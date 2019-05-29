@@ -31,8 +31,6 @@ import java.io.IOException;
  */
 public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, ElementStub> {
 
-  final static ObjectStubSerializer INSTANCE = new ElementStubSerializer();
-
   @Override
   public void serialize(@NotNull ElementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
@@ -66,7 +64,7 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   @NotNull
   @Override
   public String getExternalId() {
-    return "ElementStubSerializer";
+    return "xml.ElementStubSerializer";
   }
 
   @Override

@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,13 +19,13 @@ public class FileTypeInfo {
   /** @see com.intellij.openapi.fileTypes.impl.FileTypeRenderer */
   private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
 
-  private final FileType myFileType;
+  private final LanguageFileType myFileType;
   private final Language myDialect;
   private final String myContext;
   private final boolean myEnabled;
   private final String myDescription;
 
-  public FileTypeInfo(@NotNull FileType fileType,
+  public FileTypeInfo(@NotNull LanguageFileType fileType,
                       @Nullable Language dialect,
                       @Nullable String context,
                       boolean enabled,
@@ -38,7 +38,7 @@ public class FileTypeInfo {
   }
 
   @NotNull
-  public FileType getFileType() {
+  public LanguageFileType getFileType() {
     return myFileType;
   }
 
@@ -90,16 +90,16 @@ public class FileTypeInfo {
     return myEnabled;
   }
 
-  public boolean isEqualTo(@NotNull FileType fileType, @Nullable Language dialect, @Nullable String context) {
+  public boolean isEqualTo(@NotNull LanguageFileType fileType, @Nullable Language dialect, @Nullable String context) {
     return Objects.equals(myFileType, fileType) &&
            Objects.equals(myDialect, dialect) &&
            Objects.equals(myContext, context);
   }
 
   @NotNull
-  private static String getDescription(@NotNull FileType fileType, boolean duplicated) {
-    String description = fileType.getDescription();
-    String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
+  private static String getDescription(@NotNull LanguageFileType fileType, boolean duplicated) {
+    final String description = fileType.getDescription();
+    final String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
     if (!duplicated) {
       return trimmedDescription;
     }
@@ -110,7 +110,7 @@ public class FileTypeInfo {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof FileTypeInfo)) return false;
-    FileTypeInfo info = (FileTypeInfo)o;
+    final FileTypeInfo info = (FileTypeInfo)o;
     return Objects.equals(myFileType, info.myFileType) &&
            Objects.equals(myDialect, info.myDialect) &&
            Objects.equals(myContext, info.myContext);

@@ -87,7 +87,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
     }
   }
 
-  private static void writeJarDirs(@NotNull List<VirtualFilePointer> myJarDirectories,
+  private static void writeJarDirs(@NotNull List<? extends VirtualFilePointer> myJarDirectories,
                                    @NotNull Element element,
                                    boolean recursive) {
     List<VirtualFilePointer> jarDirectories = new ArrayList<>(myJarDirectories);

@@ -12,13 +12,14 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
@@ -139,7 +140,7 @@ public class RecentProjectPanel extends JPanel {
             } else if (selection != null) {
               AnAction selectedAction = (AnAction) selection;
               AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
-              selectedAction.actionPerformed(actionEvent);
+              ActionUtil.performActionDumbAware(selectedAction, actionEvent);
 
               // remove action from list if needed
               if (selectedAction instanceof ReopenProjectAction) {
@@ -162,7 +163,7 @@ public class RecentProjectPanel extends JPanel {
         if (selectedValued != null) {
           for (Object selection : selectedValued) {
             AnActionEvent event = AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN);
-            ((AnAction)selection).actionPerformed(event);
+            ActionUtil.performActionDumbAware((AnAction)selection, event);
           }
         }
       }
@@ -465,7 +466,7 @@ public class RecentProjectPanel extends JPanel {
     protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
       super(new VerticalFlowLayout());
       myShortener = pathShortener;
-      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
+      myPath.setFont(JBUI.Fonts.label(SystemInfoRt.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }

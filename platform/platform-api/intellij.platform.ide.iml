@@ -38,5 +38,9 @@
     <orderEntry type="library" name="rd-swing" level="project" />
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
   </component>
 </module>

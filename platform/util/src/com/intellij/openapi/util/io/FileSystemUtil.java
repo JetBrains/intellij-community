@@ -5,8 +5,10 @@ import com.intellij.Patches;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -22,7 +24,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -59,7 +64,7 @@ public class FileSystemUtil {
     Throwable error = null;
 
     if (!forceNio2 && !forceFallback) {
-      if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
+      if (SystemInfoRt.isWindows && IdeaWin32.isAvailable()) {
         try {
           return check(new IdeaWin32MediatorImpl());
         }
@@ -67,7 +72,7 @@ public class FileSystemUtil {
           error = t;
         }
       }
-      else if ((SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
+      else if ((SystemInfoRt.isLinux || SystemInfoRt.isMac || SystemInfoRt.isSolaris || SystemInfoRt.isFreeBSD) && JnaLoader.isLoaded()) {
         try {
           return check(new JnaUnixMediatorImpl());
         }
@@ -87,14 +92,15 @@ public class FileSystemUtil {
     }
 
     if (!forceFallback) {
-      LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " + "nio2=" + forceNio2, error);
+      LOG.warn("Failed to load filesystem access layer: " +
+               SystemInfoRt.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " + "nio2=" + forceNio2, error);
     }
 
     return new FallbackMediatorImpl();
   }
 
   private static Mediator check(final Mediator mediator) throws Exception {
-    final String quickTestPath = SystemInfo.isWindows ? "C:\\" :  "/";
+    final String quickTestPath = SystemInfoRt.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
   }
@@ -164,7 +170,7 @@ public class FileSystemUtil {
       else {
         realPath = ourMediator.resolveSymLink(path);
       }
-      if (realPath != null && (SystemInfo.isWindows && realPath.startsWith("\\\\") || new File(realPath).exists())) {
+      if (realPath != null && (SystemInfoRt.isWindows && realPath.startsWith("\\\\") || new File(realPath).exists())) {
         return realPath;
       }
     }
@@ -241,13 +247,13 @@ public class FileSystemUtil {
       myToRealPath = accessible(pathClass.getMethod("toRealPath", linkOptArrayClass));
       myToMillis = accessible(Class.forName("java.nio.file.attribute.FileTime").getMethod("toMillis"));
 
-      mySchema = Class.forName("java.nio.file.attribute." + (SystemInfo.isWindows ? "DosFileAttributes" : "PosixFileAttributes"));
+      mySchema = Class.forName("java.nio.file.attribute." + (SystemInfoRt.isWindows ? "DosFileAttributes" : "PosixFileAttributes"));
       myIsSymbolicLink = accessible(mySchema.getMethod("isSymbolicLink"));
       myIsDirectory = accessible(mySchema.getMethod("isDirectory"));
       myIsOther = accessible(mySchema.getMethod("isOther"));
       mySize = accessible(mySchema.getMethod("size"));
       myLastModifiedTime = accessible(mySchema.getMethod("lastModifiedTime"));
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         myIsHidden = accessible(mySchema.getMethod("isHidden"));
         myIsReadOnly = accessible(mySchema.getMethod("isReadOnly"));
         myPermissions = null;
@@ -270,7 +276,7 @@ public class FileSystemUtil {
 
         Object attributes = myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
         boolean isSymbolicLink = (Boolean)myIsSymbolicLink.invoke(attributes) ||
-                                 SystemInfo.isWindows && (Boolean)myIsOther.invoke(attributes) && (Boolean)myIsDirectory.invoke(attributes);
+                                 SystemInfoRt.isWindows && (Boolean)myIsOther.invoke(attributes) && (Boolean)myIsDirectory.invoke(attributes);
         if (isSymbolicLink) {
           try {
             attributes = myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
@@ -287,7 +293,7 @@ public class FileSystemUtil {
         boolean isOther = (Boolean)myIsOther.invoke(attributes);
         long size = (Long)mySize.invoke(attributes);
         long lastModified = (Long)myToMillis.invoke(myLastModifiedTime.invoke(attributes));
-        if (SystemInfo.isWindows) {
+        if (SystemInfoRt.isWindows) {
           boolean isHidden = new File(path).getParent() == null ? false : (Boolean)myIsHidden.invoke(attributes);
           boolean isWritable = isDirectory || !(Boolean)myIsReadOnly.invoke(attributes);
           return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
@@ -322,7 +328,7 @@ public class FileSystemUtil {
 
     @Override
     protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
-      if (SystemInfo.isUnix) {
+      if (SystemInfoRt.isUnix) {
         Object sourcePath = myGetPath.invoke(null, source, ArrayUtil.EMPTY_STRING_ARRAY);
         Object targetPath = myGetPath.invoke(null, target, ArrayUtil.EMPTY_STRING_ARRAY);
         Collection sourcePermissions = getPermissions(sourcePath);
@@ -463,12 +469,12 @@ public class FileSystemUtil {
       else if ("freebsd-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SystemInfo.isOsVersionAtLeast("12") ? BSD_64_12 : BSD_64;
       else if ("sunos-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_32;
       else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
-      else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
+      else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfoRt.OS_NAME + "/" + SystemInfo.OS_ARCH);
 
       Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, CharsetToolkit.getPlatformCharset().name());
       NativeLibrary lib = NativeLibrary.getInstance("c", options);
       Native.register(LibC.class, lib);
-      Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, lib);
+      Native.register(SystemInfoRt.isLinux ? LinuxLibC.class : UnixLibC.class, lib);
 
       myUid = LibC.getuid();
       myGid = LibC.getgid();
@@ -478,7 +484,7 @@ public class FileSystemUtil {
     protected FileAttributes getAttributes(@NotNull String path) {
       Memory buffer = myMemoryPool.alloc();
       try {
-        int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
+        int res = SystemInfoRt.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
         if (res != 0) return null;
 
         int mode = getModeFlags(buffer) & LibC.S_MASK;
@@ -513,7 +519,7 @@ public class FileSystemUtil {
       }
       catch (IOException e) {
         String message = e.getMessage();
-        if (message != null && message.toLowerCase(Locale.US).contains("too many levels of symbolic links")) {
+        if (message != null && StringUtil.toLowerCase(message).contains("too many levels of symbolic links")) {
           LOG.debug(e);
           return null;
         }
@@ -540,11 +546,11 @@ public class FileSystemUtil {
     }
 
     private static boolean loadFileStatus(String path, Memory buffer) {
-      return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
+      return (SystemInfoRt.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
     private int getModeFlags(Memory buffer) {
-      return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
+      return SystemInfoRt.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
     }
 
     private boolean ownFile(Memory buffer) {
@@ -589,7 +595,7 @@ public class FileSystemUtil {
           boolean isDirectory = isSet(flags, BA_DIRECTORY);
           boolean isSpecial = !isSet(flags, BA_REGULAR) && !isSet(flags, BA_DIRECTORY);
           boolean isHidden = isSet(flags, BA_HIDDEN) && !isWindowsRoot(path);
-          boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+          boolean isWritable = SystemInfoRt.isWindows && isDirectory || file.canWrite();
           return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
         }
       }
@@ -597,7 +603,7 @@ public class FileSystemUtil {
         boolean isDirectory = file.isDirectory();
         boolean isSpecial = !isDirectory && !file.isFile();
         boolean isHidden = file.isHidden() && !isWindowsRoot(path);
-        boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+        boolean isWritable = SystemInfoRt.isWindows && isDirectory || file.canWrite();
         return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
       }
 
@@ -605,7 +611,7 @@ public class FileSystemUtil {
     }
 
     private static boolean isWindowsRoot(String p) {
-      return SystemInfo.isWindows && p.length() >= 2 && p.length() <= 3 && Character.isLetter(p.charAt(0)) && p.charAt(1) == ':';
+      return SystemInfoRt.isWindows && p.length() >= 2 && p.length() <= 3 && Character.isLetter(p.charAt(0)) && p.charAt(1) == ':';
     }
 
     @Override
@@ -615,7 +621,7 @@ public class FileSystemUtil {
 
     @Override
     protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) {
-      if (SystemInfo.isUnix) {
+      if (SystemInfoRt.isUnix) {
         File srcFile = new File(source);
         File dstFile = new File(target);
         if (!onlyPermissionsToExecute) {

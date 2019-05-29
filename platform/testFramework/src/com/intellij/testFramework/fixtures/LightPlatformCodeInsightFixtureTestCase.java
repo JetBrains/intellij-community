@@ -15,13 +15,13 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
-  protected Module myModule;
 
   @Override
   protected void setUp() throws Exception {
@@ -36,8 +36,6 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-
-    myModule = myFixture.getModule();
   }
 
   protected TempDirTestFixture createTempDirTestFixture() {
@@ -57,7 +55,6 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     }
     finally {
       myFixture = null;
-      myModule = null;
       super.tearDown();
     }
   }
@@ -121,5 +118,10 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
 
   public PsiFile createLightFile(String fileName, Language language, String text) {
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, language, text, false, true);
+  }
+
+  @NotNull
+  protected Module getModule() {
+    return myFixture.getModule();
   }
 }

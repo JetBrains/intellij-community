@@ -284,7 +284,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
 
-  private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
+  private Collection<FrameworkSupportNodeBase> createNodes(List<? extends FrameworkSupportInModuleProvider> providers,
                                                            Set<String> associated,
                                                            final Collection<String> preselected) {
     Map<String, FrameworkSupportNode> nodes = new HashMap<>();
@@ -305,8 +305,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider,
                                           final Map<String, FrameworkSupportNode> nodes,
                                           final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
-                                          List<FrameworkSupportNodeBase> roots,
-                                          List<FrameworkSupportInModuleProvider> providers,
+                                          List<? super FrameworkSupportNodeBase> roots,
+                                          List<? extends FrameworkSupportInModuleProvider> providers,
                                           Set<String> associated,
                                           Map<String, FrameworkSupportNodeBase> associatedNodes) {
     String id = provider.getFrameworkType().getId();
@@ -373,7 +373,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return list;
   }
 
-  private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result) {
+  private static void addChildFrameworks(final List<? extends FrameworkSupportNodeBase> list, final List<? super FrameworkSupportNode> result) {
     for (FrameworkSupportNodeBase node : list) {
       if (node.isChecked() || node instanceof FrameworkGroupNode) {
         if (node instanceof FrameworkSupportNode) {
@@ -455,7 +455,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
+  private void sortFrameworks(final List<? extends FrameworkSupportNode> nodes) {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
     Collections.sort(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
   }

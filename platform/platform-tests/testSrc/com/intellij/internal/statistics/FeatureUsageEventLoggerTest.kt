@@ -304,7 +304,7 @@ class TestFeatureUsageFileEventLogger(session: String,
                                       bucket: String,
                                       recorderVersion: String,
                                       writer: TestFeatureUsageEventWriter) :
-  StatisticsFileEventLogger(session, build, bucket, recorderVersion, writer) {
+  StatisticsFileEventLogger("TEST", session, build, bucket, recorderVersion, writer) {
   val testWriter = writer
 
   override fun dispose() {

@@ -25,8 +25,10 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
@@ -100,6 +102,18 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   ProjectImportExtraModelProvider getExtraModelProvider();
 
   /**
+   * @return whether or not this resolver requires Gradle task running infrastructure to be initialized, if any of the resolvers which are
+   * used by the resolution return true then the {@link org.gradle.tooling.BuildActionExecuter} will have
+   * {@link org.gradle.tooling.BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
+   * any tasks that are scheduled by Gradle plugin in the model builders to be run.
+   *
+   * Note: If nothing inside Gradle (i.e the model builders) overwrites the task list then this will cause the default task to be run.
+   */
+  default boolean requiresTaskRunning() {
+    return false;
+  }
+
+  /**
    * add paths containing these classes to classpath of gradle tooling extension
    *
    * @return classes to be available for gradle
@@ -122,12 +136,24 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   List<String> getExtraCommandLineArgs();
 
   @NotNull
-  ExternalSystemException getUserFriendlyError(@NotNull Throwable error, @NotNull String projectPath, @Nullable String buildFilePath);
+  ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                               @NotNull Throwable error,
+                                               @NotNull String projectPath,
+                                               @Nullable String buildFilePath);
 
   /**
    * Performs project configuration and other checks before the actual project import (before invocation of gradle tooling API).
    */
   void preImportCheck();
+
+  /**
+   * Called once Gradle has finished executing everything, including any tasks that might need to be run. The models are obtained
+   * separately and in some cases before this method is called.
+   *
+   * Note: This method is called from a Gradle connection thread, within the {@link org.gradle.tooling.ResultHandler} passed to the
+   * tooling api.
+   */
+  default void buildFinished() { }
 
   /**
    * Allows extension to contribute to init script
@@ -144,6 +170,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @param initScriptConsumer consumer of init script text. Must be called to add script txt
    * @param testExecutionExpected flag that shows if tasks will be treated as tests invocation by the IDE (e.g., test events are expected)
    */
+  @ApiStatus.Experimental
   default void enhanceTaskProcessing(@NotNull List<String> taskNames,
                              @Nullable String jvmAgentSetup,
                              @NotNull Consumer<String> initScriptConsumer,

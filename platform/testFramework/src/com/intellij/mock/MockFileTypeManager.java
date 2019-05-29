@@ -18,6 +18,7 @@ package com.intellij.mock;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class MockFileTypeManager extends FileTypeManagerEx {
   private final FileType fileType;
@@ -163,7 +163,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
     if ("JavaScript".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.javascript.JavaScriptFileType", fileTypeName);
     if ("Properties".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.properties.PropertiesFileType", fileTypeName);
     if ("GUI_DESIGNER_FORM".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.uiDesigner.GuiFormFileType", fileTypeName);
-    return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase());
+    return new MockLanguageFileType(PlainTextLanguage.INSTANCE, StringUtil.toLowerCase(fileTypeName));
   }
 
   private static FileType loadFileTypeSafe(final String className, String fileTypeName) {
@@ -171,7 +171,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
       return (FileType)Class.forName(className).getField("INSTANCE").get(null);
     }
     catch (Exception ignored) {
-      return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase(Locale.ENGLISH));
+      return new MockLanguageFileType(PlainTextLanguage.INSTANCE, StringUtil.toLowerCase(fileTypeName));
     }
   }
 

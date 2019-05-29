@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
@@ -102,7 +103,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     CollectionComboBoxModel<String> model = new CollectionComboBoxModel<>(messages);
 
     comboBox.setModel(model);
-    comboBox.setRenderer(new MessageBoxCellRenderer());
+    comboBox.setRenderer(SimpleListCellRenderer.create("", o -> o.replace('\r', '|').replace('\n', '|')));
     comboBox.addActionListener(e -> messageConsumer.accept(model.getSelected()));
 
     return comboBox;

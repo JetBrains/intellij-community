@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -75,33 +76,45 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
 
+  protected open fun isForceUpdateNotEmptyCommitState(): Boolean = false
+
   protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
     LOG.debug("invoking commit dialog after update")
 
     val selectedChanges = context.selectedChanges
     val selectedUnversioned = context.selectedUnversionedFiles
+    val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
     val included: Collection<*>
 
     if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
       changesToCommit = getChangesIn(project, roots)
-      included = changesToCommit
+      included = initialChangeList.changes.intersect(changesToCommit)
     }
     else {
       changesToCommit = selectedChanges.orEmpty().toList()
       included = concat(changesToCommit, selectedUnversioned)
     }
 
-    val initialChangeList = getInitiallySelectedChangeList(context, project)
-    CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, getExecutor(project), null)
+    val executor = getExecutor(project)
+    if (executor == null && isNonModalCommit()) {
+      val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
+      workflowHandler?.run {
+        setCommitState(included, isForceUpdateNotEmptyCommitState())
+        activate()
+      }
+    }
+    else {
+      CommitChangeListDialog.commitChanges(project, changesToCommit, included, initialChangeList, executor, null)
+    }
   }
 
-  protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList? {
+  protected open fun getInitiallySelectedChangeList(context: VcsContext, project: Project): LocalChangeList {
     val manager = ChangeListManager.getInstance(project)
 
-    context.selectedChangeLists?.firstOrNull()?.let { return manager.findChangeList(it.name) }
-    context.selectedChanges?.firstOrNull()?.let { return manager.getChangeList(it) }
-    return manager.defaultChangeList
+    return context.selectedChangeLists?.firstOrNull()?.let { manager.findChangeList(it.name) }
+           ?: context.selectedChanges?.firstOrNull()?.let { manager.getChangeList(it) }
+           ?: manager.defaultChangeList
   }
 
   protected open fun getExecutor(project: Project): CommitExecutor? = null

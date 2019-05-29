@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.buildout;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -28,7 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -98,7 +84,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
             bin.refresh(false, false);
           }
           final String exe;
-          if (SystemInfo.isWindows) {
+          if (SystemInfoRt.isWindows) {
             exe = "buildout.exe";
           }
           else {
@@ -188,7 +174,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
       if (paths == null) {
         VirtualFile root = script.getParent().getParent();
         String partName = FileUtil.getNameWithoutExtension(script.getName());
-        if (SystemInfo.isWindows && partName.endsWith(SCRIPT_SUFFIX)) {
+        if (SystemInfoRt.isWindows && partName.endsWith(SCRIPT_SUFFIX)) {
           partName = partName.substring(0, partName.length() - SCRIPT_SUFFIX.length());
         }
         VirtualFile sitePy = root.findFileByRelativePath("parts/" + partName + "/site.py");
@@ -352,7 +338,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
     }
     if (rootPath != null) {
       final File[] scripts = new File(rootPath, "bin").listFiles((dir, name) -> {
-        if (SystemInfo.isWindows) {
+        if (SystemInfoRt.isWindows) {
           return name.endsWith("-script.py");
         }
         String ext = FileUtilRt.getExtension(name);
@@ -367,7 +353,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
 
   @Nullable
   public static File findScript(@Nullable BuildoutFacet buildoutFacet, String name, final VirtualFile baseDir) {
-    String scriptName = SystemInfo.isWindows ? name + SCRIPT_SUFFIX : name;
+    String scriptName = SystemInfoRt.isWindows ? name + SCRIPT_SUFFIX : name;
     final List<File> scripts = getScripts(buildoutFacet, baseDir);
     for (File script : scripts) {
       if (FileUtil.getNameWithoutExtension(script.getName()).equals(scriptName)) {

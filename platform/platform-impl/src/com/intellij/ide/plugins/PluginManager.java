@@ -33,8 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -184,17 +183,11 @@ public class PluginManager extends PluginManagerCore {
           return;
         }
 
-        List<String> disabledPlugins = getDisabledPlugins();
-        Set<String> disabledPluginSet = getDisabledPluginSet();
+        Collection<String> disabledPlugins = new LinkedHashSet<>(disabledPlugins());
         if (myPlugins2Disable != null && DISABLE.equals(description)) {
-          for (String pluginId : myPlugins2Disable) {
-            if (disabledPluginSet.add(pluginId)) {
-              disabledPlugins.add(pluginId);
-            }
-          }
+          disabledPlugins.addAll(myPlugins2Disable);
         }
         else if (myPlugins2Enable != null && ENABLE.equals(description)) {
-          disabledPluginSet.removeAll(myPlugins2Enable);
           disabledPlugins.removeAll(myPlugins2Enable);
           PluginManagerMain.notifyPluginsUpdated(null);
         }

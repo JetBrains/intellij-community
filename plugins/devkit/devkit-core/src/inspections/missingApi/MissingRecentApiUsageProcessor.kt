@@ -60,7 +60,7 @@ class MissingRecentApiUsageProcessor(
       val aClass = overriddenMethod.containingClass ?: return
       val methodNameElement = method.uastAnchor.sourcePsiElement ?: return
       val description = DevKitBundle.message(
-        "inspections.api.overrides.method.available.only.since",
+        "inspections.missing.recent.api.overriding",
         aClass.getPresentableName(),
         availableSince.asString(),
         brokenRanges.joinToString { it.asString() }
@@ -76,7 +76,7 @@ class MissingRecentApiUsageProcessor(
     brokenRanges: List<SinceUntilRange>
   ) {
     val description = DevKitBundle.message(
-      "inspections.api.constructor.only.since",
+      "inspections.missing.recent.api.default.constructor.message",
       constructorOwner.qualifiedName,
       apiSinceBuildNumber.asString(),
       brokenRanges.joinToString { it.asString() }
@@ -91,17 +91,27 @@ class MissingRecentApiUsageProcessor(
   }
 
   private fun checkApiIsRecent(modifierListOwner: PsiModifierListOwner, elementToHighlight: PsiElement) {
-    val presentableName = modifierListOwner.getPresentableName()
     val availableSince = modifierListOwner.getApiSinceBuildNumber() ?: return
     val brokenRanges = targetedSinceUntilRanges.filter { it.someBuildsAreNotCovered(availableSince) }
     if (brokenRanges.isNotEmpty()) {
-      val description = DevKitBundle.message(
-        "inspections.api.available.only.since",
-        presentableName,
-        availableSince.asString(),
-        brokenRanges.joinToString { it.asString() }
-      )
+      val description = buildDescription(modifierListOwner, availableSince, brokenRanges)
       holder.registerProblem(elementToHighlight, description, highlightType)
+    }
+  }
+
+  private fun buildDescription(
+    apiElement: PsiModifierListOwner,
+    availableSince: BuildNumber,
+    brokenRanges: List<SinceUntilRange>
+  ): String {
+    val presentableName = apiElement.getPresentableName()
+    val sinceString = availableSince.asString()
+    val rangesString = brokenRanges.joinToString { it.asString() }
+    return when (apiElement) {
+      is PsiClass -> DevKitBundle.message("inspections.missing.recent.api.class.message", presentableName, sinceString, rangesString)
+      is PsiMethod -> DevKitBundle.message("inspections.missing.recent.api.method.message", presentableName, sinceString, rangesString)
+      is PsiField -> DevKitBundle.message("inspections.missing.recent.api.field.message", presentableName, sinceString, rangesString)
+      else -> DevKitBundle.message("inspections.missing.recent.api.common.message", presentableName, sinceString, rangesString)
     }
   }
 

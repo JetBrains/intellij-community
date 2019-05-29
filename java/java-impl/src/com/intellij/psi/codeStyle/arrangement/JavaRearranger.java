@@ -150,7 +150,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
 
   @NotNull
-  private static Set<ArrangementSettingsToken> concat(@NotNull Set<ArrangementSettingsToken> base, ArrangementSettingsToken... modifiers) {
+  private static Set<ArrangementSettingsToken> concat(@NotNull Set<? extends ArrangementSettingsToken> base, ArrangementSettingsToken... modifiers) {
     Set<ArrangementSettingsToken> result = ContainerUtilRt.newHashSet(base);
     Collections.addAll(result, modifiers);
     return result;

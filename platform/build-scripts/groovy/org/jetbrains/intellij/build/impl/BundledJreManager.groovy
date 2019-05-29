@@ -73,7 +73,7 @@ class BundledJreManager {
     }
 
     buildContext.messages.block("Extract $archive.absolutePath JRE") {
-      String destination = "$targetDir/jre64"
+      String destination = "$targetDir/jbr"
       def destinationDir = new File(destination)
       if (destinationDir.exists()) destinationDir.deleteDir()
       untar(archive, destination, isSecondBundledJreModular())
@@ -130,7 +130,7 @@ class BundledJreManager {
       return null
     }
     buildContext.messages.block("Extract $archive.name JRE") {
-      String destination = "$targetDir/jre64"
+      String destination = "$targetDir/jbr"
       if (osName == "windows" && arch == JvmArchitecture.x32) {
         destination = "$targetDir/jre32"
       }
@@ -268,7 +268,7 @@ class BundledJreManager {
   }
 
   String jreSuffix() {
-    isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
+    isBundledJreModular() ? "" : "-jbr8"
   }
 
   boolean is32bitArchSupported() {

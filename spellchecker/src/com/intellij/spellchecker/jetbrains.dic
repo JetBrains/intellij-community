@@ -43,6 +43,7 @@ autorelease
 autorotate
 azul
 backend
+backport
 backref
 backtrace
 barcode
@@ -71,6 +72,7 @@ btree
 buffered
 buffering
 bugprone
+bugzilla
 buildable
 builtin
 bzip
@@ -169,6 +171,7 @@ decompiles
 decompiling
 dedent
 deduplicate
+deduplication
 deferrable
 deferrer
 deque
@@ -459,6 +462,7 @@ mongodb
 monoid
 monoidal
 monoids
+monorepo
 monospaced
 msql
 mssql
@@ -712,6 +716,7 @@ sfinae
 sftp
 shader
 sharding
+shellcheck
 sigabrt
 sigaio
 sigalrm
@@ -884,6 +889,7 @@ ungrouping
 unhandled
 uninstall
 uniques
+unmarshal
 unmerged
 unpivot
 unprotect
@@ -935,6 +941,7 @@ wildcards
 wildfly
 wordwrap
 workflow
+workgroup
 writeln
 wsdl
 xcode

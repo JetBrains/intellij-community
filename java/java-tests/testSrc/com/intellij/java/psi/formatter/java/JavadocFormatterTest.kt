@@ -271,7 +271,7 @@ class A {
 
   fun testPreserveExistingSelfClosingTagsAndGenerateOnlyPTag() {
     getJavaSettings().ENABLE_JAVADOC_FORMATTING = true
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
+    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.JDK_1_7
 
     doTextTest(
       """/**
@@ -299,7 +299,7 @@ class T {
       ENABLE_JAVADOC_FORMATTING = true
       JD_P_AT_EMPTY_LINES = true
     }
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
+    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.JDK_1_7
 
     doTextTest(
       """/**
@@ -915,7 +915,7 @@ public void voo() {
       JD_P_AT_EMPTY_LINES = true
       ENABLE_JAVADOC_FORMATTING = true
     }
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_7
+    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.JDK_1_7
 
     doClassTest(
       """/**

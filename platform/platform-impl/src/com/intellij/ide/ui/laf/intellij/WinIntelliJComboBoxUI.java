@@ -334,7 +334,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       }
     };
 
-    installEditorKeyListener(comboBoxEditor);
     return comboBoxEditor;
   }
 
@@ -342,6 +341,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   protected void configureEditor() {
     super.configureEditor();
 
+    installEditorKeyListener(comboBox.getEditor());
     if (editor instanceof JComponent) {
       JComponent jEditor = (JComponent)editor;
       jEditor.setBorder(DEFAULT_EDITOR_BORDER);
@@ -556,6 +556,14 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         protected void configureList(@NotNull JList<Object> list) {
           super.configureList(list);
           list.setBackground(UIManager.getColor("TextField.background"));
+        }
+
+        @Override
+        protected void customizeListRendererComponent(JComponent component) {
+          super.customizeListRendererComponent(component);
+          component.setBorder(getList().getComponentOrientation().isLeftToRight()
+                              ? JBUI.Borders.empty(0, 5, 0, 1)
+                              : JBUI.Borders.empty(0, 1, 0, 5));
         }
       };
     }

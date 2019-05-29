@@ -18,10 +18,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -40,7 +38,6 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -66,13 +63,10 @@ import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static java.util.Comparator.comparing;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
@@ -135,7 +129,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     updateEnvironment = new HgUpdateEnvironment(project);
     committedChangesProvider = new HgCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
-    myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
+    myCommitAndPushExecutor = new HgCommitAndPushExecutor();
     myMqNewExecutor = new HgMQNewExecutor(checkinEnvironment);
     myCloseBranchExecutor = new HgCloseBranchExecutor(checkinEnvironment);
   }
@@ -230,38 +224,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
-  @NotNull
-  @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
-
-    for (int i = 1; i < in.size(); i++) {
-      final S sChild = in.get(i);
-      final VirtualFile child = convertor.apply(sChild);
-      final VirtualFile childRoot = HgUtil.getHgRootOrNull(myProject, child);
-      if (childRoot == null) {
-        continue;
-      }
-      for (int j = i - 1; j >= 0; --j) {
-        final S sParent = in.get(j);
-        final VirtualFile parent = convertor.apply(sParent);
-        // if the parent is an ancestor of the child and that they share common root, the child is removed
-        if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
-          in.remove(i);
-          //noinspection AssignmentToForLoopParameter
-          --i;
-          break;
-        }
-      }
-    }
-    return in;
-  }
-
-  @Override
-  public RootsConvertor getCustomConvertor() {
-    return HgRootsHandler.getInstance(myProject);
-  }
-
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return HgUtil.getNearestHgRoot(dir) != null;
@@ -295,10 +257,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      myIncomingWidget.activate();
-      myOutgoingWidget.activate();
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myIncomingWidget != null) myIncomingWidget.activate();
+      if (myOutgoingWidget != null) myOutgoingWidget.activate();
+    });
 
     // updaters and listeners
     myHgRemoteStatusUpdater =
@@ -307,7 +269,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myHgRemoteStatusUpdater.activate();
 
     messageBusConnection = myProject.getMessageBus().connect();
-    myVFSListener = new HgVFSListener(myProject, this);
+    myVFSListener = HgVFSListener.createInstance(this);
 
     // ignore temporary files
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();

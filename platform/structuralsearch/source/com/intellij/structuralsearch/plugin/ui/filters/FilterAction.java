@@ -54,5 +54,5 @@ public abstract class FilterAction extends AnAction implements Filter {
 
   public abstract void clearFilter();
 
-  public abstract boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target);
+  public abstract boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target);
 }

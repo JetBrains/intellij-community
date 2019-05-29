@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
+import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginType
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.lang.Language
@@ -34,10 +35,13 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
-  private var data: MutableMap<String, Any> = HashMap<String, Any>()
+  private var data: MutableMap<String, Any> = HashMap()
+
   companion object {
-    val platformDataKeys: MutableList<String> = Arrays.asList("plugin", "project", "version", "os", "plugin_type",
-                                                              "lang", "current_file", "input_event", "place")
+    // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
+    val platformDataKeys: MutableList<String> = Arrays.asList(
+      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place"
+    )
   }
 
   fun addFeatureContext(context: FUSUsageContext?): FeatureUsageData {
@@ -81,25 +85,34 @@ class FeatureUsageData {
   }
 
   fun addPluginInfo(info: PluginInfo): FeatureUsageData {
-    data["plugin_type"] = info.type.name
-    if (info.type.isSafeToReport() && info.id != null && StringUtil.isNotEmpty(info.id)) {
-      data["plugin"] = info.id
+    addPluginInfoTo(info, data)
+    return this
+  }
+
+  fun addLanguage(id: String?): FeatureUsageData {
+    id?.let {
+      addLanguage(Language.findLanguageByID(id))
     }
     return this
   }
 
-  fun addLanguage(language: Language): FeatureUsageData {
-    val type = getPluginType(language.javaClass)
-    if (type.isSafeToReport()) {
-      data["lang"] = language.id
-    }
-    return this
+  fun addLanguage(language: Language?): FeatureUsageData {
+    return addLanguageInternal("lang", language)
   }
 
-  fun addCurrentFile(language: Language): FeatureUsageData {
-    val type = getPluginType(language.javaClass)
-    if (type.isSafeToReport()) {
-      data["current_file"] = language.id
+  fun addCurrentFile(language: Language?): FeatureUsageData {
+    return addLanguageInternal("current_file", language)
+  }
+
+  private fun addLanguageInternal(fieldName: String, language: Language?): FeatureUsageData {
+    language?.let {
+      val type = getPluginType(language.javaClass)
+      if (type.isSafeToReport()) {
+        data[fieldName] = language.id
+      }
+      else {
+        data[fieldName] = "third.party"
+      }
     }
     return this
   }
@@ -146,6 +159,21 @@ class FeatureUsageData {
     return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
   }
 
+  fun addValue(value: Any): FeatureUsageData {
+    if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
+      return addDataInternal("value", value)
+    }
+    return addData("value", value.toString())
+  }
+
+  fun addEnabled(enabled: Boolean): FeatureUsageData {
+    return addData("enabled", enabled)
+  }
+
+  fun addCount(count: Int): FeatureUsageData {
+    return addData("count", count)
+  }
+
   fun addData(key: String, value: Boolean): FeatureUsageData {
     return addDataInternal(key, value)
   }
@@ -155,6 +183,14 @@ class FeatureUsageData {
   }
 
   fun addData(key: String, value: Long): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: Float): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  fun addData(key: String, value: Double): FeatureUsageData {
     return addDataInternal(key, value)
   }
 
@@ -178,7 +214,7 @@ class FeatureUsageData {
   fun merge(next: FeatureUsageData, prefix: String): FeatureUsageData {
     for ((key, value) in next.build()) {
       val newKey = if (key.startsWith("data_")) "$prefix$key" else key
-      addDataInternal(newKey, value)
+      data[newKey] = value
     }
     return this
   }
@@ -186,7 +222,7 @@ class FeatureUsageData {
   fun copy(): FeatureUsageData {
     val result = FeatureUsageData()
     for ((key, value) in data) {
-      result.addDataInternal(key, value)
+      result.data[key] = value
     }
     return result
   }
@@ -204,6 +240,10 @@ class FeatureUsageData {
 
   override fun hashCode(): Int {
     return data.hashCode()
+  }
+
+  override fun toString(): String {
+    return data.toString()
   }
 }
 

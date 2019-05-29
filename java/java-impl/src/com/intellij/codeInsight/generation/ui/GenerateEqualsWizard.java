@@ -150,7 +150,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     @Override
-    protected void updateHashCodeMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
+    protected void updateHashCodeMemberInfos(Collection<? extends MemberInfo> equalsMemberInfos) {
       if (myHashCodePanel == null) return;
       List<MemberInfo> hashCodeFields = new ArrayList<>();
 
@@ -162,7 +162,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     @Override
-    protected void updateNonNullMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
+    protected void updateNonNullMemberInfos(Collection<? extends MemberInfo> equalsMemberInfos) {
       final ArrayList<MemberInfo> list = new ArrayList<>();
 
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
@@ -212,7 +212,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     return memberInfosToFields(myNonNullPanel.getTable().getSelectedMemberInfos());
   }
 
-  private static PsiField[] memberInfosToFields(Collection<MemberInfo> infos) {
+  private static PsiField[] memberInfosToFields(Collection<? extends MemberInfo> infos) {
     ArrayList<PsiField> list = new ArrayList<>();
     for (MemberInfo info : infos) {
       list.add((PsiField)info.getMember());

@@ -673,7 +673,7 @@ public class UsageViewImpl implements UsageViewEx {
       }
     });
 
-    TreeUtil.selectFirstNode(myTree);
+    TreeUtil.promiseSelectFirst(myTree);
     PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
@@ -1495,7 +1495,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void addButtonToLowerPane(@NotNull Action action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int index = myButtonPanel.getComponentCount();
-    if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
+    if (!SystemInfoRt.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonAction(index, action);
     Object o = action.getValue(Action.ACCELERATOR_KEY);
     if (o instanceof KeyStroke) {

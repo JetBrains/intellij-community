@@ -46,7 +46,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private JComponent myActionsContextComponent;
   private JComponent mySearchComponent;
 
-  private Computable<JComponent> myFocusRequest;
+  private Computable<? extends JComponent> myFocusRequest;
   private BusyObject myBusyObject;
   private String mySeparator;
   private Icon myPopupIcon;
@@ -86,7 +86,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setPreferredFocusedComponent(@SuppressWarnings("BoundedWildcard") Computable<JComponent> computable) {
+  public void setPreferredFocusedComponent(@SuppressWarnings("BoundedWildcard") Computable<? extends JComponent> computable) {
     myFocusRequest = computable;
   }
 

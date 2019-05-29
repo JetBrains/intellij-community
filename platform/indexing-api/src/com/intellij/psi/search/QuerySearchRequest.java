@@ -14,12 +14,12 @@ import org.jetbrains.annotations.NotNull;
 public class QuerySearchRequest {
   public final Query<PsiReference> query;
   public final SearchRequestCollector collector;
-  public final Processor<PsiReference> processor;
+  public final Processor<? super PsiReference> processor;
 
   public QuerySearchRequest(@NotNull Query<PsiReference> query,
                             @NotNull final SearchRequestCollector collector,
                             boolean inReadAction,
-                            @NotNull final PairProcessor<PsiReference, SearchRequestCollector> processor) {
+                            @NotNull final PairProcessor<? super PsiReference, ? super SearchRequestCollector> processor) {
     this.query = query;
     this.collector = collector;
     if (inReadAction) {

@@ -149,7 +149,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   }
 
 
-  private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<String, ActionOrGroup> processor) {
+  private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<? super String, ? super ActionOrGroup> processor) {
     final Project project = context.getProject();
 
     Module module = context.getModule();
@@ -165,7 +165,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     });
   }
 
-  private static boolean processPlugins(Collection<IdeaPlugin> plugins, PairProcessor<String, ActionOrGroup> processor) {
+  private static boolean processPlugins(Collection<? extends IdeaPlugin> plugins, PairProcessor<? super String, ? super ActionOrGroup> processor) {
     for (IdeaPlugin plugin : plugins) {
       final Map<String, ActionOrGroup> forFile = collectForFile(plugin);
       for (Map.Entry<String, ActionOrGroup> entry : forFile.entrySet()) {

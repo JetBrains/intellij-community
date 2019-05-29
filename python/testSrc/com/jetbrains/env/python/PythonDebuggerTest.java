@@ -1,10 +1,12 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -33,8 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -680,7 +684,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testWinEggDebug() {
-    Assume.assumeFalse("Only needs to run on windows", UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows);
+    Assume.assumeFalse("Only needs to run on windows", UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfoRt.isWindows);
     runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
       @Override
       public void before() {
@@ -718,7 +722,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testWinLongName() {
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfoRt.isWindows) {
       return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
@@ -874,7 +878,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtQThreadInheritor() {
-    Assume.assumeFalse("Don't run under Windows",UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
       @Override
@@ -919,7 +923,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtMoveToThread() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
       @Override
@@ -965,7 +969,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtQRunnableInheritor() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
       @Override
@@ -1010,7 +1014,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPySide2QThreadInheritor() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_1.py") {
       @Override
@@ -1056,7 +1060,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPySide2MoveToThread() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_2.py") {
       @Override
@@ -1101,7 +1105,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPySide2QRunnableInheritor() {
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyside2_3.py") {
       @Override
@@ -1954,8 +1958,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testExecutableScriptDebug() {
-    
-    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
+
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_executable_script_debug.py") {
       @Override
@@ -2003,6 +2007,63 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return Sets.newHashSet("pytest");
+      }
+    });
+  }
+
+  @Test
+  public void testExecAndSpawnWithBytesArgs() {
+
+    class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTask {
+
+      private final static String BYTES_ARGS_WARNING = "pydev debugger: bytes arguments were passed to a new process creation function. " +
+                                                       "Breakpoints may not work correctly.\n";
+      private final static String PYTHON2_TAG = "python2";
+
+      private Map<String, Set<String>> myEnvTags = Maps.newHashMap();
+
+      ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
+        super(relativeTestDataPath, scriptName);
+        loadEnvTags();
+      }
+
+      private void loadEnvTags() {
+        List<String> roots = PythonDebuggerTest.getPythonRoots();
+
+        roots.forEach((root) -> {
+          Set<String> tags = Sets.newHashSet();
+          tags.addAll(PythonDebuggerTest.loadEnvTags(root));
+          myEnvTags.put(root, tags);
+        });
+      }
+
+      private boolean hasPython2Tag(){
+        String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
+        return myEnvTags.get(env).stream().anyMatch((tag) -> tag.startsWith(PYTHON2_TAG));
+      }
+
+      @Override
+      public void testing() throws Exception {
+        if (hasPython2Tag()) {
+          waitForTerminate();
+          assertFalse(output().contains(BYTES_ARGS_WARNING));
+        }
+        else
+          waitForOutput(BYTES_ARGS_WARNING);
+      }
+    }
+
+    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_exec_with_bytes_args.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+    });
+
+    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_spawn_with_bytes_args.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
       }
     });
   }

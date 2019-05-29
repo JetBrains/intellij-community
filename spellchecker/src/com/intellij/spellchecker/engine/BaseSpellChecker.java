@@ -12,26 +12,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.EditDistance;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.util.containers.ContainerUtil.concat;
-import static com.intellij.util.text.EditDistance.optimalAlignment;
-import static java.util.stream.Collectors.toList;
+import java.util.stream.Collectors;
 
 public class BaseSpellChecker implements SpellCheckerEngine {
-  static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
 
   private final Transformation transform = new Transformation();
   private final Set<EditableDictionary> dictionaries = new HashSet<>();
@@ -41,7 +39,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private final List<Pair<Loader, Consumer<? super Dictionary>>> myDictionariesToLoad = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Project myProject;
 
-  public BaseSpellChecker(@NotNull Project project) {
+  BaseSpellChecker(@NotNull Project project) {
     myProject = project;
   }
 
@@ -123,8 +121,6 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   /**
-   * @param transformed
-   * @param dictionaries
    * @return -1 (all)failed / 0 (any) ok / >0 all alien
    */
   private static int isCorrect(@NotNull String transformed, @Nullable Collection<? extends Dictionary> dictionaries) {
@@ -159,9 +155,9 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public List<String> getSuggestions(@NotNull String word, int maxSuggestions, int quality) {
     String transformed = transform.transform(word);
     if (transformed == null || maxSuggestions < 1) return Collections.emptyList();
-    final MinMaxPriorityQueue<Suggestion> suggestions = MinMaxPriorityQueue.orderedBy(Suggestion::compareTo).maximumSize(maxSuggestions).create();
-    for (Dictionary dict : concat(bundledDictionaries, dictionaries)) {
-      dict.getSuggestions(transformed, s -> suggestions.add(new Suggestion(s, optimalAlignment(transformed, s, true))));
+    Queue<Suggestion> suggestions = MinMaxPriorityQueue.orderedBy(Suggestion::compareTo).maximumSize(maxSuggestions).create();
+    for (Dictionary dict : ContainerUtil.concat(bundledDictionaries, dictionaries)) {
+      dict.getSuggestions(transformed, s -> suggestions.add(new Suggestion(s, EditDistance.optimalAlignment(transformed, s, true))));
     }
     if (suggestions.isEmpty()) {
       return Collections.emptyList();
@@ -171,7 +167,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       .filter(i -> bestMetrics - i.getMetrics() < quality)
       .sorted()
       .map(Suggestion::getWord)
-      .collect(toList());
+      .collect(Collectors.toList());
   }
 
   @Override
@@ -201,14 +197,14 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   @Override
   public void removeDictionariesRecursively(@NotNull String directory) {
-    bundledDictionaries.stream()
-      .map(Dictionary::getName)
-      .filter(dict -> isAncestor(directory, dict, false) && isDictionaryLoad(dict))
-      .forEach(this::removeDictionary);
+    List<Dictionary> toRemove = ContainerUtil
+      .filter(bundledDictionaries, dict -> FileUtil.isAncestor(directory, dict.getName(), false) && isDictionaryLoad(dict.getName()));
+
+    bundledDictionaries.removeAll(toRemove);
   }
 
   @Nullable
-  public Dictionary getBundledDictionaryByName(@NotNull String name) {
+  private Dictionary getBundledDictionaryByName(@NotNull String name) {
     for (Dictionary dictionary : bundledDictionaries) {
       if (name.equals(dictionary.getName())) {
         return dictionary;

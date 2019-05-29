@@ -80,7 +80,7 @@ public class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManage
     return operands.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private static void processGString(GrString string, ArrayList<PsiElement> operands) {
+  private static void processGString(GrString string, ArrayList<? super PsiElement> operands) {
     ContainerUtil.addAll(operands, string.getAllContentParts());
   }
 
@@ -90,7 +90,7 @@ public class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManage
     return operands.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private static void processBinary(GrBinaryExpression expression, ArrayList<PsiElement> operands) {
+  private static void processBinary(GrBinaryExpression expression, ArrayList<? super PsiElement> operands) {
     final GrExpression left = expression.getLeftOperand();
     final GrExpression right = expression.getRightOperand();
     if (left instanceof GrBinaryExpression) {

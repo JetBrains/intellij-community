@@ -13,11 +13,11 @@
             },
             "edge": {
               "version_added": false,
-              "notes": "<a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
+              "notes": "<a href='https://developer.microsoft.com/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
             },
             "edge_mobile": {
               "version_added": false,
-              "notes": "<a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
+              "notes": "<a href='https://developer.microsoft.com/microsoft-edge/platform/status/detailssummary?filter=f3f0000bf&search=details'>In development</a>."
             },
             "firefox": {
               "version_added": "49"

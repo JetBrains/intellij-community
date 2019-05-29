@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableSet;
@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -388,7 +388,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   private static boolean isBinaryModule(String filename) {
     final String ext = FileUtilRt.getExtension(filename);
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       return "pyd".equalsIgnoreCase(ext);
     }
     else {

@@ -174,25 +174,23 @@ class AccessibleGutterLine extends JPanel {
     /* icons */
     if (myGutter.areIconsShown()) {
       List<GutterMark> row = myGutter.getGutterRenderers(myVisualLineNum);
-      if (row != null) {
-        myGutter.processIconsRow(myVisualLineNum, row, (x, y, renderer) -> {
-          Icon icon = myGutter.scaleIcon(renderer.getIcon());
-          addNewElement(new SimpleAccessible() {
-            @NotNull
-            @Override
-            public String getAccessibleName() {
-              if (renderer instanceof SimpleAccessible) {
-                return ((SimpleAccessible)renderer).getAccessibleName();
-              }
-              return "icon: " + renderer.getClass().getSimpleName();
+      myGutter.processIconsRow(myVisualLineNum, row, (x, y, renderer) -> {
+        Icon icon = myGutter.scaleIcon(renderer.getIcon());
+        addNewElement(new SimpleAccessible() {
+          @NotNull
+          @Override
+          public String getAccessibleName() {
+            if (renderer instanceof SimpleAccessible) {
+              return ((SimpleAccessible)renderer).getAccessibleName();
             }
-            @Override
-            public String getAccessibleTooltipText() {
-              return renderer.getTooltipText();
-            }
-          }, x, 0, icon.getIconWidth(), lineHeight);
-        });
-      }
+            return "icon: " + renderer.getClass().getSimpleName();
+          }
+          @Override
+          public String getAccessibleTooltipText() {
+            return renderer.getTooltipText();
+          }
+        }, x, 0, icon.getIconWidth(), lineHeight);
+      });
     }
 
     /* active markers */

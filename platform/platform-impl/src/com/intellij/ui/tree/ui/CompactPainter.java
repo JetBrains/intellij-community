@@ -7,16 +7,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.Component;
 import java.awt.Graphics;
+import javax.swing.UIManager;
 
 final class CompactPainter implements Control.Painter {
   static final Control.Painter DEFAULT = new CompactPainter(true, null, null, 0);
-  private final boolean paintLines;
+  private final Boolean myPaintLines;
   private final Integer myLeftIndent;
   private final Integer myRightIndent;
   private final Integer myLeafIndent;
 
-  CompactPainter(boolean paintLines, @Nullable Integer leftIndent, @Nullable Integer rightIndent, @Nullable Integer leafIndent) {
-    this.paintLines = paintLines;
+  CompactPainter(@Nullable Boolean paintLines, @Nullable Integer leftIndent, @Nullable Integer rightIndent, @Nullable Integer leafIndent) {
+    myPaintLines = paintLines;
     myLeftIndent = leftIndent;
     myRightIndent = rightIndent;
     myLeafIndent = leafIndent;
@@ -43,6 +44,7 @@ final class CompactPainter implements Control.Painter {
   public void paint(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height,
                     @NotNull Control control, int depth, boolean leaf, boolean expanded, boolean selected) {
     if (depth <= 0) return; // do not paint
+    boolean paintLines = getPaintLines();
     if (!paintLines && leaf) return; // nothing to paint
     int controlWidth = control.getWidth();
     int left = getLeftIndent();
@@ -63,6 +65,10 @@ final class CompactPainter implements Control.Painter {
     }
     if (leaf) return; // do not paint control for a leaf node
     control.paint(c, g, controlX, y, controlWidth, height, expanded, selected);
+  }
+
+  private boolean getPaintLines() {
+    return myPaintLines != null ? myPaintLines : UIManager.getBoolean("Tree.paintLines");
   }
 
   private int getLeftIndent() {

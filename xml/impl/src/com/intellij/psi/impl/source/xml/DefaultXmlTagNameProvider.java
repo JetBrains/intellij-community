@@ -96,7 +96,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
   }
 
-  private static void getRootTagsVariants(final XmlTag tag, final List<LookupElement> elements) {
+  private static void getRootTagsVariants(final XmlTag tag, final List<? super LookupElement> elements) {
     elements.add(LookupElementBuilder.create("?xml version=\"1.0\" encoding=\"\" ?>").withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>").withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override

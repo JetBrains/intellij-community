@@ -154,7 +154,7 @@ public class TestUtils {
     return testInstancePerClass(containingClass, new HashSet<>());
   }
 
-  private static boolean testInstancePerClass(@NotNull PsiClass containingClass, HashSet<PsiClass> classes) {
+  private static boolean testInstancePerClass(@NotNull PsiClass containingClass, HashSet<? super PsiClass> classes) {
     PsiAnnotation annotation = MetaAnnotationUtil.findMetaAnnotations(containingClass, Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE))
       .findFirst().orElse(null);
     if (annotation != null) {

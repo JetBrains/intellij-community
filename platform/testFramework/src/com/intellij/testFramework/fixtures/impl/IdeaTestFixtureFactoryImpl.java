@@ -92,6 +92,7 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
       super(testFixtureBuilder);
     }
 
+    @NotNull
     @Override
     protected ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);

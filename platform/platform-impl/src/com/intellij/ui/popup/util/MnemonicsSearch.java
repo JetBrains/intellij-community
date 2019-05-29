@@ -42,7 +42,7 @@ public abstract class MnemonicsSearch<T> {
         final String text = filter.getTextFor(each);
         final String charText = text.substring(pos + 1, pos + 2);
         myChar2ValueMap.put(StringUtil.toUpperCase(charText), each);
-        myChar2ValueMap.put(charText.toLowerCase(), each);
+        myChar2ValueMap.put(StringUtil.toLowerCase(charText), each);
       }
     }
   }

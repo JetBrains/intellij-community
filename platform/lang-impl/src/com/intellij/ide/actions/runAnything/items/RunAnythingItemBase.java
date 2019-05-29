@@ -8,7 +8,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.ui.SimpleTextAttributes.STYLE_SMALLER;
+import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.util.ui.UIUtil.getListSelectionForeground;
 
 public class RunAnythingItemBase extends RunAnythingItem {
   @NotNull private final String myCommand;
@@ -33,9 +33,14 @@ public class RunAnythingItemBase extends RunAnythingItem {
     return myCommand;
   }
 
+  @Nullable
+  public String getDescription() {
+    return null;
+  }
+
   @NotNull
   @Override
-  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+  public Component createComponent(@Nullable String pattern, @Nullable Icon groupIcon, boolean isSelected, boolean hasFocus) {
     Component oldComponent = createComponent(isSelected);
     if (oldComponent != null) {
       return oldComponent;
@@ -48,20 +53,37 @@ public class RunAnythingItemBase extends RunAnythingItem {
     SimpleColoredComponent textComponent = new SimpleColoredComponent();
     SpeedSearchUtil.appendColoredFragmentForMatcher(StringUtil.notNullize(getCommand()),
                                                     textComponent,
-                                                    SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                                                    REGULAR_ATTRIBUTES,
                                                     RunAnythingGroup.RUN_ANYTHING_MATCHER_BUILDER.fun(pattern).build(),
                                                     background,
                                                     isSelected);
-    textComponent.appendTextPadding(20);
-    component.add(textComponent, BorderLayout.WEST);
-    setupIcon(textComponent, myIcon);
+    component.add(BorderLayout.WEST, textComponent);
+
+    Icon icon = myIcon;
+    if (groupIcon == myIcon) {
+      icon = EmptyIcon.ICON_16;
+    }
+
+    textComponent.setIcon(icon);
+    addDescription(component, isSelected);
 
     return component;
   }
 
+  private void addDescription(@NotNull JPanel panel, boolean isSelected) {
+    String description = getDescription();
+    if (description == null) {
+      return;
+    }
+
+    SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
+    descriptionComponent.append(description, getDescriptionAttributes(isSelected));
+    descriptionComponent.setTextAlign(SwingConstants.RIGHT);
+    panel.add(descriptionComponent, BorderLayout.CENTER);
+  }
+
   public void setupIcon(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
     component.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
-    component.setIpad(JBUI.insets(0, 10, 0, 0));
   }
 
   @Override
@@ -89,5 +111,10 @@ public class RunAnythingItemBase extends RunAnythingItem {
       component.append(StringUtil.shortenTextWithEllipsis(description, 40, 0), smallAttributes);
       component.appendTextPadding(660, SwingConstants.RIGHT);
     }
+  }
+
+  @NotNull
+  private static SimpleTextAttributes getDescriptionAttributes(boolean isSelected) {
+    return new SimpleTextAttributes(STYLE_PLAIN, isSelected ? getListSelectionForeground(true) : UIUtil.getInactiveTextColor());
   }
 }

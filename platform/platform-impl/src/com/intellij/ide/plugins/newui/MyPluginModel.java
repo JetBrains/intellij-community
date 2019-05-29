@@ -5,11 +5,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -53,6 +56,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private StatusBarEx myStatusBar;
 
   private PluginUpdatesService myPluginUpdatesService;
+
+  private Runnable myInvalidFixCallback;
 
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
@@ -156,7 +161,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     List<PluginNode> pluginsToInstall = ContainerUtil.newArrayList(pluginNode);
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
-    needRestart = true;
 
     installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, updateDescriptor));
   }
@@ -303,6 +307,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     info.indicator.cancel();
 
+    if (success) {
+      needRestart = true;
+    }
     if (!success && showErrors) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
@@ -360,8 +367,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private void appendDependsAfterInstall() {
+    if (myDownloaded == null || myDownloaded.ui == null) {
+      return;
+    }
+
     for (IdeaPluginDescriptor descriptor : InstalledPluginsState.getInstance().getInstalledPlugins()) {
-      if (myDownloaded != null && myDownloaded.ui != null && myDownloaded.ui.findComponent(descriptor) != null) {
+      if (myDownloaded.ui.findComponent(descriptor) != null) {
         continue;
       }
 
@@ -434,7 +445,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  public static List<String> getVendors(@NotNull List<IdeaPluginDescriptor> descriptors) {
+  public static List<String> getVendors(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
     Map<String, Integer> vendors = new HashMap<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -532,7 +543,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (!requiredPlugins.isEmpty()) {
       enablePlugins(requiredPlugins);
+
+      if (myInvalidFixCallback != null) {
+        ApplicationManager.getApplication().invokeLater(myInvalidFixCallback, ModalityState.any());
+      }
     }
+  }
+
+  public void setInvalidFixCallback(@Nullable Runnable invalidFixCallback) {
+    myInvalidFixCallback = invalidFixCallback;
   }
 
   private void updateAfterEnableDisable() {
@@ -604,7 +623,64 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
   }
 
+  @Nullable
+  public static IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+    if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
+      for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+        if (descriptor instanceof IdeaPluginDescriptorImpl) {
+          if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
+            return descriptor;
+          }
+        }
+      }
+    }
+    return plugin;
+  }
+
+  @Override
+  public boolean hasProblematicDependencies(PluginId pluginId) {
+    Set<PluginId> ids = getDependentToRequiredListMap().get(pluginId);
+    if (ContainerUtil.isEmpty(ids)) {
+      return false;
+    }
+
+    for (PluginId id : ids) {
+      IdeaPluginDescriptor plugin = findPlugin(id);
+      if (plugin != null && !isEnabled(plugin)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public boolean hasErrors(@NotNull IdeaPluginDescriptor plugin) {
     return PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(plugin.getPluginId());
+  }
+
+  @NotNull
+  public String getErrorMessage(@NotNull PluginDescriptor pluginDescriptor, @NotNull Ref<? super String> enableAction) {
+    String message;
+
+    Set<PluginId> requiredPlugins = getRequiredPlugins(pluginDescriptor.getPluginId());
+    if (ContainerUtil.isEmpty(requiredPlugins)) {
+      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
+    }
+    else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
+      message = "The plugin requires IntelliJ IDEA Ultimate.";
+    }
+    else {
+      String deps = StringUtil.join(requiredPlugins, id -> {
+        IdeaPluginDescriptor plugin = findPlugin(id);
+        return StringUtil.wrapWithDoubleQuote(plugin != null ? plugin.getName() : id.getIdString());
+      }, ", ");
+
+      int size = requiredPlugins.size();
+      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
+      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size));
+    }
+
+    return message;
   }
 }

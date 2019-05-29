@@ -32,7 +32,6 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import com.jetbrains.rd.util.lifetime.Lifetime;
-import com.jetbrains.rd.util.reactive.PropertyCombinatorsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,6 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.rd.RdIdeaKt.childAtMouse;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
 
@@ -128,8 +126,6 @@ public class JBTabsImpl extends JComponent
   final Set<TabInfo> myAttractions = new HashSet<>();
   private final Animator myAnimator;
   private List<TabInfo> myAllTabs;
-  private boolean myPaintBlocked;
-  private BufferedImage myImage;
   private IdeFocusManager myFocusManager;
   private static final boolean myAdjustBorders = true;
 
@@ -155,7 +151,7 @@ public class JBTabsImpl extends JComponent
 
   private JBTabsPosition myPosition = JBTabsPosition.top;
 
-  private final JBTabsBackgroundAndBorder myBorder = createTabBorder();
+  private final JBTabsBorder myBorder = createTabBorder();
   private final BaseNavigationAction myNextAction;
   private final BaseNavigationAction myPrevAction;
 
@@ -182,11 +178,11 @@ public class JBTabsImpl extends JComponent
   private boolean myMouseInsideTabsArea = false;
 
   protected JBTabPainter createTabPainter() {
-    return JBTabPainter.Companion.getDEFAULT();
+    return JBTabPainter.getDEFAULT();
   }
 
-  protected JBTabsBackgroundAndBorder createTabBorder() {
-    return new JBDefaultTabsBackgroundAndBorder(this);
+  protected JBTabsBorder createTabBorder() {
+    return new JBDefaultTabsBorder(this);
   }
 
   public JBTabPainter getTabPainter() {
@@ -233,15 +229,10 @@ public class JBTabsImpl extends JComponent
     mySingleRowLayout = createSingleRowLayout();
     myLayout = mySingleRowLayout;
 
-    PropertyCombinatorsKt.map(childAtMouse(this), it -> it instanceof TabLabel ? it : null).advise(lifetime, label -> {
-      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
-
-      tabLabelAtMouse = (TabLabel)label;
-
-      if (tabLabelAtMouse != null) tabLabelAtMouse.repaint();
-
-      return null;
-    });
+    if(JBTabsFactory.getUseNewTabs()) {
+      OnePixelDivider divider = mySplitter.getDivider();
+      divider.setOpaque(false);
+    }
 
     myPopupListener = new PopupMenuListener() {
       @Override
@@ -273,7 +264,7 @@ public class JBTabsImpl extends JComponent
       int units = event.getUnitsToScroll();
 
       // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
-      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
+      if (SystemInfoRt.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
 
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {
@@ -399,13 +390,12 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    myImage = null;
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       entry.getKey().revalidate();
     }
-    boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-    boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
-    if (oldHideTabsIfNeed != newHideTabsIfNeed) {
+    boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
+    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
+    if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
       updateRowLayout();
     }
   }
@@ -440,6 +430,26 @@ public class JBTabsImpl extends JComponent
     }
 
     return this;
+  }
+
+  public void setHovered(TabLabel label) {
+    TabLabel old = tabLabelAtMouse;
+    tabLabelAtMouse = label;
+
+    if(old != null) {
+      old.repaint();
+    }
+
+    if(tabLabelAtMouse != null) {
+      tabLabelAtMouse.repaint();
+    }
+  }
+
+  public void unHover(TabLabel label) {
+    if(tabLabelAtMouse == label) {
+      tabLabelAtMouse = null;
+      label.repaint();
+    }
   }
 
   protected boolean isHoveredTab(TabLabel label) {
@@ -496,7 +506,6 @@ public class JBTabsImpl extends JComponent
     myAttractions.clear();
     myVisibleInfos.clear();
     myUiDecorator = null;
-    myImage = null;
     myActivePopup = null;
     myInfo2Label.clear();
     myInfo2Page.clear();
@@ -714,7 +723,7 @@ public class JBTabsImpl extends JComponent
     }
 
     if (changed.get()) {
-      updateTabs();
+      revalidateAndRepaint();
     }
   }
 
@@ -1259,20 +1268,18 @@ public class JBTabsImpl extends JComponent
 
   private void updateIcon(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
-    updateTabs();
+    revalidateAndRepaint();
   }
 
   private void updateColor(final TabInfo tabInfo) {
-    updateTabs();
+    revalidateAndRepaint();
   }
 
-  public void updateTabs() {
-    revalidate();
-    repaint();
+  public void revalidateAndRepaint() {
+    revalidateAndRepaint(true);
   }
 
   void revalidateAndRepaint(final boolean layoutNow) {
-
     if (myVisibleInfos.isEmpty()) {
       setOpaque(false);
       final Component nonOpaque = UIUtil.findUltimateParent(this);
@@ -1291,7 +1298,6 @@ public class JBTabsImpl extends JComponent
     else {
       revalidate();
     }
-
     repaint();
   }
 
@@ -1319,7 +1325,7 @@ public class JBTabsImpl extends JComponent
     label.setText(tabInfo.getColoredText());
     label.setToolTipText(tabInfo.getTooltipText());
 
-    updateTabs();
+    revalidateAndRepaint();
   }
 
   private void updateSideComponent(final TabInfo tabInfo) {
@@ -1472,29 +1478,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void setPaintBlocked(boolean blocked, final boolean takeSnapshot) {
-    if (blocked && !myPaintBlocked) {
-      if (takeSnapshot) {
-        if (getWidth() > 0 && getHeight() > 0) {
-          myImage = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-          final Graphics2D g = myImage.createGraphics();
-          super.paint(g);
-          g.dispose();
-        }
-      }
-    }
-
-    myPaintBlocked = blocked;
-
-    if (!myPaintBlocked) {
-      if (myImage != null) {
-        myImage.flush();
-      }
-
-      myImage = null;
-      repaint();
-    }
   }
-
 
   private void addToDeferredRemove(final Component c) {
     if (!myDeferredToRemove.containsKey(c)) {
@@ -1731,7 +1715,7 @@ public class JBTabsImpl extends JComponent
   }
 
   /**
-   * @deprecated You should implement {@link JBTabsBackgroundAndBorder} interface
+   * @deprecated You should implement {@link JBTabsBorder} interface
    */
   @Deprecated
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
@@ -1746,11 +1730,14 @@ public class JBTabsImpl extends JComponent
         UISettings.setupAntialiasing(g);
         UIUtil.drawCenteredString((Graphics2D)g, getBounds(), myEmptyText);
       }
+      return;
     }
-    else {
-      if (!isStealthModeEffective() && !isHideTabs()) {
-        myLastPaintedSelection = getSelectedInfo();
-      }
+
+    myTabPainter.fillBackground((Graphics2D)g, new Rectangle(0, 0, getWidth(), getHeight()));
+    myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+
+    if (!isStealthModeEffective() && !isHideTabs()) {
+      myLastPaintedSelection = getSelectedInfo();
     }
   }
 
@@ -1791,23 +1778,6 @@ public class JBTabsImpl extends JComponent
   @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-  }
-
-  @Override
-  public void paint(final Graphics g) {
-    Rectangle clip = g.getClipBounds();
-    if (clip == null) {
-      return;
-    }
-
-    if (myPaintBlocked) {
-      if (myImage != null) {
-        g.drawImage(myImage, 0, 0, getWidth(), getHeight(), null);
-      }
-      return;
-    }
-
-    super.paint(g);
   }
 
   @Override
@@ -2682,7 +2652,7 @@ public class JBTabsImpl extends JComponent
     @Override
     @NotNull
     public UiDecoration getDecoration() {
-      return new UiDecoration(null, new Insets(0, 4, 0, 5));
+        return new UiDecoration(null, new JBInsets(6, 12, 8, 12));
     }
   }
 
@@ -2801,11 +2771,6 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  public void setUseBufferedPaint(boolean useBufferedPaint) {
-    myUseBufferedPaint = useBufferedPaint;
-    revalidate();
-    repaint();
-  }
 
   @Override
   public void resetDropOver(TabInfo tabInfo) {

@@ -164,7 +164,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   /**
    * @return call matcher with additional check before actual call matching
    */
-  default CallMatcher withContextFilter(@NotNull Predicate<PsiElement> filter) {
+  default CallMatcher withContextFilter(@NotNull Predicate<? super PsiElement> filter) {
     return new CallMatcher() {
       @Override
       public Stream<String> names() {

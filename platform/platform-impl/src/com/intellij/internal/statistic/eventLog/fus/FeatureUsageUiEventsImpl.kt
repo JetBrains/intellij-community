@@ -4,11 +4,9 @@ package com.intellij.internal.statistic.eventLog.fus
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.ui.DialogWrapper
 
 private const val DIALOGS = "ui.dialogs"
-private const val DIALOGS_DEFAULT = "third.party"
 
 class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
   private val SELECT_CONFIGURABLE_DATA = FeatureUsageData().addData("type", "select")
@@ -31,35 +29,18 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
 
   override fun logShowDialog(name: String, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = SHOW_DIALOG_DATA.copy()
-      val report = toReport(context, name, DIALOGS_DEFAULT, data)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, data)
+      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, name, SHOW_DIALOG_DATA)
     }
   }
 
   override fun logCloseDialog(name: String, exitCode: Int, context: Class<*>) {
     if (FeatureUsageLogger.isEnabled()) {
-      val data = getDataForCloseDialog(exitCode).copy()
-      val report = toReport(context, name, DIALOGS_DEFAULT, data)
-      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, report, data)
+      val data = when (exitCode) {
+        DialogWrapper.OK_EXIT_CODE -> CLOSE_OK_DIALOG_DATA
+        DialogWrapper.CANCEL_EXIT_CODE -> CLOSE_CANCEL_DIALOG_DATA
+        else -> CLOSE_CUSTOM_DIALOG_DATA
+      }
+      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, name, data)
     }
-  }
-
-  private fun getDataForCloseDialog(exitCode: Int): FeatureUsageData {
-    if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-      return CLOSE_OK_DIALOG_DATA
-    }
-    else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      return CLOSE_CANCEL_DIALOG_DATA
-    }
-    else {
-      return CLOSE_CUSTOM_DIALOG_DATA
-    }
-  }
-
-  private fun toReport(context: Class<*>, name: String, defaultValue: String, data: FeatureUsageData): String {
-    val info = getPluginInfo(context)
-    data.addPluginInfo(info)
-    return if (info.isDevelopedByJetBrains()) name else defaultValue
   }
 }

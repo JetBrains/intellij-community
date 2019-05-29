@@ -15,12 +15,13 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
@@ -46,7 +47,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
-  private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
+  private static final String VM_EXE_NAME = SystemInfoRt.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
   private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
@@ -199,7 +200,7 @@ public class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public String adjustSelectedSdkHome(@NotNull String homePath) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       File home = new File(homePath, "/Home");
       if (home.exists()) return home.getPath();
 
@@ -213,6 +214,14 @@ public class JavaSdkImpl extends JavaSdk {
   @Override
   public boolean isValidSdkHome(String path) {
     return JdkUtil.checkForJdk(path);
+  }
+
+  @Override
+  public String getInvalidHomeMessage(String path) {
+    if (JdkUtil.checkForJre(path)) {
+      return "The selected directory points to a JRE, not a JDK.\nYou can download a JDK from " + getDownloadSdkUrl();
+    }
+    return super.getInvalidHomeMessage(path);
   }
 
   @NotNull
@@ -270,12 +279,13 @@ public class JavaSdkImpl extends JavaSdk {
     VirtualFile root = internalJdkAnnotationsPath(pathsChecked);
 
     if (root == null) {
-      StringBuilder msg = new StringBuilder("Paths checked:\n");
+      String msg = "Paths checked:\n";
       for (String p : pathsChecked) {
         File f = new File(p);
-        msg.append(p).append("; ").append(f.exists()).append("; ").append(Arrays.toString(f.getParentFile().list())).append('\n');
+        //noinspection StringConcatenationInLoop yeah I know, it's more readable this way
+        msg += p + "; exists: " + f.exists() + "; siblings: " + Arrays.toString(f.getParentFile().list()) + "\n";
       }
-      LOG.error("JDK annotations not found", msg.toString());
+      LOG.error("JDK annotations not found", msg);
       return false;
     }
 
@@ -297,6 +307,14 @@ public class JavaSdkImpl extends JavaSdk {
       root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath + "!/");
       pathsChecked.add(annotationsJarPath);
     }
+    else {
+      // when run against IDEA plugin JDK, something like this comes up: "$IDEA_HOME$/out/classes/production/intellij.java.impl"
+      File projectRoot = JBIterable.generate(javaPluginClassesRoot, File::getParentFile).get(4);
+      File root1 = new File(projectRoot, "community/java/jdkAnnotations");
+      File root2 = new File(projectRoot, "java/jdkAnnotations");
+      root = root1.exists() && root1.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root1) :
+      root2.exists() && root2.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root2) : null;
+    }
     if (root == null) {
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
       root = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -313,8 +331,8 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public final String getVersionString(String sdkHome) {
-    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, k -> {
-      JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(k);
+    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, homePath -> {
+      JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(homePath);
       return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
     });
   }
@@ -514,7 +532,7 @@ public class JavaSdkImpl extends JavaSdk {
     if (apiDocs != null) {
       sdkModificator.addRoot(apiDocs, docRootType);
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");
       if (commonDocs == null) commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
       if (commonDocs == null) commonDocs = findInJar(new File(jdkHome, "docs.jar"), "docs/api");

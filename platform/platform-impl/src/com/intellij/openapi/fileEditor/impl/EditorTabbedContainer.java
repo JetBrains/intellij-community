@@ -15,6 +15,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
@@ -24,7 +26,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +41,10 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.newImpl.*;
+import com.intellij.ui.tabs.newImpl.JBEditorTabPainter;
+import com.intellij.ui.tabs.newImpl.JBEditorTabsBorder;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
+import com.intellij.ui.tabs.newImpl.SingleHeightTabs;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
@@ -352,10 +357,6 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  void setPaintBlocked(boolean blocked) {
-    myTabs.getPresentation().setPaintBlocked(blocked, true);
-  }
-
   private static class MyQueryable implements Queryable {
     private final TabInfo myTab;
 
@@ -524,7 +525,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void mouseClicked(MouseEvent e) {
-      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || !SystemInfo.isMac && e.isControlDown())) {
+      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || !SystemInfoRt.isMac && e.isControlDown())) {
         final TabInfo info = myTabs.findInfo(e);
         Object o = info == null ? null : info.getObject();
         if (o instanceof VirtualFile) {
@@ -680,49 +681,42 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private class EditorTabs extends JBEditorTabs {
+  private class EditorTabs extends SingleHeightTabs {
     private EditorTabs(Project project) {
       super(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), EditorTabbedContainer.this);
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));
+
+      Disposable disp = Disposer.newDisposable();
+      Disposer.register(project, disp);
+      Disposer.register(EditorTabbedContainer.this, disp);
+
+      project.getMessageBus().connect(disp).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+        @Override
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          updateActive();
+        }
+
+        @Override
+        public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          updateActive();
+        }
+
+        @Override
+        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+          updateActive();
+        }
+      });
     }
-
-/*      @Override
-      protected boolean isActiveTabs(TabInfo info) {
-        if (Utils.Companion.isFocusOwner(this)) return true;
-
-        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        if (editorManager == null) return false;
-
-        final EditorWindow window = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
-        VirtualFile file = window.getSelectedFile();
-        if(file == null) return false;
-
-        return file.equals(info.getObject()) && window.equals(myWindow);
-      }*/
 
     @Override
     protected JBEditorTabPainter createTabPainter() {
-      return JBTabPainter.Companion.getEDITOR();
+      return JBTabPainter.getEDITOR();
     }
 
     @Override
-    protected JBTabsBackgroundAndBorder createTabBorder() {
-      return new JBEditorTabsBackgroundAndBorder(this);
-    }
-
-    @Override
-    protected TabLabel createTabLabel(TabInfo info) {
-      return new TabLabel(this, info) {
-        @Override
-        public Dimension getPreferredSize() {
-          Dimension size = super.getPreferredSize();
-
-          Insets insets = getLayoutInsets();
-
-          return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()) - insets.top - insets.bottom);
-        }
-      };
+    protected JBTabsBorder createTabBorder() {
+      return new JBEditorTabsBorder(this);
     }
 
     private boolean active = false;
@@ -737,17 +731,26 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     private IdeEventQueue.EventDispatcher createFocusDispatcher() {
       return e -> {
         if (e instanceof FocusEvent) {
-          SwingUtilities.invokeLater(() -> {
-            boolean newActive = UIUtil.isFocusAncestor(this);
-
-            if(newActive != active) {
-              active = newActive;
-              updateTabs();
-            }
-          });
+          updateActive();
         }
         return false;
       };
+    }
+
+    private void updateActive() {
+      checkActive();
+      SwingUtilities.invokeLater(() -> {
+        checkActive();
+      });
+    }
+
+    private void checkActive() {
+      boolean newActive = UIUtil.isFocusAncestor(this);
+
+      if(newActive != active) {
+        active = newActive;
+        revalidateAndRepaint();
+      }
     }
 
     @Override

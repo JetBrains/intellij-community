@@ -84,8 +84,8 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     }.map { ignoredBean ->
       when (ignoredBean.type) {
         MASK -> ignoredBean.mask!!
-        UNDER_DIR -> "/${FileUtil.getRelativePath(ignoreFileRoot.path, ignoredBean.path!!, '/')!!}"
-        FILE -> "/${FileUtil.getRelativePath(ignoreFileRoot.path, ignoredBean.path!!, '/')!!}"
+        UNDER_DIR -> buildIgnoreEntryContent(ignoreFileRoot, ignoredBean)
+        FILE -> buildIgnoreEntryContent(ignoreFileRoot, ignoredBean)
       }
     }
   }
@@ -133,6 +133,9 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
 
   override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider) =
     prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
+
+  override fun buildIgnoreEntryContent(ignoreFileRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
+    "/${FileUtil.getRelativePath(ignoreFileRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""}"
 
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"

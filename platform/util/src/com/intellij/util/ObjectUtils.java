@@ -109,7 +109,7 @@ public class ObjectUtils {
   }
 
   @Nullable
-  public static <T> T coalesce(@Nullable Iterable<T> o) {
+  public static <T> T coalesce(@Nullable Iterable<? extends T> o) {
     if (o == null) return null;
     for (T t : o) {
       if (t != null) return t;

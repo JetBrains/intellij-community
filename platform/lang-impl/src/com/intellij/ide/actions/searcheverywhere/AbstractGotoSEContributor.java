@@ -15,6 +15,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -23,7 +24,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
@@ -44,6 +44,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -372,7 +374,12 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
 
     @NotNull @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      JComponent c = IconWithTextAction.createCustomComponentImpl(this, presentation, place);
+      JComponent c = new ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        @Override
+        public int getMnemonic() {
+          return KeyEvent.getExtendedKeyCodeForChar(MNEMONIC);
+        }
+      };
       MnemonicHelper.registerMnemonicAction(c, MNEMONIC);
       return c;
     }
@@ -396,7 +403,23 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
       JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
       if (button == null || !button.isValid()) return;
       JList<ScopeDescriptor> fakeList = new JBList<>();
-      ListCellRenderer<ScopeDescriptor> renderer = ScopeChooserCombo.createDefaultRenderer();
+      ListCellRenderer<ScopeDescriptor> renderer = new ListCellRenderer<ScopeDescriptor>() {
+        final ListCellRenderer<ScopeDescriptor> delegate = ScopeChooserCombo.createDefaultRenderer();
+        @Override
+        public Component getListCellRendererComponent(JList<? extends ScopeDescriptor> list,
+                                                      ScopeDescriptor value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+          // copied from DarculaJBPopupComboPopup.customizeListRendererComponent()
+          Component component = delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          if (component instanceof JComponent &&
+              !(component instanceof JSeparator || component instanceof TitledSeparator)) {
+            ((JComponent)component).setBorder(JBUI.Borders.empty(2, 8));
+          }
+          return component;
+        }
+      };
       List<ScopeDescriptor> items = new ArrayList<>();
       ScopeChooserCombo.processScopes(e.getRequiredData(CommonDataKeys.PROJECT),
                                       e.getDataContext(),
@@ -437,7 +460,8 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
       ScopeDescriptor selection = getSelectedScope();
       step.setDefaultOptionIndex(ContainerUtil.indexOf(items, o ->
         Comparing.equal(o.getDisplayName(), selection.getDisplayName())));
-      ListPopupImpl popup = new ListPopupImpl(step, 10);
+      ListPopupImpl popup = new ListPopupImpl(e.getProject(), step);
+      popup.setMaxRowCount(10);
       //noinspection unchecked
       popup.getList().setCellRenderer(renderer);
       popup.showUnderneathOf(button);

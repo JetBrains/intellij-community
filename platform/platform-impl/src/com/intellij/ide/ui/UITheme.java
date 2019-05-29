@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -25,9 +25,10 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.IconUIResource;
 import java.awt.*;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ public class UITheme {
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
   private Map<String, Object> background;
+  private Map<String, Object> colors;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
   private SVGLoader.SvgColorPatcher colorPatcher;
@@ -71,13 +73,18 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IOException {
+  @NotNull
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
     return loadFromJson(stream, themeId, provider, s -> s);
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider,
-                                     @NotNull Function<String, String> iconsMapper) throws IOException {
-    UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
+  @NotNull
+  public static UITheme loadFromJson(@NotNull InputStream stream,
+                                     @NotNull String themeId,
+                                     @Nullable ClassLoader provider,
+                                     @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
+    UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
+
     theme.id = themeId;
     if (provider != null) {
       theme.providerClassLoader = provider;
@@ -251,8 +258,24 @@ public class UITheme {
   public void applyProperties(UIDefaults defaults) {
     if (ui == null) return;
 
+    loadColorPalette(defaults);
+
     for (Map.Entry<String, Object> entry : ui.entrySet()) {
-      apply(entry.getKey(), entry.getValue(), defaults);
+      apply(this, entry.getKey(), entry.getValue(), defaults);
+    }
+  }
+
+  private void loadColorPalette(UIDefaults defaults) {
+    if (colors != null) {
+      for (Map.Entry<String, Object> entry : colors.entrySet()) {
+        Object value = entry.getValue();
+        if (value instanceof String) {
+          Color color = parseColor((String)value);
+          if (color != null) {
+            defaults.put("ColorPalette." + entry.getKey(), color);
+          }
+        }
+      }
     }
   }
 
@@ -269,14 +292,22 @@ public class UITheme {
     return providerClassLoader;
   }
 
-  private static void apply(String key, Object value, UIDefaults defaults) {
-    if (value instanceof HashMap) {
+  private static void apply(UITheme theme, String key, Object value, UIDefaults defaults) {
+    if (value instanceof Map) {
       //noinspection unchecked
-      for (Map.Entry<String, Object> o : ((HashMap<String, Object>)value).entrySet()) {
-        apply(key + "." + o.getKey(), o.getValue(), defaults);
+      for (Map.Entry<String, Object> o : ((Map<String, Object>)value).entrySet()) {
+        apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
       }
     } else {
-      value = parseValue(key, value.toString());
+      String valueStr = value.toString();
+      if (theme.colors != null && theme.colors.containsKey(valueStr)) {
+        Color color = parseColor(String.valueOf(theme.colors.get(valueStr)));
+        if (color != null) {
+          defaults.put(key, color);
+          return;
+        }
+      }
+      value = parseValue(key, valueStr);
       if (key.startsWith("*.")) {
         String tail = key.substring(1);
         Object finalValue = value;
@@ -340,16 +371,14 @@ public class UITheme {
     } else if (key.endsWith("grayFilter")) {
       return parseGrayFilter(value);
     } else {
-      final Color color = parseColor(value);
-      final Integer invVal = getInteger(value);
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
-      if (color != null) {
-        return  new ColorUIResource(color);
-      } else if (invVal != null) {
-        return invVal;
-      } else if (icon != null) {
-        return new IconUIResource(icon);
-      }
+      if (icon != null) return new IconUIResource(icon);
+
+      Color color = parseColor(value);
+      if (color != null) return new ColorUIResource(color);
+
+      Integer invVal = getInteger(value);
+      if (invVal != null) return invVal;
     }
     return value;
   }
@@ -484,5 +513,13 @@ public class UITheme {
 
   public void setBackground(Map<String, Object> background) {
     this.background = background;
+  }
+
+  public Map<String, Object> getColors() {
+    return colors;
+  }
+
+  public void setColors(Map<String, Object> colors) {
+    this.colors = colors;
   }
 }

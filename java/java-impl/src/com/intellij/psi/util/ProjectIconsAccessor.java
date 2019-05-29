@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -24,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Resolve small icons located in project for use in UI (e.g. gutter preview icon, lookups).
@@ -129,7 +129,7 @@ public class ProjectIconsAccessor {
   }
 
   private static boolean isIconFileExtension(String extension) {
-    return extension != null && ICON_EXTENSIONS.contains(extension.toLowerCase(Locale.US));
+    return extension != null && ICON_EXTENSIONS.contains(StringUtil.toLowerCase(extension));
   }
 
   private static boolean hasProperSize(Icon icon) {

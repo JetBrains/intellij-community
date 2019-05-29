@@ -14,7 +14,7 @@ import com.intellij.openapi.fileChooser.actions.FileChooserAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,11 +78,11 @@ public class JdkPopupAction extends AnAction {
   }
 
   private static boolean isEnabledInCurrentOS() {
-    return SystemInfo.isWindows;
+    return SystemInfoRt.isWindows;
   }
 
   private static void showPopupMenu(AnActionEvent e,
-                             final ArrayList<Pair<File, String>> jdkLocations,
+                             final ArrayList<? extends Pair<File, String>> jdkLocations,
                              boolean showInMiddle,
                              JComponent component) {
     ActionPopupMenu menu =

@@ -10,7 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -247,7 +247,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
       initBooleanColumn(LOG_COLUMN);
 
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         initBooleanColumn(READ_ALOUD_COLUMN);
       }
 
@@ -406,7 +406,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     @Override
     public int getColumnCount() {
-      return SystemInfo.isMac ? 4 : 3;
+      return SystemInfoRt.isMac ? 4 : 3;
     }
 
     @Override

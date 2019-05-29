@@ -51,10 +51,10 @@ public class SwitchStatementEvaluator implements Evaluator {
   }
 
   static class SwitchCaseEvaluator implements Evaluator {
-    private final List<Evaluator> myEvaluators;
+    private final List<? extends Evaluator> myEvaluators;
     private final boolean myDefaultCase;
 
-    SwitchCaseEvaluator(List<Evaluator> evaluators, boolean defaultCase) {
+    SwitchCaseEvaluator(List<? extends Evaluator> evaluators, boolean defaultCase) {
       myEvaluators = evaluators;
       myDefaultCase = defaultCase;
     }

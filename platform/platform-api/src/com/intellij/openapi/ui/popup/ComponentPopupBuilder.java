@@ -53,7 +53,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setFocusable(boolean focusable);
 
   @NotNull
-  ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition);
+  ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<? super Project> condition);
 
   /**
    * @see com.intellij.openapi.util.DimensionService
@@ -138,7 +138,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setCommandButton(@NotNull ActiveComponent commandButton);
 
   @NotNull
-  ComponentPopupBuilder setCouldPin(@Nullable Processor<JBPopup> callback);
+  ComponentPopupBuilder setCouldPin(@Nullable Processor<? super JBPopup> callback);
 
   @NotNull
   ComponentPopupBuilder setKeyboardActions(@NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions);
@@ -153,9 +153,10 @@ public interface ComponentPopupBuilder {
 
   /**
    * Allows to define custom strategy for processing {@link JBPopup#dispatchKeyEvent(KeyEvent)}.
+   * @param handler
    */
   @NotNull
-  ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler);
+  ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<? super KeyEvent> handler);
 
   @NotNull
   ComponentPopupBuilder setShowBorder(boolean show);

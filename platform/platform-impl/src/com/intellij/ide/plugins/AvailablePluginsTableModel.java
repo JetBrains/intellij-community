@@ -99,7 +99,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   }
 
   @Override
-  public void updatePluginsList(List<IdeaPluginDescriptor> list) {
+  public void updatePluginsList(List<? extends IdeaPluginDescriptor> list) {
     view.clear();
     myAvailableCategories.clear();
     filtered.clear();

@@ -574,11 +574,14 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (PsiUtil.canBeOverridden(method)) return;
 
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
-    if (info == null || info.getNullability() != Nullability.NULLABLE || !info.getAnnotation().isPhysical()) return;
+    if (info == null || info.getNullability() != Nullability.NULLABLE) return;
 
-    PsiJavaCodeReferenceElement annoName = info.getAnnotation().getNameReferenceElement();
+    PsiAnnotation annotation = info.getAnnotation();
+    if (!annotation.isPhysical() || alsoAppliesToInternalSubType(annotation, method)) return;
+
+    PsiJavaCodeReferenceElement annoName = annotation.getNameReferenceElement();
     assert annoName != null;
-    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(info.getAnnotation()) +
+    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(annotation) +
                  " method '" + method.getName() + "' always returns a non-null value";
     LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method)};
     if (holder.isOnTheFly()) {
@@ -591,10 +594,15 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     holder.registerProblem(annoName, msg, fixes);
   }
 
-  private static void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
+  private static boolean alsoAppliesToInternalSubType(PsiAnnotation annotation, PsiMethod method) {
+    return AnnotationTargetUtil.isTypeAnnotation(annotation) && method.getReturnType() instanceof PsiArrayType;
+  }
+
+  private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(call -> {
       String message = getContractMessage(JavaMethodContractUtil.getMethodCallContracts(call));
-      reporter.registerProblem(getElementToHighlight(call), message);
+      LocalQuickFix causeFix = reporter.isOnTheFly() ? createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType()) : null;
+      reporter.registerProblem(getElementToHighlight(call), message, causeFix);
     });
   }
 
@@ -689,10 +697,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
+      LocalQuickFix fix = null;
       if (reporter.isOnTheFly()) {
-        reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()),
-                                 createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
+        fix = createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType());
       }
+      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fix);
     }
   }
 

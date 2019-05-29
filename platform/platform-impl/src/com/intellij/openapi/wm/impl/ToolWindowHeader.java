@@ -15,11 +15,12 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.JBTabsFactory;
-import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.ui.tabs.newImpl.TabsHeightController;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import kotlin.Unit;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +64,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
       add(myWestPanel, "grow");
       myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
+
+      TabsHeightController.registerActive(this, this);
     }
     else {
       setLayout(new BorderLayout());
@@ -138,7 +141,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     JComponent component = myToolbar.getComponent();
 
     if (JBTabsFactory.getUseNewTabs()) {
-      component.setBorder(JBUI.Borders.empty());
+      component.setBorder(JBUI.Borders.empty(2, 0));
       component.setOpaque(false);
       add(component);
     }
@@ -184,10 +187,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     setOpaque(true);
     if (JBTabsFactory.getUseNewTabs()) {
-      setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
+      setBorder(JBUI.Borders.empty(0));
     }
     else {
-      setBorder(JBUI.CurrentTheme.ToolWindow.tabHeaderBorder());
+      setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
     }
 
     new DoubleClickListener() {
@@ -348,21 +351,23 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract void hideToolWindow();
 
   @Override
-  public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
-    if (JBTabsFactory.getUseNewTabs()) {
-      return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
-    }
-    return size;
+  public void addNotify() {
+    super.addNotify();
+    TabsHeightController.registerAdjective(this, height -> {
+      updateHeight(height);
+      return Unit.INSTANCE;
+    }, this);
   }
 
-  @Override
-  public Dimension getMinimumSize() {
+  private void updateHeight(int value) {
     Dimension size = super.getMinimumSize();
-    if (JBTabsFactory.getUseNewTabs()) {
-      return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
+    Insets insets = getInsets();
+    value = value - insets.top - insets.bottom;
+
+    if(size.height != value) {
+      Dimension newSize = new Dimension(size.width, value);
+      setMinimumSize(newSize);
     }
-    return size;
   }
 
   private class ShowOptionsAction extends DumbAwareAction {

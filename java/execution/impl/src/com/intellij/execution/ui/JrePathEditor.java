@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.BrowseFolderRunnable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -67,17 +67,19 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     final Set<String> jrePaths = new HashSet<>();
     for (JreProvider provider : JreProvider.EP_NAME.getExtensionList()) {
-      String path = provider.getJrePath();
-      if (!StringUtil.isEmpty(path)) {
-        jrePaths.add(path);
-        myComboBoxModel.add(new CustomJreItem(path));
+      if (provider.isAvailable()) {
+        String path = provider.getJrePath();
+        if (!StringUtil.isEmpty(path)) {
+          jrePaths.add(path);
+          myComboBoxModel.add(new CustomJreItem(path, provider.getPresentableName()));
+        }
       }
     }
 
     for (Sdk jdk : allJDKs) {
       String homePath = jdk.getHomePath();
 
-      if (!SystemInfo.isMac) {
+      if (!SystemInfoRt.isMac) {
         final File jre = new File(jdk.getHomePath(), "jre");
         if (jre.isDirectory()) {
           homePath = jre.getPath();
@@ -247,9 +249,15 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
   static class CustomJreItem implements JreComboBoxItem {
     private final String myPath;
+    private final String myName;
 
     CustomJreItem(String path) {
+      this(path, null);
+    }
+
+    CustomJreItem(String path, String name) {
       myPath = path;
+      myName = name;
     }
 
     @Override
@@ -260,7 +268,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     @Override
     public String getPresentableText() {
-      return FileUtil.toSystemDependentName(myPath);
+      return myName != null && !myPath.equals(myName) ? myName : FileUtil.toSystemDependentName(myPath);
     }
 
     @Override

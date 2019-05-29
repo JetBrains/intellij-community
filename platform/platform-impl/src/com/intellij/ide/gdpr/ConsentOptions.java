@@ -38,61 +38,64 @@ public final class ConsentOptions {
   }
 
   private static final class InstanceHolder {
-    static final ConsentOptions ourInstance = new ConsentOptions(new IOBackend() {
-      private final File DEFAULT_CONSENTS_FILE = new File(Locations.getDataRoot(), ApplicationNamesInfo.getInstance().getLowercaseProductName() + "/consentOptions/cached");
-      private final File CONFIRMED_CONSENTS_FILE = new File(Locations.getDataRoot(), "/consentOptions/accepted");
-      private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
+    static final ConsentOptions ourInstance;
+    static {
+      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      ourInstance = new ConsentOptions(new IOBackend() {
+        private final File DEFAULT_CONSENTS_FILE = new File(Locations.getDataRoot(), ApplicationNamesInfo.getInstance().getLowercaseProductName() + "/consentOptions/cached");
+        private final File CONFIRMED_CONSENTS_FILE = new File(Locations.getDataRoot(), "/consentOptions/accepted");
+        private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
 
-      @Override
-      public void writeDefaultConsents(@NotNull String data) throws IOException {
-        FileUtil.writeToFile(DEFAULT_CONSENTS_FILE, data);
-      }
-
-      @Override
-      @NotNull
-      public String readDefaultConsents() throws IOException {
-        return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
-      }
-
-      @Override
-      @NotNull
-      public String readBundledConsents() {
-        return loadText(ConsentOptions.class.getResourceAsStream(BUNDLED_CONSENTS_PATH));
-      }
-
-      @Override
-      public void writeConfirmedConsents(@NotNull String data) throws IOException {
-        FileUtil.writeToFile(CONFIRMED_CONSENTS_FILE, data);
-      }
-
-      @Override
-      @NotNull
-      public String readConfirmedConsents() throws IOException {
-        return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
-      }
-
-      @NotNull
-      private String loadText(InputStream stream) {
-        if (stream != null) {
-          try (Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)),
-                                                     StandardCharsets.UTF_8)) {
-            return new String(FileUtil.adaptiveLoadText(reader));
-          }
-          catch (IOException e) {
-            LOG.info(e);
-          }
+        @Override
+        public void writeDefaultConsents(@NotNull String data) throws IOException {
+          FileUtil.writeToFile(DEFAULT_CONSENTS_FILE, data);
         }
-        return "";
-      }
-    });
+
+        @Override
+        @NotNull
+        public String readDefaultConsents() throws IOException {
+          return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
+        }
+
+        @Override
+        @NotNull
+        public String readBundledConsents() {
+          return loadText(ConsentOptions.class.getResourceAsStream(BUNDLED_CONSENTS_PATH));
+        }
+
+        @Override
+        public void writeConfirmedConsents(@NotNull String data) throws IOException {
+          FileUtil.writeToFile(CONFIRMED_CONSENTS_FILE, data);
+        }
+
+        @Override
+        @NotNull
+        public String readConfirmedConsents() throws IOException {
+          return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
+        }
+
+        @NotNull
+        private String loadText(InputStream stream) {
+          if (stream != null) {
+            try (Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)),
+                                                       StandardCharsets.UTF_8)) {
+              return new String(FileUtil.adaptiveLoadText(reader));
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+          }
+          return "";
+        }
+      }, appInfo.isEAP() && appInfo.isVendorJetBrains());
+    }
   }
 
   private final IOBackend myBackend;
 
-  ConsentOptions(IOBackend backend) {
+  ConsentOptions(IOBackend backend, final boolean isEap) {
     myBackend = backend;
-    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    myIsEAP = appInfo.isEAP() && appInfo.isVendorJetBrains();
+    myIsEAP = isEap;
   }
 
   public static ConsentOptions getInstance() {

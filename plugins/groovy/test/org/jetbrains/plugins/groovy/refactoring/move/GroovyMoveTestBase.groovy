@@ -32,9 +32,9 @@ abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
     String root = PathManager.homePath.replace(File.separatorChar, '/' as char) + basePath + getTestName(true)
 
     String rootBefore = "$root/before"
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.mockJdk17)
+    PsiTestUtil.removeAllRoots(module, IdeaTestUtil.mockJdk17)
     ArrayList<File> filesToDelete = new ArrayList<File>()
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, myModule, rootBefore, filesToDelete)
+    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, module, rootBefore, filesToDelete)
     def localFileSystem = LocalFileSystem.instance
     localFileSystem.refresh(false)
     if (!perform(rootDir, destination, names)) return

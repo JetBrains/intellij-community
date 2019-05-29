@@ -335,6 +335,7 @@ public class JsonSchemaObject {
       else myIfThenElse = ContainerUtil.concat(myIfThenElse, other.myIfThenElse);
     }
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
+    if (myLanguageInjection == null) myLanguageInjection = other.myLanguageInjection;
   }
 
   private static void mergeProperties(@NotNull JsonSchemaObject thisObject, @NotNull JsonSchemaObject otherObject) {

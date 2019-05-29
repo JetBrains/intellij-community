@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
@@ -42,7 +41,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -486,17 +484,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static PsiSubstitutor getCandidateInfoSubstitutor(PsiElement argList, CandidateInfo candidate, boolean resolveResult) {
-    Computable<PsiSubstitutor> computeSubstitutor =
-      () -> candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()
-            ? ((MethodCandidateInfo)candidate).inferTypeArguments(resolveResult ? DefaultParameterTypeInferencePolicy.INSTANCE
-                                                                                : CompletionParameterTypeInferencePolicy.INSTANCE, true)
-            : candidate.getSubstitutor();
-    if (resolveResult && candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()) {
-      return computeSubstitutor.compute();
-    }
-    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(ObjectUtils.notNull(argList, candidate.getElement()),
-                                                                      false,
-                                                                      computeSubstitutor);
+    return candidate instanceof MethodCandidateInfo &&
+           ((MethodCandidateInfo)candidate).isInferencePossible()
+           ? ((MethodCandidateInfo)candidate)
+             .inferTypeArguments(resolveResult ? DefaultParameterTypeInferencePolicy.INSTANCE
+                                               : CompletionParameterTypeInferencePolicy.INSTANCE, true)
+           : candidate.getSubstitutor();
   }
 
   private static boolean isAssignableParametersBeforeGivenIndex(final PsiParameter[] parms,
@@ -658,7 +651,9 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       return null;
     }
 
-    StringBuilder buffer = new StringBuilder();
+    PsiParameter[] parms = method.getParameterList().getParameters();
+    int numParams = parms.length;
+    StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
 
     if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO && !context.isSingleParameterInfo()) {
       if (!method.isConstructor()) {
@@ -678,8 +673,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     int currentParameter = context.getCurrentParameterIndex();
 
-    PsiParameter[] parms = method.getParameterList().getParameters();
-    int numParams = parms.length;
     int highlightStartOffset = -1;
     int highlightEndOffset = -1;
     if (numParams > 0) {

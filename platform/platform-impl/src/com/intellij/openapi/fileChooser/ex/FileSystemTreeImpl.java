@@ -504,7 +504,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     });
   }
 
-  private void fireSelection(@NotNull List<VirtualFile> selection) {
+  private void fireSelection(@NotNull List<? extends VirtualFile> selection) {
     for (Listener each : myListeners) {
       each.selectionChanged(selection);
     }

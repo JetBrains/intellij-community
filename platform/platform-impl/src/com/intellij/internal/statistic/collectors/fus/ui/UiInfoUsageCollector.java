@@ -78,7 +78,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     return "ui.info.features";
   }
 
-  private static void add(Set<UsageDescriptor> set, String key, int value) {
+  private static void add(Set<? super UsageDescriptor> set, String key, int value) {
     set.add(new UsageDescriptor(key, value));
   }
 

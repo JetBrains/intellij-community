@@ -201,7 +201,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @NotNull
-  private List<FrameDiffTool> filterFittedTools(@NotNull List<DiffTool> tools) {
+  private List<FrameDiffTool> filterFittedTools(@NotNull List<? extends DiffTool> tools) {
     List<FrameDiffTool> result = new ArrayList<>();
     for (DiffTool tool : tools) {
       try {
@@ -393,7 +393,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @NotNull
-  protected List<DiffTool> getToolOrderFromSettings(@NotNull List<DiffTool> availableTools) {
+  protected List<DiffTool> getToolOrderFromSettings(@NotNull List<? extends DiffTool> availableTools) {
     List<DiffTool> result = new ArrayList<>();
     List<String> savedOrder = getSettings().getDiffToolsOrder();
 
@@ -409,7 +409,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return result;
   }
 
-  protected void updateToolOrderSettings(@NotNull List<DiffTool> toolOrder) {
+  protected void updateToolOrderSettings(@NotNull List<? extends DiffTool> toolOrder) {
     List<String> savedOrder = new ArrayList<>();
     for (DiffTool tool : toolOrder) {
       savedOrder.add(tool.getClass().getCanonicalName());
@@ -441,7 +441,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     });
   }
 
-  protected void collectToolbarActions(@Nullable List<AnAction> viewerActions) {
+  protected void collectToolbarActions(@Nullable List<? extends AnAction> viewerActions) {
     myToolbarGroup.removeAll();
 
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
@@ -464,7 +464,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myTouchbarActionGroup.replaceAll(getTouchbarActions());
   }
 
-  protected void collectPopupActions(@Nullable List<AnAction> viewerActions) {
+  protected void collectPopupActions(@Nullable List<? extends AnAction> viewerActions) {
     myPopupActionGroup.removeAll();
 
     List<AnAction> selectToolActions = new ArrayList<>();
@@ -478,7 +478,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffUtil.addActionBlock(myPopupActionGroup, viewerActions);
   }
 
-  protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
+  protected void buildToolbar(@Nullable List<? extends AnAction> viewerActions) {
     collectToolbarActions(viewerActions);
 
     ((ActionToolbarImpl)myToolbar).clearPresentationCache();
@@ -487,7 +487,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
-  protected void buildActionPopup(@Nullable List<AnAction> viewerActions) {
+  protected void buildActionPopup(@Nullable List<? extends AnAction> viewerActions) {
     collectPopupActions(viewerActions);
 
     DiffUtil.registerAction(new ShowActionGroupPopupAction(), myMainPanel);
@@ -976,10 +976,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private class MyDiffContext extends DiffContextEx {
-    @NotNull private final UserDataHolder myContext;
+    @NotNull private final UserDataHolder myInitialContext;
+    @NotNull private final UserDataHolder myOwnContext = new UserDataHolderBase();
 
-    MyDiffContext(@NotNull UserDataHolder context) {
-      myContext = context;
+    MyDiffContext(@NotNull UserDataHolder initialContext) {
+      myInitialContext = initialContext;
     }
 
     @Override
@@ -1031,12 +1032,14 @@ public abstract class DiffRequestProcessor implements Disposable {
     @Nullable
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      return myContext.getUserData(key);
+      T data = myOwnContext.getUserData(key);
+      if (data != null) return data;
+      return myInitialContext.getUserData(key);
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      myContext.putUserData(key, value);
+      myOwnContext.putUserData(key, value);
     }
   }
 

@@ -278,7 +278,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myNonProjectCheckBox.addActionListener(e -> {
       if (showAll.get() != myNonProjectCheckBox.isSelected()) {
         showAll.set(!showAll.get());
-        final JTextField editor = UIUtil.findComponentOfType(myBalloon.getContent(), JTextField.class);
+        final JTextField editor = myBalloon.isDisposed() ? null : UIUtil.findComponentOfType(myBalloon.getContent(), JTextField.class);
         if (editor != null) {
           final String pattern = editor.getText();
           myAlarm.cancelAllRequests();
@@ -301,7 +301,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static String getShortcut() {
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     if (shortcuts.length == 0) {
-      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift");
+      return "Double" + (SystemInfoRt.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift");
     }
     return KeymapUtil.getShortcutsText(shortcuts);
   }
@@ -678,7 +678,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                             new JBColor(Gray._240, Gray._200);
 
     title.setForeground(foregroundColor);
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
     }
     else {
@@ -2033,7 +2033,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
                 if (event instanceof MouseEvent) {
                   final Component comp = ((MouseEvent)event).getComponent();
-                  if (balloon != null && UIUtil.getWindow(comp) == UIUtil.getWindow(balloon.getContent())) {
+                  if (balloon != null && !balloon.isDisposed() && UIUtil.getWindow(comp) == UIUtil.getWindow(balloon.getContent())) {
                     return false;
                   }
                 }
@@ -2227,7 +2227,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       size.height = JBUI.scale(30);
     }
     Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       if (sz.width > getPopupMaxWidth() || sz.height > getPopupMaxWidth()) {
         final JBScrollPane pane = new JBScrollPane();
         final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;

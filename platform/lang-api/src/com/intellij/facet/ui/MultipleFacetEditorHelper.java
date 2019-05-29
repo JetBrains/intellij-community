@@ -36,11 +36,11 @@ public interface MultipleFacetEditorHelper {
    * @param editors editors
    * @param fun maps a facet editor to checkbox inside one of its tabs
    */
-  void bind(@NotNull ThreeStateCheckBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JCheckBox> fun);
+  void bind(@NotNull ThreeStateCheckBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<? super FacetEditor, ? extends JCheckBox> fun);
 
-  void bind(@NotNull JTextField common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JTextField> fun);
+  void bind(@NotNull JTextField common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<? super FacetEditor, ? extends JTextField> fun);
 
-  void bind(@NotNull JComboBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JComboBox> fun);
+  void bind(@NotNull JComboBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<? super FacetEditor, ? extends JComboBox> fun);
 
   /**
    * Removes all bindings registered by this helper

@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -99,8 +100,8 @@ public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
 
     @Override
     protected String suggestNameForElement(PsiNamedElement element, NameSuggester suggester, String newClassName, String oldClassName) {
-      if (element instanceof PyFile && element.getName().equals(oldClassName.toLowerCase() + ".py")) {
-        return newClassName.toLowerCase() + ".py";
+      if (element instanceof PyFile && element.getName().equals(StringUtil.toLowerCase(oldClassName) + ".py")) {
+        return StringUtil.toLowerCase(newClassName) + ".py";
       }
       return super.suggestNameForElement(element, suggester, newClassName, oldClassName);
     }

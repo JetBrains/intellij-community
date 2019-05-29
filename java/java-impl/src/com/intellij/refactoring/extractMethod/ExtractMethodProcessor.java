@@ -2236,7 +2236,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
   }
 
-  public boolean hasDuplicates(Set<VirtualFile> files) {
+  public boolean hasDuplicates(Set<? extends VirtualFile> files) {
     initDuplicates(null);
     final DuplicatesFinder finder = getExactDuplicatesFinder();
 

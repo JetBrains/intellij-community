@@ -53,6 +53,7 @@ class CommunityRepositoryModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
+    "intellij.platform.util.ex",
     "intellij.platform.credentialStore",
     "intellij.platform.diff.impl",
     "intellij.platform.vcs.dvcs.impl",
@@ -83,7 +84,6 @@ class CommunityRepositoryModules {
     "intellij.xml.psi.impl",
     "intellij.xml.structureView.impl",
     "intellij.xml.impl",
-    "intellij.platform.configurationStore.impl",
   ]
 
   /**
@@ -158,6 +158,7 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
+      withArtifact("maven-event-listener", "")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
@@ -183,6 +184,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
       //the plugin is for internal use for now so it shouldn't be published
       defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
@@ -290,7 +292,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
 
-      withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.deployer", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
@@ -334,6 +335,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.lint:lint-api")
       withProjectLibrary("com.android.tools.lint:lint-checks")
       withProjectLibrary("com.android.tools:sdk-common")
+      withProjectLibrary("com.android.tools:dvlib")
       withProjectLibrary("com.android.tools:sdklib")
       withProjectLibrary("com.android.tools:common")
       withProjectLibrary("com.android.tools:repository")

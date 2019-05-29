@@ -3,7 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,7 @@ public abstract class ShowSettingsUtil {
 
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                                    @NotNull Class<T> configurableClass,
-                                                                   @Nullable Consumer<T> additionalConfiguration);
+                                                                   @Nullable Consumer<? super T> additionalConfiguration);
 
   public abstract void showSettingsDialog(@Nullable Project project,
                                           @NotNull Predicate<? super Configurable> predicate,
@@ -48,6 +48,6 @@ public abstract class ShowSettingsUtil {
   public abstract boolean editConfigurable(Component parent, String dimensionServiceKey, Configurable configurable);
 
   public static String getSettingsMenuName() {
-    return SystemInfo.isMac ? "Preferences" : "Settings";
+    return SystemInfoRt.isMac ? "Preferences" : "Settings";
   }
 }

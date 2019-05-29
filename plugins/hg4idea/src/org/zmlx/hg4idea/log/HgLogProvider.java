@@ -282,7 +282,7 @@ public final class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    return HgHistoryUtil.readAllHashes(myProject, root, Consumer.EMPTY_CONSUMER, filterParameters);
+    return HgHistoryUtil.readHashes(myProject, root, Consumer.EMPTY_CONSUMER, maxCount, filterParameters);
   }
 
   @Nullable
@@ -323,12 +323,6 @@ public final class HgLogProvider implements VcsLogProvider {
   @NotNull
   private static HgRepositoryManager getHgRepoManager(@NotNull Project project) {
     return ServiceManager.getService(project, HgRepositoryManager.class);
-  }
-
-  @Nullable
-  @Override
-  public VcsLogDiffHandler getDiffHandler() {
-    return null;
   }
 
   @Nullable

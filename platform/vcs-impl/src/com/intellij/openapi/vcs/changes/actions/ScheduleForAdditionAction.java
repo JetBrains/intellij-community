@@ -86,7 +86,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  protected static Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
+  public static Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
     boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
     if (hasExplicitUnversioned) return e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
@@ -115,11 +115,11 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     return addUnversionedFilesToVcs(project, list, files, null, null);
   }
 
-  protected static boolean addUnversionedFilesToVcs(@NotNull Project project,
-                                                    @NotNull LocalChangeList list,
-                                                    @NotNull List<? extends VirtualFile> files,
-                                                    @Nullable Consumer<? super List<Change>> changesConsumer,
-                                                    @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
+  public static boolean addUnversionedFilesToVcs(@NotNull Project project,
+                                                 @NotNull LocalChangeList list,
+                                                 @NotNull List<? extends VirtualFile> files,
+                                                 @Nullable Consumer<? super List<Change>> changesConsumer,
+                                                 @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     final List<VcsException> exceptions = new ArrayList<>();

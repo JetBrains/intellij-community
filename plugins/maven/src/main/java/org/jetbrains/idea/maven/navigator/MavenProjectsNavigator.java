@@ -45,8 +45,7 @@ import java.util.Collections;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public final class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>,
-                                                                                   Disposable, BaseComponent {
+public final class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
   public static final String TOOL_WINDOW_ID = "Maven";
   public static final String TOOL_WINDOW_PLACE_ID = "Maven tool window";
 
@@ -141,7 +140,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (!isNormalProject()) return;
     doInit();
   }
@@ -340,8 +339,17 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     }
 
     if (myToolWindow == null) return;
+
     MavenUtil.invokeLater(myProject, () -> {
-      if (!myToolWindow.isVisible()) return;
+      boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
+
+      if (myToolWindow.isAvailable() != hasMavenProjects) {
+        myToolWindow.setAvailable(hasMavenProjects, null);
+
+        if (hasMavenProjects) {
+          myToolWindow.activate(null);
+        }
+      }
 
       boolean shouldCreate = myStructure == null;
       if (shouldCreate) {

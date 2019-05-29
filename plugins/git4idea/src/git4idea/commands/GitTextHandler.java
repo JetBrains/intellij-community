@@ -35,6 +35,7 @@ public abstract class GitTextHandler extends GitHandler {
   private final Object myProcessStateLock = new Object();
 
   protected boolean myWithMediator = true;
+  private int myTerminationTimeoutMs = TERMINATION_TIMEOUT_MS;
 
   protected GitTextHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command, Collections.emptyList());
@@ -61,6 +62,10 @@ public abstract class GitTextHandler extends GitHandler {
 
   public void setWithMediator(boolean value) {
     myWithMediator = value;
+  }
+
+  public void setTerminationTimeout(int timeoutMs) {
+    myTerminationTimeoutMs = timeoutMs;
   }
 
   @Nullable
@@ -157,14 +162,14 @@ public abstract class GitTextHandler extends GitHandler {
     myHandler.destroyProcess();
 
     // signal was sent, but we still need to wait for process to finish its dark deeds
-    if (myHandler.waitFor(TERMINATION_TIMEOUT_MS)) {
+    if (myHandler.waitFor(myTerminationTimeoutMs)) {
       return true;
     }
 
     LOG.warn("Soft-kill failed for [" + printableCommandLine() + "].");
 
     ExecutionManagerImpl.stopProcess(myHandler);
-    return myHandler.waitFor(TERMINATION_TIMEOUT_MS);
+    return myHandler.waitFor(myTerminationTimeoutMs);
   }
 
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {

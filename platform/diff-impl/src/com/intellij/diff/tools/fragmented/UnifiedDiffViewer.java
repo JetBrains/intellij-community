@@ -343,7 +343,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   private Runnable apply(@NotNull final CombinedEditorData data,
-                         @NotNull final List<ChangedBlock> blocks,
+                         @NotNull final List<? extends ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor1,
                          @NotNull final LineNumberConvertor convertor2,
                          @Nullable final FoldingModelSupport.Data foldingState,
@@ -693,7 +693,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @CalledWithWriteLock
-    protected abstract void apply(@NotNull List<UnifiedDiffChange> changes);
+    protected abstract void apply(@NotNull List<? extends UnifiedDiffChange> changes);
   }
 
   private class ReplaceSelectedChangesAction extends ApplySelectedChangesActionBase {
@@ -706,7 +706,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Override
-    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
+    protected void apply(@NotNull List<? extends UnifiedDiffChange> changes) {
       for (UnifiedDiffChange change : changes) {
         replaceChange(change, myModifiedSide.other());
       }
@@ -723,7 +723,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Override
-    protected void apply(@NotNull List<UnifiedDiffChange> changes) {
+    protected void apply(@NotNull List<? extends UnifiedDiffChange> changes) {
       for (UnifiedDiffChange change : changes) {
         appendChange(change, myModifiedSide.other());
       }
@@ -979,11 +979,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   //
 
   private class ChangedLinesIterator extends BufferedLineIterator {
-    @NotNull private final List<UnifiedDiffChange> myChanges;
+    @NotNull private final List<? extends UnifiedDiffChange> myChanges;
 
     private int myIndex = 0;
 
-    private ChangedLinesIterator(@NotNull List<UnifiedDiffChange> changes) {
+    private ChangedLinesIterator(@NotNull List<? extends UnifiedDiffChange> changes) {
       myChanges = changes;
       init();
     }
@@ -1278,7 +1278,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @Nullable
-    public Data createState(@Nullable List<LineRange> changedLines,
+    public Data createState(@Nullable List<? extends LineRange> changedLines,
                             @NotNull Settings settings,
                             @NotNull Document document,
                             @NotNull LineNumberConvertor lineConvertor,

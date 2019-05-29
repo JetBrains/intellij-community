@@ -298,6 +298,9 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control E"/>
   </action>
+  <action id="SwitcherRecentEditedChangedToggleCheckBox">
+    <keyboard-shortcut first-keystroke="control E"/>
+  </action>
   <action id="RecentChangedFiles"/>
   <action id="RecentLocations">
     <keyboard-shortcut first-keystroke="control shift E"/>

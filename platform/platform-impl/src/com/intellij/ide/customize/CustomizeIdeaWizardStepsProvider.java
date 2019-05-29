@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.customize;
 
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,10 +23,6 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
   @Override
   public void initSteps(@NotNull CustomizeIDEWizardDialog dialog, @NotNull List<AbstractCustomizeWizardStep> steps) {
     steps.add(new CustomizeUIThemeStepPanel());
-
-    if (SystemInfo.isMac) {
-      steps.add(new CustomizeMacKeyboardLayoutStep());
-    }
 
     if (CustomizeDesktopEntryStep.isAvailable()) {
       steps.add(new CustomizeDesktopEntryStep("/UbuntuDesktopEntry.png"));

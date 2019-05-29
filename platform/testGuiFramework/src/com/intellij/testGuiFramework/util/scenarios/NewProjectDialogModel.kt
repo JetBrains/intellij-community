@@ -330,33 +330,6 @@ fun NewProjectDialogModel.createGradleProject(
         button(buttonNext).click()
         typeGroupAndArtifact(gradleOptions.group, gradleOptions.artifact)
         button(buttonNext).click()
-        step("set gradle options") {
-          waitForPageTransitionFinished {
-            checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target()
-          }
-          val useAutoImport = checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title)
-          if (useAutoImport.isSelected != gradleOptions.useAutoImport) {
-            step("change `${NewProjectDialogModel.GradleOptions.UseAutoImport.title}` option") {
-              useAutoImport.click()
-            }
-          }
-          val gradleModuleGroup = radioButton(gradleOptions.groupModules.title)
-          if (gradleModuleGroup.isSelected().not()) {
-            step("select ${gradleModuleGroup.text()}") {
-              gradleModuleGroup.click()
-              robot().waitForIdle()
-              val groupAgain = radioButton(gradleOptions.groupModules.title)
-              assert(groupAgain.isSelected()) { "'${groupAgain.text()}' is not selected" }
-            }
-          }
-          val useSeparateModules = checkbox(NewProjectDialogModel.GradleOptions.SeparateModules.title)
-          if (useSeparateModules.isSelected != gradleOptions.useSeparateModules) {
-            step("change `${NewProjectDialogModel.GradleOptions.SeparateModules.title}` option") {
-              useSeparateModules.click()
-            }
-          }
-        }
-        button(buttonNext).click()
         typeProjectNameAndLocation(projectPath)
         step("close New Project dialog with Finish") {
           finish()

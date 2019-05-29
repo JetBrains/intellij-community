@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.xml.XmlFormattingModelBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   private final FormattingModelBuilder myBuilder;
 
-  XsltFormattingModelBuilder(FormattingModelBuilder builder) {
-    myBuilder = builder;
+  XsltFormattingModelBuilder() {
+    myBuilder = new XmlFormattingModelBuilder();
   }
 
   @Override

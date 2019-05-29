@@ -51,6 +51,8 @@ public abstract class FontLayoutService {
 
   public abstract float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint);
 
+  public abstract int stringWidth(@NotNull FontMetrics fontMetrics, @NotNull String str);
+
   public abstract int getHeight(@NotNull FontMetrics fontMetrics);
   
   public abstract int getDescent(@NotNull FontMetrics fontMetrics);
@@ -117,6 +119,11 @@ public abstract class FontLayoutService {
         }
       }
       return charWidth(fontMetrics, codePoint);
+    }
+
+    @Override
+    public int stringWidth(@NotNull FontMetrics fontMetrics, @NotNull String str) {
+      return fontMetrics.stringWidth(str);
     }
 
     @Override

@@ -43,13 +43,13 @@ import java.util.Set;
  */
 public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
   private final DownloadableLibraryDescription myDownloadableDescription;
-  private final List<FrameworkVersion> myVersions;
+  private final List<? extends FrameworkVersion> myVersions;
 
   public OldCustomLibraryDescription(@NotNull LibraryInfo[] libraryInfos, @NotNull String defaultLibraryName) {
     this(Collections.singletonList(new FrameworkVersion(defaultLibraryName, defaultLibraryName, libraryInfos, true)), defaultLibraryName);
   }
 
-  private OldCustomLibraryDescription(final List<FrameworkVersion> versions, String defaultLibraryName) {
+  private OldCustomLibraryDescription(final List<? extends FrameworkVersion> versions, String defaultLibraryName) {
     super(defaultLibraryName);
     myVersions = versions;
     final List<FrameworkLibraryVersion> libraryVersions = new ArrayList<>();

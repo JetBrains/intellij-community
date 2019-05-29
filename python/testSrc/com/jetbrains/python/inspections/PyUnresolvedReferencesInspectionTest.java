@@ -787,6 +787,21 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-35531
+  public void testAttributeDefinedInOverloadedDunderInit() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import overload\n" +
+                         "class Example:\n" +
+                         "    @overload\n" +
+                         "    def __init__(self, **kwargs): ...\n" +
+                         "    def __init__(self, *args, **kwargs):\n" +
+                         "        self.__data = None\n" +
+                         "    def test(self):\n" +
+                         "        return self.__data")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

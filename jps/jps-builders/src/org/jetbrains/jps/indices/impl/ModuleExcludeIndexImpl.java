@@ -151,7 +151,7 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
     }
   }
 
-  private static boolean isUnderExcluded(File root, Set<File> excluded, Set<File> notUnderExcludedCache) {
+  private static boolean isUnderExcluded(File root, Set<? extends File> excluded, Set<? super File> notUnderExcludedCache) {
     File parent = root;
     List<File> parents = new ArrayList<>();
     while (parent != null) {

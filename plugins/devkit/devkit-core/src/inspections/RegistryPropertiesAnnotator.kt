@@ -121,7 +121,7 @@ class RegistryPropertiesAnnotator : Annotator {
 
     private val PLUGIN_GROUP_NAMES = setOf(
       "appcode", "cidr", "clion",
-      "cvs", "git", "svn", "hg4idea", "tfs",
+      "cvs", "git", "github", "svn", "hg4idea", "tfs",
       "dart", "markdown",
       "java", "javac", "uast", "junit4", "dsm",
       "js", "javascript", "typescript", "nodejs", "eslint", "jest",

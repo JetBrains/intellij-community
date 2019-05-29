@@ -103,7 +103,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                        @NotNull Consumer<Object> collector,
                                        @Nullable Project project) {
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
-      pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim().toLowerCase(Locale.ENGLISH);
+      pattern = pattern.startsWith(" ") ? pattern.trim() : StringUtil.toLowerCase(pattern.substring(id.length()).trim());
       MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
     }
@@ -173,7 +173,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       map.values().forEach(CachedOptions::dispose);
     }
 
-    private static void dispose(Collection<OptionDescription> options) {
+    private static void dispose(Collection<? extends OptionDescription> options) {
       if (options != null) options.forEach(CachedOptions::dispose);
     }
 
@@ -234,7 +234,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       long millis = System.currentTimeMillis();
       String name = project == null ? "application" : "project";
       Deque<ConfigurableOptionsTopHitProvider> edtProviders = new ArrayDeque<>();
-      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensionList()) {
+      for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getIterable()) {
         if (provider instanceof ConfigurableOptionsTopHitProvider) {
           // process on EDT, because it creates a Swing components
           // do not process all in one unified invokeLater to ensure that EDT is not blocked for a long time
@@ -250,7 +250,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       }
 
       if (project != null) {
-        for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
+        for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getIterable()) {
           if (indicator != null && indicator.isCanceled()) {
             getCachedOptions(provider, project);
           }
@@ -263,7 +263,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       LOG.info(delta + " ms spent to cache options in " + name);
     }
 
-    private static void scheduleEdtTasks(@NotNull Deque<ConfigurableOptionsTopHitProvider> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+    private static void scheduleEdtTasks(@NotNull Deque<? extends ConfigurableOptionsTopHitProvider> edtProviders, @Nullable ProgressIndicator indicator, @Nullable Project project) {
       if (edtProviders.isEmpty()) {
         if (project != null) {
           StartUpPerformanceReporter startUpPerformanceReporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter.class);

@@ -1,0 +1,3 @@
+a <<-"END"
+ "TEST
+END

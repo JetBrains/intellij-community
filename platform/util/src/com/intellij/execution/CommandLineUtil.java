@@ -491,4 +491,13 @@ public class CommandLineUtil {
   public static boolean hasWinShellSpecialChars(@NotNull String parameter) {
     return WIN_CARET_SPECIAL.matcher(parameter).find();
   }
+
+  /**
+   * If {@code stringToQuote} is unquoted, quotes it with single quotes, according to the bash rules, replacing single quotes
+   * with badly readable but recursion safe {@code '"'"'}
+   */
+  @NotNull
+  public static String posixQuote(@NotNull String stringToQuote) {
+    return isQuotedString(stringToQuote) ? stringToQuote : "'" + replace(stringToQuote, "'", "'\"'\"'") + "'";
+  }
 }

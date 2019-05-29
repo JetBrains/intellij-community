@@ -6,11 +6,6 @@ import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -27,28 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 /**
  * @author peter
  */
 public class DfaExpressionFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory");
-  private static final Condition<String> FALSE_GETTERS = parseFalseGetters();
-
-  private static Condition<String> parseFalseGetters() {
-    try {
-      String regex = Registry.stringValue("ide.dfa.getters.with.side.effects").trim();
-      if (!StringUtil.isEmpty(regex)) {
-        final Pattern pattern = Pattern.compile(regex);
-        return s -> pattern.matcher(s).matches();
-      }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return Conditions.alwaysFalse();
-  }
 
   private final DfaValueFactory myFactory;
   private final Map<Integer, ArrayElementDescriptor> myArrayIndices = new HashMap<>();
@@ -212,17 +190,10 @@ public class DfaExpressionFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
-      if (PropertyUtilBase.isSimplePropertyGetter(method) && isContractAllowedForGetter(method)) {
-        String qName = PsiUtil.getMemberQualifiedName(method);
-        if (qName == null || !FALSE_GETTERS.value(qName)) {
-          return new GetterDescriptor(method);
-        }
-      }
-      if (method.getParameterList().isEmpty()) {
-        if ((JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
-            isContractAllowedForGetter(method)) {
-          return new GetterDescriptor(method);
-        }
+      if (method.getParameterList().isEmpty() &&
+          (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
+          isContractAllowedForGetter(method)) {
+        return new GetterDescriptor(method);
       }
     }
     return null;

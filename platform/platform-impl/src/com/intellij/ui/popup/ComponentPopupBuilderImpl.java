@@ -46,8 +46,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private final JComponent myComponent;
   private final JComponent myPreferredFocusedComponent;
   private boolean myRequestFocus;
-  private String myDimensionServiceKey = null;
-  private Computable<Boolean> myCallback = null;
+  private String myDimensionServiceKey;
+  private Computable<Boolean> myCallback;
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
   private boolean myCancelOnWindowDeactivation = true;
@@ -59,9 +59,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myCancelOnWindow;
   private ActiveIcon myTitleIcon = new ActiveIcon(EmptyIcon.ICON_0);
   private boolean myCancelKeyEnabled = true;
-  private boolean myLocateByContent = false;
+  private boolean myLocateByContent;
   private boolean myPlaceWithinScreen = true;
-  private Processor<JBPopup> myPinCallback = null;
+  private Processor<? super JBPopup> myPinCallback;
   private Dimension myMinSize;
   private MaskProvider myMaskProvider;
   private float myAlpha;
@@ -80,7 +80,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component mySettingsButtons;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
-  private BooleanFunction<KeyEvent> myKeyEventHandler;
+  private BooleanFunction<? super KeyEvent> myKeyEventHandler;
   private Color myBorderColor;
   private boolean myNormalWindowLevel;
   private @Nullable Runnable myOkHandler;
@@ -184,7 +184,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setCouldPin(@Nullable final Processor<JBPopup> callback) {
+  public ComponentPopupBuilder setCouldPin(@Nullable final Processor<? super JBPopup> callback) {
     myPinCallback = callback;
     return this;
   }
@@ -218,7 +218,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @NotNull
   @Override
-  public ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler) {
+  public ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<? super KeyEvent> handler) {
     myKeyEventHandler = handler;
     return this;
   }
@@ -254,7 +254,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition) {
+  public ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<? super Project> condition) {
     myRequestFocus = condition.value(project);
     return this;
   }

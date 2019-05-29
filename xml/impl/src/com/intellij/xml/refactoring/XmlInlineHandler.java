@@ -10,6 +10,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlInlineHandler implements InlineHandler {
   @Override
+  public boolean canInlineElement(@NotNull PsiElement element) {
+    return false;
+  }
+
+  @Override
   public Settings prepareInlineElement(@NotNull PsiElement element, Editor editor, boolean invokedOnReference) {
     return null;
   }

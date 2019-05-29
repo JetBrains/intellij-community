@@ -42,7 +42,7 @@ public class RecentsManager implements PersistentStateComponent<Element> {
     add(recents, recentEntry);
   }
 
-  private void add(final LinkedList<String> recentEntries, final String newEntry) {
+  private void add(final LinkedList<? super String> recentEntries, final String newEntry) {
     final int oldIndex = recentEntries.indexOf(newEntry);
     if (oldIndex >= 0) {
       recentEntries.remove(oldIndex);

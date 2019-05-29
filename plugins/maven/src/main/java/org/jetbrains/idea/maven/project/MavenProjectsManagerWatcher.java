@@ -449,7 +449,7 @@ public class MavenProjectsManagerWatcher {
 
       if (newCrc == -1 // file is invalid
           || newCrc.equals(crc)) {
-        return false;
+        return true;
       }
       else {
         map.put(myProject, newCrc);

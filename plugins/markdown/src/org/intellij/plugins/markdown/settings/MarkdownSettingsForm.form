@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.plugins.markdown.settings.MarkdownSettingsForm">
+  <grid id="27dc6" binding="myMainPanel" layout-manager="GridLayoutManager" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="1108" height="644"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="69d33" layout-manager="GridLayoutManager" row-count="6" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="f0169" binding="myMultipleProvidersPreviewPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="544bd" class="com.intellij.ui.components.JBLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Preview browser:"/>
+                </properties>
+              </component>
+              <component id="16681" class="com.intellij.openapi.ui.ComboBox" binding="myPreviewProvider" custom-create="true">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+          <component id="94d00" class="com.intellij.ui.components.JBCheckBox" binding="myUseGrayscaleRenderingForJBCheckBox" default-binding="true">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.preview.use.grayscale"/>
+            </properties>
+          </component>
+          <component id="43c6b" class="com.intellij.ui.components.JBLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.default.layout"/>
+            </properties>
+          </component>
+          <hspacer id="e2419">
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+          <component id="9b890" class="com.intellij.openapi.ui.ComboBox" binding="myDefaultSplitLayout" custom-create="true">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="47e4e" class="com.intellij.ui.components.labels.LinkLabel" binding="myPlantUMLDownload">
+            <constraints>
+              <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.preview.plantUML.download"/>
+            </properties>
+          </component>
+          <component id="a73ad" class="com.intellij.ui.components.JBLabel" binding="myPlantUMLStatusLabel">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <grid id="e8c3b" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="86e8c" class="com.intellij.ui.components.JBRadioButton" binding="myVerticalLayout">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.preview.layout.vertical"/>
+                </properties>
+              </component>
+              <component id="1646b" class="com.intellij.ui.components.JBRadioButton" binding="myHorizontalLayout">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.preview.layout.horizontal"/>
+                </properties>
+              </component>
+              <component id="b101d" class="com.intellij.ui.components.JBLabel" binding="myVerticalSplitLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.preview.layout.label"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <component id="12a8f" class="com.intellij.ui.components.JBCheckBox" binding="myAutoScrollCheckBox">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.preview.auto.scroll.checkbox"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <vspacer id="52874">
+        <constraints>
+          <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <grid id="b0174" binding="myCssTitledSeparator" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </grid>
+      <component id="15d34" class="com.intellij.ui.components.JBCheckBox" binding="myCssFromURIEnabled">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.css.enable.uri"/>
+        </properties>
+      </component>
+      <component id="8042f" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myCssURI">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="9f82b" class="com.intellij.ui.components.JBCheckBox" binding="myApplyCustomCssText">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.css.enable.inline"/>
+        </properties>
+      </component>
+      <grid id="64f01" binding="myEditorPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="1" use-parent-layout="false">
+            <preferred-size width="-1" height="150"/>
+          </grid>
+        </constraints>
+        <properties>
+          <background color="-1118482"/>
+          <enabled value="true"/>
+        </properties>
+        <border type="none"/>
+        <children/>
+      </grid>
+      <component id="9be29" class="com.intellij.ui.components.JBCheckBox" binding="myDisableInjections">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.disable.injections"/>
+        </properties>
+      </component>
+      <component id="bf04b" class="com.intellij.ui.components.JBCheckBox" binding="myHideErrorsCheckbox">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text resource-bundle="org/intellij/plugins/markdown/bundle/MarkdownBundle" key="markdown.settings.hide.errors"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+  <buttonGroups>
+    <group name="mySplit">
+      <member id="86e8c"/>
+      <member id="1646b"/>
+    </group>
+  </buttonGroups>
+</form>

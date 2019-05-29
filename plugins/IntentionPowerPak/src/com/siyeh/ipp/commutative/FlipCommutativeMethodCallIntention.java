@@ -58,7 +58,7 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
     final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
     final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
     final PsiExpression strippedArgument = ParenthesesUtils.stripParentheses(argument);
-    if (strippedQualifier == null || strippedArgument == null) {
+    if (strippedQualifier == null) {
       return;
     }
     CommentTracker tracker = new CommentTracker();

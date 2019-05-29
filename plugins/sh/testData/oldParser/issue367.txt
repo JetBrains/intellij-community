@@ -1,0 +1,231 @@
+SHELL_SCRIPT
+  PsiComment(shebang)('#!/usr/bin/env bash\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('branch')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('rev-parse')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('--abbrev-ref')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('HEAD')
+                    PsiWhiteSpace(' ')
+                    NUMBER
+                      PsiElement(int)('2')
+                    SIMPLE_COMMAND_ELEMENT
+                      REDIRECTION
+                        PsiElement(>)('>')
+                        PsiElement(word)('/dev/null')
+            PsiElement())(')')
+    PsiElement(;)(';')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('output')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('tr')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      CONDITIONAL_COMMAND
+                        PsiElement([)('[')
+                        LITERAL_CONDITION
+                          PsiElement(word)(':lower:')
+                        PsiElement(])(']')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      CONDITIONAL_COMMAND
+                        PsiElement([)('[')
+                        LITERAL_CONDITION
+                          PsiElement(word)(':upper:')
+                        PsiElement(])(']')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      REDIRECTION
+                        PsiElement(<<<)('<<< ')
+                        PsiElement(word)('[')
+                        PsiElement($)('$')
+                        SHELL_PARAMETER_EXPANSION
+                          PsiElement({)('{')
+                          PsiElement(parameter_expansion_body)('branch')
+                          PsiElement(})('}')
+                        PsiElement(word)(']')
+            PsiElement())(')')
+    PsiElement(;)(';')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        IF_COMMAND
+          PsiElement(if)('if')
+          PsiWhiteSpace(' ')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([)('[')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-n')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(parameter_expansion_body)('branch')
+                      PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  PsiElement(])(']')
+            PsiWhiteSpace(' ')
+            PsiElement(&&)('&&')
+            PsiWhiteSpace(' ')
+            PIPELINE_COMMAND
+              PsiElement(!)('!')
+              PsiWhiteSpace(' ')
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement($)('$')
+                      SUBSHELL_COMMAND
+                        PsiElement(()('(')
+                        COMPOUND_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              GENERIC_COMMAND_DIRECTIVE
+                                REDIRECTION
+                                  PsiElement(<)('<')
+                                  PsiWhiteSpace(' ')
+                                  VARIABLE
+                                    PsiElement(var)('$1')
+                        PsiElement())(')')
+                    PsiWhiteSpace(' ')
+                    PsiElement(=~)('=~')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(word)('$output')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
+            PsiWhiteSpace(' ')
+            PsiElement(&&)('&&')
+            PsiWhiteSpace(' ')
+            PIPELINE_COMMAND
+              PIPELINE
+                CONDITIONAL_COMMAND
+                  PsiElement([)('[')
+                  PsiWhiteSpace(' ')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(parameter_expansion_body)('branch')
+                        PsiElement(})('}')
+                    PsiWhiteSpace(' ')
+                    PsiElement(!=)('!=')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(RAW_STRING)(''master'')
+                  PsiWhiteSpace(' ')
+                  PsiElement(])(']')
+            PsiElement(;)(';')
+            PsiElement(\n)('\n')
+          PsiWhiteSpace('    ')
+          THEN_CLAUSE
+            PsiElement(then)('then')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$output')
+                      PsiElement(STRING_CONTENT)(' ')
+                      PsiElement($)('$')
+                      SUBSHELL_COMMAND
+                        PsiElement(()('(')
+                        COMPOUND_LIST
+                          PIPELINE_COMMAND
+                            PIPELINE
+                              GENERIC_COMMAND_DIRECTIVE
+                                REDIRECTION
+                                  PsiElement(<)('<')
+                                  PsiWhiteSpace(' ')
+                                  VARIABLE
+                                    PsiElement(var)('$1')
+                        PsiElement())(')')
+                      PsiElement(CLOSE_QUOTE)('"')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      REDIRECTION
+                        PsiElement(>)('>')
+                        PsiWhiteSpace(' ')
+                        VARIABLE
+                          PsiElement(var)('$1')
+              PsiElement(;)(';')
+              PsiElement(\n)('\n')
+          PsiElement(fi)('fi')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement($)('$')
+            SUBSHELL_COMMAND
+              PsiElement(()('(')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      REDIRECTION
+                        PsiElement(<)('<')
+                        PsiWhiteSpace(' ')
+                        VARIABLE
+                          PsiElement(var)('$1')
+              PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')

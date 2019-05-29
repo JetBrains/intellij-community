@@ -174,7 +174,7 @@ public class WindowWrapperBuilder {
     }
 
     @Override
-    public void setImages(@Nullable List<Image> images) {
+    public void setImages(@Nullable List<? extends Image> images) {
     }
 
     @Override
@@ -323,7 +323,7 @@ public class WindowWrapperBuilder {
     }
 
     @Override
-    public void setImages(@Nullable List<Image> images) {
+    public void setImages(@Nullable List<? extends Image> images) {
       myFrame.setImages(images);
     }
 

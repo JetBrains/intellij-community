@@ -304,7 +304,7 @@ public class PluginDescriptorStructureUtil {
       return result;
     }
 
-    if (KNOWN_TOP_LEVEL_NODE_NAMES.contains(element.getXmlElementName().toLowerCase())) {
+    if (KNOWN_TOP_LEVEL_NODE_NAMES.contains(StringUtil.toLowerCase(element.getXmlElementName()))) {
       return element.getRawText();
     }
 
@@ -359,9 +359,9 @@ public class PluginDescriptorStructureUtil {
       if (element instanceof GenericDomValue) {
         return ((GenericDomValue)element).getRawText();
       }
-      if (element instanceof ExtensionDomExtender.SimpleTagValue) {
-        return ((ExtensionDomExtender.SimpleTagValue)element).getTagValue();
-      }
+      /*if (element instanceof ExtensionDomExtender.SimpleTagValue) {
+        return ((ExtensionDomExtender.SimpleTagValue)element).getStringValue();
+      }*/
     }
 
     return null;
@@ -387,7 +387,7 @@ public class PluginDescriptorStructureUtil {
     String[] words = NameUtil.nameToWords(result);
     for (int i = 0; i < words.length; i++) {
       @NonNls String word = words[i];
-      String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(word.toLowerCase());
+      String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(StringUtil.toLowerCase(word));
       if (replacement != null) {
         words[i] = replacement;
       }
@@ -426,7 +426,7 @@ public class PluginDescriptorStructureUtil {
     return subTagDescription.getValues(element).stream()
       .filter(e -> e instanceof ExtensionDomExtender.SimpleTagValue)
       .map(e -> (ExtensionDomExtender.SimpleTagValue)e)
-      .map(ExtensionDomExtender.SimpleTagValue::getTagValue)
+      .map(ExtensionDomExtender.SimpleTagValue::getStringValue)
       .findAny()
       .orElse(null);
   }

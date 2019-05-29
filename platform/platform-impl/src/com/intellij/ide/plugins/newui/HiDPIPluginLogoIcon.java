@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,11 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
   private static Icon myCachedDisabledJBLogo2x;
 
   HiDPIPluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logo_80) {
-    super(logo_40, createHiDPIDisabledIcon(logo_40), logo_80, createHiDPIDisabledIcon(logo_80));
+    super(logo_40, createHiDPIDisabledIcon(logo_40, true), logo_80, createHiDPIDisabledIcon(logo_80, true));
+  }
+
+  HiDPIPluginLogoIcon(@NotNull Icon logo_40, @NotNull Icon logoDisabled_40, @NotNull Icon logo_80, @NotNull Icon logoDisabled_80) {
+    super(logo_40, logoDisabled_40, logo_80, logoDisabled_80);
   }
 
   @Override
@@ -74,12 +77,13 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
     myCachedJBLogo2x = null;
     myCachedErrorLogo2x = null;
     myCachedDisabledJBLogo2x = null;
+    DisabledIcons.clear();
   }
 
   @NotNull
   @Override
-  protected Icon getDisabledIcon(@NotNull Icon icon) {
-    return createHiDPIDisabledIcon(icon);
+  protected Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
+    return createHiDPIDisabledIcon(icon, base);
   }
 
   @NotNull
@@ -117,8 +121,8 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
   }
 
   @NotNull
-  private static Icon createHiDPIDisabledIcon(@NotNull Icon icon) {
-    return getHiDPI(ScaleContext.create(), createDisabledIcon(icon));
+  private static Icon createHiDPIDisabledIcon(@NotNull Icon icon, boolean base) {
+    return getHiDPI(ScaleContext.create(), createDisabledIcon(icon, base));
   }
 
   @NotNull

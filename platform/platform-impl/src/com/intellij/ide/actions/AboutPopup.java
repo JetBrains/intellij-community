@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -22,7 +23,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -46,6 +51,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -325,7 +332,7 @@ public class AboutPopup {
       UISettings.setupAntialiasing(g);
 
       Font labelFont = JBUI.Fonts.label();
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
       }
 
@@ -355,7 +362,7 @@ public class AboutPopup {
 
       if (appInfo instanceof ApplicationInfoImpl) {
         g2.setColor(((ApplicationInfoImpl)appInfo).getCopyrightForeground());
-        if (SystemInfo.isMac) {
+        if (SystemInfoRt.isMac) {
           g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
@@ -416,7 +423,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
+      return myInfo.toString() + getExtraInfo();
     }
 
     private class TextRenderer {
@@ -442,12 +449,12 @@ public class AboutPopup {
         this.h = h;
         this.g2 = g2;
 
-        if (SystemInfo.isWindows) {
+        if (SystemInfoRt.isWindows) {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         }
       }
 
-      public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
+      public void render(int indentX, int indentY, List<? extends AboutBoxLine> lines) throws OverflowException {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -616,6 +623,24 @@ public class AboutPopup {
         return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(text);
       }
     }
+  }
+
+  @NotNull
+  private static String getExtraInfo() {
+    return SystemInfo.getOsNameAndVersion() + "\n" +
+
+           "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
+             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n" +
+
+           "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
+
+           "Cores: " + Runtime.getRuntime().availableProcessors() + "\n" +
+
+           "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
+             .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
+
+           "Non-Bundled Plugins: " + Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
+             .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
   }
 
   public static class PopupPanel extends JPanel {

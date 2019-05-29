@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Url;
@@ -22,10 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -39,16 +42,20 @@ public class PluginLogo {
   private static final String CACHE_DIR = "imageCache";
   private static final String PLUGIN_ICON = "pluginIcon.svg";
   private static final String PLUGIN_ICON_DARK = "pluginIcon_dark.svg";
+  private static final int PLUGIN_ICON_SIZE = 40;
+  private static final int PLUGIN_ICON_SIZE_SCALED = 80;
 
   private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = new HashMap<>();
   private static PluginLogoIconProvider Default;
   private static List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> myPrepareToLoad;
 
   static {
-    LafManager.getInstance().addLafManagerListener(_0 -> {
-      Default = null;
-      HiDPIPluginLogoIcon.clearCache();
-    });
+    if (!GraphicsEnvironment.isHeadless()) {
+      LafManager.getInstance().addLafManagerListener(_0 -> {
+        Default = null;
+        HiDPIPluginLogoIcon.clearCache();
+      });
+    }
   }
 
   @NotNull
@@ -80,8 +87,8 @@ public class PluginLogo {
   @NotNull
   private static PluginLogoIconProvider getDefault() {
     if (Default == null) {
-      Default = new PluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
-                                   AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);
+      Default = new HiDPIPluginLogoIcon(AllIcons.Plugins.PluginLogo_40, AllIcons.Plugins.PluginLogoDisabled_40,
+                                        AllIcons.Plugins.PluginLogo_80, AllIcons.Plugins.PluginLogoDisabled_80);
     }
     return Default;
   }
@@ -162,6 +169,7 @@ public class PluginLogo {
       }
       else {
         tryLoadJarIcons(idPlugin, lazyIcon, path, true);
+        return;
       }
       putIcon(idPlugin, lazyIcon, null, null);
       return;
@@ -222,7 +230,7 @@ public class PluginLogo {
                                          @NotNull LazyPluginLogoIcon lazyIcon,
                                          @NotNull File path,
                                          boolean put) {
-    if (!FileUtil.isJarOrZip(path) || !path.exists()) {
+    if (!FileUtilRt.isJarOrZip(path) || !path.exists()) {
       return false;
     }
     try (ZipFile zipFile = new ZipFile(path)) {
@@ -249,9 +257,10 @@ public class PluginLogo {
                                     "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme);
       HttpRequests.request(url).productNameAsUserAgent().saveToFile(file, null);
     }
-    catch (HttpRequests.HttpStatusException ignore) { }
+    catch (HttpRequests.HttpStatusException ignore) {
+    }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 
@@ -289,15 +298,23 @@ public class PluginLogo {
   }
 
   @NotNull
-  static String getIconFileName(boolean light) {
+  public static String getIconFileName(boolean light) {
     return PluginManagerCore.META_INF + (light ? PLUGIN_ICON : PLUGIN_ICON_DARK);
   }
 
+  public static int height() {
+    return PLUGIN_ICON_SIZE;
+  }
+
+  public static int width() {
+    return PLUGIN_ICON_SIZE;
+  }
+
   @Nullable
-  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<InputStream, IOException> provider) {
+  private static PluginLogoIconProvider loadFileIcon(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> provider) {
     try {
-      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 40, 40);
-      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), 80, 80);
+      Icon logo40 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE);
+      Icon logo80 = HiDPIPluginLogoIcon.loadSVG(provider.compute(), PLUGIN_ICON_SIZE_SCALED, PLUGIN_ICON_SIZE_SCALED);
 
       return new HiDPIPluginLogoIcon(logo40, logo80);
     }

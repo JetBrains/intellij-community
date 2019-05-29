@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -50,8 +50,8 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
 
   @NotNull
   private static String normLocal(@NotNull String path) {
-    if (SystemInfo.isWindows) {
-      path = path.toLowerCase();
+    if (SystemInfoRt.isWindows) {
+      path = StringUtil.toLowerCase(path);
     }
 
     return norm(path);
@@ -179,7 +179,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     myPathMappings.addAll(settings.getPathMappings());
   }
 
-  public void addAll(@NotNull List<PathMapping> mappings) {
+  public void addAll(@NotNull List<? extends PathMapping> mappings) {
     myPathMappings.addAll(mappings);
   }
 

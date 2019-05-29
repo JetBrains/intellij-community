@@ -54,7 +54,9 @@ public abstract class NullableNotNullManager {
     "org.checkerframework.checker.nullness.compatqual.NonNullType",
     "com.android.annotations.NonNull",
   };
-  private static final List<String> DEFAULT_ALL = Arrays.asList(ArrayUtil.mergeArrays(DEFAULT_NULLABLES, DEFAULT_NOT_NULLS));
+  private static final List<String> DEFAULT_ALL = Arrays.asList(
+    ArrayUtil.append(ArrayUtil.mergeArrays(DEFAULT_NULLABLES, DEFAULT_NOT_NULLS), 
+                     "org.checkerframework.checker.nullness.qual.MonotonicNonNull"));
 
   protected NullableNotNullManager(Project project) {
     myProject = project;
@@ -251,22 +253,18 @@ public abstract class NullableNotNullManager {
 
   @Nullable
   private NullabilityAnnotationInfo doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
-    List<String> nullables = getNullablesWithNickNames();
     Set<String> annotationNames = getAllNullabilityAnnotationsWithNickNames();
     Set<String> extraAnnotations = new HashSet<>(DEFAULT_ALL);
-    extraAnnotations.removeAll(annotationNames);
-    if (!extraAnnotations.isEmpty()) {
-      annotationNames = new HashSet<>(annotationNames);
-      annotationNames.addAll(extraAnnotations);
-    }
+    extraAnnotations.addAll(annotationNames);
 
-    PsiAnnotation annotation = findPlainAnnotation(owner, true, annotationNames);
+    PsiAnnotation annotation = findPlainAnnotation(owner, true, extraAnnotations);
     if (annotation != null) {
-      if (extraAnnotations.contains(annotation.getQualifiedName())) {
+      if (!annotationNames.contains(annotation.getQualifiedName())) {
         // Deliberately excluded known standard annotation still has precedence over default class-level or package-level annotation:
         // return null in this case
         return null;
       }
+      List<String> nullables = getNullablesWithNickNames();
       return new NullabilityAnnotationInfo(annotation,
                                            nullables.contains(annotation.getQualifiedName()) ? Nullability.NULLABLE : Nullability.NOT_NULL,
                                            false);
@@ -276,7 +274,7 @@ public abstract class NullableNotNullManager {
       List<PsiParameter> superParameters = getSuperAnnotationOwners((PsiParameter)owner);
       if (!superParameters.isEmpty()) {
         for (PsiParameter parameter: superParameters) {
-          PsiAnnotation plain = findPlainAnnotation(parameter, false, annotationNames);
+          PsiAnnotation plain = findPlainAnnotation(parameter, false, extraAnnotations);
           // Plain not null annotation is not inherited
           if (plain != null) return null;
           NullabilityAnnotationInfo defaultInfo = findNullityDefaultInHierarchy(parameter);
@@ -295,7 +293,7 @@ public abstract class NullableNotNullManager {
     return null;
   }
 
-  private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, @NotNull List<PsiParameter> superOwners) {
+  private PsiAnnotation takeAnnotationFromSuperParameters(@NotNull PsiParameter owner, @NotNull List<? extends PsiParameter> superOwners) {
     return RecursionManager.doPreventingRecursion(owner, true, () -> {
       for (PsiParameter superOwner : superOwners) {
         PsiAnnotation anno = findNullityAnnotationWithDefault(superOwner, false, false);
@@ -308,6 +306,17 @@ public abstract class NullableNotNullManager {
   private PsiAnnotation findPlainNullityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Set<String> qNames = getAllNullabilityAnnotationsWithNickNames();
     return findPlainAnnotation(owner, checkBases, qNames);
+  }
+
+  /**
+   * @return an annotation (if any) with the given nullability semantics on the given declaration or its type. In case of conflicts,
+   * type annotations are preferred.
+   */
+  @Nullable
+  public PsiAnnotation findExplicitNullabilityAnnotation(@NotNull PsiModifierListOwner owner, @NotNull Nullability nullability) {
+    if (nullability == Nullability.UNKNOWN) return null;
+    List<String> names = nullability == Nullability.NULLABLE ? getNullablesWithNickNames() : getNotNullsWithNickNames();
+    return findPlainAnnotation(owner, false, new HashSet<>(names));
   }
 
   @Nullable

@@ -212,12 +212,6 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return null;
   }
 
-  @Nullable
-  @Override
-  public VcsLogDiffHandler getDiffHandler() {
-    return null;
-  }
-
   private static class MockRefManager implements VcsLogRefManager {
 
     public static final Comparator<VcsRef> FAKE_COMPARATOR = (o1, o2) -> 0;

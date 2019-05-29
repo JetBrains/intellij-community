@@ -15,9 +15,9 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +50,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     initRootNode();
   }
 
-  public void reset(@NotNull Collection<X509Certificate> certificates) {
+  public void reset(@NotNull Collection<? extends X509Certificate> certificates) {
     myCertificates.clear();
     for (X509Certificate certificate : certificates) {
       addCertificate(certificate);
@@ -88,11 +88,8 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void selectFirstCertificate() {
-    if (!isEmpty()) {
-      Tree tree = (Tree)getTree();
-      TreePath path = TreeUtil.getFirstLeafNodePath(tree);
-      tree.addSelectionPath(path);
-    }
+    JTree tree = isEmpty() ? null : getTree();
+    if (tree != null) TreeUtil.promiseSelectFirstLeaf(tree);
   }
 
   /**

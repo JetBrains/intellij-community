@@ -80,7 +80,9 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -940,16 +942,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   protected VirtualFile getOrCreateProjectBaseDir() {
-    VirtualFile baseDir = myProject.getBaseDir();
+    String basePath = myProject.getBasePath();
+    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(Objects.requireNonNull(basePath));
     if (baseDir == null) {
-      String basePath = myProject.getBasePath();
       try {
-        FileUtil.ensureExists(new File(Objects.requireNonNull(basePath)));
+        Files.createDirectories(Paths.get(basePath));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
+      return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath));
     }
     return baseDir;
   }

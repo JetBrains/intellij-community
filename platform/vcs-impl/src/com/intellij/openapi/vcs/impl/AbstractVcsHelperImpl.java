@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -76,6 +76,7 @@ import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
+import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
@@ -226,9 +227,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @Override
   public boolean commitChanges(@NotNull Collection<? extends Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
-    return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList,
-                                                CommitChangeListDialog.collectExecutors(myProject, changes), true, commitMessage,
-                                                customResultHandler);
+    return CommitChangeListDialog
+      .commitChanges(myProject, changes, initialChangeList, getCommitExecutors(myProject, changes), true, commitMessage,
+                     customResultHandler);
   }
 
   private static void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<? extends VcsException> abstractVcsExceptions) {

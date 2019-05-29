@@ -39,7 +39,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   private final OrderRootType myRootType;
   private final NotNullFunction<? super OrderEntry, ? extends OrderRootType> myRootTypeProvider;
   private boolean myUsingCache;
-  private NotNullFunction<OrderEntry, VirtualFile[]> myCustomRootProvider;
+  private NotNullFunction<? super OrderEntry, VirtualFile[]> myCustomRootProvider;
   private boolean myWithoutSelfModuleOutput;
 
   OrderRootsEnumeratorImpl(@NotNull OrderEnumeratorBase orderEnumerator, @NotNull OrderRootType rootType) {
@@ -101,8 +101,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly()
                                  && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
@@ -138,8 +137,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         final Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly() && OrderEnumeratorBase
             .shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
@@ -186,7 +184,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   @NotNull
   @Override
-  public OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<OrderEntry, VirtualFile[]> provider) {
+  public OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider) {
     myCustomRootProvider = provider;
     return this;
   }

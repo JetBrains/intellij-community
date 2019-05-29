@@ -115,11 +115,20 @@ private fun assignInvestigation(investigator: Investigator, report: String) {
 internal fun thisBuildReportableLink() =
   "${System.getProperty("intellij.icons.report.buildserver")}/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF"
 
-internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.username")
-  ?.takeIf { it.isNotBlank() }
-  ?.let { teamCityGet("users/username:$it/email") }
-  ?.removeSuffix(System.lineSeparator())
+internal fun triggeredBy() =
+  System.getProperty("teamcity.build.triggeredBy.username")
+    ?.takeIf(String::isNotBlank)
+    ?.let { teamCityGet("users/username:$it/email") }
+    ?.removeSuffix(System.lineSeparator())
+    ?.takeIf { triggeredByName != null }
+    ?.let { email -> TriggeredBy(triggeredByName, email) }
 
-internal fun isScheduled() = System.getProperty("teamcity.build.triggeredBy")?.contains("Schedule") == true
+internal class TriggeredBy(val name: String, val email: String)
+
+internal fun isScheduled() = triggeredByName?.contains("Schedule") == true
+
+private val triggeredByName by lazy {
+  System.getProperty("teamcity.build.triggeredBy")
+}
 
 internal fun isPreviousBuildFailed() = teamCityGet("builds?locator=buildType:$BUILD_CONF,count:1").contains("status=\"FAILURE\"")

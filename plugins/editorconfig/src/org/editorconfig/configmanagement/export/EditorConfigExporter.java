@@ -17,7 +17,7 @@ public class EditorConfigExporter extends SchemeExporter<CodeStyleScheme> {
                            @NotNull CodeStyleScheme scheme,
                            @NotNull OutputStream outputStream) throws Exception {
     final CodeStyleSettings settings = scheme.getCodeStyleSettings();
-    try (EditorConfigSettingsWriter writer = new EditorConfigSettingsWriter(project, outputStream, settings)) {
+    try (EditorConfigSettingsWriter writer = new EditorConfigSettingsWriter(project, outputStream, settings, false, false)) {
       writer.writeSettings();
     }
   }

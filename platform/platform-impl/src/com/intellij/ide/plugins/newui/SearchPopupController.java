@@ -82,7 +82,7 @@ public abstract class SearchPopupController {
   }
 
   @NotNull
-  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<Integer> startPosition) {
+  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<? super Integer> startPosition) {
     int index = end - 1;
     String value = null;
 
@@ -158,10 +158,7 @@ public abstract class SearchPopupController {
     createAndShow(true, new SearchPopupCallback(valuePrefix) {
       @Override
       public void consume(String value) {
-        if (StringUtil.containsAnyChar(value, " ,:")) {
-          value = "\"" + value + "\"";
-        }
-        appendSearchText(value, prefix);
+        appendSearchText(SearchQueryParser.wrapAttribute(value), prefix);
         handleAppendAttributeValue();
       }
     });

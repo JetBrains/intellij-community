@@ -341,7 +341,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       errorPanel.add(errorMessage);
 
       Ref<String> enableAction = new Ref<>();
-      errorMessage.setText(PluginManagerConfigurableNew.getErrorMessage(myPluginsModel, myPlugin, enableAction));
+      errorMessage.setText(myPluginsModel.getErrorMessage(myPlugin, enableAction));
 
       if (!enableAction.isNull()) {
         LinkLabel<Object> errorAction = new LinkLabel<>("Enable", null);

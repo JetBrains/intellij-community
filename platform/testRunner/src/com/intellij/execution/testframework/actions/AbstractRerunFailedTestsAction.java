@@ -50,7 +50,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
-  private Getter<TestFrameworkRunningModel> myModelProvider;
+  private Getter<? extends TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
@@ -66,7 +66,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     myModel = model;
   }
 
-  public void setModelProvider(Getter<TestFrameworkRunningModel> modelProvider) {
+  public void setModelProvider(Getter<? extends TestFrameworkRunningModel> modelProvider) {
     myModelProvider = modelProvider;
   }
 

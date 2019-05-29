@@ -30,6 +30,7 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
   @Override
   @NotNull
   public String getText() {
-    return "Un-inject Language/Reference";
+    return IntelliLangBundle.message("intelliLang.uninject.language.action.text");
   }
 
   @Override

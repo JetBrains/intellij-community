@@ -113,7 +113,7 @@ public class RootDetectionProcessor {
     return result;
   }
 
-  private List<Pair<File, Integer>> processRecursively(File dir, BitSet enabledDetectors, Set<File> parentDirectories) {
+  private List<Pair<File, Integer>> processRecursively(File dir, BitSet enabledDetectors, Set<? super File> parentDirectories) {
     List<Pair<File, Integer>> parentsToSkip = new SmartList<>();
 
     if (myTypeManager.isFileIgnored(dir.getName())) {

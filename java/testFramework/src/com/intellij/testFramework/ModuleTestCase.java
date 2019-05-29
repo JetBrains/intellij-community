@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class ModuleTestCase extends IdeaTestCase {
+public abstract class ModuleTestCase extends JavaProjectTestCase {
   protected final Collection<Module> myModulesToDispose = new ArrayList<>();
 
   @Override

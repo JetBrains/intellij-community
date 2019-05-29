@@ -29,6 +29,6 @@ public interface XDebuggerTreeListener {
   default void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
   }
 
-  default void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, final boolean last) {
+  default void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<? extends XValueContainerNode<?>> children, final boolean last) {
   }
 }

@@ -326,7 +326,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   public <T extends InspectionProfileEntry> void modifyToolSettings(@NotNull final Key<T> shortNameKey,
                                                                     @NotNull final PsiElement psiElement,
-                                                                    @NotNull final Consumer<T> toolConsumer) {
+                                                                    @NotNull final Consumer<? super T> toolConsumer) {
     modifyProfile(model -> {
       InspectionProfileEntry tool = model.getUnwrappedTool(shortNameKey.toString(), psiElement);
       //noinspection unchecked

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -151,8 +151,8 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   @Nullable
   private static <T> T findOccurrence(@Nullable PsiElement start,
                                       @NotNull PsiLocalVariable variable,
-                                      @NotNull Function<PsiElement, PsiElement> advance,
-                                      @NotNull BiFunction<PsiElement, PsiLocalVariable, T> search) {
+                                      @NotNull Function<? super PsiElement, ? extends PsiElement> advance,
+                                      @NotNull BiFunction<? super PsiElement, ? super PsiLocalVariable, ? extends T> search) {
     PsiElement candidate = advance.apply(start);
     T result = search.apply(candidate, variable);
     if (result != null) {
@@ -233,7 +233,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     public void applyFixImpl(@NotNull Context context) {
       PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
       PsiElement elementToReplace = context.myAssignment.getParent();
-      if (initializer != null && elementToReplace != null) {
+      if (elementToReplace != null) {
         PsiLocalVariable varCopy = DeclarationJoinLinesHandler.copyVarWithInitializer(context.myVariable, initializer);
         if (varCopy != null) {
           String text = varCopy.getText();

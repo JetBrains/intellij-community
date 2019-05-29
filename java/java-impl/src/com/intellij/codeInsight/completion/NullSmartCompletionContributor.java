@@ -37,7 +37,7 @@ public class NullSmartCompletionContributor extends CompletionContributor{
                                                       not(psiElement().afterLeaf("."))), new ExpectedTypeBasedCompletionProvider() {
       @Override
       protected void addCompletions(final CompletionParameters parameters,
-                                    final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
+                                    final CompletionResultSet result, final Collection<? extends ExpectedTypeInfo> infos) {
         if (!StringUtil.startsWithChar(result.getPrefixMatcher().getPrefix(), 'n')) {
           return;
         }

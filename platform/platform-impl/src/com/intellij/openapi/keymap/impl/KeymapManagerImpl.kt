@@ -17,11 +17,13 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
 import org.jdom.Element
+import java.util.*
 import java.util.function.Function
 import java.util.function.Predicate
 
@@ -184,5 +186,35 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   fun fireShortcutChanged(keymap: Keymap, actionId: String) {
     ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).shortcutChanged(keymap, actionId)
+  }
+}
+
+val keymapComparator: Comparator<Keymap?> by lazy {
+  val defaultKeymapName = DefaultKeymap.instance.defaultKeymapName
+  Comparator<Keymap?> { keymap1, keymap2 ->
+    if (keymap1 === keymap2) return@Comparator 0
+    if (keymap1 == null) return@Comparator - 1
+    if (keymap2 == null) return@Comparator 1
+
+    val parent1 = (if (!keymap1.canModify()) null else keymap1.parent) ?: keymap1
+    val parent2 = (if (!keymap2.canModify()) null else keymap2.parent) ?: keymap2
+    if (parent1 === parent2) {
+      when {
+        !keymap1.canModify() -> - 1
+        !keymap2.canModify() -> 1
+        else -> compareByName(keymap1, keymap2, defaultKeymapName)
+      }
+    }
+    else {
+      compareByName(parent1, parent2, defaultKeymapName)
+    }
+  }
+}
+
+private fun compareByName(keymap1: Keymap, keymap2: Keymap, defaultKeymapName: String): Int {
+  return when (defaultKeymapName) {
+    keymap1.name -> -1
+    keymap2.name -> 1
+    else -> NaturalComparator.INSTANCE.compare(keymap1.presentableName, keymap2.presentableName)
   }
 }

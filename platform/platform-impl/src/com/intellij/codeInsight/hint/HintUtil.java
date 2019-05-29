@@ -191,6 +191,7 @@ public class HintUtil {
     return UIUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
+  @NotNull
   public static JLabel createAdComponent(final String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
     JLabel label = new JLabel();
     label.setText(bottomText);

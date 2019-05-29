@@ -7,10 +7,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabPainter;
@@ -48,7 +46,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().getHideTabsIfNeed() && supportsCompression()) {
+    if (!UISettings.getInstance().getHideTabsIfNeeded() && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
     else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
@@ -74,7 +72,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   @Override
   public boolean useBoldLabels() {
-    return SystemInfo.isMac && Registry.is("ide.mac.boldEditorTabs");
+    return SystemInfoRt.isMac && Registry.is("ide.mac.boldEditorTabs");
   }
 
   @Override
@@ -92,7 +90,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   @Override
-  public void setEmptySpaceColorCallback(@NotNull Supplier<Color> callback) {
+  public void setEmptySpaceColorCallback(@NotNull Supplier<? extends Color> callback) {
   }
 
   /**

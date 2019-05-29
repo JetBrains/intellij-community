@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.*;
 
 public abstract class SdkType implements SdkTypeId {
@@ -62,6 +63,15 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   public abstract boolean isValidSdkHome(String path);
+
+  /**
+   * Returns the message to be shown to the user when {@link #isValidSdkHome(String)} returned false for the path.
+   */
+  public String getInvalidHomeMessage(String path) {
+    return new File(path).isDirectory()
+      ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
+      : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
+  }
 
   @Override
   @Nullable
@@ -166,9 +176,7 @@ public abstract class SdkType implements SdkTypeId {
           if (!valid) {
             valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath));
             if (!valid) {
-              String message = files[0].isDirectory()
-                               ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
-                               : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
+              String message = getInvalidHomeMessage(selectedPath);
               throw new Exception(message);
             }
           }

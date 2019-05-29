@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.capitalization;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -37,7 +36,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           List<PsiExpression> children = ExpressionUtils.nonStructuralChildren(expression).collect(Collectors.toList());
           for (PsiExpression e : children) {
             if (capitalization == null) {
-              capitalization = getCapitalizationFromAnno(method);
+              capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno(method);
               if (capitalization == Nls.Capitalization.NotSpecified) return;
             }
             String titleValue = getTitleValue(e, new HashSet<>());
@@ -57,7 +56,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
             PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
             for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
               PsiParameter parameter = parameters[i];
-              Nls.Capitalization capitalization = getCapitalizationFromAnno(parameter);
+              Nls.Capitalization capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno(parameter);
               if (capitalization == Nls.Capitalization.NotSpecified) continue;
               ExpressionUtils.nonStructuralChildren(args[i])
                 .forEach(e -> checkCapitalization(e, getTitleValue(e, new HashSet<>()), holder, capitalization));
@@ -66,14 +65,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         }
       }
     };
-  }
-
-  public Nls.Capitalization getCapitalizationFromAnno(PsiModifierListOwner modifierListOwner) {
-    PsiAnnotation nls = AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, Collections.singleton(Nls.class.getName()));
-    if (nls == null) return Nls.Capitalization.NotSpecified;
-    PsiAnnotationMemberValue capitalization = nls.findAttributeValue("capitalization");
-    Object cap = JavaPsiFacade.getInstance(modifierListOwner.getProject()).getConstantEvaluationHelper().computeConstantExpression(capitalization);
-    return cap instanceof Nls.Capitalization ? (Nls.Capitalization)cap : Nls.Capitalization.NotSpecified;
   }
 
   private static void checkCapitalization(PsiExpression e,

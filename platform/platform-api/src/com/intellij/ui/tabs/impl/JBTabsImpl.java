@@ -241,7 +241,7 @@ public class JBTabsImpl extends JComponent
       int units = event.getUnitsToScroll();
 
       // Workaround for 'shaking' scrolling with touchpad when some events have units with opposite (wrong) sign
-      if (SystemInfo.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
+      if (SystemInfoRt.isMac && event.getModifiers() == InputEvent.SHIFT_MASK) return;
 
       if (units == 0) return;
       if (mySingleRowLayout.myLastSingRowLayout != null) {
@@ -372,9 +372,9 @@ public class JBTabsImpl extends JComponent
       entry.getKey().revalidate();
       entry.getValue().setInactiveStateImage(null);
     }
-    boolean oldHideTabsIfNeed = mySingleRowLayout instanceof ScrollableSingleRowLayout;
-    boolean newHideTabsIfNeed = UISettings.getInstance().getHideTabsIfNeed();
-    if (oldHideTabsIfNeed != newHideTabsIfNeed) {
+    boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
+    boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
+    if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
       updateRowLayout();
     }
   }

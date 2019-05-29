@@ -406,7 +406,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(@Nullable TokenSet filter, @NotNull ArrayFactory<T> constructor) {
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(@Nullable TokenSet filter, @NotNull ArrayFactory<? extends T> constructor) {
     assertReadAccessAllowed();
     int count = countChildren(filter);
     T[] result = constructor.create(count);
@@ -425,7 +425,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, @NotNull ArrayFactory<T> constructor) {
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, @NotNull ArrayFactory<? extends T> constructor) {
     assertReadAccessAllowed();
     int count = countChildren(type);
     T[] result = constructor.create(count);

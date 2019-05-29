@@ -414,7 +414,7 @@ class CompoundRendererConfigurable extends JPanel {
     MyTableModel() {
     }
 
-    public void init(List<EnumerationChildrenRenderer.ChildInfo> data) {
+    public void init(List<? extends EnumerationChildrenRenderer.ChildInfo> data) {
       myData.clear();
       for (EnumerationChildrenRenderer.ChildInfo childInfo : data) {
         myData.add(new EnumerationChildrenRenderer.ChildInfo(childInfo.myName, childInfo.myExpression, childInfo.myOnDemand));

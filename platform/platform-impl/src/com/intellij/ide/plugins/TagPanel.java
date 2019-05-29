@@ -8,6 +8,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -53,5 +54,18 @@ public class TagPanel extends NonOpaquePanel {
     }
 
     setVisible(true);
+  }
+
+  @Override
+  public int getBaseline(int width, int height) {
+    int count = getComponentCount();
+    for (int i = 0; i < count; i++) {
+      Component component = getComponent(i);
+      if (component.isVisible()) {
+        Dimension size = component.getPreferredSize();
+        return component.getY() + component.getBaseline(size.width, size.height);
+      }
+    }
+    return -1;
   }
 }

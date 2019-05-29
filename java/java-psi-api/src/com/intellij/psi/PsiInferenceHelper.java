@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ public interface PsiInferenceHelper {
   PsiSubstitutor inferTypeArguments(@NotNull PsiTypeParameter[] typeParameters,
                                     @NotNull PsiParameter[] parameters,
                                     @NotNull PsiExpression[] arguments,
+                                    @Nullable MethodCandidateInfo currentMethod, 
                                     @NotNull PsiSubstitutor partialSubstitutor,
                                     @NotNull PsiElement parent,
                                     @NotNull ParameterTypeInferencePolicy policy,

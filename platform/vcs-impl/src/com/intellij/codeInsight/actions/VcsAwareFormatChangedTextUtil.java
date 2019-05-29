@@ -26,7 +26,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.function.Function;
 
-class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
+final class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @Override
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {

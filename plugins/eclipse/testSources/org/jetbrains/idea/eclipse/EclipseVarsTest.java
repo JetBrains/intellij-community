@@ -6,12 +6,12 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-public abstract class EclipseVarsTest extends IdeaTestCase {
+public abstract class EclipseVarsTest extends JavaProjectTestCase {
   @NonNls private static final String VARIABLE = "variable";
   @NonNls private static final String SRCVARIABLE = "srcvariable";
 

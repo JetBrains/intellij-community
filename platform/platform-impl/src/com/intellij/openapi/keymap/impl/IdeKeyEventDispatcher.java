@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -67,6 +68,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.openapi.application.TransactionGuardImpl.logTimeMillis;
+
 /**
  * This class is automaton with finite number of state.
  *
@@ -77,7 +80,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   @NonNls
   private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
-  private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_WINDOWS = SystemInfoRt.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
   private KeyStroke myFirstKeyStroke;
   /**
@@ -436,7 +439,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return true;
     }
 
-    if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+    if (SystemInfoRt.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
       if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) ||
           hasMnemonicInWindow(focusOwner, e)) {
@@ -452,7 +455,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // workaround for IDEA-177327
-    if (isCandidateForAltGr && SystemInfo.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
+    if (isCandidateForAltGr && SystemInfoRt.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
       myFirstKeyStroke = keyStroke;
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
       return true;
@@ -624,6 +627,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<>();
     List<AnAction> actions = myContext.getActions();
     for (final AnAction action : actions.toArray(AnAction.EMPTY_ARRAY)) {
+      long startedAt = System.currentTimeMillis();
       Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
@@ -638,10 +642,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
         if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
           nonDumbAwareAction.add(actionEvent);
         }
+        logTimeMillis(startedAt, action);
         continue;
       }
 
       if (!presentation.isEnabled()) {
+        logTimeMillis(startedAt, action);
         continue;
       }
 
@@ -653,12 +659,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       Component component = actionEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       if (component != null && !component.isShowing()) {
+        logTimeMillis(startedAt, action);
         return true;
       }
 
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(
         () -> processor.performAction(e, action, actionEvent));
       actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
+      logTimeMillis(startedAt, action);
       return true;
     }
 
@@ -848,12 +856,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static class SecondaryKeystrokePopup extends ListPopupImpl {
-    private SecondaryKeystrokePopup(@NotNull final KeyStroke firstKeystroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext context) {
-      super(buildStep(actions, context));
+
+    SecondaryKeystrokePopup(@NotNull KeyStroke firstKeystroke, @NotNull List<? extends Pair<AnAction, KeyStroke>> actions, DataContext context) {
+      super(CommonDataKeys.PROJECT.getData(context), buildStep(actions, context));
       registerActions(firstKeystroke, actions, context);
     }
 
-    private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+    private void registerActions(@NotNull final KeyStroke firstKeyStroke, @NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       ContainerUtil.process(actions, pair -> {
         final String actionText = pair.getFirst().getTemplatePresentation().getText();
         final AbstractAction a = new AbstractAction() {
@@ -898,7 +907,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return new ActionListCellRenderer();
     }
 
-    private static ListPopupStep buildStep(@NotNull final List<Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
+    private static ListPopupStep buildStep(@NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
       return new BaseListPopupStep<Pair<AnAction, KeyStroke>>("Choose an action", ContainerUtil.findAll(actions, pair -> {
         final AnAction action = pair.getFirst();
         final Presentation presentation = action.getTemplatePresentation().clone();

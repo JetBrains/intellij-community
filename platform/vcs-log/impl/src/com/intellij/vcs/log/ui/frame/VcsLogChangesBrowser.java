@@ -27,6 +27,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -52,9 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -154,13 +154,23 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     );
   }
 
-  public void resetSelectedDetails() {
+  private void updateModel(@NotNull Runnable update) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
-    myViewer.setEmptyText("");
+
+    update.run();
+
     myViewer.rebuildTree();
     myDispatcher.getMulticaster().onModelUpdated();
+  }
+
+  public void resetSelectedDetails() {
+    updateModel(() -> myViewer.setEmptyText(""));
+  }
+
+  public void showText(@NotNull Consumer<StatusText> statusTextConsumer) {
+    updateModel(() -> statusTextConsumer.accept(myViewer.getEmptyText()));
   }
 
   public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
@@ -169,24 +179,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    setSelectedDetails(detailsList, false);
-  }
-
-  private void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList, boolean showBigCommits) {
-    myChanges.clear();
-    myChangesToParents.clear();
-    myRoots.clear();
-
-    if (detailsList.isEmpty()) {
-      myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
-    }
-    else {
-      int maxSize = VcsLogUtil.getMaxSize(detailsList);
-      if (maxSize > VcsLogUtil.getShownChangesLimit() && !showBigCommits) {
-        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
-        String sizeText = getSizeText(maxSize);
-        myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
-          appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
+    updateModel(() -> {
+      if (detailsList.isEmpty()) {
+        myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
       }
       else {
         myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
@@ -216,29 +211,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
           myViewer.setEmptyText("");
         }
       }
-    }
-
-    myViewer.rebuildTree();
-    myDispatcher.getMulticaster().onModelUpdated();
-  }
-
-  @NotNull
-  private static String getSizeText(int maxSize) {
-    if (maxSize < 1000) {
-      return String.valueOf(maxSize);
-    }
-    DecimalFormat format = new DecimalFormat("#.#");
-    format.setRoundingMode(RoundingMode.FLOOR);
-    if (maxSize < 10_000) {
-      return format.format(maxSize / 1000.0) + "K";
-    }
-    else if (maxSize < 1_000_000) {
-      return (maxSize / 1000) + "K";
-    }
-    else if (maxSize < 10_000_000) {
-      return format.format(maxSize / 1_000_000.0) + "M";
-    }
-    return (maxSize / 1_000_000) + "M";
+    });
   }
 
   @NotNull

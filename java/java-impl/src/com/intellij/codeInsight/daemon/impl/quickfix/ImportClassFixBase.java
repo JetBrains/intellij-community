@@ -76,6 +76,10 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       }
     }
 
+    if (file instanceof PsiJavaCodeReferenceCodeFragment && !((PsiJavaCodeReferenceCodeFragment)file).isClassesAccepted()) {
+      return false;
+    }
+
     return !getClassesToImport(true).isEmpty();
   }
 
@@ -210,9 +214,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return classList;
   }
 
-  private void filterAlreadyImportedButUnresolved(@NotNull List<PsiClass> list) {
+  private void filterAlreadyImportedButUnresolved(@NotNull List<? extends PsiClass> list) {
     PsiElement element = myRef.getElement();
-    PsiFile containingFile = element == null ? null : element.getContainingFile();
+    PsiFile containingFile = element.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) return;
     PsiJavaFile javaFile = (PsiJavaFile)containingFile;
     PsiImportList importList = javaFile.getImportList();
@@ -326,7 +330,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     boolean canImportHere = true;
 
-    boolean isInModlessContext =  Registry.is("ide.perProjectModality") ?
+    boolean isInModelessContext =  Registry.is("ide.perProjectModality") ?
                                   !LaterInvocator.isInModalContextForProject(editor.getProject()) :
                                   !LaterInvocator.isInModalContext();
 
@@ -334,7 +338,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName())) &&
         isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
         (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
-        isInModlessContext &&
+        isInModelessContext &&
         !autoImportWillInsertUnexpectedCharacters(classes[0])
       ) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());

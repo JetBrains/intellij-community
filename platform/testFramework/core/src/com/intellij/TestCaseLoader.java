@@ -331,7 +331,7 @@ public class TestCaseLoader {
     return TestFrameworkUtil.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
-  public void fillTestCases(String rootPackage, List<File> classesRoots) {
+  public void fillTestCases(String rootPackage, List<? extends File> classesRoots) {
     long before = System.currentTimeMillis();
     for (File classesRoot : classesRoots) {
       int oldCount = getClassesCount();

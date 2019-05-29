@@ -27,7 +27,7 @@ public class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializat
     super(defaultBeans);
   }
 
-  protected boolean equal(@NotNull Binding binding, @NotNull Object bean) {
+  protected boolean equal(@NotNull NestedBinding binding, @NotNull Object bean) {
     Accessor accessor = binding.getAccessor();
     return equal(binding, accessor.read(bean), accessor.read(getDefaultBean(bean)));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -9,8 +9,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
@@ -38,11 +38,11 @@ import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -68,7 +68,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list) {
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list) {
     return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
   }
 
@@ -129,9 +129,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                       String noText,
                                       final Runnable onYes,
                                       final Runnable onNo,
-                                      int defaultOptionIndex)
-  {
-
+                                      int defaultOptionIndex) {
     final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, yesText, noText) {
       @Override
       public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
@@ -150,7 +148,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     };
     step.setDefaultOptionIndex(defaultOptionIndex);
 
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    final Application app = ApplicationManager.getApplication();
     return app == null || !app.isUnitTestMode() ? new ListPopupImpl(step) : new MockConfirmation(step, yesText);
   }
 
@@ -170,7 +168,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             final Runnable disposeCallback,
                             final int maxRowCount,
-                            final Condition<AnAction> preselectActionCondition,
+                            final Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace) {
       this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
            maxRowCount, preselectActionCondition, actionPlace, false);
@@ -185,7 +183,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             final Runnable disposeCallback,
                             final int maxRowCount,
-                            final Condition<AnAction> preselectActionCondition,
+                            final Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace,
                             boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
@@ -198,7 +196,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                @NotNull DataContext dataContext,
                                @Nullable String actionPlace,
                                int maxRowCount) {
-      super(aParent, step, null, maxRowCount);
+      super(CommonDataKeys.PROJECT.getData(dataContext), aParent, step, null);
+      setMaxRowCount(maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       myActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
@@ -240,7 +239,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                             boolean useAlphaAsNumbers,
                                             boolean showDisabledActions,
                                             boolean honorActionMnemonics,
-                                            Condition<AnAction> preselectActionCondition,
+                                            Condition<? super AnAction> preselectActionCondition,
                                             @Nullable String actionPlace,
                                             boolean autoSelection) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
@@ -342,7 +341,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean showDisabledActions,
                                           Runnable disposeCallback,
                                           int maxRowCount,
-                                          Condition<AnAction> preselectActionCondition,
+                                          Condition<? super AnAction> preselectActionCondition,
                                           @Nullable String actionPlace) {
     return new ActionGroupPopup(title,
                                 actionGroup,
@@ -367,7 +366,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
                                           final int maxRowCount,
-                                          final Condition<AnAction> preselectActionCondition) {
+                                          final Condition<? super AnAction> preselectActionCondition) {
     return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
                                   disposeCallback, maxRowCount, preselectActionCondition, null);
   }
@@ -408,19 +407,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   @Override
   public ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount) {
-    return new ListPopupImpl(step, maxRowCount);
+    ListPopupImpl popup = new ListPopupImpl(step);
+    popup.setMaxRowCount(maxRowCount);
+    return popup;
   }
 
   @NotNull
   @Override
   public TreePopup createTree(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
-    return new TreePopupImpl(parent, aStep, parentValue);
+    return new TreePopupImpl(aStep.getProject(), parent, aStep, parentValue);
   }
 
   @NotNull
   @Override
   public TreePopup createTree(@NotNull TreePopupStep aStep) {
-    return new TreePopupImpl(aStep);
+    return new TreePopupImpl(aStep.getProject(), null, aStep, null);
   }
 
   @NotNull
@@ -643,7 +644,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       content.add(north, BorderLayout.WEST);
     }
 
-    content.setBorder(new EmptyBorder(2, 4, 2, 4));
+    content.setBorder(JBUI.Borders.empty(2, 4));
 
     final BalloonBuilder builder = createBalloonBuilder(content);
 

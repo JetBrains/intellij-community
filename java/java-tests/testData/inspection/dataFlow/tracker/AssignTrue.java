@@ -1,6 +1,6 @@
 /*
-Value is always true (b)
-  'b' was assigned to 'true' (=)
+Value is always true (b; line#9)
+  'b' was assigned to 'true' (=; line#8)
  */
 
 class Test {

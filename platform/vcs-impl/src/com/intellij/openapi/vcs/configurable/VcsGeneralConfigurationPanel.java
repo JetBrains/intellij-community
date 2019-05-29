@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -31,8 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
@@ -64,8 +48,6 @@ public class VcsGeneralConfigurationPanel {
   private JCheckBox myReloadContext;
   private JLabel myOnPatchCreationLabel;
   private JPanel myEmptyChangeListPanel;
-  private JCheckBox myManageIgnoreFiles;
-  private JCheckBox myAddExternalFiles;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -79,13 +61,6 @@ public class VcsGeneralConfigurationPanel {
       myPerformActionOnAddingFile,
       myDoNothingOnAddingFile
     };
-
-    myPerformActionOnAddingFile.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        myAddExternalFiles.setEnabled(myPerformActionOnAddingFile.isSelected());
-      }
-    });
 
     myOnFileRemovingGroup = new JRadioButton[]{
       myShowDialogOnRemovingFile,
@@ -106,19 +81,16 @@ public class VcsGeneralConfigurationPanel {
     }
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());                           // todo check text!
-    myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
+    myOnPatchCreation.setName((SystemInfoRt.isMac ? "Reveal patch in" : "Show patch in ") +
                               ShowFilePathAction.getFileManagerName() + " after creation:");
   }
 
   public void apply() {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-    VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
 
     settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
     settings.RELOAD_CONTEXT = myReloadContext.isSelected();
-    settings.ADD_EXTERNAL_FILES_SILENTLY = myAddExternalFiles.isSelected();
-    applicationSettings.MANAGE_IGNORE_FILES = myManageIgnoreFiles.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -134,7 +106,7 @@ public class VcsGeneralConfigurationPanel {
   private void applyPatchOption(VcsConfiguration settings) {
     settings.SHOW_PATCH_IN_EXPLORER = getShowPatchValue();
   }
-  
+
   @Nullable
   private Boolean getShowPatchValue() {
     final int index = myOnPatchCreation.getSelectedIndex();
@@ -200,13 +172,10 @@ public class VcsGeneralConfigurationPanel {
   public boolean isModified() {
 
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-    VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
     if (settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS != getSelected(myEmptyChangelistRemovingGroup)){
       return true;
     }
     if (settings.RELOAD_CONTEXT != myReloadContext.isSelected()) return true;
-    if (settings.ADD_EXTERNAL_FILES_SILENTLY != myAddExternalFiles.isSelected()) return true;
-    if (applicationSettings.MANAGE_IGNORE_FILES != myManageIgnoreFiles.isSelected()) return true;
 
     if (getReadOnlyStatusHandler().getState().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
@@ -225,11 +194,7 @@ public class VcsGeneralConfigurationPanel {
 
   public void reset() {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
-    VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
     myReloadContext.setSelected(settings.RELOAD_CONTEXT);
-    myAddExternalFiles.setSelected(settings.ADD_EXTERNAL_FILES_SILENTLY);
-    myManageIgnoreFiles.setSelected(applicationSettings.MANAGE_IGNORE_FILES);
-    myAddExternalFiles.setEnabled(myPerformActionOnAddingFile.isSelected());
     VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
                                                              ? 0

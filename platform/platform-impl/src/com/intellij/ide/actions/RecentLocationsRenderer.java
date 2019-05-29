@@ -232,7 +232,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
                                        boolean hasFocus) {
   }
 
-  private static void selectSearchResultsInEditor(@NotNull Editor editor, @NotNull Iterator<TextRange> resultIterator) {
+  private static void selectSearchResultsInEditor(@NotNull Editor editor, @NotNull Iterator<? extends TextRange> resultIterator) {
     if (!editor.getCaretModel().supportsMultipleCarets()) {
       return;
     }

@@ -30,7 +30,7 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsCont
                                 @NotNull PsiClass clazz,
                                 @NotNull String name,
                                 @NotNull PsiElement place,
-                                @NotNull Processor<PsiElement> processor) {
+                                @NotNull Processor<? super PsiElement> processor) {
     GrLightMethodBuilder res;
 
     // ()

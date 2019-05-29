@@ -105,7 +105,7 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   // Notifications
   //
 
-  public void setPersistentNotifications(@NotNull List<JComponent> components) {
+  public void setPersistentNotifications(@NotNull List<? extends JComponent> components) {
     myPersistentNotifications.clear();
     myPersistentNotifications.addAll(components);
     updateNotifications();

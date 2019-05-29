@@ -25,8 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 
@@ -36,31 +38,41 @@ class GroovyInferenceSessionBuilder constructor(
   private val contextSubstitutor: PsiSubstitutor
 ) {
 
-  private var closureSkipList = mutableListOf<GrMethodCall>()
+  private var expressionFilters = mutableSetOf<ExpressionPredicate>()
 
   private var skipClosureBlock = true
 
   fun resolveMode(skipClosureBlock: Boolean): GroovyInferenceSessionBuilder {
+    //TODO:add explicit typed closure constraints
     this.skipClosureBlock = skipClosureBlock
     return this
   }
 
+  fun ignoreArguments(arguments: Collection<Argument>): GroovyInferenceSessionBuilder {
+    expressionFilters.add {
+      ExpressionArgument(it) !in arguments
+    }
+    return this
+  }
+
   fun skipClosureIn(call: GrMethodCall): GroovyInferenceSessionBuilder {
-    closureSkipList.add(call)
+    expressionFilters.add {
+      it !is GrFunctionalExpression || call != GrClosureSignatureUtil.findCall(it)
+    }
     return this
   }
 
   fun build(): GroovyInferenceSession {
-    val session = GroovyInferenceSession(
-      candidate.method.typeParameters, contextSubstitutor, context, closureSkipList, skipClosureBlock
-    )
+    if (skipClosureBlock) expressionFilters.add(ignoreFunctionalExpressions)
+
+    val session = GroovyInferenceSession(candidate.method.typeParameters, contextSubstitutor, context, skipClosureBlock, expressionFilters)
     session.initArgumentConstraints(candidate.argumentMapping)
     return session
   }
 }
 
 fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession {
-  val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, emptyList(), false)
+  val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, false)
   val expression = findExpression(place) ?: return session
   val startConstraint = if (expression is GrBinaryExpression || expression is GrAssignmentExpression && expression.isOperatorAssignment) {
     OperatorExpressionConstraint(expression as GrOperatorExpression)
@@ -146,6 +158,9 @@ fun getExpectedType(expression: GrExpression): PsiType? {
 
   return null
 }
+
+internal typealias ExpressionPredicate = (GrExpression) -> Boolean
+private val ignoreFunctionalExpressions: ExpressionPredicate = { it !is GrFunctionalExpression }
 
 private fun isExitPoint(place: GrExpression): Boolean {
   return collectExitPoints(place).contains(place)

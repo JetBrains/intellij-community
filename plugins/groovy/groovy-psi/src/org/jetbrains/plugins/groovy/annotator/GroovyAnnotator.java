@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -1218,8 +1219,41 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    super.visitLambdaExpression(expression);
+
+    PsiElement arrow = expression.getArrow();
+    myHolder.createInfoAnnotation(arrow, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    super.visitBlockLambdaBody(body);
+
+    PsiElement lBrace = body.getLBrace();
+    if (lBrace != null) {
+      myHolder.createInfoAnnotation(lBrace, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+    }
+
+    PsiElement rBrace = body.getRBrace();
+    if (rBrace != null) {
+      myHolder.createInfoAnnotation(rBrace, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+    }
+  }
+
+  @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
     super.visitClosure(closure);
+
+    myHolder.createInfoAnnotation(closure.getLBrace(), null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    PsiElement rBrace = closure.getRBrace();
+    if (rBrace != null) {
+      myHolder.createInfoAnnotation(rBrace, null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    }
+    PsiElement closureArrow = closure.getArrow();
+    if (closureArrow != null) {
+      myHolder.createInfoAnnotation(closureArrow, null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    }
 
     if (TypeInferenceHelper.isTooComplexTooAnalyze(closure)) {
       int startOffset = closure.getTextRange().getStartOffset();

@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,6 +46,10 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.vcs.commit.ChangesViewCommitPanel;
+import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +90,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
+  private ChangesViewCommitPanel myCommitPanel;
+  private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
@@ -157,6 +162,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
+    if (myCommitPanel != null) Disposer.register(myContent, myCommitPanel);
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -181,6 +187,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return "ChangesViewManager";
   }
 
+  @Nullable
+  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return myCommitWorkflowHandler;
+  }
+
   private JComponent createChangeViewComponent() {
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
@@ -194,7 +205,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     };
     contentPanel.addToCenter(changesPanel);
     if (isNonModalCommit()) {
-      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
+      myCommitPanel = new ChangesViewCommitPanel(myView);
+      contentPanel.addToBottom(myCommitPanel);
+
+      myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
     }
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
@@ -213,6 +227,15 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       public List<AnAction> getActions(boolean originalProvider) {
         return changesToolbar.getActions();
       }
+
+      @Nullable
+      @Override
+      public Object getData(@NotNull String dataId) {
+        Object data = super.getData(dataId);
+        if (data != null) return data;
+        // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
+        return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
+      }
     };
     myProgressLabel = simplePanel();
     panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
@@ -220,11 +243,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return panel;
   }
 
-  private static void registerShortcuts(@NotNull JComponent component) {
+  private void registerShortcuts(@NotNull JComponent component) {
     registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
     registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
+
+    if (myCommitPanel != null) myCommitPanel.setupShortcuts(component);
   }
 
   @NotNull
@@ -238,7 +263,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
     ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
     ignoreGroup.add(new ToggleShowIgnoredAction());
-    ignoreGroup.add(new IgnoredSettingsAction());
     group.add(ignoreGroup);
     group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
     group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
@@ -312,16 +336,18 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+      List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
+      List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
 
       TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-        .setChangeLists(changeListManager.getChangeListsCopy(), Registry.is("vcs.skip.single.default.changelist"))
+        .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"))
         .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
         .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
         .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
         .setSwitchedRoots(changeListManager.getSwitchedRoots())
         .setLockedFolders(changeListManager.getLockedFolders())
         .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-        .setUnversioned(changeListManager.getUnversionedFiles());
+        .setUnversioned(unversionedFiles);
       if (myState.myShowIgnored) {
         treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
       }
@@ -334,6 +360,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         myModelUpdateInProgress = true;
         try {
           myView.updateModel(newModel);
+          synchronizeInclusion(changeLists, unversionedFiles);
         }
         finally {
           myModelUpdateInProgress = false;
@@ -341,6 +368,16 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         updatePreview(true);
       }, ModalityState.NON_MODAL);
     }, indicator);
+  }
+
+  private void synchronizeInclusion(@NotNull List<LocalChangeList> changeLists, @NotNull List<VirtualFile> unversionedFiles) {
+    if (myView.isShowCheckboxes() && !myView.isInclusionEmpty()) {
+      THashSet<Object> possibleInclusion = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
+      changeLists.forEach(changeList -> possibleInclusion.addAll(changeList.getChanges()));
+      possibleInclusion.addAll(unversionedFiles);
+
+      myView.retainInclusion(possibleInclusion);
+    }
   }
 
   private void updatePreview(boolean fromModelRefresh) {

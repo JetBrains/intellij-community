@@ -14,6 +14,7 @@ import javax.swing.Icon;
 
 import static com.intellij.util.ui.JBUI.setUserScaleFactor;
 
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class TreeControlPainterTest {
   @ClassRule
   public static final RestoreScaleRule MANAGE_STATE = new RestoreScaleRule();
@@ -56,13 +57,13 @@ public class TreeControlPainterTest {
     Control.Painter painter = new ClassicPainter(true, 0, 0, null);
 
     Control even = new TestControl(10, 10);
-    testRendererOffset(painter, even, false, 10, 15, 20, 25, 30, 35);
-    testRendererOffset(painter, even, true, 10, 15, 20, 25, 30, 35);
+    testRendererOffset(painter, even, false, 12, 17, 22, 27, 32, 37);
+    testRendererOffset(painter, even, true, 12, 17, 22, 27, 32, 37);
     testControlOffset(painter, even, 0, 5, 10, 15, 20, 25);
 
     Control odd = new TestControl(11, 11);
-    testRendererOffset(painter, odd, false, 11, 16, 21, 26, 31, 36);
-    testRendererOffset(painter, odd, true, 11, 16, 21, 26, 31, 36);
+    testRendererOffset(painter, odd, false, 13, 18, 23, 28, 33, 38);
+    testRendererOffset(painter, odd, true, 13, 18, 23, 28, 33, 38);
     testControlOffset(painter, odd, 0, 5, 10, 15, 20, 25);
   }
 
@@ -72,12 +73,12 @@ public class TreeControlPainterTest {
     Control.Painter painter = new ClassicPainter(false, 0, 0, 0);
 
     Control even = new TestControl(10, 10);
-    testRendererOffset(painter, even, false, 10, 15, 20, 25, 30, 35);
+    testRendererOffset(painter, even, false, 12, 17, 22, 27, 32, 37);
     testRendererOffset(painter, even, true, 0, 5, 10, 15, 20, 25);
     testControlOffset(painter, even, 0, 5, 10, 15, 20, 25);
 
     Control odd = new TestControl(11, 11);
-    testRendererOffset(painter, odd, false, 11, 16, 21, 26, 31, 36);
+    testRendererOffset(painter, odd, false, 13, 18, 23, 28, 33, 38);
     testRendererOffset(painter, odd, true, 0, 5, 10, 15, 20, 25);
     testControlOffset(painter, odd, 0, 5, 10, 15, 20, 25);
   }

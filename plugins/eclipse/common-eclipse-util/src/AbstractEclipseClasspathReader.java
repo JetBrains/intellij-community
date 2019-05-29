@@ -42,7 +42,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
   protected abstract String prepareValidUrlInsideJar(String url);
 
   protected abstract void addNamedLibrary(T rootModel,
-                                          Collection<String> unknownLibraries,
+                                          Collection<? super String> unknownLibraries,
                                           boolean exported,
                                           String name,
                                           boolean applicationLevel);
@@ -50,7 +50,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
   protected abstract void addInvalidModuleEntry(T rootModel, boolean exported, String moduleName);
 
   protected abstract void setUpModuleJdk(T rootModel,
-                                         Collection<String> unknownJdks,
+                                         Collection<? super String> unknownJdks,
                                          EclipseModuleManager eclipseModuleManager,
                                          String jdkName);
 
@@ -76,14 +76,14 @@ public abstract class AbstractEclipseClasspathReader<T> {
   protected abstract int rearrange(T rootModel);
 
   protected void readClasspathEntry(T rootModel,
-                                    final Collection<String> unknownLibraries,
-                                    Collection<String> unknownJdks,
-                                    Set<String> refsToModules,
+                                    final Collection<? super String> unknownLibraries,
+                                    Collection<? super String> unknownJdks,
+                                    Set<? super String> refsToModules,
                                     final String testPattern,
                                     Element element, int index,
                                     @Nullable EclipseModuleManager eclipseModuleManager,
                                     final ExpandMacroToPathMap macroMap,
-                                    final Set<String> libs) throws ConversionException {
+                                    final Set<? super String> libs) throws ConversionException {
     String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
     if (kind == null) {
       throw new ConversionException("Missing classpathentry/@kind");
@@ -322,7 +322,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
 
-  protected void readRequiredBundles(T rootModel, Set<String> refsToModules) throws ConversionException {
+  protected void readRequiredBundles(T rootModel, Set<? super String> refsToModules) throws ConversionException {
     if (myModuleNames == null) {
       return;
     }

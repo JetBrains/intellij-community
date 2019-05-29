@@ -178,6 +178,11 @@
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
+    <group id="Git.Ignore.File" class="git4idea.ignore.actions.GitIgnoreFileActionGroup">
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
+      <add-to-group group-id="GitFileActions" anchor="after" relative-to-action="Git.Add"/>
+      <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
+    </group>
 
   </actions>
 
@@ -220,7 +225,7 @@
     <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
     <projectService serviceImplementation="git4idea.history.GitHistoryProvider"/>
     <projectService serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
-    <projectService serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService serviceImplementation="git4idea.config.GitExecutableValidator"/>
@@ -270,6 +275,9 @@
      <!--END Git ignore lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
+
+    <registryKey key="git.update.incoming.info.time" defaultValue="20"
+                 description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
   </extensions>
 
   <extensionPoints>

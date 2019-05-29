@@ -332,7 +332,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       throw new AssertionError();
     }
 
-    private void performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
+    private void performTypeMigration(List<? extends PsiElement> elements, List<PsiType> types) {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
       final Project project = elements.get(0).getProject();
       final TypeMigrationRules rules = new TypeMigrationRules(project);
@@ -348,7 +348,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
                                                           true);
     }
 
-    private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,
+    private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<? extends PsiElement> elements,
                                                                              @NotNull final List<PsiType> types) {
       LOG.assertTrue(elements.size() == types.size());
       final Map<PsiElement, PsiType> mappings = new HashMap<>();

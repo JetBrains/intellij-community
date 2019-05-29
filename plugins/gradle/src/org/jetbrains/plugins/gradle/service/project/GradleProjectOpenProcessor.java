@@ -44,7 +44,6 @@ import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -64,8 +63,11 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
+ * @deprecated Use {@link org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor} instead
+ *
  * @author Vladislav.Soroka
  */
+@Deprecated
 public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
 
   @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
@@ -176,9 +178,8 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
   @NotNull
   private static GradleProjectSettings createDefaultProjectSettings() {
     GradleProjectSettings settings = new GradleProjectSettings();
+    settings.setupNewProjectDefault();
     settings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
-    settings.setStoreProjectFilesExternally(ThreeState.YES);
-    settings.setUseQualifiedModuleNames(true);
     return settings;
   }
 

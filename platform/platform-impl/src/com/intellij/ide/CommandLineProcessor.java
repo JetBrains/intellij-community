@@ -3,7 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.idea.StartupUtil;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -129,7 +129,7 @@ public class CommandLineProcessor {
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
-      if (arg.equals(StartupUtil.NO_SPLASH)) {
+      if (arg.equals(SplashManager.NO_SPLASH)) {
         continue;
       }
 

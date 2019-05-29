@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.execution.ExecutionBundle;
@@ -25,10 +11,7 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,12 +19,16 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
-import com.jediterm.terminal.*;
+import com.jediterm.terminal.HyperlinkStyle;
+import com.jediterm.terminal.RequestOrigin;
+import com.jediterm.terminal.TerminalStarter;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
@@ -73,12 +60,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
   private boolean myEnableConsoleActions = true;
 
-  private boolean myEnterKeyDefaultCodeEnabled = false; // TODO turn on by default in 2019.2
-  private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
-
-  {
-    myKeyEncoder.setAutoNewLine(true);
-  }
+  private boolean myEnterKeyDefaultCodeEnabled = true;
 
   public TerminalExecutionConsole(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     myProject = project;
@@ -120,17 +102,11 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
            color.getBlue() + "m";
   }
 
-  public void setAutoNewLineMode(boolean enabled) {
-    myKeyEncoder.setAutoNewLine(enabled);
-  }
-
   /**
-   * @deprecated use
+   * @deprecated use {@link #withEnterKeyDefaultCodeEnabled(boolean)}
    */
   @Deprecated
-  @NotNull
-  public TerminalExecutionConsole withEnterKeyLineSeparator(@NotNull LineSeparator lineSeparator) {
-    return this;
+  public void setAutoNewLineMode(@SuppressWarnings("unused") boolean enabled) {
   }
 
   @NotNull
@@ -293,8 +269,14 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
-  public void enableConsoleActions(boolean enableConsoleActions) {
-    myEnableConsoleActions = enableConsoleActions;
+  @NotNull
+  public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
+    AnAction[] actions = createConsoleActions();
+    myEnableConsoleActions = false;
+    if (prependSeparatorIfNonEmpty && actions.length > 0) {
+      actions = ArrayUtil.mergeArrays(new AnAction[] {Separator.create()}, actions);
+    }
+    return actions;
   }
 
   @NotNull
@@ -363,13 +345,10 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       return new TerminalStarter(terminal, connector, myDataStream) {
         @Override
         public byte[] getCode(int key, int modifiers) {
-          if (key == KeyEvent.VK_ENTER) {
-            if (modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-              // pty4j expects \r on Windows and \n on Unix as Enter key code
-              // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
-              return SystemInfo.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
-            }
-            return myKeyEncoder.getCode(key, modifiers);
+          if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
+            // pty4j expects \r on Windows and \n on Unix as Enter key code
+            // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
+            return SystemInfoRt.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
           }
           return super.getCode(key, modifiers);
         }
@@ -411,14 +390,21 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
-      e.getPresentation().setEnabled(model.getValue() != 0);
+      BoundedRangeModel model = getBoundedRangeModel();
+      e.getPresentation().setEnabled(model != null && model.getValue() != 0);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      BoundedRangeModel model = myTerminalWidget.getTerminalPanel().getBoundedRangeModel();
-      model.setValue(0);
+      BoundedRangeModel model = getBoundedRangeModel();
+      if (model != null) {
+        model.setValue(0);
+      }
+    }
+
+    @Nullable
+    private BoundedRangeModel getBoundedRangeModel() {
+      return myTerminalWidget != null ? myTerminalWidget.getTerminalPanel().getBoundedRangeModel() : null;
     }
   }
 }

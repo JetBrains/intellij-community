@@ -1144,6 +1144,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       popTrap(TwrFinally.class);
       pushTrap(new InsideFinally(resourceList));
       startElement(resourceList);
+      addInstruction(new FlushFieldsInstruction());
       addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
       controlTransfer(new ExitFinallyTransfer(twrFinallyDescriptor), FList.emptyList()); // DfaControlTransferValue is on stack
       finishElement(resourceList);

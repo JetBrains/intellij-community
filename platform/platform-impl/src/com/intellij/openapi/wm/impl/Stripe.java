@@ -147,7 +147,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     super.removeNotify();
   }
 
-  void addButton(@NotNull StripeButton button, final Comparator<StripeButton> comparator) {
+  void addButton(@NotNull StripeButton button, final Comparator<? super StripeButton> comparator) {
     myPrefSize = null;
     myButtons.add(button);
     Collections.sort(myButtons, comparator);

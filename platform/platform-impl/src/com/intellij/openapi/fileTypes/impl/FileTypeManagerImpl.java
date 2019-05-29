@@ -10,7 +10,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -70,7 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
-public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable, BaseComponent {
+public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -104,9 +103,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<>();
-  private final Map<FileNameMatcher, Trinity<String, String, Boolean>> myUnresolvedRemovedMappings = new THashMap<>();
-  /** This will contain removed mappings with "approved" states */
-  private final Map<FileNameMatcher, Pair<FileType, Boolean>> myRemovedMappings = new THashMap<>();
+  private final RemovedMappingTracker myRemovedMappingTracker = new RemovedMappingTracker();
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
   @NonNls private static final String ELEMENT_IGNORE_FILES = "ignoreFiles";
@@ -475,7 +472,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (!myUnresolvedMappings.isEmpty()) {
       for (StandardFileType pair : myStandardFileTypes.values()) {
         registerReDetectedMappings(pair);
@@ -1128,7 +1125,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (PlainTextFileType.INSTANCE == type) {
           FileType newFileType = myPatternsTable.findAssociatedFileType(matcher);
           if (newFileType != null && newFileType != PlainTextFileType.INSTANCE && newFileType != UnknownFileType.INSTANCE) {
-            myRemovedMappings.put(matcher, Pair.create(newFileType, false));
+            myRemovedMappingTracker.add(matcher, newFileType.getName(), false);
           }
         }
         associate(type, matcher, false);
@@ -1141,16 +1138,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    List<Trinity<FileNameMatcher, String, Boolean>> removedAssociations = AbstractFileType.readRemovedAssociations(e);
-    for (Trinity<FileNameMatcher, String, Boolean> trinity : removedAssociations) {
-      FileType type = getFileTypeByName(trinity.getSecond());
-      FileNameMatcher matcher = trinity.getFirst();
-      if (type != null) {
-        removeAssociation(type, matcher, false);
-        myRemovedMappings.put(matcher, Pair.create(type, trinity.third));
-      }
-      else {
-        myUnresolvedRemovedMappings.put(matcher, Trinity.create(trinity.getSecond(), myUnresolvedMappings.get(matcher), trinity.getThird()));
+    myRemovedMappingTracker.load(e);
+    for (RemovedMappingTracker.RemovedMapping mapping : myRemovedMappingTracker.getRemovedMappings()) {
+      FileType fileType = getFileTypeByName(mapping.getFileTypeName());
+      if (fileType != null) {
+        removeAssociation(fileType, mapping.getFileNameMatcher(), false);
       }
     }
   }
@@ -1216,13 +1208,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-138366
-    for (Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry : myRemovedMappings.entrySet()) {
-      Pair<FileType, Boolean> value = entry.getValue();
-      Element content = AbstractFileType.writeRemovedMapping(value.first, entry.getKey(), true, value.second);
-      if (content != null) {
-        map.addContent(content);
-      }
-    }
+    myRemovedMappingTracker.save(map);
 
     if (!myUnresolvedMappings.isEmpty()) {
       FileNameMatcher[] unresolvedMappingKeys = myUnresolvedMappings.keySet().toArray(new FileNameMatcher[0]);
@@ -1260,17 +1246,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    for (FileNameMatcher matcher : defaultAssociations) {
-      Element content = AbstractFileType.writeRemovedMapping(type, matcher, specifyTypeName, isApproved(matcher));
-      if (content != null) {
-        map.addContent(content);
-      }
-    }
+    myRemovedMappingTracker.saveRemovedMappingsForFileType(map, type.getName(), defaultAssociations, specifyTypeName);
   }
 
-  private boolean isApproved(@NotNull FileNameMatcher matcher) {
-    Pair<FileType, Boolean> pair = myRemovedMappings.get(matcher);
-    return pair != null && pair.getSecond();
+  public void approveRemoval(@NotNull FileNameMatcher matcher) {
+    FileType type = getExtensionMap().findAssociatedFileType(matcher);
+    if (type != null) {
+      myRemovedMappingTracker.approveRemoval(type.getName(), matcher);
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -1322,12 +1305,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    for (FileNameMatcher matcher : new THashSet<>(myUnresolvedRemovedMappings.keySet())) {
-      Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
-      if (Comparing.equal(trinity.getFirst(), fileType.getName())) {
-        removeAssociation(fileType, matcher, false);
-        myUnresolvedRemovedMappings.remove(matcher);
-      }
+    for (FileNameMatcher matcher : myRemovedMappingTracker.getMappingsForFileType(fileType.getName())) {
+      removeAssociation(fileType, matcher, false);
     }
   }
 
@@ -1383,8 +1362,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           associate(type, association.getFirst(), false);
         }
 
-        for (Trinity<FileNameMatcher, String, Boolean> removedAssociation : AbstractFileType.readRemovedAssociations(extensions)) {
-          removeAssociation(type, removedAssociation.getFirst(), false);
+        for (RemovedMappingTracker.RemovedMapping removedAssociation : RemovedMappingTracker.readRemovedMappings(extensions)) {
+          removeAssociation(type, removedAssociation.getFileNameMatcher(), false);
         }
       }
     }
@@ -1436,7 +1415,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return myPatternsTable;
   }
 
-  void setPatternsTable(@NotNull Set<? extends FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+  void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+    Map<FileNameMatcher, FileType> removedMappings = getExtensionMap().getRemovedMappings(assocTable, fileTypes);
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
       if (!fileTypes.contains(existing)) {
@@ -1451,6 +1431,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
+
+    myRemovedMappingTracker.removeMatching((matcher, fileTypeName) -> {
+      FileType fileType = getFileTypeByName(fileTypeName);
+      return fileType != null && assocTable.isAssociatedWith(fileType, matcher);
+    });
+    for (FileNameMatcher matcher : removedMappings.keySet()) {
+      myRemovedMappingTracker.add(matcher, removedMappings.get(matcher).getName(), true);
+    }
   }
 
   public void associate(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
@@ -1497,27 +1485,28 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType fileType = pair.fileType;
     if (fileType == PlainTextFileType.INSTANCE) return;
     for (FileNameMatcher matcher : pair.matchers) {
-      registerReDetectedMapping(fileType, matcher);
+      registerReDetectedMapping(fileType.getName(), matcher);
       if (matcher instanceof ExtensionFileNameMatcher) {
         // also check exact file name matcher
         ExtensionFileNameMatcher extMatcher = (ExtensionFileNameMatcher)matcher;
-        registerReDetectedMapping(fileType, new ExactFileNameMatcher("." + extMatcher.getExtension()));
+        registerReDetectedMapping(fileType.getName(), new ExactFileNameMatcher("." + extMatcher.getExtension()));
       }
     }
   }
 
-  private void registerReDetectedMapping(@NotNull FileType fileType, @NotNull FileNameMatcher matcher) {
+  private void registerReDetectedMapping(String fileTypeName, @NotNull FileNameMatcher matcher) {
     String typeName = myUnresolvedMappings.get(matcher);
-    if (typeName != null && !typeName.equals(fileType.getName())) {
-      Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
-      myRemovedMappings.put(matcher, Pair.create(fileType, trinity != null && trinity.third));
+    if (typeName != null && !typeName.equals(fileTypeName)) {
+      if (!myRemovedMappingTracker.hasRemovedMapping(matcher)) {
+        myRemovedMappingTracker.add(matcher, fileTypeName, false);
+      }
       myUnresolvedMappings.remove(matcher);
     }
   }
 
   @NotNull
-  Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
-    return myRemovedMappings;
+  RemovedMappingTracker getRemovedMappingTracker() {
+    return myRemovedMappingTracker;
   }
 
   @TestOnly
@@ -1527,7 +1516,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     myStandardFileTypes.clear();
     myUnresolvedMappings.clear();
-    myRemovedMappings.clear();
+    myRemovedMappingTracker.clear();
     mySchemeManager.setSchemes(Collections.emptyList());
   }
 

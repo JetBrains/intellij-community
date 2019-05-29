@@ -1382,6 +1382,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testFromStaticMethodInInterface() throws Exception {
     doTest();
   }
+  
+  public void testDisjunctionType() throws Exception {
+    doTest();
+  }
 
   private void doTestDisabledParam() throws PrepareFailedException {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);

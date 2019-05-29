@@ -134,7 +134,7 @@ public class ApproximateResolver {
   }
 
   @Nullable
-  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<PsiClass> qualifierType) {
+  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<? extends PsiClass> qualifierType) {
     Set<PsiClass> possibleTypes = new HashSet<>();
     for (PsiMember candidate : candidates) {
       if (candidate instanceof PsiClass) {

@@ -30,12 +30,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -57,13 +57,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -99,14 +98,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   private final Project myProject;
   private final ConsoleViewHandler myConsoleViewHandler;
   private final String myWorkingDir;
+  private final AtomicBoolean myFinishedBuildEventReceived = new AtomicBoolean();
   private final AtomicBoolean myDisposed = new AtomicBoolean();
   private final AtomicBoolean myShownFirstError = new AtomicBoolean();
+  private final boolean myFocusFirstError;
   private final StructureTreeModel<SimpleTreeStructure> myTreeModel;
   private final Tree myTree;
   private final ExecutionNode myRootNode;
   private final ExecutionNode myBuildProgressRootNode;
   private final Set<Predicate<ExecutionNode>> myNodeFilters;
   private final ProblemOccurrenceNavigatorSupport myOccurrenceNavigatorSupport;
+  private final Set<BuildEvent> myDeferredEvents = ContainerUtil.newConcurrentSet();
 
   public BuildTreeConsoleView(Project project,
                               BuildDescriptor buildDescriptor,
@@ -115,6 +117,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myNodeFilters = ContainerUtil.newConcurrentSet();
     myProject = project;
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
+    myFocusFirstError = !(buildDescriptor instanceof DefaultBuildDescriptor) ||
+                        ((DefaultBuildDescriptor)buildDescriptor).isActivateToolWindowWhenFailed();
 
     myRootNode = new ExecutionNode(myProject, null);
     myRootNode.setAutoExpandNode(true);
@@ -123,7 +127,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myRootNode.add(myBuildProgressRootNode);
 
     SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRootNode);
-    myTreeModel = new StructureTreeModel<>(treeStructure);
+    myTreeModel = new StructureTreeModel<>(treeStructure, this);
     myTree = initTree(new AsyncTreeModel(myTreeModel, this));
 
     JPanel myContentPanel = new JPanel();
@@ -243,6 +247,18 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     ExecutionNode buildProgressRootNode = getBuildProgressRootNode();
     if (event instanceof StartEvent || event instanceof MessageEvent) {
       if (currentNode == null) {
+        if (event instanceof DuplicateMessageAware) {
+          if (myFinishedBuildEventReceived.get()) {
+            if (parentNode != null &&
+                parentNode.findFirstChild(node -> event.getMessage().equals(node.getName())) != null) {
+              return;
+            }
+          }
+          else {
+            myDeferredEvents.add(event);
+            return;
+          }
+        }
         if (event instanceof StartBuildEvent) {
           currentNode = buildProgressRootNode;
           installContextMenu((StartBuildEvent)event);
@@ -274,6 +290,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             if (parentNode != buildProgressRootNode) {
               myConsoleViewHandler.addOutput(parentNode, event);
               myConsoleViewHandler.addOutput(parentNode, "\n", true);
+            }
+            if (parentNode != null) {
+              reportMessageKind(messageEvent, parentNode);
             }
             myConsoleViewHandler.addOutput(currentNode, event);
           }
@@ -329,10 +348,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
 
     if (event instanceof FinishBuildEvent) {
+      myFinishedBuildEventReceived.set(true);
       String aHint = event.getHint();
       String time = DateFormatUtil.formatDateTime(event.getEventTime());
       aHint = aHint == null ? "at " + time : aHint + " at " + time;
       currentNode.setHint(aHint);
+      myDeferredEvents.forEach(this::onEventInternal);
       if (myConsoleViewHandler.myExecutionNode == null) {
         ApplicationManager.getApplication().invokeLater(() -> myConsoleViewHandler.setNode(buildProgressRootNode));
       }
@@ -340,11 +361,34 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     scheduleUpdate(currentNode);
   }
 
+  private void reportMessageKind(@NotNull MessageEvent messageEvent, @NotNull ExecutionNode parentNode) {
+    final MessageEvent.Kind eventKind = messageEvent.getKind();
+    if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
+      SimpleNode p = parentNode;
+      Ref<ExecutionNode> child = new Ref<>();
+      do {
+        ExecutionNode executionNode = (ExecutionNode)p;
+        executionNode.reportChildMessageKind(eventKind);
+
+        boolean isUpdateNeeded =
+          (eventKind == MessageEvent.Kind.WARNING && !executionNode.hasWarnings()) ||
+          (eventKind == MessageEvent.Kind.INFO && !executionNode.hasInfos()) ||
+          (!child.isNull() && Arrays.stream(executionNode.getChildren()).noneMatch(node -> child.get() == node));
+        if (isUpdateNeeded) {
+          scheduleUpdate(executionNode);
+        }
+        child.set(executionNode);
+      }
+      while ((p = p.getParent()) instanceof ExecutionNode);
+      scheduleUpdate(getRootElement());
+    }
+  }
+
   private void showErrorIfFirst(@NotNull ExecutionNode node, @Nullable Navigatable navigatable) {
     if (myShownFirstError.compareAndSet(false, true)) {
-      if (navigatable != null && navigatable != NonNavigatable.INSTANCE) {
+      if (myFocusFirstError && navigatable != null && navigatable != NonNavigatable.INSTANCE) {
         ApplicationManager.getApplication()
-          .invokeLater(() -> navigatable.navigate(false), ModalityState.defaultModalityState(), myProject.getDisposed());
+          .invokeLater(() -> navigatable.navigate(true), ModalityState.defaultModalityState(), myProject.getDisposed());
       }
       SimpleNode parentOrNode = node.getParent() == null ? node : node.getParent();
       myTreeModel.invalidate(parentOrNode, true).onProcessed(p -> TreeUtil.promiseSelect(myTree, visitor(node)));
@@ -393,10 +437,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   private void addChildFailureNode(@NotNull ExecutionNode parentNode, @NotNull Failure failure, @NotNull String defaultFailureMessage) {
-    ExecutionNode failureNode = new ExecutionNode(myProject, parentNode);
-    parentNode.add(failureNode);
-    failureNode.setNavigatable(failure.getNavigatable());
-    failureNode.setResult(new FailureResultImpl(Collections.singletonList(failure)));
     String text = chooseNotNull(failure.getDescription(), failure.getMessage());
     if (text == null && failure.getError() != null) {
       text = failure.getError().getMessage();
@@ -412,8 +452,27 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     if (sepIndex > 0) {
       text = text.substring(0, sepIndex);
     }
-    text = StringUtil.trimEnd(text, '.');
-    failureNode.setName(text);
+    String failureNodeName = StringUtil.trimEnd(text, '.');
+    ExecutionNode failureNode = parentNode.findFirstChild(executionNode -> failureNodeName.equals(executionNode.getName()));
+    if (failureNode == null) {
+      failureNode = new ExecutionNode(myProject, parentNode);
+      failureNode.setName(failureNodeName);
+      parentNode.add(failureNode);
+    }
+    if (failure.getNavigatable() == null) {
+      failureNode.setNavigatable(failure.getNavigatable());
+    }
+
+    List<Failure> failures;
+    EventResult result = failureNode.getResult();
+    if (result instanceof FailureResult) {
+      failures = new ArrayList<>(((FailureResult)result).getFailures());
+      failures.add(failure);
+    }
+    else {
+      failures = Collections.singletonList(failure);
+    }
+    failureNode.setResult(new FailureResultImpl(failures));
     myConsoleViewHandler.addOutput(failureNode, failure);
     showErrorIfFirst(failureNode, failure.getNavigatable());
   }
@@ -542,9 +601,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     Object messageEventParentId = messageEvent.getParentId();
     if (messageEventParentId == null) return null;
 
-    String group = messageEvent.getGroup();
-    String groupNodeId = group.hashCode() + messageEventParentId.toString();
-    final MessageEvent.Kind eventKind = messageEvent.getKind();
     if (messageEvent instanceof FileMessageEvent) {
       FilePosition filePosition = ((FileMessageEvent)messageEvent).getFilePosition();
       String filePath = FileUtil.toSystemIndependentName(filePosition.getFile().getPath());
@@ -555,9 +611,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         parentsPath = myWorkingDir;
       }
 
-      String fileNodeId = groupNodeId + filePath;
       relativePath = isEmpty(parentsPath) ? filePath : FileUtil.getRelativePath(parentsPath, filePath, '/');
-      parentNode = getOrCreateMessagesNode(messageEvent, fileNodeId, parentNode, relativePath,
+      parentNode = getOrCreateMessagesNode(messageEvent, filePath, parentNode, relativePath,
                                            () -> {
                                              VirtualFile file = VfsUtil.findFileByIoFile(filePosition.getFile(), false);
                                              if (file != null) {
@@ -565,23 +620,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                              }
                                              return null;
                                            }, messageEvent.getNavigatable(myProject), nodesMap, myProject);
-    }
-
-    if (eventKind == MessageEvent.Kind.ERROR || eventKind == MessageEvent.Kind.WARNING || eventKind == MessageEvent.Kind.INFO) {
-      SimpleNode p = parentNode;
-      do {
-        ExecutionNode executionNode = (ExecutionNode)p;
-        boolean warningOrInfoUpdate =
-          (eventKind == MessageEvent.Kind.WARNING && !executionNode.hasWarnings()) ||
-          (eventKind == MessageEvent.Kind.INFO && !executionNode.hasInfos());
-        executionNode.reportChildMessageKind(eventKind);
-        if (warningOrInfoUpdate) {
-          executionNode.cleanUpCache();
-          scheduleUpdate(executionNode);
-        }
-      }
-      while ((p = p.getParent()) instanceof ExecutionNode);
-      scheduleUpdate(getRootElement());
     }
     return parentNode;
   }
@@ -623,7 +661,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return result;
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   JTree getTree() {
     return myTree;
   }
@@ -689,7 +727,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myProject = project;
       myPanel = new JPanel(new BorderLayout());
       myViewSettingsProvider = buildViewSettingsProvider;
-      myView = new CompositeView<>(null);
+      myView = new CompositeView<ExecutionConsole>(null) {
+        @Override
+        public void addView(@NotNull ExecutionConsole view, @NotNull String viewName, boolean enable) {
+          super.addView(view, viewName, enable);
+          UIUtil.removeScrollBorder(view.getComponent());
+        }
+      };
       if (executionConsole != null && buildViewSettingsProvider.isSideBySideView()) {
         String nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
         myView.addView(executionConsole, nodeConsoleViewName, true);
@@ -702,9 +746,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       }
       JComponent consoleComponent = emptyConsole.getComponent();
       consoleComponent.setFocusable(true);
-      final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT),
-                                                    new SideBorder(editorBackground, SideBorder.LEFT)));
       myPanel.add(myView.getComponent(), BorderLayout.CENTER);
       DefaultActionGroup consoleActionsGroup = new DefaultActionGroup();
       consoleActionsGroup.add(new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
@@ -923,12 +964,15 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     @Override
     public void setUI(final TreeUI ui) {
-      super.setUI(ui instanceof DefaultTreeUI ? ui : new DefaultTreeUI());
+      super.setUI(ui instanceof DefaultTreeUI ? ui : DefaultTreeUI.createUI(this));
       setLargeModel(true);
     }
   }
 
   private static class MyNodeRenderer extends NodeRenderer {
+    {
+      putClientProperty(DefaultTreeUI.SHRINK_LONG_RENDERER, true);
+    }
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;

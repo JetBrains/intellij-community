@@ -14,10 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
@@ -50,7 +47,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   private JComponent myComponent = null;
   private JComponent myPreferredFocus = null;
   private String myTitle = "";
-  private List<Image> myImages = null;
+  private List<? extends Image> myImages = null;
   private boolean myCloseOnEsc = false;
   private BooleanGetter myOnCloseHandler;
   private Window myFrame;
@@ -312,7 +309,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     setImages(image != null ? Collections.singletonList(image) : Collections.emptyList());
   }
 
-  public void setImages(List<Image> images) {
+  public void setImages(List<? extends Image> images) {
     myImages = images;
   }
 
@@ -347,6 +344,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
+    private static final boolean USE_SINGLE_SYSTEM_MENUBAR = SystemInfo.isMacSystemMenu && "true".equalsIgnoreCase(System.getProperty("mac.system.menu.singleton"));
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
 
@@ -360,7 +358,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfo.isMac;
+      final boolean setMenuOnFrame = SystemInfoRt.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));

@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -51,7 +50,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   });
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix &&
+    return SystemInfoRt.isUnix &&
            (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) &&
            INTERPRETER_NAME.getValue() != null;
   }
@@ -161,7 +160,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
-    String runPath = SystemInfo.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), "/Contents") : CreateDesktopEntryAction.getLauncherScript();
+    String runPath = SystemInfoRt.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), "/Contents") : CreateDesktopEntryAction.getLauncherScript();
     if (runPath == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
@@ -178,7 +177,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   public static String defaultScriptPath() {
     String scriptName = ApplicationNamesInfo.getInstance().getDefaultLauncherName();
-    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
     return "/usr/local/bin/" + scriptName;
   }
 }

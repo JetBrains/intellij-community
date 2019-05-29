@@ -38,10 +38,9 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
 
   @Override
   protected void doIntercept(JBPopup popup) {
-    JComponent component = popup.getContent();
-    JBList<?> content = UIUtil.findComponentOfType(component, JBList.class);
+    JBList<?> content = popup.isDisposed() ? null : UIUtil.findComponentOfType(popup.getContent(), JBList.class);
     if (content == null) {
-      fail("JBList not found under " + component);
+      fail("JBList not found under " + popup.getContent());
     }
     ListModel<?> model = content.getModel();
     List<String> actualOptions = IntStreamEx.range(model.getSize()).mapToObj(model::getElementAt).map(Object::toString).toList();

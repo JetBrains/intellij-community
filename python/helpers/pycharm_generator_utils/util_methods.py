@@ -746,3 +746,36 @@ def isidentifier(s):
                 not s[:1].isdigit() and
                 "-" not in s and
                 " " not in s)
+
+
+def is_text_file(path):
+    """
+    Verify that some path is a text file (not a binary file).
+    Ideally there should be usage of libmagic but it can be not
+    installed on a target machine.
+
+    Actually this algorithm is inspired by function `file_encoding`
+    from libmagic.
+    """
+    try:
+        with open(path, 'rb') as candidate_stream:
+            # Buffer size like in libmagic
+            buffer = candidate_stream.read(256 * 1024)
+    except EnvironmentError:
+        return False
+
+    # Verify that it looks like ASCII, UTF-8 or UTF-16.
+    for encoding in 'utf-8', 'utf-16', 'utf-16-be', 'utf-16-le':
+        try:
+            buffer.decode(encoding)
+        except UnicodeDecodeError as err:
+            if err.args[0].endswith(('truncated data', 'unexpected end of data')):
+                return True
+        else:
+            return True
+
+    # Verify that it looks like ISO-8859 or non-ISO extended ASCII.
+    return all(c not in _bytes_that_never_appears_in_text for c in buffer)
+
+
+_bytes_that_never_appears_in_text = set(range(7)) | {11} | set(range(14, 27)) | set(range(28, 32)) | {127}

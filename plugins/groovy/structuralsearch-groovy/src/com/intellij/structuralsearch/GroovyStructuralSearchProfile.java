@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -21,7 +21,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   public static final String FILE_CONTEXT = "File";
   public static final String CLASS_CONTEXT = "Class";
 
-  private static final TokenSet VARIABLE_DELIMETERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
+  private static final TokenSet VARIABLE_DELIMITERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
 
   @NotNull
   @Override
@@ -32,7 +32,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   @NotNull
   @Override
   public String[] getContextNames() {
-    return new String[]{FILE_CONTEXT, CLASS_CONTEXT};
+    return new String[] {FILE_CONTEXT, CLASS_CONTEXT};
   }
 
   @NotNull
@@ -44,14 +44,12 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   @NotNull
   @Override
   protected TokenSet getVariableDelimiters() {
-    return VARIABLE_DELIMETERS;
+    return VARIABLE_DELIMITERS;
   }
 
   @Override
-  public PsiCodeFragment createCodeFragment(Project project, String text, @Nullable PsiElement context) {
-    GroovyCodeFragment result = new GroovyCodeFragment(project, text);
-    result.setContext(context);
-    return result;
+  public PsiCodeFragment createCodeFragment(Project project, String text) {
+    return new GroovyCodeFragment(project, text);
   }
 
   @NotNull

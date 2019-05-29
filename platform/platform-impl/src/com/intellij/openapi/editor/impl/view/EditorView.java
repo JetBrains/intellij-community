@@ -517,6 +517,16 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       }
       lineHeight = (int)Math.ceil(height) + spacing;
     }
+    else if (Registry.is("editor.text.vertical.spacing.correct.rounding")) {
+      if (verticalScalingFactor == 1f) {
+        lineHeight = fontMetricsHeight;
+      }
+      else {
+        Font scaledFont = font.deriveFont(font.getSize() * verticalScalingFactor);
+        FontMetrics scaledMetrics = FontInfo.getFontMetrics(scaledFont, myFontRenderContext);
+        lineHeight = FontLayoutService.getInstance().getHeight(scaledMetrics);
+      }
+    }
     else {
       lineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
     }

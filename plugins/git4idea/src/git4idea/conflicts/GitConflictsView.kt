@@ -1,102 +1,89 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts
 
-import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS
-import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.TableSpeedSearch
-import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
-import com.intellij.ui.treeStructure.treetable.TreeTableModel
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TreeSpeedSearch
 import com.intellij.util.Alarm
+import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.containers.Convertor
-import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import git4idea.GitUtil
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
 import git4idea.repo.GitConflict.ConflictSide
+import git4idea.repo.GitConflict.Status
 import git4idea.repo.GitConflictsHolder
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import java.awt.BorderLayout
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreeNode
+import javax.swing.tree.DefaultTreeModel
 
 class GitConflictsView(private val project: Project) : Disposable {
   private val mergeHandler: GitMergeHandler = GitMergeHandler(project)
 
   private val panel: SimpleToolWindowPanel
-  private val table: MergeConflictsTreeTable
-  private val tableModel: ListTreeTableModelOnColumns
+  private val conflictsTree: MyChangesTree
 
   private val conflicts: MutableList<GitConflict> = ArrayList()
   private val reversedRoots: MutableSet<VirtualFile> = HashSet()
 
   private val updateQueue: MergingUpdateQueue
-  private val groupingSupport: ChangesGroupingSupport = ChangesGroupingSupport(project, this, false)
 
   init {
-    tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), arrayOf(PathColumn(), YoursColumn(), TheirsColumn()))
-    table = MergeConflictsTreeTable(tableModel)
-    updateQueue = MergingUpdateQueue("GitConflictsView", 300, true, table, this, null, Alarm.ThreadToUse.POOLED_THREAD)
+    conflictsTree = MyChangesTree(project)
+    updateQueue = MergingUpdateQueue("GitConflictsView", 300, true, conflictsTree, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
-    val renderer = ChangesBrowserNodeRenderer(project, { !groupingSupport.isDirectory }, false)
-    renderer.font = UIUtil.getListFont()
-    table.setTreeCellRenderer(renderer)
-    table.rowHeight = renderer.preferredSize.height
+    conflictsTree.groupingSupport.addPropertyChangeListener(PropertyChangeListener { rebuildTree() })
+    conflictsTree.groupingSupport.setGroupingKeysOrSkip(DEFAULT_GROUPING_KEYS.toSet())
 
-    groupingSupport.addPropertyChangeListener(PropertyChangeListener { rebuildTree() })
-    groupingSupport.setGroupingKeysOrSkip(DEFAULT_GROUPING_KEYS.toSet())
-
-    TableSpeedSearch(table, Convertor { (it as? GitConflict)?.filePath?.name })
+    TreeSpeedSearch(conflictsTree, Convertor { (it.lastPathComponent as? GitConflict)?.filePath?.name })
 
 
     val actionManager = ActionManager.getInstance()
     val toolbarGroup = DefaultActionGroup()
-    toolbarGroup.addAction(actionManager.getAction("ChangesView.Refresh"))
     toolbarGroup.addAction(ResolveAction())
     toolbarGroup.addAction(AcceptSideAction(false))
     toolbarGroup.addAction(AcceptSideAction(true))
+    toolbarGroup.addAction(actionManager.getAction("ChangesView.Refresh"))
+    toolbarGroup.addAction(Separator.getInstance())
     toolbarGroup.addAction(actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     val toolbar = actionManager.createActionToolbar("GitConflictsView", toolbarGroup, false)
-    toolbar.setTargetComponent(table)
+    toolbar.setTargetComponent(conflictsTree)
 
     val mainPanel = MainPanel()
-    mainPanel.add(ScrollPaneFactory.createScrollPane(table), BorderLayout.CENTER)
+    mainPanel.add(ScrollPaneFactory.createScrollPane(conflictsTree), BorderLayout.CENTER)
 
-    panel = SimpleToolWindowPanel(false, true)
+    panel = SimpleToolWindowPanel(true, true)
     panel.toolbar = toolbar.component
     panel.setContent(mainPanel)
 
 
-    object : DoubleClickListener() {
-      override fun onDoubleClick(event: MouseEvent): Boolean {
-        showMergeWindowForSelection()
-        return true
-      }
-    }.installOn(table)
+    conflictsTree.setDoubleClickHandler { showMergeWindowForSelection() }
 
     val connection = project.messageBus.connect(this)
     connection.subscribe(GitConflictsHolder.CONFLICTS_CHANGE, GitConflictsHolder.ConflictsListener { updateConflicts() })
@@ -106,13 +93,13 @@ class GitConflictsView(private val project: Project) : Disposable {
   }
 
   val component: JComponent? get() = panel
-  val preferredFocusableComponent: JComponent? get() = table
+  val preferredFocusableComponent: JComponent? get() = conflictsTree
 
   override fun dispose() {
   }
 
   private fun getSelectedConflicts(): List<GitConflict> {
-    return TreeUtil.collectSelectedObjectsOfType(table.tree, GitConflict::class.java)
+    return conflictsTree.selectedChanges
   }
 
   private fun updateConflicts() {
@@ -139,12 +126,7 @@ class GitConflictsView(private val project: Project) : Disposable {
   }
 
   private fun rebuildTree() {
-    val builder = MyTreeModelBuilder(project, groupingSupport.grouping)
-    builder.addConflicts(conflicts)
-    val newRoot = builder.build().root
-
-    tableModel.setRoot(newRoot as TreeNode)
-    TreeUtil.expandAll(table.tree)
+    conflictsTree.setChangesToDisplay(conflicts)
   }
 
   private fun showMergeWindowForSelection() {
@@ -173,55 +155,64 @@ class GitConflictsView(private val project: Project) : Disposable {
   }
 
 
-  private class PathColumn : ColumnInfo<ChangesBrowserNode<*>, Any?>("Path") {
-    override fun valueOf(node: ChangesBrowserNode<*>): Any? = node.userObject
-    override fun getColumnClass(): Class<*> = TreeTableModel::class.java
-  }
+  private inner class ResolveAction
+    : ButtonAction("Resolve") {
 
-  private inner class YoursColumn : BaseColumn("Yours") {
-    override fun valueOf(o: ChangesBrowserNode<*>): String? {
-      val c = o.conflict ?: return null
-      val status = c.getStatus(ConflictSide.OURS, reversedRoots.contains(c.root))
-      return status.name
+    override fun update(e: AnActionEvent) {
+      val isEnabled = getSelectedConflicts().any { mergeHandler.canResolveConflict(it) }
+      e.presentation.isEnabled = isEnabled
+      updateButtonPresentation(e)
     }
-  }
 
-  private inner class TheirsColumn : BaseColumn("Theirs") {
-    override fun valueOf(o: ChangesBrowserNode<*>): String? {
-      val c = o.conflict ?: return null
-      val status = c.getStatus(ConflictSide.THEIRS, reversedRoots.contains(c.root))
-      return status.name
-    }
-  }
-
-  private abstract class BaseColumn(name: String) : ColumnInfo<ChangesBrowserNode<*>, String>(name) {
-    protected val ChangesBrowserNode<*>.conflict: GitConflict?
-      get() = when (this) {
-        is ConflictChangesBrowserNode -> this.userObject
-        else -> null
-      }
-  }
-
-  private inner class ResolveAction : DumbAwareAction("Resolve", null, AllIcons.Vcs.Merge) {
     override fun actionPerformed(e: AnActionEvent) {
       showMergeWindowForSelection()
     }
   }
 
-  private inner class AcceptSideAction(val takeTheirs: Boolean) :
-    DumbAwareAction(if (takeTheirs) "Accept Theirs" else "Accept Yours", null,
-                    if (takeTheirs) AllIcons.Vcs.Arrow_left else AllIcons.Vcs.Arrow_right) {
+  private inner class AcceptSideAction(val takeTheirs: Boolean)
+    : ButtonAction(if (takeTheirs) "Accept Theirs" else "Accept Yours") {
+
+    override fun update(e: AnActionEvent) {
+      val isEnabled = getSelectedConflicts().isNotEmpty()
+      e.presentation.isEnabled = isEnabled
+      updateButtonPresentation(e)
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       acceptConflictSideForSelection(takeTheirs)
     }
   }
 
+  private abstract class ButtonAction(text: String) : DumbAwareAction(text), CustomComponentAction {
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      val button = JButton(presentation.text)
+      button.isFocusable = false
+      button.addActionListener {
+        val toolbar = UIUtil.getParentOfType(ActionToolbar::class.java, button)
+        val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
+        actionPerformed(AnActionEvent.createFromAnAction(this@ButtonAction, null, place, dataContext))
+      }
+
+      updateButtonPresentation(button, presentation)
+
+      return JBUI.Panels.simplePanel(button)
+        .withBorder(JBUI.Borders.empty(4, if (SystemInfo.isWindows) 4 else 6))
+    }
+
+    fun updateButtonPresentation(e: AnActionEvent) {
+      val button = UIUtil.findComponentOfType(e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), JButton::class.java)
+      if (button != null) updateButtonPresentation(button, e.presentation)
+    }
+
+    fun updateButtonPresentation(button: JButton, presentation: Presentation) {
+      button.isEnabled = presentation.isEnabled
+      button.isVisible = presentation.isVisible
+    }
+  }
+
   private inner class MainPanel : JPanel(BorderLayout()), DataProvider {
     override fun getData(dataId: String): Any? {
-      if (ChangesGroupingSupport.KEY.`is`(dataId)) {
-        return groupingSupport
-      }
-      else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
         return ChangesUtil.getNavigatableArray(project, getSelectedConflicts().mapNotNull { it.filePath.virtualFile }.stream())
       }
       return null
@@ -242,7 +233,8 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
   override fun isDirectory(): Boolean = false
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    val filePath = getUserObject().filePath
+    val conflict = getUserObject()
+    val filePath = conflict.filePath
     renderer.appendFileName(filePath.virtualFile, filePath.name, FileStatus.MERGED_WITH_CONFLICTS.color)
 
     if (renderer.isShowFlatten) {
@@ -252,6 +244,16 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
     if (!renderer.isShowFlatten && fileCount != 1 || directoryCount != 0) {
       appendCount(renderer)
     }
+
+    val oursStatus = conflict.getStatus(ConflictSide.OURS, true)
+    val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
+    val conflictType = when {
+      oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> "both deleted"
+      oursStatus == Status.DELETED -> "deleted by you"
+      theirsStatus == Status.DELETED -> "deleted by them"
+      else -> "both modified"
+    }
+    renderer.append(spaceAndThinSpace() + conflictType, SimpleTextAttributes.GRAYED_ATTRIBUTES)
 
     renderer.setIcon(filePath.fileType, filePath.isDirectory || !isLeaf)
   }
@@ -266,5 +268,15 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
 
   override fun compareUserObjects(o2: GitConflict): Int {
     return compareFilePaths(getUserObject().filePath, o2.filePath)
+  }
+}
+
+private class MyChangesTree(project: Project)
+  : ChangesTreeImpl<GitConflict>(project, false, true, GitConflict::class.java) {
+
+  override fun buildTreeModel(conflicts: MutableList<out GitConflict>): DefaultTreeModel {
+    val builder = MyTreeModelBuilder(project, groupingSupport.grouping)
+    builder.addConflicts(conflicts)
+    return builder.build()
   }
 }

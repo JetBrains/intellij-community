@@ -240,7 +240,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     }
   }
 
-  private void doSanityTestForFile(final File subFile, final List<File> failedFiles, final boolean formatWithPsi)
+  private void doSanityTestForFile(final File subFile, final List<? super File> failedFiles, final boolean formatWithPsi)
     throws IOException, IncorrectOperationException {
     if (subFile.isFile() && subFile.getName().endsWith(getFileExtension())) {
       final byte[] bytes = FileUtil.loadFileBytes(subFile);
@@ -277,7 +277,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     }
   }
 
-  private static String composeMessage(final List<File> failedFiles) {
+  private static String composeMessage(final List<? extends File> failedFiles) {
     final StringBuilder result = new StringBuilder();
     for (File file : failedFiles) {
       result.append(file.getPath());

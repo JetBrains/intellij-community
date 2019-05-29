@@ -5,6 +5,7 @@
     <![CDATA[Provides <i>View | Show Bytecode</i> action for easy inspection of Java bytecode instructions.]]>
   </description>
   <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.java</depends>
 
   <extensionPoints>
     <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher"/>

@@ -3,6 +3,7 @@ package com.intellij.ui.popup.async;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLabel;
@@ -30,8 +31,11 @@ public class AsyncPopupImpl extends WizardPopup implements Runnable {
   private final Alarm myAlarm;
   private JPanel myPanel;
 
-  public AsyncPopupImpl(@Nullable WizardPopup parent, @NotNull AsyncPopupStep step, Object parentValue) {
-    super(parent, step);
+  public AsyncPopupImpl(@Nullable Project project,
+                        @Nullable WizardPopup parent,
+                        @NotNull AsyncPopupStep<Object> step,
+                        @Nullable Object parentValue) {
+    super(project, parent, step);
 
     if (!(parent instanceof NextStepHandler)) throw new IllegalArgumentException("parent must be NextStepHandler");
 

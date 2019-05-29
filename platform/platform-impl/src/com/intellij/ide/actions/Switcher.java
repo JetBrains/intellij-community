@@ -84,7 +84,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 public class Switcher extends AnAction implements DumbAware {
   private static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
-  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherToggleCheckBox";
+  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
   private static final int MINIMUM_HEIGHT = JBUI.scale(100);
 
@@ -145,7 +145,10 @@ public class Switcher extends AnAction implements DumbAware {
     if (switcher != null) {
       boolean sameShortcut = Comparing.equal(switcher.myTitle, title);
       if (sameShortcut) {
-        if (switcher.isCheckboxMode() && !ToggleCheckBoxAction.isEnabled()) {
+        if (switcher.isCheckboxMode() &&
+            (!ToggleCheckBoxAction.isEnabled() ||
+             e.getInputEvent() instanceof KeyEvent &&
+             KeymapUtil.isEventForAction(((KeyEvent)e.getInputEvent()), TOGGLE_CHECK_BOX_ACTION_ID))) {
           switcher.toggleShowEditedFiles();
         }
         else {
@@ -620,7 +623,7 @@ public class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static <T> JBList<T> createList(CollectionListModel<T> baseModel,
-                                            Function<T, String> namer,
+                                            Function<? super T, String> namer,
                                             SwitcherSpeedSearch speedSearch,
                                             boolean pinned) {
       ListModel<T> listModel;
@@ -651,8 +654,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private Container getPopupFocusAncestor() {
-      JComponent content = myPopup.getContent();
-      return content == null ? null : content.getFocusCycleRootAncestor();
+      return myPopup.isDisposed() ? null : myPopup.getContent().getFocusCycleRootAncestor();
     }
 
     @NotNull
@@ -1063,7 +1065,7 @@ public class Switcher extends AnAction implements DumbAware {
                 UISettingsState settings = UISettings.getInstance().getState();
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
-                manager.openFile(file, true, true);
+                manager.openFile(file, true, UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
                 }

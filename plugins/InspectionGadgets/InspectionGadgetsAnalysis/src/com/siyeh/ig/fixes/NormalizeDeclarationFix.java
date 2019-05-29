@@ -138,20 +138,18 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       final PsiVariable variable = variables.get(i - 1);
       final String name = variable.getName();
       assert name != null;
-      final PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) ct.markUnchanged(initializer);
       final PsiDeclarationStatement newStatement =
-        factory.createVariableDeclarationStatement(name, variable.getType(), initializer, declarationStatement);
+        factory.createVariableDeclarationStatement(name, variable.getType(), ct.markUnchanged(variable.getInitializer()),
+                                                   declarationStatement);
       forStatement.getParent().addBefore(newStatement, forStatement);
     }
 
     final PsiVariable lastVariable = variables.get(variables.size() - 1);
     final String name = lastVariable.getName();
     assert name != null;
-    final PsiExpression initializer = lastVariable.getInitializer();
-    if (initializer != null) ct.markUnchanged(initializer);
     final PsiStatement replacementStatement =
-      factory.createVariableDeclarationStatement(name, lastVariable.getType(), initializer, declarationStatement);
+      factory.createVariableDeclarationStatement(name, lastVariable.getType(), ct.markUnchanged(lastVariable.getInitializer()),
+                                                 declarationStatement);
     ct.replaceAndRestoreComments(declarationStatement, replacementStatement);
   }
 }

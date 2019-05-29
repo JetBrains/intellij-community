@@ -108,7 +108,7 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
   }
 
   private void checkHasGutter(String className, String expectedText) {
-    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.moduleWithLibrariesScope(myModule));
+    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.moduleWithLibrariesScope(getModule()));
     assertNotNull(psiClass);
     myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
     String documentText = myFixture.getEditor().getDocument().getText();
@@ -127,7 +127,7 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
 
     MessageDigest digest = BytecodeAnalysisConverter.getMessageDigest();
     List<String> diffs = new ArrayList<>();
-    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(myModule)) {
+    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
       @Override
       protected void visitSubPackage(PsiPackage aPackage, PsiClass[] classes) {
         for (PsiClass aClass : classes) {
@@ -190,7 +190,7 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
     assertNotNull(rootPackage);
 
     VirtualFile annotationsRoot = getAnnotationsRoot();
-    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(myModule)) {
+    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
       @Override
       protected void visitSubPackage(PsiPackage aPackage, PsiClass[] classes) {
         System.out.println(aPackage.getQualifiedName());

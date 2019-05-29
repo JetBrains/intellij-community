@@ -46,13 +46,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.Splash;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -71,9 +69,11 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -103,7 +103,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
 
-  private final long myStartTime;
+  private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
   private volatile boolean myDisposeInProgress;
@@ -136,7 +136,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
-    myStartTime = System.currentTimeMillis();
     myName = appName;
 
     myIsInternal = isInternal;
@@ -148,56 +147,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
-
-      StartupUtil.addExternalInstanceListener(args -> invokeLater(() -> {
-        LOG.info("ApplicationImpl.externalInstanceListener invocation");
-        String currentDirectory = args.isEmpty() ? null : args.get(0);
-        List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
-        Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-        JFrame frame = project == null
-                       ? WindowManager.getInstance().findVisibleFrame() :
-                       (JFrame)WindowManager.getInstance().getIdeFrame(project);
-        if (frame != null) {
-          if (frame instanceof IdeFrame) {
-            AppIcon.getInstance().requestFocus((IdeFrame)frame);
-          }
-          else {
-            frame.toFront();
-            DialogEarthquakeShaker.shake(frame);
-          }
-        }
-      }));
-
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
-        List<String> argsList = Arrays.asList(args);
-        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-        if (argsList.isEmpty()) return;
-        ModalityState state = getDefaultModalityState();
-        for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
-          if (starter.canProcessExternalCommandLine() &&
-              argsList.get(0).equals(starter.getCommandName()) &&
-              starter.allowAnyModalityState()) {
-            state = getAnyModalityState();
-          }
-        }
-        invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory), state);
-      };
     }
 
-    if (isUnitTestMode && IdeaApplication.getInstance() == null) {
+    if (isUnitTestMode && isCommandLine) {
       String[] args = {"inspect", "", "", ""};
       Main.setFlags(args); // set both isHeadless and isCommandLine to true
       System.setProperty(IdeaApplication.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
       assert Main.isHeadless();
       assert Main.isCommandLine();
       //noinspection ResultOfObjectAllocationIgnored
-      new IdeaApplication(args);
+      IdeaApplication.createAppStarter(IdeaApplication.processProgramArguments(args), null);
     }
+
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Activity activity = StartUpMeasurer.start("instantiate AppDelayQueue");
-    Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
+    myLock = new ReadMostlyRWLock(UIUtil.invokeAndWaitIfNeeded(() -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
       AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
@@ -207,11 +172,47 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
       return Thread.currentThread();
-    });
+    }));
     activity.end();
-    myLock = new ReadMostlyRWLock(edt);
 
     NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  private void addActivateAndWindowsCliListeners() {
+    StartupUtil.addExternalInstanceListener(args -> invokeLater(() -> {
+      LOG.info("ApplicationImpl.externalInstanceListener invocation");
+      String currentDirectory = args.isEmpty() ? null : args.get(0);
+      List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
+      Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
+      JFrame frame = project == null
+                     ? WindowManager.getInstance().findVisibleFrame() :
+                     (JFrame)WindowManager.getInstance().getIdeFrame(project);
+      if (frame != null) {
+        if (frame instanceof IdeFrame) {
+          AppIcon.getInstance().requestFocus((IdeFrame)frame);
+        }
+        else {
+          frame.toFront();
+          DialogEarthquakeShaker.shake(frame);
+        }
+      }
+    }));
+
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
+      List<String> argsList = Arrays.asList(args);
+      LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
+      if (argsList.isEmpty()) return;
+      ModalityState state = getDefaultModalityState();
+      for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
+        if (starter.canProcessExternalCommandLine() &&
+            argsList.get(0).equals(starter.getCommandName()) &&
+            starter.allowAnyModalityState()) {
+          state = getAnyModalityState();
+        }
+      }
+      invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory), state);
+    };
   }
 
   /**
@@ -399,19 +400,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void load(@Nullable final String configPath) {
-    load(configPath, null, null);
+    registerComponents(PluginManagerCore.getLoadedPlugins());
+    load(configPath, null);
   }
 
-  public void load(@Nullable final String configPath, @Nullable Splash splash, @Nullable List<IdeaPluginDescriptor> plugins) {
+  @Override
+  public void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
+    super.registerComponents(plugins);
+  }
+
+  public void load(@Nullable String configPath, @Nullable ProgressIndicator indicator) {
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
-      StartupProgress startupProgress = splash == null ? null : (message, progress) -> splash.showProgress("", progress);
-
-      // before totalMeasureToken to ensure that plugin loading is not part of this
-      if (plugins == null) {
-        plugins = PluginManagerCore.getLoadedPlugins(startupProgress);
-      }
-
       if (!isHeadlessEnvironment()) {
         // wanted for UI, but should not affect start-up time,
         // since MigLayout is not important for start-up UI, it is ok execute it in a pooled thread
@@ -422,36 +422,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         });
       }
 
-      ProgressIndicator indicator = splash == null ? null : new EmptyProgressIndicator() {
-        @Override
-        public void setFraction(double fraction) {
-          splash.showProgress("", (float)fraction);
-        }
-      };
-      init(plugins, indicator, () -> {
+      init(indicator, () -> {
         String effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath == null ? PathManager.getConfigPath() : configPath);
-        List<ApplicationLoadListener> applicationLoadListeners = ApplicationLoadListener.EP_NAME.getExtensionList();
-        for (ApplicationLoadListener listener : applicationLoadListeners) {
-          try {
-            listener.beforeApplicationLoaded(this, effectiveConfigPath);
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
+        ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeApplicationLoaded(this, effectiveConfigPath));
 
         // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
         ServiceKt.getStateStore(this).setPath(effectiveConfigPath);
 
-        for (ApplicationLoadListener listener : applicationLoadListeners) {
-          try {
-            listener.beforeComponentsCreated();
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
-        }
+        ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
       });
+
+      ourThreadExecutorsService.submit(() -> createLocatorFile());
 
       Activity activity = StartUpMeasurer.start(Phases.APP_INITIALIZED_CALLBACK);
       for (ApplicationInitializedListener listener : ((ExtensionsAreaImpl)Extensions.getArea(null)).<ApplicationInitializedListener>getExtensionPoint("com.intellij.applicationInitializedListener")) {
@@ -470,13 +451,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }
       activity.end();
+
+      if (!isUnitTestMode() && !isHeadlessEnvironment()) {
+        addActivateAndWindowsCliListeners();
+      }
     }
     finally {
       token.finish();
     }
     myLoaded = true;
-
-    createLocatorFile();
   }
 
   @Override
@@ -499,17 +482,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return progressManager == null ? null : progressManager.getProgressIndicator();
   }
 
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-    float start = PluginManagerCore.PROGRESS_PART;
-    indicator.setFraction(start + getPercentageOfComponentsLoaded() * (1 - start));
-  }
-
   private static void createLocatorFile() {
-    File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
+    Path locatorFile = Paths.get(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME);
     try {
-      byte[] data = PathManager.getHomePath().getBytes(StandardCharsets.UTF_8);
-      FileUtil.writeToFile(locatorFile, data);
+      Files.write(locatorFile, PathManager.getHomePath().getBytes(StandardCharsets.UTF_8));
     }
     catch (IOException e) {
       LOG.warn("can't store a location in '" + locatorFile + "'", e);
@@ -523,7 +499,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void dispose() {
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     fireApplicationExiting();
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
@@ -828,7 +803,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
         if (Boolean.getBoolean("idea.test.guimode")) {
-          IdeaApplication.getInstance().shutdown();
+          IdeaApplication.shutdown();
         }
         return;
       }
@@ -1200,7 +1175,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (!isWriteAccessAllowed()) {
       assertIsDispatchThread("Write access is allowed from event dispatch thread only");
     }
-    HeavyProcessLatch.INSTANCE.stopThreadPrioritizing(); // let non-cancellable read actions complete faster, if present
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
       ActionPauses.WRITE.started();

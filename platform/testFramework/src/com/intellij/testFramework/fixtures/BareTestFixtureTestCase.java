@@ -1,17 +1,13 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -22,8 +18,7 @@ import static com.intellij.testFramework.TestFrameworkUtil.SKIP_SLOW;
 import static org.junit.Assume.assumeFalse;
 
 @TestOnly
-public abstract class BareTestFixtureTestCase extends Assert {
-  public static final Logger LOG = Logger.getInstance(BareTestFixtureTestCase.class);
+public abstract class BareTestFixtureTestCase {
   @Rule public final TestName myNameRule = new TestName();
 
   private BareTestFixture myFixture;

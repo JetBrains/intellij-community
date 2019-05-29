@@ -36,7 +36,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -583,12 +583,7 @@ public class PlatformTestUtil {
 
   @NotNull
   public static String getJavaExe() {
-    return SystemProperties.getJavaHome() + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
-  }
-
-  @NotNull
-  public static String getRtJarPath() {
-    return SystemProperties.getJavaHome() + "/lib/rt.jar";
+    return SystemProperties.getJavaHome() + (SystemInfoRt.isWindows ? "\\bin\\java.exe" : "/bin/java");
   }
 
   @NotNull
@@ -814,6 +809,7 @@ public class PlatformTestUtil {
     System.setProperty("file.encoding", encoding);
   }
 
+  @SuppressWarnings("ImplicitDefaultCharsetUsage")
   public static void withStdErrSuppressed(@NotNull Runnable r) {
     PrintStream std = System.err;
     System.setErr(new PrintStream(NULL));
@@ -912,14 +908,14 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.utils.ProfilingUtil"), "captureMemorySnapshot");
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler"), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");
       }
     }
     catch (ClassNotFoundException e) {
-      // ProfilingUtil is missing from the classpath, ignore
+      // YourKitProfilerHandler is missing from the classpath, ignore
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

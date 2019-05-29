@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.icons.AllIcons;
@@ -9,8 +10,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -22,16 +22,21 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TooltipWithClickableLinks;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +67,9 @@ public class UIUtil {
   @NonNls public static final String EXPECTED_TYPE = "EXPECTED TYPE";
   @NonNls public static final String MINIMUM_ZERO = "MINIMUM ZERO";
   @NonNls public static final String MAXIMUM_UNLIMITED = "MAXIMUM UNLIMITED";
+
+  private UIUtil() {
+  }
 
   @NotNull
   public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
@@ -109,7 +117,7 @@ public class UIUtil {
   }
 
   public static JComponent createOptionLine(JComponent... options) {
-    JPanel tmp = new JPanel();
+    final JPanel tmp = new JPanel();
 
     tmp.setLayout(new BoxLayout(tmp, BoxLayout.X_AXIS));
     for (int i = 0; i < options.length; i++) {
@@ -123,22 +131,18 @@ public class UIUtil {
     return tmp;
   }
 
-  public static void setContent(final Editor editor, String text) {
+  public static void setContent(@NotNull final Editor editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    CommandProcessor.getInstance().executeCommand(
-      editor.getProject(),
-      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
-      MODIFY_EDITOR_CONTENT, SS_GROUP);
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+                                             () -> document.replaceString(0, document.getTextLength(), value));
   }
 
-  public static void setContent(final EditorTextField editor, String text) {
+  public static void setContent(@NotNull EditorTextField editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
-    CommandProcessor.getInstance().executeCommand(
-      editor.getProject(),
-      () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(0, document.getTextLength(), value)),
-      MODIFY_EDITOR_CONTENT, SS_GROUP);
+    WriteCommandAction.runWriteCommandAction(editor.getProject(), MODIFY_EDITOR_CONTENT, SS_GROUP,
+                                             () -> document.replaceString(0, document.getTextLength(), value));
   }
 
   public static void invokeAction(Configuration config, SearchContext context) {
@@ -148,10 +152,6 @@ public class UIUtil {
     else {
       StructuralReplaceAction.triggerAction(config, context);
     }
-  }
-
-  public static void updateHighlighter(Editor editor, StructuralSearchProfile profile) {
-    TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
   }
 
   public static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
@@ -192,7 +192,7 @@ public class UIUtil {
   @NotNull
   public static JComponent installCompleteMatchInfo(JLabel completeMatchInfo,
                                                     Supplier<? extends Configuration> configurationProducer,
-                                                    Consumer<String> linkConsumer) {
+                                                    Consumer<? super String> linkConsumer) {
     completeMatchInfo.putClientProperty(IdeTooltip.TOOLTIP_DISMISS_DELAY_KEY, 20000);
     completeMatchInfo.addMouseListener(new MouseAdapter() {
       @Override
@@ -256,7 +256,7 @@ public class UIUtil {
     return fileType;
   }
 
-  public static FileType detectFileType(@NotNull SearchContext searchContext) {
+  public static LanguageFileType detectFileType(@NotNull SearchContext searchContext) {
     final PsiFile file = searchContext.getFile();
     PsiElement context = file;
 
@@ -275,10 +275,63 @@ public class UIUtil {
       final Language language = context.getLanguage();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
-        final FileType fileType = profile.detectFileType(context);
+        final LanguageFileType fileType = profile.detectFileType(context);
         return fileType != null ? fileType : language.getAssociatedFileType();
       }
     }
     return StructuralSearchUtil.getDefaultFileType();
+  }
+
+  @NotNull
+  public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
+                                        @NotNull StructuralSearchProfile profile) {
+    PsiFile codeFragment = profile.createCodeFragment(project, text);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      return doc;
+    }
+
+    return EditorFactory.getInstance().createDocument(text);
+  }
+
+  @NotNull
+  public static Editor createEditor(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
+                                    @NotNull StructuralSearchProfile profile) {
+    PsiFile codeFragment = profile.createCodeFragment(project, text);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return createEditor(doc, project, true, true, getTemplateContextType(profile));
+    }
+
+    final EditorFactory factory = EditorFactory.getInstance();
+    final Document document = factory.createDocument(text);
+    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
+    editor.getSettings().setFoldingOutlineShown(false);
+    return editor;
+  }
+
+  private static PsiFile createFileFragment(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text) {
+    final String name = "__dummy." + fileType.getDefaultExtension();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+
+    return dialect == null
+           ? factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true)
+           : factory.createFileFromText(name, dialect, text, true, true);
+  }
+
+  public static TemplateContextType getTemplateContextType(StructuralSearchProfile profile) {
+    final Class<? extends TemplateContextType> clazz = profile.getTemplateContextTypeClass();
+    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
   }
 }

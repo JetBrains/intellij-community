@@ -187,7 +187,7 @@ public class DuplicatesImpl {
     }
   }
 
-  public static void highlightMatch(final Project project, Editor editor, final Match match, final ArrayList<RangeHighlighter> highlighters) {
+  public static void highlightMatch(final Project project, Editor editor, final Match match, final ArrayList<? super RangeHighlighter> highlighters) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager.getInstance(project).addRangeHighlight(editor, match.getTextRange().getStartOffset(), match.getTextRange().getEndOffset(),

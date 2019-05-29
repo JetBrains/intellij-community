@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
@@ -8,10 +6,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
@@ -29,8 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
 import javax.swing.*;
 
-public class GroovyScriptClass extends GrLightTypeDefinitionBase implements SyntheticElement {
-
+public final class GroovyScriptClass extends GrLightTypeDefinitionBase implements SyntheticElement {
   private final GroovyFile myFile;
   private final GrTypeDefinitionMembersCache<GroovyScriptClass> myCache;
 
@@ -74,7 +71,7 @@ public class GroovyScriptClass extends GrLightTypeDefinitionBase implements Synt
     return myFile.isValid() && myFile.isScript();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getQualifiedName() {
     return StringUtil.getQualifiedName(myFile.getPackageName(), getName());
@@ -208,7 +205,6 @@ public class GroovyScriptClass extends GrLightTypeDefinitionBase implements Synt
   }
 
   @Override
-  @Nullable
   public PsiElement getOriginalElement() {
     return JavaPsiImplementationHelper.getInstance(getProject()).getOriginalClass(this);
   }
@@ -219,9 +215,8 @@ public class GroovyScriptClass extends GrLightTypeDefinitionBase implements Synt
   }
 
   @Override
-  @Nullable
   public Icon getIcon(int flags) {
-    RowIcon baseIcon = ElementBase.createLayeredIcon(this, JetgroovyIcons.Groovy.Class, 0);
+    RowIcon baseIcon = (RowIcon)IconManager.getInstance().createLayeredIcon(this, JetgroovyIcons.Groovy.Class, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

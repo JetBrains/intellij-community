@@ -11,7 +11,8 @@ import com.intellij.util.ConcurrencyUtil
 import java.io.File
 import java.util.*
 
-open class StatisticsFileEventLogger(private val sessionId: String,
+open class StatisticsFileEventLogger(private val recorderId: String,
+                                     private val sessionId: String,
                                      private val build: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
@@ -30,8 +31,9 @@ open class StatisticsFileEventLogger(private val sessionId: String,
     val eventTime = System.currentTimeMillis()
     myLogExecutor.execute(Runnable {
       val context = EventContext.create(eventId, data)
-      val validatedEventId = SensitiveDataValidator.getInstance().guaranteeCorrectEventId(group, context)
-      val validatedEventData = SensitiveDataValidator.getInstance().guaranteeCorrectEventData(group, context)
+      val validator = SensitiveDataValidator.getInstance(recorderId)
+      val validatedEventId = validator.guaranteeCorrectEventId(group, context)
+      val validatedEventData = validator.guaranteeCorrectEventData(group, context)
 
       val creationTime = System.currentTimeMillis()
       val event = newLogEvent(sessionId, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, validatedEventId, isState)

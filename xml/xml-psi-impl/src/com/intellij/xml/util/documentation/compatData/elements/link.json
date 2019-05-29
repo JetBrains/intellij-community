@@ -141,7 +141,7 @@
                 "version_added": true
               },
               "webview_android": {
-                "version_added": null
+                "version_added": "37"
               }
             },
             "status": {
@@ -326,7 +326,7 @@
                 "version_added": false
               },
               "opera": {
-                "version_added": null
+                "version_added": "32"
               },
               "opera_android": {
                 "version_added": null
@@ -526,7 +526,7 @@
                   "version_added": false
                 },
                 "opera": {
-                  "version_added": null
+                  "version_added": "51"
                 },
                 "opera_android": {
                   "version_added": null
@@ -538,7 +538,7 @@
                   "version_added": null
                 },
                 "samsunginternet_android": {
-                  "version_added": null
+                  "version_added": true
                 },
                 "webview_android": {
                   "version_added": "64"
@@ -727,7 +727,7 @@
                   "version_added": null
                 },
                 "opera": {
-                  "version_added": null
+                  "version_added": "33"
                 },
                 "opera_android": {
                   "version_added": null
@@ -777,7 +777,7 @@
                   "version_added": null
                 },
                 "opera": {
-                  "version_added": null
+                  "version_added": false
                 },
                 "opera_android": {
                   "version_added": null
@@ -839,7 +839,7 @@
                   "version_added": null
                 },
                 "samsunginternet_android": {
-                  "version_added": null
+                  "version_added": true
                 },
                 "webview_android": {
                   "version_added": "66"
@@ -931,7 +931,7 @@
                   "version_added": false
                 },
                 "opera": {
-                  "version_added": null
+                  "version_added": "33"
                 },
                 "opera_android": {
                   "version_added": null
@@ -1035,7 +1035,7 @@
                   "version_added": null
                 },
                 "opera": {
-                  "version_added": null
+                  "version_added": "37"
                 },
                 "opera_android": {
                   "version_added": null

@@ -319,7 +319,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public String getGroupName(@NotNull OptionDescription description) {
     String name = description.getGroupName();
     if (name == null) name = myConfigurablesNames.getValue().get(description.getConfigurableId());
-    String settings = SystemInfo.isMac ? "Preferences" : "Settings";
+    String settings = SystemInfoRt.isMac ? "Preferences" : "Settings";
     if (name == null || name.equals(description.getHit())) return settings;
     return settings + " > " + name;
   }
@@ -529,7 +529,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @Nullable
-    private String getPathName(@NotNull List<ActionGroup> path) {
+    private String getPathName(@NotNull List<? extends ActionGroup> path) {
       String name = "";
       for (ActionGroup group : path) {
         name = appendGroupName(name, group, group.getTemplatePresentation());
@@ -538,7 +538,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @Nullable
-    private String getActualPathName(@NotNull List<ActionGroup> path, @NotNull DataContext context) {
+    private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull DataContext context) {
       String name = "";
       for (ActionGroup group : path) {
         Presentation presentation = updateActionBeforeShow(group, context).getPresentation();

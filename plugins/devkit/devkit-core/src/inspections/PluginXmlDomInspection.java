@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.ListTable;
@@ -186,6 +187,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       else if (element instanceof IdeaVersion) {
         annotateIdeaVersion((IdeaVersion)element, holder);
       }
+      else if (element instanceof Dependency) {
+        annotateDependency((Dependency)element, holder);
+      }
       else if (element instanceof Extensions) {
         annotateExtensions((Extensions)element, holder);
       }
@@ -203,6 +207,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         if (element instanceof Component.Project) {
           annotateProjectComponent((Component.Project)element, holder);
         }
+      }
+      else if (element instanceof Helpset) {
+        highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
       }
     }
 
@@ -230,6 +237,20 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
     return virtualFile != null &&
            ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
+  }
+
+  private static void annotateDependency(Dependency dependency, DomElementAnnotationHolder holder) {
+    final GenericAttributeValue<Boolean> optional = dependency.getOptional();
+    if (optional.getValue() == Boolean.FALSE) {
+      highlightRedundant(optional,
+                         DevKitBundle.message("inspections.plugin.xml.dependency.superfluous.optional"),
+                         ProblemHighlightType.WARNING, holder);
+    }
+    else if (optional.getValue() == Boolean.TRUE &&
+             !DomUtil.hasXml(dependency.getConfigFile())) {
+      holder.createProblem(dependency, DevKitBundle.message("inspections.plugin.xml.dependency.specify.config.file"),
+                           new AddDomElementQuickFix<>(dependency.getConfigFile())).highlightWholeElement();
+    }
   }
 
   private static void annotateIdeaPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
@@ -274,7 +295,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
     }
 
-    
+
     boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
 
     if (isNotIdeaProject &&
@@ -367,9 +388,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
   }
 
-  private void annotateExtensionPoint(ExtensionPoint extensionPoint,
-                                      DomElementAnnotationHolder holder,
-                                      ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
+  private static void annotateExtensionPoint(ExtensionPoint extensionPoint,
+                                             DomElementAnnotationHolder holder,
+                                             ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     if (extensionPoint.getWithElements().isEmpty() &&
         !extensionPoint.collectMissingWithTags().isEmpty()) {
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
@@ -377,6 +398,26 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     checkEpBeanClassAndInterface(extensionPoint, holder);
     checkEpNameAndQualifiedName(extensionPoint, holder);
+
+    if (DomUtil.hasXml(extensionPoint.getQualifiedName())) {
+      IdeaPlugin ideaPlugin = DomUtil.getParentOfType(extensionPoint, IdeaPlugin.class, true);
+      assert ideaPlugin != null;
+      final String pluginId = ideaPlugin.getPluginId();
+      if (pluginId != null) {
+        final String epQualifiedName = extensionPoint.getQualifiedName().getStringValue();
+        if (epQualifiedName != null && epQualifiedName.startsWith(pluginId + ".")) {
+          holder.createProblem(extensionPoint.getQualifiedName(), ProblemHighlightType.WARNING,
+                               DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous"), null,
+                               new LocalQuickFixBase(DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix")) {
+                                 @Override
+                                 public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                                   extensionPoint.getQualifiedName().undefine();
+                                   extensionPoint.getName().setStringValue(StringUtil.substringAfter(epQualifiedName, pluginId + "."));
+                                 }
+                               }).highlightWholeElement();
+        }
+      }
+    }
 
     Module module = extensionPoint.getModule();
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
@@ -449,7 +490,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (StringUtil.isEmpty(name) ||
         !Character.isLowerCase(name.charAt(0)) || // also checks that name doesn't start with dot
-        name.toUpperCase().equals(name) || // not all uppercase
+        StringUtil.toUpperCase(name).equals(name) || // not all uppercase
         !StringUtil.isLatinAlphanumeric(name.replace(".", "")) ||
         name.charAt(name.length() - 1) == '.') {
       return false;
@@ -587,15 +628,19 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
     }
 
-    
+
     if (ServiceDescriptor.class.getName().equals(extensionPoint.getBeanClass().getStringValue())) {
       GenericAttributeValue serviceInterface = getAttribute(extension, "serviceInterface");
       GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
-        highlightRedundant(serviceInterface,
-                           DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
-                           ProblemHighlightType.WARNING, holder);
+        final GenericAttributeValue testServiceImplementation = getAttribute(extension, "testServiceImplementation");
+        if (testServiceImplementation != null &&
+            !DomUtil.hasXml(testServiceImplementation)) {
+          highlightRedundant(serviceInterface,
+                             DevKitBundle.message("inspections.plugin.xml.service.interface.class.redundant"),
+                             ProblemHighlightType.WARNING, holder);
+        }
       }
     }
 
@@ -639,8 +684,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return attributeDescription.getDomAttributeValue(domElement);
   }
 
-  private void annotateComponent(Component component,
-                                 DomElementAnnotationHolder holder, ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
+  private static void annotateComponent(Component component,
+                                        DomElementAnnotationHolder holder,
+                                        ComponentModuleRegistrationChecker componentModuleRegistrationChecker) {
     Module module = component.getModule();
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       componentModuleRegistrationChecker.checkProperXmlFileForClass(
@@ -649,7 +695,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     GenericDomValue<PsiClass> interfaceClassElement = component.getInterfaceClass();
     PsiClass interfaceClass = interfaceClassElement.getValue();
-    if (interfaceClass != null && interfaceClass.equals(component.getImplementationClass().getValue())) {
+    if (interfaceClass != null && interfaceClass.equals(component.getImplementationClass().getValue()) &&
+        component.getHeadlessImplementationClass().getValue() == null) {
       highlightRedundant(interfaceClassElement,
                          DevKitBundle.message("inspections.plugin.xml.component.interface.class.redundant"),
                          ProblemHighlightType.WARNING, holder);

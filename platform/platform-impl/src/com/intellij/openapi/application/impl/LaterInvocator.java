@@ -345,7 +345,7 @@ public class LaterInvocator {
   }
 
   /**
-   * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances 
+   * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances
    * {@link EventQueue#peekEvent()} default implementation would return null, and {@link UIUtil#dispatchAllInvocationEvents()} would
    * stop processing events too early and lead to spurious test failures.
    *
@@ -407,6 +407,7 @@ public class LaterInvocator {
     }
 
     private boolean runNextEvent() {
+      long startedAt = System.currentTimeMillis();
       final RunnableInfo lastInfo = getNextEvent(true);
       myLastInfo = lastInfo;
 
@@ -421,6 +422,7 @@ public class LaterInvocator {
         }
         finally {
           if (!DEBUG) myLastInfo = null;
+          TransactionGuardImpl.logTimeMillis(startedAt, lastInfo.runnable);
         }
       }
       return lastInfo != null;

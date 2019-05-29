@@ -76,7 +76,7 @@ class ExitContext {
     }
   }
 
-  void registerReturnValue(PsiExpression value, List<String> replacements) {
+  void registerReturnValue(PsiExpression value, List<? super String> replacements) {
     myReturnVariableUsed = true;
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(myReturnVariableDefaultValue, value)) {
       replacements.add(0, myReturnVariable + "=" + value.getText() + ";");

@@ -4,6 +4,8 @@ package com.intellij.diagnostic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
@@ -40,7 +42,11 @@ public final class StartUpMeasurer {
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
+    public static final String FRAME_INITIALIZATION = "frame initialization";
 
+    public static final String PROJECT_CONVERSION = "project conversion";
+    public static final String PROJECT_BEFORE_LOADED = "project before loaded callbacks";
+    public static final String PROJECT_INSTANTIATION = "project instantiation";
     public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";
 
@@ -48,6 +54,13 @@ public final class StartUpMeasurer {
     public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES = "project post-startup activities";
 
     public static final String LOAD_MODULES = "module loading";
+    public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";
+  }
+
+  private static boolean measuringPluginStartupCosts = true;
+
+  public static void stopPluginCostMeasurement() {
+    measuringPluginStartupCosts = false;
   }
 
   // ExtensionAreas not available for ExtensionPointImpl
@@ -76,22 +89,24 @@ public final class StartUpMeasurer {
     return System.nanoTime();
   }
 
+  public static final Map<String, Map<String, Long>> pluginCostMap = new HashMap<>();
+
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
-    return new ActivityImpl(name, description, null);
+    return new ActivityImpl(name, description, null, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name) {
-    return new ActivityImpl(name, null, null);
+    return new ActivityImpl(name, null, null, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name, @NotNull Level level) {
-    return new ActivityImpl(name, null, level);
+    return new ActivityImpl(name, null, level, null);
   }
 
-  public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<ActivityImpl> consumer) {
+  public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {
     isEnabled = isContinueToCollect;
 
     while (true) {
@@ -114,6 +129,22 @@ public final class StartUpMeasurer {
   static void add(@NotNull ActivityImpl activity) {
     if (isEnabled) {
       items.add(activity);
+    }
+    String phase = activity.getParallelActivity() != null ? activity.getParallelActivity().name() : "unknown";
+    addPluginCost(activity.getPluginId(), phase, activity.getEnd() - activity.getStart());
+  }
+
+  public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
+    if (pluginId == null || !measuringPluginStartupCosts) return;
+    synchronized (pluginCostMap) {
+      Map<String, Long> costPerPhaseMap = pluginCostMap.get(pluginId);
+      if (costPerPhaseMap == null) {
+        costPerPhaseMap = new HashMap<>();
+        pluginCostMap.put(pluginId, costPerPhaseMap);
+      }
+      Long oldCost = costPerPhaseMap.get(phase);
+      if (oldCost == null) oldCost = 0L;
+      costPerPhaseMap.put(phase, oldCost + timeNanos);
     }
   }
 }

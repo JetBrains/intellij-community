@@ -56,9 +56,7 @@ public class TestLoggerFactory implements Logger.Factory {
   public static boolean reconfigure() {
     try {
       File logXmlFile = new File(PathManager.getHomePath(), "test-log.xml");
-      if (!logXmlFile.exists()) {
-        logXmlFile = new File(PathManager.getBinPath(), "log.xml");
-      }
+
       if (!logXmlFile.exists()) {
         return false;
       }

@@ -1,0 +1,84 @@
+<idea-plugin>
+  <id>com.jetbrains.sh</id>
+  <vendor>JetBrains</vendor>
+  <depends>com.intellij.modules.lang</depends>
+  <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
+  <name>Shell Script</name>
+  <description><![CDATA[
+    <p>Shell Script support for IntelliJ IDEA, RubyMine, WebStorm, etc.</p>
+    ]]></description>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="com.intellij.sh.ShFileTypeFactory"/>
+    <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
+    <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.ShCommenter"/>
+    <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.sh.ShQuoteHandler"/>
+    <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.sh.ShBackspaceModeOverride"/>
+
+    <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.ShStructureViewFactory"/>
+
+    <annotator language="Shell Script" implementationClass="com.intellij.sh.ShAnnotator"/>
+    <colorSettingsPage implementation="com.intellij.sh.highlighter.ShColorPage"/>
+    <additionalTextAttributes scheme="Default" file="colors/ShDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colors/ShDarcula.xml"/>
+
+    <psi.referenceContributor language="Shell Script" implementation="com.intellij.sh.ShUrlReferenceContributor"/>
+
+    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShKeywordCompletionContributor" order="after bashFilePathCompletionContributor"/>
+    <completion.contributor id="bashFilePathCompletionContributor" language="Shell Script" implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"/>
+    <completion.contributor language="Shell Script" implementationClass="com.intellij.sh.completion.ShCommandCompletionContributor"/>
+    <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
+    <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.ShDocumentationProvider"/>
+    <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
+
+    <defaultLiveTemplatesProvider implementation="com.intellij.sh.template.ShTemplateProvider"/>
+    <liveTemplateContext implementation="com.intellij.sh.template.ShContextType"/>
+    <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
+
+    <externalFormatProcessor implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
+    <lang.formatter language="Shell Script" implementationClass="com.intellij.sh.formatter.ShFormatterModelBuilder"/>
+    <postFormatProcessor implementation="com.intellij.sh.formatter.ShPostFormatProcessor"/>
+
+    <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
+
+    <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.shellcheck.ShShellcheckExternalAnnotator"/>
+    <localInspection language="Shell Script" groupName="Shell Script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
+                     level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>
+
+    <fileTypeDetector implementation="com.intellij.sh.ShFileTypeDetector"/>
+    <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
+
+    <statistics.counterUsagesCollector groupId="shell.script" version="1"/>
+
+    <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
+    <renameHandler implementation="com.intellij.sh.ShRenameHandler"/>
+
+    <intentionAction>
+      <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
+      <category>Shell Script</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.sh.ShExplainShellIntention</className>
+      <category>Shell Script</category>
+    </intentionAction>
+  </extensions>
+  <actions>
+    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction"
+            text="Run File"
+            description="Run current shell file in the terminal" use-shortcut-of="RunClass"/>
+
+    <group id="ShGenerateGroup">
+      <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"
+              text="For loop"
+              description="Creates for loop"/>
+      <action id="ShGenerateWhileLoop" class="com.intellij.sh.actions.ShGenerateWhileLoop"
+              text="While loop"
+              description="Creates while loop"/>
+      <action id="ShGenerateUntilLoop" class="com.intellij.sh.actions.ShGenerateUntilLoop"
+              text="Until loop"
+              description="Creates until loop"/>
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
+  </actions>
+</idea-plugin>

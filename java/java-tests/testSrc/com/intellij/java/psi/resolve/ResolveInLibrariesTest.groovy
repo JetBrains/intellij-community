@@ -47,8 +47,8 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
       JarFileSystem.instance.getLocalVirtualFileFor(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
     }
 
-    PsiTestUtil.addProjectLibrary(myModule, 'proto1', [protobufJar], [])
-    PsiTestUtil.addProjectLibrary(myModule, 'proto2', [JarFileSystem.instance.getJarRootForLocalFile(jarCopy)], [])
+    PsiTestUtil.addProjectLibrary(module, 'proto1', [protobufJar], [])
+    PsiTestUtil.addProjectLibrary(module, 'proto2', [JarFileSystem.instance.getJarRootForLocalFile(jarCopy)], [])
 
     def scope = GlobalSearchScope.allScope(project)
 
@@ -77,10 +77,10 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/inheritance")
 
     //Foo, Middle implements Foo, Other extends Middle
-    PsiTestUtil.addLibrary(myModule, 'full', lib.path, ["/fullLibrary.jar!/"] as String[], [] as String[])
+    PsiTestUtil.addLibrary(module, 'full', lib.path, ["/fullLibrary.jar!/"] as String[], [] as String[])
 
     //Middle, Bottom extends Middle
-    PsiTestUtil.addLibrary(myModule, 'partial', lib.path, ["/middleBottom.jar!/"] as String[], [] as String[])
+    PsiTestUtil.addLibrary(module, 'partial', lib.path, ["/middleBottom.jar!/"] as String[], [] as String[])
 
     def scope = GlobalSearchScope.allScope(project)
 
@@ -122,7 +122,7 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
   void "test do not parse not stubbed sources in class jars"() {
     def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources")
-    PsiTestUtil.addLibrary(myModule, 'cas', lib.path, ["/classesAndSources.jar!/"] as String[], ["/classesAndSources.jar!/"] as String[])
+    PsiTestUtil.addLibrary(module, 'cas', lib.path, ["/classesAndSources.jar!/"] as String[], ["/classesAndSources.jar!/"] as String[])
 
     def facade = JavaPsiFacade.getInstance(project)
     def scope = GlobalSearchScope.allScope(project)
@@ -158,7 +158,7 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
     checkFileIsNotLoadedAndHasNoIndexedStub(localFile)
     assert facade.findClasses('Foo', scope).size() == 0
-    PsiTestUtil.addLibrary(myModule, 'cas', lib.path, [] as String[], ["/classesAndSources.jar!/"] as String[])
+    PsiTestUtil.addLibrary(module, 'cas', lib.path, [] as String[], ["/classesAndSources.jar!/"] as String[])
 
     def vfile = lib.findChild("classesAndSources.jar")
     assert vfile != null
@@ -184,10 +184,10 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   void "test directory with class files inside project content"() {
     def testData = PathManagerEx.getTestDataPath() + "/codeInsight/interJarDependencies"
     myFixture.setTestDataPath(testData)
-    PsiTestUtil.addLibrary(myModule, "lib2", testData, "lib2.jar")
+    PsiTestUtil.addLibrary(module, "lib2", testData, "lib2.jar")
 
     myFixture.copyDirectoryToProject("lib1", "lib1")
-    PsiTestUtil.addLibrary(myModule, "lib1", myFixture.tempDirFixture.getFile("").path, "lib1")
+    PsiTestUtil.addLibrary(module, "lib1", myFixture.tempDirFixture.getFile("").path, "lib1")
 
     myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("TestCase.java", """
 class TestCase {
@@ -203,7 +203,7 @@ class TestCase {
   void "test update method hierarchy on class file change"() {
     myFixture.testDataPath = PathManagerEx.getTestDataPath() + "/libResolve/methodHierarchy"
     myFixture.copyDirectoryToProject("", "lib")
-    PsiTestUtil.addLibrary(myModule, "lib", myFixture.tempDirFixture.getFile("").path, "lib")
+    PsiTestUtil.addLibrary(module, "lib", myFixture.tempDirFixture.getFile("").path, "lib")
 
     def message = JavaPsiFacade.getInstance(project).findClass('com.google.protobuf.AbstractMessageLite', GlobalSearchScope.allScope(project))
     assert message
@@ -221,7 +221,7 @@ class TestCase {
   void "test nested generic signature from binary"() {
     myFixture.testDataPath = PathManagerEx.getTestDataPath() + "/libResolve/genericSignature"
     myFixture.copyDirectoryToProject("", "lib")
-    PsiTestUtil.addLibrary(myModule, "lib", myFixture.tempDirFixture.getFile("").path, "lib")
+    PsiTestUtil.addLibrary(module, "lib", myFixture.tempDirFixture.getFile("").path, "lib")
 
     def javaPsiFacade = JavaPsiFacadeEx.getInstanceEx(project)
     def factory = javaPsiFacade.elementFactory
@@ -267,7 +267,7 @@ class TestCase {
 
   void "test extending inner types of parameterised classes in external jars"() {
     def classesDir = myFixture.tempDirFixture.findOrCreateDir("classes")
-    PsiTestUtil.addLibrary(myModule, classesDir.path)
+    PsiTestUtil.addLibrary(module, classesDir.path)
     def libSrc = myFixture.addFileToProject("Child.java", """package p;
 class Parent<T> {
 

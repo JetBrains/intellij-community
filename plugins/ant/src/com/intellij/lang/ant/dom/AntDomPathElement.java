@@ -68,7 +68,7 @@ public abstract class AntDomPathElement extends AntDomFilesProviderImpl{
     return files;
   }
 
-  private static void addLocation(final File baseDir, final List<File> files, final String locationPath) {
+  private static void addLocation(final File baseDir, final List<? super File> files, final String locationPath) {
     if (locationPath != null) {
       File file = new File(locationPath);
       if (file.isAbsolute()) {

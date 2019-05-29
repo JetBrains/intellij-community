@@ -107,8 +107,8 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
 
     @NonNls String tagName = tag.getName();
     if (tag.getDescriptor() instanceof HtmlElementDescriptorImpl) {
-      name = name.toLowerCase();
-      tagName = tagName.toLowerCase();
+      name = StringUtil.toLowerCase(name);
+      tagName = StringUtil.toLowerCase(tagName);
     }
 
     final String namespace = tag.getNamespace();

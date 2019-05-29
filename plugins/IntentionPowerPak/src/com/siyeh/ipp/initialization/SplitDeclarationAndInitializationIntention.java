@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,7 +106,6 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     }
     initializer.delete();
     CodeStyleManager.getInstance(manager.getProject()).reformat(classInitializer);
-    HighlightUtil.highlightElement(addedElement, IntentionPowerPackBundle.message(
-                                     "press.escape.to.remove.highlighting.message"));
+    HighlightUtils.highlightElement(addedElement);
   }
 }

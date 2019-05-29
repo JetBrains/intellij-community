@@ -280,8 +280,6 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   private static DiffRequest createMergeRequest(@Nullable Project project,
                                                 @NotNull Change change,
                                                 @NotNull UserDataHolder context) throws DiffRequestProducerException {
-    // FIXME: This part is ugly as a VCS merge subsystem itself.
-
     FilePath path = ChangesUtil.getFilePath(change);
     VirtualFile file = path.getVirtualFile();
     if (file == null) {
@@ -294,7 +292,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
     }
     final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, project);
     if (vcs == null || vcs.getMergeProvider() == null) {
-      throw new DiffRequestProducerException("Can't show merge conflict - operation nos supported");
+      throw new DiffRequestProducerException("Can't show merge conflict - operation not supported");
     }
     try {
       MergeData mergeData = vcs.getMergeProvider().loadRevisions(file);

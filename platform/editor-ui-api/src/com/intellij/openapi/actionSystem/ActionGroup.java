@@ -32,6 +32,8 @@ import java.util.Set;
  *
  * @see com.intellij.openapi.actionSystem.DefaultActionGroup
  * @see com.intellij.openapi.actionSystem.ComputableActionGroup
+ * @see com.intellij.openapi.actionSystem.CheckedActionGroup
+ * @see com.intellij.openapi.actionSystem.CompactActionGroup
  */
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
@@ -55,7 +57,7 @@ public abstract class ActionGroup extends AnAction {
 
   /**
    * Creates a new {@code ActionGroup} with shortName set to {@code null} and
-   * popup set to false.
+   * popup set to {@code false}.
    */
   public ActionGroup(){
     // avoid eagerly creating template presentation
@@ -82,14 +84,14 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * This method can be called in popup menus if {@link #canBePerformed(DataContext)} is true
+   * This method can be called in popup menus if {@link #canBePerformed(DataContext)} is {@code true}.
    */
   @Override
   public void actionPerformed(@NotNull AnActionEvent e){
   }
 
   /**
-   * @return true if {@link #actionPerformed(AnActionEvent)} should be called
+   * @return {@code true} if {@link #actionPerformed(AnActionEvent)} should be called.
    */
   public boolean canBePerformed(@NotNull DataContext context) {
     return false;
@@ -107,7 +109,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Sets the type of the group.
    *
-   * @param popup If {@code true} the group will be shown as a popup in menus
+   * @param popup If {@code true} the group will be shown as a popup in menus.
    */
   public final void setPopup(boolean popup){
     boolean oldPopup = myPopup;

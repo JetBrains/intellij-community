@@ -622,7 +622,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  private ChildAttributes getDelegateAttributes(@NotNull List<Block> result) {
+  private ChildAttributes getDelegateAttributes(@NotNull List<? extends Block> result) {
     if (FormattingMode.ADJUST_INDENT_ON_ENTER.equals(myFormattingMode) && !result.isEmpty()) {
       final int lastIndex = result.size() - 1;
       Block lastBlock = result.get(lastIndex);
@@ -674,7 +674,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return null;
   }
 
-  private ASTNode processField(@NotNull final List<Block> result,
+  private ASTNode processField(@NotNull final List<? super Block> result,
                                ASTNode child,
                                @NotNull final AlignmentStrategy alignmentStrategy,
                                final Wrap defaultWrap,
@@ -709,7 +709,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  private ASTNode processTernaryOperationRange(@NotNull final List<Block> result,
+  private ASTNode processTernaryOperationRange(@NotNull final List<? super Block> result,
                                                @NotNull final ASTNode child,
                                                final Wrap defaultWrap,
                                                final Indent childIndent) {
@@ -751,7 +751,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
   }
 
-  private static void collectNodes(@NotNull List<ASTNode> nodes, @NotNull ASTNode node) {
+  private static void collectNodes(@NotNull List<? super ASTNode> nodes, @NotNull ASTNode node) {
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
@@ -1032,7 +1032,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  private ASTNode processEnumBlock(@NotNull List<Block> result,
+  private ASTNode processEnumBlock(@NotNull List<? super Block> result,
                                    @Nullable ASTNode child,
                                    ASTNode last)
   {
@@ -1236,7 +1236,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  protected ASTNode composeCodeBlock(@NotNull final List<Block> result,
+  protected ASTNode composeCodeBlock(@NotNull final List<? super Block> result,
                                      ASTNode child,
                                      final Indent indent,
                                      final int childrenIndent,

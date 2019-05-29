@@ -35,7 +35,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
@@ -80,7 +80,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private static final Logger LOG = Logger.getInstance(RunAnythingPopupUI.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final String HELP_PLACEHOLDER = "?";
-  private static final int LIST_REBUILD_DELAY = 200;
+  private static final int LIST_REBUILD_DELAY = 100;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private final AnActionEvent myActionEvent;
   private boolean myIsUsedTrigger;
@@ -388,7 +388,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
     myTextFieldTitle.setForeground(foregroundColor);
     myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(3, 5, 5, 0));
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD, myTextFieldTitle.getFont().getSize() - 1f));
     }
     else {
@@ -534,7 +534,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   private class MyListRenderer extends ColoredListCellRenderer<Object> {
     private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
-    private final JLabel myTitle = new JLabel();
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
@@ -545,7 +544,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, findIcon(index), isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -572,7 +571,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (model != null) {
         String title = model.getTitle(index);
         if (title != null) {
-          myTitle.setText(title);
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
         }
       }
@@ -587,6 +585,19 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
 
       return myMainPanel;
+    }
+
+    @Nullable
+    private Icon findIcon(int index) {
+      RunAnythingSearchListModel model = getSearchingModel(myResultsList);
+      Icon groupIcon = null;
+      if (model != null) {
+        RunAnythingGroup group = model.findItemGroup(index);
+        if (group != null) {
+          groupIcon = group.getIcon();
+        }
+      }
+      return groupIcon;
     }
 
     @Override
@@ -684,12 +695,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       });
     }
 
-    private void runReadAction(@NotNull Runnable action) {
-      if (!DumbService.getInstance(myProject).isDumb()) {
-        ApplicationManager.getApplication().runReadAction(action);
-      }
-    }
-
     protected void check() {
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
@@ -708,13 +713,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
     private void buildCompletionGroups(@NotNull String pattern, @NotNull Runnable checkCancellation) {
       LOG.assertTrue(myListModel instanceof RunAnythingSearchListModel.RunAnythingMainListModel);
 
+      if (DumbService.getInstance(myProject).isDumb()) {
+        return;
+      }
+
       StreamEx.of(RunAnythingRecentGroup.INSTANCE)
         .select(RunAnythingGroup.class)
         .append(myListModel.getGroups().stream()
                   .filter(group -> group instanceof RunAnythingCompletionGroup || group instanceof RunAnythingGeneralGroup)
                   .filter(group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group.getTitle())))
         .forEach(group -> {
-          runReadAction(() -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
+          ApplicationManager.getApplication().runReadAction(
+            () -> group.collectItems(myDataContext, myListModel, pattern, checkCancellation));
           checkCancellation.run();
         });
     }
@@ -741,7 +751,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     public ActionCallback insert(final int index, @NotNull RunAnythingGroup group) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         try {
           RunAnythingGroup.SearchResult result = group.getItems(myDataContext, myListModel, trimHelpPattern(), true, this::check);
 

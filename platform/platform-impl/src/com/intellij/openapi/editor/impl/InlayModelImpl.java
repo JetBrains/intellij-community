@@ -359,7 +359,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
     return null;
   }
 
-  private static Inlay findInlay(List<Inlay> inlays, @NotNull Point point, int startX) {
+  private static Inlay findInlay(List<? extends Inlay> inlays, @NotNull Point point, int startX) {
     for (Inlay inlay : inlays) {
       int endX = startX + inlay.getWidthInPixels();
       if (point.x >= startX && point.x < endX) return inlay;

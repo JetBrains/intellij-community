@@ -2,6 +2,8 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -24,17 +26,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ReorderingUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Performs actual write action (see {@link #extractVariable()}) which introduces new variable and replaces all occurrences.
@@ -85,7 +81,7 @@ class VariableExtractor {
       commentTracker.markUnchanged(initializer);
       initializer = (PsiExpression)initializer.copy();
 
-      PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, myProject);
+      PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, newExpr);
       PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
 
       replaceOccurrences(newExpr);
@@ -235,11 +231,18 @@ class VariableExtractor {
   }
 
   @NotNull
-  private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final Project project) {
+  private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final PsiExpression expression) {
     PsiType type = selectedType.getType();
     if (type == null) {
       throw new IncorrectOperationException("Unexpected empty type pointer");
     }
+
+    PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
+      .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
+    Project project = expression.getProject();
+    NullabilityAnnotationInfo nullabilityAnnotationInfo = 
+      NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
+
     final PsiAnnotation[] annotations = type.getAnnotations();
     return type.annotate(new TypeAnnotationProvider() {
       @NotNull
@@ -247,8 +250,17 @@ class VariableExtractor {
       public PsiAnnotation[] getAnnotations() {
         final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
         final Set<String> nullables = new HashSet<>();
-        nullables.addAll(manager.getNotNulls());
-        nullables.addAll(manager.getNullables());
+        Nullability nullability = nullabilityAnnotationInfo != null ? nullabilityAnnotationInfo.getNullability() : Nullability.UNKNOWN;
+        if (nullability == Nullability.UNKNOWN) {
+          nullables.addAll(manager.getNotNulls());
+          nullables.addAll(manager.getNullables());
+        }
+        else if (nullability == Nullability.NOT_NULL) {
+          nullables.addAll(manager.getNotNulls());
+        }
+        else if (nullability == Nullability.NULLABLE){
+          nullables.addAll(manager.getNullables());
+        }
         return Arrays.stream(annotations)
           .filter(annotation -> !nullables.contains(annotation.getQualifiedName()))
           .toArray(PsiAnnotation[]::new);
@@ -268,8 +280,8 @@ class VariableExtractor {
         expr = (PsiExpression)anchor;
       }
     }
-    PsiExpression firstOccurrence = StreamEx.of(occurrences).append(expr)
-      .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
+    Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).append(expr).toSet();
+    PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
     if (anchor instanceof PsiWhileStatement) {
       PsiExpression condition = ((PsiWhileStatement)anchor).getCondition();
       if (condition != null) {
@@ -287,9 +299,14 @@ class VariableExtractor {
     if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence) && 
         !PsiUtil.isAccessedForWriting(firstOccurrence)) {
       PsiExpression ancestorCandidate = ExpressionUtils.getTopLevelExpression(firstOccurrence);
-      if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false) &&
-          ReorderingUtils.canExtract(ancestorCandidate, firstOccurrence) == ThreeState.NO) {
-        return firstOccurrence;
+      if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false)) {
+        PsiElement statement = RefactoringUtil.getParentStatement(ancestorCandidate, false);
+        if (allOccurrences.stream().allMatch(occurrence ->
+                                               PsiTreeUtil.isAncestor(statement, occurrence, false) &&
+                                               (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
+                                                ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {
+          return firstOccurrence;
+        }
       }
     }
     if (anchor instanceof PsiTryStatement && firstOccurrence != null) {

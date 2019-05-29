@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -573,7 +573,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   protected void processMouseEvent(MouseEvent e) {
     MouseEvent e2 = e;
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
@@ -974,7 +974,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
        */
       JTable table = getTable();
       if (table != null) {
-        table.setCursor(cursor);
+        table.setCursor(UIUtil.cursorIfNotDefault(cursor));
         myCursor = cursor;
       }
       else {
@@ -1048,7 +1048,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     public void mouseReleased(@NotNull MouseEvent e) {
       mouseInputListener.mouseReleased(convertMouseEvent(e));
       if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
-        header.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        header.setCursor(null);
       }
     }
 

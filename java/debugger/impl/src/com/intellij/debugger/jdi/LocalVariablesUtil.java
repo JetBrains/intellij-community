@@ -177,7 +177,7 @@ public class LocalVariablesUtil {
   }
 
   private static Map<DecompiledLocalVariable, Value> fetchSlotValues(Map<DecompiledLocalVariable, Value> map,
-                                                                     List<DecompiledLocalVariable> vars,
+                                                                     List<? extends DecompiledLocalVariable> vars,
                                                                      StackFrame frame) throws Exception {
     final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");
     final VirtualMachine vm = frame.virtualMachine();
@@ -237,7 +237,7 @@ public class LocalVariablesUtil {
     return arrayInstance;
   }
 
-  private static Object createSlotInfoArray(Collection<DecompiledLocalVariable> vars) throws Exception {
+  private static Object createSlotInfoArray(Collection<? extends DecompiledLocalVariable> vars) throws Exception {
     final Object arrayInstance = Array.newInstance(ourSlotInfoClass, vars.size());
 
     int idx = 0;

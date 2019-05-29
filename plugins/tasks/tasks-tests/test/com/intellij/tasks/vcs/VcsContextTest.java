@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.LocalTask;
@@ -18,6 +19,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import static com.intellij.tasks.vcs.GitTaskBranchesTest.createRepository;
 
@@ -38,6 +40,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
     new RunAll()
       .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode())
       .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode())
+      .append(() -> ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMappings(Collections.emptyList()))
       .append(() -> super.tearDown())
       .run();
   }

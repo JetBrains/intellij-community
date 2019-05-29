@@ -3,6 +3,7 @@ package com.intellij.xml.util.documentation;
 
 import com.google.gson.Gson;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
@@ -15,7 +16,6 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public class HtmlCompatibilityData {
@@ -69,7 +69,7 @@ public class HtmlCompatibilityData {
     if (tag == null) return null;
     String key = tag instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
                  tag.getName() :
-                 tag.getName().toLowerCase(Locale.US);
+                 StringUtil.toLowerCase(tag.getName());
     if ("input".equals(key)) {
       String type = tag.getAttributeValue("type");
       if (type != null) {
@@ -85,7 +85,7 @@ public class HtmlCompatibilityData {
       if (element instanceof XmlTag) {
         String name = element instanceof XmlTagImpl && ((XmlTagImpl)tag).isCaseSensitive() ?
                      ((XmlTagImpl)element).getName() :
-                     ((XmlTag)element).getName().toLowerCase(Locale.US);
+                     StringUtil.toLowerCase(((XmlTag)element).getName());
 
         if (MATH.equals(name)) {
           return MATHML;
@@ -103,7 +103,7 @@ public class HtmlCompatibilityData {
   public static Map getAttributeData(@Nullable XmlTag tag, String attributeName) {
     Object data = getTagData(tag);
     if (data != null) {
-      Object attributeData = ((Map)data).get(attributeName.toLowerCase(Locale.US));
+      Object attributeData = ((Map)data).get(StringUtil.toLowerCase(attributeName));
       if (attributeData != null) return (Map)attributeData;
     }
     if (ourGlobalAttributesCache.get() == null) {

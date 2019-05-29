@@ -61,7 +61,7 @@ public class VcsHistoryCache {
     }
   }
 
-  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<List<VcsFileRevision>> consumer) {
+  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<? super List<VcsFileRevision>> consumer) {
     synchronized (myLock) {
       final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
       if (cachedHistory != null) {

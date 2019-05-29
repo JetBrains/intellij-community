@@ -57,6 +57,15 @@ def _is_already_patched(args):
     return False
 
 
+def _is_py3_and_has_bytes_args(args):
+    if not isinstance('', type(u'')):
+        return False
+    for arg in args:
+        if isinstance(arg, bytes):
+            return True
+    return False
+
+
 def _on_forked_process():
     import pydevd
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
@@ -72,7 +81,7 @@ def _on_set_trace_for_new_thread(global_debugger):
 # Things related to monkey-patching
 #===============================================================================
 def is_python_args(args):
-    return len(args) > 0 and is_python(args[0])
+    return not _is_py3_and_has_bytes_args(args) and len(args) > 0 and is_python(args[0])
 
 
 def is_executable(path):
@@ -153,6 +162,11 @@ def get_c_option_index(args):
 def patch_args(args):
     try:
         log_debug("Patching args: %s"% str(args))
+
+        if _is_py3_and_has_bytes_args(args):
+            warn_bytes_args()
+            return args
+
         args = remove_quotes_from_args(args)
 
         from pydevd import SetupHolder
@@ -363,10 +377,6 @@ def patch_fork_exec_executable_list(args, other_args):
     return other_args
 
 
-def patch_path(path):
-    return sys.executable if is_python(path) else path
-
-
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
         original_name = 'original_' + funcname
@@ -385,6 +395,11 @@ def warn_multiproc():
             "pydev debugger: To debug that process please enable 'Attach to subprocess automatically while debugging?' option in the debugger settings.\n")
 
 
+def warn_bytes_args():
+    log_error_once(
+            "pydev debugger: bytes arguments were passed to a new process creation function. Breakpoints may not work correctly.\n")
+
+
 def create_warn_multiproc(original_name):
 
     def new_warn_multiproc(*args):
@@ -394,6 +409,7 @@ def create_warn_multiproc(original_name):
 
         return getattr(os, original_name)(*args)
     return new_warn_multiproc
+
 
 def create_execl(original_name):
     def new_execl(path, *args):
@@ -406,8 +422,9 @@ def create_execl(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
+            path = args[0]
             send_process_will_be_substituted()
-        return getattr(os, original_name)(patch_path(path), *args)
+        return getattr(os, original_name)(path, *args)
     return new_execl
 
 
@@ -418,9 +435,11 @@ def create_execv(original_name):
         os.execvp(file, args)
         """
         import os
+        args = patch_args(args)
         if is_python_args(args):
+            path = args[0]
             send_process_will_be_substituted()
-        return getattr(os, original_name)(patch_path(path), patch_args(args))
+        return getattr(os, original_name)(path, args)
     return new_execv
 
 
@@ -431,9 +450,11 @@ def create_execve(original_name):
     """
     def new_execve(path, args, env):
         import os
+        args = patch_args(args)
         if is_python_args(args):
+            path = args[0]
             send_process_will_be_substituted()
-        return getattr(os, original_name)(patch_path(path), patch_args(args), env)
+        return getattr(os, original_name)(path, args, env)
     return new_execve
 
 
@@ -457,8 +478,9 @@ def create_spawnv(original_name):
         os.spawnvp(mode, file, args)
         """
         import os
+        args = patch_args(args)
         send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args))
+        return getattr(os, original_name)(mode, path, args)
     return new_spawnv
 
 
@@ -469,8 +491,9 @@ def create_spawnve(original_name):
     """
     def new_spawnve(mode, path, args, env):
         import os
+        args = patch_args(args)
         send_process_created_message()
-        return getattr(os, original_name)(mode, path, patch_args(args), env)
+        return getattr(os, original_name)(mode, path, args, env)
     return new_spawnve
 
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -6,7 +6,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
@@ -35,16 +35,16 @@ public abstract class JavaHomeFinder {
   protected abstract List<String> findExistingJdks();
 
   private static JavaHomeFinder getFinder() {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       return new WindowsJavaFinder();
     }
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       return new MacFinder();
     }
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       return new DefaultFinder("/usr/java", "/opt/java", "/usr/lib/jvm");
     }
-    if (SystemInfo.isSolaris) {
+    if (SystemInfoRt.isSolaris) {
       return new DefaultFinder("/usr/jdk");
     }
     return new DefaultFinder();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -31,7 +31,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
@@ -65,7 +64,6 @@ import org.slf4j.impl.Log4jLoggerFactory;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
@@ -98,20 +96,31 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class BundledMavenPathHolder {
     private static final File myBundledMaven2Home;
     private static final File myBundledMaven3Home;
+    private static final File eventListenerJar;
 
     static {
       final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
       final String root = pluginFileOrDir.getParent();
-
       if (pluginFileOrDir.isDirectory()) {
         File parentFile = getMavenPluginParentFile();
         myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
         myBundledMaven3Home = new File(parentFile, "maven36-server-impl/lib/maven3");
+        eventListenerJar = getEventSpyPathForLocalBuild();
       }
       else {
         myBundledMaven2Home = new File(root, "maven2");
         myBundledMaven3Home = new File(root, "maven3");
+        eventListenerJar = new File(root, "maven-event-listener.jar");
       }
+
+      if (!eventListenerJar.exists()) {
+        MavenLog.LOG.error("Event listener does not exist" + eventListenerJar);
+      }
+    }
+
+    private static File getEventSpyPathForLocalBuild() {
+      final File root = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+      return new File(root.getParent(), "intellij.maven.server.eventListener");
     }
   }
 
@@ -239,6 +248,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
   }
 
+  public static File getMavenEventListener() {
+    return BundledMavenPathHolder.eventListenerJar;
+  }
+
   public static File getMavenLibDirectory() {
     return new File(getInstance().getCurrentMavenHomeFile(), "lib");
   }
@@ -264,8 +277,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
    */
   public static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final List<File> classpath = new ArrayList<>();
     final String root = pluginFileOrDir.getParent();
+
+    final List<File> classpath = new ArrayList<>();
 
     if (pluginFileOrDir.isDirectory()) {
       prepareClassPathForLocalRunAndUnitTests(mavenVersion, classpath, root);
@@ -787,6 +801,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
       }
 
+      MavenUtil.addEventListener(mavenVersion, params);
       return params;
     }
 

@@ -14,9 +14,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.serialization.SerializationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -116,8 +116,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
 
-  public boolean SHOW_SOURCE_INFERRED_ANNOTATIONS = true;
-
   @OptionTag("SMART_BACKSPACE") // explicit name makes it work also for obfuscated private field's name
   private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
 
@@ -198,7 +196,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     try {
       XmlSerializer.deserializeInto(state, this);
     }
-    catch (XmlSerializationException e) {
+    catch (SerializationException e) {
       LOG.info(e);
     }
   }
@@ -231,7 +229,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     try {
       XmlSerializer.serializeObjectInto(this, element);
     }
-    catch (XmlSerializationException e) {
+    catch (SerializationException e) {
       LOG.info(e);
     }
   }

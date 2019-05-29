@@ -80,7 +80,7 @@ public abstract class HistoryDialogModel {
     });
   }
 
-  private static List<RevisionItem> groupRevisions(List<Revision> revs) {
+  private static List<RevisionItem> groupRevisions(List<? extends Revision> revs) {
     LinkedList<RevisionItem> result = new LinkedList<>();
 
     for (Revision each : ContainerUtil.iterateBackward(revs)) {

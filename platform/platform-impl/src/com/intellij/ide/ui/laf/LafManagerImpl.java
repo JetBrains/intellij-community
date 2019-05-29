@@ -13,18 +13,19 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -61,7 +62,7 @@ import java.util.List;
 import java.util.*;
 
 @State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
-public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable, BaseComponent {
+public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.LafManager");
 
   @NonNls private static final String ELEMENT_LAF = "laf";
@@ -105,7 +106,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
     List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
     }
     else {
@@ -134,7 +135,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
 
@@ -164,7 +165,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
@@ -268,7 +269,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find wizard L&F: " + wizardLafName);
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       String className = IntelliJLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) return laf;
@@ -444,7 +445,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
-    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF())) {
       return AllIcons.Mac.Tree_white_right_arrow;
     }
     return null;
@@ -475,6 +476,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchLafFonts(uiDefaults);
 
+    patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
 
     patchHiDPI(uiDefaults);
@@ -511,6 +513,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
     initFontDefaults(defaults, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
+      if (!(key instanceof String)) continue;
+      if (!StringUtil.endsWithIgnoreCase(((String)key), "font")) continue;
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {
         FontUIResource font = (FontUIResource)value;
@@ -534,7 +538,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
   }
 
+  private static void patchBorder(UIDefaults defaults, String key) {
+    if (defaults.getBorder(key) == null) {
+      defaults.put(key, JBUI.Borders.empty(1, 0).asUIResource());
+    }
+  }
+
+  private static void patchListUI(UIDefaults defaults) {
+    patchBorder(defaults, "List.border");
+  }
+
   private static void patchTreeUI(UIDefaults defaults) {
+    patchBorder(defaults, "Tree.border");
     if (Registry.is("ide.tree.ui.experimental")) {
       defaults.put("TreeUI", "com.intellij.ui.tree.ui.DefaultTreeUI");
       defaults.put("Tree.repaintWholeRow", true);
@@ -546,6 +561,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (isUnsupported(defaults.getIcon("Tree.expandedIcon"))) {
       defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
       defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
+    }
+
+    Object rowHeight = defaults.get("Tree.rowHeight");
+    if (rowHeight != null && !(rowHeight instanceof Integer)) {
+      LOG.error("unexpected Tree.rowHeight: '" + rowHeight + "' " + rowHeight.getClass());
+      try {
+        rowHeight = Double.valueOf(String.valueOf(rowHeight)).intValue();
+      }
+      catch (NumberFormatException e) {
+        rowHeight = 0;
+      }
+      defaults.put("Tree.rowHeight", rowHeight);
     }
   }
 
@@ -602,7 +629,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF())) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
@@ -611,7 +638,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
-    } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+    } else if ((SystemInfoRt.isLinux || SystemInfoRt.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
       uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 
@@ -636,7 +663,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * NOTE: This code could be removed if {@link com.intellij.ui.components.JBOptionButton} is moved to [platform-impl]
    * and default UI is created there directly.
    */
-  private static void fixOptionButton(UIDefaults uiDefaults) {
+  static void fixOptionButton(UIDefaults uiDefaults) {
     if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
       uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     }
@@ -650,14 +677,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
     String property = System.getProperty("idea.popup.weight");
-    if (property != null) property = property.toLowerCase(Locale.ENGLISH).trim();
+    if (property != null) property = StringUtil.toLowerCase(property).trim();
     if (SystemInfo.isMacOSLeopard) {
       // force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
       popupWeight = OurPopupFactory.WEIGHT_HEAVY;
     }
     else if (property == null) {
       // use defaults if popup weight isn't specified
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         popupWeight = OurPopupFactory.WEIGHT_HEAVY;
       }
     }
@@ -820,7 +847,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       defaults.put(fontResource, uiFont);
     }
 
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       defaults.put("PasswordField.font", monoFont);
     }
     defaults.put("TextArea.font", monoFont);
@@ -858,6 +885,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
         UIUtil.markAsTypeAheadAware(window);
+        window.setMinimumSize(null); // clear min-size from prev invocations on JBR11
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();

@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -151,8 +152,18 @@ public class DfaConstValue extends DfaValue {
   }
 
   public String toString() {
-    if (myValue == null) return "null";
-    return myValue.toString();
+    return renderValue(myValue);
+  }
+
+  public static String renderValue(Object value) {
+    if (value == null) return "null";
+    if (value instanceof String) return '"' + StringUtil.escapeStringCharacters((String)value) + '"';
+    if (value instanceof PsiField) {
+      PsiField field = (PsiField)value;
+      PsiClass containingClass = field.getContainingClass();
+      return containingClass == null ? field.getName() : containingClass.getName() + "." + field.getName();
+    }
+    return value.toString();
   }
 
   @Override

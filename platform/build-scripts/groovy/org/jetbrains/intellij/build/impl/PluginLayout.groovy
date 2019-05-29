@@ -76,7 +76,11 @@ class PluginLayout extends BaseLayout {
     return layout
   }
 
-  /**
+  @Override
+  String toString() {
+    return "Plugin '$mainModule'"
+  }
+/**
    * @return map from a JAR name to list of modules
    */
   MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {

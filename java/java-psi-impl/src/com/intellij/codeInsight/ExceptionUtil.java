@@ -208,6 +208,9 @@ public class ExceptionUtil {
     List<PsiClassType> result = new ArrayList<>();
     for (PsiType type : referenceTypes) {
       type = PsiClassImplUtil.correctType(substitutor.substitute(type), scope);
+      if (type instanceof PsiCapturedWildcardType) {
+        type = ((PsiCapturedWildcardType)type).getUpperBound();
+      }
       if (type instanceof PsiClassType) {
         result.add((PsiClassType)type);
       }
@@ -447,8 +450,7 @@ public class ExceptionUtil {
     if (MethodCandidateInfo.isOverloadCheck()) {
       return Collections.emptyList();
     }
-    final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(methodCall.getArgumentList());
-    final JavaResolveResult result = properties != null ? properties.getInfo() : PsiDiamondType.getDiamondsAwareResolveResult(methodCall);
+    final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(methodCall);
     final PsiElement element = result.getElement();
     final PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : null;
     if (method == null) {
@@ -456,10 +458,6 @@ public class ExceptionUtil {
     }
     if (skipCondition.test(methodCall)) {
       return Collections.emptyList();
-    }
-
-    if (properties != null) {
-      PsiUtilCore.ensureValid(method);
     }
 
     final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
@@ -655,7 +653,7 @@ public class ExceptionUtil {
   private static List<PsiClassType> getUnhandledExceptions(@NotNull PsiMethod method,
                                                           PsiElement element,
                                                           PsiElement topElement,
-                                                          @NotNull Supplier<PsiSubstitutor> substitutor) {
+                                                          @NotNull Supplier<? extends PsiSubstitutor> substitutor) {
     if (isArrayClone(method, element)) {
       return Collections.emptyList();
     }

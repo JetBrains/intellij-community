@@ -55,7 +55,7 @@ public class WhiteListSimpleRuleFactory {
     return createSimpleRule(rule,
                             Pair.create(RULE_PREFIX,s -> getBooleanRule(s)),
                             Pair.create(UTIL_PREFIX,s -> getCustomUtilRule(s)),
-                            Pair.create(ENUM_PREFIX, s -> new EnumWhiteListRule(StringUtil.split(s, ENUM_SEPARATOR))),
+                            Pair.create(ENUM_PREFIX, s -> new EnumWhiteListRule(StringUtil.split(s, ENUM_SEPARATOR, true, false))),
                             Pair.create(ENUM_REF_PREFIX, s -> new EnumWhiteListRule(contextData.getEnum(s))),
                             Pair.create(REGEXP_PREFIX, s -> new RegexpWhiteListRule(s)),
                             Pair.create(REGEXP_REF_PREFIX, s -> new RegexpWhiteListRule(contextData.getRegexp(s)))); }
@@ -192,7 +192,7 @@ public class WhiteListSimpleRuleFactory {
     return nodes;
   }
 
-  private static void addNonEmpty(@NotNull List<String> nodes, @Nullable String s) {
+  private static void addNonEmpty(@NotNull List<? super String> nodes, @Nullable String s) {
     if (StringUtil.isNotEmpty(s)) nodes.add(s);
   }
 

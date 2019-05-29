@@ -70,7 +70,7 @@ public class FileTypesTest extends PlatformTestCase {
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -344,13 +344,6 @@ public class FileTypesTest extends PlatformTestCase {
     log("T: ensureRedetected: clear");
   }
 
-  public void testReassignedPredefinedFileType() {
-    final FileType fileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
-    assertEquals("Perl", fileType.getName());
-    assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
-    doReassignTest(fileType, "cgi");
-  }
-
   public void testReassignTextFileType() {
     doReassignTest(PlainTextFileType.INSTANCE, "dtd");
   }
@@ -365,7 +358,7 @@ public class FileTypesTest extends PlatformTestCase {
 
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + extension));
     }
@@ -384,19 +377,19 @@ public class FileTypesTest extends PlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     Element state = myFileTypeManager.getState();
 
-    myFileTypeManager.getRemovedMappings().clear();
+    myFileTypeManager.getRemovedMappingTracker().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
 
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
-    Pair<FileType, Boolean> pair = mappings.get(matcher);
-    assertNotNull(pair);
-    assertTrue(pair.second);
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
+    assertEquals(1, mappings.size());
+    assertTrue(mappings.get(0).isApproved());
+    assertEquals(matcher, mappings.get(0).getFileNameMatcher());
   }
 
   public void testRemovedExactNameMapping() {
@@ -410,19 +403,42 @@ public class FileTypesTest extends PlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappings().put(matcher, Pair.create(fileType, true));
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     Element state = myFileTypeManager.getState();
 
-    myFileTypeManager.getRemovedMappings().clear();
+    myFileTypeManager.getRemovedMappingTracker().clear();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(state);
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
 
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
-    Pair<FileType, Boolean> pair = mappings.get(matcher);
-    assertNotNull(pair);
-    assertTrue(pair.second);
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
+    assertTrue(mappings.get(0).isApproved());
+    assertEquals(matcher, mappings.get(0).getFileNameMatcher());
+  }
+
+  public void testReassignedPredefinedFileType() {
+    final FileType fileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
+    assertEquals("Perl", fileType.getName());
+    assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
+    doReassignTest(fileType, "cgi");
+  }
+
+  public void testReAddedMapping() {
+    ArchiveFileType fileType = ArchiveFileType.INSTANCE;
+    FileNameMatcher matcher = myFileTypeManager.getAssociations(fileType).get(0);
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
+
+    WriteAction.run(() -> myFileTypeManager
+      .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
+    assertEquals(0, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
+  }
+
+  public void testPreserveRemovedMappingForUnknownFileType() {
+    myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("xxx"), "Foo Files", true);
+    WriteAction.run(() -> myFileTypeManager
+      .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
+    assertEquals(1, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
   }
 
   public void testGetRemovedMappings() {
@@ -435,10 +451,10 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(1, reassigned.size());
   }
 
-  public void testRenamedPropertiesToUnknownAndBack() throws Exception {
-    FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.properties");
-    assertEquals("Properties", propFileType.getName());
-    File file = createTempFile("xx.properties", "xx=yy");
+  public void testRenamedXmlToUnknownAndBack() throws Exception {
+    FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.xml");
+    assertEquals("XML", propFileType.getName());
+    File file = createTempFile("xx.xml", "<foo></foo>");
     VirtualFile vFile = getVirtualFile(file);
     assertEquals(propFileType, myFileTypeManager.getFileTypeByFile(vFile));
 
@@ -446,7 +462,7 @@ public class FileTypesTest extends PlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFile(vFile));
 
-    rename(vFile, "xx.properties");
+    rename(vFile, "xx.xml");
     myFileTypeManager.drainReDetectQueue();
     for (int i=0; i<100;i++) {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -474,54 +490,14 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
 
-    myFileTypeManager.initComponent();
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    myFileTypeManager.initializeComponent();
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertEquals(1, mappings.size());
-    assertEquals(typeFromPlugin, mappings.values().iterator().next().first);
+    assertEquals(typeFromPlugin.getName(), mappings.get(0).getFileTypeName());
   }
 
   public void testPreserveUninstalledPluginAssociations() {
-    final FileType typeFromPlugin = new FileType() {
-      @NotNull
-      @Override
-      public String getName() {
-        return "Foo files";
-      }
-
-      @NotNull
-      @Override
-      public String getDescription() {
-        return "";
-      }
-
-      @NotNull
-      @Override
-      public String getDefaultExtension() {
-        return "fromPlugin";
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon() {
-        return null;
-      }
-
-      @Override
-      public boolean isBinary() {
-        return false;
-      }
-
-      @Override
-      public boolean isReadOnly() {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
-        return null;
-      }
-    };
+    final FileType typeFromPlugin = createTestFileType();
     FileTypeFactory factory = new FileTypeFactory() {
       @Override
       public void createFileTypes(@NotNull FileTypeConsumer consumer) {
@@ -535,7 +511,7 @@ public class FileTypesTest extends PlatformTestCase {
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint(null).registerExtension(factory, disposable);
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(typeFromPlugin, "*.foo"));
 
@@ -548,7 +524,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
@@ -558,7 +534,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.clearForTests();
       myFileTypeManager.initStandardFileTypes();
       myFileTypeManager.loadState(element);
-      myFileTypeManager.initComponent();
+      myFileTypeManager.initializeComponent();
 
       //element = myFileTypeManager.getState();
       //log(JDOMUtil.writeElement(element));
@@ -574,7 +550,7 @@ public class FileTypesTest extends PlatformTestCase {
   public void testReassign() throws Exception {
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
 
     Element element = JDOMUtil.load(
       "<component name=\"FileTypeManager\" version=\"13\">\n" +
@@ -584,11 +560,11 @@ public class FileTypesTest extends PlatformTestCase {
       "</component>");
 
     myFileTypeManager.loadState(element);
-    myFileTypeManager.initComponent();
-    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    myFileTypeManager.initializeComponent();
+    List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertEquals(1, mappings.size());
-    assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
-    mappings.clear();
+    assertEquals(ArchiveFileType.INSTANCE.getName(), mappings.get(0).getFileTypeName());
+    myFileTypeManager.getRemovedMappingTracker().clear();
     assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
     Element map = myFileTypeManager.getState().getChild("extensionMap");
     if (map != null) {
@@ -609,7 +585,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.loadState(element);
-    myFileTypeManager.initComponent();
+    myFileTypeManager.initializeComponent();
     FileType extensions = myFileTypeManager.getFileTypeByExtension(extension);
     assertEquals("IDL", extensions.getName());
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(idl, extension));
@@ -804,5 +780,50 @@ public class FileTypesTest extends PlatformTestCase {
     finally {
       manager.setDefaultCharsetName(oldProject);
     }
+  }
+
+  @NotNull
+  private static FileType createTestFileType() {
+    return new FileType() {
+      @NotNull
+      @Override
+      public String getName() {
+        return "Foo files";
+      }
+
+      @NotNull
+      @Override
+      public String getDescription() {
+        return "";
+      }
+
+      @NotNull
+      @Override
+      public String getDefaultExtension() {
+        return "fromPlugin";
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
+      @Override
+      public boolean isBinary() {
+        return false;
+      }
+
+      @Override
+      public boolean isReadOnly() {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+        return null;
+      }
+    };
   }
 }

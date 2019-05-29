@@ -32,14 +32,14 @@ class <info descr="null" textAttributesKey="Class">C</info> {
     def <info descr="null" textAttributesKey="Groovy reassigned var">reassignedLocal</info> = null
     <info descr="null" textAttributesKey="Groovy reassigned parameter">reassignedParam</info> = <info descr="null" textAttributesKey="Groovy reassigned var">reassignedLocal</info>
     <info descr="null" textAttributesKey="Groovy reassigned var">reassignedLocal</info> = <info descr="null" textAttributesKey="Groovy reassigned parameter">reassignedParam</info>
-    {
-      <info descr="null" textAttributesKey="Class">Object</info> <info descr="null" textAttributesKey="Groovy reassigned parameter">param</info> ->
+    <info descr="null" textAttributesKey="Closure braces">{</info>
+      <info descr="null" textAttributesKey="Class">Object</info> <info descr="null" textAttributesKey="Groovy reassigned parameter">param</info> <info descr="null" textAttributesKey="Closure braces">-></info>
       <info descr="null" textAttributesKey="Groovy reassigned parameter">param</info> = ""
       <info descr="null" textAttributesKey="Method call">print</info> <info descr="null" textAttributesKey="Groovy reassigned parameter">param</info>
-    } (1)
-    {
-      <info descr="null" textAttributesKey="Class">Object</info> <info descr="null" textAttributesKey="Groovy parameter">param</info> -> <info descr="null" textAttributesKey="Groovy parameter">param</info>
-    } (2)
+    <info descr="null" textAttributesKey="Closure braces">}</info> (1)
+    <info descr="null" textAttributesKey="Closure braces">{</info>
+      <info descr="null" textAttributesKey="Class">Object</info> <info descr="null" textAttributesKey="Groovy parameter">param</info> <info descr="null" textAttributesKey="Closure braces">-></info> <info descr="null" textAttributesKey="Groovy parameter">param</info>
+    <info descr="null" textAttributesKey="Closure braces">}</info> (2)
 
     if (true) {
       def <info descr="null" textAttributesKey="Groovy var">a</info> = 1

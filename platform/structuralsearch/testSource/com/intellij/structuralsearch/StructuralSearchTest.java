@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -18,23 +18,22 @@ import java.util.List;
 @SuppressWarnings("ALL")
 public class StructuralSearchTest extends StructuralSearchTestCase {
   @Override
-  protected int findMatchesCount(@Language("JAVA") String in, String pattern, FileType fileType) {
+  protected int findMatchesCount(@Language("JAVA") String in, String pattern, LanguageFileType fileType) {
     return super.findMatchesCount(in, pattern, fileType);
   }
 
   @Override
   protected List<MatchResult> findMatches(@Language("JAVA") String in,
                                           String pattern,
-                                          FileType patternFileType,
+                                          LanguageFileType patternFileType,
                                           com.intellij.lang.Language patternLanguage,
-                                          FileType sourceFileType,
-                                          String sourceExtension,
+                                          LanguageFileType sourceFileType,
                                           boolean physicalSourceFile) {
-    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, sourceExtension, physicalSourceFile);
+    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, physicalSourceFile);
   }
 
   @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, FileType patternFileType) {
+  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, LanguageFileType patternFileType) {
     return super.findMatches(in, pattern, patternFileType);
   }
 
@@ -2293,6 +2292,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     String pattern3 = "3 * 8 + 2 + 2";
     assertEquals(1, findMatchesCount(source2, pattern3));
+
+    String source3 = "class C {" +
+                     "  static int foo() {\n" +
+                     "    return (Integer.parseInt(\"3\"));\n" +
+                     "  }" +
+                     "}";
+    String pattern4 = "Integer.parseInt('_x)";
+    assertEquals(1, findMatchesCount(source3, pattern4));
   }
 
   public void testFindSelfAssignment() {
@@ -2383,6 +2390,35 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     String pattern8 = "String '_x;";
     assertEquals("avoid IncorrectOperationException", 0, findMatchesCount(source3, pattern8));
+
+    String source4 = "class Main2 {\n" +
+                     "    public static void main(String[] args) {\n" +
+                     "        //need to match this\n" +
+                     "        JSTestUtils.testES6(\"myProject\", () -> {\n" +
+                     "            doTest1();\n" +
+                     "            doTest2();\n" +
+                     "        });\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest1() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest2() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    static class JSTestUtils {\n" +
+                     "        private JSTestUtils() {\n" +
+                     "        }\n" +
+                     "\n" +
+                     "        static void testES6(Object project, Runnable runnable) {\n" +
+                     "            runnable.run();\n" +
+                     "        }\n" +
+                     "    }\n" +
+                     "}";
+    String pattern9 = "JSTestUtils.testES6('_expression, () -> {\n" +
+                      "    '_statements*;\n" +
+                      "})";
+    assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
   }
 
   public void testFindDefaultMethods() {

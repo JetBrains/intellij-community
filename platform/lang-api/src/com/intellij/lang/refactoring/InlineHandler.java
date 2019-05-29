@@ -53,6 +53,10 @@ public interface InlineHandler {
     };
   }
 
+  default boolean canInlineElement(@NotNull PsiElement element) {
+    return true;
+  }
+
   /**
    * @param element element to be inlined
    * @param invokedOnReference true if the user invoked the refactoring on an element reference

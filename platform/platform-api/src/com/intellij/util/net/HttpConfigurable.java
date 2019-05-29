@@ -7,7 +7,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -53,7 +52,7 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.util.Pair.pair;
 
 @State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable, BaseComponent {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
@@ -123,7 +122,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     final HttpConfigurable currentState = getState();
     if (currentState != null) {
       final Element serialized = XmlSerializer.serialize(currentState);
@@ -152,6 +151,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);
     CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
+  }
+
+  @Deprecated
+  public void initComponent() {
+    initializeComponent();
   }
 
   @NotNull

@@ -56,7 +56,7 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
   }
 
   @Override
-  public void addFilesTo(final List<File> files) {
+  public void addFilesTo(final List<? super File> files) {
     File[] children = myDir.listFiles(FileFilters.filesWithExtension("jar"));
     if (children != null) ContainerUtil.addAll(files, children);
   }

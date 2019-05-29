@@ -86,7 +86,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, injectionSupport, operands) {
       @Override
       protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
-                                                                          List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                          List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                                                           boolean settingsAvailable,
                                                                           boolean unparsable) {
         InjectorUtils.registerInjection(language, list, containingFile, registrar);
@@ -424,7 +424,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
-                                                                        List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                        List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                                                         boolean xmlInjection,
                                                                         boolean unparsable) {
       return null;

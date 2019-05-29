@@ -3,8 +3,7 @@ package com.intellij.idea;
 
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
@@ -12,11 +11,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -31,7 +27,7 @@ import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
-import com.intellij.ui.Splash;
+import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
@@ -45,7 +41,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class IdeaApplication {
+public final class IdeaApplication {
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
@@ -53,21 +49,33 @@ public class IdeaApplication {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 
-  private static IdeaApplication ourInstance;
+  private static boolean ourPerformProjectLoad = true;
+  private static volatile boolean ourLoaded;
 
-  public static IdeaApplication getInstance() {
-    return ourInstance;
+  private IdeaApplication() {
   }
 
   public static boolean isLoaded() {
-    return ourInstance != null && ourInstance.myLoaded;
+    return ourLoaded;
   }
 
-  public static void initApplication(@NotNull String[] args) {
+  public static void initApplication(@NotNull String[] rawArgs) {
     Activity activity = PluginManager.startupStart.endAndStart(Phases.INIT_APP);
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
     EventQueue.invokeLater(() -> {
-      IdeaApplication app = new IdeaApplication(args, pluginDescriptorsFuture);
+      String[] args = processProgramArguments(rawArgs);
+      ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
+
+      CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
+        .thenAccept(pluginDescriptors -> {
+          Activity activity1 = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
+          ((ApplicationImpl)ApplicationManager.getApplication()).registerComponents(pluginDescriptors);
+          activity1.end();
+        });
+
+      if (!Main.isHeadless()) {
+        SplashManager.showLicenseeInfoOnSplash(LOG);
+      }
 
       // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
       Activity placeOnEventQueueActivity = activity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
@@ -75,14 +83,25 @@ public class IdeaApplication {
         placeOnEventQueueActivity.end();
         PluginManager.installExceptionHandler();
         activity.end();
-        // this run is blocking, while app is running
-        app.run(pluginDescriptorsFuture);
+        try {
+          Activity activity1 = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
+          registerComponentsFuture.get();
+          activity1.end();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          throw new CompletionException(e);
+        }
+
+        ((ApplicationImpl)ApplicationManager.getApplication()).load(null, SplashManager.getProgressIndicator());
+        ourLoaded = true;
+
+        ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
       });
     });
 
     List<IdeaPluginDescriptor> plugins;
     try {
-      plugins = PluginManagerCore.getLoadedPlugins(null);
+      plugins = PluginManagerCore.getLoadedPlugins();
     }
     catch (Throwable e) {
       pluginDescriptorsFuture.completeExceptionally(e);
@@ -91,58 +110,45 @@ public class IdeaApplication {
     pluginDescriptorsFuture.complete(plugins);
   }
 
-  private final @NotNull String[] myArgs;
-  private static boolean myPerformProjectLoad = true;
-  private ApplicationStarter myStarter;
-  private volatile boolean myLoaded;
-
-  public IdeaApplication(@NotNull String[] args) {
-    this(args, null);
-  }
-
-  private IdeaApplication(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
-    LOG.assertTrue(ourInstance == null);
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourInstance = this;
-
-    myArgs = processProgramArguments(args);
-    boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
-    boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
-    boolean isShowSplash = !Boolean.getBoolean(StartupUtil.NO_SPLASH);
-    boolean headless = Main.isHeadless();
+  @NotNull
+  public static ApplicationStarter createAppStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
+    LOG.assertTrue(!ourLoaded);
 
     {
       Activity activity = StartUpMeasurer.start("patch system");
-      patchSystem(headless);
+      patchSystem(Main.isHeadless());
       activity.end();
     }
 
-    myStarter = getStarter(myArgs, pluginsLoaded);
+    ApplicationStarter starter = getStarter(args, pluginsLoaded);
 
-    if (headless && !myStarter.isHeadless()) {
+    boolean headless = Main.isHeadless();
+    if (headless && !starter.isHeadless()) {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
       System.exit(Main.NO_GRAPHICS);
     }
+
+    LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
+
+    boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
+    boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
 
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
         new CommandLineApplication(isInternal, isUnitTest, headless);
       }
       if (isUnitTest) {
-        myLoaded = true;
+        ourLoaded = true;
       }
     }
     else {
-      if (isShowSplash && myStarter instanceof IdeStarter) {
-        ((IdeStarter)myStarter).showSplash();
-      }
-
       Activity activity = StartUpMeasurer.start("create app");
       new ApplicationImpl(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION);
       activity.end();
     }
 
-    myStarter.premain(myArgs);
+    starter.premain(args);
+    return starter;
   }
 
   /**
@@ -153,7 +159,7 @@ public class IdeaApplication {
    * @see IdeaApplication#SAFE_JAVA_ENV_PARAMETERS
    */
   @NotNull
-  private static String[] processProgramArguments(@NotNull String[] args) {
+  public static String[] processProgramArguments(@NotNull String[] args) {
     List<String> arguments = new ArrayList<>();
     List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
     for (String arg : args) {
@@ -164,10 +170,10 @@ public class IdeaApplication {
           continue;
         }
       }
-      if (StartupUtil.NO_SPLASH.equals(arg)) {
-        System.setProperty(StartupUtil.NO_SPLASH, "true");
+      if (SplashManager.NO_SPLASH.equals(arg)) {
         continue;
       }
+
       arguments.add(arg);
     }
     return ArrayUtil.toStringArray(arguments);
@@ -253,34 +259,7 @@ public class IdeaApplication {
     return null;
   }
 
-  private void run(@NotNull CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture) {
-    Splash splash = myStarter instanceof IdeStarter ? ((IdeStarter)myStarter).mySplash : null;
-
-    List<IdeaPluginDescriptor> plugins;
-    try {
-      Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
-      plugins = pluginDescriptorsFuture.get();
-      activity.end();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new CompletionException(e);
-    }
-
-    if (splash != null) {
-      splash.showProgress("", PluginManagerCore.PROGRESS_PART);
-    }
-
-    ((ApplicationImpl)ApplicationManager.getApplication()).load(null, splash, plugins);
-    myLoaded = true;
-
-    ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> myStarter.main(myArgs));
-    // GC it
-    myStarter = null;
-  }
-
   public static class IdeStarter implements ApplicationStarter {
-    private Splash mySplash;
-
     @Override
     public boolean isHeadless() {
       return false;
@@ -289,41 +268,6 @@ public class IdeaApplication {
     @Override
     public String getCommandName() {
       return null;
-    }
-
-    @Override
-    public void premain(String[] args) {
-    }
-
-    private void showSplash() {
-      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      final SplashScreen splashScreen = getSplashScreen();
-      if (splashScreen == null) {
-        mySplash = new Splash(appInfo);
-        mySplash.show();
-      }
-      else {
-        updateSplashScreen(appInfo, splashScreen);
-      }
-    }
-
-    private static void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, @NotNull SplashScreen splashScreen) {
-      final Graphics2D graphics = splashScreen.createGraphics();
-      final Dimension size = splashScreen.getSize();
-      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor(), appInfo)) {
-        splashScreen.update();
-      }
-    }
-
-    @Nullable
-    private static SplashScreen getSplashScreen() {
-      try {
-        return SplashScreen.getSplashScreen();
-      }
-      catch (Throwable t) {
-        LOG.warn(t);
-        return null;
-      }
     }
 
     @Override
@@ -369,14 +313,20 @@ public class IdeaApplication {
 
     @Override
     public void main(String[] args) {
+      Activity activity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
+      if (SystemInfoRt.isMac) {
+        MacOSApplicationProvider.initApplication();
+      }
+
       SystemDock.updateMenu();
 
       RecentProjectsManager.getInstance();  // ensures that RecentProjectsManager app listener is added
+      GcPauseWatcher.Companion.getInstance();
 
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
-      final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      Application app = ApplicationManager.getApplication();
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
 
@@ -393,23 +343,23 @@ public class IdeaApplication {
         System.setProperty("jbre.popupwindow.settype", "true");
       }
 
+      LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
+
+      Runnable beforeSetVisible = SplashManager.getHideTask();
+
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
-        WelcomeFrame.showNow();
+        WelcomeFrame.showNow(beforeSetVisible);
         lifecyclePublisher.welcomeScreenDisplayed();
       }
       else {
-        windowManager.showFrame();
+        windowManager.showFrame(beforeSetVisible);
       }
 
-      if (mySplash != null) {
-        app.invokeLater(() -> {
-          mySplash.dispose();
-          mySplash = null; // Allow GC collect the splash window
-        }, ModalityState.any());
-      }
+      activity.end();
 
       TransactionGuard.submitTransaction(app, () -> {
-        Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
+        Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
+        // The appStarting callback in RecentProjectsManagerBase will reopen the last project
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection
@@ -423,18 +373,13 @@ public class IdeaApplication {
   /**
    * Used for GUI tests to stop IdeEventQueue dispatching when Application is disposed already
    */
-  public void shutdown() {
-    myLoaded = false;
+  public static void shutdown() {
+    ourLoaded = false;
     IdeEventQueue.applicationClose();
     ShutDownTracker.getInstance().run();
   }
 
-  @NotNull
-  public String[] getCommandLineArguments() {
-    return myArgs;
-  }
-
-  public void disableProjectLoad() {
-    myPerformProjectLoad = false;
+  public static void disableProjectLoad() {
+    ourPerformProjectLoad = false;
   }
 }

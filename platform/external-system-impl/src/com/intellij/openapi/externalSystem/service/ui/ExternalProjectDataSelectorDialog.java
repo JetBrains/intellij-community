@@ -179,7 +179,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final DataNode<ProjectData> projectStructure = myProjectInfo.getExternalProjectStructure();
     if (projectStructure != null) {
       final boolean[] isModified = {false};
-      ExternalSystemApiUtil.visit(projectStructure, node -> {
+      projectStructure.visit(node -> {
         final DataNode modifiedDataNode = node.getUserData(MODIFIED_NODE_KEY);
         if (modifiedDataNode != null) {
           if (node.isIgnored() != modifiedDataNode.isIgnored()) {
@@ -514,16 +514,10 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (moduleNode != null) {
           moduleNode.isChecked = true;
         }
-        ExternalSystemApiUtil.visit(moduleNode == null ? myDataNode : moduleNode.myDataNode, node -> {
-          final DataNode modifiedDataNode = getModifiableDataNode(node);
-          modifiedDataNode.setIgnored(false);
-        });
+        ExternalSystemApiUtil.visit(moduleNode == null ? myDataNode : moduleNode.myDataNode, node -> getModifiableDataNode(node).setIgnored(false));
       }
       else {
-        ExternalSystemApiUtil.visit(myDataNode, node -> {
-          final DataNode modifiedDataNode = getModifiableDataNode(node);
-          modifiedDataNode.setIgnored(true);
-        });
+        ExternalSystemApiUtil.visit(myDataNode, node -> getModifiableDataNode(node).setIgnored(true));
         if (myShowSelectedRowsOnly) {
           final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
           TreePath[] before = myTree.getSelectionPaths();
@@ -605,7 +599,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
     }
 
-    private String getEnableMessage(List<DataNode<Identifiable>> selectedModules, Set<DataNode<Identifiable>> deps) {
+    private String getEnableMessage(List<? extends DataNode<Identifiable>> selectedModules, Set<? extends DataNode<Identifiable>> deps) {
       if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE || selectedModules.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
         return String.format(
           "%d disabled %s depend on %d selected %s. Would you like to enable %s too?",
@@ -624,7 +618,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         listOfDependencies, deps.size() == 1 ? "it" : "them");
     }
 
-    private String getDisableMessage(Set<DataNode<Identifiable>> deps) {
+    private String getDisableMessage(Set<? extends DataNode<Identifiable>> deps) {
       if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
         return String.format("%d enabled modules depend on selected modules. Would you like to disable them too?", deps.size());
       }

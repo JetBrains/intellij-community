@@ -156,7 +156,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       .setRenderer(cellRenderer)
       .setNamerForFiltering(o -> o.getName())
       .setTitle("Choose Framework")
-      .setItemChosenCallback((selectedValue) -> consumer.consume(selectedValue))
+      .setItemChosenCallback(consumer)
       .setMovable(true)
       .createPopup().showInBestPositionFor(editor);
   }

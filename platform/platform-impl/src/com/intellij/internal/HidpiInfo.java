@@ -1,32 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.function.BiFunction;
 
@@ -40,10 +27,10 @@ public class HidpiInfo extends AnAction implements DumbAware {
   private static final String JRE_HIDPI_MODE_TEXT = "Per-monitor DPI-aware";
   private static final String JRE_HIDPI_MODE_DESC =
     "<html><span style='font-size:x-small'>When enabled, the IDE UI scaling honors per-monitor DPI.<br>" +
-    (SystemInfo.isWindows ?
+    (SystemInfoRt.isWindows ?
     "To " + (ENABLED ? "disable" : "enable") + " set the JVM option <code>-Dsun.java2d.uiScale.enabled=" +
     (ENABLED ? "false" : "true") + "</code> and restart.</span></html>" :
-    "The mode can not be changed on this platform.");
+     "The mode can not be changed on this platform.");
 
   private static final String MONITOR_RESOLUTION_TEXT = "Monitor resolution";
   private static final String MONITOR_RESOLUTION_DESC =
@@ -66,10 +53,10 @@ public class HidpiInfo extends AnAction implements DumbAware {
     "<html><span style='font-size:x-small'>The global IDE scale factor" +
     (JBUI.DEBUG_USER_SCALE_FACTOR.isNotNull() ?
     ", overridden by the debug property." :
-    ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
-    (ENABLED ? "pt" : "px") + "</code><br>" +
-    "<code>" + (SystemInfo.isMac ? "Preferences " : "Settings ") +
-    "> Appearance & Behaviour > Appearance > Override default font") +
+     ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
+     (ENABLED ? "pt" : "px") + "</code><br>" +
+     "<code>" + (SystemInfoRt.isMac ? "Preferences " : "Settings ") +
+     "> Appearance & Behaviour > Appearance > Override default font") +
     "</code></span></html>";
 
   @Override

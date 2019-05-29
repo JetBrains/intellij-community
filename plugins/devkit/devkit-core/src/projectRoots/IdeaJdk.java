@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
@@ -96,7 +96,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @NotNull
   @Override
   public String adjustSelectedSdkHome(@NotNull String homePath) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       File home = new File(homePath, "Contents");
       if (home.exists()) return home.getPath();
     }
@@ -150,9 +150,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Nullable
   public static String getBuildNumber(String ideaHome) {
     try {
-      @NonNls final String buildTxt = SystemInfo.isMac ? "Resources/build.txt" : "build.txt";
+      @NonNls final String buildTxt = SystemInfoRt.isMac ? "Resources/build.txt" : "build.txt";
       File file = new File(ideaHome, buildTxt);
-      if (SystemInfo.isMac && !file.exists()) {
+      if (SystemInfoRt.isMac && !file.exists()) {
         // IntelliJ IDEA 13 and earlier used a different location for build.txt on Mac;
         // recognize the old location as well
         file = new File(ideaHome, "build.txt");
@@ -435,7 +435,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   private static void addDocs(@NotNull SdkModificator sdkModificator, @NotNull Sdk javaSdk) {
-    if (!addOrderEntries(JavadocOrderRootType.getInstance(), javaSdk, sdkModificator) && SystemInfo.isMac) {
+    if (!addOrderEntries(JavadocOrderRootType.getInstance(), javaSdk, sdkModificator) && SystemInfoRt.isMac) {
       Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
       for (Sdk jdk : jdks) {
         if (jdk.getSdkType() instanceof JavaSdk) {
@@ -449,7 +449,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static void addSources(SdkModificator sdkModificator, final Sdk javaSdk) {
     if (javaSdk != null) {
       if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)){
-        if (SystemInfo.isMac) {
+        if (SystemInfoRt.isMac) {
           Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
           for (Sdk jdk : jdks) {
             if (jdk.getSdkType() instanceof JavaSdk) {

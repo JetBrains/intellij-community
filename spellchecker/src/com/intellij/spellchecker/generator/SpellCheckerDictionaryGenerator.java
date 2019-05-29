@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -195,7 +196,7 @@ public abstract class SpellCheckerDictionaryGenerator {
   }
 
   protected void addSeenWord(HashSet<String> seenNames, String word, Language language) {
-    final String lowerWord = word.toLowerCase(Locale.US);
+    final String lowerWord = StringUtil.toLowerCase(word);
     if (globalSeenNames.contains(lowerWord)) {
       return;
     }

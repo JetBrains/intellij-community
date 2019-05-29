@@ -68,7 +68,7 @@ class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>
 
   override fun getIndexer(): DataIndexer<Int, PropertyIndexValue, FileContent> = DataIndexer { inputData ->
     val result = HashMap<Int, PropertyIndexValue>()
-    val tree = (inputData as FileContentImpl).lighterASTForPsiDependentIndex
+    val tree = (inputData as PsiDependentFileContent).lighterAST
 
     object : RecursiveLighterASTNodeWalkingVisitor(tree) {
       var methodIndex = 0

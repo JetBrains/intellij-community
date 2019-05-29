@@ -1,49 +1,47 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
+public class ProjectId implements ProjectCoordinate {
+  @Nullable private final String groupId;
+  @Nullable private final String artifactId;
+  @Nullable private final String version;
 
-public class ProjectId implements Serializable, ProjectCoordinate {
-  public static final String UNKNOWN_VALUE = "Unknown";
-
-  @Nullable private final String myGroupId;
-  @Nullable private final String myArtifactId;
-  @Nullable private final String myVersion;
-
+  @PropertyMapping({"groupId", "artifactId", "version"})
   public ProjectId(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
-    myGroupId = groupId;
-    myArtifactId = artifactId;
-    myVersion = version;
+    this.groupId = groupId;
+    this.artifactId = artifactId;
+    this.version = version;
   }
 
   @Override
   @Nullable
   public String getGroupId() {
-    return myGroupId;
+    return groupId;
   }
 
   @Override
   @Nullable
   public String getArtifactId() {
-    return myArtifactId;
+    return artifactId;
   }
 
   @Override
   @Nullable
   public String getVersion() {
-    return myVersion;
+    return version;
   }
 
   @NotNull
   public String getKey() {
     StringBuilder builder = new StringBuilder();
 
-    append(builder, myGroupId);
-    append(builder, myArtifactId);
-    append(builder, myVersion);
+    append(builder, groupId);
+    append(builder, artifactId);
+    append(builder, version);
 
     return builder.toString();
   }
@@ -64,14 +62,14 @@ public class ProjectId implements Serializable, ProjectCoordinate {
   }
 
   public boolean equals(@Nullable String groupId, @Nullable String artifactId) {
-    if (myArtifactId != null ? !myArtifactId.equals(artifactId) : artifactId != null) return false;
-    if (myGroupId != null ? !myGroupId.equals(groupId) : groupId != null) return false;
+    if (this.artifactId != null ? !this.artifactId.equals(artifactId) : artifactId != null) return false;
+    if (this.groupId != null ? !this.groupId.equals(groupId) : groupId != null) return false;
     return true;
   }
 
   public boolean equals(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
     if (!equals(groupId, artifactId)) return false;
-    if (myVersion != null ? !myVersion.equals(version) : version != null) return false;
+    if (this.version != null ? !this.version.equals(version) : version != null) return false;
     return true;
   }
 
@@ -81,15 +79,15 @@ public class ProjectId implements Serializable, ProjectCoordinate {
     if (o == null || getClass() != o.getClass()) return false;
 
     ProjectId other = (ProjectId)o;
-    return equals(other.getGroupId(), other.myArtifactId, other.myVersion);
+    return equals(other.getGroupId(), other.artifactId, other.version);
   }
 
   @Override
   public int hashCode() {
     int result;
-    result = (myGroupId != null ? myGroupId.hashCode() : 0);
-    result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
-    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = (groupId != null ? groupId.hashCode() : 0);
+    result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0);
+    result = 31 * result + (version != null ? version.hashCode() : 0);
     return result;
   }
 }

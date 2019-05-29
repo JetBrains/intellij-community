@@ -5,15 +5,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +23,7 @@ import java.util.Map;
  * @author irengrig
  */
 public class MultipleRootEditorWithSplitter extends JPanel {
-  private final JList myList;
+  private final JList<FilePath> myList;
   private final JPanel myConfigureRootPanel;
   @NonNls private static final String EMPTY = "empty";
 
@@ -35,7 +34,7 @@ public class MultipleRootEditorWithSplitter extends JPanel {
     splitter.setHonorComponentsMinimumSize(false);
     add(splitter, BorderLayout.CENTER);
 
-    myList = new JBList();
+    myList = new JBList<>();
     final Color borderColor = UIUtil.getBorderColor();
     myConfigureRootPanel = new JPanel();
     myConfigureRootPanel.setBorder(BorderFactory.createLineBorder(borderColor));
@@ -45,7 +44,7 @@ public class MultipleRootEditorWithSplitter extends JPanel {
     final CardLayout layout = new CardLayout();
     myConfigureRootPanel.setLayout(layout);
 
-    final DefaultListModel listModel = new DefaultListModel();
+    DefaultListModel<FilePath> listModel = new DefaultListModel<>();
 
     layout.addLayoutComponent(new JPanel(), EMPTY);
 
@@ -65,28 +64,18 @@ public class MultipleRootEditorWithSplitter extends JPanel {
 
     myList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myList.setCellRenderer(new ColoredListCellRenderer(){
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof FilePath) {
-          final FilePath path = ((FilePath)value);
-          if (path.getVirtualFile() != null) {
-            append(VcsPathPresenter.getInstance(project).getPresentableRelativePathFor(path.getVirtualFile()),
-                   SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          } else {
-            append(VcsPathPresenter.getInstance(project).getPresentableRelativePathFor(path.getVirtualFileParent()) + File.separator + path.getName(),
-                   SimpleTextAttributes.REGULAR_ATTRIBUTES);
-
-          }
-        }
-      }
-    });
-
+    myList.setCellRenderer(SimpleListCellRenderer.create("", o -> {
+      VcsPathPresenter presenter = VcsPathPresenter.getInstance(project);
+      VirtualFile file = o.getVirtualFile();
+      return file != null ? presenter.getPresentableRelativePathFor(file) :
+             presenter.getPresentableRelativePathFor(o.getVirtualFileParent()) + File.separator + o.getName();
+    }));
     myList.addListSelectionListener(e -> {
-      final FilePath root = ((FilePath)myList.getSelectedValue());
+      FilePath root = myList.getSelectedValue();
       if (root != null) {
         layout.show(myConfigureRootPanel, root.getPath());
-      } else {
+      }
+      else {
         layout.show(myConfigureRootPanel, EMPTY);
       }
     });

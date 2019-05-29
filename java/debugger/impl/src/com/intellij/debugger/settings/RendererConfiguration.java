@@ -91,7 +91,7 @@ public class RendererConfiguration implements Cloneable, JDOMExternalizable {
     myRepresentationNodes.remove(renderer);
   }
 
-  public void setRenderers(Collection<NodeRenderer> renderers) {
+  public void setRenderers(Collection<? extends NodeRenderer> renderers) {
     myRepresentationNodes.clear();
     myRepresentationNodes.addAll(renderers);
   }

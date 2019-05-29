@@ -42,16 +42,14 @@ class GitLogIndexer(private val project: Project,
   override fun readFullDetails(root: VirtualFile,
                                hashes: List<String>,
                                encoder: VcsLogIndexer.PathsEncoder,
-                               commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>,
-                               fast: Boolean) {
+                               commitConsumer: Consumer<in VcsLogIndexer.CompressedDetails>) {
     if (!isRepositoryReady(repositoryManager, root)) {
       return
     }
 
-    val renameLimit = if (fast) DiffRenameLimit.REGISTRY else DiffRenameLimit.INFINITY
-    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), renameLimit,
+    val requirements = GitCommitRequirements(shouldIncludeRootChanges(repositoryManager, root), DiffRenameLimit.REGISTRY,
                                              DiffInMergeCommits.DIFF_TO_PARENTS)
-    GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, fast, commitConsumer)
+    GitCompressedDetailsCollector(project, root, encoder).readFullDetailsForHashes(hashes, requirements, true, commitConsumer)
   }
 
   override fun getSupportedVcs(): VcsKey {
@@ -61,9 +59,7 @@ class GitLogIndexer(private val project: Project,
 
 class GitCompressedDetails(private val metadata: VcsCommitMetadata,
                            private val changes: List<TIntObjectHashMap<Change.Type>>,
-                           private val renames: List<TIntIntHashMap>,
-                           private val hasRenames: Boolean) : VcsCommitMetadata by metadata,
-                                                              VcsLogIndexer.CompressedDetails {
+                           private val renames: List<TIntIntHashMap>) : VcsCommitMetadata by metadata, VcsLogIndexer.CompressedDetails {
 
   override fun getModifiedPaths(parent: Int): TIntObjectHashMap<Change.Type> {
     return changes[parent]
@@ -71,9 +67,5 @@ class GitCompressedDetails(private val metadata: VcsCommitMetadata,
 
   override fun getRenamedPaths(parent: Int): TIntIntHashMap {
     return renames[parent]
-  }
-
-  override fun hasRenames(): Boolean {
-    return hasRenames
   }
 }

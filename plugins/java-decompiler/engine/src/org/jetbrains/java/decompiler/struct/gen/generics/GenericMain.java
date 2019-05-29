@@ -95,7 +95,7 @@ public class GenericMain {
     }
   }
 
-  private static String parseFormalParameters(String signature, List<String> parameters, List<List<GenericType>> bounds) {
+  private static String parseFormalParameters(String signature, List<? super String> parameters, List<? super List<GenericType>> bounds) {
     if (signature.charAt(0) != '<') {
       return signature;
     }

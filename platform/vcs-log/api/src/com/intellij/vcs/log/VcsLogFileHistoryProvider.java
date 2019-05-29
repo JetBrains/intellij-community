@@ -20,8 +20,10 @@ import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface VcsLogFileHistoryProvider {
-  boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path);
+import java.util.Collection;
 
-  void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber);
+public interface VcsLogFileHistoryProvider {
+  boolean canShowFileHistory(@NotNull Project project, @NotNull Collection<FilePath> path, @Nullable String revisionNumber);
+
+  void showFileHistory(@NotNull Project project, @NotNull Collection<FilePath> path, @Nullable String revisionNumber);
 }

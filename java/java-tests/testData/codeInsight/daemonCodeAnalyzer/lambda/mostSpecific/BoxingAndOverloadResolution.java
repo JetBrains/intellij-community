@@ -14,7 +14,7 @@ class Test {
 
 class Test2 {
 
-  static void m(Integer <warning descr="Parameter 'i' is never used">i</warning>) { }
+  static void m(Integer i) { }
 
   interface I1 {
     void m(int x);

@@ -175,8 +175,13 @@ public class VfsData {
     segment.myObjectArray.set(offset, data);
   }
 
+  @NotNull
   CharSequence getNameByFileId(int id) {
-    return FileNameCache.getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
+    return FileNameCache.getVFileName(getNameId(id));
+  }
+
+  int getNameId(int id) {
+    return assertNotNull(getSegment(id, false)).getNameId(id);
   }
 
   boolean isFileValid(int id) {

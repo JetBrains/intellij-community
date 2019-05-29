@@ -39,7 +39,7 @@ public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B,
   }
 
   @Override
-  public XBreakpointTypeGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointTypeGroup> groups) {
+  public XBreakpointTypeGroup getGroup(@NotNull B b, @NotNull Collection<? extends XBreakpointTypeGroup> groups) {
     if (b instanceof XBreakpoint) {
       final XBreakpoint breakpoint = (XBreakpoint)b;
       for (XBreakpointTypeGroup group : groups) {

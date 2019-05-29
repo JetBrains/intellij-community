@@ -20,6 +20,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -104,7 +105,7 @@ public class AnnotationUtil {
     }
     List<PsiAnnotation> result = null;
     for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (annotationNames.contains(annotation.getQualifiedName())) {
+      if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName) && isApplicableToDeclaration(annotation, list)) {
         if (result == null) {
           result = new SmartList<>();
         }
@@ -112,6 +113,17 @@ public class AnnotationUtil {
       }
     }
     return result;
+  }
+
+  private static boolean isApplicableToDeclaration(PsiAnnotation annotation, PsiModifierList list) {
+    PsiAnnotation.TargetType[] allTargets = AnnotationTargetUtil.getTargetsForLocation(list);
+    if (allTargets.length == 0) return true;
+                                
+    PsiAnnotation.TargetType[] nonTypeUse = Stream
+      .of(allTargets)
+      .filter(t -> t != PsiAnnotation.TargetType.TYPE_USE)
+      .toArray(PsiAnnotation.TargetType[]::new);
+    return AnnotationTargetUtil.findAnnotationTarget(annotation, nonTypeUse) != null;
   }
 
   @Nullable
@@ -292,6 +304,12 @@ public class AnnotationUtil {
       PsiType type = null;
       if (listOwner instanceof PsiMethod) {
         type = ((PsiMethod)listOwner).getReturnType();
+      }
+      else if (listOwner instanceof PsiParameter) {
+        if (((PsiParameter)listOwner).getTypeElement() != null) {
+          // Avoid lambda parameter type inference: anyway it doesn't have any explicit annotations
+          type = ((PsiParameter)listOwner).getType();
+        }
       }
       else if (listOwner instanceof PsiVariable) {
         type = ((PsiVariable)listOwner).getType();

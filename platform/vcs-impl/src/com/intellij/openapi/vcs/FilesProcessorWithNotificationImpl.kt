@@ -25,7 +25,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   abstract val askedBeforeProperty: String
 
-  abstract val doForCurrentProjectProperty: String
+  abstract val doForCurrentProjectProperty: String?
 
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
@@ -40,6 +40,10 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   abstract fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile>
 
   abstract fun rememberForAllProjects()
+
+  protected open fun rememberForCurrentProject() {
+    setForCurrentProject(true)
+  }
 
   init {
     Disposer.register(parentDisposable, this)
@@ -79,7 +83,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   }
 
   @Synchronized
-  private fun removeFiles(filesToRemove: Collection<VirtualFile>) {
+  protected fun removeFiles(filesToRemove: Collection<VirtualFile>) {
     files.removeAll(filesToRemove)
   }
 
@@ -92,7 +96,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   }
 
   @Synchronized
-  private fun acquireValidFiles(): List<VirtualFile> {
+  protected fun acquireValidFiles(): List<VirtualFile> {
     files.removeAll { !it.isValid }
     return files.toList()
   }
@@ -126,7 +130,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   private fun addForCurrentProjectAction() = NotificationAction.create(forCurrentProjectActionText) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    projectProperties.setValue(doForCurrentProjectProperty, true)
+    rememberForCurrentProject()
     projectProperties.setValue(askedBeforeProperty, true)
     expireNotification()
     clearFiles()
@@ -134,7 +138,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   private fun forAllProjectsAction() = NotificationAction.create(forAllProjectsActionText!!) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    projectProperties.setValue(doForCurrentProjectProperty, true)
+    rememberForCurrentProject()
     projectProperties.setValue(askedBeforeProperty, true)
     rememberForAllProjects()
     expireNotification()
@@ -142,22 +146,30 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   }
 
   private fun muteAction() = NotificationAction.create(muteActionText) { _, notification ->
-    projectProperties.setValue(doForCurrentProjectProperty, false)
+    setForCurrentProject(false)
     projectProperties.setValue(askedBeforeProperty, true)
     notification.expire()
   }
 
-  private fun notificationNotPresent() =
+  protected fun notificationNotPresent() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.isExpired ?: true
     }
 
-  private fun expireNotification() =
+  protected fun expireNotification() =
     synchronized(NOTIFICATION_LOCK) {
       notification?.expire()
     }
 
-  private fun notAskedBefore() = !projectProperties.getBoolean(askedBeforeProperty, false)
+  private fun setForCurrentProject(value: Boolean) =
+    doForCurrentProjectProperty?.let { projectProperties.setValue(it, value) }
 
-  protected open fun needDoForCurrentProject() = projectProperties.getBoolean(doForCurrentProjectProperty, false)
+  private fun getForCurrentProject() =
+    doForCurrentProjectProperty?.let { projectProperties.getBoolean(it, false) } ?: false
+
+  private fun notAskedBefore() = !wasAskedBefore()
+
+  protected fun wasAskedBefore() = projectProperties.getBoolean(askedBeforeProperty, false)
+
+  protected open fun needDoForCurrentProject() = getForCurrentProject()
 }

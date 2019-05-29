@@ -2,13 +2,10 @@
 package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubUserWithPermissions extends GithubUser {
-  @Mandatory private GithubPermissions permissions;
+  private GithubPermissions permissions;
 
   @NotNull
   public GithubPermissions getPermissions() {

@@ -38,7 +38,8 @@
       <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
-    <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
+    <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"
+            icon="AllIcons.Actions.IntentionBulbGrey"/>
 
     <group id="ShowIntentionsGroup" compact="true">
       <reference ref="ShowIntentionActions"/>
@@ -321,7 +322,7 @@
       <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
-    
+
     <group id="ParameterNameHints" popup="true">
       <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
       <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
@@ -329,7 +330,7 @@
       <separator/>
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
-    
+
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
     <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
@@ -412,7 +413,7 @@
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" />
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
-      <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator"/>
+      <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
@@ -953,8 +954,6 @@
         <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
       </group>
       <group id="Runner.View.Popup">
-        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.General.HideToolWindow"/>
-        <separator/>
         <reference ref="Runner.View.Close.Group"/>
         <separator/>
         <group id="Runner.Focus">
@@ -964,7 +963,6 @@
 
 
       <group id="Runner.View.Toolbar">
-        <reference ref="Runner.MinimizeView"/>
         <reference ref="Runner.CloseView"/>
       </group>
     </group>
@@ -1003,7 +1001,7 @@
         <reference id="Vcs.Checkout"/>
       </group>
       <separator/>
-      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true"/>
+      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
       <separator text="Local History"/>
       <reference id="LocalHistory.ShowHistory"/>
       <reference id="LocalHistory.PutLabel"/>
@@ -1024,6 +1022,7 @@
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction" text="Send EOF"/>
 
     <group>
+      <!--suppress PluginXmlCapitalization -->
       <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction"
               text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="Diff.ShowDiff"/>
       <separator/>
@@ -1032,10 +1031,12 @@
     <group>
       <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup"
               text="Import Test Results" icon="AllIcons.ToolbarDecorator.Import" id="ImportTests"/>
+      <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction"
+              text="Import Test From File" id="ImportTestsFromFile"/>
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="editRunConfigurations"/>
     </group>
 
-    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights to log">
+    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights" text="Dump Lookup Element Weights to Log">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
@@ -1178,16 +1179,31 @@
     </group>
 
     <group id="ServiceViewTreeToolbar">
-      <group id="ServiceViewTreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
+      <group id="ServiceView.GroupBy" popup="true" text="Group By" icon="AllIcons.Actions.GroupBy"
+             class="com.intellij.ide.actions.NonEmptyActionGroup">
+        <action id="ServiceView.GroupByType" class="com.intellij.execution.services.GroupByTypeAction"
+                text="Type"/>
+      </group>
+      <separator/>
+      <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
+              text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
+      <action id="ServiceView.FlattenServices" class="com.intellij.execution.services.FlattenServicesAction"
+              text="Flatten Services" icon="AllIcons.Actions.ListFiles"/>
+      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
+              text="Split By Type" icon="AllIcons.Modules.Split"/>
+      <group id="ServiceView.TreeSettings" popup="true" text="Settings" icon="AllIcons.General.Settings"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
     <group id="ServiceViewNodeToolbar">
-      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup" id="ServiceViewItemToolbarGroup"/>
       <separator/>
     </group>
     <group id="ServiceViewNodePopup">
-      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup"/>
+      <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
       <separator/>
+      <reference id="ServiceView.ShowInNewTab"/>
+      <reference id="ServiceView.FlattenServices"/>
+      <reference id="ServiceView.SplitByType"/>
     </group>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
@@ -1282,7 +1298,7 @@
     </action>
 
     <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction"
-            text="Show control flow" internal="true">
+            text="Show Control Flow" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
     <group id="TodoMainGroup" text="TODO">

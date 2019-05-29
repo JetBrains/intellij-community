@@ -215,7 +215,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @NotNull
   final FinalizableCommand createAddButtonCmd(final StripeButton button,
                                               @NotNull WindowInfoImpl info,
-                                              @NotNull Comparator<StripeButton> comparator,
+                                              @NotNull Comparator<? super StripeButton> comparator,
                                               @NotNull Runnable finishCallBack) {
     final WindowInfoImpl copiedInfo = info.copy();
     myId2Button.put(copiedInfo.getId(), button);
@@ -946,11 +946,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class AddToolStripeButtonCmd extends FinalizableCommand {
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
-    private final Comparator<StripeButton> myComparator;
+    private final Comparator<? super StripeButton> myComparator;
 
     AddToolStripeButtonCmd(final StripeButton button,
                            @NotNull WindowInfoImpl info,
-                           @NotNull Comparator<StripeButton> comparator,
+                           @NotNull Comparator<? super StripeButton> comparator,
                            @NotNull Runnable finishCallBack) {
       super(finishCallBack);
       myButton = button;

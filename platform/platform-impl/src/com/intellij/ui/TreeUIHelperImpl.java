@@ -31,7 +31,7 @@ public class TreeUIHelperImpl extends TreeUIHelper {
   }
 
   @Override
-  public void installTreeSpeedSearch(JTree tree, Convertor<TreePath, String> convertor, boolean canExpand) {
+  public void installTreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> convertor, boolean canExpand) {
     new TreeSpeedSearch(tree, convertor, canExpand);
   }
 
@@ -41,7 +41,7 @@ public class TreeUIHelperImpl extends TreeUIHelper {
   }
 
   @Override
-  public <T> void installListSpeedSearch(JList<T> list, Convertor<T, String> convertor) {
+  public <T> void installListSpeedSearch(JList<T> list, Convertor<? super T, String> convertor) {
     new ListSpeedSearch<>(list, (Function<T, String>)convertor::convert);
   }
 

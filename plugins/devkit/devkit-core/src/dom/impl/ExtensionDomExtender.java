@@ -16,6 +16,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
@@ -43,7 +46,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new DomExtender<Extension>() {
 
-    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName("implementation");
+    private final XmlName IMPLEMENTATION_XML_NAME = new XmlName(Extension.IMPLEMENTATION_ATTRIBUTE);
 
     @Override
     public void registerExtensions(@NotNull final Extension extension, @NotNull final DomExtensionsRegistrar registrar) {
@@ -161,7 +164,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper, fieldName);
       if (attrName != null) {
         Class clazz = String.class;
-        if (withElement != null || isClassField(fieldName)) {
+        if (withElement != null || Extension.isClassField(fieldName)) {
           clazz = PsiClass.class;
         } else if (PsiType.BOOLEAN.equals(field.getType())) {
           clazz = Boolean.class;
@@ -217,17 +220,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (withElement != null || isClassField(fieldName)) {
+    if (withElement != null || Extension.isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
-  }
-
-  public static boolean isClassField(@NotNull String fieldName) {
-    return (fieldName.endsWith("Class") && !fieldName.equals("forClass")) ||
-           fieldName.equals("className") ||
-           fieldName.equals("implementation") ||
-           fieldName.equals("serviceInterface") ||
-           fieldName.equals("serviceImplementation");
   }
 
   @Nullable
@@ -378,7 +373,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
       final String pluginId = StringUtil.notNullize(plugin.getPluginId(), PluginManagerCore.CORE_PLUGIN_ID);
-      for (ExtensionPoints points : plugin.getExtensionPoints()) {
+      AbstractCollectionChildDescription collectionChildDescription =
+        (AbstractCollectionChildDescription)plugin.getGenericInfo().getCollectionChildDescription("extensionPoints");
+      DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(plugin);
+      assert handler != null;
+      List<ExtensionPoints> children = handler.getCollectionChildren(collectionChildDescription, false);
+      for (ExtensionPoints points : children) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
           registerExtensionPoint(registrar, point, epPrefix, pluginId);
         }
@@ -391,10 +391,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     return false;
   }
 
-  public interface SimpleTagValue extends DomElement {
-    @SuppressWarnings("UnusedDeclaration")
-    @TagValue
-    String getTagValue();
+  public interface SimpleTagValue extends GenericDomValue<String> {
   }
 
   @SuppressWarnings("ClassExplicitlyAnnotation")

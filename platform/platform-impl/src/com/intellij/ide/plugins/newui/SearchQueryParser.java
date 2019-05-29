@@ -308,7 +308,7 @@ public abstract class SearchQueryParser {
         if (name.startsWith("/")) {
           if (name.equals("/vendor:")) {
             if (index < size) {
-              vendors.add(words.get(index++));
+              handleAttribute("vendor", words.get(index++), false);
             }
             else {
               addToSearchQuery(query);
@@ -351,7 +351,16 @@ public abstract class SearchQueryParser {
         case "outdated":
           needUpdate = true;
           break;
+
+        case "vendor":
+          vendors.add(value);
+          break;
       }
     }
+  }
+
+  @NotNull
+  public static String wrapAttribute(@NotNull String value) {
+    return StringUtil.containsAnyChar(value, " ,:") ? StringUtil.wrapWithDoubleQuote(value) : value;
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.JDK_1_9
+    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.JDK_1_9
   }
 
   fun testEmpty() {

@@ -87,7 +87,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return set;
   }
 
-  private T getByKey(final List<KeyedFactoryEPBean> epBeans, final String key, final Method method, final Object[] args) {
+  private T getByKey(final List<? extends KeyedFactoryEPBean> epBeans, final String key, final Method method, final Object[] args) {
     Object result = null;
     for(KeyedFactoryEPBean epBean: epBeans) {
       if (Comparing.strEqual(epBean.key, key, true)) {

@@ -153,7 +153,7 @@ public class LightTreeUtil {
     return null;
   }
 
-  public static void processLeavesAtOffsets(int[] offsets, @NotNull LighterAST tree, @NotNull BiConsumer<LighterASTTokenNode, Integer> consumer) {
+  public static void processLeavesAtOffsets(int[] offsets, @NotNull LighterAST tree, @NotNull BiConsumer<? super LighterASTTokenNode, ? super Integer> consumer) {
     if (offsets.length == 0) return;
 
     int[] sortedOffsets = offsets.clone();

@@ -48,7 +48,7 @@ class MacGestureAdapter extends GestureAdapter {
 
     if (pointerInfo == null) return;
 
-    Point mouse = pointerInfo.getLocation();
+    Point mouse = new Point(pointerInfo.getLocation());
     SwingUtilities.convertPointFromScreen(mouse, myFrame.getComponent());
     Component deepest = SwingUtilities.getDeepestComponentAt(myFrame.getComponent(), mouse.x, mouse.y);
     ZoomableViewport viewport = (ZoomableViewport) SwingUtilities.getAncestorOfClass(ZoomableViewport.class, deepest);
@@ -56,7 +56,7 @@ class MacGestureAdapter extends GestureAdapter {
       Magnificator magnificator = viewport.getMagnificator();
 
       if (magnificator != null) {
-        Point at = pointerInfo.getLocation();
+        Point at = new Point(pointerInfo.getLocation());
         SwingUtilities.convertPointFromScreen(at, (JComponent)viewport);
         viewport.magnificationStarted(at);
         myMagnifyingViewport = viewport;

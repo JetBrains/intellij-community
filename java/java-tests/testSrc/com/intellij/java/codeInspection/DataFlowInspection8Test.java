@@ -37,6 +37,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
   public void testMethodReferenceConstantValue() { doTestWithCustomAnnotations(); }
+  public void testLambdaAutoCloseable() { doTest(); }
 
   public void testOptionalOfNullable() { doTest(); }
   public void testPrimitiveOptional() { doTest(); }
@@ -236,4 +237,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testOptionalValueTracking() { doTest(); }
   public void testClearZeroesSize() { doTest(); }
   public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
+
+  public void testReturningNonNullFromMethodWithNullableArrayInReturnType() {
+    setupAmbiguousAnnotations("mixed", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
+    NullableNotNullManager.getInstance(getProject()).setNullables("mixed.Nullable", "typeUse.Nullable");
+    doTest();
+  }
+
 }

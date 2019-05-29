@@ -112,7 +112,10 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
         myDefaultHandler.handle(listenerMethod, message.getArgs());
       }
       else {
+        long startTime = System.nanoTime();
         listenerMethod.invoke(handler, message.getArgs());
+        long endTime = System.nanoTime();
+        myBus.notifyMessageDeliveryListener(topic, handler, endTime - startTime);
       }
     }
     catch (AbstractMethodError e) {

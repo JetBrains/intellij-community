@@ -235,7 +235,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  private void cancelAndRemoveRequestFrom(@NotNull Runnable request, @NotNull List<Request> list) {
+  private void cancelAndRemoveRequestFrom(@NotNull Runnable request, @NotNull List<? extends Request> list) {
     for (int i = list.size()-1; i>=0; i--) {
       Request r = list.get(i);
       if (r.myTask == request) {
@@ -254,7 +254,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  private int cancelAllRequests(@NotNull List<Request> list) {
+  private int cancelAllRequests(@NotNull List<? extends Request> list) {
     int count = list.size();
     for (Request request : list) {
       request.cancel();

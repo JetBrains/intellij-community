@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -18,6 +19,13 @@ import com.intellij.util.containers.MultiMap;
  * @author Dmitry Avdeev
  */
 public class RemoteTemplatesTest extends NewProjectWizardTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Registry.get("new.project.load.remote.templates").setValue(true, getTestRootDisposable());
+  }
+
   public void testParsing() throws Exception {
     MultiMap<String, ArchivedProjectTemplate> map = RemoteTemplatesFactory.createFromText(
       "<templates>\n" +

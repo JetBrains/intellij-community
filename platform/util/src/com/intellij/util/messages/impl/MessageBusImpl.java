@@ -59,6 +59,7 @@ public class MessageBusImpl implements MessageBus {
   private final String myOwner;
   private boolean myDisposed;
   private final Disposable myConnectionDisposable;
+  private MessageDeliveryListener myListener;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     this(owner);
@@ -444,6 +445,16 @@ public class MessageBusImpl implements MessageBus {
   @NotNull
   static <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
     return ThreadLocal.withInitial(ArrayDeque::new);
+  }
+
+  public void setMessageDeliveryListener(MessageDeliveryListener listener) {
+    myListener = listener;
+  }
+
+  void notifyMessageDeliveryListener(Topic topic, Object handler, long durationNanos) {
+    if (myListener != null) {
+      myListener.messageDelivered(topic, handler, durationNanos);
+    }
   }
 
   public static class RootBus extends MessageBusImpl {

@@ -43,7 +43,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
+public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> implements DocumentChangeDependentIndex {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
   private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());

@@ -1,23 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.bootRuntime;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.Locale;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class BinTrayUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
@@ -32,7 +32,7 @@ public class BinTrayUtil {
 
   private static String getExecutable() {
     String executable = System.getProperty("idea.executable");
-    return executable != null ? executable : ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    return executable != null ? executable : StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
   }
 
   @NotNull
@@ -73,7 +73,7 @@ public class BinTrayUtil {
         Throwable var4 = null;
 
         try {
-          File jdkPath = SystemInfo.isMac ? new File(directoryToExtractFile, "jdk") : directoryToExtractFile;
+          File jdkPath = SystemInfoRt.isMac ? new File(directoryToExtractFile, "jdk") : directoryToExtractFile;
           String jdk = jdkPath.getPath();
           fooWriter.write(jdk);
         } catch (Throwable var15) {
@@ -97,7 +97,7 @@ public class BinTrayUtil {
         var17.printStackTrace();
       }
 
-      ApplicationManagerEx.getApplicationEx().restart();
+      ApplicationManager.getApplication().restart();
     }
   }
 
@@ -107,14 +107,14 @@ public class BinTrayUtil {
 
   public static boolean isInstalled(String selectedItem) {
     File jdkBundleDirFile = new File(getJdkStoragePathFile(), archveToDirectoryName(selectedItem));
-    File bundlePathFromItem = SystemInfo.isMac ? new File(jdkBundleDirFile, "jdk") : jdkBundleDirFile;
+    File bundlePathFromItem = SystemInfoRt.isMac ? new File(jdkBundleDirFile, "jdk") : jdkBundleDirFile;
     return bundlePathFromItem.exists() && isActiveBundle(selectedItem);
   }
 
   public static boolean isActiveBundle(String selectedItem) {
     File jdkConfigFilePath = getJdkConfigFilePath();
     File jdkBundleDirFile = new File(getJdkStoragePathFile(), archveToDirectoryName(selectedItem));
-    File bundlePathFromItem = SystemInfo.isMac ? new File(jdkBundleDirFile, "jdk") : jdkBundleDirFile;
+    File bundlePathFromItem = SystemInfoRt.isMac ? new File(jdkBundleDirFile, "jdk") : jdkBundleDirFile;
     if (jdkConfigFilePath != null && jdkConfigFilePath.exists()) {
       try {
         Stream<String> lines = Files.lines(jdkConfigFilePath.toPath(), Charset.defaultCharset());
@@ -151,7 +151,7 @@ public class BinTrayUtil {
   }
 
   static {
-    productJdkConfigFileName = getExecutable() + (SystemInfo.isWindows ? (SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk") : ".jdk");
+    productJdkConfigFileName = getExecutable() + (SystemInfoRt.isWindows ? (SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk") : ".jdk");
     pathsSelector = PathManager.getPathsSelector();
     productJdkConfigDir = new File(pathsSelector != null ? PathManager.getDefaultConfigPathFor(pathsSelector) : PathManager.getConfigPath());
     productJdkConfigFile = new File(productJdkConfigDir, productJdkConfigFileName);

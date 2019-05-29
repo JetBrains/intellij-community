@@ -14,8 +14,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
@@ -86,7 +84,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
-      public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+      public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<? super Boolean> willOpenProject) {
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
         BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
         long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
@@ -102,12 +100,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
   }
 
   private static void cleanupPatch() {
-    new Task.Backgroundable(null, IdeBundle.message("update.cleaning.patch.progress"), false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        UpdateInstaller.cleanupPatch();
-      }
-    }.queue();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> UpdateInstaller.cleanupPatch());
   }
 
   private void queueNextCheck(long interval) {

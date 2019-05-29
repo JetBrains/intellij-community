@@ -128,7 +128,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
           }
           catch (IOException e) {
             final String actionName = getActionName();
-            final String message = "Cannot " + actionName.toLowerCase() + " file " + from.getAbsolutePath() + ": " + e.getMessage();
+            final String message = "Cannot " + StringUtil.toLowerCase(actionName) + " file " + from.getAbsolutePath() + ": " + e.getMessage();
             Messages.showErrorDialog(ChangeLibraryLevelActionBase.this.myProject, message, "Cannot " + actionName);
             LOG.info(e);
             return;

@@ -119,6 +119,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myTitleToolbarPanel.add(mySettingsButton);
     myTitleToolbarPanel.add(myRestoreSizeButton);
     getTitle().setButtonComponent(new ActiveComponent.Adapter() {
+      @NotNull
       @Override
       public JComponent getComponent() {
         return myTitleToolbarPanel;

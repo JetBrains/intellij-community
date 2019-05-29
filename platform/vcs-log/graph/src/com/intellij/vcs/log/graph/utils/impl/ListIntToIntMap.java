@@ -42,7 +42,7 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
    *                  getShortIndex access need: blockSize
    */
   @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize, int blockSize) {
+  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<? super Integer> thisIsVisible, final int longSize, int blockSize) {
     if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
     if (longSize == 0) return IDIntToIntMap.EMPTY;
@@ -53,14 +53,14 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     return listIntToIntMap;
   }
 
-  @NotNull final BooleanFunction<Integer> myThisIsVisible;
+  @NotNull final BooleanFunction<? super Integer> myThisIsVisible;
 
   private final int myLongSize;
 
   private final int myBlockSize;
   private final int[] mySubSumOfBlocks;
 
-  private ListIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize, int blockSize, int[] subSumOfBlocks) {
+  private ListIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize, int blockSize, int[] subSumOfBlocks) {
     myLongSize = longSize;
     myThisIsVisible = thisIsVisible;
     myBlockSize = blockSize;

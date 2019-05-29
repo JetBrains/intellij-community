@@ -483,7 +483,7 @@ public abstract class DialogWrapper {
       addHelpToLeftSide = true;
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
       if (macOtherAction != null) {
         leftSideActions.add(macOtherAction);
@@ -546,7 +546,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static List<Action> flattenOptionsActions(@NotNull List<Action> actions) {
+  private static List<Action> flattenOptionsActions(@NotNull List<? extends Action> actions) {
     List<Action> newActions = new ArrayList<>();
     for (Action action : actions) {
       newActions.add(action);
@@ -575,7 +575,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private List<JButton> createButtons(@NotNull List<Action> actions) {
+  private List<JButton> createButtons(@NotNull List<? extends Action> actions) {
     List<JButton> buttons = new ArrayList<>();
     for (Action action : actions) {
       buttons.add(createJButtonForAction(action));
@@ -584,8 +584,8 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
-                                  @NotNull List<JButton> rightSideButtons,
+  private JPanel createSouthPanel(@NotNull List<? extends JButton> leftSideButtons,
+                                  @NotNull List<? extends JButton> rightSideButtons,
                                   boolean addHelpToLeftSide) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
@@ -760,7 +760,7 @@ public abstract class DialogWrapper {
       button = new JButton(action);
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
@@ -1173,7 +1173,7 @@ public abstract class DialogWrapper {
     if (myPreferredFocusedComponentFromPanel != null) {
       return myPreferredFocusedComponentFromPanel;
     }
-    return SystemInfo.isMac ? myPreferredFocusedComponent : null;
+    return SystemInfoRt.isMac ? myPreferredFocusedComponent : null;
   }
 
   /**
@@ -1339,7 +1339,7 @@ public abstract class DialogWrapper {
     if (!postponeValidation()) {
       startTrackingValidation();
     }
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);
@@ -2103,6 +2103,11 @@ public abstract class DialogWrapper {
 
   public boolean isDisposed() {
     return myDisposed;
+  }
+
+  public void disposeIfNeeded() {
+    if (isDisposed()) return;
+    Disposer.dispose(getDisposable());
   }
 
   /**

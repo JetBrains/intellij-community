@@ -511,7 +511,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     });
   }
 
-  protected void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList<T> list, @NotNull List<T> newItems) {
+  protected void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull JList<? extends T> list, @NotNull List<? extends T> newItems) {
     setMergeListItemsRunning(true);
 
     try {

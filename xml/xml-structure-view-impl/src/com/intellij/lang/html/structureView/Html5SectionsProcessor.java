@@ -3,6 +3,7 @@ package com.intellij.lang.html.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SortedList;
@@ -217,7 +218,7 @@ class Html5SectionsProcessor {
 
     if (HGROUP_ELEMENT.equalsIgnoreCase(header.getLocalName())) {
       for (XmlTag subTag : header.getSubTags()) {
-        if (ArrayUtil.contains(subTag.getLocalName().toLowerCase(), HEADER_ELEMENTS)) {
+        if (ArrayUtil.contains(StringUtil.toLowerCase(subTag.getLocalName()), HEADER_ELEMENTS)) {
           if (buf.length() > 0) {
             buf.append(" ");
           }
@@ -247,15 +248,15 @@ class Html5SectionsProcessor {
   }
 
   private static boolean isSectioningRootElement(final XmlTag tag) {
-    return ArrayUtil.contains(tag.getLocalName().toLowerCase(), SECTIONING_ROOT_ELEMENTS);
+    return ArrayUtil.contains(StringUtil.toLowerCase(tag.getLocalName()), SECTIONING_ROOT_ELEMENTS);
   }
 
   private static boolean isSectioningContentElement(final XmlTag tag) {
-    return ArrayUtil.contains(tag.getLocalName().toLowerCase(), SECTIONING_CONTENT_ELEMENTS);
+    return ArrayUtil.contains(StringUtil.toLowerCase(tag.getLocalName()), SECTIONING_CONTENT_ELEMENTS);
   }
 
   private static boolean isHeader(final XmlTag tag) {
-    return ArrayUtil.contains(tag.getLocalName().toLowerCase(), HEADER_ELEMENTS) || HGROUP_ELEMENT.equalsIgnoreCase(tag.getLocalName());
+    return ArrayUtil.contains(StringUtil.toLowerCase(tag.getLocalName()), HEADER_ELEMENTS) || HGROUP_ELEMENT.equalsIgnoreCase(tag.getLocalName());
   }
 
   private static int compareHeaderRanks(final @NotNull XmlTag header1, final @NotNull XmlTag header2) {
@@ -267,7 +268,7 @@ class Html5SectionsProcessor {
       int minIndex = HEADER_ELEMENTS.length;
 
       for (XmlTag subTag : header.getSubTags()) {
-        final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, subTag.getLocalName().toLowerCase());
+        final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(subTag.getLocalName()));
         if (index < minIndex) {
           minIndex = index;
           if (minIndex == 0) break;
@@ -282,7 +283,7 @@ class Html5SectionsProcessor {
       return minIndex + 1;
     }
 
-    final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, header.getLocalName().toLowerCase());
+    final int index = ArrayUtil.indexOf(HEADER_ELEMENTS, StringUtil.toLowerCase(header.getLocalName()));
     if (index < 0) throw new IllegalArgumentException(header.getName());
     return index + 1;
   }

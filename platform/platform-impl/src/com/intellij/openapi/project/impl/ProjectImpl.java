@@ -2,13 +2,16 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
@@ -43,6 +46,7 @@ import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
 import org.picocontainer.MutablePicoContainer;
 
@@ -80,13 +84,27 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
-    if (!isDefault()) {
-      getStateStore().setPath(filePath);
-    }
+    getStateStore().setPath(filePath);
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
+  }
+
+  static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
+  // default project constructor
+  ProjectImpl() {
+    super(ApplicationManager.getApplication(), TEMPLATE_PROJECT_NAME);
+
+    putUserData(CREATION_TIME, System.nanoTime());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      putUserData(CREATION_TRACE, DebugUtil.currentStackTrace());
+    }
+
+    creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
+
+    myName = TEMPLATE_PROJECT_NAME;
+    myLight = false;
   }
 
   @Override
@@ -172,23 +190,23 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Nullable
   @Override
   public @SystemIndependent String getProjectFilePath() {
-    return isDefault() ? null : getStateStore().getProjectFilePath();
+    return getStateStore().getProjectFilePath();
   }
 
   @Override
   public VirtualFile getProjectFile() {
-    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
+    return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectFilePath());
   }
 
   @Override
   public VirtualFile getBaseDir() {
-    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
+    return LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
   }
 
   @Override
   @Nullable
   public @SystemIndependent String getBasePath() {
-    return isDefault() ? null : getStateStore().getProjectBasePath();
+    return getStateStore().getProjectBasePath();
   }
 
   @NotNull
@@ -202,10 +220,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public @SystemDependent String getPresentableUrl() {
-    if (isDefault()) {
-      return null;
-    }
-
     IProjectStore store = getStateStore();
     return PathUtil.toSystemDependentName(store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath());
   }
@@ -219,14 +233,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       str = getName();
     }
 
-    final String prefix = !isDefault() && getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
+    final String prefix = getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
   }
 
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    String workspaceFilePath = isDefault() ? null : getStateStore().getWorkspaceFilePath();
+    String workspaceFilePath = getStateStore().getWorkspaceFilePath();
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
@@ -234,14 +248,18 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void init() {
     Application application = ApplicationManager.getApplication();
 
-    ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    String activityNamePrefix = activityNamePrefix();
+    Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-    //noinspection CodeBlock2Expr
-    init(PluginManagerCore.getLoadedPlugins(null), progressIndicator, !isDefault() && application.isUnitTestMode() ? () -> {
-      application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
-    } : null);
+    registerComponents(PluginManagerCore.getLoadedPlugins());
+    if (activity != null) {
+      activity.end();
+    }
 
-    if (!isDefault() && !application.isHeadlessEnvironment()) {
+    init(progressIndicator, application.isUnitTestMode() ? () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this) : null);
+
+    if (!application.isHeadlessEnvironment()) {
       distributeProgress();
     }
     if (myName == null) {
@@ -300,7 +318,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public synchronized void dispose() {
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();  // dispose must be under write action
 
     // can call dispose only via com.intellij.ide.impl.ProjectUtil.closeAndDispose()
@@ -346,8 +364,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
-           (isDefault() ? " (Default)" : "") +
+                         : " '" + getPresentableUrl() + "'") +
            " " + myName;
   }
 
@@ -360,5 +377,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   protected String activityNamePrefix() {
     return "project ";
+  }
+
+  @Override
+  protected void logMessageBusDelivery(Topic topic, Object handler, long durationNanos) {
+    super.logMessageBusDelivery(topic, handler, durationNanos);
+    if (topic == ProjectManager.TOPIC) {
+      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationNanos, handler.getClass(),
+                                                   StartUpMeasurer.Level.PROJECT);
+    }
   }
 }

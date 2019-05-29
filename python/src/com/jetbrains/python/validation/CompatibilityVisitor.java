@@ -230,7 +230,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     boolean seenBytes = false;
     boolean seenNonBytes = false;
     for (PyStringElement element : node.getStringElements()) {
-      final String prefix = element.getPrefix().toUpperCase();
+      final String prefix = StringUtil.toUpperCase(element.getPrefix());
       if (prefix.isEmpty()) continue;
 
       final boolean bytes = element.isBytes();

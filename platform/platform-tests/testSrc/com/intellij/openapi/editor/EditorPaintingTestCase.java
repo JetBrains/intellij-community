@@ -21,12 +21,14 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.tree.IElementType;
@@ -69,7 +71,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   protected void checkResult() throws IOException {
-    checkResult(getFileName());
+    checkResult(getFileName(), false);
+  }
+
+  protected void checkResultWithGutter() throws IOException {
+    checkResult(getFileName(), true);
   }
 
   @NotNull
@@ -81,24 +87,24 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }
 
-  protected static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
-    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
+  protected static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
-  protected static void addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
-    addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
+  protected static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    return addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
-  protected static void addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
+  protected static RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  protected static void addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+  protected static RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    return myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
-  protected static void addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
-    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
+  protected static RangeHighlighter addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
+    return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
   }
 
   @Override
@@ -165,18 +171,29 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return TEST_DATA_PATH;
   }
 
-  private void checkResult(@TestDataFile String expectedResultFileName) throws IOException {
+  private void checkResult(@TestDataFile String expectedResultFileName, boolean withGutter) throws IOException {
     myEditor.getSettings().setAdditionalLinesCount(0);
     myEditor.getSettings().setAdditionalColumnsCount(1);
+
     JComponent editorComponent = myEditor.getContentComponent();
-    Dimension size = editorComponent.getPreferredSize();
-    editorComponent.setSize(size);
+    JComponent gutterComponent = withGutter ? ((EditorImpl)myEditor).getGutterComponentEx() : new MyEmptyPanel();
+
+    Dimension editorSize = editorComponent.getPreferredSize();
+    Dimension gutterSize = gutterComponent.getPreferredSize();
+    Dimension imageSize = new Dimension(editorSize.width + gutterSize.width, Math.max(editorSize.height, gutterSize.height));
+
+    editorComponent.setSize(editorSize.width, imageSize.height);
+    gutterComponent.setSize(gutterSize.width, imageSize.height);
+
     //noinspection UndesirableClassUsage
-    BufferedImage image = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB);
     BitmapFont plainFont = BitmapFont.loadFromFile(getFontFile(false));
     BitmapFont boldFont = BitmapFont.loadFromFile(getFontFile(true));
     MyGraphics graphics = new MyGraphics(image.createGraphics(), plainFont, boldFont);
     try {
+      gutterComponent.paint(graphics);
+      graphics.translate(gutterComponent.getWidth(), 0);
+
       editorComponent.paint(graphics);
     }
     finally {
@@ -256,6 +273,11 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
         drawChar(str.charAt(i), (int)x, (int)y);
         x += BitmapFont.CHAR_WIDTH;
       }
+    }
+
+    @Override
+    public void drawString(String str, int x, int y) {
+      drawString(str, (float)x, (float)y);
     }
 
     private void drawChar(char c, int x, int y) {
@@ -408,5 +430,12 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     plainFont.saveToFile(getFontFile(false));
     BitmapFont boldBont = BitmapFont.createFromFont(font.deriveFont(Font.BOLD));
     boldBont.saveToFile(getFontFile(true));
+  }
+
+  private static class MyEmptyPanel extends JComponent {
+    @Override
+    public Dimension getPreferredSize() {
+      return new Dimension(0, 0);
+    }
   }
 }

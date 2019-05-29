@@ -17,8 +17,18 @@ public interface ServiceViewDescriptor {
   ItemPresentation getPresentation();
 
   @Nullable
+  default String getId() {
+    return getPresentation().getPresentableText();
+  }
+
+  @Nullable
   default JComponent getContentComponent() {
     return null;
+  }
+
+  @NotNull
+  default ItemPresentation getContentPresentation() {
+    return getPresentation();
   }
 
   @Nullable

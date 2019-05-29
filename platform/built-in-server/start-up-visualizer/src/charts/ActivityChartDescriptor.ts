@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-export type ActivityChartType = "prepareAppInitActivities" | "components" | "services" | "extensions" | "topHitProviders" | "projectPostStartupActivities"
+export type ActivityChartType = "prepareAppInitActivities" | "components" | "services" | "extensions" | "topHitProviders" | "projectPostStartupActivities" | "GCs"
 
 export interface ActivityChartDescriptor {
   readonly label: string
   readonly id: ActivityChartType
 
   readonly sourceNames?: Array<string>
+
+  readonly rotatedLabels?: boolean
+  readonly groupByThread?: boolean
 }
 
 // not as part of ItemChartManager.ts to reduce scope of changes on change
@@ -34,9 +37,15 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
   {
     label: "Prepare App Init",
     id: "prepareAppInitActivities",
+    groupByThread: true,
   },
   {
     label: "Project Post-Startup",
     id: "projectPostStartupActivities",
+  },
+  {
+    label: "GCs",
+    id: "GCs",
+    rotatedLabels: false,
   },
 ]

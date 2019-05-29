@@ -18,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.tasks.compatibility" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
   </component>
 </module>

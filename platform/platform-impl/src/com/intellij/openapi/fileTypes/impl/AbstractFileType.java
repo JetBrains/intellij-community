@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 public class AbstractFileType extends UserFileType<AbstractFileType> implements ExternalizableFileType, ExternalizableScheme,
-                                                                                CustomSyntaxTableFileType {
+                                                                                CustomSyntaxTableFileType, PlainTextLikeFileType {
   private static final String SEMICOLON = ";";
   protected SyntaxTable mySyntaxTable;
   private SyntaxTable myDefaultSyntaxTable;
@@ -304,11 +304,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   @NonNls static final String ELEMENT_MAPPING = "mapping";
   @NonNls static final String ATTRIBUTE_EXT = "ext";
-  @NonNls private static final String ATTRIBUTE_PATTERN = "pattern";
-  /** Applied for removed mappings approved by user */
-  @NonNls private static final String ATTRIBUTE_APPROVED = "approved";
-
-  @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
+  @NonNls static final String ATTRIBUTE_PATTERN = "pattern";
   @NonNls static final String ATTRIBUTE_TYPE = "type";
 
   @NotNull
@@ -325,22 +321,6 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
       FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : FileTypeManager.parseFromString(pattern);
       result.add(Pair.create(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE)));
-    }
-    return result;
-  }
-
-  @NotNull
-  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element element) {
-    List<Element> children = element.getChildren(ELEMENT_REMOVED_MAPPING);
-    if (children.isEmpty()) {
-      return Collections.emptyList();
-    }
-
-    List<Trinity<FileNameMatcher, String, Boolean>> result = new SmartList<>();
-    for (Element mapping : children) {
-      String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
-      FileNameMatcher matcher = ext == null ? FileTypeManager.parseFromString(mapping.getAttributeValue(ATTRIBUTE_PATTERN)) : new ExtensionFileNameMatcher(ext);
-      result.add(Trinity.create(matcher, mapping.getAttributeValue(ATTRIBUTE_TYPE), Boolean.parseBoolean(mapping.getAttributeValue(ATTRIBUTE_APPROVED))));
     }
     return result;
   }
@@ -362,25 +342,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return mapping;
   }
 
-  static Element writeRemovedMapping(@NotNull FileType type, @NotNull FileNameMatcher matcher, boolean specifyTypeName, boolean approved) {
-    Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
-    if (matcher instanceof ExtensionFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
-    }
-    else if (writePattern(matcher, mapping)) {
-      return null;
-    }
-    if (approved) {
-      mapping.setAttribute(ATTRIBUTE_APPROVED, "true");
-    }
-    if (specifyTypeName) {
-      mapping.setAttribute(ATTRIBUTE_TYPE, type.getName());
-    }
-
-    return mapping;
-  }
-
-  private static boolean writePattern(FileNameMatcher matcher, Element mapping) {
+  static boolean writePattern(FileNameMatcher matcher, Element mapping) {
     if (matcher instanceof WildcardFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
     }

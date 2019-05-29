@@ -207,7 +207,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return null;
   }
 
-  private static String getStringContent(Transferable content) {
+  private static String getStringContent(@NotNull Transferable content) {
     try {
       return (String)content.getTransferData(DataFlavor.stringFlavor);
     }

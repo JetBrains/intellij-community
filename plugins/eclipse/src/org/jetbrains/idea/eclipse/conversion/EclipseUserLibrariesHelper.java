@@ -5,7 +5,6 @@ package org.jetbrains.idea.eclipse.conversion;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -59,7 +58,7 @@ public class EclipseUserLibrariesHelper {
       if (!parentFile.mkdir()) return;
     }
     final Element userLibsElement = new Element("eclipse-userlibraries");
-    final List<Library> libraries = new ArrayList<>(Arrays.asList(ProjectLibraryTable.getInstance(project).getLibraries()));
+    final List<Library> libraries = new ArrayList<>(Arrays.asList(LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()));
     ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
     for (Library library : libraries) {
       Element libElement = new Element("library");
@@ -77,7 +76,7 @@ public class EclipseUserLibrariesHelper {
       return;
     }
 
-    LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
     Element element = JDOMUtil.load(exportedFile.getInputStream());
     WriteAction.run(() -> {
       for (Element libElement : element.getChildren("library")) {

@@ -21,13 +21,13 @@ public class MavenBadConfigEventParser implements MavenLoggedEventParser {
   }
 
   @Override
-  public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
+  public boolean checkLogLine(@NotNull Object parendId,
                               @NotNull MavenLogEntryReader.MavenLogEntry logLine,
                               @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
     String line = logLine.getLine();
     if (line.startsWith(PREFIX)) {
-      messageConsumer.accept(new MavenUnparseableConfigEvent(id, System.currentTimeMillis(), line.substring(PREFIX.length())));
+      messageConsumer.accept(new MavenUnparseableConfigEvent(parendId, System.currentTimeMillis(), line.substring(PREFIX.length())));
       return true;
     }
     return false;

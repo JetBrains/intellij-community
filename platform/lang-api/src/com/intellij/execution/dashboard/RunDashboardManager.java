@@ -21,7 +21,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -60,7 +59,7 @@ public interface RunDashboardManager {
 
   void updateDashboard(boolean withStructure);
 
-  List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
+  List<RunDashboardService> getRunConfigurations();
 
   boolean isShowConfigurations();
 
@@ -80,4 +79,15 @@ public interface RunDashboardManager {
 
   @NotNull
   Condition<Content> getReuseCondition();
+
+  interface RunDashboardService {
+    @NotNull
+    RunnerAndConfigurationSettings getSettings();
+
+    @Nullable
+    RunContentDescriptor getDescriptor();
+
+    @Nullable
+    Content getContent();
+  }
 }

@@ -468,26 +468,32 @@ public class JavaReflectionReferenceUtil {
     return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
   }
 
+  /**
+   * Tries to unwrap array and find its components
+   * @param maybeArray an array to unwrap
+   * @return list of unwrapped array components, some or all of them could be null if unknown (but the length is known);
+   * returns null if nothing is known.
+   */
   @Nullable
-  public static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
+  public static List<PsiExpression> getVarargs(@Nullable PsiExpression maybeArray) {
     if (ExpressionUtils.isNullLiteral(maybeArray)) {
-      return PsiExpression.EMPTY_ARRAY;
+      return Collections.emptyList();
     }
     if (isVarargAsArray(maybeArray)) {
       final PsiExpression argumentsDefinition = findDefinition(maybeArray);
       if (argumentsDefinition instanceof PsiArrayInitializerExpression) {
-        return ((PsiArrayInitializerExpression)argumentsDefinition).getInitializers();
+        return Arrays.asList(((PsiArrayInitializerExpression)argumentsDefinition).getInitializers());
       }
       if (argumentsDefinition instanceof PsiNewExpression) {
         final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)argumentsDefinition).getArrayInitializer();
         if (arrayInitializer != null) {
-          return arrayInitializer.getInitializers();
+          return Arrays.asList(arrayInitializer.getInitializers());
         }
         final PsiExpression[] dimensions = ((PsiNewExpression)argumentsDefinition).getArrayDimensions();
-        if (dimensions.length == 1) { // special case: new Object[0]
+        if (dimensions.length == 1) { // new Object[length] or new Class<?>[length]
           final Integer itemCount = computeConstantExpression(findDefinition(dimensions[0]), Integer.class);
-          if (itemCount != null && itemCount == 0) {
-            return PsiExpression.EMPTY_ARRAY;
+          if (itemCount != null && itemCount >= 0 && itemCount < 256) {
+            return Collections.nCopies(itemCount, null);
           }
         }
       }

@@ -55,8 +55,9 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
     assertTrue("Selected element is not an expression: " + selectedText, element instanceof PsiExpression);
     PsiExpression expression = (PsiExpression)element;
     TrackingRunner.DfaProblemType problemType = getProblemType(selectedText, expression);
-    List<TrackingRunner.CauseItem> items = TrackingRunner.findProblemCause(true, false, expression, problemType);
-    String dump = StreamEx.of(items).map(item -> item.dump(getEditor().getDocument())).joining("\n----\n");
+    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(true, false, expression, problemType);
+    assertNotNull(item);
+    String dump = item.dump(getEditor().getDocument());
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);
     if (firstComment == null) {
       fail("Comment not found");
@@ -100,6 +101,9 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
       return new TrackingRunner.NullableDfaProblemType();
     }
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
+    if (expression instanceof PsiCallExpression && !result.cannotFailByContract((PsiCallExpression)expression)) {
+      return new TrackingRunner.FailingCallDfaProblemType();
+    }
     assertNotNull("No common dataflow result for expression: " + selectedText, result);
     Set<Object> values = result.getExpressionValues(expression);
     assertEquals("No single value for expression: "+selectedText, 1, values.size());
@@ -152,4 +156,28 @@ public class DataFlowInspectionTrackerTest extends LightCodeInsightFixtureTestCa
   public void testAssignTernaryNotNull() { doTest(); }
   public void testAssignTernaryNumeric() { doTest(); }
   public void testTrivialContract() { doTest(); }
+  public void testTripleCheck() { doTest(); }
+  public void testInstanceOfSecondCheck() { doTest(); }
+  public void testNullCheckNpeNullCheck() { doTest(); }
+  public void testListAddContract() { doTest(); }
+  public void testConstantStrings() { doTest(); }
+  public void testConstantStrings2() { doTest(); }
+  public void testNumericCast() { doTest(); }
+  public void testNumericCast2() { doTest(); }
+  public void testNumericWidening() { doTest(); }
+  public void testSimpleContract() { doTest(); }
+  public void testSimpleContract2() { doTest(); }
+  public void testEqualsContract() { doTest(); }
+  public void testCollectionSizeEquality() { doTest(); }
+  public void testFailingCall() { doTest(); }
+  public void testInstanceOfMethodReturn() { doTest(); }
+  public void testReassignAfterCheck() { doTest(); }
+  public void testAndAllTrue() { doTest(); }
+  public void testConstructorSimple() { doTest(); }
+  public void testConstructorDependOnInitializer() { doTest(); }
+  public void testBasedOnPreviousRelation() { doTest(); }
+  public void testBasedOnPreviousRelationContracts() { doTest(); }
+  public void testFinalFieldInitialized() { doTest(); }
+  public void testFinalFieldInitializedCtor() { doTest(); }
+  public void testEqualsNull() { doTest(); }
 }

@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 public abstract class EditorGutterComponentEx extends JComponent implements EditorGutter {
@@ -35,6 +34,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
+
+  @NotNull
+  public abstract List<GutterMark> getGutterRenderers(int line);
 
   public abstract int getWhitespaceSeparatorOffset();
 

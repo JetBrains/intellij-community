@@ -34,7 +34,7 @@ public abstract class MultiSelectionListPopupStep<T> extends BaseListPopupStep<T
 
   public abstract PopupStep<?> onChosen(List<T> selectedValues, boolean finalChoice);
 
-  public boolean hasSubstep(List<T> selectedValues) {
+  public boolean hasSubstep(List<? extends T> selectedValues) {
     return false;
   }
 

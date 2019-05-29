@@ -3,6 +3,8 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,7 +22,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-abstract class AbstractCollectionBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
+abstract class AbstractCollectionBinding extends NotNullDeserializeBinding implements MultiNodeBinding, NestedBinding {
+  private final MutableAccessor myAccessor;
   private List<Binding> itemBindings;
 
   protected final Class<?> itemType;
@@ -34,12 +37,18 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   private Serializer serializer;
 
   AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
-    super(accessor);
+    myAccessor = accessor;
 
     itemType = elementType;
     newAnnotation = accessor == null ? null : accessor.getAnnotation(XCollection.class);
     //noinspection deprecation
     annotation = newAnnotation == null ? (accessor == null ? null : accessor.getAnnotation(AbstractCollection.class)) : null;
+  }
+
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return myAccessor;
   }
 
   protected boolean isSortOrderedSet() {
@@ -68,10 +77,15 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     return annotation == null ? ArrayUtil.EMPTY_CLASS_ARRAY : annotation.elementTypes();
   }
 
+  @Nullable
+  private Binding getItemBinding(@NotNull Class<?> aClass) {
+    return ClassUtil.isPrimitive(aClass) ? null : serializer.getRootBinding(aClass, aClass);
+  }
+
   @NotNull
-  private synchronized List<Binding> getElementBindings() {
+  private synchronized List<Binding> getItemBindings() {
     if (itemBindings == null) {
-      Binding binding = serializer.getBinding(itemType);
+      Binding binding = getItemBinding(itemType);
       Class<?>[] elementTypes = getElementTypes();
       if (elementTypes.length == 0) {
         itemBindings = binding == null ? Collections.emptyList() : Collections.singletonList(binding);
@@ -83,7 +97,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
         }
 
         for (Class<?> aClass : elementTypes) {
-          Binding b = serializer.getBinding(aClass);
+          Binding b = getItemBinding(aClass);
           if (b != null && !itemBindings.contains(b)) {
             itemBindings.add(b);
           }
@@ -98,7 +112,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
   @Nullable
   private Binding getElementBinding(@NotNull Element element) {
-    for (Binding binding : getElementBindings()) {
+    for (Binding binding : getItemBindings()) {
       if (binding.isBoundTo(element)) {
         return binding;
       }
@@ -170,7 +184,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
       return null;
     }
 
-    Binding binding = serializer.getBinding(value.getClass());
+    Binding binding = getItemBinding(value.getClass());
     if (binding == null) {
       String elementName = getElementName();
       if (StringUtil.isEmpty(elementName)) {
@@ -234,7 +248,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     if (isSurroundWithTag()) {
       return element.getName().equals(getCollectionTagName(null));
     }
-    else if (getElementBindings().isEmpty()) {
+    else if (getItemBindings().isEmpty()) {
       return element.getName().equals(getElementName());
     }
     else {

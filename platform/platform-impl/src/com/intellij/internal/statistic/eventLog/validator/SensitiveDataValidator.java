@@ -1,16 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator;
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.validator.persistence.FUSWhiteListPersistence;
+import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,33 +16,49 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
 public class SensitiveDataValidator {
-  private static final NotNullLazyValue<SensitiveDataValidator> me = NotNullLazyValue.createValue(
-    () -> ApplicationManager.getApplication().isUnitTestMode() ? new BlindSensitiveDataValidator() : new SensitiveDataValidator()
-  );
+  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator");
+  private static final ConcurrentMap<String, SensitiveDataValidator> instances = ContainerUtil.newConcurrentMap();
 
+  private final String myRecorderId;
   private final Semaphore mySemaphore;
   private final AtomicBoolean isWhiteListInitialized;
   protected final Map<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
 
-  public static SensitiveDataValidator getInstance() {
-    return me.getValue();
+  private String myVersion;
+  private final EventLogWhitelistPersistence myWhitelistPersistence;
+  private final EventLogExternalSettingsService mySettingsService;
+
+  @NotNull
+  public static SensitiveDataValidator getInstance(@NotNull String recorderId) {
+    return instances.computeIfAbsent(
+      recorderId,
+      id -> ApplicationManager.getApplication().isUnitTestMode() ? new BlindSensitiveDataValidator(id) : new SensitiveDataValidator(id)
+    );
   }
 
-  protected SensitiveDataValidator() {
+  protected SensitiveDataValidator(@NotNull String recorderId) {
+    myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     isWhiteListInitialized = new AtomicBoolean(false);
-    updateValidators(FUSWhiteListPersistence.getCachedWhiteList());
+    myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
+    mySettingsService = new EventLogExternalSettingsService(recorderId);
+
+    myVersion = updateValidators(myWhitelistPersistence.getCachedWhiteList());
+    EventLogSystemLogger.logWhitelistLoad(recorderId, myVersion);
   }
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
     if (isUnreachableWhitelist()) return UNREACHABLE_WHITELIST.getDescription();
+    if (isSystemEventId(context.eventId)) return context.eventId;
 
     ValidationResultType validationResultType = validateEvent(group, context);
     return validationResultType == ACCEPTED ? context.eventId : validationResultType.getDescription();
@@ -62,15 +76,28 @@ public class SensitiveDataValidator {
       ValidationResultType resultType = validateEventData(context, whiteListRule, key, entryValue);
       validatedData.put(key, resultType == ACCEPTED ? entryValue : resultType.getDescription());
     }
+
+    if (context.pluginInfo != null && !(validatedData.containsKey("plugin") || validatedData.containsKey("plugin_type"))) {
+      addPluginInfoTo(context.pluginInfo, validatedData);
+    }
     return validatedData;
   }
 
   public SensitiveDataValidator update() {
-    updateValidators(getWhiteListContent());
+    final String version = updateValidators(getWhiteListContent());
+    if (!StringUtil.equals(version, myVersion)) {
+      myVersion = version;
+      EventLogSystemLogger.logWhitelistUpdated(myRecorderId, myVersion);
+    }
     return this;
   }
 
-  private void updateValidators(@Nullable String whiteListContent) {
+  public void reload() {
+    updateValidators(myWhitelistPersistence.getCachedWhiteList());
+  }
+
+  @Nullable
+  private String updateValidators(@Nullable String whiteListContent) {
     if (whiteListContent != null) {
       mySemaphore.down();
       try {
@@ -87,15 +114,21 @@ public class SensitiveDataValidator {
 
           isWhiteListInitialized.set(true);
         }
+        return groups == null ? null : groups.version;
       }
       finally {
         mySemaphore.up();
       }
     }
+    return null;
   }
 
   private boolean isUnreachableWhitelist() {
     return !isWhiteListInitialized.get();
+  }
+
+  private static boolean isSystemEventId(@Nullable String eventId) {
+    return "invoked".equals(eventId) || "registered".equals(eventId);
   }
 
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
@@ -126,16 +159,33 @@ public class SensitiveDataValidator {
   }
 
   protected String getWhiteListContent() {
-    String content = FUStatisticsWhiteListGroupsService.getFUSWhiteListContent();
-    if (StringUtil.isNotEmpty(content)) {
-      FUSWhiteListPersistence.cacheWhiteList(content);
-      return content;
+    final long lastModified = FUStatisticsWhiteListGroupsService.lastModifiedWhitelist(mySettingsService);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+        "Loading whitelist, last modified cached=" + myWhitelistPersistence.getLastModified() +
+        ", last modified on the server=" + lastModified
+      );
     }
-    return FUSWhiteListPersistence.getCachedWhiteList();
+
+    if (lastModified <= 0 || lastModified > myWhitelistPersistence.getLastModified()) {
+      final String content = FUStatisticsWhiteListGroupsService.loadWhiteListFromServer(mySettingsService);
+      if (StringUtil.isNotEmpty(content)) {
+        myWhitelistPersistence.cacheWhiteList(content, lastModified);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Update local whitelist, last modified cached=" + myWhitelistPersistence.getLastModified());
+        }
+        return content;
+      }
+    }
+    return myWhitelistPersistence.getCachedWhiteList();
   }
 
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
+    protected BlindSensitiveDataValidator(@NotNull String recorderId) {
+      super(recorderId);
+    }
+
     @Override
     public String guaranteeCorrectEventId(@NotNull EventLogGroup group, @NotNull EventContext context) {
       return context.eventId;
@@ -145,5 +195,24 @@ public class SensitiveDataValidator {
     public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
       return context.eventData;
     }
+  }
+
+  public boolean shouldUpdateCache(@NotNull String gsonWhiteListContent) {
+    int cachedVersion = getVersion(myWhitelistPersistence.getCachedWhiteList());
+
+    return cachedVersion == 0 || getVersion(gsonWhiteListContent) > cachedVersion;
+  }
+
+  private static int getVersion(@Nullable String whiteListContent) {
+    if (whiteListContent == null) return 0;
+    FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
+    if (groups == null) return 0;
+    String version = groups.version;
+    if (version == null) return 0;
+    try {
+      return Integer.parseInt(version);
+    } catch (Exception ignored) {
+    }
+    return 0;
   }
 }

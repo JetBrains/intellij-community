@@ -87,11 +87,11 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
     return sb.append(name).toString();
   }
 
-  protected void init(Collection<BooleanOptionDescription> options, Configurable configurable, Component component) {
+  protected void init(Collection<? super BooleanOptionDescription> options, Configurable configurable, Component component) {
     initRecursively(options, configurable, component);
   }
 
-  private void initRecursively(Collection<BooleanOptionDescription> options, Configurable configurable, Component component) {
+  private void initRecursively(Collection<? super BooleanOptionDescription> options, Configurable configurable, Component component) {
     String section = getSection(component);
     if (section != null) {
       myPrefix.push(section);

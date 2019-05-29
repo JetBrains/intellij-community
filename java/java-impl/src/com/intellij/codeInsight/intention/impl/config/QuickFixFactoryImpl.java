@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -23,7 +23,6 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
-import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -45,6 +44,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -483,6 +483,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return CreateMethodFromUsage.generateActions(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
@@ -495,24 +497,32 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new CreateMethodFromMethodReferenceFix(methodReferenceExpression);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreateAbstractMethodFromUsageFix(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreatePropertyFromUsageFix(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateConstructorFromSuperFix(@NotNull PsiMethodCallExpression call) {
     return new CreateConstructorFromSuperFix(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateConstructorFromThisFix(@NotNull PsiMethodCallExpression call) {
@@ -522,15 +532,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
-    if (JvmElementActionFactories.useInterlaguageActions()) {
-      return CreateConstructorFromUsage.generateConstructorActions(call);
-    }
-    return Arrays.asList(
-      createCreateConstructorFromSuperFix(call),
-      createCreateConstructorFromThisFix(call)
-    );
+    return CreateConstructorFromUsage.generateConstructorActions(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {
@@ -555,6 +561,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new ReplaceAddAllArrayToCollectionFix(call);
   }
 
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2019.3")
   @NotNull
   @Override
   public IntentionAction createCreateConstructorFromCallFix(@NotNull PsiConstructorCall call) {
@@ -564,10 +572,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public List<IntentionAction> createCreateConstructorFromUsageFixes(@NotNull PsiConstructorCall call) {
-    if (JvmElementActionFactories.useInterlaguageActions()) {
-      return CreateConstructorFromUsage.generateConstructorActions(call);
-    }
-    return Collections.singletonList(createCreateConstructorFromCallFix(call));
+    return CreateConstructorFromUsage.generateConstructorActions(call);
   }
 
   @NotNull

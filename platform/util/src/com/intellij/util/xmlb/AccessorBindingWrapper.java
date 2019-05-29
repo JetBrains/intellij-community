@@ -2,6 +2,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -10,21 +11,25 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 
-class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
-  protected final Binding myBinding;
+final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
+  private final Binding myBinding;
+  private final MutableAccessor myAccessor;
 
   private final boolean myFlat;
   private final Property.Style beanStyle;
 
-  AccessorBindingWrapper(@NotNull MutableAccessor accessor,
-                                @NotNull Binding binding,
-                                boolean flat,
-                                Property.Style beanStyle) {
-    super(accessor);
+  AccessorBindingWrapper(@NotNull MutableAccessor accessor, @NotNull Binding binding, boolean flat, Property.Style beanStyle) {
+    myAccessor = accessor;
 
     myBinding = binding;
     myFlat = flat;
     this.beanStyle = beanStyle;
+  }
+
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return myAccessor;
   }
 
   public boolean isFlat() {
@@ -99,7 +104,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
     return context;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     Object currentValue = myAccessor.read(context);

@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -20,7 +19,7 @@ import java.util.function.Consumer;
  */
 public interface NonBlockingReadAction<T> {
 
-  /** 
+  /**
    * @return a copy of this builder that runs read actions only when index is available in the given project.
    * The operation is canceled if the project is closed before either the background computation or {@link #finishOnUiThread} runnable
    * are completed.
@@ -64,7 +63,7 @@ public interface NonBlockingReadAction<T> {
    * Submit this computation to be performed in a non-blocking read action on background thread. The returned promise
    * is completed on the same thread (in the same read action), or on UI thread if {@link #finishOnUiThread} has been called.
    * @param backgroundThreadExecutor an executor to actually run the computation. Common examples are
-   *                                 {@link NonUrgentExecutor#getInstance()} or
+   *                                 {@link com.intellij.util.concurrency.NonUrgentExecutor#getInstance()} or
    *                                 {@link AppExecutorUtil#getAppExecutorService()} or
    *                                 {@link com.intellij.util.concurrency.BoundedTaskExecutor} on top of that.
    */

@@ -176,6 +176,7 @@ public class MavenExternalParameters {
     params.setCharset(encodingManager.getDefaultCharset());
 
     addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
+    MavenUtil.addEventListener(mavenVersion, params);
 
     return params;
   }

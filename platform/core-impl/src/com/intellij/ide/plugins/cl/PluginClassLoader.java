@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
@@ -10,6 +11,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -131,6 +133,7 @@ public class PluginClassLoader extends UrlClassLoader {
   // a different version of which is used in IDEA.
   @Nullable
   private Class tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+    long startTime = System.nanoTime();
     Class c = null;
     if (!mustBeLoadedByPlatform(name)) {
       c = loadClassInsideSelf(name);
@@ -144,10 +147,11 @@ public class PluginClassLoader extends UrlClassLoader {
       if (resolve) {
         resolveClass(c);
       }
-      return c;
     }
 
-    return null;
+    String phase = SwingUtilities.isEventDispatchThread() ? "Classloading (EDT)" : "Classloading (background)";
+    StartUpMeasurer.addPluginCost(myPluginId != null ? myPluginId.getIdString() : null, phase, System.nanoTime() - startTime);
+    return c;
   }
 
   private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
@@ -311,6 +315,10 @@ public class PluginClassLoader extends UrlClassLoader {
 
   public PluginId getPluginId() {
     return myPluginId;
+  }
+
+  public String getPluginIdString() {
+    return myPluginId != null ? myPluginId.getIdString() : "com.intellij";
   }
 
   @Override

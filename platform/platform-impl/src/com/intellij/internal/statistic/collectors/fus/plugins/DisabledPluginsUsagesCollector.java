@@ -21,7 +21,7 @@ final class DisabledPluginsUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     Set<UsageDescriptor> set = new THashSet<>();
-    for (String id : PluginManagerCore.getDisabledPlugins()) {
+    for (String id : PluginManagerCore.disabledPlugins()) {
       if (StatisticsUtilKt.isSafeToReport(id)) {
         set.add(new UsageDescriptor(id, 1));
       }

@@ -29,7 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -91,7 +90,7 @@ public class Utils {
       locationHash = directoryBased.toString().hashCode();
     }
 
-    return new File(systemRoot, name.toLowerCase(Locale.US) + "_" + Integer.toHexString(locationHash));
+    return new File(systemRoot, StringUtil.toLowerCase(name) + "_" + Integer.toHexString(locationHash));
   }
 
   public static boolean errorsDetected(CompileContext context) {

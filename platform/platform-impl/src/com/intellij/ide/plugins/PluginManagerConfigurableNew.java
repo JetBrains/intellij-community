@@ -10,11 +10,9 @@ import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -739,7 +737,6 @@ public class PluginManagerConfigurableNew
       return true;
     }
 
-    Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     int rowCount = myPluginsModel.getRowCount();
 
     for (int i = 0; i < rowCount; i++) {
@@ -747,7 +744,7 @@ public class PluginManagerConfigurableNew
       boolean enabledInTable = myPluginsModel.isEnabled(descriptor);
 
       if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !disabledPlugins.contains(descriptor.getPluginId().getIdString())) {
+        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId().getIdString())) {
           continue; // was disabled automatically on startup
         }
         return true;
@@ -756,7 +753,7 @@ public class PluginManagerConfigurableNew
 
     for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
       Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled && !disabledPlugins.contains(entry.getKey().getIdString())) {
+      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey().getIdString())) {
         return true;
       }
     }
@@ -1433,10 +1430,10 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<List<IdeaPluginDescriptor>, Boolean, IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
@@ -1449,7 +1446,7 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull String name,
                         @NotNull String query,
@@ -1548,43 +1545,6 @@ public class PluginManagerConfigurableNew
       PluginManagerMain.LOG.info(e);
     }
     return Collections.emptyList();
-  }
-
-  @NotNull
-  public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
-                                       @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<String> enableAction) {
-    String message;
-
-    Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());
-    if (ContainerUtil.isEmpty(requiredPlugins)) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
-    }
-    else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-      message = "The plugin requires IntelliJ IDEA Ultimate.";
-    }
-    else {
-      String deps = StringUtil.join(requiredPlugins, id -> {
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-        if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
-          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (descriptor instanceof IdeaPluginDescriptorImpl) {
-              if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
-                plugin = descriptor;
-                break;
-              }
-            }
-          }
-        }
-        return plugin != null ? plugin.getName() : id.getIdString();
-      }, ", ");
-
-      int size = requiredPlugins.size();
-      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
-    }
-
-    return message;
   }
 
   @NotNull
@@ -1735,7 +1695,7 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   public static <T extends Component> T installTiny(@NotNull T component) {
-    return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
+    return SystemInfoRt.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
   public static int offset5() {

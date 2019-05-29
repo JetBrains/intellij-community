@@ -31,6 +31,6 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Def
       return false;
     }
 
-    return FunctionalExpressionSearch.search(psiClass, scope).forEach(processor::process);
+    return FunctionalExpressionSearch.search(psiClass, scope).forEach(processor);
   }
 }

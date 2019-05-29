@@ -302,7 +302,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   }
 
   @Override
-  public void reset(@NotNull List<T> items) {
+  public void reset(@NotNull List<? extends T> items) {
     super.reset(items);
     model.setItems(new ArrayList<>(items));
   }

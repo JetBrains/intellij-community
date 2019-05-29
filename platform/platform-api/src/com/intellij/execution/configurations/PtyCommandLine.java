@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
@@ -160,7 +160,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   public Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
     List<Pair<String, String>> backup = new ArrayList<>();
     try {
-      if (SystemInfo.isUnix && (myInitialColumns > 0 || myInitialRows > 0)) {
+      if (SystemInfoRt.isUnix && (myInitialColumns > 0 || myInitialRows > 0)) {
         setSystemProperty(UNIX_PTY_INIT, Boolean.toString(true), backup);
         if (myInitialColumns > 0) {
           setSystemProperty(UNIX_PTY_COLUMNS, Integer.toString(myInitialColumns), backup);
@@ -169,7 +169,7 @@ public class PtyCommandLine extends GeneralCommandLine {
           setSystemProperty(UNIX_PTY_ROWS, Integer.toString(myInitialRows), backup);
         }
       }
-      else if (SystemInfo.isWindows) {
+      else if (SystemInfoRt.isWindows) {
         if (myInitialColumns > 0) {
           setSystemProperty(WIN_PTY_COLUMNS, Integer.toString(myInitialColumns), backup);
         }
@@ -188,7 +188,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   private static void setSystemProperty(@NotNull String propertyName,
                                         @Nullable String newPropertyValue,
-                                        @Nullable List<Pair<String, String>> backup) {
+                                        @Nullable List<? super Pair<String, String>> backup) {
     if (backup != null) {
       String oldValue = System.getProperty(propertyName);
       backup.add(Pair.create(propertyName, oldValue));
@@ -209,7 +209,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     String[] command = ArrayUtil.toStringArray(commands);
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
-    boolean cygwin = myUseCygwinLaunch && SystemInfo.isWindows;
+    boolean cygwin = myUseCygwinLaunch && SystemInfoRt.isWindows;
     PtyProcessBuilder builder = new PtyProcessBuilder(command)
       .setEnvironment(env)
       .setDirectory(directory)

@@ -25,7 +25,6 @@ import java.io.File
 import java.util.Collections.singletonMap
 import javax.swing.Action
 
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   private lateinit var repository: GitRepository

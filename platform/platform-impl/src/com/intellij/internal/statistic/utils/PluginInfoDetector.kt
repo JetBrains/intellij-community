@@ -12,16 +12,16 @@ import com.intellij.openapi.extensions.PluginId
  * so API from it may be reported
  */
 fun getPluginInfo(clazz: Class<*>): PluginInfo {
-  val className = clazz.name
+  return getPluginInfo(clazz.name)
+}
+
+fun getPluginInfo(className: String): PluginInfo {
   if (className.startsWith("java.") || className.startsWith("javax.") ||
       className.startsWith("kotlin.") || className.startsWith("groovy.")) {
     return platformPlugin
   }
 
   val pluginId = PluginManagerCore.getPluginOrPlatformByClassName(className) ?: return unknownPlugin
-  if (PluginManagerCore.CORE_PLUGIN_ID == pluginId.idString) {
-    return platformPlugin
-  }
   return getPluginInfoById(pluginId)
 }
 
@@ -32,6 +32,9 @@ fun getPluginInfo(clazz: Class<*>): PluginInfo {
 fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
   if (pluginId == null) return unknownPlugin
 
+  if (PluginManagerCore.CORE_PLUGIN_ID == pluginId.idString) {
+    return platformPlugin
+  }
   return getPluginInfoByDescriptor(PluginManager.getPlugin(pluginId))
 }
 

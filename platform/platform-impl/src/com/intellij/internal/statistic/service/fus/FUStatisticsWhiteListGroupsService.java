@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.service.fus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist.VersionRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
@@ -55,8 +54,12 @@ public class FUStatisticsWhiteListGroupsService {
   }
 
   @Nullable
-  public static String getFUSWhiteListContent() {
-    return getFUSWhiteListContent(EventLogExternalSettingsService.getFeatureUsageSettings().getWhiteListProductUrl());
+  public static String loadWhiteListFromServer(@NotNull EventLogExternalSettingsService settingsService) {
+    return getFUSWhiteListContent(settingsService.getWhiteListProductUrl());
+  }
+
+  public static long lastModifiedWhitelist(@NotNull EventLogExternalSettingsService settingsService) {
+    return lastModifiedWhitelist(settingsService.getWhiteListProductUrl());
   }
 
   @Nullable
@@ -73,6 +76,20 @@ public class FUStatisticsWhiteListGroupsService {
       LOG.info(e);
     }
     return content;
+  }
+
+  private static long lastModifiedWhitelist(@Nullable String serviceUrl) {
+    try {
+      if (!StringUtil.isEmptyOrSpaces(serviceUrl)) {
+        return HttpRequests.head(serviceUrl).
+          productNameAsUserAgent().
+          connect(r -> r.getConnection().getLastModified());
+      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return 0;
   }
 
   @Nullable
@@ -113,6 +130,7 @@ public class FUStatisticsWhiteListGroupsService {
     public final ArrayList<WLGroup> groups = new ArrayList<>();
     @Nullable public Map<String, Set<String>> globalEnums;
     @Nullable public WLRule rules;
+    @Nullable public String version;
   }
 
   public static class WLGroup {
@@ -140,11 +158,11 @@ public class FUStatisticsWhiteListGroupsService {
     }
   }
 
-  private static class WLVersion {
+  public static class WLVersion {
     public final String from;
     public final String to;
 
-    private WLVersion(String from, String to) {
+    public WLVersion(String from, String to) {
       this.from = from;
       this.to = to;
     }

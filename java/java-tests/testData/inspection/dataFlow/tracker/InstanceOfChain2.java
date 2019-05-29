@@ -1,7 +1,7 @@
 /*
-Value is always true (s instanceof RandomAccess)
-  An object is already known to be ArrayList which is a subtype of RandomAccess (s)
-    Type of 's' is known from line #12 (s instanceof ArrayList)
+Value is always true (s instanceof RandomAccess; line#14)
+  An object is already known to be ArrayList which is a subtype of RandomAccess (s; line#14)
+    Type of 's' is known from line #12 (s instanceof ArrayList; line#12)
  */
 import java.util.*;
 

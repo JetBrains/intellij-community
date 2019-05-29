@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Level;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -15,7 +16,6 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.NamedComponent;
-import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -33,6 +33,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
@@ -49,7 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
+public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
   private volatile MutablePicoContainer myPicoContainer;
@@ -63,7 +65,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myComponentConfigCount;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private int myInstantiatedComponentCount = -1;
+  private int myInstantiatedComponentCount = 0;
   private boolean myComponentsCreated;
 
   private final List<BaseComponent> myBaseComponents = new SmartList<>();
@@ -86,17 +88,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return null;
   }
 
-  protected final void init(@NotNull List<? extends IdeaPluginDescriptor> plugins,
-                            @Nullable ProgressIndicator indicator,
-                            @Nullable Runnable componentsRegistered) {
-    String activityNamePrefix = activityNamePrefix();
-    boolean isNeededToMeasure = activityNamePrefix != null;
-    Activity totalActivity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.INITIALIZE_COMPONENTS_SUFFIX) : null;
-
-    final Application app = ApplicationManager.getApplication();
+  protected void registerComponents(@NotNull List<? extends IdeaPluginDescriptor> plugins) {
+    Application app = ApplicationManager.getApplication();
     boolean headless = app == null || app.isHeadlessEnvironment();
 
-    Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX) : null;
     int componentConfigCount = 0;
     for (IdeaPluginDescriptor plugin : plugins) {
       for (ComponentConfig config : getMyComponentConfigsFromDescriptor(plugin)) {
@@ -112,30 +107,29 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
       registerServices(plugin);
     }
-
-    if (activity != null) {
-      activity.end();
-    }
     myComponentConfigCount = componentConfigCount;
+  }
 
+  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
+    LOG.assertTrue(!myComponentsCreated);
+
+    String activityNamePrefix = activityNamePrefix();
+    boolean isNeededToMeasure = activityNamePrefix != null;
     if (componentsRegistered != null) {
-      activity = isNeededToMeasure ? totalActivity.startChild(activityNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
+      Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
       componentsRegistered.run();
       if (activity != null) {
         activity.end();
       }
     }
 
-    activity = isNeededToMeasure ? totalActivity.startChild(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
+    Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);
     if (activity != null) {
       activity.end();
     }
 
     myComponentsCreated = true;
-    if (isNeededToMeasure) {
-      totalActivity.end("component count: " + getComponentConfigCount());
-    }
   }
 
   protected void registerServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
@@ -197,7 +191,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentAdapter adapter = picoContainer.getComponentAdapter(interfaceClass);
-    if (!(adapter instanceof ComponentConfigComponentAdapter)) {
+    if (adapter == null) {
       return null;
     }
 
@@ -214,10 +208,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Nullable
   protected ProgressIndicator getProgressIndicator() {
     return ProgressManager.getInstance().getProgressIndicator();
-  }
-
-  @Override
-  public void initializeComponent(@NotNull Object component, boolean service) {
   }
 
   protected void handleInitComponentError(@NotNull Throwable ex, String componentClassName, PluginId pluginId) {
@@ -350,15 +340,20 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myPicoContainer = picoContainer;
 
     myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
+    if (myMessageBus instanceof MessageBusImpl) {
+      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, handler, duration) -> logMessageBusDelivery(topic, handler, duration));
+    }
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
+  }
+
+  protected void logMessageBusDelivery(Topic topic, Object handler, long durationNanos) {
+    ClassLoader loader = handler.getClass().getClassLoader();
+    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
+    StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationNanos);
   }
 
   protected final ComponentManager getParentComponentManager() {
     return myParentComponentManager;
-  }
-
-  private int getComponentConfigCount() {
-    return myComponentConfigCount;
   }
 
   @Nullable
@@ -511,7 +506,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
               indicator.checkCanceled();
               setProgressDuringInit(indicator);
             }
-            initializeComponent(instance, false);
+            initializeComponent(instance, null);
             if (instance instanceof BaseComponent) {
               ((BaseComponent)instance).initComponent();
             }
@@ -540,7 +535,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private Activity createMeasureActivity(@NotNull PicoContainer picoContainer) {
       Level level = DefaultPicoContainer.getActivityLevel(picoContainer);
       if (level == Level.APPLICATION || (level == Level.PROJECT && activityNamePrefix() != null)) {
-        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level);
+        return ParallelActivity.COMPONENT.start(getComponentImplementation().getName(), level, myPluginId != null ? myPluginId.getIdString() : null);
       }
       return null;
     }

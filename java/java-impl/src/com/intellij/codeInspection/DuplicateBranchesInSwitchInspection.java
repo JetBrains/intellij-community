@@ -358,7 +358,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     private Set<String> myCommentsToMergeWith;
     private PsiElement myNextFromLabelToMergeWith;
 
-    private boolean prepare(PsiElement startElement, Predicate<Branch> shouldMergeWith) {
+    private boolean prepare(PsiElement startElement, Predicate<? super Branch> shouldMergeWith) {
       PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(startElement, PsiSwitchBlock.class);
       if (switchBlock == null) return false;
 
@@ -744,7 +744,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       return labels.toArray(EMPTY_LABELS_ARRAY);
     }
 
-    private static PsiStatement[] statementsWithoutTrailingBreak(List<PsiStatement> statementList) {
+    private static PsiStatement[] statementsWithoutTrailingBreak(List<? extends PsiStatement> statementList) {
       // trailing 'break' is taken into account in myCanFallThrough
       int lastIndex = statementList.size() - 1;
       PsiStatement lastStatement = statementList.get(lastIndex);
@@ -880,7 +880,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     private Rule myRuleToMergeWith;
     private Set<String> myCommentsToMergeWith;
 
-    boolean prepare(PsiElement startElement, Predicate<Rule> shouldMergeWith) {
+    boolean prepare(PsiElement startElement, Predicate<? super Rule> shouldMergeWith) {
       if (startElement != null) {
         PsiSwitchLabeledRuleStatement ruleStatement = ObjectUtils.tryCast(startElement.getParent(), PsiSwitchLabeledRuleStatement.class);
         if (ruleStatement != null) {

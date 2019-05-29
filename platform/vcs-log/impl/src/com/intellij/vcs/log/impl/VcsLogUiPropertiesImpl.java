@@ -24,8 +24,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
                              CommonUiProperties.SHOW_ROOT_NAMES,
                              MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
-                             MainVcsLogUiProperties.TEXT_FILTER_REGEX,
-                             CommonUiProperties.COLUMN_ORDER);
+                             MainVcsLogUiProperties.TEXT_FILTER_REGEX);
   private final Set<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
   @NotNull private final VcsLogApplicationSettings myAppSettings;
 
@@ -43,7 +42,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public Map<String, List<String>> FILTERS = new TreeMap<>();
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
     public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
-    public List<Integer> COLUMN_ORDER = new ArrayList<>();
+    @Deprecated public List<Integer> COLUMN_ORDER = new ArrayList<>();
   }
 
   @NotNull
@@ -79,13 +78,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     else if (TEXT_FILTER_REGEX.equals(property)) {
       return (T)Boolean.valueOf(getTextFilterSettings().REGEX);
     }
-    else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
-      List<Integer> order = getState().COLUMN_ORDER;
-      if (order == null || order.isEmpty()) {
-        order = ContainerUtilRt.newArrayList(ROOT_COLUMN, COMMIT_COLUMN, AUTHOR_COLUMN, DATE_COLUMN);
-      }
-      return (T)order;
-    }
     else if (property instanceof VcsLogHighlighterProperty) {
       Boolean result = getState().HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
       if (result == null) return (T)Boolean.TRUE;
@@ -99,7 +91,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public <T> void set(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property, @NotNull T value) {
     if (myAppSettings.exists(property)) {
@@ -127,9 +118,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
       getTextFilterSettings().MATCH_CASE = (boolean)(Boolean)value;
-    }
-    else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
-      getState().COLUMN_ORDER = (List<Integer>)value;
     }
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);

@@ -73,7 +73,6 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
-import static java.util.Locale.ENGLISH;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static final String CLICK_INFO = "CLICK_INFO";
@@ -129,7 +128,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class InspectorWindow extends JDialog {
     private InspectorTable myInspectorTable;
     private Component myComponent;
-    private List<PropertyBean> myInfo;
+    private List<? extends PropertyBean> myInfo;
     private final Component myInitialComponent;
     private HighlightComponent myHighlightComponent;
     private final HierarchyTree myHierarchyTree;
@@ -197,7 +196,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         }
 
         @Override
-        public void onComponentChanged(List<PropertyBean> info) {
+        public void onComponentChanged(List<? extends PropertyBean> info) {
           boolean wasHighlighted = myHighlightComponent != null;
           setHighlightingEnabled(false);
           switchInfo(info);
@@ -259,7 +258,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myWrapperPanel.repaint();
     }
 
-    private void switchInfo(@NotNull List<PropertyBean> clickInfo) {
+    private void switchInfo(@NotNull List<? extends PropertyBean> clickInfo) {
       myComponent = null;
       myInfo = clickInfo;
       setTitle("Click Info");
@@ -523,7 +522,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
     }
 
-    public abstract void onComponentChanged(List<PropertyBean> info);
+    public abstract void onComponentChanged(List<? extends PropertyBean> info);
 
     public abstract void onComponentChanged(Component c);
 
@@ -632,7 +631,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     InspectorTableModel myModel;
     DimensionsComponent myDimensionComponent;
 
-    private InspectorTable(@NotNull final List<PropertyBean> clickInfo) {
+    private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
        myModel = new InspectorTableModel(clickInfo);
        init(null);
     }
@@ -958,7 +957,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       sb.append(" argb:0x");
       String hex = Integer.toHexString(value.getRGB());
       for (int i = hex.length(); i < 8; i++) sb.append('0');
-      sb.append(hex.toUpperCase(ENGLISH));
+      sb.append(StringUtil.toUpperCase(hex));
 
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
@@ -1139,7 +1138,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getText", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
       "getAlignmentX", "getAlignmentY",
-      "getTooltipText", "getToolTipText",
+      "getTooltipText", "getToolTipText", "cursor",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
       "isValid", "isDisplayable", "isLightweight"
@@ -1339,11 +1338,17 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       else if (layout instanceof MigLayout) {
         MigLayout migLayout = (MigLayout)layout;
 
-        myProperties.add(new PropertyBean("MigLayout layout constraints", migLayout.getLayoutConstraints()));
+        Object constraints = migLayout.getLayoutConstraints();
+        if (constraints instanceof LC) {
+          addMigLayoutLayoutConstraints((LC)constraints);
+        }
+        else {
+          myProperties.add(new PropertyBean("MigLayout layout constraints", constraints));
+        }
 
-        Object constraints = migLayout.getColumnConstraints();
+        constraints = migLayout.getColumnConstraints();
         if (constraints instanceof AC) {
-          addMigLayoutAxisConstraints("MigLayout column constraints", (AC) constraints);
+          addMigLayoutAxisConstraints("MigLayout column constraints", (AC)constraints);
         }
         else {
           myProperties.add(new PropertyBean("MigLayout column constraints", constraints));
@@ -1351,7 +1356,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
         constraints = migLayout.getRowConstraints();
         if (constraints instanceof AC) {
-          addMigLayoutAxisConstraints("MigLayout row constraints", (AC) constraints);
+          addMigLayoutAxisConstraints("MigLayout row constraints", (AC)constraints);
         }
         else {
           myProperties.add(new PropertyBean("MigLayout row constraints", constraints));
@@ -1364,10 +1369,55 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
         com.intellij.ui.layout.migLayout.patched.MigLayout migLayout = (com.intellij.ui.layout.migLayout.patched.MigLayout)layout;
 
-        myProperties.add(new PropertyBean("MigLayout layout constraints", migLayout.getLayoutConstraints()));
+        addMigLayoutLayoutConstraints(migLayout.getLayoutConstraints());
         addMigLayoutAxisConstraints("MigLayout column constraints", migLayout.getColumnConstraints());
         addMigLayoutAxisConstraints("MigLayout row constraints", migLayout.getRowConstraints());
       }
+    }
+
+    private void addMigLayoutLayoutConstraints(LC lc) {
+      myProperties.add(new PropertyBean("MigLayout layout constraints", lcConstraintToString(lc)));
+      UnitValue[] insets = lc.getInsets();
+      if (insets != null) {
+        myProperties.add(new PropertyBean("  lc.insets", Arrays.toString(insets)));
+      }
+      UnitValue alignX = lc.getAlignX();
+      UnitValue alignY = lc.getAlignY();
+      if (alignX != null || alignY != null) {
+        myProperties.add(new PropertyBean("  lc.align", "x: " + alignX + "; y: " + alignY));
+      }
+      BoundSize width = lc.getWidth();
+      BoundSize height = lc.getHeight();
+      if (width != BoundSize.NULL_SIZE || height != BoundSize.NULL_SIZE) {
+        myProperties.add(new PropertyBean("  lc.size", "width: " + width + "; height: " + height));
+      }
+      BoundSize gridX = lc.getGridGapX();
+      BoundSize gridY = lc.getGridGapY();
+      if (gridX != null || gridY != null) {
+        myProperties.add(new PropertyBean("  lc.gridGap", "x: " + gridX + "; y: " + gridY));
+      }
+      boolean fillX = lc.isFillX();
+      boolean fillY = lc.isFillY();
+      if (fillX || fillY) {
+        myProperties.add(new PropertyBean("  lc.fill", "x: " + fillX + "; y: " + fillY));
+      }
+      BoundSize packWidth = lc.getPackWidth();
+      BoundSize packHeight = lc.getPackHeight();
+      if (packWidth != BoundSize.NULL_SIZE || packHeight != BoundSize.NULL_SIZE) {
+        myProperties.add(new PropertyBean("  lc.pack", "width: " + packWidth + "; height: " + packHeight +
+                                                       "; widthAlign: " + lc.getPackWidthAlign() +
+                                                       "; heightAlign: " + lc.getPackHeightAlign()));
+      }
+    }
+
+    private static String lcConstraintToString(LC constraint) {
+      return "isFlowX=" + constraint.isFlowX() +
+             " leftToRight=" + constraint.getLeftToRight() +
+             " noGrid=" + constraint.isNoGrid() +
+             " hideMode=" + constraint.getHideMode() +
+             " visualPadding=" + constraint.isVisualPadding() +
+             " topToBottom=" + constraint.isTopToBottom() +
+             " noCache=" + constraint.isNoCache();
     }
 
     private void addMigLayoutAxisConstraints(String title, AC ac) {
