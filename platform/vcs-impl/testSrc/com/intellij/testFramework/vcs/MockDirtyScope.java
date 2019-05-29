@@ -16,6 +16,7 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -123,7 +124,13 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
 
   @Override
   public boolean belongsTo(FilePath path) {
-    throw new UnsupportedOperationException();
+    if (myDirtyFiles.contains(path)) return true;
+
+    for (FilePath parent : myDirtyDirs) {
+      if (FileUtil.startsWith(path.getPath(), parent.getPath())) return true;
+    }
+
+    return false;
   }
 
   @Override
