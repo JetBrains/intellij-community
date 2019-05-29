@@ -1,18 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonLiteral;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.model.SymbolResolveResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaBaseReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -28,27 +32,11 @@ class ThemeJsonNamedColorPsiReference extends JsonSchemaBaseReference<JsonLitera
   @Nullable
   @Override
   public PsiElement resolveInner() {
-    PsiFile file = getElement().getContainingFile();
-    if (file instanceof JsonFile) {
-      PsiElement object = file.getFirstChild();
-      if (object instanceof JsonObject) {
-        PsiElement[] children = object.getChildren();
-        for (PsiElement child : children) {
-          if (child instanceof JsonProperty && ((JsonProperty)child).getName().equals("colors")) {
-            JsonValue colors = ((JsonProperty)child).getValue();
-            if (colors != null) {
-              for (PsiElement namedColor : colors.getChildren()) {
-                if (namedColor instanceof JsonProperty && ((JsonProperty)namedColor).getName().equals(myName)) {
-                  return ((JsonProperty)namedColor).getNameElement();
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    final PsiFile containingFile = getElement().getContainingFile();
+    if (!(containingFile instanceof JsonFile)) return null;
 
-    return null;
+    final List<JsonProperty> namedColors = ThemeJsonUtil.getNamedColors((JsonFile)containingFile);
+    return ContainerUtil.find(namedColors, property -> property.getName().equals(myName));
   }
 
   @NotNull
