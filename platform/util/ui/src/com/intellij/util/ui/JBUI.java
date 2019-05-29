@@ -114,8 +114,8 @@ public class JBUI {
           getLogger().error("ide.ui.scale system property is not a float value: " + prop);
         }
       }
-      else if (Registry.is("ide.ui.scale.override")) {
-        return (float)Registry.get("ide.ui.scale").asDouble();
+      else if (Boolean.getBoolean("ide.ui.scale.override")) {
+        return 1f;
       }
       return null;
     }
