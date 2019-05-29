@@ -28,9 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -524,7 +523,9 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       for (final PsiParameter parameter : parameters) {
         final PsiType parameterType = parameter.getType();
-        if (PsiTypesUtil.mentionsTypeParametersOrUnboundedWildcard(parameterType, substitutor.getSubstitutionMap().keySet(), true)) {
+        Set<PsiTypeParameter> typeParameters = new HashSet<>(substitutor.getSubstitutionMap().keySet());
+        Arrays.stream(method.getTypeParameters()).forEach(typeParameters::remove);
+        if (PsiTypesUtil.mentionsTypeParametersOrUnboundedWildcard(parameterType, typeParameters, true)) {
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
           PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
           return JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
