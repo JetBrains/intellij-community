@@ -84,7 +84,7 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
       KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
       "NetBeans 6.5" -> "NetBeans"
       else -> {
-        val newName = name.removeSuffix(" (Mac OS X)")
+        val newName = name.removeSuffix(" (Mac OS X)").removeSuffix(" OSX")
         when {
           newName === name -> name
           else -> "$newName (macOS)"
