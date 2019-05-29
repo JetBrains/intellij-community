@@ -382,11 +382,15 @@ public class ScrollingUtil {
 
   public static Couple<Integer> getVisibleRows(JTable table) {
     Rectangle visibleRect = table.getVisibleRect();
-    return Couple.of(getLeadingRow(table, visibleRect) + 1, getTrailingRow(table, visibleRect));
+    return Couple.of(getLeadingRow(table, visibleRect), getTrailingRow(table, visibleRect));
   }
 
   private static int getLeadingRow(JTable table, Rectangle visibleRect) {
-    return table.rowAtPoint(getLeadingPoint(table, visibleRect));
+    int row = table.rowAtPoint(getLeadingPoint(table, visibleRect));
+    if (row >= 0) return row;
+    // return the first row in the table
+    // if there is no any row at the given point
+    return 0 < table.getRowCount() ? 0 : -1;
   }
 
   private static Point getLeadingPoint(JTable table, Rectangle visibleRect) {
@@ -429,7 +433,11 @@ public class ScrollingUtil {
           trailingPoint = new Point(visibleRect.x + visibleRect.width,
                                     visibleRect.y + visibleRect.height - 1);
       }
-      return table.rowAtPoint(trailingPoint);
+    int row = table.rowAtPoint(trailingPoint);
+    if (row >= 0) return row;
+    // return the last row in the table
+    // if there is no any row at the given point
+    return table.getRowCount() - 1;
   }
 
 
