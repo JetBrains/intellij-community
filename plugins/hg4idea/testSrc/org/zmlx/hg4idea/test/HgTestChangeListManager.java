@@ -21,11 +21,12 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
-import org.testng.Assert;
+import org.junit.Assert;
 
 import java.util.*;
 
-import static org.testng.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * The ChangeListManagerImpl extension with some useful helper methods for tests.
@@ -59,7 +60,7 @@ public class HgTestChangeListManager {
 
     final Collection<Change> changes = peer.getDefaultChangeList().getChanges();
     if (only) {
-      Assert.assertEquals(changes.size(), files.length);
+      assertEquals(files.length, changes.size());
     }
     final Collection<VirtualFile> filesInChangeList = new HashSet<>();
     for (Change c : changes) {

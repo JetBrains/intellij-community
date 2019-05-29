@@ -34,7 +34,7 @@ import org.zmlx.hg4idea.HgVcs;
 
 import java.io.*;
 
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The ancestor of all intellij.vcs.hg test cases.

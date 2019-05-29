@@ -10,8 +10,8 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Collections;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class HgRevertTest extends HgSingleUserTest {
   @Test
@@ -28,7 +28,7 @@ public class HgRevertTest extends HgSingleUserTest {
     HgCatCommand catCommand = new HgCatCommand(myProject);
     HgCommandResult result = catCommand.execute(getHgFile("file.txt"), null, Charset.defaultCharset());
     assertNotNull(result);
-    assertEquals(result.getRawOutput(), "initial contents");
+    assertEquals("initial contents", result.getRawOutput());
   }
 
 
@@ -48,7 +48,7 @@ public class HgRevertTest extends HgSingleUserTest {
     HgCatCommand catCommand = new HgCatCommand(myProject);
     HgCommandResult result = catCommand.execute(getHgFile("file.txt"), HgRevisionNumber.getLocalInstance("0"), Charset.defaultCharset());
     assertNotNull(result);
-    assertEquals(result.getRawOutput(), "initial contents");
+    assertEquals("initial contents", result.getRawOutput());
   }
 
 }
