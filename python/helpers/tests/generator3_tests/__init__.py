@@ -78,6 +78,12 @@ class GeneratorTestCase(unittest.TestCase):
                 raise AssertionError(
                     '%r != %r' % (actual_child, expected_child))
 
+    def assertNonEmptyFile(self, path):
+        with open(path) as f:
+            content = f.read()
+            self.assertTrue(content and not content.isspace(),
+                            "File {!r} is empty or contains only whitespaces".format(path))
+
     @contextmanager
     def comparing_dirs(self, subdir='', tmp_subdir=''):
         before_dir = os.path.join(self.test_data_dir, subdir, 'before')
