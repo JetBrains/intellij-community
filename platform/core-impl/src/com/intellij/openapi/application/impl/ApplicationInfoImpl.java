@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class ApplicationInfoImpl extends ApplicationInfoEx {
+public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCodeName;
   private String myMajorVersion;
   private String myMinorVersion;
@@ -107,7 +107,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
-  private List<ProgressSlide> myProgressSlides = new ArrayList<>();
+  private final List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -314,6 +314,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutImageUrl;
   }
 
+  @Override
   public Color getProgressColor() {
     return myProgressColor;
   }
@@ -322,22 +323,27 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return ObjectUtils.notNull(myCopyrightForeground, JBColor.BLACK);
   }
 
+  @Override
   public int getProgressHeight() {
     return myProgressHeight;
   }
 
+  @Override
   public int getProgressY() {
     return myProgressY;
   }
 
+  @Override
   public int getLicenseOffsetX() {
     return myLicenseOffsetX;
   }
 
+  @Override
   public int getLicenseOffsetY() {
     return myLicenseOffsetY;
   }
 
+  @Override
   @Nullable
   public Icon getProgressTailIcon() {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {

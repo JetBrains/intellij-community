@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ImageLoader;
@@ -31,12 +30,11 @@ public final class Splash extends Window {
   private final ApplicationInfoEx myInfo;
   private final int myWidth;
   private final int myHeight;
-  private int myProgressHeight;
-  private Color myProgressColor;
-  private int myProgressY;
+  private final int myProgressHeight;
+  private final int myProgressY;
   private double myProgress;
   private int myProgressLastPosition = 0;
-  private Icon myProgressTail;
+  private final Icon myProgressTail;
   private final List<ProgressSlideAndImage> myProgressSlideImages = new ArrayList<>();
   private final Image myImage;
 
@@ -46,13 +44,9 @@ public final class Splash extends Window {
     super(null);
 
     myInfo = info;
-    if (info instanceof ApplicationInfoImpl) {
-      final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
-      myProgressHeight = appInfo.getProgressHeight();
-      myProgressColor = appInfo.getProgressColor();
-      myProgressY = appInfo.getProgressY();
-      myProgressTail = appInfo.getProgressTailIcon();
-    }
+    myProgressHeight = uiScale(info.getProgressHeight());
+    myProgressY = uiScale(info.getProgressY());
+    myProgressTail = info.getProgressTailIcon();
 
     setFocusableWindowState(false);
 
@@ -133,7 +127,10 @@ public final class Splash extends Window {
   }
 
   public void showProgress(double progress) {
-    if (myProgressColor == null) return;
+    if (myInfo.getProgressColor() == null) {
+      return;
+    }
+
     if (((progress - myProgress) > 0.01) || (progress > 0.99)) {
       myProgress = progress;
       paintProgress(getGraphics());
@@ -146,7 +143,7 @@ public final class Splash extends Window {
       paintSlides(g);
     }
 
-    Color color = myProgressColor;
+    Color color = myInfo.getProgressColor();
     if (color == null) {
       return;
     }
@@ -158,12 +155,12 @@ public final class Splash extends Window {
     }
 
     g.setColor(color);
-    int y = hasSlides ? myHeight - getProgressHeight() : getProgressY();
-    g.fillRect(myProgressLastPosition, y, currentWidth, getProgressHeight());
+    int y = hasSlides ? myHeight - myProgressHeight : myProgressY;
+    g.fillRect(myProgressLastPosition, y, currentWidth, myProgressHeight);
     if (myProgressTail != null) {
       float onePixel = JBUI_INIT_SCALE;
       myProgressTail.paintIcon(this, g, (int)(currentWidth - (myProgressTail.getIconWidth() / onePixel / 2f * onePixel)),
-                               (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / onePixel / 2f * onePixel)); //I'll buy you a beer if you understand this line without playing with it
+                               (int)(myProgressY - (myProgressTail.getIconHeight() - myProgressHeight) / onePixel / 2f * onePixel)); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
   }
@@ -174,14 +171,6 @@ public final class Splash extends Window {
         UIUtil.drawImage(g, progressSlide.image, 0, 0, null);
       }
     }
-  }
-
-  private int getProgressHeight() {
-    return uiScale(myProgressHeight);
-  }
-
-  private int getProgressY() {
-    return uiScale(myProgressY);
   }
 
   public void paintLicenseeInfo() {
@@ -208,15 +197,15 @@ public final class Splash extends Window {
     g.setFont(font.getValue());
     g.setColor(info.getSplashTextColor());
 
-    int offsetX = Math.max(uiScale(15), uiScale(((ApplicationInfoImpl)info).getLicenseOffsetX()));
-    int offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
+    int offsetX = Math.max(uiScale(15), uiScale(info.getLicenseOffsetX()));
+    int offsetYUnscaled = info.getLicenseOffsetY();
 
     if (licensedToMessage != null) {
-      g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
+      g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetYUnscaled));
     }
 
     if (!licenseRestrictionsMessages.isEmpty()) {
-      g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
+      g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetYUnscaled - 16));
     }
     return true;
   }

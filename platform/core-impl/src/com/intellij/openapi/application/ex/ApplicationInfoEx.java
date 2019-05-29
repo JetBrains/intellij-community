@@ -5,14 +5,12 @@ import com.intellij.openapi.application.ApplicationInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
-/**
- * @author mike
- */
 public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {
     return (ApplicationInfoEx) getInstance();
@@ -156,4 +154,18 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   }
 
   public abstract List<ProgressSlide> getProgressSlides();
+
+  public abstract int getProgressHeight();
+
+  public abstract int getProgressY();
+
+  @Nullable
+  public abstract Color getProgressColor();
+
+  @Nullable
+  public abstract Icon getProgressTailIcon();
+
+  public abstract int getLicenseOffsetX();
+
+  public abstract int getLicenseOffsetY();
 }
