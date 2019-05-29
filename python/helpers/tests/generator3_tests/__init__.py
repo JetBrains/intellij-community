@@ -1,8 +1,9 @@
+from contextlib import contextmanager
+from io import open
 import os
 import shutil
 import tempfile
 import unittest
-from contextlib import contextmanager
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
