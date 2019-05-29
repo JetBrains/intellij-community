@@ -13,17 +13,12 @@ import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.DefaultThrowableRenderer;
+import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.spi.ThrowableRenderer;
 import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
 /**
  * @author Mike
@@ -33,7 +28,6 @@ public class IdeaLogger extends Log4jBasedLogger {
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;  // when not null, holds the first of errors that occurred
 
   private static final ApplicationInfoProvider ourApplicationInfoProvider;
-  private static final String ourCompilationTimestamp;
   private static final ThrowableRenderer ourThrowableRenderer;
 
   static {
@@ -41,19 +35,6 @@ public class IdeaLogger extends Log4jBasedLogger {
       ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
       return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
     };
-
-    String stamp = null;
-    URL resource = Logger.class.getResource("/.compilation-timestamp");
-    if (resource != null) {
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-        String s = reader.readLine();
-        if (s != null) {
-          stamp = s.trim();
-        }
-      }
-      catch (IOException ignored) { }
-    }
-    ourCompilationTimestamp = stamp;
 
     ourThrowableRenderer = t -> {
       String[] lines = DefaultThrowableRenderer.render(t);
@@ -72,7 +53,7 @@ public class IdeaLogger extends Log4jBasedLogger {
 
   @Nullable
   public static String getOurCompilationTimestamp() {
-    return ourCompilationTimestamp;
+    return null;
   }
 
   @NotNull
@@ -80,7 +61,7 @@ public class IdeaLogger extends Log4jBasedLogger {
     return ourThrowableRenderer;
   }
 
-  IdeaLogger(@NotNull org.apache.log4j.Logger logger) {
+  IdeaLogger(@NotNull Logger logger) {
     super(logger);
     LoggerRepository repository = myLogger.getLoggerRepository();
     if (repository instanceof ThrowableRendererSupport) {
@@ -133,10 +114,6 @@ public class IdeaLogger extends Log4jBasedLogger {
 
   private void logErrorHeader(@Nullable Throwable t) {
     myLogger.error(ourApplicationInfoProvider.getInfo());
-
-    if (ourCompilationTimestamp != null) {
-      myLogger.error("Internal version. Compiled " + ourCompilationTimestamp);
-    }
 
     myLogger.error("JDK: " + System.getProperties().getProperty("java.version", "unknown")+
                    "; VM: " + System.getProperties().getProperty("java.vm.name", "unknown") +
