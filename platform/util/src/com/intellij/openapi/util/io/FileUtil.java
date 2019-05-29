@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
@@ -1088,13 +1087,15 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  @NotNull
-  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
-    return FILE_TRAVERSER.withRoot(root);
+  private static class Lazy {
+    private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
+      (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
   }
 
-  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
-    (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
+  @NotNull
+  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
+    return Lazy.FILE_TRAVERSER.withRoot(root);
+  }
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
