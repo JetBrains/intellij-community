@@ -97,7 +97,7 @@ public final class IconLoader {
     STRICT_GLOBAL = strict;
   }
 
-  private static void updateTransform(Function<? super IconTransform, ? extends IconTransform> updater) {
+  private static void updateTransform(Function<? super IconTransform, IconTransform> updater) {
     IconTransform prev, next;
     do {
       prev = ourTransform.get();
@@ -724,7 +724,7 @@ public final class IconLoader {
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
       URL url = getURL();
       if (url == null) return null;
-      return ImageLoader.loadFromUrl(url, true, myUseCacheOnLoad, dark, getFilters(), ctx);
+      return ImageLoader.loadFromUrl(url, null, true, myUseCacheOnLoad, dark, getFilters(), ctx);
     }
 
     private class MyScaledIconsCache {

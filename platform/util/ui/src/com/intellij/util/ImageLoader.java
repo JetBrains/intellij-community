@@ -3,11 +3,13 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
@@ -28,6 +30,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentMap;
 
@@ -58,7 +62,7 @@ public class ImageLoader implements Serializable {
     Image load(@Nullable LoadFunction delegate, @NotNull ImageDesc.Type type) throws IOException;
   }
 
-  public static class ImageDesc {
+  public static final class ImageDesc {
     public enum Type {IMG, SVG}
 
     final @NotNull String path;
@@ -105,11 +109,16 @@ public class ImageLoader implements Serializable {
           LOG.warn("empty image path", new Throwable());
           return null;
         }
-        if (cls != null) {
+
+        boolean isFromFile = path.startsWith("file:");
+        if (!isFromFile && cls != null) {
           //noinspection IOResourceOpenedButNotSafelyClosed
           stream = cls.getResourceAsStream(path);
-          if (stream == null) return null;
+          if (stream == null) {
+            return null;
+          }
         }
+
         if (stream == null) {
           if (useCache) {
             cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
@@ -119,15 +128,24 @@ public class ImageLoader implements Serializable {
               return pair.first;
             }
           }
+
           url = new URL(path);
-          URLConnection connection = url.openConnection();
-          if (connection instanceof HttpURLConnection) {
-            if (!original) return null;
-            connection.addRequestProperty("User-Agent", "IntelliJ");
+          if (isFromFile) {
+            byte[] bytes = Files.readAllBytes(Paths.get(url.getPath()));
+            //noinspection IOResourceOpenedButNotSafelyClosed
+            stream = new BufferExposingByteArrayInputStream(bytes);
           }
-          stream = connection.getInputStream();
+          else {
+            URLConnection connection = url.openConnection();
+            if (connection instanceof HttpURLConnection) {
+              if (!original) return null;
+              connection.addRequestProperty("User-Agent", "IntelliJ");
+            }
+            stream = connection.getInputStream();
+          }
         }
       }
+
       Image image = loadImpl(url, stream);
       if (image != null && cacheKey != null &&
           4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE)
@@ -138,7 +156,7 @@ public class ImageLoader implements Serializable {
     }
 
     @Nullable
-    private Image loadImpl(final URL url, final InputStream stream) throws IOException {
+    private Image loadImpl(@Nullable URL url, @NotNull InputStream stream) throws IOException {
       LoadFunction f = new LoadFunction() {
         @Override
         public Image load(@Nullable LoadFunction delegate, @NotNull Type type) throws IOException {
@@ -161,27 +179,25 @@ public class ImageLoader implements Serializable {
     @Nullable
     private Image loadImpl(@NotNull InputStream stream) {
       try {
-        BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-        try {
-          byte[] buffer = new byte[1024];
-          while (true) {
-            final int n = stream.read(buffer);
-            if (n < 0) break;
-            outputStream.write(buffer, 0, n);
+        Image image;
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        if (stream instanceof BufferExposingByteArrayInputStream) {
+          BufferExposingByteArrayInputStream byteInput = (BufferExposingByteArrayInputStream)stream;
+          image = toolkit.createImage(byteInput.getInternalBuffer(), 0, byteInput.available());
+        }
+        else {
+          BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+          try {
+            FileUtilRt.copy(stream, outputStream);
           }
+          finally {
+            stream.close();
+          }
+          image = toolkit.createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
         }
-        finally {
-          stream.close();
-        }
-
-        Image image = Toolkit.getDefaultToolkit().createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
 
         waitForImage(image);
-
-        if (image != null) {
-          origUsrSize.setSize(image.getWidth(null) / scale, image.getHeight(null) / scale);
-        }
-
+        origUsrSize.setSize(image.getWidth(null) / scale, image.getHeight(null) / scale);
         return image;
       }
       catch (Exception ex) {
@@ -284,8 +300,8 @@ public class ImageLoader implements Serializable {
                                  true,
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
 
-      if (path.contains("://") && !path.startsWith("file:")) {
-        list.add(StringUtil.endsWithIgnoreCase(StringUtil.substringBeforeLast(path, "?"), ".svg") ? SVG : IMG);
+      if (!path.startsWith("file:") && path.contains("://")) {
+        list.add(StringUtilRt.endsWithIgnoreCase(StringUtil.substringBeforeLast(path, "?"), ".svg") ? SVG : IMG);
       }
       else if (retina && dark) {
         list.add(true, true);
@@ -391,11 +407,11 @@ public class ImageLoader implements Serializable {
   }
 
   /**
-   * @see #loadFromUrl(URL, boolean, boolean, boolean, ImageFilter[], ScaleContext)
+   * @see #loadFromUrl(URL, Class, boolean, boolean, boolean, ImageFilter[], ScaleContext)
    */
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, ImageFilter[] filters, final ScaleContext ctx) {
-    return loadFromUrl(url, allowFloatScaling, useCache, UIUtil.isUnderDarcula(), filters, ctx);
+    return loadFromUrl(url, null, allowFloatScaling, useCache, UIUtil.isUnderDarcula(), filters, ctx);
   }
 
   /**
@@ -403,11 +419,11 @@ public class ImageLoader implements Serializable {
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, boolean dark, @Nullable ImageFilter[] filters, final ScaleContext ctx) {
+  public static Image loadFromUrl(@NotNull URL url, @Nullable Class aClass, boolean allowFloatScaling, boolean useCache, boolean dark, @Nullable ImageFilter[] filters, final ScaleContext ctx) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
 
-    return ImageDescList.create(url.toString(), null, dark, allowFloatScaling, ctx).load(
+    return ImageDescList.create(url.toString(), aClass, dark, allowFloatScaling, ctx).load(
       ImageConverterChain.create().
         withFilter(filters).
         with(new ImageConverter() {
@@ -543,7 +559,7 @@ public class ImageLoader implements Serializable {
   private static @Nullable Image _loadImageFromFile(@NotNull File f) throws IOException {
     final ScaleContext ctx = ScaleContext.create();
     final double scale = ctx.getScale(PIX_SCALE); // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
-    final ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), null,  scale, StringUtil.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
+    final ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), null, scale, StringUtilRt.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
     return ImageUtil.ensureHiDPI(desc.load(true), ctx);
   }
 }
