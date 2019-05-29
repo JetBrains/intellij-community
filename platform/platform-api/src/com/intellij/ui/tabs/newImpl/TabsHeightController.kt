@@ -65,9 +65,9 @@ class TabsHeightController {
 
     private fun createNestedLifeTime(parentDisposable: Disposable): Lifetime {
       val ds = Disposer.newDisposable()
-      Disposer.register(ld.createNestedDisposable(), ds)
-      Disposer.register(parentDisposable, ds)
-
+      val nestedDisposable = ld.createNestedDisposable()
+      Disposer.register(nestedDisposable, ds)
+      Disposer.register(parentDisposable, nestedDisposable)
       return ds.createLifetime()
     }
   }
