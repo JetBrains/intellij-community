@@ -320,8 +320,7 @@ public class SearchDialog extends DialogWrapper {
 
     JPanel searchOptions = new JPanel();
     searchOptions.setLayout(new GridLayout(getRowsCount(), 1, 0, 0));
-    searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border"),
-                                                                true));
+    searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border")));
 
     JPanel allOptions = new JPanel(new BorderLayout());
     if (myShowScopePanel) {

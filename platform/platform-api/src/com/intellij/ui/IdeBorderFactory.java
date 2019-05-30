@@ -135,7 +135,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true);
+      return IdeBorderFactory.createTitledBorder(title);
     }
   }
 

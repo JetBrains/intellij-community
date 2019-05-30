@@ -253,7 +253,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     panel.add(myReplaceFieldsInaccessibleInRadioButton);
     panel.add(myReplaceAllFieldsRadioButton);
 
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters", true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Replace fields used in expression with their getters"));
     return panel;
   }
 
