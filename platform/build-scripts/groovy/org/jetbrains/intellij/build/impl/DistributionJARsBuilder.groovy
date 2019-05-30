@@ -105,6 +105,7 @@ class DistributionJARsBuilder {
       getPlatformApiModules(productLayout).each {
         withModule(it, "platform-api.jar")
       }
+      // NOTE: If you change the name of this jar, make sure to update BootstrapClassLoaderUtil.MAIN_RUNNER_JAR
       getPlatformImplModules(productLayout).each {
         withModule(it, "platform-impl.jar")
       }

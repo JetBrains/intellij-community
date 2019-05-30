@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// NOTE: If you move this class to a different module, make sure to update BootstrapClassLoaderUtil.MAIN_RUNNER_JAR
 public class MainRunner {
   public static WindowsCommandLineListener LISTENER;
 

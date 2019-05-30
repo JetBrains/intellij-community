@@ -26,6 +26,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
+  public static final String MAIN_RUNNER_JAR = "platform-impl.jar";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -111,6 +112,12 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     classpath.add(selfRootUrl);
 
     File libFolder = new File(PathManager.getLibPath());
+
+    File platformImplJar = new File(libFolder, MAIN_RUNNER_JAR);
+    if (platformImplJar.exists()) {
+      classpath.add(platformImplJar.toURI().toURL());
+    }
+
     addLibraries(classpath, libFolder, selfRootUrl);
     addLibraries(classpath, new File(libFolder, "ext"), selfRootUrl);
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
@@ -121,7 +128,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     if (files == null) return;
 
     for (File file : files) {
-      if (FileUtilRt.isJarOrZip(file)) {
+      if (FileUtilRt.isJarOrZip(file) && !file.getName().equals(MAIN_RUNNER_JAR)) {
         URL url = file.toURI().toURL();
         if (!selfRootUrl.equals(url)) {
           classPath.add(url);
