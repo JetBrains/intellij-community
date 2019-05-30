@@ -57,6 +57,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JTextField myVersion;
   private JLabel myVersionSize;
   private TagPanel myTagPanel;
+  private JLabel myDate;
   private JLabel myRating;
   private JLabel myDownloads;
   private JLabel mySize;
@@ -237,16 +238,22 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new HorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
+    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUI.scale(7)) {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
         if (myTagPanel != null && myTagPanel.isVisible()) {
           int baseline = myTagPanel.getBaseline(-1, -1);
           if (baseline != -1) {
-            Rectangle bounds = myVersion.getBounds();
-            int newY = myTagPanel.getY() + baseline - myVersion.getBaseline(bounds.width, bounds.height);
-            myVersion.setBounds(bounds.x, newY, bounds.width, bounds.height);
+            Rectangle versionBounds = myVersion.getBounds();
+            int versionY = myTagPanel.getY() + baseline - myVersion.getBaseline(versionBounds.width, versionBounds.height);
+            myVersion.setBounds(versionBounds.x, versionY, versionBounds.width, versionBounds.height);
+
+            if (myDate.isVisible()) {
+              Rectangle dateBounds = myDate.getBounds();
+              int dateY = myTagPanel.getY() + baseline - myDate.getBaseline(dateBounds.width, dateBounds.height);
+              myDate.setBounds(dateBounds.x - JBUI.scale(4), dateY, dateBounds.width, dateBounds.height);
+            }
           }
         }
       }
@@ -255,6 +262,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       panel2.add(myTagPanel = new TagPanel(mySearchListener));
     }
     panel2.add(myVersion);
+    myDate =
+      GridCellPluginComponent.createRatingLabel(panel2, TextHorizontalLayout.FIX_LABEL, "", null, CellPluginComponent.GRAY_COLOR, true);
     centerPanel.add(panel2);
   }
 
@@ -425,6 +434,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myHomePage.show("Plugin homepage", () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
                                                                   URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
     }
+
+    String date = PluginManagerConfigurableNew.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
+    myDate.setText(date);
+    myDate.setVisible(date != null);
 
     String description = getDescription();
     if (description != null) {
