@@ -30,7 +30,6 @@ import javax.sound.sampled.Clip;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.UndoableEditListener;
@@ -51,9 +50,7 @@ import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
-import java.awt.image.PixelGrabber;
 import java.awt.image.RGBImageFilter;
 import java.awt.print.PrinterGraphics;
 import java.beans.PropertyChangeListener;
@@ -180,22 +177,6 @@ public class UIUtil extends StartupUiUtil {
   @Nullable
   public static Cursor cursorIfNotDefault(@Nullable Cursor cursorToSet) {
     return cursorToSet != null && cursorToSet.getType() != Cursor.DEFAULT_CURSOR ? cursorToSet : null;
-  }
-
-  /**
-   * Draws two horizontal lines, the first at {@code topY}, the second at {@code bottomY}.
-   * The purpose of this method (and the ground of the name) is to draw two lines framing a horizontal filled rectangle.
-   *
-   * @param g       Graphics context to draw with.
-   * @param startX  x-start point.
-   * @param endX    x-end point.
-   * @param topY    y-coordinate of the first line.
-   * @param bottomY y-coordinate of the second line.
-   * @param color   color of the lines.
-   */
-  public static void drawFramingLines(@NotNull Graphics2D g, int startX, int endX, int topY, int bottomY, @NotNull Color color) {
-    drawLine(g, startX, topY, endX, topY, null, color);
-    drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
   @NotNull
@@ -338,13 +319,6 @@ public class UIUtil extends StartupUiUtil {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
   }
 
-  public static boolean isScrolledToTheBottom(JComponent c) {
-    JScrollPane scrollPane = c != null ? getParentOfType(JScrollPane.class, c) : null;
-    if (scrollPane == null) return true;
-    Rectangle viewRect = scrollPane.getViewport().getViewRect();
-    return c.getHeight() == viewRect.y + viewRect.height;
-  }
-
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
@@ -399,8 +373,8 @@ public class UIUtil extends StartupUiUtil {
   public static final int DEFAULT_VGAP = 4;
   public static final int LARGE_VGAP = 12;
 
-  public static final Insets PANEL_REGULAR_INSETS = new Insets(8, 12, 8, 12);
-  public static final Insets PANEL_SMALL_INSETS = new Insets(5, 8, 5, 8);
+  public static final Insets PANEL_REGULAR_INSETS = JBUI.insets(8, 12);
+  public static final Insets PANEL_SMALL_INSETS = JBUI.insets(5, 8);
 
   @Deprecated
   public static final Border DEBUG_MARKER_BORDER = new Border() {
@@ -1141,10 +1115,6 @@ public class UIUtil extends StartupUiUtil {
     return c.getClientProperty("TabbedPane.paintContentBorder");
   }
 
-  public static boolean isMenuCrossMenuMnemonics() {
-    return UIManager.getBoolean("Menu.crossMenuMnemonic");
-  }
-
   public static Color getTableGridColor() {
     return UIManager.getColor("Table.gridColor");
   }
@@ -1220,10 +1190,6 @@ public class UIUtil extends StartupUiUtil {
     return UIManager.getColor("Separator.highlight");
   }
 
-  public static Color getSeparatorColorUnderNimbus() {
-    return UIManager.getColor("nimbusBlueGrey");
-  }
-
   @NotNull
   @Deprecated
   public static Color getSeparatorColor() {
@@ -1257,10 +1223,6 @@ public class UIUtil extends StartupUiUtil {
 
   public static Border getTextFieldBorder() {
     return UIManager.getBorder("TextField.border");
-  }
-
-  public static Border getButtonBorder() {
-    return UIManager.getBorder("Button.border");
   }
 
   @NotNull
@@ -1466,12 +1428,6 @@ public class UIUtil extends StartupUiUtil {
       return false;
     }
   }
-
-  @Deprecated
-  public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
-
-  @Deprecated
-  public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
 
   @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
@@ -1760,13 +1716,6 @@ public class UIUtil extends StartupUiUtil {
     config.restore();
   }
 
-  public static void drawRectPickedOut(@NotNull Graphics2D g, int x, int y, int w, int h) {
-    drawLine(g ,x + 1, y, x + w - 1, y);
-    drawLine(g ,x + w, y + 1, x + w, y + h - 1);
-    drawLine(g ,x + w - 1, y + h, x + 1, y + h);
-    drawLine(g ,x, y + 1, x, y + h - 1);
-  }
-
   private static void drawBoringDottedLine(@NotNull final Graphics2D g,
                                            final int startX,
                                            final int endX,
@@ -2022,10 +1971,6 @@ public class UIUtil extends StartupUiUtil {
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
     return createImage(g, width, height, type);
-  }
-
-  public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, @NotNull Consumer<? super Graphics2D> paintRoutine) {
-    paintWithXorOnRetina(size, g, true, paintRoutine);
   }
 
   /**
@@ -2456,6 +2401,7 @@ public class UIUtil extends StartupUiUtil {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   public static Color getBorderColor() {
     return JBColor.border();
   }
@@ -2733,10 +2679,6 @@ public class UIUtil extends StartupUiUtil {
 
   public static boolean isFocusProxy(@Nullable Component c) {
     return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
-  }
-
-  public static void setFocusProxy(@NotNull JComponent c, boolean isProxy) {
-    c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
   }
 
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
@@ -3050,12 +2992,6 @@ public class UIUtil extends StartupUiUtil {
     }
 
     @NotNull
-    public TextPainter withShadow(boolean drawShadow) {
-      myDrawShadow = drawShadow;
-      return this;
-    }
-
-    @NotNull
     public TextPainter withShadow(boolean drawShadow, Color shadowColor) {
       myDrawShadow = drawShadow;
       myShadowColor = shadowColor;
@@ -3099,22 +3035,6 @@ public class UIUtil extends StartupUiUtil {
     }
 
     @NotNull
-    public TextPainter withBullet(char c) {
-      if (!myLines.isEmpty()) {
-        LineInfo info = myLines.get(myLines.size() - 1).getSecond();
-        info.withBullet = true;
-        info.bulletChar = c;
-      }
-
-      return this;
-    }
-
-    @NotNull
-    public TextPainter withBullet() {
-      return withBullet('\u2022');
-    }
-
-    @NotNull
     public TextPainter underlined() {
       return underlined(null);
     }
@@ -3155,7 +3075,6 @@ public class UIUtil extends StartupUiUtil {
       try {
         final int[] maxWidth = {0};
         final int[] height = {0};
-        final int[] maxBulletWidth = {0};
         ContainerUtil.process(myLines, pair -> {
           final LineInfo info = pair.getSecond();
           Font old = null;
@@ -3164,12 +3083,8 @@ public class UIUtil extends StartupUiUtil {
             g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
 
-          final FontMetrics fm = g.getFontMetrics();
-
-          final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
-          maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
-
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
+          FontMetrics fm = g.getFontMetrics();
+          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "")), maxWidth[0]);
           height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
 
           if (old != null) {
@@ -3198,7 +3113,7 @@ public class UIUtil extends StartupUiUtil {
             g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
 
-          final int x = position.getFirst() + maxBulletWidth[0] + 10;
+          final int x = position.getFirst() + 10;
 
           final FontMetrics fm = g.getFontMetrics();
           int xOffset = x;
@@ -3212,16 +3127,9 @@ public class UIUtil extends StartupUiUtil {
             g.setColor(myShadowColor);
 
             int yOff = 1;
-            if (info.withBullet) {
-              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
-            }
 
             g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
             g.setColor(oldColor1);
-          }
-
-          if (info.withBullet) {
-            g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
           }
 
           g.drawString(text, xOffset, yOffset[0]);
@@ -3239,7 +3147,7 @@ public class UIUtil extends StartupUiUtil {
               g.setColor(info.underlineColor);
             }
 
-            drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+            drawLine(g ,x - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
             if (c != null) {
               g.setColor(c);
             }
@@ -3247,7 +3155,7 @@ public class UIUtil extends StartupUiUtil {
             if (myDrawShadow) {
               c = g.getColor();
               g.setColor(myShadowColor);
-              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+              drawLine(g ,x - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
                          yOffset[0] + fm.getDescent() + 1);
               g.setColor(c);
             }
@@ -3270,8 +3178,6 @@ public class UIUtil extends StartupUiUtil {
 
     private static class LineInfo {
       private boolean underlined;
-      private boolean withBullet;
-      private char bulletChar;
       private Color underlineColor;
       private boolean smaller;
       private boolean center;
@@ -3425,25 +3331,6 @@ public class UIUtil extends StartupUiUtil {
         }
       });
     }
-  }
-
-  @Nullable
-  public static Color getColorAt(@NotNull Icon icon, final int x, final int y) {
-    if (0 <= x && x < icon.getIconWidth() && 0 <= y && y < icon.getIconHeight()) {
-      final BufferedImage image = createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
-      icon.paintIcon(null, image.getGraphics(), 0, 0);
-
-      final int[] pixels = new int[1];
-      final PixelGrabber pixelGrabber = new PixelGrabber(image, x, y, 1, 1, pixels, 0, 1);
-      try {
-        pixelGrabber.grabPixels();
-        return new Color(pixels[0]);
-      }
-      catch (InterruptedException ignored) {
-      }
-    }
-
-    return null;
   }
 
   public static int getLcdContrastValue() {
@@ -3674,54 +3561,6 @@ public class UIUtil extends StartupUiUtil {
     }, "play sound").start();
   }
 
-  // Experimental!!!
-  // It seems to work under Windows
-  @Nullable
-  public static String getCurrentKeyboardLayout() {
-    InputContext instance = InputContext.getInstance();
-    Class<? extends InputContext> instanceClass = instance.getClass();
-    Class<?> superclass = instanceClass.getSuperclass();
-    if (superclass.getName().equals("sun.awt.im.InputContext")) {
-      try {
-        Object inputMethodLocator = ReflectionUtil.getField(superclass, instance, null, "inputMethodLocator");
-        Locale locale = ReflectionUtil.getField(inputMethodLocator.getClass(), inputMethodLocator, Locale.class, "locale");
-        return locale.getLanguage().toUpperCase(Locale.getDefault());
-      }
-      catch (Exception ignored) {
-      }
-    }
-    return null;
-  }
-
-  private static Map<String, String> ourRealFontFamilies;
-
-  //Experimental, seems to be reliable under MacOS X only
-
-  public static String getRealFontFamily(String genericFontFamily) {
-    if (ourRealFontFamilies != null && ourRealFontFamilies.get(genericFontFamily) != null) {
-      return ourRealFontFamilies.get(genericFontFamily);
-    }
-    int patternSize = 50;
-    BufferedImage image = createImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-    Graphics graphics = image.getGraphics();
-    graphics.setFont(new Font(genericFontFamily, Font.PLAIN, patternSize));
-    String pattern = "Real Font Family";
-    Object patternBounds = graphics.getFontMetrics().getStringBounds(pattern, graphics);
-    List<String> GENERIC = Arrays.asList(Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SANS_SERIF, Font.SERIF);
-    for (String family: GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
-      if (GENERIC.contains(family)) continue;
-      graphics.setFont(new Font(family, Font.PLAIN, patternSize));
-      if (graphics.getFontMetrics().getStringBounds(pattern, graphics).equals(patternBounds)) {
-        if (ourRealFontFamilies == null) {
-          ourRealFontFamilies = new HashMap<>();
-        }
-        ourRealFontFamilies.put(genericFontFamily, family);
-        return family;
-      }
-    }
-    return genericFontFamily;
-  }
-
   @NotNull
   public static String rightArrow() {
     return FontUtil.rightArrow(getLabelFont());
@@ -3730,34 +3569,6 @@ public class UIUtil extends StartupUiUtil {
   @NotNull
   public static String upArrow(@NotNull String defaultValue) {
     return FontUtil.upArrow(getLabelFont(), defaultValue);
-  }
-
-  @NotNull
-  public static EmptyBorder getTextAlignBorder(@NotNull JToggleButton alignSource) {
-    ButtonUI ui = alignSource.getUI();
-    int leftGap = alignSource.getIconTextGap();
-    Border border = alignSource.getBorder();
-    if (border != null) {
-      leftGap += border.getBorderInsets(alignSource).left;
-    }
-    if (ui instanceof BasicRadioButtonUI) {
-      leftGap += ((BasicRadioButtonUI)alignSource.getUI()).getDefaultIcon().getIconWidth();
-    }
-    else {
-      Method method = ReflectionUtil.getMethod(ui.getClass(), "getDefaultIcon", JComponent.class);
-      if (method != null) {
-        try {
-          Object o = method.invoke(ui, alignSource);
-          if (o instanceof Icon) {
-            leftGap += ((Icon)o).getIconWidth();
-          }
-        }
-        catch (IllegalAccessException | InvocationTargetException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    return new EmptyBorder(0, leftGap, 0, 0);
   }
 
   /**
@@ -3802,16 +3613,6 @@ public class UIUtil extends StartupUiUtil {
     if (window != null) {
       window.toFront();
     }
-  }
-
-  @NotNull
-  public static Image getDebugImage(@NotNull Component component) {
-    BufferedImage image = createImage(component, component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
-    Graphics2D graphics = image.createGraphics();
-    graphics.setColor(Color.RED);
-    graphics.fillRect(0, 0, component.getWidth() + 1, component.getHeight() + 1);
-    component.paint(graphics);
-    return image;
   }
 
   /**
@@ -3895,39 +3696,6 @@ public class UIUtil extends StartupUiUtil {
     return ComponentStyle.REGULAR;
   }
 
-  /**
-   * KeyEvents for specified keystrokes would be redispatched to target component
-   */
-  public static void redirectKeystrokes(@NotNull Disposable disposable,
-                                        @NotNull final JComponent source,
-                                        @NotNull final JComponent target,
-                                        @NotNull final KeyStroke... keyStrokes) {
-    final KeyAdapter keyAdapter = new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
-        for (KeyStroke stroke : keyStrokes) {
-          if (!stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
-        }
-      }
-
-      @Override
-      public void keyReleased(KeyEvent e) {
-        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
-        for (KeyStroke stroke : keyStrokes) {
-          if (stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
-        }
-      }
-    };
-    source.addKeyListener(keyAdapter);
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        source.removeKeyListener(keyAdapter);
-      }
-    });
-  }
-
   public static final String CHECKBOX_ROLLOVER_PROPERTY = "JCheckBox.rollOver.rectangle";
   public static final String CHECKBOX_PRESSED_PROPERTY = "JCheckBox.pressed.rectangle";
 
@@ -3976,20 +3744,6 @@ public class UIUtil extends StartupUiUtil {
 
   public static boolean isHelpButton(Component button) {
     return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
-  }
-
-  public static void typeAheadUntilFocused(InputEvent event, @NotNull Component component) {
-    getLogger().assertTrue(component.isFocusable());
-    Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
-    try {
-      if (enqueueKeyEventsMethod != null) {
-        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(),
-                                      event != null ? event.getWhen() : System.currentTimeMillis(), component);
-      }
-    }
-    catch (IllegalAccessException | InvocationTargetException e) {
-      getLogger().debug(e);
-    }
   }
 
   public static boolean isRetina(@NotNull GraphicsDevice device) {
@@ -4171,17 +3925,6 @@ public class UIUtil extends StartupUiUtil {
   public static Color getTreeSelectionForeground() {
     return getTreeSelectionForeground(true);
   }
-
-
-  // Table
-
-  @NotNull
-  public static Font getTableFont() {
-    Font font = UIManager.getFont("Table.font");
-    return font != null ? font : getLabelFont();
-  }
-
-  // background
 
   @NotNull
   public static Color getTableBackground() {

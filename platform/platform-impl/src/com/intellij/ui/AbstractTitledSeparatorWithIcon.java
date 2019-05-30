@@ -44,7 +44,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     myLabel = new JLabel(icon);
     add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 8), 0, 0));
     Color oldColor = UIManager.getColor("Separator.separatorColor");
-    UIManager.put("Separator.separatorColor", UIUtil.getBorderColor());
+    UIManager.put("Separator.separatorColor", JBColor.border());
     mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
     UIManager.put("Separator.separatorColor", oldColor);
     GridBagConstraints gb =

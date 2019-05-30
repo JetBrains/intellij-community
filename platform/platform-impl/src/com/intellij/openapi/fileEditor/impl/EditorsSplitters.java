@@ -158,7 +158,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     if (showEmptyText()) {
       Graphics2D gg = IdeBackgroundUtil.withFrameBackground(g, this);
       super.paintComponent(gg);
-      g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
+      g.setColor(UIUtil.isUnderDarcula() ? JBColor.border() : new Color(0, 0, 0, 50));
       g.drawLine(0, 0, getWidth(), 0);
     }
   }
