@@ -858,7 +858,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
       reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                                  " but was " + parentGroup.getClass());
+                                  " but was " + (parentGroup != null ? parentGroup.getClass() : "[null]"));
       return null;
     }
     return parentGroup;
