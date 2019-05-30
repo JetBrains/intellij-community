@@ -6,4 +6,4 @@ foo() {
   echo "Sample text"
 }
 
-echo<caret>
+<caret>echo

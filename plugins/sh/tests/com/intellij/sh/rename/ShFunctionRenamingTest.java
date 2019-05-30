@@ -29,13 +29,8 @@ public class ShFunctionRenamingTest extends LightPlatformCodeInsightFixtureTestC
     doTest("exit");
   }
 
-  //public void testNotFunction() {
-  //  doTest("bash");
-  //}
-
   private void doTest(@Nullable String newName) {
     myFixture.configureByFile(getTestName(true) + ".before.sh");
-    //myFixture.renameElementAtCaretUsingHandler(newName);
     myFixture.renameElementAtCaret(newName);
     myFixture.checkResultByFile(getTestName(true) + ".after.sh");
   }

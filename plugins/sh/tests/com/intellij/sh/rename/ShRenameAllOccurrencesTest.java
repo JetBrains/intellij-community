@@ -47,6 +47,10 @@ public class ShRenameAllOccurrencesTest extends LightPlatformCodeInsightTestCase
     doTest("4]]");
   }
 
+  public void testNotFunction() {
+    doTest("bash");
+  }
+
   public void testKeyword1() {
     doTest(null);
   }
