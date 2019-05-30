@@ -53,6 +53,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
       fileset(dir: "$context.paths.communityHome/python/helpers") {
         exclude(name: "**/setup.py")
         exclude(name: "pydev/test**/**")
+        exclude(name: "tests/")
       }
     }
     context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {
