@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -527,7 +526,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Nullable
   public static LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<? super String> existingNames) {
-    final String s = FileUtil.getNameWithoutExtension(item.getName());
+    final String s = FileUtilRt.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
     if (existingNames != null) {
       if (existingNames.contains(s)) {

@@ -7,6 +7,7 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -429,7 +430,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
       int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
       ClassWriter writer = new ClassWriter(reader, flags);
       modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-      String className = FileUtil.getNameWithoutExtension(file.getName());
+      String className = FileUtilRt.getNameWithoutExtension(file.getName());
       Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
       if (className.equals(testName)) {
         mainClass = aClass;

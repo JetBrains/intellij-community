@@ -173,7 +173,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
       List<String> paths = extractFromScript(script);
       if (paths == null) {
         VirtualFile root = script.getParent().getParent();
-        String partName = FileUtil.getNameWithoutExtension(script.getName());
+        String partName = FileUtilRt.getNameWithoutExtension(script.getName());
         if (SystemInfoRt.isWindows && partName.endsWith(SCRIPT_SUFFIX)) {
           partName = partName.substring(0, partName.length() - SCRIPT_SUFFIX.length());
         }
@@ -356,7 +356,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
     String scriptName = SystemInfoRt.isWindows ? name + SCRIPT_SUFFIX : name;
     final List<File> scripts = getScripts(buildoutFacet, baseDir);
     for (File script : scripts) {
-      if (FileUtil.getNameWithoutExtension(script.getName()).equals(scriptName)) {
+      if (FileUtilRt.getNameWithoutExtension(script.getName()).equals(scriptName)) {
         return script;
       }
     }

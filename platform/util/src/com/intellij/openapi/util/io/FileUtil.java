@@ -551,7 +551,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String getNameWithoutExtension(@NotNull File file) {
-    return getNameWithoutExtension(file.getName());
+    return FileUtilRt.getNameWithoutExtension(file.getName());
   }
 
   @NotNull

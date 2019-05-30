@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -300,7 +299,7 @@ public class ImageLoader implements Serializable {
       // retina images provides a better result than up-scaling non-retina images.
       boolean retina = JBUI.isHiDPI(ctx.getScale(PIX_SCALE));
 
-      Builder list = new Builder(FileUtil.getNameWithoutExtension(path),
+      Builder list = new Builder(FileUtilRt.getNameWithoutExtension(path),
                                  FileUtilRt.getExtension(path),
                                  cls,
                                  true,
