@@ -75,7 +75,6 @@ public final class ImageLoader implements Serializable {
     public enum Type {IMG, SVG}
 
     final @NotNull String path;
-    final @Nullable Class cls; // resource class if present
     final @Nullable InputStream inputStream;
     final double scale; // initial scale factor
     final @NotNull Type type;
@@ -84,21 +83,20 @@ public final class ImageLoader implements Serializable {
     // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
     final @NotNull Dimension2D origUsrSize;
 
-    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type) {
-      this(path, cls, scale, type, false);
+    public ImageDesc(@NotNull String path, double scale, @NotNull Type type) {
+      this(path, scale, type, false);
     }
 
-    public ImageDesc(@NotNull String path, @Nullable Class cls, double scale, @NotNull Type type, boolean original) {
-      this(path, cls, null, scale, type, original);
+    public ImageDesc(@NotNull String path, double scale, @NotNull Type type, boolean original) {
+      this(path, null, scale, type, original);
     }
 
     public ImageDesc(@NotNull InputStream inputStream, double scale) {
-      this("", null, inputStream, scale, IMG, false);
+      this("", inputStream, scale, IMG, false);
     }
 
-    private ImageDesc(@NotNull String path, @Nullable Class cls, @Nullable InputStream inputStream, double scale, @NotNull Type type, boolean original) {
+    private ImageDesc(@NotNull String path, @Nullable InputStream inputStream, double scale, @NotNull Type type, boolean original) {
       this.path = path;
-      this.cls = cls;
       this.scale = scale;
       this.type = type;
       this.original = original;
@@ -108,6 +106,11 @@ public final class ImageLoader implements Serializable {
 
     @Nullable
     public Image load(boolean useCache) throws IOException {
+      return load(useCache, null);
+    }
+
+    @Nullable
+    public Image load(boolean useCache, @Nullable Class<?> resourceClass) throws IOException {
       String cacheKey = null;
       URL url = null;
       InputStream stream = inputStream;
@@ -120,9 +123,9 @@ public final class ImageLoader implements Serializable {
         }
 
         boolean isFromFile = path.startsWith("file:");
-        if (!isFromFile && cls != null) {
+        if (!isFromFile && resourceClass != null) {
           //noinspection IOResourceOpenedButNotSafelyClosed
-          stream = cls.getResourceAsStream(path);
+          stream = resourceClass.getResourceAsStream(path);
           if (stream == null) {
             return null;
           }
@@ -225,14 +228,12 @@ public final class ImageLoader implements Serializable {
     private final List<ImageDesc> list = new SmartList<>();
     final String name;
     final String ext;
-    final Class cls;
     final boolean svg;
     final double scale;
 
-    ImageDescriptorListBuilder(String name, String ext, Class cls, boolean svg, double scale) {
+    ImageDescriptorListBuilder(String name, String ext, boolean svg, double scale) {
       this.name = name;
       this.ext = ext;
-      this.cls = cls;
       this.svg = svg;
       this.scale = scale;
     }
@@ -248,18 +249,18 @@ public final class ImageLoader implements Serializable {
       String _ext = SVG == type ? "svg" : ext;
       double _scale = SVG == type ? scale : retina ? 2 : 1;
 
-      list.add(new ImageDesc(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, cls, _scale, type));
+      list.add(new ImageDesc(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, type));
       if (retina && dark) {
-        list.add(new ImageDesc(name + "@2x_dark" + "." + _ext, cls, _scale, type));
+        list.add(new ImageDesc(name + "@2x_dark" + "." + _ext, _scale, type));
       }
       if (retina) {
         // a fallback to 1x icon
-        list.add(new ImageDesc(name + (dark ? "_dark" : "") + "." + _ext, cls, SVG == type ? scale : 1, type));
+        list.add(new ImageDesc(name + (dark ? "_dark" : "") + "." + _ext, SVG == type ? scale : 1, type));
       }
     }
 
     void add(ImageDesc.Type type) {
-      list.add(new ImageDesc(name + "." + ext, cls, 1.0, type, true));
+      list.add(new ImageDesc(name + "." + ext, 1.0, type, true));
     }
 
     @NotNull
@@ -282,14 +283,14 @@ public final class ImageLoader implements Serializable {
 
     @Nullable
     public Image load(@NotNull ImageConverterChain converters) {
-      return load(converters, true);
+      return load(converters, true, null);
     }
 
     @Nullable
-    public Image load(@NotNull ImageConverterChain converters, boolean useCache) {
+    public Image load(@NotNull ImageConverterChain converters, boolean useCache, @Nullable Class<?> resourceClass) {
       for (ImageDesc descriptor : list) {
         try {
-          Image image = descriptor.load(useCache);
+          Image image = descriptor.load(useCache, resourceClass);
           if (image == null) {
             continue;
           }
@@ -304,10 +305,7 @@ public final class ImageLoader implements Serializable {
     }
 
     @NotNull
-    public static ImageDescriptorList create(@NotNull String path,
-                                             @Nullable Class cls,
-                                             @MagicConstant(flags = {ALLOW_FLOAT_SCALING, DARK, FIND_SVG}) int flags,
-                                             ScaleContext scaleContext) {
+    public static ImageDescriptorList create(@NotNull String path, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, DARK, FIND_SVG}) int flags, @NotNull ScaleContext scaleContext) {
       // Prefer retina images for HiDPI scale, because downscaling
       // retina images provides a better result than up-scaling non-retina images.
       double pixScale = scaleContext.getScale(PIX_SCALE);
@@ -315,7 +313,6 @@ public final class ImageLoader implements Serializable {
 
       ImageDescriptorListBuilder builder = new ImageDescriptorListBuilder(FileUtilRt.getNameWithoutExtension(path),
                                                                           FileUtilRt.getExtension(path),
-                                                                          cls,
                                                                           BitUtil.isSet(flags, FIND_SVG),
                                                                           adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), pixScale));
 
@@ -451,7 +448,7 @@ public final class ImageLoader implements Serializable {
   public static Image loadFromUrl(@NotNull URL url, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, @Nullable ImageFilter[] filters, ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
-    return ImageDescriptorList.create(url.toString(), aClass, flags, scaleContext).load(
+    return ImageDescriptorList.create(url.toString(), flags, scaleContext).load(
       ImageConverterChain.create()
         .withFilter(filters)
         .with(new ImageConverter() {
@@ -466,7 +463,7 @@ public final class ImageLoader implements Serializable {
           }
         })
         .withHiDPI(scaleContext),
-      BitUtil.isSet(flags, USE_CACHE));
+      BitUtil.isSet(flags, USE_CACHE), aClass);
   }
 
   private static double adjustScaleFactor(boolean allowFloatScaling, double scale) {
@@ -529,8 +526,8 @@ public final class ImageLoader implements Serializable {
     if (UIUtil.isUnderDarcula()) {
       flags |= DARK;
     }
-    return ImageDescriptorList.create(path, aClass, flags, scaleContext)
-      .load(ImageConverterChain.create().withHiDPI(scaleContext));
+    return ImageDescriptorList.create(path, flags, scaleContext)
+      .load(ImageConverterChain.create().withHiDPI(scaleContext), true, aClass);
   }
 
   public static Image loadFromBytes(@NotNull final byte[] bytes) {
@@ -591,7 +588,7 @@ public final class ImageLoader implements Serializable {
   private static @Nullable Image _loadImageFromFile(@NotNull File f) throws IOException {
     final ScaleContext ctx = ScaleContext.create();
     final double scale = ctx.getScale(PIX_SCALE); // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
-    final ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), null, scale, StringUtilRt.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
+    ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), scale, StringUtilRt.endsWithIgnoreCase(f.getPath(), ".svg") ? SVG : IMG);
     return ImageUtil.ensureHiDPI(desc.load(true), ctx);
   }
 }
