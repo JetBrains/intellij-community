@@ -908,7 +908,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_IF_PRESENT;
     }
 
-    class Context {
+    static class Context {
       @Nullable PsiMethodCallExpression myMapBefore;
       @Nullable PsiExpression myMapLambdaBodyAfter;
       @NotNull String myOuterIfPresentVarName;
