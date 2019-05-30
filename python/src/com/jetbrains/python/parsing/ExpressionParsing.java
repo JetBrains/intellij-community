@@ -172,7 +172,8 @@ public class ExpressionParsing extends Parsing {
                                               PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START,
                                               PyTokenTypes.FSTRING_FRAGMENT_END,
                                               PyTokenTypes.FSTRING_END,
-                                              PyTokenTypes.STATEMENT_BREAK)) {
+                                              PyTokenTypes.STATEMENT_BREAK,
+                                              PyTokenTypes.EQ)) {
         nextToken();
         recovery = true;
       }
@@ -183,6 +184,8 @@ public class ExpressionParsing extends Parsing {
       else {
         recoveryMarker.drop();
       }
+
+      matchToken(PyTokenTypes.EQ);
       final boolean hasTypeConversion = matchToken(PyTokenTypes.FSTRING_FRAGMENT_TYPE_CONVERSION);
       final boolean hasFormatPart = atToken(PyTokenTypes.FSTRING_FRAGMENT_FORMAT_START);
       if (hasFormatPart) {
@@ -195,6 +198,7 @@ public class ExpressionParsing extends Parsing {
           errorMessage = "type conversion, " + errorMessage;
         }
       }
+
       checkMatches(PyTokenTypes.FSTRING_FRAGMENT_END, errorMessage);
       marker.setCustomEdgeTokenBinders(null, CONSUME_COMMENTS_AND_SPACES_TO_LEFT);
       marker.done(PyElementTypes.FSTRING_FRAGMENT);

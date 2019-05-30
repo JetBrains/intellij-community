@@ -901,6 +901,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON38);
   }
 
+  // PY-36009
+  public void testFStringEqualitySign() {
+    doTest(LanguageLevel.PYTHON37);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }
