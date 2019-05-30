@@ -562,12 +562,13 @@ public class PluginManagerCore {
     Collections.sort(custom);
     Collections.sort(disabled);
 
-    getLogger().info("Loaded bundled plugins: " + StringUtil.join(bundled, ", "));
+    Logger logger = getLogger();
+    logger.info("Loaded bundled plugins: " + StringUtil.join(bundled, ", "));
     if (!custom.isEmpty()) {
-      getLogger().info("Loaded custom plugins: " + StringUtil.join(custom, ", "));
+      logger.info("Loaded custom plugins: " + StringUtil.join(custom, ", "));
     }
     if (!disabled.isEmpty()) {
-      getLogger().info("Disabled plugins: " + StringUtil.join(disabled, ", "));
+      logger.info("Disabled plugins: " + StringUtil.join(disabled, ", "));
     }
   }
 
