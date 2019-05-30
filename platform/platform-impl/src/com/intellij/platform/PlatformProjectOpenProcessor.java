@@ -185,7 +185,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
 
-
     Pair<Project, Module> result = null;
     if (frame == null) {
       result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
@@ -195,9 +194,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       VirtualFile finalBaseDir = baseDir;
       boolean finalDummyProject = dummyProject;
       String finalDummyProjectName = dummyProjectName;
-      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
-      }, "Loading Project...", true, null, frame.getComponent());
+      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName)),
+        "Loading Project...", true, null, frame.getComponent()
+      );
       if (progressCompleted) result = refResult.get();
     }
 
@@ -253,7 +253,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
         processor.refreshProjectFiles(baseDir);
       }
-
       return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
     }
     catch (Exception e) {
