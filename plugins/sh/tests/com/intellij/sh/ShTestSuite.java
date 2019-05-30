@@ -14,6 +14,7 @@ import com.intellij.sh.lexer.ShOldLexerVersion4Test;
 import com.intellij.sh.oldParser.ShOldParserTest;
 import com.intellij.sh.parser.ShParserTest;
 import com.intellij.sh.parser.ShShebangParserUtilTest;
+import com.intellij.sh.rename.ShFunctionRenamingTest;
 import com.intellij.sh.rename.ShRenameAllOccurrencesTest;
 import com.intellij.sh.shellcheck.ShShellcheckInspectionTest;
 import com.intellij.sh.shellcheck.ShShellcheckTestSetup;
@@ -76,6 +77,7 @@ public class ShTestSuite {
     public static Test suite() {
       TestSuite suite = new TestSuite("Others");
       suite.addTestSuite(ShRenameAllOccurrencesTest.class);
+      suite.addTestSuite(ShFunctionRenamingTest.class);
       suite.addTestSuite(ShTypingTest.class);
       suite.addTestSuite(ShLineIndentProviderTest.class);
       suite.addTestSuite(ShFunctionResolverTest.class);
