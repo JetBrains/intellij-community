@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.*;
@@ -56,7 +57,7 @@ public final class IdeaApplication {
   }
 
   public static void initApplication(@NotNull String[] rawArgs) {
-    Activity activity = PluginManager.startupStart.endAndStart(Phases.INIT_APP);
+    Activity activity = MainRunner.startupStart.endAndStart(Phases.INIT_APP);
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
     EventQueue.invokeLater(() -> {
       String[] args = processProgramArguments(rawArgs);
@@ -132,7 +133,7 @@ public final class IdeaApplication {
       }
     }));
 
-    WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
+    MainRunner.LISTENER = (currentDirectory, args) -> {
       List<String> argsList = Arrays.asList(args);
       LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
       if (argsList.isEmpty()) return;

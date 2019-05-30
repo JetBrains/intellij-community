@@ -4,7 +4,7 @@ package com.intellij.ide;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -519,7 +519,7 @@ public final class IdeEventQueue extends EventQueue {
 
   private void processException(@NotNull Throwable t) {
     if (!myToolkitBugsProcessor.process(t)) {
-      PluginManager.processException(t);
+      MainRunner.processException(t);
     }
   }
 

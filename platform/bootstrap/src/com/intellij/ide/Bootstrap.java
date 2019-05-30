@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
  * @author max
  */
 public class Bootstrap {
-  private static final String PLUGIN_MANAGER = "com.intellij.ide.plugins.PluginManager";
+  private static final String MAIN_RUNNER = "com.intellij.ide.plugins.MainRunner";
 
   private Bootstrap() { }
 
@@ -22,11 +22,9 @@ public class Bootstrap {
     ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
-    startupTimings.put("WindowsCommandLineProcessor search", System.nanoTime());
-    WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
-
-    startupTimings.put("PluginManager search", System.nanoTime());
-    Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);
+    startupTimings.put("MainRunner search", System.nanoTime());
+    Class<?> klass = Class.forName(MAIN_RUNNER, true, newClassLoader);
+    WindowsCommandLineProcessor.ourMainRunnerClass = klass;
     Method startMethod = klass.getDeclaredMethod("start", String.class, String.class, String[].class, LinkedHashMap.class);
     startMethod.setAccessible(true);
     startMethod.invoke(null, mainClass, methodName, args, startupTimings);
