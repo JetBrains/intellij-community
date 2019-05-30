@@ -97,7 +97,6 @@ public class ActionStub extends AnAction implements ActionStubBase {
   public final void initAction(@NotNull AnAction targetAction) {
     copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
-    targetAction.markAsGlobal();
   }
 
   public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {
