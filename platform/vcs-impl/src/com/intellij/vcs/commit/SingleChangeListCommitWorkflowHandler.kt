@@ -25,7 +25,7 @@ class SingleChangeListCommitWorkflowHandler(
     }
   }
 
-  override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
+  override val amendCommitHandler: AmendCommitHandlerImpl = AmendCommitHandlerImpl(this)
 
   private fun getChangeList() = ui.getChangeList()
 
@@ -54,6 +54,8 @@ class SingleChangeListCommitWorkflowHandler(
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
     initCommitMessage()
     initCommitOptions()
+
+    amendCommitHandler.initialMessage = getCommitMessage()
 
     return ui.activate()
   }

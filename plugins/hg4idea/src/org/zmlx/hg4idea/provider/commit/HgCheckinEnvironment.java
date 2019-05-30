@@ -43,6 +43,8 @@ import org.zmlx.hg4idea.action.HgActionUtil;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.command.mq.HgQNewCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.HgCurrentBinaryContentRevision;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -100,6 +102,19 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   @Override
   public boolean isAmendCommitSupported() {
     return myVcs.getVersion().isAmendSupported();
+  }
+
+  @Nullable
+  @Override
+  public String getLastCommitMessage(@NotNull VirtualFile root) {
+    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    List<String> args = new ArrayList<>();
+    args.add("-r");
+    args.add(".");
+    args.add("--template");
+    args.add("{desc}");
+    HgCommandResult result = commandExecutor.executeInCurrentThread(root, "log", args);
+    return result == null ? "" : result.getRawOutput();
   }
 
   @NotNull
