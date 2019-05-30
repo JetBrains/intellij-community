@@ -47,8 +47,6 @@ public class StartupUiUtil {
     }
   }
 
-  private final static Logger LOG = Logger.getInstance(StartupUiUtil.class);
-
   @NotNull
   public static String getSystemLookAndFeelClassName() {
     if (ourSystemLaFClassName != null) {
@@ -124,7 +122,7 @@ public class StartupUiUtil {
     if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
       // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
       System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-      LOG.info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
+      Logger.getInstance(StartupUiUtil.class).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
   }
 
