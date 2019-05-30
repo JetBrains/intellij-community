@@ -8,7 +8,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.push.GitPushTagMode;
@@ -85,7 +85,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
   }
 
   public String[] getCommitAuthors() {
-    return ArrayUtil.toStringArray(myState.getPreviousCommitAuthors());
+    return ArrayUtilRt.toStringArray(myState.getPreviousCommitAuthors());
   }
 
   @Override

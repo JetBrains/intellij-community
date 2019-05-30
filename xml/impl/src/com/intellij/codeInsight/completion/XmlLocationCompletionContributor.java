@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -93,7 +94,7 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
       if (s != null) { additionalNs.add(s); }
       return true;
     });
-    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtil.toStringArray(additionalNs));
+    resourceUrls = ArrayUtil.mergeArrays(resourceUrls, ArrayUtilRt.toStringArray(additionalNs));
 
     final Set<Object> preferred = new HashSet<>();
     if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
@@ -115,6 +116,6 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
       return attributeValue != null &&
              attribute.isNamespaceDeclaration() &&
              ContainerUtil.find(refs, ref -> ref.getCanonicalText().equals(attributeValue)) == null ? attributeValue + " " : null;
-    }, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    }, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 }

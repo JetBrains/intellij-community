@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
@@ -115,7 +115,7 @@ public class SceneBuilderInfo {
       fillPaths(programFiles, suspiciousPaths, sb20, sb11, sb10);
       fillPaths(programFiles + " (x86)", suspiciousPaths, sb20, sb11, sb10);
 
-      path = findFirstThatExist(ArrayUtil.toStringArray(suspiciousPaths));
+      path = findFirstThatExist(ArrayUtilRt.toStringArray(suspiciousPaths));
     }
     else if (SystemInfoRt.isMac) {
       path = findFirstThatExist("/Applications/JavaFX Scene Builder 2.0.app",

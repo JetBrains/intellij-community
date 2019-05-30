@@ -4,7 +4,7 @@ package git4idea.log;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -372,7 +372,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     final VcsUser defaultUser = getDefaultUser();
     final Function<String, Hash> TO_HASH = s -> HashImpl.build(s);
     return ContainerUtil.map(StringUtil.splitByLines(output), record -> {
-      String[] items = ArrayUtil.toStringArray(StringUtil.split(record, "|", true, false));
+      String[] items = ArrayUtilRt.toStringArray(StringUtil.split(record, "|", true, false));
       long time = Long.valueOf(items[2]) * 1000;
       return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
                                        projectRoot, items[3], defaultUser, items[4], defaultUser, time);

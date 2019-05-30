@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -229,7 +229,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.lock.files"), false, project);
     if (!failedLocks.isEmpty()) {
-      String[] failedFiles = ArrayUtil.toStringArray(failedLocks);
+      String[] failedFiles = ArrayUtilRt.toStringArray(failedLocks);
       List<VcsException> exceptions = new ArrayList<>();
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
@@ -292,7 +292,7 @@ public class SvnUtil {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.unlock.files"), false, project);
     if (!failedUnlocks.isEmpty()) {
-      String[] failedFiles = ArrayUtil.toStringArray(failedUnlocks);
+      String[] failedFiles = ArrayUtilRt.toStringArray(failedUnlocks);
       List<VcsException> exceptions = new ArrayList<>();
 
       for (String file : failedFiles) {

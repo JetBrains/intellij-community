@@ -30,7 +30,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
 import com.intellij.util.lang.JavaVersion;
@@ -119,7 +119,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       bundleList.addBundle(bundledJdk);
     }
 
-    String[] locations = ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] locations = ArrayUtilRt.EMPTY_STRING_ARRAY;
     if (SystemInfoRt.isWindows) {
       String dir = SystemInfo.is32Bit ? WINDOWS_X86_JVM_LOCATION : WINDOWS_X64_JVM_LOCATION;
       locations = Stream.of(File.listRoots()).map(root -> new File(root, dir).getPath()).toArray(String[]::new);

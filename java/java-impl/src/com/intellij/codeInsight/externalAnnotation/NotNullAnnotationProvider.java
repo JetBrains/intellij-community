@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.externalAnnotation;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 public class NotNullAnnotationProvider implements AnnotationProvider {
@@ -23,6 +23,6 @@ public class NotNullAnnotationProvider implements AnnotationProvider {
   @NotNull
   @Override
   public String[] getAnnotationsToRemove(Project project) {
-    return ArrayUtil.toStringArray(NullableNotNullManager.getInstance(project).getNullables());
+    return ArrayUtilRt.toStringArray(NullableNotNullManager.getInstance(project).getNullables());
   }
 }

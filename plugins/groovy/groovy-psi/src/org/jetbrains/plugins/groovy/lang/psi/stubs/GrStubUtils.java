@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class GrStubUtils {
 
   @NotNull
   public static String[] readStringArray(@NotNull StubInputStream dataStream) throws IOException {
-    return ArrayUtil.toStringArray(readSeq(dataStream, dataStream::readNameString));
+    return ArrayUtilRt.toStringArray(readSeq(dataStream, dataStream::readNameString));
   }
 
   public static void writeNullableString(StubOutputStream dataStream, @Nullable String typeText) throws IOException {
@@ -105,7 +105,7 @@ public class GrStubUtils {
         }
       }
     }
-    return ArrayUtil.toStringArray(annoNames);
+    return ArrayUtilRt.toStringArray(annoNames);
   }
 
   public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {

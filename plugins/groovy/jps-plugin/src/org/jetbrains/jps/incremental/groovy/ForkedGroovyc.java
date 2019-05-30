@@ -5,7 +5,7 @@ import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -92,7 +92,7 @@ class ForkedGroovyc implements GroovycFlavor {
       vmParams,
       getProgramParams(tempFile, settings, forStubs)
     );
-    final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
+    final Process process = Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(cmd));
     ProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmd, " "), null) {
       @NotNull
       @Override

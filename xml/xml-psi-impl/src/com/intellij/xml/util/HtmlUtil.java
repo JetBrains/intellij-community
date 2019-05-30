@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -37,6 +37,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -67,7 +68,7 @@ public class HtmlUtil {
   public static final String ID_ATTRIBUTE_NAME = "id";
   public static final String CLASS_ATTRIBUTE_NAME = "class";
 
-  public static final String[] CONTENT_TYPES = ArrayUtil.toStringArray(MimeTypeDictionary.getContentTypes());
+  public static final String[] CONTENT_TYPES = ArrayUtilRt.toStringArray(MimeTypeDictionary.getContentTypes());
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -110,7 +111,7 @@ public class HtmlUtil {
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
-  
+
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();
 
   @NonNls private static final String[] HTML5_TAGS = {
@@ -229,7 +230,7 @@ public class HtmlUtil {
   public static boolean isShortNotationOfBooleanAttributePreferred() {
     return Registry.is("html.prefer.short.notation.of.boolean.attributes", true);
   }
-  
+
   @TestOnly
   public static void setShortNotationOfBooleanAttributeIsPreferred(boolean value, Disposable parent) {
     final boolean oldValue = isShortNotationOfBooleanAttributePreferred();
@@ -272,7 +273,7 @@ public class HtmlUtil {
     }
     return false;
   }
-  
+
   public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;

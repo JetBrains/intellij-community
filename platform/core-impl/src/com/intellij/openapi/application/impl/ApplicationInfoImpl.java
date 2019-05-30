@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -881,7 +882,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       String id = element.getTextTrim();
       return StringUtil.isNotEmpty(id) ? id : null;
     });
-    myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
+    myEssentialPluginsIds = ArrayUtilRt.toStringArray(essentialPluginsIds);
 
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {

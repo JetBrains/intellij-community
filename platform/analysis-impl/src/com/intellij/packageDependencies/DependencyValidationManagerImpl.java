@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.IconManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -242,7 +242,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
     State state = myState;
     if (!state.unnamedScopes.isEmpty()) {
-      String[] unnamedScopes = ArrayUtil.toStringArray(state.unnamedScopes.keySet());
+      String[] unnamedScopes = ArrayUtilRt.toStringArray(state.unnamedScopes.keySet());
       Arrays.sort(unnamedScopes);
       for (String unnamedScope : unnamedScopes) {
         element.addContent(new Element(UNNAMED_SCOPE).setAttribute(VALUE, unnamedScope));

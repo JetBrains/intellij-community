@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ public interface SdkModificator {
 
   @NotNull
   default String[] getUrls(@NotNull OrderRootType rootType) {
-    return ContainerUtil.map(getRoots(rootType), file -> file.getUrl(), ArrayUtil.EMPTY_STRING_ARRAY);
+    return ContainerUtil.map(getRoots(rootType), file -> file.getUrl(), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType);

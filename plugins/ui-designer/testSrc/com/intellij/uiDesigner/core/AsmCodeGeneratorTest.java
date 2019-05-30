@@ -18,6 +18,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
@@ -229,7 +230,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private static Object invokeMethod(Object obj, String methodName) throws InvocationTargetException, IllegalAccessException {
-    return invokeMethod(obj, methodName, ArrayUtil.EMPTY_CLASS_ARRAY, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return invokeMethod(obj, methodName, ArrayUtil.EMPTY_CLASS_ARRAY, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws

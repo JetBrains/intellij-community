@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public abstract class JavaHomeFinder {
     if (JdkUtil.checkForJdk(folder))
       result.add(folder.getAbsolutePath());
 
-    for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY)) {
+    for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY)) {
       file = adjustPath(file);
       if (JdkUtil.checkForJdk(file)) {
         result.add(file.getAbsolutePath());

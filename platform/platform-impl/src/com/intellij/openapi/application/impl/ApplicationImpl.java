@@ -692,7 +692,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * @param elevate if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
    */
   public void restart(boolean exitConfirmed, boolean elevate) {
-    exit(false, exitConfirmed, true, elevate, ArrayUtil.EMPTY_STRING_ARRAY);
+    exit(false, exitConfirmed, true, elevate, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   /**
@@ -705,7 +705,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   public void exit(boolean force, boolean exitConfirmed, boolean restart) {
-    exit(force, exitConfirmed, restart, ArrayUtil.EMPTY_STRING_ARRAY);
+    exit(force, exitConfirmed, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {

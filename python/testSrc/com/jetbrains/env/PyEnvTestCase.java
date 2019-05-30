@@ -13,13 +13,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -31,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.filter;
 
 /**
  * <p>
@@ -277,7 +280,7 @@ public abstract class PyEnvTestCase {
       return tagsRequiredAnnotation.tags();
     }
     else {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
   }
 

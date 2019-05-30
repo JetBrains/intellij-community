@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +73,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       lines = dataString.split("\n");
     }
     else {
-      lines = ArrayUtil.EMPTY_STRING_ARRAY;
+      lines = ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     boolean found = false;

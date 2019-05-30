@@ -246,7 +246,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     for (String message : messages) {
       list.addAll(StringUtil.split(StringUtil.convertLineSeparators(message), "\n"));
     }
-    return ArrayUtil.toStringArray(list);
+    return ArrayUtilRt.toStringArray(list);
   }
 
   private void showErrorsImpl(final boolean isEmpty, final Getter<? extends VcsException> firstGetter, @NotNull final String tabDisplayName,

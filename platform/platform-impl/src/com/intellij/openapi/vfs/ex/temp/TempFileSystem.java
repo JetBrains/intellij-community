@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -273,7 +273,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
     @NotNull
     public String[] list() {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     @Override
@@ -314,7 +314,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     @NotNull
     @Override
     public String[] list() {
-      return ArrayUtil.toStringArray(myChildren.keySet());
+      return ArrayUtilRt.toStringArray(myChildren.keySet());
     }
   }
 

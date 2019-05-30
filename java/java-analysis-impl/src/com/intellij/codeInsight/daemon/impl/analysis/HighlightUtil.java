@@ -1179,7 +1179,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfo checkUnderscores(@NotNull PsiElement expression, @NotNull String text, boolean isInt) {
-    String[] parts = ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] parts = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
     if (isInt) {
       int start = 0;

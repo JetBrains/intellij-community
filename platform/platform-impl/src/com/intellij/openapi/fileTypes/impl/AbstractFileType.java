@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.FileTypeRegistrator;
@@ -10,8 +10,11 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.util.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
@@ -271,7 +274,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   private static Element writeKeywords(Set<String> keywords, String tagName, Element highlightingElement) {
     if (keywords.size() == 0 && !ELEMENT_KEYWORDS.equals(tagName)) return null;
     Element keywordsElement = new Element(tagName);
-    String[] strings = ArrayUtil.toStringArray(keywords);
+    String[] strings = ArrayUtilRt.toStringArray(keywords);
     Arrays.sort(strings);
     StringBuilder keywordsAttribute = new StringBuilder();
 

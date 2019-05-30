@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
@@ -101,7 +101,7 @@ public final class SocketLock {
 
   @NotNull
   public ActivateStatus lock() throws Exception {
-    return lock(ArrayUtil.EMPTY_STRING_ARRAY);
+    return lock(ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @NotNull

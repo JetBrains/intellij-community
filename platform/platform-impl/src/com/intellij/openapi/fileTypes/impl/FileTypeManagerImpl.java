@@ -895,7 +895,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public void registerFileType(@NotNull FileType fileType) {
     //noinspection deprecation
-    registerFileType(fileType, ArrayUtil.EMPTY_STRING_ARRAY);
+    registerFileType(fileType, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override
@@ -1182,7 +1182,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       ignoreFiles = "";
     }
     else {
-      String[] strings = ArrayUtil.toStringArray(masks);
+      String[] strings = ArrayUtilRt.toStringArray(masks);
       Arrays.sort(strings);
       ignoreFiles = StringUtil.join(strings, ";") + ";";
     }

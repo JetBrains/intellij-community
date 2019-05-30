@@ -1600,7 +1600,7 @@ public class AbstractTreeUi {
     }
     catch (IndexNotReadyException e) {
       warnOnIndexNotReady(e);
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     if (!Registry.is("ide.tree.checkStructure")) return passOne.get();
@@ -4805,7 +4805,7 @@ public class AbstractTreeUi {
     private final Map<NodeDescriptor, Boolean> myChanges = new HashMap<>();
 
     LoadedChildren(@Nullable Object[] elements) {
-      myElements = Arrays.asList(elements != null ? elements : ArrayUtil.EMPTY_OBJECT_ARRAY);
+      myElements = Arrays.asList(elements != null ? elements : ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     }
 
     void putDescriptor(Object element, NodeDescriptor descriptor, boolean isChanged) {

@@ -304,7 +304,7 @@ public class PluginManagerCore {
   }
 
   public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
-    String[] sortedIds = ArrayUtil.toStringArray(ids);
+    String[] sortedIds = ArrayUtilRt.toStringArray(ids);
     Arrays.sort(sortedIds);
     String separator = LineSeparator.getSystemLineSeparator().getSeparatorString();
     for (String id : sortedIds) {
@@ -1287,7 +1287,7 @@ public class PluginManagerCore {
 
   public static void initClassLoader(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
     List<File> classPath = descriptor.getClassPath();
-    ClassLoader loader = createPluginClassLoader(classPath.toArray(ArrayUtil.EMPTY_FILE_ARRAY), new ClassLoader[]{parentLoader}, descriptor);
+    ClassLoader loader = createPluginClassLoader(classPath.toArray(ArrayUtilRt.EMPTY_FILE_ARRAY), new ClassLoader[]{parentLoader}, descriptor);
     descriptor.setLoader(loader);
   }
 
@@ -1469,7 +1469,7 @@ public class PluginManagerCore {
         pluginDescriptor.setLoader(coreLoader);
       }
       else {
-        File[] classPath = pluginDescriptor.getClassPath().toArray(ArrayUtil.EMPTY_FILE_ARRAY);
+        File[] classPath = pluginDescriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
         ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor.getDependentPluginIds());
         if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
         pluginDescriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, pluginDescriptor));

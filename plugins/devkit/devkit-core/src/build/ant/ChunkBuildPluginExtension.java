@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.devkit.build.ant;
 
@@ -7,7 +7,7 @@ import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -24,7 +24,7 @@ public class ChunkBuildPluginExtension extends ChunkBuildExtension {
   @NotNull
   public String[] getTargets(final ModuleChunk chunk) {
     return isPlugins(chunk.getModules()) ? new String[] {PluginBuildProperties.getBuildJarTargetName(chunk.getName())}
-           : ArrayUtil.EMPTY_STRING_ARRAY;
+           : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override

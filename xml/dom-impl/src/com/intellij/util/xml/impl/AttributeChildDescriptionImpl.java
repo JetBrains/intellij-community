@@ -2,7 +2,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -74,7 +74,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     if (handler != null) {
       return getDomAttributeValue(handler);
     }
-    return (GenericAttributeValue)myGetterMethod.invoke(parent, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    return (GenericAttributeValue)myGetterMethod.invoke(parent, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   public GenericAttributeValue getDomAttributeValue(final DomInvocationHandler handler) {

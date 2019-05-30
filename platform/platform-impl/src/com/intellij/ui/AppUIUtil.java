@@ -277,7 +277,7 @@ public class AppUIUtil {
   @Nullable
   public static String findIcon() {
     String iconsPath = PathManager.getBinPath();
-    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtil.EMPTY_STRING_ARRAY);
+    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     // 1. look for .svg icon
     for (String child : childFiles) {

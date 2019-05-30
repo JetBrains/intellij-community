@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -11,7 +11,7 @@ import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -290,7 +290,7 @@ public class TestAll implements Test {
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
       if (suiteMethod != null && !isPerformanceTestsRun()) {
-        return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
+        return (Test)suiteMethod.invoke(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
       }
 
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {

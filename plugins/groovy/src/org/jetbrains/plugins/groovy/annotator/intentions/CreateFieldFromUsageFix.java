@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -29,7 +29,7 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
     if (myRefExpression != null && GrStaticChecker.isInStaticContext(myRefExpression, targetClass)) {
       return new String[]{PsiModifier.STATIC};
     }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   private TypeConstraint[] calculateTypeConstrains() {

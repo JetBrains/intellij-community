@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,7 +136,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         String[] list = roots[0].list();
         if (list != null) return list;
         LOG.warn("Root '" + roots[0] + "' has no children - is it readable?");
-        return ArrayUtil.EMPTY_STRING_ARRAY;
+        return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
       if (file.getName().isEmpty()) {
         // return drive letter names for the 'fake' root on windows
@@ -151,7 +151,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     String[] names = convertToIOFile(file).list();
-    return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
+    return names == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : names;
   }
 
   @Override

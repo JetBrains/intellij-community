@@ -39,7 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -543,7 +542,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           idList.add(id);
         }
       }
-      return ArrayUtil.toStringArray(idList);
+      return ArrayUtilRt.toStringArray(idList);
     }
   }
 

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -52,7 +52,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       while (scanner.hasNextLine()) {
         result.add(scanner.nextLine());
       }
-      return ArrayUtil.toStringArray(result);
+      return ArrayUtilRt.toStringArray(result);
     }
   }
 

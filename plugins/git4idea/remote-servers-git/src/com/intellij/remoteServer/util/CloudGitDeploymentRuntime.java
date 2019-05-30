@@ -22,7 +22,7 @@ import com.intellij.remoteServer.agent.util.CloudGitApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.Semaphore;
 import git4idea.GitUtil;
 import git4idea.actions.GitInit;
@@ -471,7 +471,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       repositoryUrls.addAll(remote.getUrls());
     }
 
-    return getAgentTaskExecutor().execute(() -> getDeployment().findApplication4Repository(ArrayUtil.toStringArray(repositoryUrls)));
+    return getAgentTaskExecutor().execute(() -> getDeployment().findApplication4Repository(ArrayUtilRt.toStringArray(repositoryUrls)));
   }
 
   public class CloneJob {

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathsList;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +97,7 @@ public class TestClassCollector {
       LOG.error(e);
     }
 
-    return ArrayUtil.toStringArray(classes);
+    return ArrayUtilRt.toStringArray(classes);
   }
 
   public static ClassLoader createUsersClassLoader(JavaTestConfigurationBase configuration) {

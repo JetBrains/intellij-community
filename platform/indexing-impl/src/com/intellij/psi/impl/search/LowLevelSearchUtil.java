@@ -18,7 +18,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
@@ -154,14 +154,14 @@ public class LowLevelSearchUtil {
     TextRange range = scope.getTextRange();
     if (range == null) {
       LOG.error("Element " + scope + " of class " + scope.getClass() + " has null range");
-      return ArrayUtil.EMPTY_INT_ARRAY;
+      return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
       diagnoseInvalidRange(scope, file, viewProvider, buffer, range);
-      return ArrayUtil.EMPTY_INT_ARRAY;
+      return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
     int[] offsets = getTextOccurrences(buffer, startOffset, endOffset, searcher, progress);

@@ -7,7 +7,7 @@ import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public class BinaryPatchWriter {
       writer.write(String.format(LITERAL_HEADER, afterContent == null ? 0 : afterContent.length));
       writer.write(lineSeparator);
       try {
-        BinaryEncoder.encode(new ByteArrayInputStream(afterContent != null ? afterContent : ArrayUtil.EMPTY_BYTE_ARRAY), writer);
+        BinaryEncoder.encode(new ByteArrayInputStream(afterContent != null ? afterContent : ArrayUtilRt.EMPTY_BYTE_ARRAY), writer);
       }
       catch (BinaryEncoder.BinaryPatchException e) {
         LOG.error("Can't write patch for binary file: " + afterFile.getPath(), e);

@@ -865,7 +865,7 @@ public class UIUtil extends StartupUiUtil {
       lines.add(s);
     }
 
-    return ArrayUtil.toStringArray(lines);
+    return ArrayUtilRt.toStringArray(lines);
   }
 
   public static void setActionNameAndMnemonic(@NotNull String text, @NotNull Action action) {
@@ -1590,7 +1590,7 @@ public class UIUtil extends StartupUiUtil {
       result.add(familyName ? labelFont.getFamily() : labelFont.getName());
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   @NotNull

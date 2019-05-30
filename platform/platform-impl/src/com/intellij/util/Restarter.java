@@ -224,7 +224,7 @@ public class Restarter {
     boolean isUpdate = restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS);
     File restarter = isUpdate ? createTempExecutable(restarterFile) : restarterFile;
     restarterArgs.add(0, restarter.getPath());
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
+    Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(restarterArgs));
   }
 
   @NotNull

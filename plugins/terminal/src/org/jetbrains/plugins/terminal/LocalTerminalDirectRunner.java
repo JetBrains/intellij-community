@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
@@ -300,10 +300,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         setLoginShellEnv(envs, isLogin(command));
 
         result.addAll(command);
-        return ArrayUtil.toStringArray(result);
+        return ArrayUtilRt.toStringArray(result);
       }
       else {
-        return ArrayUtil.toStringArray(command);
+        return ArrayUtilRt.toStringArray(command);
       }
     }
     else {

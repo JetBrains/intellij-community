@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.pty4j.PtyProcessBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,7 +206,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
 
-    String[] command = ArrayUtil.toStringArray(commands);
+    String[] command = ArrayUtilRt.toStringArray(commands);
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
     boolean cygwin = myUseCygwinLaunch && SystemInfoRt.isWindows;

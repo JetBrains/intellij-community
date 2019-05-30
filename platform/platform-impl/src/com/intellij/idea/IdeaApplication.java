@@ -33,7 +33,7 @@ import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.MacOSApplicationProvider;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -216,7 +216,7 @@ public final class IdeaApplication {
 
       arguments.add(arg);
     }
-    return ArrayUtil.toStringArray(arguments);
+    return ArrayUtilRt.toStringArray(arguments);
   }
 
   private static void patchSystem(boolean headless) {

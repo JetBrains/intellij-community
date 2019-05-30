@@ -545,7 +545,7 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     catch (IOException e) {
       FSRecords.handleError(e);
     }
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   @Override

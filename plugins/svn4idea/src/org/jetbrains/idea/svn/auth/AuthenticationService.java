@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IdeHttpClientHelpers;
@@ -201,7 +201,7 @@ public class AuthenticationService {
     // TODO: Implement algorithm of resolving necessary enabled protocols (TLSv1 vs SSLv3) instead of just using values from Settings.
     SSLContext sslContext = createSslContext(repositoryUrl);
     List<String> supportedProtocols = getSupportedSslProtocols();
-    SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, ArrayUtil.toStringArray(supportedProtocols), null,
+    SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext, ArrayUtilRt.toStringArray(supportedProtocols), null,
                                                                               SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
     // TODO: Seems more suitable here to read timeout values directly from config file - without utilizing SvnAuthenticationManager.
     final RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();

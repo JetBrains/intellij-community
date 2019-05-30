@@ -21,7 +21,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +106,7 @@ public class CommandLineProcessor {
       if (command.equals(starter.getCommandName())) {
         if (starter.canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          starter.processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
+          starter.processExternalCommandLine(ArrayUtilRt.toStringArray(args), currentDirectory);
         }
         else {
           String title = "Cannot execute command '" + command + "'";
