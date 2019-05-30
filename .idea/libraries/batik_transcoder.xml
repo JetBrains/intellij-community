@@ -1,48 +1,31 @@
 <component name="libraryTable">
   <library name="batik-transcoder" type="repository">
-    <properties maven-id="org.apache.xmlgraphics:batik-transcoder:1.11">
+    <properties maven-id="org.jetbrains.intellij.deps.batik:batik-transcoder:1.12.0-3">
       <exclude>
         <dependency maven-id="org.apache.xmlgraphics:xmlgraphics-commons" />
-        <dependency maven-id="org.apache.xmlgraphics:batik-script" />
         <dependency maven-id="xalan:xalan" />
         <dependency maven-id="xml-apis:xml-apis" />
         <dependency maven-id="xml-apis:xml-apis-ext" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-transcoder/1.11/batik-transcoder-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-anim/1.11/batik-anim-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-css/1.11/batik-css-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-ext/1.11/batik-ext-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-parser/1.11/batik-parser-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-svg-dom/1.11/batik-svg-dom-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-awt-util/1.11/batik-awt-util-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-bridge/1.11/batik-bridge-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-dom/1.11/batik-dom-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-gvt/1.11/batik-gvt-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-svggen/1.11/batik-svggen-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-util/1.11/batik-util-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-constants/1.11/batik-constants-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-i18n/1.11/batik-i18n-1.11.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-xml/1.11/batik-xml-1.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-transcoder/1.12.0-3/batik-transcoder-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-awt-util/1.12.0-3/batik-awt-util-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-bridge/1.12.0-3/batik-bridge-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-anim/1.12.0-3/batik-anim-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-css/1.12.0-3/batik-css-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-parser/1.12.0-3/batik-parser-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.12.0-3/batik-svg-dom-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-dom/1.12.0-3/batik-dom-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-ext/1.12.0-3/batik-ext-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-gvt/1.12.0-3/batik-gvt-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svggen/1.12.0-3/batik-svggen-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-util/1.12.0-3/batik-util-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-constants/1.12.0-3/batik-constants-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-i18n/1.12.0-3/batik-i18n-1.12.0-3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-xml/1.12.0-3/batik-xml-1.12.0-3.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-transcoder/1.11/batik-transcoder-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-anim/1.11/batik-anim-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-css/1.11/batik-css-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-ext/1.11/batik-ext-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-parser/1.11/batik-parser-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-svg-dom/1.11/batik-svg-dom-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-awt-util/1.11/batik-awt-util-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-bridge/1.11/batik-bridge-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-dom/1.11/batik-dom-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-gvt/1.11/batik-gvt-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-svggen/1.11/batik-svggen-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-util/1.11/batik-util-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-constants/1.11/batik-constants-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-i18n/1.11/batik-i18n-1.11-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-xml/1.11/batik-xml-1.11-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

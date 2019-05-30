@@ -28,7 +28,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.*;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
@@ -136,16 +139,11 @@ public class StartupUtil {
       // see note about UIUtil static init - it is required even if headless
       try {
         StartupUiUtil.initDefaultLaF();
-
         if (!Main.isHeadless()) {
           SplashManager.show(args);
-
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init Batik cursors");
-          SVGLoader.prepareBatikInAwt();
-          activity.end();
         }
       }
-      catch (Throwable e) {
+      catch (Exception e) {
         throw new CompletionException(e);
       }
     }, runnable -> {

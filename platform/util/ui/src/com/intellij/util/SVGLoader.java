@@ -11,7 +11,6 @@ import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.apache.batik.anim.dom.*;
 import org.apache.batik.bridge.BridgeContext;
-import org.apache.batik.bridge.CursorManager;
 import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.dom.AbstractDocument;
@@ -247,14 +246,6 @@ public class SVGLoader {
   public static void setColorPatcher(@Nullable SvgColorPatcher colorPatcher) {
     ourColorPatcher = colorPatcher;
     IconLoader.clearCache();
-  }
-
-  // ideally Apache Batik should be fixed, because we don't use cursors at all
-  public static void prepareBatikInAwt() {
-    // force initialization to call WToolkit.createCustomCursor in EDT thread,
-    // otherwise when our SVG loading is performed in a pooled thread, it can lead to deadlock
-    // https://youtrack.jetbrains.com/issue/IDEA-209987
-    CursorManager.DEFAULT_CURSOR.getType();
   }
 
   private BufferedImage createImage() throws TranscoderException {
