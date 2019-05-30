@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -22,6 +23,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +35,6 @@ import java.util.concurrent.TimeoutException;
  * @author Dmitry Avdeev
  */
 public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsightFixtureTestCase {
-
   protected FileEditorManagerImpl myManager;
   private FileEditorManager myOldManager;
   private Set<DockContainer> myOldDockContainers;
@@ -41,6 +42,10 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    // to avoid tab ui creation
+    UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
+
     DockManager dockManager = DockManager.getInstance(getProject());
     myOldDockContainers = dockManager.getContainers();
     myManager = new FileEditorManagerImpl(getProject(), dockManager);
@@ -51,6 +56,8 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
   @Override
   protected void tearDown() throws Exception {
     try {
+      UISettings.getInstance().setEditorTabPlacement(SwingConstants.TOP);
+
       for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
         if (!myOldDockContainers.contains(container)) {
           Disposer.dispose(container);
