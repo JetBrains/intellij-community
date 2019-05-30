@@ -89,7 +89,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     };
 
     UIManager.getDefaults().addPropertyChangeListener(l);
-    Disposer.register(manager.getProject(), () -> UIManager.getDefaults().removePropertyChangeListener(l));
+    Disposer.register(this, () -> UIManager.getDefaults().removePropertyChangeListener(l));
 
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();

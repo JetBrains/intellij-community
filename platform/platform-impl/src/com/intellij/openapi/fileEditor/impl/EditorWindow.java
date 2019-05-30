@@ -77,7 +77,7 @@ public class EditorWindow {
   private final AtomicBoolean myTabsHidingInProgress = new AtomicBoolean(false);
   private final Stack<Pair<String, Integer>> myHiddenTabs = new Stack<>();
 
-  protected EditorWindow(final EditorsSplitters owner) {
+  protected EditorWindow(@NotNull EditorsSplitters owner) {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
     myPanel.setOpaque(false);
@@ -104,7 +104,7 @@ public class EditorWindow {
 
   private void createTabs() {
     LOG.assertTrue (myTabbedPane == null);
-    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject());
+    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), myOwner);
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
 
