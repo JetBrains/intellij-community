@@ -110,11 +110,11 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   @NotNull
   private static String getActionId(@NotNull PluginInfo info, @NotNull AnAction action, boolean simpleName) {
-    if (!info.isDevelopedByJetBrains()) {
+    if (!info.isSafeToReport()) {
       return DEFAULT_ID;
     }
 
-    final String actionId = ActionManager.getInstance().getId(action);
+    String actionId = ActionManager.getInstance().getId(action);
     if (actionId != null) {
       return ConvertUsagesUtil.escapeDescriptorName(actionId);
     }
