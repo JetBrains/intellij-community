@@ -4,16 +4,12 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.getFunctionTypeAnnotation
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
 import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.PyClassType
@@ -222,42 +218,19 @@ class PyFinalInspection : PyInspection() {
         if (it.operand == node && isTopLevelInAnnotationOrTypeComment(it)) return
       }
 
-      if (PyTypingTypeProvider.isInAnnotationOrTypeComment(node) && resolvesToFinal(node)) {
+      if (isInAnnotationOrTypeComment(node) && resolvesToFinal(node)) {
         registerProblem(node, "'Final' could only be used as the outermost type")
       }
     }
 
-    private fun isFinal(decoratable: PyDecoratable): Boolean {
-      return PyKnownDecoratorUtil.getKnownDecorators(decoratable, myTypeEvalContext).any { it == TYPING_FINAL || it == TYPING_FINAL_EXT }
-    }
+    private fun isFinal(decoratable: PyDecoratable) = isFinal(decoratable, myTypeEvalContext)
 
     private fun <T> isFinal(node: T): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner {
-      val typeHint = typeHintAsExpression(node)
-      return resolvesToFinal(if (typeHint is PySubscriptionExpression) typeHint.operand else typeHint)
-    }
-
-    private fun isFinal(qualifiedName: String?): Boolean {
-      return qualifiedName == PyTypingTypeProvider.FINAL || qualifiedName == PyTypingTypeProvider.FINAL_EXT
+      return isFinal(node, myTypeEvalContext)
     }
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
-      return expression is PyReferenceExpression &&
-             expression
-               .multiFollowAssignmentsChain(resolveContext) { !isFinal(it.qualifiedName) }
-               .asSequence()
-               .mapNotNull { it.element }
-               .any { it is PyTargetExpression && isFinal(it.qualifiedName) }
-    }
-
-    private fun <T> typeHintAsExpression(node: T): PyExpression? where T : PyAnnotationOwner, T : PyTypeCommentOwner {
-      val annotation = node.annotation?.value
-      if (annotation != null) return annotation
-
-      val typeComment = node.typeCommentAnnotation
-      if (typeComment == null) return null
-
-      val file = FileContextUtil.getContextFile(node) ?: return null
-      return PyUtil.createExpressionFromFragment(typeComment, file)
+      return expression is PyReferenceExpression && eventuallyResolvesToFinal(expression, myTypeEvalContext)
     }
 
     private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {

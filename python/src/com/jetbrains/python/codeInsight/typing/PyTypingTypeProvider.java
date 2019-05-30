@@ -53,6 +53,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
+import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL;
+import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -456,7 +458,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  public static PyType getNewTypeForCallExpression(@NotNull PyCallExpression callExpression, @NotNull TypeEvalContext context) {
+  private static PyType getNewTypeForCallExpression(@NotNull PyCallExpression callExpression, @NotNull TypeEvalContext context) {
     if (PyTypingNewType.Companion.isTypingNewType(callExpression)) {
       final String className = PyResolveUtil.resolveFirstStrArgument(callExpression);
       if (className != null) {
@@ -959,8 +961,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (resolved instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
 
-      final Collection<String> operandNames = resolveToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext());
-      if (ContainerUtil.exists(operandNames, name -> name.equals(FINAL) || name.equals(FINAL_EXT))) {
+      if (eventuallyResolvesToFinal(subscriptionExpr.getOperand(), context.getTypeContext())) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr != null) {
           return getType(indexExpr, context);
@@ -969,6 +970,78 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
 
     return null;
+  }
+
+  public static boolean isFinal(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
+    return ContainerUtil.exists(PyKnownDecoratorUtil.getKnownDecorators(decoratable, context),
+                                d -> d == TYPING_FINAL || d == TYPING_FINAL_EXT);
+  }
+
+  public static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean isFinal(@NotNull T owner, @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(owner, context, p -> isFinalImpl(owner, p));
+  }
+
+  private static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean isFinalImpl(@NotNull T owner, @NotNull TypeEvalContext context) {
+    final PyExpression annotation = getAnnotationValue(owner, context);
+    if (annotation instanceof PySubscriptionExpression) {
+      return eventuallyResolvesToFinal(((PySubscriptionExpression)annotation).getOperand(), context);
+    }
+    else if (annotation instanceof PyReferenceExpression) {
+      return eventuallyResolvesToFinal(annotation, context);
+    }
+
+    final String typeCommentValue = owner.getTypeCommentAnnotation();
+    final PyExpression typeComment = typeCommentValue == null ? null : toExpression(typeCommentValue, owner);
+    if (typeComment instanceof PySubscriptionExpression) {
+      return eventuallyResolvesToFinal(((PySubscriptionExpression)typeComment).getOperand(), context);
+    }
+    else if (typeComment instanceof PyReferenceExpression) {
+      return eventuallyResolvesToFinal(typeComment, context);
+    }
+
+    return false;
+  }
+
+  public static boolean eventuallyResolvesToFinal(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final Set<PyExpression> currentQueue = new HashSet<>();
+    final Set<PyExpression> nextQueue = new HashSet<>();
+    nextQueue.add(expression);
+    final Set<PyExpression> visited = new HashSet<>();
+
+    while (!nextQueue.isEmpty()) {
+      currentQueue.clear();
+      currentQueue.addAll(nextQueue);
+      nextQueue.clear();
+
+      for (PyExpression element : currentQueue) {
+        if (resolvesToFinal(element, context, nextQueue, visited)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean resolvesToFinal(@NotNull PyExpression expression,
+                                         @NotNull TypeEvalContext context,
+                                         @NotNull Set<PyExpression> queue,
+                                         @NotNull Set<PyExpression> visited) {
+    final List<Pair<PyTargetExpression, PsiElement>> pairs = tryResolvingWithAliases(expression, context);
+
+    for (Pair<PyTargetExpression, PsiElement> pair : pairs) {
+      if (pair.second instanceof PyExpression) {
+        final PyExpression resolved = (PyExpression)pair.second;
+
+        final String qualifiedName = getQualifiedName(resolved);
+        if (FINAL.equals(qualifiedName) || FINAL_EXT.equals(qualifiedName)) {
+          return true;
+        }
+        else if (pair.first != null && visited.add(resolved)) {
+          queue.add(resolved);
+        }
+      }
+    }
+
+    return false;
   }
 
   @Nullable
@@ -982,10 +1055,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     else {
       final String annotationText = owner.getAnnotationValue();
       if (annotationText != null) {
-        return PyUtil.createExpressionFromFragment(annotationText, owner.getContainingFile());
+        return toExpression(annotationText, owner);
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyExpression toExpression(@NotNull String contents, @NotNull PsiElement anchor) {
+    final PsiFile file = FileContextUtil.getContextFile(anchor);
+    if (file == null) return null;
+    return PyUtil.createExpressionFromFragment(contents, file);
   }
 
   @Nullable
@@ -995,11 +1075,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static Ref<PyType> getStringBasedType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
-    final PsiFile file = FileContextUtil.getContextFile(anchor);
-    if (file == null) {
-      return null;
-    }
-    final PyExpression expr = PyUtil.createExpressionFromFragment(contents, file);
+    final PyExpression expr = toExpression(contents, anchor);
     return expr != null ? getType(expr, context) : null;
   }
 
@@ -1016,8 +1092,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static Ref<PyType> getVariableTypeCommentType(@NotNull String contents,
                                                         @NotNull PyTargetExpression target,
                                                         @NotNull Context context) {
-    // TODO pass the real anchor as the context element for the fragment to resolve local classes/type aliases
-    final PyExpression expr = PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(contents, target.getContainingFile()));
+    final PyExpression expr = PyPsiUtils.flattenParens(toExpression(contents, target));
     if (expr != null) {
       // Such syntax is specific to "# type:" comments, unpacking in type hints is not allowed anywhere else
       if (expr instanceof PyTupleExpression) {
