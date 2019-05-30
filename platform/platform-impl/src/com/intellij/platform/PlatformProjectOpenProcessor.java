@@ -172,24 +172,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
 
-    boolean runConfigurators = true;
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    Project project = null;
+    Project project;
     if (PathKt.exists(Paths.get(FileUtil.toSystemDependentName(baseDir.getPath()), Project.DIRECTORY_STORE_FOLDER))) {
-      try {
-        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
-          processor.refreshProjectFiles(baseDir);
-        }
-
-        project = projectManager.convertAndLoadProject(baseDir);
-        if (project != null && ModuleManager.getInstance(project).getModules().length > 0) {
-          runConfigurators = false;
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      project = tryLoadProject(baseDir);
     }
     else {
       project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
@@ -203,14 +190,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
 
-    Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
-    if (runConfigurators && dummyProject) { // add content root for chosen (single) file
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        ContentEntry[] entries = model.getContentEntries();
-        if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
-        model.addContentEntry(virtualFile);
-      });
-    }
+    Module module = configureNewProject(project, baseDir, virtualFile, dummyProject, newProject);
 
     if (newProject) {
       project.save();
@@ -230,6 +210,34 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     return project;
+  }
+
+  private static Project tryLoadProject(VirtualFile baseDir) {
+    try {
+      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
+        processor.refreshProjectFiles(baseDir);
+      }
+
+      return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  private static Module configureNewProject(Project project, VirtualFile baseDir, @NotNull VirtualFile dummyFileContentRoot,
+                                            boolean dummyProject, boolean newProject) {
+    boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
+    Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
+    if (runConfigurators && dummyProject) { // add content root for chosen (single) file
+      ModuleRootModificationUtil.updateModel(module, model -> {
+        ContentEntry[] entries = model.getContentEntries();
+        if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
+        model.addContentEntry(dummyFileContentRoot);
+      });
+    }
+    return module;
   }
 
   private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, VirtualFile baseDir) {
