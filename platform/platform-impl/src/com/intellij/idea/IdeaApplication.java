@@ -148,6 +148,7 @@ public final class IdeaApplication {
     LOG.assertTrue(!ApplicationManagerEx.isAppLoaded());
 
     {
+      LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
       Activity activity = StartUpMeasurer.start("patch system");
       patchSystem(Main.isHeadless());
       activity.end();
@@ -160,8 +161,6 @@ public final class IdeaApplication {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
       System.exit(Main.NO_GRAPHICS);
     }
-
-    LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
     boolean isInternal = Boolean.getBoolean(ApplicationImpl.IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(ApplicationImpl.IDEA_IS_UNIT_TEST);

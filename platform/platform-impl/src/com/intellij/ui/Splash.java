@@ -7,10 +7,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -107,7 +104,7 @@ public final class Splash extends Window {
 
   @Override
   public void paint(Graphics g) {
-    UIUtil.drawImage(g, myImage, 0, 0, null);
+    StartupUiUtil.drawImage(g, myImage, 0, 0, null);
     paintProgress(g);
   }
 
@@ -128,7 +125,7 @@ public final class Splash extends Window {
     if (SystemInfoRt.isWindows) {
       JBInsets.removeFrom(bounds, ScreenUtil.getScreenInsets(getGraphicsConfiguration()));
     }
-    setLocation(UIUtil.getCenterPoint(bounds, getSize()));
+    setLocation(StartupUiUtil.getCenterPoint(bounds, getSize()));
   }
 
   public void showProgress(double progress) {
@@ -173,7 +170,7 @@ public final class Splash extends Window {
   private void paintSlides(@NotNull Graphics g) {
     for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
       if (progressSlide.slide.getProgressRation() <= myProgress) {
-        UIUtil.drawImage(g, progressSlide.image, 0, 0, null);
+        StartupUiUtil.drawImage(g, progressSlide.image, 0, 0, null);
       }
     }
   }

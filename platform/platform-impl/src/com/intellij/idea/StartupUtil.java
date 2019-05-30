@@ -30,7 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -132,7 +132,7 @@ public class StartupUtil {
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
       // see note about UIUtil static init - it is required even if headless
       try {
-        UIUtil.initDefaultLaF();
+        StartupUiUtil.initDefaultLaF();
 
         if (!Main.isHeadless()) {
           SplashManager.show(args);
@@ -263,7 +263,7 @@ public class StartupUtil {
 
         // UIUtil.initDefaultLaF must be called before this call
         Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
-        UIUtil.initSystemFontData(log);
+        StartupUiUtil.initSystemFontData(log);
         activity.end();
       }
       catch (Exception e) {

@@ -16,6 +16,7 @@ import com.intellij.ui.TableActions;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,7 +148,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   private static void applySystemFonts(UIDefaults defaults) {
     try {
-      String fqn = UIUtil.getSystemLookAndFeelClassName();
+      String fqn = StartupUiUtil.getSystemLookAndFeelClassName();
       Object systemLookAndFeel = Class.forName(fqn).newInstance();
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
