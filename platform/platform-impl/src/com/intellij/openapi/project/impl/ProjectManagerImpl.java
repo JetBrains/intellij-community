@@ -509,7 +509,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
+  public Project loadAndOpenProject(@NotNull final String originalFilePath) {
     final String filePath = toCanonicalName(originalFilePath);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
     final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
