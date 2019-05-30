@@ -41,6 +41,10 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   abstract fun rememberForAllProjects()
 
+  protected open val viewFilesDialogTitle: String? = null
+  protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
+  protected open val viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
+
   protected open fun rememberForCurrentProject() {
     setForCurrentProject(true)
   }
@@ -114,7 +118,8 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
     val allFiles = acquireValidFiles()
     if (allFiles.isNotEmpty()) {
       with(SelectFilesDialog.init(project, allFiles, null, null, true, true,
-                                  CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText())) {
+                                  viewFilesDialogOkActionName, viewFilesDialogCancelActionName)) {
+        title = viewFilesDialogTitle
         selectedFiles = allFiles
         if (showAndGet()) {
           val userSelectedFiles = selectedFiles
