@@ -2,8 +2,8 @@
 @file:JvmName("Responses")
 package org.jetbrains.io
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.util.registry.Registry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
@@ -52,7 +52,7 @@ val serverHeaderValue: String?
     if (SERVER_HEADER_VALUE == null) {
       val app = ApplicationManager.getApplication()
       if (app != null && !app.isDisposed) {
-        SERVER_HEADER_VALUE = ApplicationInfoEx.getInstanceEx().fullApplicationName
+        SERVER_HEADER_VALUE = ApplicationInfo.getInstance().fullApplicationName
       }
     }
     return SERVER_HEADER_VALUE

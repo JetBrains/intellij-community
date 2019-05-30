@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Conditions
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
-import com.intellij.util.text.nullize
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
@@ -200,9 +199,9 @@ val HttpRequest.host: String?
 
 val HttpRequest.hostName: String?
   get() {
-    val hostAndPort = headers().getAsString(HttpHeaderNames.HOST).nullize() ?: return null
+    val hostAndPort = headers().getAsString(HttpHeaderNames.HOST)?.ifBlank { null } ?: return null
     val portIndex = hostAndPort.lastIndexOf(':')
-    return if (portIndex > 0) hostAndPort.substring(0, portIndex).nullize() else hostAndPort
+    return if (portIndex > 0) hostAndPort.substring(0, portIndex).ifBlank { null } else hostAndPort
   }
 
 val HttpRequest.origin: String?

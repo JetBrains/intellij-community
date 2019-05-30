@@ -6,13 +6,13 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -63,11 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-/**
- * @author Vladimir Kondratyev
- * @author Anton Katilin
- */
-public class IdeEventQueue extends EventQueue {
+public final class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
@@ -332,8 +328,11 @@ public class IdeEventQueue extends EventQueue {
   private static boolean ourAppIsLoaded;
 
   private static boolean appIsLoaded() {
-    if (ourAppIsLoaded) return true;
-    boolean loaded = IdeaApplication.isLoaded();
+    if (ourAppIsLoaded) {
+      return true;
+    }
+
+    boolean loaded = ApplicationManagerEx.isAppLoaded();
     if (loaded) {
       ourAppIsLoaded = true;
     }

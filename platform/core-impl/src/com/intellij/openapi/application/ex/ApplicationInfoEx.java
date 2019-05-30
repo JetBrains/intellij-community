@@ -74,8 +74,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Nullable
   public abstract String getPackageCode();
 
-  public abstract String getFullApplicationName();
-
   public abstract boolean showLicenseeInfo();
 
   public abstract boolean isEAP();

@@ -1,28 +1,29 @@
-package io.netty.bootstrap;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package io.netty.bootstrap
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import org.jetbrains.annotations.NotNull;
+import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
 
-public final class BootstrapUtil {
-  public static ChannelFuture initAndRegister(@NotNull Channel channel, @NotNull Bootstrap bootstrap) throws Throwable {
+object BootstrapUtil {
+  @Throws(Throwable::class)
+  fun initAndRegister(channel: Channel, bootstrap: Bootstrap): ChannelFuture {
     try {
-      bootstrap.init(channel);
+      bootstrap.init(channel)
     }
-    catch (Throwable e) {
-      channel.unsafe().closeForcibly();
-      throw e;
+    catch (e: Throwable) {
+      channel.unsafe().closeForcibly()
+      throw e
     }
 
-    ChannelFuture registrationFuture = bootstrap.group().register(channel);
+    val registrationFuture = bootstrap.group().register(channel)
     if (registrationFuture.cause() != null) {
-      if (channel.isRegistered()) {
-        channel.close();
+      if (channel.isRegistered) {
+        channel.close()
       }
       else {
-        channel.unsafe().closeForcibly();
+        channel.unsafe().closeForcibly()
       }
     }
-    return registrationFuture;
+    return registrationFuture
   }
 }

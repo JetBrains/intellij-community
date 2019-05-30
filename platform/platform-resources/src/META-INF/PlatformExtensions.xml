@@ -162,7 +162,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
-    <applicationService serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
     <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
                         serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
 
@@ -653,5 +652,7 @@
     </obsoleteStorage>
 
     <postStartupActivity implementation="com.intellij.diagnostic.StartUpPerformanceReporter" order="last"/>
+
+    <httpRequestHandler implementation="com.intellij.ide.FavIconHttpRequestHandler" order="last"/>
   </extensions>
 </idea-plugin>

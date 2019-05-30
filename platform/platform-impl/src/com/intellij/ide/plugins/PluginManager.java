@@ -5,7 +5,6 @@ import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -14,6 +13,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -33,7 +33,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 /**
@@ -91,7 +92,7 @@ public class PluginManager extends PluginManagerCore {
   }
 
   public static void processException(@NotNull Throwable t) {
-    if (!IdeaApplication.isLoaded()) {
+    if (!ApplicationManagerEx.isAppLoaded()) {
       EssentialPluginMissingException pluginMissingException = findCause(t, EssentialPluginMissingException.class);
       if (pluginMissingException != null && pluginMissingException.pluginIds != null) {
         Main.showMessage("Corrupted Installation",

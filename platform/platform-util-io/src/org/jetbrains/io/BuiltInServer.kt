@@ -16,6 +16,7 @@ import java.net.InetSocketAddress
 import java.util.*
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Supplier
 
 // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
 private val FORBIDDEN_PORTS = intArrayOf(6953, 6969, 6970)
@@ -44,13 +45,13 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       get() = if (PlatformUtils.isIdeaCommunity()) 2 else 3
 
     @Throws(Exception::class)
-    fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean = false, handler: (() -> ChannelHandler)? = null): BuiltInServer {
+    fun start(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean = false, handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
       return start(multiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
     }
 
     @Throws(Exception::class)
     @JvmStatic
-    fun startNioOrOio(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (() -> ChannelHandler)?): BuiltInServer {
+    fun startNioOrOio(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (Supplier<ChannelHandler>)?): BuiltInServer {
       val threadFactory = BuiltInServerThreadFactory()
       val loopGroup: EventLoopGroup = try {
         multiThreadEventLoopGroup(workerCount, threadFactory)
@@ -70,7 +71,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
               firstPort: Int,
               portsCount: Int,
               tryAnyPort: Boolean,
-              handler: (() -> ChannelHandler)?): BuiltInServer {
+              handler: (Supplier<ChannelHandler>)?): BuiltInServer {
       val channelRegistrar = ChannelRegistrar()
       val bootstrap = serverBootstrap(eventLoopGroup)
       configureChildHandler(bootstrap, channelRegistrar, handler)
@@ -79,11 +80,11 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
     }
 
     @JvmStatic
-    fun configureChildHandler(bootstrap: ServerBootstrap, channelRegistrar: ChannelRegistrar, channelHandler: (() -> ChannelHandler)?) {
+    fun configureChildHandler(bootstrap: ServerBootstrap, channelRegistrar: ChannelRegistrar, channelHandler: (Supplier<ChannelHandler>)?) {
       val portUnificationServerHandler = if (channelHandler == null) PortUnificationServerHandler() else null
       bootstrap.childHandler(object : ChannelInitializer<Channel>(), ChannelHandler {
         override fun initChannel(channel: Channel) {
-          channel.pipeline().addLast(channelRegistrar, channelHandler?.invoke() ?: portUnificationServerHandler)
+          channel.pipeline().addLast(channelRegistrar, channelHandler?.get() ?: portUnificationServerHandler)
         }
       })
     }

@@ -18,7 +18,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -41,16 +40,12 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.DialogEarthquakeShaker;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.AppIcon;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -74,7 +69,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -83,6 +77,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
+  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
+
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 
@@ -152,7 +149,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (isUnitTestMode && isCommandLine) {
       String[] args = {"inspect", "", "", ""};
       Main.setFlags(args); // set both isHeadless and isCommandLine to true
-      System.setProperty(IdeaApplication.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
+      System.setProperty(IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
       assert Main.isHeadless();
       assert Main.isCommandLine();
       //noinspection ResultOfObjectAllocationIgnored
@@ -176,43 +173,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
-  }
-
-  private void addActivateAndWindowsCliListeners() {
-    StartupUtil.addExternalInstanceListener(args -> invokeLater(() -> {
-      LOG.info("ApplicationImpl.externalInstanceListener invocation");
-      String currentDirectory = args.isEmpty() ? null : args.get(0);
-      List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
-      Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-      JFrame frame = project == null
-                     ? WindowManager.getInstance().findVisibleFrame() :
-                     (JFrame)WindowManager.getInstance().getIdeFrame(project);
-      if (frame != null) {
-        if (frame instanceof IdeFrame) {
-          AppIcon.getInstance().requestFocus((IdeFrame)frame);
-        }
-        else {
-          frame.toFront();
-          DialogEarthquakeShaker.shake(frame);
-        }
-      }
-    }));
-
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
-      List<String> argsList = Arrays.asList(args);
-      LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
-      if (argsList.isEmpty()) return;
-      ModalityState state = getDefaultModalityState();
-      for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
-        if (starter.canProcessExternalCommandLine() &&
-            argsList.get(0).equals(starter.getCommandName()) &&
-            starter.allowAnyModalityState()) {
-          state = getAnyModalityState();
-        }
-      }
-      invokeLater(() -> CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory), state);
-    };
   }
 
   /**
@@ -451,10 +411,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }
       activity.end();
-
-      if (!isUnitTestMode() && !isHeadlessEnvironment()) {
-        addActivateAndWindowsCliListeners();
-      }
     }
     finally {
       token.finish();
@@ -803,7 +759,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
         if (Boolean.getBoolean("idea.test.guimode")) {
-          IdeaApplication.shutdown();
+          shutdown();
         }
         return;
       }
@@ -825,6 +781,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       myDisposeInProgress = false;
       myExitInProgress = false;
     }
+  }
+
+  /**
+   * Used for GUI tests to stop IdeEventQueue dispatching when Application is disposed already
+   */
+  private static void shutdown() {
+    IdeEventQueue.applicationClose();
+    ShutDownTracker.getInstance().run();
   }
 
   private static boolean confirmExitIfNeeded(boolean exitConfirmed) {

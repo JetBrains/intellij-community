@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
 import org.jetbrains.annotations.NotNull;
@@ -101,8 +100,8 @@ public class NetUtils {
     final ServerSocket[] sockets = new ServerSocket[capacity];
 
     for (int i = 0; i < capacity; i++) {
-      //noinspection SocketOpenedButNotSafelyClosed
-      final ServerSocket serverSocket = new ServerSocket(0);
+      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "SocketOpenedButNotSafelyClosed"})
+      ServerSocket serverSocket = new ServerSocket(0);
       sockets[i] = serverSocket;
       ports[i] = serverSocket.getLocalPort();
     }
@@ -159,7 +158,7 @@ public class NetUtils {
       indicator.checkCanceled();
       indicator.setIndeterminate(expectedContentLength <= 0);
     }
-    CountingGZIPInputStream gzipStream = ObjectUtils.tryCast(inputStream, CountingGZIPInputStream.class);
+    CountingGZIPInputStream gzipStream = inputStream instanceof CountingGZIPInputStream ? (CountingGZIPInputStream)inputStream : null;
     final byte[] buffer = FileUtilRt.getThreadLocalBuffer();
     int count;
     int bytesWritten = 0;

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
@@ -55,7 +54,7 @@ public final class SocketLock {
 
   private final String myConfigPath;
   private final String mySystemPath;
-  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<>();
+  private final AtomicReference<java.util.function.Consumer<List<String>>> myActivateListener = new AtomicReference<>();
   private String myToken;
   private BuiltInServer myServer;
 
@@ -67,7 +66,7 @@ public final class SocketLock {
     }
   }
 
-  public void setExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
+  public void setExternalInstanceListener(@Nullable java.util.function.Consumer<List<String>> consumer) {
     myActivateListener.set(consumer);
   }
 
@@ -284,12 +283,12 @@ public final class SocketLock {
     private enum State {HEADER, CONTENT}
 
     private final String[] myLockedPaths;
-    private final AtomicReference<? extends Consumer<List<String>>> myActivateListener;
+    private final AtomicReference<? extends java.util.function.Consumer<List<String>>> myActivateListener;
     private final String myToken;
     private State myState = State.HEADER;
 
     MyChannelInboundHandler(@NotNull String[] lockedPaths,
-                            @NotNull AtomicReference<? extends Consumer<List<String>>> activateListener,
+                            @NotNull AtomicReference<? extends java.util.function.Consumer<List<String>>> activateListener,
                             @NotNull String token) {
       myLockedPaths = lockedPaths;
       myActivateListener = activateListener;
@@ -361,9 +360,9 @@ public final class SocketLock {
                   NotificationType.WARNING));
               }
               else {
-                Consumer<List<String>> listener = myActivateListener.get();
+                java.util.function.Consumer<List<String>> listener = myActivateListener.get();
                 if (listener != null) {
-                  listener.consume(args.subList(1, args.size()));
+                  listener.accept(args.subList(1, args.size()));
                 }
               }
 

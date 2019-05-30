@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import java.security.Security;
 import java.util.UUID;
 
 @ChannelHandler.Sharable
-class PortUnificationServerHandler extends Decoder {
+final class PortUnificationServerHandler extends Decoder {
   // https://stackoverflow.com/questions/33827789/self-signed-certificate-dnsname-components-must-begin-with-a-letter
   // https://github.com/kaikramer/keystore-explorer (use cert.cet as cert ext template)
   // keytool -genkey -keyalg EC -keysize 256 -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -ext 'san=dns:localhost,dns:*.localhost,dns:*.dev,dns:*.local'
@@ -81,7 +81,7 @@ class PortUnificationServerHandler extends Decoder {
     }
   }
 
-  protected void decode(@NotNull ChannelHandlerContext context, @NotNull ByteBuf buffer) {
+  private void decode(@NotNull ChannelHandlerContext context, @NotNull ByteBuf buffer) {
     ChannelPipeline pipeline = context.pipeline();
     if (detectSsl && SslHandler.isEncrypted(buffer)) {
       SSLEngine engine = SSL_SERVER_CONTEXT.getValue().newEngine(context.alloc());

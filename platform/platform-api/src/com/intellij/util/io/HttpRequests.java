@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -60,6 +60,10 @@ public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
 
   public static final String JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+
+  public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
+  public static final int READ_TIMEOUT = SystemProperties.getIntProperty("idea.read.timeout", 60000);
+  public static final int REDIRECT_LIMIT = SystemProperties.getIntProperty("idea.redirect.limit", 10);
 
   private static final int[] REDIRECTS = {
     // temporary redirects
@@ -239,9 +243,9 @@ public final class HttpRequests {
 
   private static class RequestBuilderImpl extends RequestBuilder {
     private final String myUrl;
-    private int myConnectTimeout = HttpConfigurable.CONNECTION_TIMEOUT;
-    private int myTimeout = HttpConfigurable.READ_TIMEOUT;
-    private int myRedirectLimit = HttpConfigurable.REDIRECT_LIMIT;
+    private int myConnectTimeout = CONNECTION_TIMEOUT;
+    private int myTimeout = READ_TIMEOUT;
+    private int myRedirectLimit = REDIRECT_LIMIT;
     private boolean myGzip = true;
     private boolean myForceHttps;
     private boolean myUseProxy = true;
