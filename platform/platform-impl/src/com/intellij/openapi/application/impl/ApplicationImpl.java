@@ -16,7 +16,6 @@ import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -144,16 +143,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
-    }
-
-    if (isUnitTestMode && isCommandLine) {
-      String[] args = {"inspect", "", "", ""};
-      Main.setFlags(args); // set both isHeadless and isCommandLine to true
-      System.setProperty(IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
-      assert Main.isHeadless();
-      assert Main.isCommandLine();
-      //noinspection ResultOfObjectAllocationIgnored
-      IdeaApplication.createAppStarter(IdeaApplication.processProgramArguments(args), null);
     }
 
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();

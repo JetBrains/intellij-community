@@ -7,16 +7,23 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IdeaTestApplication extends CommandLineApplication implements Disposable {
+public final class IdeaTestApplication extends CommandLineApplication implements Disposable {
   private DataProvider myDataContext;
 
   private IdeaTestApplication() {
-    super(true, true, true);
+    String[] args = {"inspect", "", "", ""};
+    Main.setFlags(args);
+    System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
+    assert Main.isHeadless();
+    assert Main.isCommandLine();
+    IdeaApplication.createAppStarter(IdeaApplication.processProgramArguments(args), null);
+    new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
   }
 
   public void setDataProvider(@Nullable DataProvider dataContext) {

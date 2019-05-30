@@ -153,8 +153,9 @@ public final class IdeaApplication {
   public static ApplicationStarter createAppStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
     LOG.assertTrue(!ApplicationManagerEx.isAppLoaded());
 
+    LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
+
     {
-      LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
       Activity activity = StartUpMeasurer.start("patch system");
       patchSystem(Main.isHeadless());
       activity.end();
@@ -170,16 +171,20 @@ public final class IdeaApplication {
 
     boolean isInternal = Boolean.getBoolean(ApplicationImpl.IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(ApplicationImpl.IDEA_IS_UNIT_TEST);
+    boolean isCommandLine = Main.isCommandLine();
 
-    if (Main.isCommandLine()) {
-      if (CommandLineApplication.ourInstance == null) {
-        new CommandLineApplication(isInternal, isUnitTest, headless);
+    Activity activity = StartUpMeasurer.start("create app");
+    new ApplicationImpl(isInternal, isUnitTest, headless, isCommandLine, ApplicationManagerEx.IDEA_APPLICATION);
+    activity.end();
+
+    if (isCommandLine && CommandLineApplication.ourInstance == null) {
+      new CommandLineApplication();
+      if (isUnitTest) {
+        String[] newArgs = {"inspect", "", "", ""};
+        Main.setFlags(newArgs);
+        System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
+        starter = getStarter(newArgs, pluginsLoaded);
       }
-    }
-    else {
-      Activity activity = StartUpMeasurer.start("create app");
-      new ApplicationImpl(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION);
-      activity.end();
     }
 
     starter.premain(args);
@@ -225,7 +230,9 @@ public final class IdeaApplication {
     //noinspection ResultOfMethodCallIgnored
     IdeEventQueue.getInstance();  // replaces system event queue
 
-    if (headless) return;
+    if (headless) {
+      return;
+    }
 
     /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
        because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
