@@ -1162,7 +1162,7 @@
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
               text="Edit Configuration" icon="AllIcons.Actions.EditSource"
-              use-shortcut-of="EditSource"/>
+              use-shortcut-of="EditSourceInNewWindow"/>
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
               text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
