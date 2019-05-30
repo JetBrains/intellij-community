@@ -931,5 +931,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, String message) {
     return new CreateDefaultBranchFix(switchBlock, message);
-  } 
+  }
+
+  @Override
+  public IntentionAction createCollapseAnnotationsFix(PsiAnnotation annotation) {
+    return CollapseAnnotationsFix.from(annotation);
+  }
 }
