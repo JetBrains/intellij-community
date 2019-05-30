@@ -2,7 +2,6 @@
 package com.intellij.idea;
 
 import com.intellij.Patches;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -35,7 +34,6 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +42,10 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public final class IdeaApplication {
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY};
@@ -150,20 +151,23 @@ public final class IdeaApplication {
   }
 
   @NotNull
-  public static ApplicationStarter createAppStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
+  private static ApplicationStarter createAppStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
     LOG.assertTrue(!ApplicationManagerEx.isAppLoaded());
 
     LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
+    boolean headless = Main.isHeadless();
     {
       Activity activity = StartUpMeasurer.start("patch system");
-      patchSystem(Main.isHeadless());
+      ApplicationImpl.patchSystem();
+      if (!headless) {
+        patchSystemForUi();
+      }
       activity.end();
     }
 
     ApplicationStarter starter = getStarter(args, pluginsLoaded);
 
-    boolean headless = Main.isHeadless();
     if (headless && !starter.isHeadless()) {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
       System.exit(Main.NO_GRAPHICS);
@@ -219,21 +223,7 @@ public final class IdeaApplication {
     return ArrayUtilRt.toStringArray(arguments);
   }
 
-  private static void patchSystem(boolean headless) {
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(headless);
-    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
-             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
-             "; factory: " + ForkJoinPool.commonPool().getFactory());
-
-    System.setProperty("sun.awt.noerasebackground", "true");
-
-    //noinspection ResultOfMethodCallIgnored
-    IdeEventQueue.getInstance();  // replaces system event queue
-
-    if (headless) {
-      return;
-    }
-
+  private static void patchSystemForUi() {
     /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
        because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
 
@@ -256,11 +246,6 @@ public final class IdeaApplication {
     }
 
     IconLoader.activate();
-
-    if (SystemProperties.getBooleanProperty("idea.app.use.fake.frame", false)) {
-      // this peer will prevent shutting down our application
-      new JFrame().pack();
-    }
   }
 
   @NotNull

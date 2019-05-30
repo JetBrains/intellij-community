@@ -123,6 +123,9 @@ public class StartupUtil {
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
     throws InvocationTargetException, InterruptedException, ExecutionException {
+    //noinspection SpellCheckingInspection
+    System.setProperty("sun.awt.noerasebackground", "true");
+
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 

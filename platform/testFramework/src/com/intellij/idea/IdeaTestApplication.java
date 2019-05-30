@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -17,13 +18,6 @@ public final class IdeaTestApplication extends CommandLineApplication implements
   private DataProvider myDataContext;
 
   private IdeaTestApplication() {
-    String[] args = {"inspect", "", "", ""};
-    Main.setFlags(args);
-    System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
-    assert Main.isHeadless();
-    assert Main.isCommandLine();
-    IdeaApplication.createAppStarter(IdeaApplication.processProgramArguments(args), null);
-    new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
   }
 
   public void setDataProvider(@Nullable DataProvider dataContext) {
@@ -50,7 +44,16 @@ public final class IdeaTestApplication extends CommandLineApplication implements
     if (ourInstance == null) {
       PlatformTestCase.doAutodetectPlatformPrefix();
       new IdeaTestApplication();
-      ApplicationManagerEx.getApplicationEx().load(configPath);
+
+      String[] args = {"inspect", "", "", ""};
+      Main.setFlags(args);
+      assert Main.isHeadless();
+      assert Main.isCommandLine();
+      System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
+      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+      ApplicationImpl.patchSystem();
+      ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
+      app.load(configPath);
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
     }
     return (IdeaTestApplication)ourInstance;

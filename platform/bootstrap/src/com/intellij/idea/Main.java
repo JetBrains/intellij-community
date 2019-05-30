@@ -82,8 +82,8 @@ public class Main {
 
   public static void setFlags(@NotNull String[] args) {
     isHeadless = isHeadless(args);
-    isCommandLine = isCommandLine(args);
-    if (isHeadless()) {
+    isCommandLine = isHeadless || isCommandLine(args);
+    if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
   }

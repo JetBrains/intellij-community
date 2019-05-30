@@ -69,10 +69,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
@@ -162,6 +159,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  public static void patchSystem() {
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
+             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
+             "; factory: " + ForkJoinPool.commonPool().getFactory());
+
+    // replaces system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();
   }
 
   /**
