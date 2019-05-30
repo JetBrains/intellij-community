@@ -114,7 +114,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
       return DEFAULT_ID;
     }
 
-    final String actionId = action.isGlobal() ? ActionManager.getInstance().getId(action) : null;
+    final String actionId = ActionManager.getInstance().getId(action);
     if (actionId != null) {
       return ConvertUsagesUtil.escapeDescriptorName(actionId);
     }
