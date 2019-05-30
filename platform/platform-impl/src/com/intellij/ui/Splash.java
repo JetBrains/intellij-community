@@ -19,7 +19,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -79,7 +78,12 @@ public final class Splash extends Window {
     if (imageUrl == null) {
       throw new IllegalStateException("Cannot find image: " + url);
     }
-    return Objects.requireNonNull(ImageLoader.loadFromUrl(imageUrl, Splash.class, true, false, false, null, JBUIScale.ScaleContext.create()));
+
+    Image result = ImageLoader.loadFromUrl(imageUrl, null, true, false, false, null, JBUIScale.ScaleContext.create());
+    if (result == null) {
+      throw new IllegalStateException("Cannot load image: " + url);
+    }
+    return result;
   }
 
   @NotNull
