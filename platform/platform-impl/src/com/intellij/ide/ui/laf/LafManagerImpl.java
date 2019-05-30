@@ -42,6 +42,7 @@ import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -478,6 +479,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
+    patchTreeRowHeight(uiDefaults,false); // will be scaled in #patchHiDPI
 
     patchHiDPI(uiDefaults);
 
@@ -573,6 +575,27 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         rowHeight = 0;
       }
       defaults.put("Tree.rowHeight", rowHeight);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void patchTreeRowHeight(UIDefaults defaults) {
+    patchTreeRowHeight(defaults, true);
+  }
+
+  private static void patchTreeRowHeight(UIDefaults defaults, boolean scaled) {
+    Object value = defaults.get("Tree.rowHeight");
+    if (value != null && !(value instanceof Integer)) {
+      int height = 0;
+      try {
+        height = Double.valueOf(String.valueOf(value)).intValue();
+        if (scaled) height = JBUI.scale(height);
+      }
+      catch (NumberFormatException ignored) {
+      }
+      defaults.put("Tree.rowHeight", height);
+      LOG.error(new RuntimeException(height + " instead of unexpected Tree.rowHeight: '" + value + "' " + value.getClass()
+                                     + "; L&F: " + UIManager.getLookAndFeel() + "; OS: " + SystemInfoRt.OS_NAME));
     }
   }
 
