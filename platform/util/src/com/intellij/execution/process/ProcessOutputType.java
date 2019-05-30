@@ -65,11 +65,11 @@ public class ProcessOutputType extends Key {
   }
 
   public boolean isStdout() {
-    return getBaseOutputType() == ProcessOutputTypes.STDOUT;
+    return getBaseOutputType() == STDOUT;
   }
 
   public boolean isStderr() {
-    return getBaseOutputType() == ProcessOutputTypes.STDERR;
+    return getBaseOutputType() == STDERR;
   }
 
   public static boolean isStderr(@NotNull Key key) {
