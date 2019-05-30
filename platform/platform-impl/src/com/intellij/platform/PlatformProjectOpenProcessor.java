@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -18,11 +19,13 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
@@ -126,6 +129,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
+    return doOpenProject(virtualFile, projectToClose, line, callback, options, null);
+  }
+
+  @Nullable
+  public static Project doOpenProject(@NotNull VirtualFile virtualFile,
+                                      @Nullable Project projectToClose,
+                                      int line,
+                                      @Nullable ProjectOpenedCallback callback,
+                                      @NotNull EnumSet<Option> options,
+                                      @Nullable IdeFrame frame) {
     VirtualFile baseDir = virtualFile;
     boolean dummyProject = false;
     String dummyProjectName = null;
@@ -172,6 +185,44 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
       }
     }
 
+
+    Pair<Project, Module> result = null;
+    if (frame == null) {
+      result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
+    }
+    else {
+      Ref<Pair<Project, Module>> refResult = Ref.create();
+      VirtualFile finalBaseDir = baseDir;
+      boolean finalDummyProject = dummyProject;
+      String finalDummyProjectName = dummyProjectName;
+      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
+      }, "Loading Project...", true, null, frame.getComponent());
+      if (progressCompleted) result = refResult.get();
+    }
+
+    if (result == null || result.first == null) {
+      WelcomeFrame.showIfNoProjectOpened();
+      return null;
+    }
+
+    if (!virtualFile.isDirectory()) {
+      openFileFromCommandLine(result.first, virtualFile, line);
+    }
+
+    if (callback != null) {
+      callback.projectOpened(result.first, result.second);
+    }
+
+    return result.first;
+  }
+
+  @Nullable
+  private static Pair<Project, Module> prepareAndOpenProject(@NotNull VirtualFile virtualFile,
+                                                             @NotNull EnumSet<Option> options,
+                                                             VirtualFile baseDir,
+                                                             boolean dummyProject,
+                                                             String dummyProjectName) {
     boolean newProject = false;
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project;
@@ -184,7 +235,6 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     }
 
     if (project == null) {
-      WelcomeFrame.showIfNoProjectOpened();
       return null;
     }
 
@@ -195,21 +245,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     if (newProject) {
       project.save();
     }
-
-    if (!virtualFile.isDirectory()) {
-      openFileFromCommandLine(project, virtualFile, line);
-    }
-
-    if (!projectManager.openProject(project)) {
-      WelcomeFrame.showIfNoProjectOpened();
-      return null;
-    }
-
-    if (callback != null) {
-      callback.projectOpened(project, module);
-    }
-
-    return project;
+    return projectManager.openProject(project) ? new Pair<>(project, module) : null;
   }
 
   private static Project tryLoadProject(VirtualFile baseDir) {

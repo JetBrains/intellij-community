@@ -374,20 +374,22 @@ public final class IdeaApplication {
 
       Runnable beforeSetVisible = SplashManager.getHideTask();
 
+      IdeFrame frame = null;
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow(beforeSetVisible);
         lifecyclePublisher.welcomeScreenDisplayed();
       }
       else {
-        windowManager.showFrame(beforeSetVisible);
+        frame = windowManager.showFrame(beforeSetVisible);
       }
 
       activity.end();
 
+      IdeFrame finalFrame = frame;
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
         // The appStarting callback in RecentProjectsManagerBase will reopen the last project
-        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
+        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine, finalFrame);
 
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
