@@ -75,7 +75,6 @@ public final class ImageLoader implements Serializable {
     public enum Type {IMG, SVG}
 
     final @NotNull String path;
-    final @Nullable InputStream inputStream;
     final double scale; // initial scale factor
     final @NotNull Type type;
     final boolean original; // path is not altered
@@ -87,21 +86,16 @@ public final class ImageLoader implements Serializable {
       this(path, scale, type, false);
     }
 
-    public ImageDesc(@NotNull String path, double scale, @NotNull Type type, boolean original) {
-      this(path, null, scale, type, original);
+    public ImageDesc(double scale) {
+      this("", scale, IMG, false);
     }
 
-    public ImageDesc(@NotNull InputStream inputStream, double scale) {
-      this("", inputStream, scale, IMG, false);
-    }
-
-    private ImageDesc(@NotNull String path, @Nullable InputStream inputStream, double scale, @NotNull Type type, boolean original) {
+    private ImageDesc(@NotNull String path, double scale, @NotNull Type type, boolean original) {
       this.path = path;
       this.scale = scale;
       this.type = type;
       this.original = original;
       this.origUsrSize = new Dimension2DDouble(0, 0);
-      this.inputStream = inputStream;
     }
 
     @Nullable
@@ -111,57 +105,57 @@ public final class ImageLoader implements Serializable {
 
     @Nullable
     public Image load(boolean useCache, @Nullable Class<?> resourceClass) throws IOException {
-      String cacheKey = null;
-      URL url = null;
-      InputStream stream = inputStream;
+      if (StringUtil.isEmpty(path)) {
+        getLogger().warn("empty image path", new Throwable());
+        return null;
+      }
 
-      // Either {inputStream} or {path} should be defined
-      if (stream == null) {
-        if (StringUtil.isEmpty(path)) {
-          getLogger().warn("empty image path", new Throwable());
-          return null;
-        }
+      InputStream stream = null;
 
-        boolean isFromFile = path.startsWith("file:");
-        if (!isFromFile && resourceClass != null) {
-          //noinspection IOResourceOpenedButNotSafelyClosed
-          stream = resourceClass.getResourceAsStream(path);
-          if (stream == null) {
-            return null;
-          }
-        }
-
+      boolean isFromFile = path.startsWith("file:");
+      if (!isFromFile && resourceClass != null) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
+        stream = resourceClass.getResourceAsStream(path);
         if (stream == null) {
-          if (useCache) {
-            cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
-            Pair<Image, Dimension2D> pair = ourCache.get(cacheKey);
-            if (pair != null) {
-              origUsrSize.setSize(pair.second);
-              return pair.first;
-            }
-          }
-
-          url = new URL(path);
-          if (isFromFile && !SystemInfoRt.isWindows) {
-            byte[] bytes = Files.readAllBytes(Paths.get(url.getPath()));
-            //noinspection IOResourceOpenedButNotSafelyClosed
-            stream = new BufferExposingByteArrayInputStream(bytes);
-          }
-          else {
-            URLConnection connection = url.openConnection();
-            if (connection instanceof HttpURLConnection) {
-              if (!original) return null;
-              connection.addRequestProperty("User-Agent", "IntelliJ");
-            }
-            stream = connection.getInputStream();
-          }
+          return null;
         }
       }
 
+      String cacheKey = null;
+      URL url = null;
+      if (stream == null) {
+        if (useCache) {
+          cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
+          Pair<Image, Dimension2D> pair = ourCache.get(cacheKey);
+          if (pair != null) {
+            origUsrSize.setSize(pair.second);
+            return pair.first;
+          }
+        }
+
+        url = new URL(path);
+        if (isFromFile && !SystemInfoRt.isWindows) {
+          byte[] bytes = Files.readAllBytes(Paths.get(url.getPath()));
+          //noinspection IOResourceOpenedButNotSafelyClosed
+          stream = new BufferExposingByteArrayInputStream(bytes);
+        }
+        else {
+          URLConnection connection = url.openConnection();
+          if (connection instanceof HttpURLConnection) {
+            if (!original) return null;
+            connection.addRequestProperty("User-Agent", "IntelliJ");
+          }
+          stream = connection.getInputStream();
+        }
+      }
+
+      return loadFromStream(stream, url, cacheKey);
+    }
+
+    @Nullable
+    public Image loadFromStream(@NotNull InputStream stream, @Nullable URL url, @Nullable String cacheKey) throws IOException {
       Image image = loadImpl(url, stream);
-      if (image != null && cacheKey != null &&
-          4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE)
-      {
+      if (image != null && cacheKey != null && 4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE) {
         ourCache.put(cacheKey, Pair.create(image, origUsrSize));
       }
       return image;
@@ -552,11 +546,14 @@ public final class ImageLoader implements Serializable {
   /**
    * The scale context describes the image the stream presents.
    */
-  public static Image loadFromStream(@NotNull final InputStream inputStream, final ScaleContext ctx, ImageFilter filter) {
+  public static Image loadFromStream(@NotNull InputStream inputStream, @NotNull ScaleContext ctx, ImageFilter filter) {
     try {
-      ImageDesc desc = new ImageDesc(inputStream, ctx.getScale(PIX_SCALE));
-      Image image = desc.load(false);
-      return ImageConverterChain.create().withFilter(filter).withHiDPI(ctx).convert(image, desc);
+      ImageDesc desc = new ImageDesc(ctx.getScale(PIX_SCALE));
+      Image image = desc.loadFromStream(inputStream, null, null);
+      return ImageConverterChain.create()
+        .withFilter(filter)
+        .withHiDPI(ctx)
+        .convert(image, desc);
     }
     catch (IOException ex) {
       getLogger().error(ex);
