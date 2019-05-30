@@ -33,8 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +49,14 @@ public class PluginManager extends PluginManagerCore {
    * Called via reflection
    */
   @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
-  protected static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args) {
+  protected static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args,
+                              @NotNull LinkedHashMap<String, Long> startupTimings) {
+    ArrayList<Map.Entry<String, Long>> entries = new ArrayList<>(startupTimings.entrySet());
+    for (int i = 0; i < entries.size(); i++) {
+      long end = i == entries.size() - 1 ? System.nanoTime() : entries.get(i + 1).getValue();
+      StartUpMeasurer.record(entries.get(i).getKey(), entries.get(i).getValue(), end);
+    }
+
     startupStart = StartUpMeasurer.start(Phases.PREPARE_TO_INIT_APP);
 
     Main.setFlags(args);

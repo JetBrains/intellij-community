@@ -13,6 +13,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -45,6 +46,8 @@ public class Main {
   private Main() { }
 
   public static void main(String[] args) {
+    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
+    startupTimings.put("Startup begin", System.nanoTime());
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }
@@ -61,7 +64,7 @@ public class Main {
     }
 
     try {
-      Bootstrap.main(args, Main.class.getName() + "Impl", "start");
+      Bootstrap.main(args, Main.class.getName() + "Impl", "start", startupTimings);
     }
     catch (Throwable t) {
       showMessage("Start Failed", t);

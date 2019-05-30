@@ -134,6 +134,12 @@ public final class StartUpMeasurer {
     addPluginCost(activity.getPluginId(), phase, activity.getEnd() - activity.getStart());
   }
 
+  public static void record(String name, long start, long end) {
+    ActivityImpl activity = new ActivityImpl(name,null, start, null, Level.APPLICATION, null, null);
+    activity.setEnd(end);
+    add(activity);
+  }
+
   public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
     if (pluginId == null || !measuringPluginStartupCosts) return;
     synchronized (pluginCostMap) {
