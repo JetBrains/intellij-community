@@ -68,6 +68,10 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     lastEvent = null
   }
 
+  override fun getActiveLogFile(): File? {
+    return writer.getActiveFile()
+  }
+
   override fun getLogFiles(): List<File> {
     return writer.getFiles()
   }
