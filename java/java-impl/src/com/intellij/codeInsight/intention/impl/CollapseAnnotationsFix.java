@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -19,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@SuppressWarnings("foo")
 public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private CollapseAnnotationsFix(PsiAnnotation annotation) {
     super(annotation);
@@ -30,8 +28,6 @@ public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsi
   public String getText() {
     return "Collapse repeating annotations";
   }
-  
-  int[] x;
 
   @Override
   public void invoke(@NotNull Project project,
