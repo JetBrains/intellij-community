@@ -118,7 +118,7 @@ public class AppUIUtil {
     }
   }
 
-  private static boolean isWindowIconAlreadyExternallySet() {
+  public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfoRt.isMac) {
       return !RUNNING_FROM_SOURCES;
     }

@@ -272,13 +272,15 @@ public class StartupUtil {
 
       // updateWindowIcon must be after UIUtil.initSystemFontData because uses computed system font data for scale context
       if (!Main.isHeadless()) {
-        // no need to wait - doesn't affect other functionality
-        executorService.execute(() -> {
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
-          // most of the time consumed to load SVG - so, can be done in parallel
-          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-          activity.end();
-        });
+        if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
+          // no need to wait - doesn't affect other functionality
+          executorService.execute(() -> {
+            Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
+            // most of the time consumed to load SVG - so, can be done in parallel
+            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+            activity.end();
+          });
+        }
 
         if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
           System.setProperty("com.jetbrains.suppressWindowRaise", "true");

@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.util.ArrayUtil;
@@ -93,6 +94,10 @@ public final class IdeaApplication {
           addActivateAndWindowsCliListeners(app);
         }
         ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
+
+        if (PluginManagerCore.isRunningFromSources()) {
+          app.invokeLater(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
+        }
       });
     });
 
