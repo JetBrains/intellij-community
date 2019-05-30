@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static com.jetbrains.rdclient.util.idea.DisposableExKt.createLifetime;
+import static com.intellij.openapi.rd.DisposableExKt.createLifetime;
 
 public class JBTabsImpl extends JComponent
   implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
