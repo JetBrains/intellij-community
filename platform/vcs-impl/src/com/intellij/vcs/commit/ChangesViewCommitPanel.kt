@@ -43,6 +43,7 @@ import javax.swing.JComponent
 import javax.swing.KeyStroke.getKeyStroke
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
+private val BACKGROUND_COLOR = JBColor { getTreeBackground() }
 
 private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16)))
 
@@ -78,6 +79,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     editorField.setPlaceholder("Commit Message")
   }
   private val commitButton = object : JButton() {
+    init {
+      background = BACKGROUND_COLOR
+    }
+
     override fun isDefaultButton() = true
   }
   private val commitLegendCalculator = ChangeInfoCalculator()
@@ -99,7 +104,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
       add(commitButton)
       add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
       add(commitLegend.component)
-    }.withBackground(getTreeBackground())
+    }.withBackground(BACKGROUND_COLOR)
     val centerPanel = simplePanel(commitMessage).addToBottom(buttonPanel)
 
     addToCenter(centerPanel).addToLeft(toolbar.component).withBorder(createBorder(JBColor.border(), SideBorder.TOP))
