@@ -63,6 +63,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
+  private boolean myIsGlobal; // action is registered in ActionManager
 
 
   /**
@@ -271,8 +272,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
-    ActionManager actionManager = ActionManager.getInstance();
-    if (actionManager != null && actionManager.getId(this) != null && myShortcutSet != shortcutSet) {
+    if (myIsGlobal && myShortcutSet != shortcutSet) {
       LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
                "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
                "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
@@ -333,6 +333,14 @@ public abstract class AnAction implements PossiblyDumbAware {
   @Override
   public String toString() {
     return getTemplatePresentation().toString();
+  }
+
+  public final boolean isGlobal() {
+    return myIsGlobal;
+  }
+
+  void markAsGlobal() {
+    myIsGlobal = true;
   }
 
   /**
