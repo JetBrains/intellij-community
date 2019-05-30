@@ -67,6 +67,8 @@ fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement
 
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> =
       provider(cls.cast(element), context[REQUESTED_PSI_ELEMENT])
+
+    override fun toString(): String = "uastReferenceProvider($provider)"
   }
 
 inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
