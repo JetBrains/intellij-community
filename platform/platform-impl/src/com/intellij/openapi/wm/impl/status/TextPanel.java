@@ -2,9 +2,8 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -24,7 +23,6 @@ public class TextPanel extends JComponent implements Accessible {
   private Dimension myExplicitSize;
 
   protected float myAlignment;
-  private int myRightPadding = JBUI.scale(14);
 
   protected TextPanel() {
     setOpaque(false);
@@ -145,12 +143,9 @@ public class TextPanel extends JComponent implements Accessible {
     return getPanelDimensionFromFontMetrics(text);
   }
 
-  public void setRightPadding(int rightPadding) {
-    myRightPadding = rightPadding;
-  }
-
   private Dimension getPanelDimensionFromFontMetrics(String text) {
-    int width = (text == null) ? 0 : myRightPadding + getFontMetrics(getFont()).stringWidth(text);
+    Insets insets = getInsets();
+    int width = insets.left + insets.right + (text != null ? getFontMetrics(getFont()).stringWidth(text) : 0);
     int height = (myPrefHeight == null) ? getMinimumSize().height : myPrefHeight;
     return new Dimension(width, height);
   }
