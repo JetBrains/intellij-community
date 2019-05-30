@@ -288,7 +288,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     if (pos == Position.RIGHT) {
       if (myRightPanel == null) {
         myRightPanel = new JPanel();
-        myRightPanel.setBorder(JBUI.Borders.empty(1, 1, 0, SystemInfoRt.isMac ? 2 : 0));
+        myRightPanel.setBorder(JBUI.Borders.emptyLeft(1));
         myRightPanel.setLayout(new BoxLayout(myRightPanel, BoxLayout.X_AXIS) {
           @Override
           public void layoutContainer(Container target) {
@@ -359,12 +359,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
             if (component == bean.component) {
               if (before) {
                 panel.add(c, i);
-                updateBorder(i);
               }
               else {
-                final int ndx = i + 1;
                 panel.add(c, i + 1);
-                updateBorder(ndx);
               }
 
               installWidget(widget, pos, c, anchor);
@@ -393,27 +390,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
 
     repaint();
-  }
-
-  private void updateBorder(int ndx) {
-    if (myRightPanel.getComponentCount() == 0) return;
-    if (ndx >= myRightPanel.getComponentCount()) ndx--;
-    if (ndx < 0) ndx++;
-    final JComponent self = (JComponent)myRightPanel.getComponent(ndx);
-    if (self instanceof IconPresentationWrapper || self instanceof IconLikeCustomStatusBarWidget) {
-      final int prev = ndx - 1;
-      final int next = ndx + 1;
-
-      final JComponent p = prev >= 0 ? (JComponent)myRightPanel.getComponent(prev) : null;
-      final JComponent n = next < myRightPanel.getComponentCount() ? (JComponent)myRightPanel.getComponent(next) : null;
-
-      final boolean prevIcon = p instanceof IconPresentationWrapper || p instanceof IconLikeCustomStatusBarWidget;
-      final boolean nextIcon = n instanceof IconPresentationWrapper || n instanceof IconLikeCustomStatusBarWidget;
-
-      // 2peter: please do not touch it anymore :)
-      self.setBorder(prevIcon ? JBUI.Borders.empty(2) : StatusBarWidget.WidgetBorder.INSTANCE);
-      if (nextIcon) n.setBorder(JBUI.Borders.empty(2));
-    }
   }
 
   @Override
@@ -509,6 +485,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     JComponent wrapper;
     if (presentation instanceof StatusBarWidget.IconPresentation) {
       wrapper = new IconPresentationWrapper((StatusBarWidget.IconPresentation)presentation);
+      wrapper.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
     }
     else if (presentation instanceof StatusBarWidget.TextPresentation) {
       wrapper = new TextPresentationWrapper((StatusBarWidget.TextPresentation)presentation);
@@ -588,14 +565,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       }
       else if (Position.RIGHT == bean.position) {
         final Component[] components = myRightPanel.getComponents();
-        int i = 0;
         for (final Component c : components) {
           if (c == bean.component) break;
-          i++;
         }
 
         myRightPanel.remove(bean.component);
-        updateBorder(i);
       }
       else {
         myCenterPanel.remove(bean.component);

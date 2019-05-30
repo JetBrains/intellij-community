@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.AnimatedIcon.Blinking;
 
 import javax.swing.*;
@@ -14,7 +15,7 @@ class IdeErrorsIcon extends JLabel {
 
   IdeErrorsIcon(boolean enableBlink) {
     myEnableBlink = enableBlink;
-    setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
+    setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
   }
 
   void setState(MessagePool.State state) {
