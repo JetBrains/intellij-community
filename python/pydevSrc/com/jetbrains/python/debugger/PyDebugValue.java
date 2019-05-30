@@ -36,6 +36,7 @@ public class PyDebugValue extends XNamedValue {
   private final @Nullable String myTypeQualifier;
   private @Nullable String myValue;
   private final boolean myContainer;
+  private final @Nullable String myShape;
   private final boolean myIsReturnedVal;
   private final boolean myIsIPythonHidden;
   private @Nullable PyDebugValue myParent;
@@ -64,18 +65,35 @@ public class PyDebugValue extends XNamedValue {
                       @Nullable String typeQualifier,
                       @Nullable final String value,
                       final boolean container,
+                      @Nullable String shape,
                       boolean isReturnedVal,
                       boolean isIPythonHidden,
                       boolean errorOnEval,
                       @NotNull final PyFrameAccessor frameAccessor) {
-    this(name, type, typeQualifier, value, container, isReturnedVal, isIPythonHidden, errorOnEval, null, frameAccessor);
+    this(name, type, typeQualifier, value, container, shape, isReturnedVal, isIPythonHidden, errorOnEval, null, frameAccessor);
   }
 
+  /**
+   * Represents instance of a Python variable available at runtime. Used in Debugger and various Variable Viewers
+   *
+   * @param name            variable name
+   * @param type            variable type
+   * @param typeQualifier   type qualifier
+   * @param value           string representation of a value
+   * @param container       does variable have fields for expanding
+   * @param shape           variable's shape field (available for numeric containers)
+   * @param isReturnedVal   is value was returned from a function during debug session
+   * @param isIPythonHidden does value belong to IPython util variables group
+   * @param errorOnEval     did an error occur during evaluation
+   * @param parent          parent variable in Variables tree
+   * @param frameAccessor   frame accessor used for evaluation
+   */
   public PyDebugValue(@NotNull final String name,
                       @Nullable final String type,
                       @Nullable String typeQualifier,
                       @Nullable final String value,
                       final boolean container,
+                      @Nullable String shape,
                       boolean isReturnedVal,
                       boolean isIPythonHidden,
                       boolean errorOnEval,
@@ -86,6 +104,7 @@ public class PyDebugValue extends XNamedValue {
     myTypeQualifier = Strings.isNullOrEmpty(typeQualifier) ? null : typeQualifier;
     myValue = value;
     myContainer = container;
+    myShape = shape;
     myIsReturnedVal = isReturnedVal;
     myIsIPythonHidden = isIPythonHidden;
     myErrorOnEval = errorOnEval;
@@ -99,7 +118,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   public PyDebugValue(@NotNull PyDebugValue value, @NotNull String newName) {
-    this(newName, value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.isReturnedVal(),
+    this(newName, value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.getShape(), value.isReturnedVal(),
          value.isIPythonHidden(), value.isErrorOnEval(), value.getParent(), value.getFrameAccessor());
     myOffset = value.getOffset();
     setLoadValuePolicy(value.getLoadValuePolicy());
@@ -135,6 +154,11 @@ public class PyDebugValue extends XNamedValue {
 
   public boolean isContainer() {
     return myContainer;
+  }
+
+  @Nullable
+  public String getShape() {
+    return myShape;
   }
 
   public boolean isReturnedVal() {
