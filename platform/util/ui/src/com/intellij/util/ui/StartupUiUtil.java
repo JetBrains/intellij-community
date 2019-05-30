@@ -134,7 +134,7 @@ public class StartupUiUtil {
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the default monitor device is HiDPI.
-   * (analogue of {@link #isRetina()} on macOS)
+   * (analogue of {@link UIUtil#isRetina()} on macOS)
    */
   public static boolean isJreHiDPI() {
     return isJreHiDPI((GraphicsConfiguration)null);
@@ -142,7 +142,7 @@ public class StartupUiUtil {
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the graphics configuration represents a HiDPI device.
-   * (analogue of {@link #isRetina(Graphics2D)} on macOS)
+   * (analogue of {@link UIUtil#isRetina(Graphics2D)} on macOS)
    */
   public static boolean isJreHiDPI(@Nullable GraphicsConfiguration gc) {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(gc));
@@ -150,7 +150,7 @@ public class StartupUiUtil {
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the graphics represents a HiDPI device.
-   * (analogue of {@link #isRetina(Graphics2D)} on macOS)
+   * (analogue of {@link UIUtil#isRetina(Graphics2D)} on macOS)
    */
   public static boolean isJreHiDPI(@Nullable Graphics2D g) {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(g));
