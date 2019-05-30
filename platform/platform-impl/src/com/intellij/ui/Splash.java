@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -70,15 +69,10 @@ public final class Splash extends Window {
   }
 
   @NotNull
-  private static Image loadImage(@NotNull String url) {
-    URL imageUrl = Splash.class.getResource(url);
-    if (imageUrl == null) {
-      throw new IllegalStateException("Cannot find image: " + url);
-    }
-
-    Image result = ImageLoader.loadFromUrl(imageUrl, null, ImageLoader.ALLOW_FLOAT_SCALING, null, JBUIScale.ScaleContext.create());
+  private static Image loadImage(@NotNull String path) {
+    Image result = ImageLoader.loadFromUrl(path, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, JBUIScale.ScaleContext.create());
     if (result == null) {
-      throw new IllegalStateException("Cannot load image: " + url);
+      throw new IllegalStateException("Cannot find image: " + path);
     }
     return result;
   }
