@@ -18,6 +18,9 @@
       <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
     </extensionPoint>
+    <extensionPoint name="psi.implicitReferenceProvider"
+                    dynamic="true"
+                    interface="com.intellij.model.psi.ImplicitReferenceProvider"/>
     <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
     </extensionPoint>
