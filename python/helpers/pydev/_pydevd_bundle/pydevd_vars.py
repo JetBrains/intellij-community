@@ -440,28 +440,28 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
             if result:
                 return result
 
+        if value is SENTINEL_VALUE:
+            # It is possible to have variables with names like '.0', ',,,foo', etc in scope by setting them with
+            # `sys._getframe().f_locals`. In particular, the '.0' variable name is used to denote the list iterator when we stop in
+            # list comprehension expressions. This variable evaluates to 0. by `eval`, which is not what we want and this is the main
+            # reason we have to check if the expression exists in the global and local scopes before trying to evaluate it.
+            value = frame.f_locals.get(expression) or frame.f_globals.get(expression) or eval(expression, frame.f_globals, frame.f_locals)
+
         if attr[:7] == "Globals":
             attr = attr[8:]
             if attr in frame.f_globals:
-                if value is SENTINEL_VALUE:
-                    value = eval(expression, frame.f_globals, frame.f_locals)
                 frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
-                if value is SENTINEL_VALUE:
-                    value = eval(expression, frame.f_globals, frame.f_locals)
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
 
             # default way (only works for changing it in the topmost frame)
-            if value is SENTINEL_VALUE:
-                value = eval(expression, frame.f_globals, frame.f_locals)
             result = value
             Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
             return result
-
 
     except Exception:
         traceback.print_exc()

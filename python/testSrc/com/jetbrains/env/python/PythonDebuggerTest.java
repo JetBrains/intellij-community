@@ -2071,4 +2071,36 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       (script) -> runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", script))
     );
   }
+
+  @Test
+  public void testListComprehension() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_list_comprehension.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForPause();
+        List<PyDebugValue> frameVariables = loadFrame();
+        assertTrue(findDebugValueByName(frameVariables,".0").getType().endsWith("_iterator"));
+        eval(".0");
+        // Different Python versions have different types of an internal list comprehension loop. Whatever the type is, we shouldn't get
+        // an evaluating error.
+        assertFalse(output().contains("Error evaluating"));
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        // Remove this after PY-36229 is fixed.
+        return ImmutableSet.of("python3");
+      }
+    });
+  }
 }
