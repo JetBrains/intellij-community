@@ -1205,6 +1205,8 @@
       <reference id="ServiceView.ShowInNewTab"/>
       <reference id="ServiceView.SplitToNewTabs"/>
       <reference id="ServiceView.SplitByType"/>
+      <separator/>
+      <reference id="EditSource"/>
     </group>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">

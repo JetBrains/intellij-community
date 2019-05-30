@@ -4,6 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,11 @@ public interface ServiceViewDescriptor {
 
   @Nullable
   default Object getPresentationTag(Object fragment) {
+    return null;
+  }
+
+  @Nullable
+  default Navigatable getNavigatable() {
     return null;
   }
 }
