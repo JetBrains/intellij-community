@@ -215,6 +215,12 @@ class ImmutableCollectionModelUtils {
                                                       @NotNull PsiStatement usage) {
       String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : model.myCall.getText());
       PsiExpression initializer = myElementFactory.createExpressionFromText(initializerText, null);
+      PsiType rhsType = initializer.getType();
+      if (rhsType == null) return null;
+      if (!TypeUtils.areConvertible(type, rhsType)) {
+        type = ExpectedTypeUtils.findExpectedType(model.myCall, false);
+      }
+      if (type == null) return null;
       PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(name, type, initializer);
       return ObjectUtils.tryCast(BlockUtils.addBefore(usage, declaration), PsiDeclarationStatement.class);
     }
