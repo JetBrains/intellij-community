@@ -11,7 +11,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShRenameTest extends LightPlatformCodeInsightTestCase {
+public class ShRenameAllOccurrencesTest extends LightPlatformCodeInsightTestCase {
 
   @NotNull
   @Override

@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.sh.ShSupport;
@@ -46,7 +48,12 @@ public class ShRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element instanceof PsiNamedElement) {
+      PsiElementRenameHandler.invoke(element, project, file, editor);
+    } else {
+      ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
+    }
   }
 
   @Override

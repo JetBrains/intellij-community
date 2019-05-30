@@ -1,7 +1,7 @@
 #!/bin/sh
 
 function sayBye() {
-  echo "Bye"
+  echo "sayBye"
 }
 
 sayBye
