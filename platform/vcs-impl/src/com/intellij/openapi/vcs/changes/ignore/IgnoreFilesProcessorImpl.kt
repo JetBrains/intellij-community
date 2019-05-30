@@ -170,6 +170,9 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
   override val forAllProjectsActionText: String? = VcsBundle.getString("ignored.file.manage.all.project")
   override val muteActionText: String = VcsBundle.getString("ignored.file.manage.notmanage")
 
+  override val viewFilesDialogTitle: String? = VcsBundle.getString("ignored.file.manage.view.dialog.title")
+  override val viewFilesDialogOkActionName: String = VcsBundle.message("ignored.file.manage.view.dialog.ignore.action")
+
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message")
 

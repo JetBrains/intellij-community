@@ -120,6 +120,8 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.message("external.files.add.notification.action.mute")
 
+  override val viewFilesDialogTitle: String? = VcsBundle.message("external.files.add.view.dialog.title", vcs.displayName)
+
   override fun notificationTitle() = ""
 
   override fun notificationMessage(): String = VcsBundle.message("external.files.add.notification.message", vcs.displayName)

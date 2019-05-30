@@ -91,6 +91,8 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.mute")
 
+  override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
+
   override fun rememberForAllProjects() {}
 
   private fun isProjectConfigurationFile(storeDir: VirtualFile?, file: VirtualFile) =
