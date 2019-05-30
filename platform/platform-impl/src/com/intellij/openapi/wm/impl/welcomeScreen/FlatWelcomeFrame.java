@@ -413,6 +413,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private JComponent createErrorsLink() {
       IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
       panel.setBorder(JBUI.Borders.emptyRight(13));
+      panel.setOpaque(false);
       Disposer.register(this, panel);
       return panel;
     }
