@@ -215,6 +215,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON34);
   }
 
+  // PY-36009
+  public void testEqualitySignInFStrings() {
+    doTest(LanguageLevel.PYTHON38);
+  }
+
   public void testInputFromSixLib() {
     doTest(LanguageLevel.PYTHON27);
   }

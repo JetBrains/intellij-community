@@ -954,4 +954,9 @@ public class PyFormatterTest extends PyTestCase {
   public void testSpacesAroundFStringFragmentExpressionStripped() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
+
+  // PY-36009
+  public void testSpacesAroundEqualsSignInFStringFragment() {
+    doTest();
+  }
 }
