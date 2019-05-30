@@ -76,7 +76,7 @@ public final class Splash extends Window {
       throw new IllegalStateException("Cannot find image: " + url);
     }
 
-    Image result = ImageLoader.loadFromUrl(imageUrl, null, true, false, false, null, JBUIScale.ScaleContext.create());
+    Image result = ImageLoader.loadFromUrl(imageUrl, null, ImageLoader.ALLOW_FLOAT_SCALING, null, JBUIScale.ScaleContext.create());
     if (result == null) {
       throw new IllegalStateException("Cannot load image: " + url);
     }

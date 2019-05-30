@@ -723,8 +723,18 @@ public final class IconLoader {
     @Nullable
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
       URL url = getURL();
-      if (url == null) return null;
-      return ImageLoader.loadFromUrl(url, null, true, myUseCacheOnLoad, dark, getFilters(), ctx);
+      if (url == null) {
+        return null;
+      }
+
+      int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+      if (myUseCacheOnLoad) {
+        flags |= ImageLoader.USE_CACHE;
+      }
+      if (dark) {
+        flags |= ImageLoader.DARK;
+      }
+      return ImageLoader.loadFromUrl(url, null, flags, getFilters(), ctx);
     }
 
     private class MyScaledIconsCache {

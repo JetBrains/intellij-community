@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.imgscalr.Scalr;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,12 @@ import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
 import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
-public class ImageLoader implements Serializable {
+public final class ImageLoader implements Serializable {
+  public static final int ALLOW_FLOAT_SCALING = 0x01;
+  public static final byte USE_CACHE = 0x02;
+  public static final int DARK = 0x04;
+  public static final int FIND_SVG = 0x08;
+
   @NotNull
   private static Logger getLogger() {
     return Logger.getInstance("#com.intellij.util.ImageLoader");
@@ -300,27 +306,28 @@ public class ImageLoader implements Serializable {
     @NotNull
     public static ImageDescriptorList create(@NotNull String path,
                                              @Nullable Class cls,
-                                             boolean dark,
-                                             boolean allowFloatScaling,
+                                             @MagicConstant(flags = {ALLOW_FLOAT_SCALING, DARK, FIND_SVG}) int flags,
                                              ScaleContext scaleContext) {
       // Prefer retina images for HiDPI scale, because downscaling
       // retina images provides a better result than up-scaling non-retina images.
-      boolean retina = JBUI.isHiDPI(scaleContext.getScale(PIX_SCALE));
+      double pixScale = scaleContext.getScale(PIX_SCALE);
+      boolean retina = JBUI.isHiDPI(pixScale);
 
       ImageDescriptorListBuilder builder = new ImageDescriptorListBuilder(FileUtilRt.getNameWithoutExtension(path),
                                                                           FileUtilRt.getExtension(path),
                                                                           cls,
-                                                                          true,
-                                                                          adjustScaleFactor(allowFloatScaling, scaleContext.getScale(PIX_SCALE)));
+                                                                          BitUtil.isSet(flags, FIND_SVG),
+                                                                          adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), pixScale));
 
+      boolean isDark = BitUtil.isSet(flags, DARK);
       if (!path.startsWith("file:") && path.contains("://")) {
         builder.add(StringUtilRt.endsWithIgnoreCase(StringUtil.substringBeforeLast(path, "?"), ".svg") ? SVG : IMG);
       }
-      else if (retina && dark) {
+      else if (retina && isDark) {
         builder.add(true, true);
         builder.add(true, false); // fallback to non-dark
       }
-      else if (dark) {
+      else if (isDark) {
         builder.add(false, true);
         builder.add(false, false); // fallback to non-dark
       }
@@ -419,11 +426,21 @@ public class ImageLoader implements Serializable {
   }
 
   /**
-   * @see #loadFromUrl(URL, Class, boolean, boolean, boolean, ImageFilter[], ScaleContext)
+   * @see #loadFromUrl(URL, Class, int, ImageFilter[], ScaleContext)
    */
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, final boolean allowFloatScaling, boolean useCache, ImageFilter[] filters, final ScaleContext ctx) {
-    return loadFromUrl(url, null, allowFloatScaling, useCache, UIUtil.isUnderDarcula(), filters, ctx);
+    int flags = FIND_SVG;
+    if (allowFloatScaling) {
+      flags |= ALLOW_FLOAT_SCALING;
+    }
+    if (useCache) {
+      flags |= USE_CACHE;
+    }
+    if (UIUtil.isUnderDarcula()) {
+      flags |= DARK;
+    }
+    return loadFromUrl(url, null, flags, filters, ctx);
   }
 
   /**
@@ -431,17 +448,17 @@ public class ImageLoader implements Serializable {
    * Then wraps the image with {@link JBHiDPIScaledImage} if necessary.
    */
   @Nullable
-  public static Image loadFromUrl(@NotNull URL url, @Nullable Class aClass, boolean allowFloatScaling, boolean useCache, boolean dark, @Nullable ImageFilter[] filters, ScaleContext scaleContext) {
+  public static Image loadFromUrl(@NotNull URL url, @Nullable Class aClass, @MagicConstant(flags = {ALLOW_FLOAT_SCALING, USE_CACHE, DARK, FIND_SVG}) int flags, @Nullable ImageFilter[] filters, ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually.
-    return ImageDescriptorList.create(url.toString(), aClass, dark, allowFloatScaling, scaleContext).load(
+    return ImageDescriptorList.create(url.toString(), aClass, flags, scaleContext).load(
       ImageConverterChain.create()
         .withFilter(filters)
         .with(new ImageConverter() {
           @Override
           public Image convert(Image source, ImageDesc desc) {
             if (source != null && desc.type != SVG) {
-              double scale = adjustScaleFactor(allowFloatScaling, scaleContext.getScale(PIX_SCALE));
+              double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), scaleContext.getScale(PIX_SCALE));
               if (desc.scale > 1) scale /= desc.scale; // compensate the image original scale
               source = scaleImage(source, scale);
             }
@@ -449,7 +466,7 @@ public class ImageLoader implements Serializable {
           }
         })
         .withHiDPI(scaleContext),
-      useCache);
+      BitUtil.isSet(flags, USE_CACHE));
   }
 
   private static double adjustScaleFactor(boolean allowFloatScaling, double scale) {
@@ -508,7 +525,11 @@ public class ImageLoader implements Serializable {
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
     ScaleContext scaleContext = ScaleContext.create();
-    return ImageDescriptorList.create(path, aClass, UIUtil.isUnderDarcula(), true, scaleContext)
+    int flags = FIND_SVG | ALLOW_FLOAT_SCALING;
+    if (UIUtil.isUnderDarcula()) {
+      flags |= DARK;
+    }
+    return ImageDescriptorList.create(path, aClass, flags, scaleContext)
       .load(ImageConverterChain.create().withHiDPI(scaleContext));
   }
 
