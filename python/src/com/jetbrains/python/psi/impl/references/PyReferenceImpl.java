@@ -174,7 +174,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ResolveResultList results = new ResolveResultList();
     for (RatedResolveResult r : ret) {
       final PsiElement e = r.getElement();
-      if (e == element || element instanceof PyTargetExpression && e != null && PyPsiUtils.isBefore(element, e)) {
+      if (e == element ||
+          element instanceof PyTargetExpression && e != null && PyUtil.inSameFile(element, e) && PyPsiUtils.isBefore(element, e)) {
         continue;
       }
       results.add(changePropertyMethodToSameNameGetter(r, name));
