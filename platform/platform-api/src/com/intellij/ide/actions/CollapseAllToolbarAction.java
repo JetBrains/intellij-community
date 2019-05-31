@@ -16,16 +16,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.TreeExpander;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 
 public class CollapseAllToolbarAction extends TreeCollapseAllActionBase {
   private TreeExpander myTreeExpander;
 
   public CollapseAllToolbarAction(TreeExpander treeExpander) {
     myTreeExpander = treeExpander;
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
+    ActionUtil.copyFrom(this, IdeActions.ACTION_COLLAPSE_ALL);
   }
 
   public CollapseAllToolbarAction(TreeExpander treeExpander, String description) {

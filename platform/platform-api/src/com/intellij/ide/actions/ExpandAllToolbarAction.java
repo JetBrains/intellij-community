@@ -16,16 +16,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.TreeExpander;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 
 public class ExpandAllToolbarAction extends TreeExpandAllActionBase {
   private TreeExpander myTreeExpander;
 
   public ExpandAllToolbarAction(TreeExpander treeExpander) {
     myTreeExpander = treeExpander;
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
+    ActionUtil.copyFrom(this, IdeActions.ACTION_EXPAND_ALL);
   }
 
   public ExpandAllToolbarAction(TreeExpander treeExpander, String description) {

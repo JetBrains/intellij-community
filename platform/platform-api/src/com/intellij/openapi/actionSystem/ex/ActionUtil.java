@@ -380,7 +380,10 @@ public class ActionUtil {
    * @param actionId action id
    */
   public static AnAction copyFrom(@NotNull AnAction action, @NotNull String actionId) {
-    action.copyFrom(ActionManager.getInstance().getAction(actionId));
+    AnAction from = ActionManager.getInstance().getAction(actionId);
+    if (from != null) {
+      action.copyFrom(from);
+    }
     ActionsCollector.getInstance().onActionConfiguredByActionId(action, actionId);
     return action;
   }

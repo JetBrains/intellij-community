@@ -167,8 +167,9 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   /**
    * Copies template presentation and shortcuts set from {@code sourceAction}.
+   * Consider using {@link com.intellij.openapi.actionSystem.ex.ActionUtil#copyFrom(AnAction, String)} instead.
    */
-  public final void copyFrom(@NotNull AnAction sourceAction){
+  public final void copyFrom(@NotNull AnAction sourceAction) {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
     presentation.copyFrom(sourcePresentation);
