@@ -97,7 +97,7 @@ class ForkedGroovyc implements GroovycFlavor {
       @NotNull
       @Override
       public Future<?> executeTask(@NotNull Runnable task) {
-        return SharedThreadPool.getInstance().executeOnPooledThread(task);
+        return SharedThreadPool.getInstance().submit(task);
       }
 
       @Override
