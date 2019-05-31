@@ -69,12 +69,12 @@ public final class IdeaTestApplication extends CommandLineApplication implements
   }
 
   private static void disposeInstance() {
-    if (ourInstance == null) return;
-    Application applicationEx = ApplicationManager.getApplication();
-    if (applicationEx != null) {
-      Disposer.dispose(applicationEx);
-      //ApplicationManagerEx.setApplication(null); it will set automatically back to null
+    if (ourInstance != null) {
+      Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        Disposer.dispose(application);  // `ApplicationManager#ourApplication` will be automatically set to `null`
+      }
+      ourInstance = null;
     }
-    ourInstance = null;
   }
 }
