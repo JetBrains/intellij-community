@@ -2,14 +2,10 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +28,7 @@ class TBItemAnActionButton extends TBItemButton {
   public static final int SHOWMODE_IMAGE_ONLY_IF_PRESENTED = 3;
 
   private @NotNull AnAction myAnAction;
-  private @Nullable String myActionId;
+  private @NotNull String myActionId;
 
   private int myShowMode = SHOWMODE_IMAGE_ONLY_IF_PRESENTED;
   private boolean myAutoVisibility = true;
@@ -41,8 +37,8 @@ class TBItemAnActionButton extends TBItemButton {
   private @Nullable Component myComponent;
   private @Nullable List<? extends TBItemAnActionButton> myLinkedButtons;
 
-  TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action) {
-    super(uid, listener);
+  TBItemAnActionButton(@Nullable ItemListener listener, @NotNull AnAction action, @Nullable TouchBarStats.AnActionStats stats) {
+    super(listener, stats);
     setAnAction(action);
     setModality(null);
 
@@ -52,7 +48,7 @@ class TBItemAnActionButton extends TBItemButton {
   }
 
   @Override
-  public String toString() { return String.format("%s [%s]", myActionId, myUid); }
+  public String toString() { return String.format("%s [%s]", myActionId, getUid()); }
 
   TBItemAnActionButton setComponent(Component component/*for DataCtx*/) { myComponent = component; return this; }
   TBItemAnActionButton setModality(ModalityState modality) { setAction(this::_performAction, true, modality); return this; }
@@ -60,47 +56,19 @@ class TBItemAnActionButton extends TBItemButton {
 
   void setLinkedButtons(@Nullable List<? extends TBItemAnActionButton> linkedButtons) { myLinkedButtons = linkedButtons; }
 
-  @NotNull Presentation updateAnAction(boolean forceUseCached) {
-    final Presentation presentation = myAnAction.getTemplatePresentation().clone();
-
-    if (ApplicationManager.getApplication() == null) {
-      if (myComponent instanceof JButton) {
-        presentation.setEnabled(myComponent.isEnabled());
-        presentation.setText(DialogWrapper.extractMnemonic(((JButton)myComponent).getText()).second);
-      }
-      return presentation;
-    }
-
-    final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());
-    final ActionManager am = ActionManagerEx.getInstanceEx();
-    final AnActionEvent e = new AnActionEvent(
-      null,
-      dctx,
-      ActionPlaces.TOUCHBAR_GENERAL,
-      presentation,
-      am,
-      0
-    );
-
-    try {
-      ActionUtil.performFastUpdate(false, myAnAction, e, forceUseCached);
-    } catch (IndexNotReadyException e1) {
-      presentation.setEnabledAndVisible(false);
-    }
-
-    return presentation;
-  }
-
   boolean isAutoVisibility() { return myAutoVisibility; }
   void setAutoVisibility(boolean autoVisibility) { myAutoVisibility = autoVisibility; }
 
   void setHiddenWhenDisabled(boolean hiddenWhenDisabled) { myHiddenWhenDisabled = hiddenWhenDisabled; }
 
   @NotNull AnAction getAnAction() { return myAnAction; }
+  @NotNull String getActionId() { return myActionId; }
+
   void setAnAction(@NotNull AnAction newAction) {
     // can be safely replaced without setAction (because _performAction will use updated reference to AnAction)
     myAnAction = newAction;
-    myActionId = ApplicationManager.getApplication() == null ? newAction.toString() : ActionManager.getInstance().getId(newAction);
+    String newActionId = ApplicationManager.getApplication() == null ? newAction.toString() : ActionManager.getInstance().getId(newAction);
+    myActionId = newActionId == null ? newAction.toString() : newActionId;
   }
 
   // returns true when visibility changed
@@ -119,10 +87,11 @@ class TBItemAnActionButton extends TBItemButton {
 
     return visibilityChanged;
   }
-  void updateView(Presentation presentation) { // called from EDT
+  void updateView(@NotNull Presentation presentation) { // called from EDT
     if (!myIsVisible)
       return;
 
+    final long startNs = myActionStats != null ? System.nanoTime() : 0;
     Icon icon = null;
     if (myShowMode != SHOWMODE_TEXT_ONLY) {
       if (presentation.isEnabled())
@@ -133,13 +102,12 @@ class TBItemAnActionButton extends TBItemButton {
           icon = presentation.getIcon() == null ? null : IconLoader.getDisabledIcon(presentation.getIcon());
         }
       }
-      // if (icon == null) System.out.println("WARN: can't obtain icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
     }
 
     boolean isSelected = false;
     if (myAnAction instanceof Toggleable) {
       isSelected = Toggleable.isSelected(presentation);
-      if (myNativePeer != ID.NIL && myActionId != null && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
+      if (myNativePeer != ID.NIL && myActionId.startsWith("Console.Jdbc.Execute")) // permanent update of toggleable-buttons of DataGrip
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }
     if ("RunConfiguration".equals(myActionId)) {
@@ -155,7 +123,13 @@ class TBItemAnActionButton extends TBItemButton {
     final boolean hideText = myShowMode == SHOWMODE_IMAGE_ONLY || (myShowMode == SHOWMODE_IMAGE_ONLY_IF_PRESENTED && icon != null);
     final String text = hideText ? null : presentation.getText();
 
-    update(icon, text, isSelected, !presentation.isEnabled());
+    setIcon(icon);
+    setText(text);
+    setSelected(isSelected);
+    setDisabled(!presentation.isEnabled());
+    updateNativePeerIfNecessary();
+    if (myActionStats != null)
+      myActionStats.updateViewNs += System.nanoTime() - startNs;
   }
 
   private boolean _setLinkedVisibility(boolean visible) {
@@ -179,7 +153,7 @@ class TBItemAnActionButton extends TBItemButton {
     }
 
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
-    final Component src = _getComponent();
+    final Component src = getComponent();
     if (src == null) // KeyEvent can't have null source object
       return;
 
@@ -190,19 +164,7 @@ class TBItemAnActionButton extends TBItemButton {
       myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
   }
 
-  private Component _getComponent() { return myComponent != null ? myComponent : _getCurrentFocusComponent(); }
-
-  private static Component _getCurrentFocusComponent() {
-    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    Component focusOwner = focusManager.getFocusOwner();
-    if (focusOwner == null)
-      focusOwner = focusManager.getPermanentFocusOwner();
-    if (focusOwner == null) {
-      // LOG.info(String.format("WARNING: [%s:%s] _getCurrentFocusContext: null focus-owner, use focused window", myUid, myActionId));
-      return focusManager.getFocusedWindow();
-    }
-    return focusOwner;
-  }
+  Component getComponent() { return myComponent != null ? myComponent : BuildUtils.getCurrentFocusComponent(); }
 
   private static String _printPresentation(Presentation presentation) {
     StringBuilder sb = new StringBuilder();

@@ -67,8 +67,4 @@ public class Utils {
 
     return appId;
   }
-
-  static @Nullable ModalityState getCurrentModalityState() {
-    return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null;
-  }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,14 +18,16 @@ import java.util.List;
 
 class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
   private final int myWidth;
+  private final @Nullable TouchBarStats myStats;
   private final NSTLibrary.ScrubberCacheUpdater myUpdater;
   private List<ItemData> myItems;
   private int myNativeItemsCount;
 
   // NOTE: make scrubber with 'flexible' width when scrubWidth <= 0
-  TBItemScrubber(@NotNull String uid, @Nullable ItemListener listener, int scrubWidth) {
-    super(uid, listener);
+  TBItemScrubber(@Nullable ItemListener listener, @Nullable TouchBarStats stats, int scrubWidth) {
+    super("scrubber", listener);
     myWidth = scrubWidth;
+    myStats = stats;
     myUpdater = () -> {
       // NOTE: called from AppKit (when last cached item become visible)
       if (myItems == null || myItems.isEmpty())
@@ -53,10 +54,13 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     };
     if (icon instanceof EmptyIcon)
       icon = null;
-    else if (icon != null)
+    else if (icon != null) {
+      final long startNs = myStats != null ? System.nanoTime() : 0;
       icon = IconLoader.getDarkIcon(icon, true);
+      if (myStats != null)
+        myStats.incrementCounter(StatsCounters.iconLoadingRenderingDurationNs, System.nanoTime() - startNs);
+    }
     myItems.add(new ItemData(icon, text, nativeAction));
-    updateNativePeer();
     return this;
   }
 
@@ -91,7 +95,7 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
   @Override
   protected ID _createNativePeer() {
     myNativeItemsCount = myItems == null || myItems.isEmpty() ? 0 : Math.min(30, myItems.size());
-    final ID result = NST.createScrubber(myUid, myWidth, this, myUpdater, myItems, myNativeItemsCount);
+    final ID result = NST.createScrubber(getUid(), myWidth, this, myUpdater, myItems, myNativeItemsCount, myStats);
     NST.enableScrubberItems(result, _getDisabledIndices(), false);
     return result;
   }

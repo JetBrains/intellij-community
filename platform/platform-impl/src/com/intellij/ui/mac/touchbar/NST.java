@@ -133,8 +133,11 @@ public class NST {
     return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int visibleItems) {
+  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int visibleItems, @Nullable TouchBarStats stats) {
+    final long startNs = stats != null ? System.nanoTime() : 0;
     final Memory mem = items == null ? null : _packItems(items, 0, items.size(), visibleItems);
+    if (stats != null)
+      stats.incrementCounter(StatsCounters.iconLoadingRenderingDurationNs, System.nanoTime() - startNs);
     final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
     return scrubberNativePeer;
   }
@@ -149,11 +152,17 @@ public class NST {
                                   int buttonFlags,
                                   String text,
                                   Icon icon,
-                                  NSTLibrary.Action action) {
+                                  NSTLibrary.Action action,
+                                  @Nullable TouchBarStats.AnActionStats stats) {
+    final long startNs = stats != null && icon != null ? System.nanoTime() : 0;
     final BufferedImage img = _getImg4ByteRGBA(icon);
     final Memory raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
+    if (stats != null && icon != null) {
+      stats.iconUpdateIconRasterCount++;
+      stats.iconRenderingDurationNs += System.nanoTime() - startNs;
+    }
     ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action); // creates autorelease-pool internally
   }
 

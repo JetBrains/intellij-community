@@ -2,9 +2,12 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.impl.Utils.ActionGroupVisitor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -54,10 +57,70 @@ class BuildUtils {
   private static final int BUTTON_BORDER = 16;
   private static final int BUTTON_IMAGE_MARGIN = 2;
 
+  static @NotNull TouchBar buildFromCustomizedGroup(@NotNull String touchbarName, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
+    final @NotNull String groupId = getActionId(customizedGroup);
+
+    final TouchBar result = new TouchBar(touchbarName, replaceEsc, false, false, customizedGroup, groupId + "_");
+
+    final String filterPrefix = groupId + "_";
+    final String defaultOptCtx = groupId + "OptionalGroup";
+    result.setDefaultOptionalContextName(defaultOptCtx);
+    final Customizer customizer = new Customizer() {
+      @Override
+      public void process(@NotNull INodeInfo ni, @NotNull TBItemAnActionButton butt) {
+        super.process(ni, butt);
+        if (defaultOptCtx.equals(ni.getParentGroupID()))
+          butt.myOptionalContextName = defaultOptCtx;
+      }
+    };
+    addActionGroupButtons(result, customizedGroup, filterPrefix, customizer);
+    result.selectVisibleItemsToShow();
+    return result;
+  }
+
+  static @NotNull TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup actions, boolean replaceEsc, boolean emulateESC) {
+    final TouchbarDataKeys.ActionDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+    if (groupDesc != null && !groupDesc.isReplaceEsc())
+      replaceEsc = false;
+    final TouchBar result = new TouchBar(touchbarName, replaceEsc, false, emulateESC, actions, null);
+    addActionGroup(result, actions);
+    return result;
+  }
+
+  static void addActionGroup(@NotNull TouchBar result, @NotNull ActionGroup actions) {
+    final @Nullable ModalityState ms = getCurrentModalityState();
+    final @Nullable TouchbarDataKeys.ActionDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+    final Customizer customizer = new Customizer(groupDesc, ms);
+    addActionGroup(result, actions, customizer);
+  }
+
+  static void addActionGroup(@NotNull TouchBar result, @NotNull ActionGroup actions, @NotNull Customizer customizer) {
+    addActionGroupButtons(result, actions, null, customizer);
+    result.selectVisibleItemsToShow();
+  }
+
   static void addActionGroupButtons(@NotNull TouchBar out, @NotNull ActionGroup actionGroup, @Nullable String filterGroupPrefix, @Nullable Customizer customizer) {
-    _traverse(actionGroup, new GroupVisitor(out, filterGroupPrefix, customizer));
+    out.softClear();
+    GroupVisitor visitor = new GroupVisitor(out, filterGroupPrefix, customizer, out.getStats());
+
+    final DataContext dctx = DataManager.getInstance().getDataContext(getCurrentFocusComponent());
+    Utils.expandActionGroup(false, actionGroup, out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL, visitor);
     if (customizer != null)
       customizer.finish();
+  }
+
+  static @Nullable ModalityState getCurrentModalityState() { return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null; }
+
+  static @Nullable Component getCurrentFocusComponent() {
+    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    Component focusOwner = focusManager.getFocusOwner();
+    if (focusOwner == null)
+      focusOwner = focusManager.getPermanentFocusOwner();
+    if (focusOwner == null) {
+      // LOG.info(String.format("WARNING: [%s:%s] _getCurrentFocusContext: null focus-owner, use focused window", myUid, myActionId));
+      return focusManager.getFocusedWindow();
+    }
+    return focusOwner;
   }
 
   static ActionGroup getCustomizedGroup(@NotNull String barId) {
@@ -68,11 +131,7 @@ class BuildUtils {
     for (AnAction act : kids) {
       if (!(act instanceof ActionGroup))
         continue;
-      final String gid = getActionId(act);
-      if (gid == null || gid.isEmpty()) {
-        LOG.error("unregistered ActionGroup: " + act);
-        continue;
-      }
+      final @NotNull String gid = getActionId(act);
       if (gid.equals(childGroupId))
         return (ActionGroup)act;
     }
@@ -81,22 +140,14 @@ class BuildUtils {
   }
 
   static Map<String, ActionGroup> getAltLayouts(@NotNull ActionGroup context) {
-    final String ctxId = getActionId(context);
-    if (ctxId == null || ctxId.isEmpty()) {
-      LOG.error("can't load alt-layout for unregistered ActionGroup: " + context);
-      return null;
-    }
+    final @NotNull String ctxId = getActionId(context);
 
     Map<String, ActionGroup> result = new HashMap<>();
     final AnAction[] kids = context.getChildren(null);
     for (AnAction act : kids) {
       if (!(act instanceof ActionGroup))
         continue;
-      final String gid = getActionId(act);
-      if (gid == null || gid.isEmpty()) {
-        LOG.info("skip loading alt-layout for unregistered ActionGroup: " + act + ", child of " + context);
-        continue;
-      }
+      final @NotNull String gid = getActionId(act);
       if (gid.startsWith(ctxId + "_"))
         result.put(gid.substring(ctxId.length() + 1), (ActionGroup)act);
     }
@@ -105,7 +156,7 @@ class BuildUtils {
   }
 
   static void addDialogButtons(@NotNull TouchBar out, @Nullable Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons, @Nullable Map<Component, ActionGroup> actions) {
-    final ModalityState ms = Utils.getCurrentModalityState();
+    final ModalityState ms = getCurrentModalityState();
     final boolean hasSouthPanelButtons = unorderedButtons != null && !unorderedButtons.isEmpty();
     final byte[] prio = {-1};
 
@@ -154,7 +205,7 @@ class BuildUtils {
               butt.setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
           }
         };
-        TouchBar.addActionGroup(out, ag, customizer);
+        addActionGroup(out, ag, customizer);
 
         ag.addPropertyChangeListener(new PropertyChangeListener() {
           @Override
@@ -178,7 +229,7 @@ class BuildUtils {
                 if (curr.size() != prev.size()) {
                   out.getItemsContainer().remove(tbi -> DIALOG_ACTIONS_CONTEXT.equals(tbi.myOptionalContextName));
                   // System.out.printf("mismatch sizes of prev %d and cur %d actions inside: %s\n", prev.size(), curr.size(), out);
-                  TouchBar.addActionGroup(out, ag, customizer);
+                  addActionGroup(out, ag, customizer);
                 } else {
                   out.getItemsContainer().forEachDeep(tbi -> {
                     if (!(tbi instanceof TBItemAnActionButton))
@@ -201,7 +252,7 @@ class BuildUtils {
                 return;
 
               // System.out.println("prev actions is null, add all new actions into: " + out);
-              TouchBar.addActionGroup(out, ag, customizer);
+              addActionGroup(out, ag, customizer);
             }
             out.updateActionItems();
           }
@@ -221,10 +272,14 @@ class BuildUtils {
         final AnAction anAct = _createAnAction(jb.getAction(), jb, false);
         if (anAct == null)
           continue;
-        final TBItemButton tbb = desc.isMainGroup() ?
-                                 group.addAnActionButton(anAct).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(jb) :
-                                 out.addAnActionButton(anAct, gr).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(jb)
-                                    .setPriority(--prio[0]);
+        final TBItemAnActionButton tbb = out.createActionButton(anAct);
+        tbb.setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(jb);
+        if (desc.isMainGroup()) {
+          group.addItem(tbb);
+        } else {
+          out.getItemsContainer().addItem(tbb, gr);
+          tbb.setPriority(--prio[0]);
+        }
 
         boolean isDefault = desc.isDefault();
         if (!isDefault) {
@@ -243,7 +298,7 @@ class BuildUtils {
 
   // creates releaseOnClose touchbar
   static TouchBar createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
-    final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, true, false, true);
+    final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, true, false, true, null, null);
 
     final Application app = ApplicationManager.getApplication();
     final ModalityState ms = app != null ? LaterInvocator.getCurrentModalityState() : null;
@@ -314,8 +369,8 @@ class BuildUtils {
 
   // creates releaseOnClose touchbar
   static TouchBar createStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
-    final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true);
-    tb.addButton().setText("Stop All").setActionOnEDT(() -> stoppableDescriptors.forEach((pair) -> pair.second.run()));
+    final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true, null, null);
+    tb.addButton().setText("Stop All").setAction(() -> stoppableDescriptors.forEach((pair) -> pair.second.run()), true, null);
     final TBItemScrubber stopScrubber = tb.addScrubber();
     for (Pair<RunContentDescriptor, Runnable> sd : stoppableDescriptors)
       stopScrubber.addItem(sd.first.getIcon(), sd.first.getDisplayName(), sd.second);
@@ -323,73 +378,102 @@ class BuildUtils {
     return tb;
   }
 
-  static class GroupVisitor implements INodeInfo {
+  static class GroupVisitor implements INodeInfo, ActionGroupVisitor {
     private final @NotNull TouchBar myOut;
     private final @Nullable String myFilterByPrefix;
     private final @Nullable Customizer myCustomizer;
 
     private int mySeparatorCounter = 0;
     private final LinkedList<InternalNode> myNodePath = new LinkedList<>();
+    private final List<InternalNode> myVisitedNodes = new ArrayList<>();
+    private InternalNodeWithContainer myRoot;
 
-    GroupVisitor(@NotNull TouchBar out, @Nullable String filterByPrefix, @Nullable Customizer customizer) {
+    private final @Nullable TouchBarStats myStats;
+
+    GroupVisitor(@NotNull TouchBar out, @Nullable String filterByPrefix, @Nullable Customizer customizer, @Nullable TouchBarStats stats) {
       this.myOut = out;
       this.myFilterByPrefix = filterByPrefix;
       this.myCustomizer = customizer;
+      this.myStats = stats;
     }
 
-    boolean enterNode(@NotNull ActionGroup groupNode) {
-      final String groupName = getActionId(groupNode);
-      if (myFilterByPrefix != null && groupName != null && groupName.startsWith(myFilterByPrefix))
+    @Override
+    public Component getCustomComponent(@NotNull AnAction action) {
+      final TouchbarDataKeys.ActionDesc actionDesc = action.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      return actionDesc != null ? actionDesc.getContextComponent() : null;
+    }
+
+    private @Nullable TouchBarStats.AnActionStats getActionStats(@NotNull String actId) {
+      return myStats == null ? null : myStats.getActionStats(actId);
+    }
+
+    @Override
+    public boolean enterNode(@NotNull ActionGroup groupNode) {
+      final @NotNull String groupId = getActionId(groupNode);
+      if (myFilterByPrefix != null && groupId.startsWith(myFilterByPrefix))
         return false;
 
-      final TouchbarDataKeys.ActionDesc groupDesc = groupNode.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
-      final InternalNode node = new InternalNode(groupNode, groupName, groupDesc);
-      if (groupDesc != null && groupDesc.isMainGroup()) {
-        final TBItemGroup group = myOut.addGroup();
-        node.groupContainer = group.getContainer();
-        myOut.setPrincipal(group);
+      if (myRoot == null) {
+        myRoot = new InternalNodeWithContainer(myOut.getItemsContainer(), groupNode, groupId, null, getActionStats(groupId));
       }
 
+      final TouchbarDataKeys.ActionDesc groupDesc = groupNode.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      InternalNode node = null;
+      if (groupDesc != null && groupDesc.isMainGroup()) {
+        @NotNull InternalNodeWithContainer currNode = _getCurrentNodeContainer();
+        final TBItemGroup group = myOut.createGroup();
+        currNode.container.addItem(group);
+        myOut.setPrincipal(group);
+        node = new InternalNodeWithContainer(group.getContainer(), groupNode, groupId, groupDesc, getActionStats(groupId));
+      }
+
+      if (node == null)
+        node = new InternalNode(groupNode, groupId, groupDesc, getActionStats(groupId));
       myNodePath.add(node);
+      myVisitedNodes.add(node);
       return true;
     }
 
-    void visitLeaf(AnAction act) {
-      ItemsContainer out = _getParentContainer();
-      if (out == null)
-        out = myOut.getItemsContainer();
+    @Override
+    public void visitLeaf(@NotNull AnAction act) {
+      @NotNull InternalNodeWithContainer currNode = _getCurrentNodeContainer();
 
       if (act instanceof Separator) {
         final Separator sep = (Separator)act;
         int increment = 1;
         if (sep.getText() != null) {
           if (sep.getText().equals(ourSmallSeparatorText))
-            out.addSpacing(false);
+            currNode.container.addSpacing(false);
           else if (sep.getText().equals(ourLargeSeparatorText))
-            out.addSpacing(true);
+            currNode.container.addSpacing(true);
           else if (sep.getText().equals(ourFlexibleSeparatorText))
-            out.addFlexibleSpacing();
+            currNode.container.addFlexibleSpacing();
         } else {
           mySeparatorCounter += increment;
         }
-        return;
-      }
-      if (mySeparatorCounter > 0) {
-        if (mySeparatorCounter == 1) out.addSpacing(false);
-        else if (mySeparatorCounter == 2) out.addSpacing(true);
-        else out.addFlexibleSpacing();
 
+        return;
+      } // separator
+
+      if (mySeparatorCounter > 0) {
+        if (mySeparatorCounter == 1) currNode.container.addSpacing(false);
+        else if (mySeparatorCounter == 2) currNode.container.addSpacing(true);
+        else currNode.container.addFlexibleSpacing();
         mySeparatorCounter = 0;
       }
 
-      final TBItemAnActionButton butt = out.addAnActionButton(act);
+      final TBItemAnActionButton butt = myOut.createActionButton(act);
+      currNode.container.addItem(butt);
+
       if (myCustomizer != null)
         myCustomizer.process(this, butt);
     }
 
-    void leaveNode(ActionGroup groupNode) { myNodePath.removeLast(); }
-
-    private @Nullable ItemsContainer _getParentContainer() { return myNodePath.isEmpty() ? null : myNodePath.getLast().groupContainer; }
+    @Override
+    public void leaveNode() {
+      final InternalNode leaved = myNodePath.removeLast();
+      leaved.leaveTimeNs = System.nanoTime();
+    }
 
     @Override
     public boolean isParentCompact() { return !myNodePath.isEmpty() && myNodePath.getLast().group instanceof CompactActionGroup; }
@@ -408,18 +492,49 @@ class BuildUtils {
       return myNodePath.getLast().groupDesc;
     }
 
+    private @NotNull InternalNodeWithContainer _getCurrentNodeContainer() {
+      if (myNodePath.isEmpty())
+        return myRoot;
+
+      Iterator<InternalNode> di = myNodePath.descendingIterator();
+      while (di.hasNext()) {
+        InternalNode in = di.next();
+        if (in instanceof InternalNodeWithContainer)
+          return (InternalNodeWithContainer)in;
+      }
+      return myRoot;
+    }
+
     private static class InternalNode {
       final @NotNull ActionGroup group;
-      final @Nullable String groupID;
-      final TouchbarDataKeys.ActionDesc groupDesc;
+      final @NotNull String groupID;
+      final @Nullable TouchbarDataKeys.ActionDesc groupDesc;
+      final @Nullable TouchBarStats.AnActionStats myActionStats;
 
-      ItemsContainer groupContainer;
+      final long bornTimeNs;
+      long leaveTimeNs;
 
-      InternalNode(@NotNull ActionGroup group, @Nullable String groupID, TouchbarDataKeys.ActionDesc groupDesc) {
+      InternalNode(@NotNull ActionGroup group, @NotNull String groupID, @Nullable TouchbarDataKeys.ActionDesc groupDesc, @Nullable TouchBarStats.AnActionStats stats) {
         this.group = group;
         this.groupID = groupID;
         this.groupDesc = groupDesc;
+        this.myActionStats = stats;
+
+        bornTimeNs = System.nanoTime();
       }
+    }
+  }
+
+  private static class InternalNodeWithContainer extends GroupVisitor.InternalNode {
+    final @NotNull ItemsContainer container;
+
+    InternalNodeWithContainer(@NotNull ItemsContainer container,
+                              @NotNull ActionGroup group,
+                              @NotNull String groupID,
+                              @Nullable TouchbarDataKeys.ActionDesc groupDesc,
+                              @Nullable TouchBarStats.AnActionStats stats) {
+      super(group, groupID, groupDesc, stats);
+      this.container = container;
     }
   }
 
@@ -452,8 +567,7 @@ class BuildUtils {
     }
 
     void process(@NotNull INodeInfo ni, @NotNull TBItemAnActionButton butt) {
-      final String actId = getActionId(butt.getAnAction());
-      // if (actId == null || actId.isEmpty())   System.out.println("unregistered action: " + act);
+      final @NotNull String actId = getActionId(butt.getAnAction());
 
       final boolean isRunConfigPopover = "RunConfiguration".equals(actId);
       final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId);
@@ -484,50 +598,17 @@ class BuildUtils {
     }
   }
 
-  static @Nullable String getActionId(AnAction act) {
+  static @NotNull String getActionId(@NotNull AnAction act) {
     if (ApplicationManager.getApplication() == null)
-      return null;
-    return ActionManager.getInstance().getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
+      return act.toString();
+    final String actId = ActionManager.getInstance().getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
+    return actId == null ? act.toString() : actId;
   }
 
   private static void _setDialogLayout(TBItemButton button) {
     if (button == null)
       return;
     button.setLayout(BUTTON_MIN_WIDTH_DLG, NSTLibrary.LAYOUT_FLAG_MIN_WIDTH, BUTTON_IMAGE_MARGIN, BUTTON_BORDER);
-  }
-
-  private static void _traverse(@NotNull ActionGroup group, @NotNull GroupVisitor visitor) {
-    String groupId = getActionId(group);
-    if (groupId == null) groupId = "unregistered";
-
-    final AnAction[] children = group.getChildren(null);
-    for (int i = 0; i < children.length; i++) {
-      AnAction child = children[i];
-      if (child == null) {
-        LOG.error(String.format("action is null: i=%d, group='%s', group id='%s'",i, group.toString(), groupId));
-        continue;
-      }
-
-      if (child instanceof ActionGroup) {
-        final @NotNull ActionGroup childGroup = (ActionGroup)child;
-        final boolean visitNode = visitor.enterNode(childGroup);
-        if (!visitNode) {
-          // System.out.printf("filter child group: i=%d, childId='%s', group='%s', group id='%s'\n", i, _getActionId(child), group.toString(), groupId);
-          continue;
-        }
-
-        try {
-          if (childGroup.isPopup()) {
-            // System.out.println(String.format("add child with isPopup=true: i=%d, group='%s', group id='%s'", i, group.toString(), groupId));
-            visitor.visitLeaf(child);
-          } else
-            _traverse((ActionGroup)child, visitor);
-        } finally {
-          visitor.leaveNode(childGroup);
-        }
-      } else
-        visitor.visitLeaf(child);
-    }
   }
 
   private static AnAction _createAnAction(@Nullable Action action, @NotNull JButton fromButton, boolean useTextFromAction /*for optional buttons*/) {

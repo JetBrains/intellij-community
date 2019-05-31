@@ -208,11 +208,11 @@ class ProjectData {
           // System.out.println("ERROR: zero mask for modId="+modId);
           continue;
         }
-        alts.put(mask, TouchBar.buildFromCustomizedGroup(type.name() + "_" + modId, strmod2alt.get(modId), replaceEsc));
+        alts.put(mask, BuildUtils.buildFromCustomizedGroup(type.name() + "_" + modId, strmod2alt.get(modId), replaceEsc));
       }
     }
 
-    container.set(TouchBar.buildFromCustomizedGroup(type.name(), mainLayout, replaceEsc), alts);
+    container.set(BuildUtils.buildFromCustomizedGroup(type.name(), mainLayout, replaceEsc), alts);
   }
 
   void releaseAll() {
