@@ -57,7 +57,6 @@ public final class SVGLoader {
   };
 
   private final TranscoderInput myTranscoderInput;
-  private final double myScale;
   private final double myOverriddenWidth;
   private final double myOverriddenHeight;
 
@@ -75,7 +74,7 @@ public final class SVGLoader {
 
   static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable Dimension2D docSize /*OUT*/) throws IOException {
     try {
-      MyTranscoder transcoder = new SVGLoader(url, stream, scale).createImage();
+      MyTranscoder transcoder = new SVGLoader(url, stream).createImage(scale);
       if (docSize != null) {
         docSize.setSize(transcoder.getOrigDocWidth(), transcoder.getOrigDocHeight());
       }
@@ -95,7 +94,7 @@ public final class SVGLoader {
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
     try {
       double s = ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE);
-      return new SVGLoader(url, stream, width * s, height * s, 1).createImage().getImage();
+      return new SVGLoader(url, stream, width * s, height * s).createImage(1).getImage();
     }
     catch (TranscoderException ex) {
       throw new IOException(ex);
@@ -148,23 +147,22 @@ public final class SVGLoader {
       }
       else if (checkClosingBracket && ch == '>') {
         buffer.write(new byte[]{'<', '/', 's', 'v', 'g', '>'});
-        return new SVGLoader(url, new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size()), scale).getDocumentSize();
+        return new SVGLoader(url, new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size())).getDocumentSize(scale);
       }
     }
     return new Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
   }
 
   public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
-    SVGLoader loader = new SVGLoader(url, stream, ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE));
-    Dimension2D size = loader.getDocumentSize();
+    Dimension2D size = new SVGLoader(url, stream).getDocumentSize(ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE));
     return Math.min(ICON_MAX_SIZE.get() / size.getWidth(), ICON_MAX_SIZE.get() / size.getHeight());
   }
 
-  private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
-    this(url, stream, -1, -1, scale);
+  private SVGLoader(@Nullable URL url, InputStream stream) throws IOException {
+    this(url, stream, -1, -1);
   }
 
-  private SVGLoader(@Nullable URL url, InputStream stream, double width, double height, double scale) throws IOException {
+  private SVGLoader(@Nullable URL url, InputStream stream, double width, double height) throws IOException {
     String uri = null;
     try {
       if (url != null && "jar".equals(url.getProtocol()) && stream != null) {
@@ -183,7 +181,6 @@ public final class SVGLoader {
     myTranscoderInput = new TranscoderInput(document);
     myOverriddenWidth = width;
     myOverriddenHeight = height;
-    myScale = scale;
   }
 
   private static void patchColors(URL url, Document document) {
@@ -198,8 +195,8 @@ public final class SVGLoader {
   }
 
   @NotNull
-  private MyTranscoder createImage() throws TranscoderException {
-    MyTranscoder transcoder = new MyTranscoder(myScale);
+  private MyTranscoder createImage(double scale) throws TranscoderException {
+    MyTranscoder transcoder = new MyTranscoder(scale);
     if (myOverriddenWidth != -1) {
       transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(myOverriddenWidth));
     }
@@ -212,12 +209,12 @@ public final class SVGLoader {
     return transcoder;
   }
 
-  private Dimension2D getDocumentSize() {
+  private Dimension2D getDocumentSize(double scale) {
     SVGOMDocument document = (SVGOMDocument)myTranscoderInput.getDocument();
-    BridgeContext ctx = new MyTranscoder(myScale).createBridgeContext(document);
+    BridgeContext ctx = new MyTranscoder(scale).createBridgeContext(document);
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();
-    size.setSize(size.getWidth() * myScale, size.getHeight() * myScale);
+    size.setSize(size.getWidth() * scale, size.getHeight() * scale);
     return size;
   }
 
