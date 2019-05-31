@@ -97,6 +97,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       for (CodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
         addCustomSettings(provider.createCustomSettings(this));
       }
+
+      // Android Studio: also apply our predefined Android code styles.
+      for (PredefinedCodeStyle style : PredefinedCodeStyle.EP_NAME.getExtensionList()) {
+        if ("Android".equals(style.getName())) {
+          style.apply(this);
+        }
+      }
     }
   }
 
