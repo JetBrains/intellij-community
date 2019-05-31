@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class AsyncEventSupport {
@@ -57,7 +58,7 @@ public class AsyncEventSupport {
     if (events.isEmpty()) return Collections.emptyList();
 
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
-    for (AsyncFileListener listener : EP_NAME.getExtensionList()) {
+    runAsyncListeners((listener) -> {
       ProgressManager.checkCanceled();
       try {
         if (listener.needsReadAction()) {
@@ -72,8 +73,15 @@ public class AsyncEventSupport {
       catch (Throwable e) {
         LOG.error(e);
       }
-    }
+    });
     return appliers;
+  }
+  
+  private static void runAsyncListeners(@NotNull Consumer<AsyncFileListener> listenerAction) {
+    for (AsyncFileListener listener : EP_NAME.getExtensionList()) {
+      listenerAction.accept(listener);
+    }
+    VirtualFileManager.getInstance().runAsyncListeners(listenerAction);
   }
 
   private static void beforeVfsChange(List<AsyncFileListener.ChangeApplier> appliers) {

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
@@ -41,6 +42,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   private final VirtualFileSystem[] myPhysicalFileSystems;
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<AsyncFileListener> myAsyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
   public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems) {
@@ -193,6 +195,22 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.remove(listener);
+  }
+
+  @Override
+  public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
+    myAsyncFileListeners.add(listener);
+    Disposer.register(parentDisposable, () -> removeAsyncFileListener(listener));
+  }
+
+  @Override
+  public void removeAsyncFileListener(@NotNull AsyncFileListener listener) {
+    myAsyncFileListeners.remove(listener);
+  }
+
+  @Override
+  public void runAsyncListeners(@NotNull Consumer<AsyncFileListener> listenerAction) {
+    myAsyncFileListeners.forEach(listenerAction);
   }
 
   @Override
