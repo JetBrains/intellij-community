@@ -145,11 +145,6 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     Disposer.register(getTestRootDisposable(), () -> Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName()));
   }
 
-  protected <T> void registerApplicationService(Class<T> aClass, T object) {
-    getApplication().registerService(aClass, object);
-    Disposer.register(getTestRootDisposable(), () -> getApplication().getPicoContainer().unregisterComponent(aClass.getName()));
-  }
-
   @NotNull
   public MockProjectEx getProject() {
     return myProject;
