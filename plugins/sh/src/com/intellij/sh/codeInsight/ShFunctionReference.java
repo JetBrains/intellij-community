@@ -8,10 +8,12 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.sh.psi.ShFunctionName;
 import com.intellij.sh.psi.ShGenericCommandDirective;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
@@ -29,18 +31,57 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
     if (myFile == null) return null;
     myExecutionContext = new LinkedHashMap<>();
 
-    PsiElement target = checkChildren(myFile);
+    // Execution context should be build, not check inner function if it was not called
+    PsiElement target = checkChildren(myFile, false);
     if (target != null) return target;
     return checkUnvisitedMethods();
   }
 
-  private PsiElement checkChildren(PsiElement element) {
-    if (element == null) return null;
-    for (PsiElement child : element.getChildren()) {
-      PsiElement target = collectStatistic(skipUnnecessaryNodes(child));
+  @Nullable
+  private PsiElement checkUnvisitedMethods() {
+    List<FunctionContext> notVisitedFunctions = ContainerUtil.filter(myExecutionContext.values(), it -> !it.visited);
+    // In this case we should visit all not visited function one by one with checking inner function also
+    for (FunctionContext functionContext : notVisitedFunctions) {
+      functionContext.visited = true;
+      PsiElement target = checkChildren(functionContext.function, true);
       if (target != null) return target;
     }
     return null;
+  }
+
+  private PsiElement checkChildren(PsiElement element, boolean visitInnerFunctions) {
+    if (element == null) return null;
+    for (PsiElement child : element.getChildren()) {
+      PsiElement target = buildExecutionContext(skipUnnecessaryNodes(child), visitInnerFunctions);
+      if (target != null) return target;
+    }
+    return null;
+  }
+
+  private PsiElement buildExecutionContext(PsiElement element, boolean visitInnerFunctions) {
+    if (element == null) return null;
+    if (element instanceof ShFunctionDefinition) {
+      // If we meet function definition, should add it to the context like a not visited node
+      return handleFunction((ShFunctionDefinition)element, visitInnerFunctions);
+    }
+    if (element instanceof ShGenericCommandDirective) {
+      // Check if command linked to function which we searching for. If linked function is not visited, we should check
+      // all its entire function and add them to the execution context
+      if (myExecutionContext.containsKey(element.getText())) {
+        FunctionContext functionContext = myExecutionContext.get(element.getText());
+        if (visitInnerFunctions) {
+          if (element == myElement && functionContext.visited) return functionContext.function.getFunctionName();
+        } else {
+          if (element == myElement) return functionContext.function.getFunctionName();
+          if (!functionContext.visited) {
+            functionContext.visited = true;
+            PsiElement target = checkChildren(functionContext.function, visitInnerFunctions);
+            if (target != null) return target;
+          }
+        }
+      }
+    }
+    return checkChildren(element, visitInnerFunctions);
   }
 
   private static PsiElement skipUnnecessaryNodes(@NotNull PsiElement element) {
@@ -55,51 +96,14 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
     return element.getChildren().length == 1 && !(element instanceof ShGenericCommandDirective || element instanceof ShFunctionDefinition);
   }
 
-  private PsiElement collectStatistic(PsiElement element) {
-    if (element == null) return null;
-    if (element instanceof ShFunctionDefinition) {
-      // If we meet function definition, should add it to the context like a not visited node
-      handleFunction((ShFunctionDefinition)element);
-      return null;
-    }
-    if (element instanceof ShGenericCommandDirective) {
-      // Check if command linked to function which we searching for. If linked function is not visited, we should check
-      // all its entire function and add them to the execution context
-      if (myExecutionContext.containsKey(element.getText())) {
-        FunctionContext functionContext = myExecutionContext.get(element.getText());
-        if (element == myElement) return functionContext.function.getFunctionName();
-        if (!functionContext.visited) {
-          functionContext.visited = true;
-          PsiElement target = checkChildren(functionContext.function);
-          if (target != null) return target;
-        }
-      }
-    }
-    return checkChildren(element);
-  }
-
-  private void handleFunction(@NotNull ShFunctionDefinition functionDefinition) {
+  private PsiElement handleFunction(@NotNull ShFunctionDefinition functionDefinition, boolean visitInnerFunctions) {
     ShFunctionName functionName = functionDefinition.getFunctionName();
     assert functionName != null;
-    myExecutionContext.put(functionName.getText(), new FunctionContext(functionDefinition));
-  }
-
-  @Nullable
-  private PsiElement checkUnvisitedMethods() {
-    while (containsUnvisitedMethods()) {
-      for (FunctionContext functionContext : myExecutionContext.values()) {
-        if (!functionContext.visited) {
-          functionContext.visited = true;
-          PsiElement target = checkChildren(functionContext.function);
-          if (target != null) return target;
-        }
-      }
-    }
-    return null;
-  }
-
-  private boolean containsUnvisitedMethods() {
-    return !myExecutionContext.values().stream().allMatch(it -> it.visited);
+    FunctionContext functionContext = new FunctionContext(functionDefinition);
+    myExecutionContext.put(functionName.getText(), functionContext);
+    if (!visitInnerFunctions) return null;
+    functionContext.visited = true;
+    return checkChildren(functionDefinition, visitInnerFunctions);
   }
 
   private static class FunctionContext {

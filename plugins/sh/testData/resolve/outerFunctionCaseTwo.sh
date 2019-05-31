@@ -6,5 +6,3 @@ exists() {
   }
   <caret>xecho
 }
-
-

@@ -14,43 +14,39 @@ import java.util.Collection;
 import java.util.function.Supplier;
 
 public class ShFunctionResolverTest extends LightCodeInsightFixtureTestCase {
+  private final Supplier<PsiElement> getLastFunction = () -> {
+    Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
+    return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
+  };
+  private final Supplier<PsiElement> getFirstFunction = () -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class);
+
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("sh") + "/testData/resolve/";
   }
 
   public void testSimpleFunction() {
-    doTest(() -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class));
+    doTest(getFirstFunction);
   }
 
   public void testFromFunction() {
-    doTest(() -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class));
+    doTest(getFirstFunction);
   }
 
   public void testRecursiveFunction() {
-    doTest(() -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class));
+    doTest(getFirstFunction);
   }
 
   public void testInnerFunction() {
-    doTest(() -> {
-      Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
-      return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
-    });
+    doTest(getLastFunction);
   }
 
   public void testFunctionCaseOne() {
-    doTest(() -> {
-      Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
-      return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
-    });
+    doTest(getLastFunction);
   }
 
   public void testFunctionCaseTwo() {
-    doTest(() -> {
-      //In this case we assume that functions called from the bottom of the file, if they even don't have a call (to show possible reference)
-      Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
-      return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
-    });
+    doNullTest();
   }
 
   public void testFunctionCaseThree() {
@@ -58,11 +54,11 @@ public class ShFunctionResolverTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testOuterFunctionCaseOne() {
-    doTest(() -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class));
+    doTest(getFirstFunction);
   }
 
   public void testOuterFunctionCaseTwo() {
-    doNullTest();
+    doTest(getLastFunction);
   }
 
   public void testFunctionUnavailable() {
@@ -70,25 +66,46 @@ public class ShFunctionResolverTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testOverridingFunctionCaseOne() {
-    doTest(() -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class));
+    doTest(getFirstFunction);
   }
 
   public void testOverridingFunctionCaseTwo() {
-    doTest(() -> {
-      Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
-      return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
-    });
+    doTest(getLastFunction);
   }
 
   public void testOverridingFunctionCaseThree() {
-    doTest(() -> {
-      Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
-      return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
-    });
+    doTest(getLastFunction);
   }
 
   public void testFunctionCommandSubstitution() {
-    doTest(() -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class));
+    doTest(getFirstFunction);
+  }
+
+  public void testCaseOne() {
+    doTest(getLastFunction);
+  }
+
+  public void testCaseTwo() {
+    doNullTest();
+  }
+
+  public void testCaseThree() {
+    doNullTest();
+  }
+
+  public void testCaseFour() {
+    doNullTest();
+  }
+
+  public void testCaseFive() {
+    doTest(getFirstFunction);
+  }
+
+  public void testCaseSix() {
+    doTest(() -> {
+      Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
+      return new ArrayList<>(functionNames).get(1);
+    });
   }
 
   private void configFile() {
