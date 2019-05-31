@@ -22,12 +22,6 @@ public final class CoreIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon getIcon(@NotNull String path) {
-    return IconLoader.getIcon(path);
-  }
-
-  @NotNull
-  @Override
   public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
     return IconLoader.getIcon(path, aClass);
   }

@@ -17,9 +17,6 @@ public interface IconManager {
   }
 
   @NotNull
-  Icon getIcon(@NotNull String path);
-
-  @NotNull
   Icon getIcon(@NotNull String path, @NotNull Class aClass);
 
   @NotNull
@@ -68,12 +65,6 @@ class Holder {
 }
 
 final class DummyIconManager implements IconManager {
-  @NotNull
-  @Override
-  public Icon getIcon(@NotNull String path) {
-    return DummyIcon.INSTANCE;
-  }
-
   @NotNull
   @Override
   public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
