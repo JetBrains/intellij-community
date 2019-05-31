@@ -117,7 +117,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<>();
   private final List<AnActionListener> myActionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<ActionPopupMenuListener> myActionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final KeymapManagerEx myKeymapManager;
   private final List<Object/*ActionPopupMenuImpl|JBPopup*/> myPopups = new ArrayList<>();
   private MyTimer myTimer;
   private int myRegisteredActionsCount;
@@ -129,9 +128,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private final AnActionListener messageBusPublisher;
   private int myAnonymousGroupIdCounter;
 
-  ActionManagerImpl(@NotNull KeymapManager keymapManager) {
-    myKeymapManager = (KeymapManagerEx)keymapManager;
-
+  ActionManagerImpl() {
     registerPluginActions();
     messageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
@@ -316,7 +313,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
+  private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId, @NotNull KeymapManager keymapManager) {
     String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
     if (keystrokeString == null || keystrokeString.trim().isEmpty()) {
       reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
@@ -336,7 +333,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
-    Keymap keymap = myKeymapManager.getKeymap(keymapName);
+    Keymap keymap = keymapManager.getKeymap(keymapName);
     if (keymap == null) {
       reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
@@ -459,7 +456,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   @NotNull
   @Override
   public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
-    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myKeymapManager);
+    return new ActionToolbarImpl(place, group, horizontal, decorateButtons, KeymapManagerEx.getInstanceEx());
   }
 
   private void registerPluginActions() {
@@ -467,7 +464,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (IdeaPluginDescriptor plugin : plugins) {
       final List<Element> elementList = plugin.getAndClearActionDescriptionElements();
       if (elementList != null) {
-        long startTime = System.nanoTime();
+        long startTime = StartUpMeasurer.getCurrentTime();
         for (Element e : elementList) {
           processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
         }
@@ -600,16 +597,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return presentation;
     });
 
+    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     // process all links and key bindings if any
     for (Element e : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(e.getName())) {
         processAddToGroupNode(stub, e, pluginId, isSecondary(e));
       }
       else if (SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processKeyboardShortcutNode(e, id, pluginId);
+        processKeyboardShortcutNode(e, id, pluginId, keymapManager);
       }
       else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
-        processMouseShortcutNode(e, id, pluginId);
+        processMouseShortcutNode(e, id, pluginId, keymapManager);
       }
       else if (ABBREVIATION_ELEMENT_NAME.equals(e.getName())) {
         processAbbreviationNode(e, id);
@@ -620,7 +618,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
     if (element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
-      myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+      keymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
     }
 
     registerOrReplaceActionInner(element, id, stub, pluginId);
@@ -744,7 +742,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
       if (customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
-        myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+        KeymapManagerEx.getInstanceEx().bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
       }
 
       // process all group's children. There are other groups, actions, references and links
@@ -909,7 +907,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     unregisterAction(id);
   }
 
-  private void processKeyboardShortcutNode(Element element, String actionId, PluginId pluginId) {
+  private static void processKeyboardShortcutNode(Element element,
+                                                  String actionId,
+                                                  PluginId pluginId,
+                                                  @NotNull KeymapManagerEx keymapManager) {
     String firstStrokeString = element.getAttributeValue(FIRST_KEYSTROKE_ATTR_NAME);
     if (firstStrokeString == null) {
       reportActionError(pluginId, "\"first-keystroke\" attribute must be specified for action with id=" + actionId);
@@ -936,7 +937,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
-    Keymap keymap = myKeymapManager.getKeymap(keymapName);
+    Keymap keymap = keymapManager.getKeymap(keymapName);
     if (keymap == null) {
       reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
@@ -1032,7 +1033,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (pluginId != null && !(action instanceof ActionGroup)){
         myPlugin2Id.putValue(pluginId, actionId);
       }
-      action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
+      action.registerCustomShortcutSet(new ProxyShortcutSet(actionId), null);
     }
   }
 

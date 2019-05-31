@@ -29,6 +29,7 @@ import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -70,15 +71,14 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   @NonNls private static final String ATTRIBUTE_CLASS = "class";
 
   /**
-   * FOR USE IN TESTS ONLY!!!
    * @param project
-   * @param keymapManager
    */
-  public Commander(final Project project, KeymapManager keymapManager) {
-    this(project, keymapManager, null);
+  @TestOnly
+  public Commander(final Project project) {
+    this(project, null);
   }
 
-  public Commander(final Project project, KeymapManager keymapManager, final ToolWindowManager toolWindowManager) {
+  public Commander(final Project project, final ToolWindowManager toolWindowManager) {
     super(new BorderLayout());
 
     myProject = project;
@@ -96,6 +96,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         myHistory.forward();
       }
     };
+
+    KeymapManager keymapManager = KeymapManager.getInstance();
     final ActionMap actionMap = getActionMap();
     actionMap.put(ACTION_BACKCOMMAND, backAction);
     actionMap.put(ACTION_FORWARDCOMMAND, fwdAction);
