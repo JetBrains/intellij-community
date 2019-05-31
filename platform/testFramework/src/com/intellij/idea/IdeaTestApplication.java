@@ -3,6 +3,7 @@ package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
@@ -10,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +55,9 @@ public final class IdeaTestApplication extends CommandLineApplication implements
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
       ApplicationImpl.patchSystem();
       ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
-      app.load(configPath);
+      app.registerComponents(PluginManagerCore.getLoadedPlugins());
+      RegistryKeyBean.addKeysFromPlugins();
+      app.load(configPath, null);
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
     }
     return (IdeaTestApplication)ourInstance;
