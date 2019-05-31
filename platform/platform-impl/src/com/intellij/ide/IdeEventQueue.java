@@ -446,7 +446,10 @@ public final class IdeEventQueue extends EventQueue {
   private static ProgressManager obtainProgressManager() {
     ProgressManager manager = ourProgressManager;
     if (manager == null) {
-      ourProgressManager = manager = ServiceManager.getService(ProgressManager.class);
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
+        ourProgressManager = manager = ServiceManager.getService(ProgressManager.class);
+      }
     }
     return manager;
   }
