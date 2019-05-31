@@ -494,7 +494,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     JComponent wrapper;
     if (presentation instanceof StatusBarWidget.IconPresentation) {
       wrapper = new IconPresentationWrapper((StatusBarWidget.IconPresentation)presentation);
-      wrapper.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+      wrapper.setBorder(StatusBarWidget.WidgetBorder.ICON);
     }
     else if (presentation instanceof StatusBarWidget.TextPresentation) {
       wrapper = new TextPresentationWrapper((StatusBarWidget.TextPresentation)presentation);

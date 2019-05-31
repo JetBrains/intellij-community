@@ -66,6 +66,7 @@ public interface StatusBarWidget extends Disposable {
   }
 
   abstract class WidgetBorder implements Border {
+    public static final Border ICON = JBUI.Borders.empty(0, 4);
     public static final Border INSTANCE = JBUI.Borders.empty(0, 6);
     public static final Border WIDE = JBUI.Borders.empty(0, 6);
   }

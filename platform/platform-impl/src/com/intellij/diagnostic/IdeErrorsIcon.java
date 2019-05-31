@@ -14,7 +14,7 @@ class IdeErrorsIcon extends JLabel {
 
   IdeErrorsIcon(boolean enableBlink) {
     myEnableBlink = enableBlink;
-    setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+    setBorder(StatusBarWidget.WidgetBorder.ICON);
   }
 
   void setState(MessagePool.State state) {

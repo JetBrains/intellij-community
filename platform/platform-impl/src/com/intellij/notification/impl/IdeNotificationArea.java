@@ -50,7 +50,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED,
                                                                                 () -> ApplicationManager.getApplication()
                                                                                                         .invokeLater(() -> updateStatus()));
-    setBorder(WidgetBorder.INSTANCE);
+    setBorder(WidgetBorder.ICON);
   }
 
   @Override

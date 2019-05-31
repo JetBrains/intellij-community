@@ -152,7 +152,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
     private Widget(StatusBar statusBar) {
       myStatusBar = statusBar;
-      myIcon.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+      myIcon.setBorder(StatusBarWidget.WidgetBorder.ICON);
       myPresentation = new WidgetPresentation() {
         @Override
         public String getTooltipText() {
