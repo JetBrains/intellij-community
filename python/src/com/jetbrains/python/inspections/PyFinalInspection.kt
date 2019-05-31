@@ -104,21 +104,7 @@ class PyFinalInspection : PyInspection() {
         }
       }
       else if (!isFinal(node)) {
-        val qualifierType = node.qualifier?.let { myTypeEvalContext.getType(it) }
-        if (qualifierType is PyClassType && !qualifierType.isDefinition) {
-          checkInstanceFinalReassignment(node, qualifierType.pyClass)
-        }
-        else if (PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node && it is PyTargetExpression && isFinal(it) }) {
-          registerProblem(node, "'${node.name}' is 'Final' and could not be reassigned")
-        }
-        else {
-          if (!node.isQualified) {
-            val scopeOwner = ScopeUtil.getScopeOwner(node)
-            if (scopeOwner is PyClass) {
-              checkInheritedClassFinalReassignmentOnClassLevel(node, scopeOwner)
-            }
-          }
-        }
+        checkFinalReassignment(node)
       }
 
       if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
@@ -235,6 +221,36 @@ class PyFinalInspection : PyInspection() {
       PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
       instanceAttributes.values.forEach {
         if (isFinal(it)) registerProblem(it, "'Final' attribute should be declared in class body or '__init__'")
+      }
+    }
+
+    private fun checkFinalReassignment(node: PyTargetExpression) {
+      val qualifierType = node.qualifier?.let { myTypeEvalContext.getType(it) }
+      if (qualifierType is PyClassType && !qualifierType.isDefinition) {
+        checkInstanceFinalReassignment(node, qualifierType.pyClass)
+        return
+      }
+
+      val resolved = PyUtil.multiResolveTopPriority(node, resolveContext)
+      if (resolved.any { it is PyTargetExpression && isFinal(it) }) {
+        registerProblem(node, "'${node.name}' is 'Final' and could not be reassigned")
+        return
+      }
+
+      for (e in resolved) {
+        if (myTypeEvalContext.maySwitchToAST(e) &&
+            e.parent.let { it is PyNonlocalStatement || it is PyGlobalStatement } &&
+            PyUtil.multiResolveTopPriority(e, resolveContext).any { it is PyTargetExpression && isFinal(it) }) {
+          registerProblem(node, "'${node.name}' is 'Final' and could not be reassigned")
+          return
+        }
+      }
+
+      if (!node.isQualified) {
+        val scopeOwner = ScopeUtil.getScopeOwner(node)
+        if (scopeOwner is PyClass) {
+          checkInheritedClassFinalReassignmentOnClassLevel(node, scopeOwner)
+        }
       }
     }
 
