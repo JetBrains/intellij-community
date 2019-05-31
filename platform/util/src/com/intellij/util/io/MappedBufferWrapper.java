@@ -12,14 +12,12 @@ import java.nio.MappedByteBuffer;
 /**
  * @author max
  */
-public abstract class MappedBufferWrapper extends ByteBufferWrapper {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedBufferWrapper");
-
+abstract class MappedBufferWrapper extends ByteBufferWrapper {
   private static final int MAX_FORCE_ATTEMPTS = 10;
 
   private volatile MappedByteBuffer myBuffer;
 
-  protected MappedBufferWrapper(final File file, final long pos, final long length) {
+  protected MappedBufferWrapper(File file, long pos, long length) {
     super(file, pos, length);
   }
 
@@ -30,9 +28,9 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
     if (myBuffer != null) {
-      if (isDirty()) tryForce(myBuffer);
+      if (isDirty()) flush();
       if (!ByteBufferUtil.cleanBuffer(myBuffer)) {
-        LOG.error("Unmapping failed for: " + myFile);
+        Logger.getInstance(MappedBufferWrapper.class).error("Unmapping failed for: " + myFile);
       }
       myBuffer = null;
     }
@@ -59,25 +57,21 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
     return buffer;
   }
 
-  private static boolean tryForce(MappedByteBuffer buffer) {
-    for (int i = 0; i < MAX_FORCE_ATTEMPTS; i++) {
-      try {
-        buffer.force();
-        return true;
-      }
-      catch (Throwable e) {
-        LOG.info(e);
-        TimeoutUtil.sleep(10);
-      }
-    }
-    return false;
-  }
-
   @Override
   public void flush() {
-    final MappedByteBuffer buffer = myBuffer;
+    MappedByteBuffer buffer = myBuffer;
     if (buffer != null && isDirty()) {
-      if(tryForce(buffer)) myDirty = false;
+      for (int i = 0; i < MAX_FORCE_ATTEMPTS; i++) {
+        try {
+          buffer.force();
+          myDirty = false;
+          break;
+        }
+        catch (Throwable e) {
+          Logger.getInstance(MappedBufferWrapper.class).info(e);
+          TimeoutUtil.sleep(10);
+        }
+      }
     }
   }
 }

@@ -12,7 +12,7 @@ abstract class DirectBufferWrapper extends ByteBufferWrapper {
 
   private volatile ByteBuffer myBuffer;
 
-  DirectBufferWrapper(final File file, final long offset, final long length) {
+  DirectBufferWrapper(File file, long offset, long length) {
     super(file, offset, length);
   }
 
