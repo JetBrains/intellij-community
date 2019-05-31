@@ -26,6 +26,7 @@ import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
@@ -37,9 +38,11 @@ import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Point
+import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import javax.swing.JButton
+import javax.swing.AbstractAction
+import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.KeyStroke.getKeyStroke
 import javax.swing.LayoutFocusTraversalPolicy
@@ -80,7 +83,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     editorField.addSettingsProvider { it.setBorder(emptyLeft(3)) }
     editorField.setPlaceholder("Commit Message")
   }
-  private val commitButton = object : JButton() {
+  private val defaultCommitAction = object : AbstractAction() {
+    override fun actionPerformed(e: ActionEvent) = fireDefaultExecutorCalled()
+  }
+  private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
     init {
       background = BACKGROUND_COLOR
     }
@@ -94,7 +100,6 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     buildLayout()
 
     changesView.setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
-    commitButton.addActionListener { fireDefaultExecutorCalled() }
 
     addInclusionListener(object : InclusionListener {
       override fun inclusionChanged() = this@ChangesViewCommitPanel.inclusionChanged()
@@ -130,17 +135,16 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 
-  // store as a separate property - this way getter will return text with mnemonic
-  override var defaultCommitActionName: String = ""
-    set(value) {
-      field = value
-      commitButton.text = value
-    }
+  // NOTE: getter should return text with mnemonic (if any) to make mnemonics available in dialogs shown by commit handlers.
+  //  See CheckinProjectPanel.getCommitActionName() usages.
+  override var defaultCommitActionName: String
+    get() = (defaultCommitAction.getValue(Action.NAME) as? String).orEmpty()
+    set(value) = defaultCommitAction.putValue(Action.NAME, value)
 
   override var isDefaultCommitActionEnabled: Boolean
-    get() = commitButton.isEnabled
+    get() = defaultCommitAction.isEnabled
     set(value) {
-      commitButton.isEnabled = value
+      defaultCommitAction.isEnabled = value
     }
 
   override fun activate(): Boolean {
@@ -216,7 +220,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   inner class DefaultCommitAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = commitButton.isEnabled
+      e.presentation.isEnabledAndVisible = defaultCommitAction.isEnabled
     }
 
     override fun actionPerformed(e: AnActionEvent) = fireDefaultExecutorCalled()
