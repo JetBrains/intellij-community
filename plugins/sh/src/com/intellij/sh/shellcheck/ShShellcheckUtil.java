@@ -117,11 +117,17 @@ class ShShellcheckUtil {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
   }
 
+  static boolean isExecutionValidPath(@Nullable String path) {
+    if (path == null || ShSettings.I_DO_MIND.equals(path)) return false;
+    File file = new File(path);
+    return file.canExecute() && file.getName().contains(SHELLCHECK);
+  }
+
   static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
     if (ShSettings.I_DO_MIND.equals(path)) return true;
     File file = new File(path);
-    return file.canExecute() && file.getName().contains("shellcheck");
+    return file.canExecute() && file.getName().contains(SHELLCHECK);
 
 //    try {
 //      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
