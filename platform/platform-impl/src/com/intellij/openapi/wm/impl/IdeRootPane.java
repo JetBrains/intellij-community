@@ -305,7 +305,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   private void setMemoryIndicatorVisible(final boolean visible) {
     if (myMemoryWidget != null) {
       myMemoryWidget.setShowing(visible);
-      myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, visible ? 0 : 8));
+      myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, visible ? 0 : 6));
     }
   }
 
