@@ -38,7 +38,7 @@ public interface StatusBarWidget extends Disposable {
   }
 
   interface IconPresentation extends WidgetPresentation {
-    @NotNull
+    @Nullable
     Icon getIcon();
   }
 

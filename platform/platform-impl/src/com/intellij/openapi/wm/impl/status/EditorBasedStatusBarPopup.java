@@ -50,6 +50,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     super(project);
     update = new Alarm(this);
     myComponent = new TextPanel.WithIconAndArrows();
+    myComponent.setVisible(false);
 
     new ClickListener() {
       @Override

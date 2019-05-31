@@ -643,6 +643,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
       myPresentation = presentation;
+      setVisible(presentation.getSelectedValue() != null);
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -668,6 +669,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       if (value != null) {
         append(value);
       }
+      setVisible(value != null);
     }
 
     @Override
@@ -685,6 +687,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       myPresentation = presentation;
       myClickConsumer = myPresentation.getClickConsumer();
       setTextAlignment(presentation.getAlignment());
+      setVisible(!myPresentation.getText().isEmpty());
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
@@ -705,7 +708,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     public void beforeUpdate() {
       String text = myPresentation.getText();
       setText(text);
-      setEnabled(!text.isEmpty());
+      setVisible(!text.isEmpty());
     }
   }
 
@@ -718,6 +721,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       myClickConsumer = myPresentation.getClickConsumer();
       setTextAlignment(Component.CENTER_ALIGNMENT);
       setIcon(myPresentation.getIcon());
+      setVisible(hasIcon());
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
@@ -737,7 +741,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     @Override
     public void beforeUpdate() {
       setIcon(myPresentation.getIcon());
-      setEnabled(hasIcon());
+      setVisible(hasIcon());
     }
   }
 

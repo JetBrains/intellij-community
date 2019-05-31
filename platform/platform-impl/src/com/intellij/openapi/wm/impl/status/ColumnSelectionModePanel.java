@@ -30,6 +30,7 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
 
   public ColumnSelectionModePanel(Project project) {
     super(project);
+    myTextPanel.setVisible(false);
   }
 
   @Override
@@ -73,7 +74,8 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
     if (editor == null || !editor.isColumnMode()) {
       myTextPanel.setBorder(null);
       myTextPanel.setVisible(false);
-    } else {
+    } 
+    else {
       myTextPanel.setBorder(WidgetBorder.INSTANCE);
       myTextPanel.setVisible(true);
       myTextPanel.setText(UIBundle.message("status.bar.column.status.text"));
