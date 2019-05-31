@@ -561,18 +561,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
       defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
     }
-
-    Object rowHeight = defaults.get("Tree.rowHeight");
-    if (rowHeight != null && !(rowHeight instanceof Integer)) {
-      LOG.error("unexpected Tree.rowHeight: '" + rowHeight + "' " + rowHeight.getClass());
-      try {
-        rowHeight = Double.valueOf(String.valueOf(rowHeight)).intValue();
-      }
-      catch (NumberFormatException e) {
-        rowHeight = 0;
-      }
-      defaults.put("Tree.rowHeight", rowHeight);
-    }
   }
 
   @ApiStatus.Internal
