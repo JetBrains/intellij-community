@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.util.containers.ObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,6 @@ public final class StartUpMeasurer {
 
     public static final String WAIT_PLUGIN_INIT = "wait plugin initialization";
 
-    public static final String INITIALIZE_COMPONENTS_SUFFIX = "component initialization";
     // actually, now it is also registers services, not only components,but it doesn't worth to rename
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String COMPONENTS_REGISTERED_CALLBACK_SUFFIX = "component registered callback";
@@ -89,7 +89,7 @@ public final class StartUpMeasurer {
     return System.nanoTime();
   }
 
-  public static final Map<String, Map<String, Long>> pluginCostMap = new HashMap<>();
+  public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
 
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
@@ -143,13 +143,15 @@ public final class StartUpMeasurer {
   public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
     if (pluginId == null || !measuringPluginStartupCosts) return;
     synchronized (pluginCostMap) {
-      Map<String, Long> costPerPhaseMap = pluginCostMap.get(pluginId);
+      ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
       if (costPerPhaseMap == null) {
-        costPerPhaseMap = new HashMap<>();
+        costPerPhaseMap = new ObjectLongHashMap<>();
         pluginCostMap.put(pluginId, costPerPhaseMap);
       }
-      Long oldCost = costPerPhaseMap.get(phase);
-      if (oldCost == null) oldCost = 0L;
+      long oldCost = costPerPhaseMap.get(phase);
+      if (oldCost == -1) {
+        oldCost = 0L;
+      }
       costPerPhaseMap.put(phase, oldCost + timeNanos);
     }
   }
