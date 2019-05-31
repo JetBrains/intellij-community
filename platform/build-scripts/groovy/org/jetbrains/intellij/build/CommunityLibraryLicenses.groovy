@@ -22,6 +22,8 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(name: "Amazon Ion Java", libraryName: "ion", license: "Apache 2.0", url: "https://github.com/amzn/ion-java"),
 
+    new LibraryLicense(name: "Android Aia Manifest Proto", libraryName: "aia-manifest-proto-1.0-jarjar.jar", license: "Apache 2.0",
+                       url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics", attachedTo: "intellij.android.core", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Crash", libraryName: "com.android.tools.analytics-library:crash",
