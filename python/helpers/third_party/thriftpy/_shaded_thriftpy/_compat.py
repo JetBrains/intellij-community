@@ -99,21 +99,28 @@ def init_func_generator(spec):
 
     code = init.__code__
     if PY3:
-        new_code = types.CodeType(len(varnames),
-                                  0,
-                                  len(varnames),
-                                  code.co_stacksize,
-                                  code.co_flags,
-                                  code.co_code,
-                                  code.co_consts,
-                                  code.co_names,
-                                  varnames,
-                                  code.co_filename,
-                                  "__init__",
-                                  code.co_firstlineno,
-                                  code.co_lnotab,
-                                  code.co_freevars,
-                                  code.co_cellvars)
+        args = [
+            len(varnames),
+            0,
+            len(varnames),
+            code.co_stacksize,
+            code.co_flags,
+            code.co_code,
+            code.co_consts,
+            code.co_names,
+            varnames,
+            code.co_filename,
+            "__init__",
+            code.co_firstlineno,
+            code.co_lnotab,
+            code.co_freevars,
+            code.co_cellvars
+        ]
+        if sys.version_info >= (3, 8, 0):
+            # Python 3.8 and above supports positional-only parameters. The number of such
+            # parameters is passed to the constructor as the second argument.
+            args.insert(2, 0)
+        new_code = types.CodeType(*args)
     elif JYTHON:
         from org.python.core import PyBytecode
 
