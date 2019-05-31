@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 @ApiStatus.Experimental
@@ -69,6 +70,11 @@ public interface ServiceViewDescriptor {
 
   @Nullable
   default Navigatable getNavigatable() {
+    return null;
+  }
+
+  @Nullable
+  default Color getItemBackgroundColor() {
     return null;
   }
 }
