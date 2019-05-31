@@ -40,6 +40,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
@@ -52,6 +53,7 @@ import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -380,11 +382,16 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Override
-  protected void logMessageBusDelivery(Topic topic, Object handler, long durationNanos) {
-    super.logMessageBusDelivery(topic, handler, durationNanos);
+  protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
+    super.logMessageBusDelivery(topic, messageName, handler, durationNanos);
     if (topic == ProjectManager.TOPIC) {
       ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationNanos, handler.getClass(),
                                                    StartUpMeasurer.Level.PROJECT);
+    }
+    else if (topic == VirtualFileManager.VFS_CHANGES) {
+      if (TimeUnit.NANOSECONDS.toMillis(durationNanos) > 50) {
+        LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(durationNanos)));
+      }
     }
   }
 }
