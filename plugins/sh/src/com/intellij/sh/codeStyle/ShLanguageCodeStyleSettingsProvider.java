@@ -33,6 +33,12 @@ public class ShLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     return ShLanguage.INSTANCE;
   }
 
+  @NotNull
+  @Override
+  public String getExternalLanguageId() {
+    return "shell";
+  }
+
   @Nullable
   @Override
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
