@@ -56,8 +56,7 @@ public final class IdeaApplication {
 
   private static boolean ourPerformProjectLoad = true;
 
-  private IdeaApplication() {
-  }
+  private IdeaApplication() { }
 
   public static void initApplication(@NotNull String[] rawArgs) {
     Activity initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP);
@@ -193,6 +192,7 @@ public final class IdeaApplication {
     }
 
     starter.premain(args);
+
     return starter;
   }
 
