@@ -52,6 +52,8 @@ class PyFinalInspection : PyInspection() {
         checkClassLevelFinalsAreInitialized(classLevelFinals, initAttributes)
         checkSameNameClassAndInstanceFinals(classLevelFinals, initAttributes)
       }
+
+      checkOverridingInheritedFinalWithNewOne(node)
     }
 
     override fun visitPyFunction(node: PyFunction) {
@@ -140,6 +142,28 @@ class PyFinalInspection : PyInspection() {
       return Pair(classLevelFinals, initAttributes)
     }
 
+    private fun getDeclaredClassAndInstanceFinals(cls: PyClass): Pair<Map<String, PyTargetExpression>, Map<String, PyTargetExpression>> {
+      val classFinals = mutableMapOf<String, PyTargetExpression>()
+      val instanceFinals = mutableMapOf<String, PyTargetExpression>()
+
+      for (classAttribute in cls.classAttributes) {
+        val name = classAttribute.name ?: continue
+
+        if (isFinal(classAttribute)) {
+          val mapToPut = if (classAttribute.hasAssignedValue()) classFinals else instanceFinals
+          mapToPut[name] = classAttribute
+        }
+      }
+
+      cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { init ->
+        val attributesInInit = mutableMapOf<String, PyTargetExpression>()
+        PyClassImpl.collectInstanceAttributes(init, attributesInInit, instanceFinals.keys)
+        instanceFinals += attributesInInit.filterValues { isFinal(it) }
+      }
+
+      return Pair(classFinals, instanceFinals)
+    }
+
     private fun checkClassLevelFinalsAreInitialized(classLevelFinals: Map<String?, PyTargetExpression>,
                                                     initAttributes: Map<String, PyTargetExpression>) {
       classLevelFinals.forEach { (name, psi) ->
@@ -164,6 +188,35 @@ class PyFinalInspection : PyInspection() {
             registerProblem(initAttribute, message)
           }
         }
+      }
+    }
+
+    private fun checkOverridingInheritedFinalWithNewOne(cls: PyClass) {
+      val (newClassFinals, newInstanceFinals) = getDeclaredClassAndInstanceFinals(cls)
+
+      val notRegisteredClassFinals = newClassFinals.keys.toMutableSet()
+      val notRegisteredInstanceFinals = newInstanceFinals.keys.toMutableSet()
+      if (notRegisteredClassFinals.isEmpty() && notRegisteredInstanceFinals.isEmpty()) return
+
+      for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
+        val (inheritedClassFinals, inheritedInstanceFinals) = getDeclaredClassAndInstanceFinals(ancestor)
+
+        checkOverridingInheritedFinalWithNewOne(newClassFinals, inheritedClassFinals, ancestor.name, notRegisteredClassFinals)
+        checkOverridingInheritedFinalWithNewOne(newInstanceFinals, inheritedInstanceFinals, ancestor.name, notRegisteredInstanceFinals)
+
+        if (notRegisteredClassFinals.isEmpty() && notRegisteredInstanceFinals.isEmpty()) break
+      }
+    }
+
+    private fun checkOverridingInheritedFinalWithNewOne(newFinals: Map<String, PyTargetExpression>,
+                                                        inheritedFinals: Map<String, PyTargetExpression>,
+                                                        ancestorName: String?,
+                                                        notRegistered: MutableSet<String>) {
+      if (notRegistered.isEmpty()) return
+
+      for (commonFinal in newFinals.keys.intersect(inheritedFinals.keys)) {
+        registerProblem(newFinals[commonFinal], "'$ancestorName.$commonFinal' is 'Final' and could not be overridden")
+        notRegistered.remove(commonFinal)
       }
     }
 
