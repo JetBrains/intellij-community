@@ -136,7 +136,7 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null || myImportedNameDefiners == null) {
       collectDeclarations();
     }
-    if (isNonlocal(name)) {
+    if (isNonlocal(name) || isGlobal(name)) {
       return false;
     }
     if (!getNamedElements(name, true).isEmpty()) {
