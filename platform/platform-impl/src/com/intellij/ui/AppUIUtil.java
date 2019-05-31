@@ -316,11 +316,7 @@ public class AppUIUtil {
       if (!agreement.isAccepted()) {
         try {
           // todo: does not seem to request focus when shown
-          EventQueue.invokeAndWait(() -> {
-            SplashManager.setVisible(false);
-            showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy());
-            SplashManager.setVisible(true);
-          });
+          EventQueue.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
@@ -366,7 +362,6 @@ public class AppUIUtil {
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
       DialogWrapper dialog = new DialogWrapper(true) {
-
       private JEditorPane myViewer;
 
       @Override
@@ -463,7 +458,8 @@ public class AppUIUtil {
       : ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement"
     );
     dialog.pack();
-    dialog.show();
+
+    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> dialog.show());
   }
 
   public static boolean confirmConsentOptions(@NotNull List<Consent> consents) {

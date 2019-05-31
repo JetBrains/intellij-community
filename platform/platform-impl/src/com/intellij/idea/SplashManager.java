@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public final class SplashManager {
   @SuppressWarnings("SpellCheckingInspection")
@@ -39,10 +41,28 @@ public final class SplashManager {
     splashInitialization.end();
   }
 
-  public static void setVisible(boolean value) {
+  public static void executeWithHiddenSplash(@NotNull Window window, @NotNull Runnable runnable) {
+    WindowAdapter listener = new WindowAdapter() {
+      @Override
+      public void windowOpened(WindowEvent e) {
+        setVisible(false);
+      }
+    };
+    window.addWindowListener(listener);
+
+    runnable.run();
+
+    setVisible(true);
+    window.removeWindowListener(listener);
+  }
+
+  private static void setVisible(boolean value) {
     Splash splash = SPLASH_WINDOW;
     if (splash != null) {
       splash.setVisible(value);
+      if (value) {
+        splash.paint(splash.getGraphics());
+      }
     }
   }
 

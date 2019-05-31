@@ -599,9 +599,10 @@ public class StartupUtil {
 
     appStarter.beforeStartupWizard();
     CustomizeIDEWizardDialog dialog = new CustomizeIDEWizardDialog(provider, appStarter);
-    SplashManager.setVisible(false);
-    dialog.show();
-    SplashManager.setVisible(true);
+    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> {
+      dialog.show();
+    });
+
     PluginManagerCore.invalidatePlugins();
     appStarter.startupWizardFinished();
   }
