@@ -5,7 +5,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
@@ -1634,7 +1633,6 @@ public class PluginManagerCore {
     }
     activity.end("plugin count: " + result.length);
     logPlugins(result);
-    ClassUtilCore.clearJarURLCache();
     return result;
   }
 
