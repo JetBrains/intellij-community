@@ -36,10 +36,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -170,7 +167,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
-        boolean needUninstall = UIUtil.isUnderDarcula();
+        boolean needUninstall = StartupUiUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
         updateWizardLAF(needUninstall);
       }
@@ -185,7 +182,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
     if (WelcomeWizardUtil.getWizardLAF() != null) {
-      if (UIUtil.isUnderDarcula()) {
+      if (StartupUiUtil.isUnderDarcula()) {
         DarculaInstaller.install();
       }
       else if (wasUnderDarcula) {
@@ -403,7 +400,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    boolean dark = UIUtil.isUnderDarcula();
+    boolean dark = StartupUiUtil.isUnderDarcula();
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme current = colorsManager.getGlobalScheme();
     boolean wasUITheme = oldLaf instanceof UIThemeBasedLookAndFeelInfo;
@@ -661,7 +658,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
-    } else if ((SystemInfoRt.isLinux || SystemInfoRt.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+    } else if ((SystemInfoRt.isLinux || SystemInfoRt.isWindows) && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 
@@ -676,7 +673,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixProgressBar(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
       uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
       uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
     }
@@ -687,7 +684,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * and default UI is created there directly.
    */
   static void fixOptionButton(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
       uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     }
   }
@@ -1001,7 +998,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
-    private static final boolean invert = UIUtil.isUnderDarcula();
+    private static final boolean invert = StartupUiUtil.isUnderDarcula();
     private DefaultMenuArrowIcon(@NotNull Icon icon) {
       super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
             IconUtil.brighter(icon, 8),

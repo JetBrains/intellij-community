@@ -136,7 +136,7 @@ public class StartupUtil {
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     System.setProperty("idea.ui.util.static.init.enabled", "false");
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
-      // see note about UIUtil static init - it is required even if headless
+      // see note about StartupUiUtil static init - it is required even if headless
       try {
         StartupUiUtil.initDefaultLaF();
         if (!Main.isHeadless()) {
