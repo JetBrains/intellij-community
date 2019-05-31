@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class AsyncEventSupport {
@@ -64,7 +63,10 @@ public class AsyncEventSupport {
     }
 
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
-    runAsyncListeners((listener) -> {
+    List<AsyncFileListener> allListeners = ContainerUtil.concat(
+      EP_NAME.getExtensionList(),
+      ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).getAsyncFileListeners());
+    for (AsyncFileListener listener : allListeners) {
       ProgressManager.checkCanceled();
       long startNs = System.nanoTime();
       boolean canceled = false;
@@ -88,15 +90,8 @@ public class AsyncEventSupport {
           LOG.warn(listener + " took too long (" + elapsedMs + "ms) on " + events.size() + " events" + (canceled ? ", canceled" : ""));
         }
       }
-    });
-    return appliers;
-  }
-  
-  private static void runAsyncListeners(@NotNull Consumer<AsyncFileListener> listenerAction) {
-    for (AsyncFileListener listener : EP_NAME.getExtensionList()) {
-      listenerAction.accept(listener);
     }
-    ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).runAsyncListeners(listenerAction);
+    return appliers;
   }
 
   private static void beforeVfsChange(List<AsyncFileListener.ChangeApplier> appliers) {

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
@@ -205,8 +204,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @ApiStatus.Internal
-  public void runAsyncListeners(@NotNull Consumer<AsyncFileListener> listenerAction) {
-    myAsyncFileListeners.forEach(listenerAction);
+  public List<AsyncFileListener> getAsyncFileListeners() {
+    return Collections.unmodifiableList(myAsyncFileListeners);
   }
 
   @Override
