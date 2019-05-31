@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -274,6 +275,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myShortcutSet != shortcutSet &&
         !"ProxyShortcutSet".equals(shortcutSet.getClass().getSimpleName()) && // avoid CyclicDependencyException
+        ApplicationManager.getApplication() != null &&
         ActionManager.getInstance() != null &&
         ActionManager.getInstance().getId(this) != null) {
       LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
