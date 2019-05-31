@@ -95,6 +95,8 @@ public class UIUtil {
   // should be here and not in JBUI to avoid dependency on JBUI class in initSystemFontData method
   public static final boolean SCALE_VERBOSE = Boolean.getBoolean("ide.ui.scale.verbose");
 
+  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux") && Registry.is("suppress.focus.stealing");
+
   static {
     // static init it is hell - if this UIUtil static init is not called, null stylesheet added and it leads to NPE on some UI tests
     // e.g. workaround is used in UiDslTest, where UIUtil is not called at all, so, UI tasks like "set comment text" failed because of NPE.
@@ -4111,7 +4113,7 @@ public class UIUtil {
   public static void suppressFocusStealing (@NotNull Window window) {
     // Focus stealing is not a problem on Mac
     if (SystemInfo.isMac) return;
-    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
+    if (SUPPRESS_FOCUS_STEALING && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(window, false);
     }
   }
