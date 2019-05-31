@@ -19,8 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -35,18 +37,20 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.PowerSupplyKit;
 
 import javax.accessibility.AccessibleContext;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
@@ -75,6 +79,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private boolean myRestoreFullScreen;
   private final LafManagerListener myLafListener;
   private final ComponentListener resizedListener;
+
+  private boolean ready;
+  private Image mySelfie;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
     super();
@@ -461,6 +468,15 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
 
       installDefaultProjectStatusBarWidgets(myProject);
+
+      ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerListener() {
+        @Override
+        public void projectClosingBeforeSave(@NotNull Project project) {
+          takeASelfie();
+        }
+      });
+
+      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> ready = true);
     }
     else {
       if (myRootPane != null) { //already disposed
@@ -581,7 +597,49 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
+    if (shouldPaintSelfie()) {
+      try {
+        if (mySelfie == null) {
+          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), JBUIScale.ScaleContext.create(this));
+        }
+      } catch (IOException ignored) {}
+      StartupUiUtil.drawImage(g, mySelfie, 0, 0, null);
+      return;
+    } else {
+      mySelfie = null;
+    }
     super.paint(g);
+  }
+
+  private boolean shouldPaintSelfie() {
+    return !ready && Registry.is("ide.project.loading.show.last.state") &&
+           (myProject != null || ProjectManager.getInstance().getOpenProjects().length == 0);
+  }
+
+  public void takeASelfie() {
+    if (myProject == null || !Registry.is("ide.project.loading.show.last.state")) return;
+    BufferedImage image = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+    UISettings.setupAntialiasing(image.getGraphics());
+    paint(image.getGraphics());
+    try {
+      File selfie = getSelfieLocation();
+      if (selfie.getParentFile().exists() || selfie.getParentFile().mkdirs()) {
+        ImageIO.write(image, "png", selfie);
+        FileUtil.copy(selfie, getLastSelfieLocation());
+      }
+    } catch (IOException ignored) {}
+  }
+
+  @NotNull
+  private File getSelfieLocation() {
+    return myProject != null ?
+           ProjectUtil.getProjectCachePath(myProject, "selfies", false, ".png").toFile() :
+           getLastSelfieLocation();
+  }
+
+  @NotNull
+  private static File getLastSelfieLocation() {
+    return new File(PathManager.getSystemPath(), "selfies/last_closed_project.png");
   }
 
   @Override
