@@ -122,11 +122,29 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util.rt", "util.jar")
       withModule("intellij.platform.util.classLoader", "util.jar")
       withModule("intellij.platform.util.ui")
+      withModule("intellij.platform.util.ex")
 
       withModule("intellij.platform.ide.util.io")
 
       withModule("intellij.platform.concurrency")
       withModule("intellij.platform.core.ui")
+
+      withModule("intellij.platform.builtInServer.impl")
+      withModule("intellij.platform.credentialStore")
+      withModule("intellij.json")
+      withModule("intellij.spellchecker")
+      withModule("intellij.platform.images")
+
+      withModule("intellij.relaxng", "intellij-xml.jar")
+      withModule("intellij.xml.analysis.impl", "intellij-xml.jar")
+      withModule("intellij.xml.psi.impl", "intellij-xml.jar")
+      withModule("intellij.xml.structureView.impl", "intellij-xml.jar")
+      withModule("intellij.xml.impl", "intellij-xml.jar")
+
+      withModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
+      withModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
+      withModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
+      withModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
 
       withModule("intellij.platform.objectSerializer.annotations")
       withModule("intellij.platform.objectSerializer")
