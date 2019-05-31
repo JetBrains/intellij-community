@@ -400,7 +400,7 @@
                      implementationClass="com.siyeh.ig.bugs.SuspiciousToArrayCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TextLabelInSwitchStatement" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="text.label.in.switch.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.TextLabelInSwitchStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ThrowableNotThrown" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="throwable.not.thrown.display.name" groupBundle="messages.InspectionsBundle"
