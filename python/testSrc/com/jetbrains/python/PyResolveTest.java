@@ -754,9 +754,13 @@ public class PyResolveTest extends PyResolveTestCase {
     assertEquals("2", target.getText());
   }
 
-
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testGlobalReassignmentNotDefinedAtTopLevel() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "xx");
+    assertInstanceOf(target.getParent(), PyGlobalStatement.class);
   }
 
   // PY-13734
