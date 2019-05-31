@@ -851,6 +851,7 @@ public class JBTabsImpl extends JComponent
 
     info.getChangeSupport().addPropertyChangeListener(this);
     final TabLabel label = createTabLabel(info);
+    Disposer.register(this, label);
     myInfo2Label.put(info, label);
     myInfo2Page.put(info, new AccessibleTabPage(info));
 
@@ -2012,6 +2013,11 @@ public class JBTabsImpl extends JComponent
     }
     else {
       queueForRemove(tabComponent);
+    }
+
+    TabLabel tabLabel = myInfo2Label.get(info);
+    if (tabLabel != null) {
+      Disposer.dispose(tabLabel);
     }
 
     myVisibleInfos.remove(info);
