@@ -415,6 +415,56 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-34945
+  public void testClassFinalOverriding() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    a: Final[int] = 1\n" +
+                         "\n" +
+                         "class B(A):\n" +
+                         "    <warning descr=\"'A.a' is 'Final' and could not be overridden\">a</warning>: Final[str] = \"3\"\n")
+    );
+  }
+
+  // PY-34945
+  public void testImportedClassFinalOverriding() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doMultiFileTest);
+  }
+
+  // PY-34945
+  public void testInstanceFinalOverriding() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    a: Final[int]\n" +
+                         "\n" +
+                         "    def __init__(self):\n" +
+                         "        self.a = 1\n" +
+                         "\n" +
+                         "class B(A):\n" +
+                         "    def __init__(self):\n" +
+                         "        super().__init__()\n" +
+                         "        <warning descr=\"'A.a' is 'Final' and could not be overridden\">self.a</warning>: Final[str] = \"2\"\n" +
+                         "\n" +
+                         "class C(A):\n" +
+                         "    <warning descr=\"'A.a' is 'Final' and could not be overridden\">a</warning>: Final[str]\n" +
+                         "\n" +
+                         "    def __init__(self):\n" +
+                         "        super().__init__()\n" +
+                         "        self.a = \"3\"")
+    );
+  }
+
+  // PY-34945
+  public void testImportedInstanceFinalOverriding() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doMultiFileTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
