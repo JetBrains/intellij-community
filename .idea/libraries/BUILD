@@ -1651,3 +1651,11 @@ java_library(
     exports = ["//tools/base/profiler:perfetto-protos"],
     runtime_deps = ["//tools/base/profiler:perfetto-protos"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "layoutinspector-proto",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/dynamic-layout-inspector/proto:java_proto"],
+    runtime_deps = ["//tools/base/dynamic-layout-inspector/proto:java_proto"],
+)
