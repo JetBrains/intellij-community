@@ -114,7 +114,7 @@ public class ShShfmtFormatterUtil {
     if (ShSettings.I_DO_MIND.equals(path)) return true;
     File file = new File(path);
     if (!file.canExecute()) return false;
-    return file.getName().contains("shfmt");
+    return file.getName().contains(SHFMT);
 
 //    try {
 //      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("-version");
