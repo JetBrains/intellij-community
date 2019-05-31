@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.util.ConcurrencyUtil;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ public class Registry  {
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<>();
   private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<>();
-  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<>();
+  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
 
   private static final Registry ourInstance = new Registry();
 
@@ -196,20 +197,15 @@ public class Registry  {
     return false;
   }
 
-  public static void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
-    addKey(key, description, defaultValue, restartRequired, false);
+  public static synchronized void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
+    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, false));
   }
 
-  public static void addKey(@NotNull String key,
-                            @NotNull String description,
-                            @NotNull String defaultValue,
-                            boolean restartRequired,
-                            boolean contributedByThirdPartyPlugin) {
-    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, contributedByThirdPartyPlugin));
-  }
-
-  public static void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
-    addKey(key, description, Integer.toString(defaultValue), restartRequired);
+  public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {
+    Map<String, RegistryKeyDescriptor> map = getInstance().myContributedKeys;
+    for (RegistryKeyDescriptor descriptor : descriptors) {
+      map.put(descriptor.getName(), descriptor);
+    }
   }
 
   public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {

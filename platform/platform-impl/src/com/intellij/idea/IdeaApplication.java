@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +35,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,17 +60,25 @@ public final class IdeaApplication {
   }
 
   public static void initApplication(@NotNull String[] rawArgs) {
-    Activity activity = MainRunner.startupStart.endAndStart(Phases.INIT_APP);
+    Activity initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP);
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
     EventQueue.invokeLater(() -> {
       String[] args = processProgramArguments(rawArgs);
       ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
 
       CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
-        .thenAccept(pluginDescriptors -> {
-          Activity activity1 = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
+        .thenCompose(pluginDescriptors -> {
+          CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+            Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
+            RegistryKeyBean.addKeysFromPlugins();
+            activity.end();
+          }, AppExecutorUtil.getAppExecutorService());
+
+          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
           ((ApplicationImpl)ApplicationManager.getApplication()).registerComponents(pluginDescriptors);
-          activity1.end();
+          activity.end();
+
+          return future;
         });
 
       if (!Main.isHeadless()) {
@@ -76,15 +86,15 @@ public final class IdeaApplication {
       }
 
       // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
-      Activity placeOnEventQueueActivity = activity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
+      Activity placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
       EventQueue.invokeLater(() -> {
         placeOnEventQueueActivity.end();
         PluginManager.installExceptionHandler();
-        activity.end();
+        initAppActivity.end();
         try {
-          Activity activity1 = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
+          Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
           registerComponentsFuture.get();
-          activity1.end();
+          activity.end();
         }
         catch (InterruptedException | ExecutionException e) {
           throw new CompletionException(e);
@@ -98,7 +108,7 @@ public final class IdeaApplication {
         ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
 
         if (PluginManagerCore.isRunningFromSources()) {
-          app.invokeLater(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
+          AppExecutorUtil.getAppExecutorService().execute(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
         }
       });
     });
