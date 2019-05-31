@@ -54,6 +54,11 @@ public interface ServiceViewDescriptor {
   }
 
   default boolean handleDoubleClick(@NotNull MouseEvent event) {
+    Navigatable navigatable = getNavigatable();
+    if (navigatable != null && navigatable.canNavigateToSource()) {
+      navigatable.navigate(true);
+      return true;
+    }
     return false;
   }
 
