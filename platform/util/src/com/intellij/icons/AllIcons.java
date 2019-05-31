@@ -1619,14 +1619,14 @@ public class AllIcons {
       /** 16x16 */ public static final Icon Collapse = load("/ide/notification/collapse.svg");
       /** 16x16 */ public static final Icon CollapseHover = load("/ide/notification/collapseHover.svg");
       /** 16x16 */ public static final Icon DropTriangle = load("/ide/notification/dropTriangle.svg");
-      /** 13x13 */ public static final Icon ErrorEvents = load("/ide/notification/errorEvents.svg");
+      /** 16x16 */ public static final Icon ErrorEvents = load("/ide/notification/errorEvents.svg");
       /** 16x16 */ public static final Icon Expand = load("/ide/notification/expand.svg");
       /** 16x16 */ public static final Icon ExpandHover = load("/ide/notification/expandHover.svg");
       /** 16x16 */ public static final Icon Gear = load("/ide/notification/gear.svg");
       /** 16x16 */ public static final Icon GearHover = load("/ide/notification/gearHover.svg");
-      /** 13x13 */ public static final Icon InfoEvents = load("/ide/notification/infoEvents.svg");
-      /** 13x13 */ public static final Icon NoEvents = load("/ide/notification/noEvents.svg");
-      /** 13x13 */ public static final Icon WarningEvents = load("/ide/notification/warningEvents.svg");
+      /** 16x16 */ public static final Icon InfoEvents = load("/ide/notification/infoEvents.svg");
+      /** 16x16 */ public static final Icon NoEvents = load("/ide/notification/noEvents.svg");
+      /** 16x16 */ public static final Icon WarningEvents = load("/ide/notification/warningEvents.svg");
 
     }
     /** 16x16 */ public static final Icon OutgoingChangesOn = load("/ide/outgoingChangesOn.svg");
@@ -2731,6 +2731,9 @@ public class AllIcons {
 
   public final static class Toolwindows {
     /** 13x13 */ public static final Icon Documentation = load("/toolwindows/documentation.svg");
+    /** 13x13 */ public static final Icon ErrorEvents = load("/toolwindows/errorEvents.svg");
+    /** 13x13 */ public static final Icon InfoEvents = load("/toolwindows/infoEvents.svg");
+    /** 13x13 */ public static final Icon NoEvents = load("/toolwindows/noEvents.svg");
     /** 13x13 */ public static final Icon Problems = load("/toolwindows/problems.svg");
     /** 13x13 */ public static final Icon ProblemsEmpty = load("/toolwindows/problemsEmpty.svg");
     /** 13x13 */ public static final Icon ToolWindowAnt = load("/toolwindows/toolWindowAnt.svg");
@@ -2754,6 +2757,7 @@ public class AllIcons {
     /** 13x13 */ public static final Icon ToolWindowStructure = load("/toolwindows/toolWindowStructure.svg");
     /** 13x13 */ public static final Icon ToolWindowTodo = load("/toolwindows/toolWindowTodo.svg");
     /** 13x13 */ public static final Icon ToolWindowUIDesigner = load("/toolwindows/toolWindowUIDesigner.svg");
+    /** 13x13 */ public static final Icon WarningEvents = load("/toolwindows/warningEvents.svg");
     /** 13x13 */ public static final Icon WebToolWindow = load("/toolwindows/webToolWindow.svg");
 
   }

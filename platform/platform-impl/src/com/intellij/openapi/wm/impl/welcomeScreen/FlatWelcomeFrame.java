@@ -44,10 +44,7 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
@@ -352,7 +349,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
         Color foreground = JBColor.namedColor("DragAndDrop.areaForeground", Gray._120);
         g.setColor(foreground);
-        Font labelFont = UIUtil.getLabelFont();
+        Font labelFont = StartupUiUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
         String drop = "Drop files here to open";
         g.setFont(font);
@@ -445,7 +442,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           panel.setVisible(false);
         }
         else {
-          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size()));
+          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size(), false));
           panel.setVisible(true);
         }
       };
@@ -674,7 +671,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
         }
       }
-      return UIUtil.getLabelFont();
+      return StartupUiUtil.getLabelFont();
     }
 
     private JComponent createRecentProjects() {

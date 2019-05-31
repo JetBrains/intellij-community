@@ -87,7 +87,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   private void updateStatus() {
     final Project project = getProject();
     ArrayList<Notification> notifications = EventLog.getLogModel(project).getNotifications();
-    applyIconToStatusAndToolWindow(project, createIconWithNotificationCount(notifications));
+    updateIconOnStatusBarAndToolWindow(project, notifications);
 
     int count = notifications.size();
     setToolTipText(count > 0 ? String.format("%s notification%s pending", count, count == 1 ? "" : "s") : "No new notifications");
@@ -95,34 +95,35 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     myStatusBar.updateWidget(ID());
   }
 
-  private void applyIconToStatusAndToolWindow(Project project, LayeredIcon icon) {
+  private void updateIconOnStatusBarAndToolWindow(Project project, ArrayList<Notification> notifications) {
     if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().getPresentationMode()) {
       setVisible(true);
-      setIcon(icon);
+      setIcon(createIconWithNotificationCount(notifications, false));
     }
     else {
       ToolWindow eventLog = EventLog.getEventLog(project);
       if (eventLog != null) {
-        eventLog.setIcon(icon);
+        eventLog.setIcon(createIconWithNotificationCount(notifications, true));
       }
       setVisible(false);
     }
   }
 
-  private LayeredIcon createIconWithNotificationCount(ArrayList<? extends Notification> notifications) {
-    return createIconWithNotificationCount(this, getMaximumType(notifications), notifications.size());
+  private LayeredIcon createIconWithNotificationCount(ArrayList<? extends Notification> notifications, boolean forToolWindow) {
+    return createIconWithNotificationCount(this, getMaximumType(notifications), notifications.size(), forToolWindow);
   }
 
   @NotNull
-  public static LayeredIcon createIconWithNotificationCount(JComponent component, NotificationType type, int size) {
+  public static LayeredIcon createIconWithNotificationCount(JComponent component, NotificationType type, int size, boolean forToolWindow) {
     LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(getPendingNotificationsIcon(AllIcons.Ide.Notification.NoEvents, type), 0);
+    Icon baseIcon = getPendingNotificationsIcon(type, forToolWindow);
+    icon.setIcon(baseIcon, 0);
     if (size > 0) {
       //noinspection UseJBColor
       Color textColor = type == NotificationType.ERROR || type == NotificationType.INFORMATION
                         ? new JBColor(Color.white, new Color(0xF2F2F2))
                         : new Color(0x333333);
-      icon.setIcon(new TextIcon(component, size < 10 ? String.valueOf(size) : "9+", textColor), 1);
+      icon.setIcon(new TextIcon(component, size < 10 ? String.valueOf(size) : "9+", textColor, baseIcon), 1);
     }
     return icon;
   }
@@ -132,18 +133,18 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     return this;
   }
 
-  private static Icon getPendingNotificationsIcon(Icon defIcon, final NotificationType maximumType) {
+  private static Icon getPendingNotificationsIcon(NotificationType maximumType, boolean forToolWindow) {
     if (maximumType != null) {
       switch (maximumType) {
         case WARNING:
-          return AllIcons.Ide.Notification.WarningEvents;
+          return forToolWindow ? AllIcons.Toolwindows.WarningEvents : AllIcons.Ide.Notification.WarningEvents;
         case ERROR:
-          return AllIcons.Ide.Notification.ErrorEvents;
+          return forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
         case INFORMATION:
-          return AllIcons.Ide.Notification.InfoEvents;
+          return forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
       }
     }
-    return defIcon;
+    return forToolWindow ? AllIcons.Toolwindows.NoEvents : AllIcons.Ide.Notification.NoEvents;
   }
 
   @Nullable
@@ -169,13 +170,15 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     private final String myStr;
     private final JComponent myComponent;
     private final Color myTextColor;
+    private final Icon myBaseIcon;
     private final int myWidth;
     private final Font myFont;
 
-    TextIcon(JComponent component, @NotNull String str, @NotNull Color textColor) {
+    TextIcon(JComponent component, @NotNull String str, @NotNull Color textColor, @NotNull Icon baseIcon) {
       myStr = str;
       myComponent = component;
       myTextColor = textColor;
+      myBaseIcon = baseIcon;
       myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, JBUI.scale(9));
       myWidth = myComponent.getFontMetrics(myFont).stringWidth(myStr);
     }
@@ -210,7 +213,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
       Color originalColor = g.getColor();
       g.setFont(myFont);
 
-      x += (getIconWidth() - myWidth) / 2;
+      x += (getIconWidth() - myWidth - 1) / 2;
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
 
       int length = myStr.length();
@@ -232,12 +235,12 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
 
     @Override
     public int getIconWidth() {
-      return AllIcons.Ide.Notification.NoEvents.getIconWidth();
+      return myBaseIcon.getIconWidth();
     }
 
     @Override
     public int getIconHeight() {
-      return AllIcons.Ide.Notification.NoEvents.getIconHeight();
+      return myBaseIcon.getIconHeight();
     }
   }
 }
