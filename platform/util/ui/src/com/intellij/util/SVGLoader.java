@@ -4,17 +4,16 @@ package com.intellij.util;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.ui.svg.MyTranscoder;
+import com.intellij.ui.svg.SaxSvgDocumentFactory;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGOMDocument;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.util.XMLResourceDescriptor;
 import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,11 +140,11 @@ public final class SVGLoader {
   }
 
   @NotNull
-  private static TranscoderInput createTranscodeInput(@Nullable URL url, InputStream stream) throws IOException {
+  private static TranscoderInput createTranscodeInput(@Nullable URL url, @NotNull InputStream stream) throws IOException {
     TranscoderInput myTranscoderInput;
     String uri = null;
     try {
-      if (url != null && "jar".equals(url.getProtocol()) && stream != null) {
+      if (url != null && "jar".equals(url.getProtocol())) {
         // workaround for BATIK-1217
         url = new URL(url.getPath());
       }
@@ -153,10 +152,7 @@ public final class SVGLoader {
     }
     catch (URISyntaxException ignore) { }
 
-    Document document = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName()).createDocument(uri, stream);
-    if (document == null) {
-      throw new IOException("document not created");
-    }
+    Document document = new SaxSvgDocumentFactory().createDocument(uri, stream);
     patchColors(url, document);
     myTranscoderInput = new TranscoderInput(document);
     return myTranscoderInput;
