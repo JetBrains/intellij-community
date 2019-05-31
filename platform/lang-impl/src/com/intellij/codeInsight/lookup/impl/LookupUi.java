@@ -74,13 +74,7 @@ class LookupUi {
 
     MenuAction menuAction = new MenuAction();
     menuAction.add(new ChangeSortingAction());
-    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)){
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
-      }
-    });
-    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)));
+    menuAction.add(new ChangeQuickDocAction());
 
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.Actions.More);
@@ -242,16 +236,15 @@ class LookupUi {
       location = ScreenUtil.findNearestPointOnBorder(screenRectangle, location);
     }
 
-    Rectangle candidate = new Rectangle(location, dim);
-    ScreenUtil.cropRectangleToFitTheScreen(candidate);
-
     JRootPane rootPane = editor.getComponent().getRootPane();
     if (rootPane != null) {
       SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
-    }
-    else {
+    } else {
       LOG.error("editor.disposed=" + editor.isDisposed() + "; lookup.disposed=" + myLookup.isLookupDisposed() + "; editorShowing=" + editor.getContentComponent().isShowing());
     }
+
+    Rectangle candidate = new Rectangle(location, dim);
+    ScreenUtil.cropRectangleToFitTheScreen(candidate);
 
     myMaximumHeight = candidate.height;
     return new Rectangle(location.x, location.y, dim.width, candidate.height);
@@ -299,7 +292,7 @@ class LookupUi {
             }
           }
 
-          myList.setFixedCellWidth(myScrollPane.getViewport().getWidth());
+          //myList.setFixedCellWidth(myScrollPane.getViewport().getWidth());
         }
       });
     }
@@ -351,19 +344,23 @@ class LookupUi {
     }
   }
 
-  private static class DelegatedAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
-    private final AnAction delegateAction;
-    private DelegatedAction(AnAction action) {
-      delegateAction = action;
-      getTemplatePresentation().setText(delegateAction.getTemplateText(), true);
-      copyShortcutFrom(delegateAction);
+  private static class ChangeQuickDocAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
+    private final AnAction quickDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
+    private ChangeQuickDocAction() {
+      getTemplatePresentation().setText(quickDocAction.getTemplateText(), true);
+      copyShortcutFrom(quickDocAction);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (e.getPlace() == ActionPlaces.EDITOR_POPUP) {
-        delegateAction.actionPerformed(e);
+        quickDocAction.actionPerformed(e);
       }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
     }
   }
 

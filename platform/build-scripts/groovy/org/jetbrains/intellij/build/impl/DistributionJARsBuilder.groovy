@@ -105,6 +105,7 @@ class DistributionJARsBuilder {
       getPlatformApiModules(productLayout).each {
         withModule(it, "platform-api.jar")
       }
+      // NOTE: If you change the name of this jar, make sure to update BootstrapClassLoaderUtil.MAIN_RUNNER_JAR
       getPlatformImplModules(productLayout).each {
         withModule(it, "platform-impl.jar")
       }
@@ -121,29 +122,11 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util.rt", "util.jar")
       withModule("intellij.platform.util.classLoader", "util.jar")
       withModule("intellij.platform.util.ui")
-      withModule("intellij.platform.util.ex")
 
       withModule("intellij.platform.ide.util.io")
 
       withModule("intellij.platform.concurrency")
       withModule("intellij.platform.core.ui")
-
-      withModule("intellij.platform.builtInServer.impl")
-      withModule("intellij.platform.credentialStore")
-      withModule("intellij.json")
-      withModule("intellij.spellchecker")
-      withModule("intellij.platform.images")
-
-      withModule("intellij.relaxng", "intellij-xml.jar")
-      withModule("intellij.xml.analysis.impl", "intellij-xml.jar")
-      withModule("intellij.xml.psi.impl", "intellij-xml.jar")
-      withModule("intellij.xml.structureView.impl", "intellij-xml.jar")
-      withModule("intellij.xml.impl", "intellij-xml.jar")
-
-      withModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
-      withModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
 
       withModule("intellij.platform.objectSerializer.annotations")
       withModule("intellij.platform.objectSerializer")
@@ -466,14 +449,8 @@ class DistributionJARsBuilder {
 
           CompatibleBuildRange compatibleBuildRange = publishingSpec.compatibleBuildRange
           if (compatibleBuildRange == null) {
-            def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-                                                   publishingSpec.includeInCustomPluginRepository &&
-                                                   buildContext.proprietaryBuildTools.artifactsServer != null
-            //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
-                                   //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
-                                   buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
-                                                                      : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+            def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
+            compatibleBuildRange = includeInCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
           }
 
           setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),

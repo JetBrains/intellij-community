@@ -72,5 +72,6 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
     processed.add(StringUtil.toLowerCase(IfsUtil.ICO_FORMAT));
 
     consumer.consume(IMAGE_FILE_TYPE, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+    consumer.consume(SvgFileType.INSTANCE, "svg");
   }
 }

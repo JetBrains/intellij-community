@@ -29,8 +29,4 @@ public interface IgnoredFileContentProvider {
 
   @NotNull
   String buildIgnoreGroupDescription(@NotNull IgnoredFileProvider ignoredFileProvider);
-
-  default boolean supportIgnoreFileNotInVcsRoot() {
-    return true;
-  }
 }

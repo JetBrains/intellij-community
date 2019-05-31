@@ -94,13 +94,14 @@ public class ColorUtil {
 
   @NotNull
   public static Color dimmer(@NotNull final Color color) {
-    return wrap(color, () -> {
+    NotNullProducer<Color> func = () -> {
       float[] rgb = color.getRGBColorComponents(null);
 
       float alpha = 0.80f;
       float rem = 1 - alpha;
       return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
-    });
+    };
+    return wrap(color, func);
   }
 
   private static Color wrap(@NotNull Color color, NotNullProducer<? extends Color> func) {
@@ -109,7 +110,7 @@ public class ColorUtil {
 
   private static int shift(int colorComponent, double d) {
     final int n = (int)(colorComponent * d);
-    return n > 255 ? 255 : Math.max(n, 0);
+    return n > 255 ? 255 : n < 0 ? 0 : n;
   }
 
   @NotNull
@@ -121,6 +122,19 @@ public class ColorUtil {
   @NotNull
   public static Color withAlpha(@NotNull Color c, double a) {
     return toAlpha(c, (int)(255 * a));
+  }
+
+  @NotNull
+  static Color srcOver(@NotNull Color c, @NotNull Color b) {
+    float [] rgba = new float[4];
+    rgba = c.getRGBComponents(rgba);
+    float[] brgba = new float[4];
+    brgba = b.getRGBComponents(brgba);
+    float dsta = 1.0f - rgba[3];
+    // Applying SrcOver rule
+    return new Color(rgba[0]*rgba[3] + dsta*brgba[0],
+                     rgba[1]*rgba[3] + dsta*brgba[1],
+                     rgba[2]*rgba[3] + dsta*brgba[2], 1.0f);
   }
 
   @NotNull

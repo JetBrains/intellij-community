@@ -37,7 +37,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -55,8 +54,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
 
-  private PsiFile myFile;
-  private PsiJavaModule myJavaModule;
+  @SuppressWarnings("StatefulEp") private PsiFile myFile;
+  @SuppressWarnings("StatefulEp") private PsiJavaModule myJavaModule;
 
   // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<>();
@@ -468,13 +467,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitJavaToken(PsiJavaToken token) {
     super.visitJavaToken(token);
-
-    if (!myHolder.hasErrorResults()) {
-      IElementType type = token.getTokenType();
-      if (type == JavaTokenType.TEXT_BLOCK_LITERAL) myHolder.add(checkFeature(token, Feature.TEXT_BLOCKS));
-      if (type == JavaTokenType.RAW_STRING_LITERAL) myHolder.add(checkFeature(token, Feature.RAW_LITERALS));
+    if (!myHolder.hasErrorResults() && token.getTokenType() == JavaTokenType.RAW_STRING_LITERAL) {
+      myHolder.add(checkFeature(token, Feature.RAW_LITERALS));
     }
-
     if (!myHolder.hasErrorResults() && token.getTokenType() == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
       PsiElement gParent = token.getParent().getParent();
       PsiCodeBlock codeBlock;
@@ -814,12 +809,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     super.visitLiteralExpression(expression);
     if (myHolder.hasErrorResults()) return;
-
     myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel,myFile));
-
-    if (myRefCountHolder != null && !myHolder.hasErrorResults()) {
-      registerReferencesFromInjectedFragments(expression);
-    }
+    if (myRefCountHolder != null && !myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(expression);
 
     if (myRefCountHolder != null && !myHolder.hasErrorResults()) {
       for (PsiReference reference : expression.getReferences()) {

@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,11 +19,7 @@ import java.util.Comparator;
 
 /**
  * @author Yura Cangea
- *
- * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated
 public class FileTreeBuilder extends AbstractTreeBuilder {
   private final FileChooserDescriptor myChooserDescriptor;
 

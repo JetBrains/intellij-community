@@ -268,7 +268,7 @@ public class DaemonsUi implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
-      GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.ActionID.refreshDaemons);
+      GradleActionsUsagesCollector.trigger(myProject, "refreshDaemons");
       List<DaemonState> daemonStateList = GradleDaemonServices.getDaemonsStatus();
       myTable.setValues(daemonStateList);
       updateDaemonsList(daemonStateList);
@@ -288,7 +288,7 @@ public class DaemonsUi implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
-      GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.ActionID.stopAllDaemons);
+      GradleActionsUsagesCollector.trigger(myProject, "stopAllDaemons");
       GradleDaemonServices.stopDaemons();
       List<DaemonState> daemonStateList = GradleDaemonServices.getDaemonsStatus();
       myTable.setValues(daemonStateList);
@@ -310,7 +310,7 @@ public class DaemonsUi implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
-      GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.ActionID.stopSelectedDaemons);
+      GradleActionsUsagesCollector.trigger(myProject, "stopSelectedDaemons");
       GradleDaemonServices.stopDaemons(myTable.getTableView().getSelectedObjects());
       List<DaemonState> daemonStateList = GradleDaemonServices.getDaemonsStatus();
       myTable.setValues(daemonStateList);

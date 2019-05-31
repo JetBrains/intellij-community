@@ -38,7 +38,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
   }
 
-  public synchronized void finish(Consumer<? super BuildEvent> messageConsumer) {
+  public void finish(Consumer<? super BuildEvent> messageConsumer) {
     completeParsers(messageConsumer);
 
     if (!myCompleted) {
@@ -106,7 +106,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     };
   }
 
-  private synchronized boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
+  private boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
                                 MavenLogEntryReader.MavenLogEntry logLine,
                                 MavenLogEntryReader mavenLogReader) {
     if (logLine.myLine.equals("BUILD FAILURE")) {

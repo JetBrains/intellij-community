@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,13 @@ public interface AppLifecycleListener {
    * Called after an application frame is shown.
    */
   default void appStarting(@Nullable Project projectFromCommandLine) {
+  }
+
+  /**
+   * Called after an application frame is shown.
+   */
+  default void appStarting(@Nullable Project projectFromCommandLine, IdeFrame frame) {
+    appStarting(projectFromCommandLine);
   }
 
   /**

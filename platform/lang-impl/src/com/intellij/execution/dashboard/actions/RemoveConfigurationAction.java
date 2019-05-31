@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.JBIterable;
@@ -43,9 +42,7 @@ public class RemoveConfigurationAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || !RunDashboardManager.getInstance(project).isShowConfigurations() ||
-        Registry.is("ide.service.view")) {
-      // Also hide from popup menu in Services tool window.
+    if (project == null || !RunDashboardManager.getInstance(project).isShowConfigurations()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

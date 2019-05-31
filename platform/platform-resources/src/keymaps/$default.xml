@@ -1009,9 +1009,6 @@
   <action id="VcsShowPrevChangeMarker">
     <keyboard-shortcut first-keystroke="shift control alt UP"/>
   </action>
-  <action id="Vcs.ToggleAmendCommitMode">
-    <keyboard-shortcut first-keystroke="control alt M"/>
-  </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
     <keyboard-shortcut first-keystroke="control E"/>

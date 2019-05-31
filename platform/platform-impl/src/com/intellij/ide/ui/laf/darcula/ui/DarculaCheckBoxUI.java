@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -36,7 +34,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    if (ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)c) != null) {
+    if (UIUtil.getParentOfType(CellRendererPane.class, c) != null) {
       c.setBorder(null);
     }
   }
@@ -65,7 +63,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected int textIconGap() {
-    return JBUIScale.scale(5);
+    return scale(5);
   }
 
   @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
@@ -118,10 +116,8 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       if (op != null) {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(1), iconRect.y, JBUIScale.scale(18), JBUIScale.scale(18),
-                                                  JBUIScale.scale(8), JBUIScale.scale(8)), false);
-        outline.append(new RoundRectangle2D.Float(iconRect.x + JBUIScale.scale(4), iconRect.y + JBUIScale.scale(3), JBUIScale.scale(12),
-                                                  JBUIScale.scale(12), JBUIScale.scale(3), JBUIScale.scale(3)),
+        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(1), iconRect.y, scale(18), scale(18), scale(8), scale(8)), false);
+        outline.append(new RoundRectangle2D.Float(iconRect.x + scale(4), iconRect.y + scale(3), scale(12), scale(12), scale(3), scale(3)),
                        false);
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -136,15 +132,19 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
+    //text
     if (text != null) {
-      View v = (View)b.getClientProperty(BasicHTML.propertyKey);
-      if (v != null) {
-        v.paint(g, textRect);
+      View view = (View)c.getClientProperty(BasicHTML.propertyKey);
+      if (view != null) {
+        view.paint(g, textRect);
       }
       else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        int mnemonicIndex = DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
-        UIUtilities.drawStringUnderlineCharAt(b, g, text, mnemonicIndex, textRect.x, textRect.y + fm.getAscent());
+        final int mnemonicIndex = SystemInfoRt.isMac && !UIManager.getBoolean("Button.showMnemonics") ? -1 : b.getDisplayedMnemonicIndex();
+        UIUtilities.drawStringUnderlineCharAt(c, g, text,
+                                              mnemonicIndex,
+                                              textRect.x,
+                                              textRect.y + fm.getAscent());
       }
     }
   }

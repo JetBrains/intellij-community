@@ -51,7 +51,7 @@ class NonDefaultConstructorTest {
     file.file.write("""
       {
         version:42,
-        formatVersion:2,
+        formatVersion:1,
         data:{
         }
       }

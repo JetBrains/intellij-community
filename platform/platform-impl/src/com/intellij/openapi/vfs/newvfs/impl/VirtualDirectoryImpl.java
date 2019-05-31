@@ -397,6 +397,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  @TestOnly
+  void doClearAdoptedNames() {
+    synchronized (myData) {
+      myData.clearAdoptedNames();
+    }
+  }
+
   private void assertConsistency(boolean caseSensitive, @NotNull Object details) {
     if (!CHECK || ApplicationInfoImpl.isInStressTest()) return;
     int[] childrenIds = myData.myChildrenIds;

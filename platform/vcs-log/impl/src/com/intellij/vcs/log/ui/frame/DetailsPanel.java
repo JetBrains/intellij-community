@@ -26,7 +26,6 @@ import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
@@ -253,7 +252,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   @Override
   public Dimension getMinimumSize() {
     Dimension minimumSize = super.getMinimumSize();
-    return new Dimension(Math.max(minimumSize.width, JBUIScale.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUIScale.scale(MIN_SIZE)));
+    return new Dimension(Math.max(minimumSize.width, JBUI.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUI.scale(MIN_SIZE)));
   }
 
   @Override

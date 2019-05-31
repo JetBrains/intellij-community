@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseGenerateAction extends CodeInsightAction implements GenerateActionPopupTemplateInjector {
+public class BaseGenerateAction extends CodeInsightAction implements GenerateActionPopupTemplateInjector {
   private final CodeInsightActionHandler myHandler;
 
-  protected BaseGenerateAction(CodeInsightActionHandler handler) {
+  public BaseGenerateAction(CodeInsightActionHandler handler) {
     myHandler = handler;
   }
 

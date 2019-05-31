@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,6 @@ public class ShellcheckOptionsPanel {
   private JPanel myPanel;
   private JPanel myWarningPanel;
   private JLabel myWarningLabel;
-  private JLabel myErrorLabel;
   @SuppressWarnings("unused")
   private ActionLink myShellcheckDownloadLink;
   private TextFieldWithBrowseButton myShellcheckSelector;
@@ -50,14 +48,12 @@ public class ShellcheckOptionsPanel {
         String shellcheckPath = myShellcheckSelector.getText();
         ShSettings.setShellcheckPath(shellcheckPath);
         myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
-        myErrorLabel.setVisible(false);
       }
     });
 
     String shellcheckPath = ShSettings.getShellcheckPath();
     myShellcheckSelector.setText(shellcheckPath);
     myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
-    myErrorLabel.setForeground(JBColor.RED);
 
     ShShellcheckUtil.shellCheckCodes.forEach((key, value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
     myWarningLabel.setIcon(AllIcons.General.Warning);
@@ -67,9 +63,7 @@ public class ShellcheckOptionsPanel {
     myShellcheckDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        ShShellcheckUtil.download(event.getProject(),
-                                  () -> myShellcheckSelector.setText(ShSettings.getShellcheckPath()),
-                                  () -> myErrorLabel.setVisible(true));
+        ShShellcheckUtil.download(event.getProject(), () -> myShellcheckSelector.setText(ShSettings.getShellcheckPath()));
         EditorNotifications.getInstance(myProject).updateAllNotifications();
       }
     });

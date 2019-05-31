@@ -7,20 +7,16 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
-import com.intellij.ui.icons.CopyableIcon;
-import com.intellij.ui.icons.DarkIconProvider;
-import com.intellij.ui.icons.ImageDescriptor;
-import com.intellij.ui.icons.MenuBarIconProvider;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.scale.ScaleContextAware;
-import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
+import com.intellij.util.ui.JBUIScale.ScaleContextSupport;
+import com.intellij.util.ui.JBUIScale.UserScaleContext.UpdateListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -29,6 +25,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
+import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -37,14 +34,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
-import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.ui.scale.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.DEV_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
@@ -59,7 +55,6 @@ public final class IconLoader {
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createWeakMap(200);
 
   private static volatile boolean STRICT_GLOBAL;
-
   private static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<Boolean>() {
     @Override
     protected Boolean initialValue() {
@@ -102,19 +97,16 @@ public final class IconLoader {
     STRICT_GLOBAL = strict;
   }
 
-  private static void updateTransform(@NotNull Function<? super IconTransform, IconTransform> updater) {
+  private static void updateTransform(Function<? super IconTransform, IconTransform> updater) {
     IconTransform prev, next;
     do {
       prev = ourTransform.get();
-      next = updater.apply(prev);
-    }
-    while (!ourTransform.compareAndSet(prev, next));
-
+      next = updater.fun(prev);
+    } while (!ourTransform.compareAndSet(prev, next));
     if (prev != next) {
       ourIconsCache.clear();
       ourIcon2DisabledIcon.clear();
-      //clears svg cache
-      ImageDescriptor.clearCache();
+      ImageLoader.clearCache(); //clears svg cache
     }
   }
 
@@ -159,7 +151,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
+  private static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
     try {
       @NonNls String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
       Class cur = Class.forName(pckg + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
@@ -203,13 +195,13 @@ public final class IconLoader {
     ourIsActivated = true;
   }
 
-  @TestOnly
-  public static void deactivate() {
-    ourIsActivated = false;
-  }
-
   private static boolean isLoaderDisabled() {
     return !ourIsActivated;
+  }
+
+  @Nullable
+  public static Icon findLafIcon(@NotNull String key, @NotNull Class aClass) {
+    return findLafIcon(key, aClass, STRICT_LOCAL.get());
   }
 
   @Nullable
@@ -237,10 +229,6 @@ public final class IconLoader {
   }
 
   private static boolean isReflectivePath(@NotNull String path) {
-    if (path.isEmpty() || path.charAt(0) == '/') {
-      return false;
-    }
-
     List<String> paths = StringUtil.split(path, ".");
     return paths.size() > 1 && paths.get(0).endsWith("Icons");
   }
@@ -327,7 +315,7 @@ public final class IconLoader {
                                    .createCompatibleImage(ROUND.round(ctx.apply(icon.getIconWidth(), DEV_SCALE)),
                                                           ROUND.round(ctx.apply(icon.getIconHeight(), DEV_SCALE)),
                                                           Transparency.TRANSLUCENT);
-        if (StartupUiUtil.isJreHiDPI(ctx)) {
+        if (UIUtil.isJreHiDPI(ctx)) {
           image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, icon.getIconWidth(), icon.getIconHeight());
         }
       }
@@ -412,7 +400,7 @@ public final class IconLoader {
         scale = (float)((ScaleContextAware)icon).getScale(SYS_SCALE);
       }
       else {
-        scale = StartupUiUtil.isJreHiDPI() ? JBUIScale.sysScale(ancestor) : 1f;
+        scale = UIUtil.isJreHiDPI() ? JBUI.sysScale(ancestor) : 1f;
       }
       @SuppressWarnings("UndesirableClassUsage")
       BufferedImage image = new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
@@ -426,7 +414,7 @@ public final class IconLoader {
       graphics.dispose();
 
       Image img = ImageUtil.filter(image, filterSupplier.get());
-      if (StartupUiUtil.isJreHiDPI(ancestor)) img = RetinaImage.createFrom(img, scale, null);
+      if (UIUtil.isJreHiDPI(ancestor)) img = RetinaImage.createFrom(img, scale, null);
 
       icon = new JBImageIcon(img);
     }
@@ -511,7 +499,12 @@ public final class IconLoader {
   }
 
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static final class CachedImageIcon extends com.intellij.ui.icons.LazyImageIcon {
+  public static final class CachedImageIcon
+    extends com.intellij.util.ui.JBUIScale.ScaleContextSupport /* do not modify this FQN */
+    implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider
+  {
+    private final Object myLock = new Object();
+    @Nullable private volatile Object myRealIcon;
     @Nullable private final String myOriginalPath;
     @NotNull private volatile MyUrlResolver myResolver;
     @Nullable("when not overridden") private final Boolean myDarkOverridden;
@@ -547,6 +540,13 @@ public final class IconLoader {
       myUseCacheOnLoad = useCacheOnLoad;
       myTransform = transform;
       myLocalFilterSupplier = localFilterSupplier;
+      // For instance, ShadowPainter updates the context from outside.
+      getScaleContext().addUpdateListener(new UpdateListener() {
+        @Override
+        public void contextUpdated() {
+          myRealIcon = null;
+        }
+      });
     }
 
     @Contract("_, _, _, _, _, true -> !null")
@@ -568,9 +568,19 @@ public final class IconLoader {
       return myOriginalPath;
     }
 
-    @Override
     @NotNull
-    protected ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
+    private ImageIcon getRealIcon() {
+      return getRealIcon(null);
+    }
+
+    @Nullable
+    @TestOnly
+    public ImageIcon doGetRealIcon() {
+      return unwrapIcon(myRealIcon);
+    }
+
+    @NotNull
+    private ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
       if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
         synchronized (myLock) {
@@ -602,8 +612,34 @@ public final class IconLoader {
       return EMPTY_ICON;
     }
 
+    @Nullable
+    private static ImageIcon unwrapIcon(Object realIcon) {
+      Object icon = realIcon;
+      if (icon instanceof Reference) {
+        //noinspection unchecked
+        icon = ((Reference<ImageIcon>)icon).get();
+      }
+      return icon instanceof ImageIcon ? (ImageIcon)icon : null;
+    }
+
     private boolean isValid() {
       return myTransform == ourTransform.get() && myResolver.isResolved();
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
+      getRealIcon(ScaleContext.create(g2d)).paintIcon(c, g, x, y);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return getRealIcon().getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return getRealIcon().getIconHeight();
     }
 
     @Override
@@ -613,6 +649,11 @@ public final class IconLoader {
         if (url != null) return url.toString();
       }
       return myOriginalPath != null ? myOriginalPath : "unknown path";
+    }
+
+    @Override
+    public float getScale() {
+      return 1f;
     }
 
     @NotNull
@@ -681,6 +722,11 @@ public final class IconLoader {
 
     @Nullable
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
+      URL url = getURL();
+      if (url == null) {
+        return null;
+      }
+
       int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
       if (myUseCacheOnLoad) {
         flags |= ImageLoader.USE_CACHE;
@@ -688,21 +734,10 @@ public final class IconLoader {
       if (dark) {
         flags |= ImageLoader.DARK;
       }
-
-      String path = myResolver.myOverriddenPath;
-      Class aClass = myResolver.myClass;
-      if (aClass != null && path != null) {
-        return ImageLoader.loadFromUrl(path, aClass, flags, getFilters(), ctx);
-      }
-
-      URL url = getURL();
-      if (url == null) {
-        return null;
-      }
       return ImageLoader.loadFromUrl(url, null, flags, getFilters(), ctx);
     }
 
-    private final class MyScaledIconsCache {
+    private class MyScaledIconsCache {
       private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
       private final Map<Couple<Double>, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(
@@ -765,7 +800,7 @@ public final class IconLoader {
     /**
      * Used to defer URL resolve.
      */
-    private static final class MyUrlResolver {
+    private static class MyUrlResolver {
       @Nullable private final Class myClass;
       @Nullable private final ClassLoader myClassLoader;
       @Nullable private final String myOverriddenPath;
@@ -863,7 +898,7 @@ public final class IconLoader {
       @Nullable
       @SuppressWarnings("DuplicateExpressions")
       private static URL findURL(@NotNull String path, @NotNull Function<? super String, URL> urlProvider) {
-        URL url = urlProvider.apply(path);
+        URL url = urlProvider.fun(path);
         if (url != null) return url;
 
         // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
@@ -879,7 +914,7 @@ public final class IconLoader {
         else {
           LOG.debug("unexpected path: ", path);
         }
-        return urlProvider.apply(path);
+        return urlProvider.fun(path);
       }
     }
   }
@@ -941,6 +976,15 @@ public final class IconLoader {
     public Icon copy() {
       return IconLoader.copy(getOrComputeIcon(), null, false);
     }
+  }
+
+  // todo: remove and use DarkIconProvider when JBSDK supports scalable icons in menu
+  public interface MenuBarIconProvider {
+    Icon getMenuBarIcon(boolean isDark);
+  }
+
+  public interface DarkIconProvider {
+    Icon getDarkIcon(boolean isDark);
   }
 
   private static Icon getOrigin(RetrievableIcon icon) {

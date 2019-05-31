@@ -58,28 +58,22 @@ class VfsEventGenerationHelper {
                         @Nullable String symlinkTarget,
                         @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
-    ChildInfo[] children = null;
+    ChildInfo[] children;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
       Path root = Paths.get(parent.getPath(), childName);
-      if (isUnderSomeProjectRoot(root)) {
-        Path[] excluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
-             url -> {
-               Path path = Paths.get(VirtualFileManager.extractPath(url));
-               return path.startsWith(root) ? path : null;
-             }, new Path[0]);
-        children = scanChildren(root, excluded, checkCanceled);
-      }
+      Path[] excluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(),
+                                         url -> {
+                                           Path path = Paths.get(VirtualFileManager.extractPath(url));
+                                           return path.startsWith(root) ? path : null;
+                                         }, new Path[0]);
+
+      children = scanChildren(root, excluded, checkCanceled);
+    }
+    else {
+      children = null;
     }
     VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
     myEvents.add(event);
-  }
-
-  private static boolean isUnderSomeProjectRoot(@NotNull Path root) {
-    String[] projectRootUrls = ProjectManagerEx.getInstanceEx().getAllProjectUrls();
-    return ContainerUtil.exists(projectRootUrls, projectRootUrl -> {
-      Path projectRootPath = Paths.get(VirtualFileManager.extractPath(projectRootUrl));
-      return root.startsWith(projectRootPath);
-    });
   }
 
   void beginTransaction() {

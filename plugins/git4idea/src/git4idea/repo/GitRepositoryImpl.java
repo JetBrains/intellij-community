@@ -76,32 +76,19 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     }
   }
 
-  /**
-   * @see GitRepositoryManager#getRepositoryForRoot
-   */
-  @NotNull
-  @Deprecated
-  public static GitRepository getInstance(@NotNull VirtualFile root,
-                                          @NotNull Project project,
-                                          boolean listenToRepoChanges) {
-    return getInstance(root, project, project, listenToRepoChanges);
-  }
-
   @NotNull
   public static GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull Project project,
-                                          @NotNull Disposable parentDisposable,
                                           boolean listenToRepoChanges) {
-    return getInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
+    return getInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, listenToRepoChanges);
   }
 
   @NotNull
   public static GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull VirtualFile gitDir,
                                           @NotNull Project project,
-                                          @NotNull Disposable parentDisposable,
                                           boolean listenToRepoChanges) {
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, project, !listenToRepoChanges);
     if (listenToRepoChanges) {
       repository.getUntrackedFilesHolder().setupVfsListener(project);
       repository.getIgnoredFilesHolder().setupVfsListener();

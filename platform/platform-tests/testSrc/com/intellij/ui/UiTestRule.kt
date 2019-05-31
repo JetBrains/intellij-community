@@ -1,25 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
+import org.apache.xmlgraphics.java2d.GenericGraphicsDevice
+import org.apache.xmlgraphics.java2d.GraphicsConfigurationWithTransparency
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
+import java.awt.Rectangle
 import java.nio.file.Path
 import javax.swing.JPanel
 
 class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
-  override fun before() {
-    super.before()
+  // must be lazy, otherwise we cannot change `java.awt.headless`
+  private val graphicsConfiguration by lazy {
+    object : GraphicsConfigurationWithTransparency() {
+      private val device = object : GenericGraphicsDevice(this) {
+        override fun getType() = TYPE_RASTER_SCREEN
+      }
 
-    IconManager.activate()
-  }
+      override fun getBounds() = Rectangle(0, 0, 1000, 1000)
 
-  override fun after() {
-    super.after()
-
-    IconManager.deactivate()
+      override fun getDevice() = device
+    }
   }
 
   fun validate(panel: JPanel, testName: TestName, lafName: String) {
@@ -28,7 +32,11 @@ class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
 
   fun validate(panel: JPanel, snapshotName: String, lafName: String) {
     val snapshotDir = testDataRoot.resolve(getSnapshotRelativePath(lafName))
-    val svgRenderer = SvgRenderer(snapshotDir)
+    val svgRenderer = SvgRenderer(snapshotDir, graphicsConfiguration)
+
+    // to run tests on retina monitor (@2x images must be not used and so on)
+    // actually, not required (IconUtil correctly uses graphics device configuration), but just to be sure
+    AppUIUtil.setGraphicsConfiguration(panel, graphicsConfiguration)
 
     val preferredSize = panel.preferredSize
     panel.setBounds(0, 0, Math.max(preferredSize.width, JBUI.scale(480)), Math.max(preferredSize.height, 320))

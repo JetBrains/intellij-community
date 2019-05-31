@@ -4,7 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.vcs.changes.CommitExecutor
 
 interface CommitWorkflowHandler {
-  val amendCommitHandler: AmendCommitHandler
+  var isAmendCommitMode: Boolean
 
   fun getExecutor(executorId: String): CommitExecutor?
   fun isExecutorEnabled(executor: CommitExecutor): Boolean

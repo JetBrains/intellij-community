@@ -109,6 +109,11 @@
     </group>
 
     <!-- Tools -->
+    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis" text="Fold Lines Like This">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
+    </action>
+
+
     <group id="Internal1" text="IDEA Internal Actions" internal="true">
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
@@ -126,11 +131,11 @@
       </group>
 
       <separator/>
-      <group internal="true" text="Cached Value Profiler" popup="true">
+      <group internal="true" text="Cached value profiler" popup="true">
         <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
-                text="Turn on Cached Value Profiler" internal="true"/>
+                text="Turn on cached value profiler" internal="true"/>
         <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
-                text="Dump Results" internal="true"/>
+                text="Dump results" internal="true"/>
       </group>
 
       <separator/>
@@ -140,7 +145,7 @@
                 text="Mark File Dirty"/>
         <separator/>
         <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"
-                text="Check VFS Sanity"/>
+                text="Check VFS sanity"/>
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load All Files Content"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"
                 text="Load All VFS Stored Files Content"/>
@@ -785,6 +790,13 @@
       <reference ref="EditorPopupMenu"/>
     </group>
 
+    <group id="MethodChainHintsContextMenu" popup="true">
+      <action id="MethodChainHintAction"
+              class="com.intellij.codeInsight.hints.MethodChainHintTurningAction"
+              text="Show method chain hints"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
+    </group>
 
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />

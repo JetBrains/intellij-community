@@ -33,7 +33,7 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
 
             override fun updateDigest(data: Element?) {
             }
-          }, provider.getKeyFromFileName(fileName), provider.javaClass)
+          }, provider.getKeyFromFileName(fileName))
         }
       }
     }
@@ -55,12 +55,8 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
     }
   }
 
-  private fun loadKeymapsFromElement(dataHolder: SchemeDataHolder<KeymapImpl>,
-                                     keymapName: String,
-                                     providerClass: Class<BundledKeymapProvider>) {
-    val keymap =
-      if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder, this, providerClass)
-      else DefaultKeymapImpl(dataHolder, this, providerClass)
+  private fun loadKeymapsFromElement(dataHolder: SchemeDataHolder<KeymapImpl>, keymapName: String) {
+    val keymap = if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder, this) else DefaultKeymapImpl(dataHolder, this)
     keymap.name = keymapName
     myKeymaps.add(keymap)
     nameToScheme.put(keymapName, keymap)
@@ -88,7 +84,7 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
       KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
       "NetBeans 6.5" -> "NetBeans"
       else -> {
-        val newName = name.removeSuffix(" (Mac OS X)").removeSuffix(" OSX")
+        val newName = name.removeSuffix(" (Mac OS X)")
         when {
           newName === name -> name
           else -> "$newName (macOS)"

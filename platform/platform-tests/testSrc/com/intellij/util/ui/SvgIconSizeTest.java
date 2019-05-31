@@ -1,24 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
 import java.awt.*;
+import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.loadImage;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 import static junit.framework.TestCase.assertEquals;
@@ -35,20 +34,20 @@ public class SvgIconSizeTest {
 
   @Test
   public void test() throws IOException {
-    JBUIScale.setUserScaleFactor((float)1);
+    JBUI.setUserScaleFactor(1);
     overrideJreHiDPIEnabled(true);
 
     test(ScaleContext.create(SYS_SCALE.of(1)));
     test(ScaleContext.create(SYS_SCALE.of(2)));
 
-    float currentSysScale = JBUIScale.sysScale();
+    float currentSysScale = JBUI.sysScale();
     if (currentSysScale != 2) {
-      JBUIScale.setSystemScaleFactor(2);
+      JBUI.setSystemScaleFactor(2);
       /*
        * Test with the system scale equal to the current system scale.
        */
       test(ScaleContext.create(SYS_SCALE.of(2)));
-      JBUIScale.setSystemScaleFactor(currentSysScale);
+      JBUI.setSystemScaleFactor(currentSysScale);
     }
 
     /*
@@ -67,7 +66,7 @@ public class SvgIconSizeTest {
      * Test SVGLoader.getDocumentSize for SVG starting with <svg.
      */
     url = new File(getSvgIconPath("20x10")).toURI().toURL();
-    ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
+    Dimension2D size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
     assertEquals("wrong svg doc width", 20d, size.getWidth());
     assertEquals("wrong svg doc height", 10d, size.getHeight());
 

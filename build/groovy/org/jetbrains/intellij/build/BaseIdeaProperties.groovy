@@ -9,19 +9,50 @@ import java.util.function.Consumer
  * @author nik
  */
 abstract class BaseIdeaProperties extends ProductProperties {
-  public static final List<String> JAVA_IDE_API_MODULES = [
+  public static final List<String> JAVA_API_MODULES = [
+    "intellij.java.compiler",
+    "intellij.java.debugger",
     "intellij.xml.dom",
+    "intellij.java.execution",
+    "intellij.java.remoteServers",
     "intellij.java.testFramework",
     "intellij.platform.testFramework.core",
     "intellij.platform.uast.tests"
   ]
-  public static final List<String> JAVA_IDE_IMPLEMENTATION_MODULES = [
+  public static final List<String> MAIN_JAVA_API_MODULES = [
+    "intellij.java.analysis",
+    "intellij.jvm.analysis",
+    "intellij.java.indexing",
+    "intellij.java.psi",
+    "intellij.java",
+    "intellij.jsp.base",
+    "intellij.jsp",
+    "intellij.platform.uast"
+  ]
+  public static final List<String> JAVA_IMPLEMENTATION_MODULES = [
+    "intellij.java.compiler.impl",
+    "intellij.java.debugger.impl",
+    "intellij.java.debugger.memory.agent",
     "intellij.xml.dom.impl",
+    "intellij.java.execution.impl",
+    "intellij.java.ui",
+    "intellij.java.structureView",
+    "intellij.java.manifest",
+    "intellij.java.remoteServers.impl",
     "intellij.platform.testFramework",
-    "intellij.tools.testsBootstrap"
+    "intellij.tools.testsBootstrap",
+    "intellij.uiDesigner"
+  ]
+  public static final List<String> MAIN_JAVA_IMPLEMENTATION_MODULES = [
+    "intellij.java.analysis.impl",
+    "intellij.jvm.analysis.impl",
+    "intellij.java.indexing.impl",
+    "intellij.java.psi.impl",
+    "intellij.java.impl",
+    "intellij.jsp.spi",
+    "intellij.java.uast"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
-    "intellij.java.plugin",
     "intellij.copyright",
     "intellij.properties",
     "intellij.terminal",
@@ -57,8 +88,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.android.smali",
     "intellij.statsCollector",
     "intellij.sh",
-    "intellij.vcs.changeReminder",
-    "intellij.markdown"
+    "intellij.vcs.changeReminder"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     "": "1.8",
@@ -66,11 +96,11 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "lib/forms_rt.jar": "1.4",
     "lib/annotations.jar": "1.5",
     "lib/util.jar": "1.8",
+    "lib/rt/debugger-agent.jar": "1.6",
+    "lib/rt/debugger-agent-storage.jar": "1.6",
     "lib/external-system-rt.jar": "1.6",
     "lib/jshell-frontend.jar": "1.9",
     "lib/sa-jdwp": "",  // ignored
-    "plugins/java/lib/rt/debugger-agent.jar": "1.6",
-    "plugins/java/lib/rt/debugger-agent-storage.jar": "1.6",
     "plugins/Groovy/lib/groovy_rt.jar": "1.5",
     "plugins/Groovy/lib/groovy-rt-constants.jar": "1.5",
     "plugins/coverage/lib/coverage_rt.jar": "1.5",
@@ -93,27 +123,41 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
+    productLayout.moduleExcludes.put("intellij.java.resources.en", "search/searchableOptions.xml")
 
-    //for compatibility with generated Ant build.xml files which refer to this file
+    productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
+    productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")
+    productLayout.additionalPlatformJars.put("jps-launcher.jar", "intellij.platform.jps.build.launcher")
+    productLayout.additionalPlatformJars.put("jps-builders.jar", "intellij.platform.jps.build")
+    productLayout.additionalPlatformJars.put("jps-builders-6.jar", "intellij.platform.jps.build.javac.rt")
+    productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "intellij.java.aetherDependencyResolver")
+    productLayout.additionalPlatformJars.put("jshell-protocol.jar", "intellij.java.jshell.protocol")
+    productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
     productLayout.additionalPlatformJars.
       putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
 
-    productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
-
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
-        //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
-        withModule("intellij.java.rt", "idea_rt.jar", null)
+        MAIN_JAVA_API_MODULES.each {
+          withModule(it, "java-api.jar", "java_resources_en.jar")
+        }
+        MAIN_JAVA_IMPLEMENTATION_MODULES.each {
+          withModule(it, "java-impl.jar", "java_resources_en.jar")
+        }
 
-        //for compatibility with users' projects which take these libraries from IDEA installation
+        withModule("intellij.java.rt", "idea_rt.jar", null)
+        withArtifact("debugger-agent", "rt")
+        withArtifact("debugger-agent-storage", "rt")
+        withProjectLibrary("Eclipse")
+        withProjectLibrary("jgoodies-common")
+        withProjectLibrary("commons-net")
+        withProjectLibrary("snakeyaml")
         withProjectLibrary("jetbrains-annotations")
+        withoutProjectLibrary("Ant")
+        withoutProjectLibrary("Gradle")
         removeVersionFromProjectLibraryJarNames("jetbrains-annotations")
         withProjectLibrary("JUnit3")
         removeVersionFromProjectLibraryJarNames("JUnit3") //for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
-        withProjectLibrary("commons-net")
-
-        withoutProjectLibrary("Ant")
-        withoutProjectLibrary("Gradle")
       }
     } as Consumer<PlatformLayout>
 

@@ -108,15 +108,15 @@ public class RefreshWorker {
 
     while (!myRefreshQueue.isEmpty()) {
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.pullFirst();
-      boolean fullSync = dir.allChildrenLoaded();
-      boolean succeeded;
+      boolean fullSync = dir.allChildrenLoaded(), succeed;
+
       do {
         myHelper.beginTransaction();
-        succeeded = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
-        myHelper.endTransaction(succeeded);
-        if (!succeeded && LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
+        succeed = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
+        myHelper.endTransaction(succeed);
+        if (!succeed && LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
       }
-      while (!succeeded);
+      while (!succeed);
 
       if (myIsRecursive) {
         dir.markClean();
@@ -336,10 +336,8 @@ public class RefreshWorker {
     }
 
     if (!childAttributes.isDirectory()) {
-      long oltTS = persistence.getTimeStamp(child);
-      long newTS = childAttributes.lastModified;
-      long oldLength = persistence.getLastRecordedLength(child);
-      long newLength = childAttributes.length;
+      long oltTS = persistence.getTimeStamp(child), newTS = childAttributes.lastModified;
+      long oldLength = persistence.getLastRecordedLength(child), newLength = childAttributes.length;
       myHelper.checkContentChanged(child, oltTS, newTS, oldLength, newLength);
 
       child.markClean();
@@ -362,9 +360,13 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
-      assert parent != null : "transgender orphan: " + child + ' ' + childAttributes;
-      String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
+      if (parent != null) {
+        String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
+        myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
+      }
+      else {
+        LOG.error("Trans-gender orphan: " + child + ' ' + childAttributes);
+      }
       return true;
     }
 

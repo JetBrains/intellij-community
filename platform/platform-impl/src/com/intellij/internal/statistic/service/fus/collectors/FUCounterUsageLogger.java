@@ -79,97 +79,53 @@ public class FUCounterUsageLogger {
   }
 
   /**
-   * Records new <strong>project-wide</strong> event without context.
-   * <br/><br/>
-   * For events with context use {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
-   * useful to report structured events.<br/><br/>
-   * <i>Example:</i><br/>
-   * "eventId": "tooltip.shown"
-   *
-   * @param project shows in which project event was invoked, useful to separate events from two simultaneously opened projects.
-   * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
-   * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   *
-   * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * Records new event in project dependent counter with group (e.g. 'dialogs', 'intentions')
    */
   public void logEvent(@NotNull Project project,
                        @NotNull String groupId,
-                       @NotNull String eventId) {
+                       @NotNull String event) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
       final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data);
+      FeatureUsageLogger.INSTANCE.log(group, event, data);
     }
   }
 
   /**
-   * Records new <strong>project-wide</strong> event with context.
-   * <br/><br/>
-   * <i>Example:</i><br/>
-   * "eventId": "action.called"<br/>
-   * "data": {"id":"ShowIntentionsAction", "input_event":"Alt+Enter"}
-   *
-   * @param project shows in which project event was invoked, useful to separate events from two simultaneously opened projects.
-   * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
-   * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
+   * Records new event in project dependent counter with group (e.g. 'dialogs', 'intentions').
+   * Adds context information to the event, e.g. source and shortcut for an action.
    */
   public void logEvent(@NotNull Project project,
                        @NotNull String groupId,
-                       @NotNull String eventId,
+                       @NotNull String event,
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.addProject(project).build());
+      FeatureUsageLogger.INSTANCE.log(group, event, data.addProject(project).build());
     }
   }
 
   /**
-   * Records new <strong>application-wide</strong> event without context.
-   * <br/><br/>
-   * For events with context use {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)},
-   * useful to report structured events.<br/>
-   * For project-wide events use {@link FUCounterUsageLogger#logEvent(Project, String, String)},
-   * useful to separate events from two simultaneously opened projects.<br/><br/>
-   *
-   * <i>Example:</i><br/>
-   * "eventId": "hector.clicked"
-   *
-   * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
-   * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   *
-   * @see FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)
-   * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * Records new event in application counter with group (e.g. 'dialogs', 'intentions')
    */
   public void logEvent(@NotNull String groupId,
-                       @NotNull String eventId) {
+                       @NotNull String event) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId);
+      FeatureUsageLogger.INSTANCE.log(group, event);
     }
   }
 
   /**
-   * Records new <strong>application-wide</strong> event with context information.
-   * <br/><br/>
-   * For project-wide events use {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
-   * useful to separate events from two simultaneously opened projects.<br/><br/>
-   * <i>Example:</i><br/>
-   * "eventId": "ide.started"<br/>
-   * "data": {"eap":true, "internal":false}
-   *
-   * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
-   * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
-   *
-   * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * Records new event in application counter with group (e.g. 'dialogs', 'intentions').
+   * Adds context information to the event, e.g. source and shortcut for an action.
    */
   public void logEvent(@NotNull String groupId,
-                       @NotNull String eventId,
+                       @NotNull String event,
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.build());
+      FeatureUsageLogger.INSTANCE.log(group, event, data.build());
     }
   }
 

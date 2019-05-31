@@ -2,7 +2,6 @@
 package com.intellij.ide.ui;
 
 import com.google.gson.Gson;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -43,9 +42,6 @@ import static com.intellij.util.ui.JBUI.asUIResource;
  */
 public class UITheme {
   public static final String FILE_EXT_ENDING = ".theme.json";
-
-  private static final Logger LOG = Logger.getInstance(UITheme.class);
-
   private String name;
   private boolean dark;
   private String author;
@@ -60,7 +56,10 @@ public class UITheme {
   private String editorSchemeName;
   private SVGLoader.SvgColorPatcher colorPatcher;
 
-  private UITheme() { }
+  private static final Logger LOG = Logger.getInstance(UITheme.class);
+
+  private UITheme() {
+  }
 
   public String getName() {
     return name;
@@ -85,12 +84,11 @@ public class UITheme {
                                      @Nullable ClassLoader provider,
                                      @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
-    theme.id = themeId;
 
+    theme.id = themeId;
     if (provider != null) {
       theme.providerClassLoader = provider;
     }
-
     if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
@@ -117,7 +115,6 @@ public class UITheme {
           return theme.providerClassLoader;
         }
       };
-
       Object palette = theme.icons.get("ColorPalette");
       if (palette instanceof Map) {
         Map colors = (Map)palette;
@@ -141,8 +138,7 @@ public class UITheme {
               if (alpha != null) {
                 try {
                   fillTransparency = Integer.parseInt(alpha, 16);
-                }
-                catch (Exception ignore) { }
+                } catch (Exception ignore) {}
               }
               if (fillTransparency != -1) {
                 scope.alphas.put(value, fillTransparency);
@@ -180,7 +176,6 @@ public class UITheme {
         };
       }
     }
-
     return theme;
   }
 
@@ -189,7 +184,10 @@ public class UITheme {
       fillValue += ".Dark";
     }
     String color = colorPalette.get(fillValue);
-    return color != null ? StringUtil.toLowerCase(color) : StringUtil.toLowerCase(fillValue);
+    if (color != null) {
+      return StringUtil.toLowerCase(color);
+    }
+    return StringUtil.toLowerCase(fillValue);
   }
 
   private static final Map<String, String> colorPalette = new HashMap<>();
@@ -231,12 +229,15 @@ public class UITheme {
     colorPalette.put("Checkbox.Focus.Wide.Dark", "#3D6185");
     colorPalette.put("Checkbox.Foreground.Disabled", "#ABABAB");
     colorPalette.put("Checkbox.Foreground.Disabled.Dark", "#606060");
+
     colorPalette.put("Checkbox.Background.Selected", "#4D89C9");
     colorPalette.put("Checkbox.Background.Selected.Dark", "#43494A");
+
     colorPalette.put("Checkbox.Border.Selected", "#4982CC");
     colorPalette.put("Checkbox.Border.Selected.Dark", "#6B6B6B");
     colorPalette.put("Checkbox.Foreground.Selected", "#FFFFFF");
     colorPalette.put("Checkbox.Foreground.Selected.Dark", "#A7A7A7");
+
     colorPalette.put("Checkbox.Focus.Thin.Selected", "#ACCFF7");
     colorPalette.put("Checkbox.Focus.Thin.Selected.Dark", "#466D94");
   }
@@ -293,12 +294,11 @@ public class UITheme {
 
   private static void apply(UITheme theme, String key, Object value, UIDefaults defaults) {
     if (value instanceof Map) {
-      @SuppressWarnings("unchecked") Map<String, Object> map = (Map<String, Object>)value;
-      for (Map.Entry<String, Object> o : map.entrySet()) {
+      //noinspection unchecked
+      for (Map.Entry<String, Object> o : ((Map<String, Object>)value).entrySet()) {
         apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
       }
-    }
-    else {
+    } else {
       String valueStr = value.toString();
       if (theme.colors != null && theme.colors.containsKey(valueStr)) {
         Color color = parseColor(String.valueOf(theme.colors.get(valueStr)));
@@ -317,8 +317,7 @@ public class UITheme {
         ((UIDefaults)defaults.clone()).keySet().stream()
           .filter(k -> k instanceof String && ((String)k).endsWith(tail))
           .forEach(k -> defaults.put(k, finalValue));
-      }
-      else {
+      } else {
         defaults.put(key, value);
       }
     }
@@ -327,7 +326,7 @@ public class UITheme {
   @SuppressWarnings("unchecked")
   private static void addPattern(String key, Object value, UIDefaults defaults) {
     Object o = defaults.get("*");
-    if (!(o instanceof Map)) {
+    if (! (o instanceof Map)) {
       o = new HashMap<String, Object>();
       defaults.put("*", o);
     }
@@ -338,61 +337,49 @@ public class UITheme {
   }
 
   public static Object parseValue(String key, @NotNull String value) {
-    if ("null".equals(value)) return null;
+    if ("null".equals(value)) {
+      return null;
+    }
     if ("true".equals(value)) return Boolean.TRUE;
     if ("false".equals(value)) return Boolean.FALSE;
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
-    }
-    else if (key.endsWith("Border") || key.endsWith("border")) {
+    } else if (key.endsWith("Border") || key.endsWith("border")) {
       try {
         List<String> ints = StringUtil.split(value, ",");
         if (ints.size() == 4) {
           return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
-        }
-        else if (ints.size() == 5) {
+        } else if (ints.size() == 5) {
           return asUIResource(customLine(ColorUtil.fromHex(ints.get(4)),
                                          Integer.parseInt(ints.get(0)),
                                          Integer.parseInt(ints.get(1)),
                                          Integer.parseInt(ints.get(2)),
                                          Integer.parseInt(ints.get(3))));
-        }
-        else if (ColorUtil.fromHex(value, null) != null) {
+        } else if (ColorUtil.fromHex(value, null) != null) {
           return asUIResource(customLine(ColorUtil.fromHex(value), 1));
-        }
-        else {
+        } else {
           return Class.forName(value).newInstance();
         }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         LOG.warn(e);
       }
-    }
-    else if (key.endsWith("Size")) {
+    } else if (key.endsWith("Size")) {
       return parseSize(value);
-    }
-    else if (key.endsWith("Width") || key.endsWith("Height")) {
-      return getInteger(value, key);
-    }
-    else if (key.endsWith("grayFilter")) {
+    } else if (key.endsWith("Width")) {
+      return getInteger(value);
+    } else if (key.endsWith("grayFilter")) {
       return parseGrayFilter(value);
-    }
-    else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
-      if (icon != null) {
-        return new IconUIResource(icon);
-      }
-      Color color = parseColor(value);
-      if (color != null) {
-        return new ColorUIResource(color);
-      }
-      Integer intVal = getInteger(value, null);
-      if (intVal != null) {
-        return intVal;
-      }
-    }
+    } else {
+      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
+      if (icon != null) return new IconUIResource(icon);
 
+      Color color = parseColor(value);
+      if (color != null) return new ColorUIResource(color);
+
+      Integer invVal = getInteger(value);
+      if (invVal != null) return invVal;
+    }
     return value;
   }
 
@@ -420,22 +407,18 @@ public class UITheme {
         try {
           int alpha = Integer.parseInt(value.substring(6, 8), 16);
           return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
-        }
-        catch (Exception ignore) { }
+        } catch (Exception ignore){}
         return null;
       }
     }
     return ColorUtil.fromHex(value, null);
   }
 
-  private static Integer getInteger(String value, @Nullable String key) {
+  private static Integer getInteger(String value) {
     try {
-      return Integer.parseInt(StringUtil.trimEnd(value, ".0"));
+      return Integer.parseInt(value);
     }
     catch (NumberFormatException e) {
-      if (key != null) {
-        LOG.warn(key + " = " + value);
-      }
       return null;
     }
   }
@@ -459,14 +442,14 @@ public class UITheme {
   }
 
   static class PaletteScope {
-    final Map<String, String> newPalette = new HashMap<>();
-    final Map<String, Integer> alphas = new HashMap<>();
+    Map<String, String> newPalette = new HashMap<>();
+    Map<String, Integer> alphas = new HashMap<>();
   }
 
   static class PaletteScopeManager {
-    final PaletteScope ui = new PaletteScope();
-    final PaletteScope checkBoxes = new PaletteScope();
-    final PaletteScope radioButtons = new PaletteScope();
+    PaletteScope ui = new PaletteScope();
+    PaletteScope checkBoxes = new PaletteScope();
+    PaletteScope radioButtons = new PaletteScope();
 
     PaletteScope getScope(String colorKey) {
       if (colorKey.startsWith("Checkbox.")) return checkBoxes;

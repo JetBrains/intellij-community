@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,7 +239,7 @@ public class TableUtil {
   }
 
   public static void updateScroller(@NotNull JTable table) {
-    JScrollPane scrollPane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)table);
+    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
     if (scrollPane != null) {
       scrollPane.revalidate();
       scrollPane.repaint();

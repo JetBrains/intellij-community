@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
-    super("Test History", "Open recent test session", AllIcons.Vcs.History);
+    super("Test History", "Import tests from history", AllIcons.ToolbarDecorator.Import);
     setPopup(true);
   }
 

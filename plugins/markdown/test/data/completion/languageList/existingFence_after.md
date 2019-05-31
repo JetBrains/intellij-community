@@ -1,6 +1,6 @@
 Foobar
 
-```json<caret>
+```javascript<caret>
 console.log("!");
 ```
 

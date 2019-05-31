@@ -45,9 +45,9 @@ import java.beans.PropertyChangeSupport;
 /**
  * @author Sergey.Vasiliev
  */
-public abstract class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
+abstract public class PerspectiveFileEditor extends UserDataHolderBase implements DocumentsEditor, Committable {
   private final Wrapper myWrapper = new Wrapper();
-  private boolean myInitialised;
+  private boolean myInitialised = false;
   /** createCustomComponent() is in progress */
   private boolean myInitializing;
 
@@ -62,8 +62,7 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
     myUndoHelper = new UndoHelper(project, this);
     myFile = file;
 
-    project.getMessageBus().connect(this).subscribe(
-      FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    FileEditorManager.getInstance(myProject).addFileEditorManagerListener(new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         if (!isValid()) return;
@@ -107,7 +106,7 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
           }
         }
       }
-    });
+    }, this);
 
     myUndoHelper.startListeningDocuments();
 
@@ -121,28 +120,28 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   @Nullable
-  protected abstract DomElement getSelectedDomElement();
+  abstract protected DomElement getSelectedDomElement();
 
-  protected abstract void setSelectedDomElement(DomElement domElement);
+  abstract protected void setSelectedDomElement(DomElement domElement);
 
   public final void addWatchedElement(@NotNull final DomElement domElement) {
     addWatchedDocument(getDocumentManager().getDocument(DomUtil.getFile(domElement)));
   }
 
-  final void removeWatchedElement(@NotNull final DomElement domElement) {
+  public final void removeWatchedElement(@NotNull final DomElement domElement) {
     removeWatchedDocument(getDocumentManager().getDocument(DomUtil.getFile(domElement)));
   }
 
-  private void addWatchedDocument(final Document document) {
+  public final void addWatchedDocument(final Document document) {
     myUndoHelper.addWatchedDocument(document);
   }
 
-  private void removeWatchedDocument(final Document document) {
+  public final void removeWatchedDocument(final Document document) {
     myUndoHelper.removeWatchedDocument(document);
   }
 
   @Nullable
-  private DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {
+  protected DomElement getSelectedDomElementFromTextEditor(final TextEditor textEditor) {
     final PsiFile psiFile = getPsiFile();
     if (psiFile == null) return null;
     final PsiElement psiElement = psiFile.findElementAt(textEditor.getEditor().getCaretModel().getOffset());
@@ -154,7 +153,7 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
     return DomManager.getDomManager(myProject).getDomElement(xmlTag);
   }
 
-  private void setSelectionInTextEditor(final TextEditor textEditor, final DomElement element) {
+  public void setSelectionInTextEditor(final TextEditor textEditor, final DomElement element) {
     if (element != null && element.isValid()) {
       final XmlTag tag = element.getXmlTag();
       if (tag == null) return;

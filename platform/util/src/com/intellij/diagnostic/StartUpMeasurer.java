@@ -2,11 +2,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.util.containers.ObjectLongHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
@@ -51,17 +51,13 @@ public final class StartUpMeasurer {
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
-    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE = "project post-startup dumb-aware activities";
-    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT = "project post-startup edt activities";
+    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES = "project post-startup activities";
 
     public static final String LOAD_MODULES = "module loading";
     public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";
-
-    public static final String RESTORING_EDITORS = "restoring editors";
   }
 
-  @SuppressWarnings("StaticNonFinalField")
-  public static boolean measuringPluginStartupCosts = true;
+  private static boolean measuringPluginStartupCosts = true;
 
   public static void stopPluginCostMeasurement() {
     measuringPluginStartupCosts = false;
@@ -89,16 +85,11 @@ public final class StartUpMeasurer {
 
   private static boolean isEnabled = true;
 
-  public static boolean isEnabled() {
-    return isEnabled;
-  }
-
-  @ApiStatus.Internal
-  public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
-
   public static long getCurrentTime() {
     return System.nanoTime();
   }
+
+  public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
 
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
@@ -128,7 +119,9 @@ public final class StartUpMeasurer {
     }
   }
 
-  @ApiStatus.Internal
+  /**
+   * Internal use only.
+   */
   public static long getClassInitStartTime() {
     return classInitStartTime;
   }
@@ -137,47 +130,29 @@ public final class StartUpMeasurer {
     if (isEnabled) {
       items.add(activity);
     }
+    String phase = activity.getParallelActivity() != null ? activity.getParallelActivity().name() : "unknown";
+    addPluginCost(activity.getPluginId(), phase, activity.getEnd() - activity.getStart());
   }
 
-  public static void addTimings(@NotNull LinkedHashMap<String, Long> timings, @NotNull String groupName) {
-    if (timings.isEmpty()) {
-      return;
-    }
-
-    List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
-
-    ActivityImpl parent = new ActivityImpl(groupName, null, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
-    parent.setEnd(getCurrentTime());
-
-    for (int i = 0; i < entries.size(); i++) {
-      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), null, entries.get(i).getValue(), parent, Level.APPLICATION, null, null);
-      activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
-      items.add(activity);
-    }
-    items.add(parent);
+  public static void record(String name, long start, long end) {
+    ActivityImpl activity = new ActivityImpl(name,null, start, null, Level.APPLICATION, null, null);
+    activity.setEnd(end);
+    add(activity);
   }
 
   public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
-    if (pluginId == null || !measuringPluginStartupCosts) {
-      return;
-    }
-
+    if (pluginId == null || !measuringPluginStartupCosts) return;
     synchronized (pluginCostMap) {
-      doAddPluginCost(pluginId, phase, timeNanos, pluginCostMap);
+      ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
+      if (costPerPhaseMap == null) {
+        costPerPhaseMap = new ObjectLongHashMap<>();
+        pluginCostMap.put(pluginId, costPerPhaseMap);
+      }
+      long oldCost = costPerPhaseMap.get(phase);
+      if (oldCost == -1) {
+        oldCost = 0L;
+      }
+      costPerPhaseMap.put(phase, oldCost + timeNanos);
     }
-  }
-
-  @ApiStatus.Internal
-  public static void doAddPluginCost(@NotNull String pluginId, @NotNull String phase, long timeNanos, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
-    ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
-    if (costPerPhaseMap == null) {
-      costPerPhaseMap = new ObjectLongHashMap<>();
-      pluginCostMap.put(pluginId, costPerPhaseMap);
-    }
-    long oldCost = costPerPhaseMap.get(phase);
-    if (oldCost == -1) {
-      oldCost = 0L;
-    }
-    costPerPhaseMap.put(phase, oldCost + timeNanos);
   }
 }

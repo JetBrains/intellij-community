@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -71,8 +70,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
   private void addToPopup(@NotNull BalloonImpl balloon, @NotNull BalloonLayoutData layoutData) {
     layoutData.doLayout = this::layoutPopup;
-    int i = myPopupBalloon == null ? 7 : 5;
-    layoutData.configuration = layoutData.configuration.replace(JBUIScale.scale(i), JBUIScale.scale(12));
+    layoutData.configuration = layoutData.configuration.replace(JBUI.scale(myPopupBalloon == null ? 7 : 5), JBUI.scale(12));
 
     if (myPopupBalloon == null) {
       final JScrollPane pane = NotificationsManagerImpl.createBalloonScrollPane(myBalloonPanel, true);
@@ -93,7 +91,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       });
 
       myPopupBalloon =
-        new BalloonImpl(pane, BORDER_COLOR, JBUI.emptyInsets(), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
+        new BalloonImpl(pane, BORDER_COLOR, new Insets(0, 0, 0, 0), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
                         null, false, 0, 0, 0, 0, false, null, null, false, false, true, null, false, null, -1);
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(
@@ -185,8 +183,6 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private static class BalloonPanel extends NonOpaquePanel {
-    private static final int VERTICAL_GAP = JBUIScale.scale(2);
-
     BalloonPanel() {
       super(new AbstractLayoutManager() {
         @Override
@@ -199,25 +195,25 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
             width = Math.max(width, size.width);
             height += size.height;
           }
-          height += VERTICAL_GAP * (count - 1);
-          return new Dimension(Math.max(width + JBUIScale.scale(32), BalloonLayoutConfiguration.MaxWidth()), height);
+          height += count - 1;
+          return new Dimension(Math.max(width + JBUI.scale(32), BalloonLayoutConfiguration.MaxWidth()), height);
         }
 
         @Override
         public void layoutContainer(Container parent) {
           int count = parent.getComponentCount();
-          int width = parent.getWidth() - JBUIScale.scale(32);
+          int width = parent.getWidth() - JBUI.scale(32);
           int height = parent.getHeight();
           if (count == 1) {
-            parent.getComponent(0).setBounds(JBUIScale.scale(16), 0, width, height);
+            parent.getComponent(0).setBounds(JBUI.scale(16), 0, width, height);
           }
           else {
             int y = 0;
             for (int i = 0; i < count; i++) {
               Component component = parent.getComponent(i);
               Dimension size = component.getPreferredSize();
-              component.setBounds(JBUIScale.scale(16), y, width, size.height);
-              y += size.height + VERTICAL_GAP;
+              component.setBounds(JBUI.scale(16), y, width, size.height);
+              y += size.height + JBUI.scale(2);
             }
           }
         }
@@ -230,15 +226,15 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
       int count = getComponentCount() - 1;
       if (count > 0) {
-        int x2 = getWidth() - JBUIScale.scale(16);
+        int x2 = getWidth() - JBUI.scale(16);
         int y = 0;
 
         g.setColor(new JBColor(0xD0D0D0, 0x717375));
 
         for (int i = 0; i < count; i++) {
           Dimension size = getComponent(i).getPreferredSize();
-          y += size.height + VERTICAL_GAP;
-          g.drawLine(JBUIScale.scale(16), y, x2, y);
+          y += size.height + 1;
+          g.drawLine(JBUI.scale(16), y, x2, y);
         }
       }
     }

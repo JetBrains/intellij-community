@@ -1,3 +1,3 @@
-```json
-<error descr="<value> expected, got '|'">|</error>|
+```js
+<error descr="statement expected">^</error>
 ```

@@ -2,15 +2,17 @@
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import javax.swing.Icon;
+
+import static com.intellij.util.ui.JBUI.setUserScaleFactor;
 
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class TreeControlPainterTest {
@@ -19,7 +21,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testClassicDefault() {
-    JBUIScale.setUserScaleFactor((float)1);
+    setUserScaleFactor(1);
     Control.Painter painter = new ClassicPainter(true, 7, 11, null);
 
     Control even = new TestControl(10, 10);
@@ -35,7 +37,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testClassicDefaultLeafIndent() {
-    JBUIScale.setUserScaleFactor((float)1);
+    setUserScaleFactor(1);
     Control.Painter painter = new ClassicPainter(false, 7, 11, 0);
 
     Control even = new TestControl(10, 10);
@@ -51,7 +53,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testClassicCompact() {
-    JBUIScale.setUserScaleFactor((float)1);
+    setUserScaleFactor(1);
     Control.Painter painter = new ClassicPainter(true, 0, 0, null);
 
     Control even = new TestControl(10, 10);
@@ -67,7 +69,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testClassicCompactLeafIndent() {
-    JBUIScale.setUserScaleFactor((float)1);
+    setUserScaleFactor(1);
     Control.Painter painter = new ClassicPainter(false, 0, 0, 0);
 
     Control even = new TestControl(10, 10);
@@ -83,7 +85,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testCompact() {
-    JBUIScale.setUserScaleFactor((float)1);
+    setUserScaleFactor(1);
     for (int i = 0; i < 4; i++) {
       Control.Painter painter = new CompactPainter(true, i, i, -1);
 
@@ -101,7 +103,7 @@ public class TreeControlPainterTest {
 
   @Test
   public void testCompactLeafIndent() {
-    JBUIScale.setUserScaleFactor((float)1);
+    setUserScaleFactor(1);
     for (int i = 0; i < 4; i++) {
       Control.Painter painter = new CompactPainter(false, i, i, 0);
 

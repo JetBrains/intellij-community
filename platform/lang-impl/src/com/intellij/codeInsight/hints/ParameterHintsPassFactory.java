@@ -52,4 +52,5 @@ public class ParameterHintsPassFactory implements TextEditorHighlightingPassFact
   protected static void putCurrentPsiModificationStamp(@NotNull Editor editor, @NotNull PsiFile file) {
     editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(file));
   }
+
 }

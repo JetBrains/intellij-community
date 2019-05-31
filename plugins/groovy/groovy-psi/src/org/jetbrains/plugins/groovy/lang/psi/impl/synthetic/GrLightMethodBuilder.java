@@ -14,8 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.icons.RowIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +54,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   private boolean myConstructor = false;
   private PsiClass myContainingClass;
   private Map<String, NamedArgumentDescriptor> myNamedParameters = Collections.emptyMap();
-
+  
   private Icon myBaseIcon;
   private Object myMethodKind;
   private Object myData;
@@ -444,7 +443,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = myBaseIcon != null ? myBaseIcon :
                       hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
-    RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
+    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(methodIcon, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

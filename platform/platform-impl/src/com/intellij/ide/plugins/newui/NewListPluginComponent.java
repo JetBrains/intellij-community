@@ -13,7 +13,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +116,7 @@ public class NewListPluginComponent extends CellPluginComponent {
             if (myBaseline == -1) {
               JCheckBox checkBox = new JCheckBox("Foo", true);
               Dimension size = checkBox.getPreferredSize();
-              myBaseline = checkBox.getBaseline(size.width, size.height) - JBUIScale.scale(1);
+              myBaseline = checkBox.getBaseline(size.width, size.height) - JBUI.scale(1);
             }
             return myBaseline;
           }
@@ -131,7 +130,7 @@ public class NewListPluginComponent extends CellPluginComponent {
           @Override
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
-            int scale = JBUIScale.scale(2);
+            int scale = JBUI.scale(2);
             return new Dimension(size.width + scale, size.height + scale);
           }
         });
@@ -144,7 +143,7 @@ public class NewListPluginComponent extends CellPluginComponent {
   }
 
   private void createMetricsPanel() {
-    JPanel panel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
+    JPanel panel = new NonOpaquePanel(new TextHorizontalLayout(JBUI.scale(7)));
     panel.setBorder(JBUI.Borders.emptyTop(5));
     myLayout.addLineComponent(panel);
 
@@ -653,7 +652,7 @@ public class NewListPluginComponent extends CellPluginComponent {
       Dimension iconSize = myIconComponent.getPreferredSize();
       myIconComponent.setBounds(x, y, iconSize.width, iconSize.height);
       x += iconSize.width + myHGap.get();
-      y += JBUIScale.scale(2);
+      y += JBUI.scale(2);
 
       int calcNameWidth = calculateNameWidth();
       Dimension nameSize = myNameComponent.getPreferredSize();
@@ -754,13 +753,11 @@ public class NewListPluginComponent extends CellPluginComponent {
         myButtonComponents.add(index, component);
       }
       add(component);
-      updateVisibleOther();
     }
 
     public void removeButtonComponent(@NotNull JComponent component) {
       myButtonComponents.remove(component);
       remove(component);
-      updateVisibleOther();
     }
 
     public void setProgressComponent(@NotNull JComponent progressComponent) {
@@ -784,13 +781,6 @@ public class NewListPluginComponent extends CellPluginComponent {
 
       setVisibleOther(true);
       doLayout();
-    }
-
-    private void updateVisibleOther() {
-      if (myProgressComponent != null) {
-        myButtonEnableStates = null;
-        setVisibleOther(false);
-      }
     }
 
     private void setVisibleOther(boolean value) {

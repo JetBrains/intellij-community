@@ -10,7 +10,6 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
@@ -192,7 +191,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     Icon fieldIcon = isProperty()
                      ? isAbstract ? JetgroovyIcons.Groovy.AbstractProperty : JetgroovyIcons.Groovy.Property
                      : isAbstract ? JetgroovyIcons.Groovy.AbstractField : JetgroovyIcons.Groovy.Field;
-    return IconManager.getInstance().createLayeredIcon(this, fieldIcon, ElementPresentationUtil.getFlags(this, false));
+    return ElementPresentationUtil.createLayeredIcon(fieldIcon, this, false);
   }
 
   @Override

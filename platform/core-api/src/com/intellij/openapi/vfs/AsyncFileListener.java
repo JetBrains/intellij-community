@@ -13,8 +13,6 @@ import java.util.List;
  * An alternative to {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} that allows
  * for moving parts of VFS event processing to background thread and thus reduce the duration
  * of UI freezes.
- *
- * @see VirtualFileManager#addAsyncFileListener(AsyncFileListener, com.intellij.openapi.Disposable)
  */
 public interface AsyncFileListener {
 
@@ -33,12 +31,12 @@ public interface AsyncFileListener {
    * Called (possibly on a background thread) when a batch of VFS events is ready to be fired.
    * This method should not have side effects and should guarantee its cancellability by calling
    * {@link ProgressManager#checkCanceled()} often enough.<p></p>
-   * <p>
+   *
    * Note that this listener can only observe the state of the system before VFS events, and so
    * it can't work with anything that would be after them, e.g. there will be no file in
    * {@link com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent}, {@link com.intellij.openapi.roots.FileIndexFacade}
-   * won't know anything about the updated state after VFS change, and so on.
-   * <p>
+   * won't know anything about the updated state after VFS change, and so on.<p></p>
+   *
    * Note that the events posted passed might differ from the ones passed into {@link com.intellij.openapi.vfs.newvfs.BulkFileListener}.
    * In particular, there may occasionally be several events about the same file (e.g deletion and then creation, or creation and
    * then deletion of the file's parent). Hence the order of events is significant. Implementations should be prepared to such situations.
@@ -52,7 +50,7 @@ public interface AsyncFileListener {
 
   interface ChangeApplier {
     default void beforeVfsChange() {}
-
     default void afterVfsChange() {}
   }
+
 }

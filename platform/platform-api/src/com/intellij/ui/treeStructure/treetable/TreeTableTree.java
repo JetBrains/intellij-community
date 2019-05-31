@@ -44,7 +44,6 @@ public class TreeTableTree extends Tree {
     myTreeTable = treeTable;
     setCellRenderer(getCellRenderer());
     putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, treeTable);
-    setBorder(null);
   }
 
   public TreeTable getTreeTable() {

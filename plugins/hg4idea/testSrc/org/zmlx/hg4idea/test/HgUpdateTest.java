@@ -18,8 +18,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileStatusEnum;
@@ -31,11 +31,12 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.testng.Assert.*;
 
 @SuppressWarnings({"ConstantConditions"})
 public class HgUpdateTest extends HgCollaborativeTest {
@@ -44,26 +45,13 @@ public class HgUpdateTest extends HgCollaborativeTest {
   private File projectRepo;
   private File remoteRepo;
 
+  @BeforeMethod
   @Override
-  protected HgTestRepository initRepositories() throws Exception {
-    myParentRepo = HgTestRepository.create(this);
-    remoteRepo = new File(myParentRepo.getDirFixture().getTempDirPath());
-
-    File aFile = fillFile(remoteRepo, new String[]{"com", "a.txt"}, "file contents");
-    verify(runHg(remoteRepo, "add", aFile.getPath()));
-    verify(runHg(remoteRepo, "status"), HgTestOutputParser.added("com", "a.txt"));
-    verify(runHg(remoteRepo, "commit", "-m", "initial contents"));
-
-    myRepo = myParentRepo.cloneRepository();
-    projectRepo = new File(myRepo.getDirFixture().getTempDirPath());
-    return myRepo;
-  }
-
-  @Before
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     projectRepoVirtualFile = myRepo.getDir();
+    projectRepo = new File(myRepo.getDir().getPath());
+    remoteRepo = new File(myParentRepo.getDir().getPath());
   }
 
   @Test
@@ -76,13 +64,15 @@ public class HgUpdateTest extends HgCollaborativeTest {
     pull.setSource(HgUtil.getRepositoryDefaultPath(myProject, projectRepoVirtualFile));
     pull.executeInCurrentThread();
 
-    assertEquals("The update operation should have pulled the incoming changes from the default repository.", 0,
-                 determineNumberOfIncomingChanges(projectRepo));
-
+    assertEquals( determineNumberOfIncomingChanges( projectRepo ), 0,
+                  "The update operation should have pulled the incoming changes from the default repository." );
+    
     updateThroughPlugin();
 
     HgRevisionNumber parentRevision = new HgWorkingCopyRevisionsCommand(myProject).firstParent(projectRepoVirtualFile);
-    assertEquals("The working directory should have been updated to the latest version", "1", parentRevision.getRevision());
+    assertEquals( parentRevision.getRevision(), "1",
+                  "The working directory should have been updated to the latest version" );
+
   }
 
   @Test
@@ -97,7 +87,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     List<VcsException> warnings = updateThroughPlugin();
 
-    assertEquals("Plain update should not generate warnings", 0, warnings.size());
+    assertEquals(warnings.size(), 0, "Plain update should not generate warnings");
 
     assertCurrentHeadIsMerge(incomingHead, headBeforeUpdate);
   }
@@ -120,15 +110,15 @@ public class HgUpdateTest extends HgCollaborativeTest {
     runHg(projectRepo, "commit", "-m", "creating new local head");
 
     List<HgRevisionNumber> branchHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
-    assertEquals(2, branchHeads.size());
+    assertEquals(branchHeads.size(), 2);
 
     HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile).getFirst();
     assertUpdateThroughPluginFails();
     HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile).getFirst();
     List<HgRevisionNumber> branchHeadsAfterUpdate = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
 
-    assertEquals(3, branchHeadsAfterUpdate.size());
-    assertEquals(parentAfterUpdate, parentBeforeUpdate);
+    assertEquals(branchHeadsAfterUpdate.size(), 3);
+    assertEquals(parentBeforeUpdate, parentAfterUpdate);
   }
   
   @Test
@@ -154,7 +144,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     assertTrue(nonFatalWarnings.isEmpty());
     HgRevisionNumber parentAfterUpdate = new HgParentsCommand(myProject).executeInCurrentThread(projectRepoVirtualFile).get(0);
-    assertEquals(parentAfterUpdate, incomingHead);
+    assertEquals(incomingHead, parentAfterUpdate);
 
     assertIsChanged(HgFileStatusEnum.MODIFIED, "com", "b.txt");
     assertIsChanged(HgFileStatusEnum.ADDED, "com", "c.txt");
@@ -174,7 +164,9 @@ public class HgUpdateTest extends HgCollaborativeTest {
     assertUpdateThroughPluginFails();
 
     List<HgRevisionNumber> branchHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
-    assertEquals(2, branchHeads.size());
+    assertEquals(branchHeads.size(), 2);
+
+
   }
 
   private void assertIsChanged(HgFileStatusEnum status, String... filepath) {
@@ -193,13 +185,12 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
   private void assertCurrentHeadIsMerge(HgRevisionNumber incomingHead, HgRevisionNumber headBeforeUpdate) {
     List<HgRevisionNumber> newHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
-    assertEquals("After updating, there should be only one head because the remote heads should have been merged", 1,
-                 newHeads.size());
+    assertEquals(newHeads.size(), 1, "After updating, there should be only one head because the remote heads should have been merged");
     HgRevisionNumber newHead = newHeads.get(0);
     HgParentsCommand parents = new HgParentsCommand(myProject);
     parents.setRevision(newHead);
     List<HgRevisionNumber> parentRevisions = parents.executeInCurrentThread(projectRepoVirtualFile);
-    assertEquals(2, parentRevisions.size());
+    assertEquals(parentRevisions.size(), 2);
     assertTrue(parentRevisions.contains(incomingHead));
     assertTrue(parentRevisions.contains(headBeforeUpdate));
   }
@@ -210,7 +201,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     VirtualFile commonFile = projectRepoVirtualFile.findChild("com").findChild("a.txt");
     assertNotNull(commonFile);
-
+    
     VcsTestUtil.editFileInCommand(myProject, commonFile, "conflicting content");
     runHg(projectRepo, "commit", "-m", "adding conflicting history to local repository");
     
@@ -220,11 +211,11 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     List<VcsException> warnings = updateThroughPlugin();
     assertFalse(warnings.isEmpty());
-    assertTrue(warnings.get(warnings.size() - 1).getMessage().contains("conflicts"));
-    assertTrue(warnings.get(warnings.size() - 1).getMessage().contains("commit"));
+    assertTrue(warnings.get(warnings.size()-1).getMessage().contains("conflicts"));
+    assertTrue(warnings.get(warnings.size()-1).getMessage().contains("commit"));
 
     List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile);
-    assertEquals(2, parents.size());
+    assertEquals(parents.size(), 2);
     assertTrue(parents.contains(incomingHead));
     assertTrue(parents.contains(headBeforeUpdate));
   }
@@ -242,14 +233,14 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
     assertUpdateThroughPluginFails();
 
-    assertEquals("Remote head should have been pulled in", 2,
-                 new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread().size());
+    assertEquals(new HgHeadsCommand( myProject, projectRepoVirtualFile ).executeInCurrentThread().size(), 2,
+                 "Remote head should have been pulled in" );
 
-    assertEquals("No merge should have been attempted", 1,
-                 new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile).size());
+    assertEquals( new HgWorkingCopyRevisionsCommand( myProject ).parents( projectRepoVirtualFile ).size(), 1,
+                  "No merge should have been attempted" );
 
-    assertEquals("No merge should have been attempted", parentBeforeUpdate,
-                 new HgWorkingCopyRevisionsCommand(myProject).parents(projectRepoVirtualFile).get(0));
+    assertEquals( new HgWorkingCopyRevisionsCommand( myProject ).parents( projectRepoVirtualFile ).get(0), parentBeforeUpdate,
+                  "No merge should have been attempted" );
   }
 
   private void assertUpdateThroughPluginFails() {
@@ -279,7 +270,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
     fillFile(remoteRepo, new String[]{"com", "a.txt"}, "update file contents");
     runHg(remoteRepo, "commit", "-m", "Adding history to remote repository");
 
-    assertEquals("The remote repository should have gotten new history", 1, determineNumberOfIncomingChanges(projectRepo));
+    assertEquals( determineNumberOfIncomingChanges( projectRepo ), 1,
+                  "The remote repository should have gotten new history" );
   }
 
   private int determineNumberOfIncomingChanges(File repo) throws IOException {
@@ -304,8 +296,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
       List<HgRevisionNumber> currentHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).executeInCurrentThread();
       List<HgRevisionNumber> incomingChangesets = new HgIncomingCommand(myProject).executeInCurrentThread(projectRepoVirtualFile);
 
-      assertEquals(1, currentHeads.size());
-      assertEquals(1, incomingChangesets.size());
+      assertEquals(currentHeads.size(), 1);
+      assertEquals(incomingChangesets.size(), 1);
 
       incomingHead = incomingChangesets.get(0);
       headBeforeUpdate = currentHeads.get(0);

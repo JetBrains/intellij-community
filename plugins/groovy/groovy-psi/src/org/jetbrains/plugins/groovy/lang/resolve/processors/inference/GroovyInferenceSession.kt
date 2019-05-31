@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
-open class GroovyInferenceSession(
+class GroovyInferenceSession(
   typeParams: Array<PsiTypeParameter>,
   val contextSubstitutor: PsiSubstitutor,
   context: PsiElement,
@@ -49,7 +49,7 @@ open class GroovyInferenceSession(
     return null
   }
 
-  open fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY) {
+  fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY) {
     if (mapping == null) return
     val substitutor = inferenceSubstitutor.putAll(inferenceSubstitution)
     for ((expectedType, argument) in mapping.expectedTypes) {
@@ -65,7 +65,7 @@ open class GroovyInferenceSession(
     }
   }
 
-  open fun startNestedSession(params: Array<PsiTypeParameter>,
+  fun startNestedSession(params: Array<PsiTypeParameter>,
                          siteSubstitutor: PsiSubstitutor,
                          context: PsiElement,
                          result: GroovyResolveResult,

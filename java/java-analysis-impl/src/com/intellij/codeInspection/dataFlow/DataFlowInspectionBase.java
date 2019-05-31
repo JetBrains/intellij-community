@@ -46,7 +46,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
@@ -227,11 +227,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (name != null) { // Might be null for synthetic methods like JSP page.
       holder.registerProblem(name, message, ProblemHighlightType.WEAK_WARNING);
     }
-  }
-
-  @NotNull
-  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
-    return Collections.emptyList();
   }
 
   @NotNull
@@ -702,11 +697,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
-      List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, reporter.isOnTheFly()));
+      LocalQuickFix fix = null;
       if (reporter.isOnTheFly()) {
-        fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
+        fix = createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType());
       }
-      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fix);
     }
   }
 
@@ -904,7 +899,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         final String text = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
-        reporter.registerProblem(expr, text, createNPEFixes(expr, expr, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY));
+        reporter.registerProblem(expr, text);
       }
       else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
         final String defaultNullable = manager.getDefaultNullable();

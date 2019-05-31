@@ -61,9 +61,6 @@ public class ParamHelper {
       else if (psi instanceof PyNamedParameter) {
         walker.visitNamedParameter((PyNamedParameter)psi, first, last);
       }
-      else if (psi instanceof PySlashParameter) {
-        walker.visitSlashParameter((PySlashParameter)psi, first, last);
-      }
       else if (psi instanceof PySingleStarParameter) {
         walker.visitSingleStarParameter((PySingleStarParameter)psi, first, last);
       }
@@ -105,12 +102,6 @@ public class ParamHelper {
         @Override
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
           visitNonPsiParameter(PyCallableParameterImpl.psi(param), first, last);
-        }
-
-        @Override
-        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          result.append('/');
-          if (!last) result.append(", ");
         }
 
         @Override
@@ -168,8 +159,6 @@ public class ParamHelper {
      */
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
 
-    void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last);
-
     void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last);
 
     void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last);
@@ -185,9 +174,6 @@ public class ParamHelper {
 
     @Override
     public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) { }
-
-    @Override
-    public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) { }
 
     @Override
     public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) { }

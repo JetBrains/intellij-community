@@ -22,22 +22,12 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       return
     }
 
-    fun writeEntry(key: Any?, value: Any?, isStringKey: Boolean) {
-      if (isStringKey) {
-        if (key == null) {
-          throw SerializationException("null string keys not supported")
-        }
-        else {
-          writer.setFieldName(key as String)
-        }
+    fun writeEntry(key: Any?, value: Any?) {
+      if (key == null) {
+        writer.writeNull()
       }
       else {
-        if (key == null) {
-          writer.writeNull()
-        }
-        else {
-          keyBinding.serialize(key, context)
-        }
+        keyBinding.serialize(key, context)
       }
 
       if (value == null) {
@@ -48,8 +38,7 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
       }
     }
 
-    val isStringKey = keyBinding is StringBinding
-    writer.stepIn(if (isStringKey) IonType.STRUCT else IonType.LIST)
+    writer.stepIn(IonType.LIST)
     if (context.configuration.orderMapEntriesByKeys && isKeyComparable && map !is SortedMap<*, *> && map !is LinkedHashMap<*, *>) {
       val keys = ArrayUtil.toObjectArray(map.keys)
       Arrays.sort(keys) { a, b ->
@@ -61,20 +50,18 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
         }
       }
       for (key in keys) {
-        writeEntry(key, map.get(key), isStringKey)
+        writeEntry(key, map.get(key))
       }
     }
     else {
       if (map is THashMap) {
         map.forEachEntry { k: Any?, v: Any? ->
-          writeEntry(k, v, isStringKey)
+          writeEntry(k, v)
           true
         }
       }
       else {
-        map.forEach {
-          key, value -> writeEntry(key, value, isStringKey)
-        }
+        map.forEach(::writeEntry)
       }
     }
     writer.stepOut()
@@ -106,26 +93,11 @@ internal class MapBinding(keyType: Type, valueType: Type, context: BindingInitia
 
   private fun readInto(result: MutableMap<Any?, Any?>, context: ReadContext) {
     val reader = context.reader
-
-    if (reader.type == IonType.INT) {
-      LOG.assertTrue(context.reader.intValue() == 0)
-      return
-    }
-
-    val isStringKeys = reader.type == IonType.STRUCT
     reader.stepIn()
     while (true) {
-      if (isStringKeys) {
-        val type = reader.next() ?: break
-        val key = reader.fieldName
-        val value = read(type, valueBinding, context)
-        result.put(key, value)
-      }
-      else {
-        val key = read(reader.next() ?: break, keyBinding, context)
-        val value = read(reader.next() ?: break, valueBinding, context)
-        result.put(key, value)
-      }
+      val key = read(reader.next() ?: break, keyBinding, context)
+      val value = read(reader.next() ?: break, valueBinding, context)
+      result.put(key, value)
     }
     reader.stepOut()
   }

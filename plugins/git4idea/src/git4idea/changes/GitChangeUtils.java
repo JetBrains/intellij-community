@@ -460,7 +460,7 @@ public class GitChangeUtils {
   }
 
   @NotNull
-  public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
+  private static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                           @NotNull VirtualFile root,
                                                           @NotNull String oldRevision,
                                                           @Nullable Collection<FilePath> dirtyPaths,

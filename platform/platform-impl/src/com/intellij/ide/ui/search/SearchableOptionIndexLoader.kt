@@ -3,9 +3,7 @@ package com.intellij.ide.ui.search
 
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
-import com.intellij.util.containers.MultiMap
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import java.net.URL
@@ -14,8 +12,6 @@ internal class SearchableOptionIndexLoader(val registrar: SearchableOptionsRegis
   // option => array of packed OptionDescriptor
   @Suppress("CanBePrimaryConstructorProperty")
   val storage: MutableMap<CharSequence, LongArray> = storage
-
-  val optionsTopHit: MultiMap<String, String> = MultiMap.create()
 
   val highlightOptionToSynonym: MutableMap<Couple<String>, MutableSet<String>> = THashMap()
 
@@ -30,10 +26,6 @@ internal class SearchableOptionIndexLoader(val registrar: SearchableOptionsRegis
           val path = optionElement.getAttributeValue("path")
           val hit = optionElement.getAttributeValue("hit")
           putOptionWithHelpId(option, id, groupName, hit, path)
-        }
-        for (optionElement in configurable.getChildren("option_top_hit")) {
-          val option = optionElement.getAttributeValue("name") ?: continue
-          optionsTopHit.putValue(id, StringUtil.unescapeStringCharacters(option))
         }
       }
     }

@@ -2,7 +2,6 @@
 
 package com.intellij.ui;
 
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -19,7 +18,7 @@ public class TitlePanel extends CaptionPanel {
   private final Icon myInactive;
 
   private boolean myHtml;
-
+  
   public TitlePanel() {
     this(null, null);
   }
@@ -65,11 +64,11 @@ public class TitlePanel extends CaptionPanel {
 
     final Dimension preferredSize = super.getPreferredSize();
     preferredSize.height = JBUI.CurrentTheme.Popup.headerHeight(containsSettingsControls());
-    int maxWidth = JBUIScale.scale(350);
+    int maxWidth = JBUI.scale(350);
     if (!myHtml && preferredSize.width > maxWidth) { // do not allow caption to extend parent container
       return new Dimension(maxWidth, preferredSize.height);
     }
-
+    
     return preferredSize;
   }
 }

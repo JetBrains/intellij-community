@@ -5,7 +5,6 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
@@ -244,10 +243,10 @@ public class UnixProcessManager {
     if (!new File(psCommand).isFile()) {
       psCommand = "ps";
     }
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
-    else if (SystemInfoRt.isMac || SystemInfo.isFreeBSD) {
+    else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
       final String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }

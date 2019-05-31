@@ -14,7 +14,6 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBScrollPane.Alignment;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 
@@ -590,8 +589,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected int getThickness() {
-    int i = isMacOverlayScrollbar() ? 15 : 13;
-    return JBUIScale.scale(i);
+    return JBUI.scale(isMacOverlayScrollbar() ? 15 : 13);
   }
 
   @Override
@@ -715,7 +713,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         bounds.height -= 2;
       }
       if (SystemInfoRt.isMac) {
-        int max = JBUIScale.scale(12);
+        int max = JBUI.scale(12);
         if (max < bounds.width && bounds.width < bounds.height) {
           bounds.x += (bounds.width - max) / 2;
           bounds.width = max;
@@ -754,7 +752,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Deprecated
   protected int getThumbOffset(int value) {
     // com.intellij.ui.components.AbstractScrollBarUI.scale
-    float scale = JBUIScale.scale(10);
+    float scale = JBUI.scale(10);
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (UIUtil.getComponentStyle(scrollbar)) {
       case LARGE:
@@ -797,7 +795,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     int baseSize = vertical ? baseBounds.width : baseBounds.height;
 
     int maxSize = baseSize - (thumb ? borderSize * 2 : 0);
-    int minSize = Math.min(baseSize / 2, JBUIScale.scale(7)) + (thumb ? 0 : borderSize * 2);
+    int minSize = Math.min(baseSize / 2, JBUI.scale(7)) + (thumb ? 0 : borderSize * 2);
 
     int currentSize = minSize + (int)(myMouseOverScrollbarExpandLevel * (maxSize - minSize));
 

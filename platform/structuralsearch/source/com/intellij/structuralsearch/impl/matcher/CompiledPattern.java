@@ -86,7 +86,7 @@ public abstract class CompiledPattern {
   @NotNull
   public String getTypedVarString(PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    final String typedVarString = (profile == null) ? element.getText() : profile.getTypedVarString(element);
+    String typedVarString = (profile == null) ? element.getText() : profile.getTypedVarString(element);
     return typedVarString.trim();
   }
 

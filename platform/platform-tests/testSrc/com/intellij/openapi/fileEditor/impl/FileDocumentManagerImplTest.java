@@ -19,7 +19,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -126,7 +126,10 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     //noinspection UnusedAssignment
     document = null;
 
-    GCWatcher.tracking(myDocumentManager.getCachedDocument(file)).tryGc();
+    TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
+    while (myDocumentManager.getCachedDocument(file) != null && !t.timedOut()) {
+      System.gc();
+    }
 
     document = myDocumentManager.getDocument(file);
     assertTrue(idCode != System.identityHashCode(document));
@@ -353,7 +356,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
             long oldStamp = getModificationStamp();
             setModificationStamp(newModificationStamp);
             setText(toString());
-            myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, self, oldStamp, getModificationStamp(), false));
+            myDocumentManager.contentsChanged(new VirtualFileEvent(requestor, self, null, oldStamp, getModificationStamp()));
           }
         };
       }
@@ -428,7 +431,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
         long oldStamp = getModificationStamp();
         setModificationStamp(LocalTimeCounter.currentTime());
-        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp(), false));
+        myDocumentManager.contentsChanged(new VirtualFileEvent(null, this, null, oldStamp, getModificationStamp()));
       }
     };
     Document document = myDocumentManager.getDocument(file);
@@ -453,7 +456,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
         long oldStamp = getModificationStamp();
         setModificationStamp(LocalTimeCounter.currentTime());
-        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp(), false));
+        myDocumentManager.contentsChanged(new VirtualFileEvent(null, this, null, oldStamp, getModificationStamp()));
       }
     };
 

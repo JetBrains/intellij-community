@@ -217,7 +217,13 @@ public abstract class InspectionTreeNode implements TreeNode {
     public LevelAndCount[] getValue() {
       LevelAndCount[] result = myLevels;
       if (result == null) {
-        myLevels = result = compute();
+        //noinspection SynchronizeOnThis
+        synchronized (this) {
+          result = myLevels;
+          if (result == null) {
+            myLevels = result = compute();
+          }
+        }
       }
       return result;
     }

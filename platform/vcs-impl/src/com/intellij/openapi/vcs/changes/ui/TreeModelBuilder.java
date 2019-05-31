@@ -34,7 +34,7 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
 @SuppressWarnings("UnusedReturnValue")
-public class TreeModelBuilder implements ChangesViewModelBuilder {
+public class TreeModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
     NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> new HashMap<>());
@@ -268,8 +268,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return subtreeRoot;
   }
 
-  @Override
-  public void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
+  private void insertFilesIntoNode(@NotNull Collection<? extends VirtualFile> files, @NotNull ChangesBrowserNode subtreeRoot) {
     List<VirtualFile> sortedFiles = sorted(files, VirtualFileHierarchicalComparator.getInstance());
     for (VirtualFile file : sortedFiles) {
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
@@ -358,13 +357,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       final LogicalLock lock = logicallyLockedFiles.get(file);
       insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createLogicallyLocked(myProject, file, lock));
     }
-    return this;
-  }
-
-  @NotNull
-  @Override
-  public TreeModelBuilder insertChangeNode(@NotNull ChangesBrowserNode node) {
-    myModel.insertNodeInto(node, myRoot, myRoot.getChildCount());
     return this;
   }
 

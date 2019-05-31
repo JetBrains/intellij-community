@@ -41,7 +41,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -51,9 +55,12 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vfs.AsyncVfsEventsListener;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +172,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       return;
     }
     myUpdatesQueue.activate();
-    VirtualFileManager.getInstance().addAsyncFileListener(new FileChangeListener(this), this);
+    AsyncVfsEventsPostProcessor.getInstance().addListener(new MyFileChangeListener(this), this);
 
     makeUserAware(myChangedDocumentsQueue, myProject);
     myChangedDocumentsQueue.activate();
@@ -214,7 +221,8 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         });
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myChangedDocumentsQueue);
+    final MessageBusConnection myBusConnection = myProject.getMessageBus().connect(myChangedDocumentsQueue);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myBusConnection);
     ServiceManager.getService(ExternalSystemProgressNotificationManager.class).addNotificationListener(this);
 
     updateWatchedRoots(true);
@@ -682,7 +690,21 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
   }
 
-  private class FileChangeListener extends AsyncFileChangeListenerBase {
+  private class MyFileChangeListener implements AsyncVfsEventsListener {
+    private final BulkFileListener myFileListener;
+
+    MyFileChangeListener(ExternalSystemProjectsWatcherImpl watcher) {
+      myFileListener = new FileChangeListener(watcher);
+    }
+
+    @Override
+    public void filesChanged(@NotNull List<? extends VFileEvent> events) {
+      myFileListener.before(events);
+      myFileListener.after(events);
+    }
+  }
+
+  private class FileChangeListener extends FileChangeListenerBase {
     private final ExternalSystemProjectsWatcherImpl myWatcher;
     private final MultiMap<String/* file path */, String /* project path */> myKnownFiles = MultiMap.createSet();
     private List<VirtualFile> filesToUpdate;
@@ -720,27 +742,33 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
     @Override
     protected void updateFile(VirtualFile file, VFileEvent event) {
-    myFileModificationTimeStamps.put(file.getPath(), file.getModificationStamp());
-    init();
-      debug("File changed '" + file.getPath() + "'");
-      if (event instanceof VFileContentChangeEvent && fileWasChanged(file)) {
-        filesToUpdate.add(file);
-      }
-      else {
-        for (String externalProjectPath : myKnownFiles.get(file.getPath())) {
-          handleRevertedChanges(externalProjectPath);
-        }
-      }
+      doUpdateFile(file, event, false);
     }
 
     @Override
-    protected void prepareFileDeletion(VirtualFile file) {
+    protected void deleteFile(VirtualFile file, VFileEvent event) {
+      doUpdateFile(file, event, true);
+    }
+
+    private void doUpdateFile(VirtualFile file, VFileEvent event, boolean remove) {
       myFileModificationTimeStamps.put(file.getPath(), file.getModificationStamp());
       init();
-      debug("File removed '" + file.getPath() + "'");
-      filesToRemove.add(file);
+      if (remove) {
+        debug("File removed '" + file.getPath() + "'");
+        filesToRemove.add(file);
+      }
+      else {
+        debug("File changed '" + file.getPath() + "'");
+        if (event instanceof VFileContentChangeEvent && fileWasChanged(file)) {
+          filesToUpdate.add(file);
+        }
+        else {
+          for (String externalProjectPath : myKnownFiles.get(file.getPath())) {
+            handleRevertedChanges(externalProjectPath);
+          }
+        }
+      }
     }
-    
 
     @Override
     protected void apply() {
@@ -750,7 +778,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         filesToUpdate.removeAll(filesToRemove);
         scheduleUpdate(ContainerUtil.concat(filesToUpdate, filesToRemove));
       }
-      reset();
+      clear();
     }
 
     private boolean areFileSetsInitialised() {
@@ -774,11 +802,10 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       if (areFileSetsInitialised()) return;
 
       filesToUpdate = new ArrayList<>();
-      filesToRemove = Collections.synchronizedList(new ArrayList<>());
+      filesToRemove = new ArrayList<>();
     }
 
-    @Override
-    protected void reset() {
+    private void clear() {
       filesToUpdate = null;
       filesToRemove = null;
       myKnownFiles.clear();

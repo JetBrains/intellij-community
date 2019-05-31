@@ -123,11 +123,9 @@ public abstract class DiffActionExecutor {
           String title1;
           String title2;
           final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(mySelectedFile);
-          boolean noLocalChanges = FileStatus.NOT_CHANGED.equals(status) ||
-                                   FileStatus.UNKNOWN.equals(status) ||
-                                   FileStatus.IGNORED.equals(status);
-          final VcsRevisionNumber currentRevision = noLocalChanges ? myDiffProvider.getCurrentRevision(mySelectedFile) : null;
-          if (currentRevision != null) {
+          if (FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status)) {
+            final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
+
             inverted = revisionNumber.compareTo(currentRevision) > 0;
             title1 = revisionNumber.asString();
             title2 = VcsBundle.message("diff.title.local.with.number", currentRevision.asString());

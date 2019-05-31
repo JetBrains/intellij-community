@@ -21,10 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -446,7 +443,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public State getState() {
     String currentSchemeName = mySchemeManager.getCurrentSchemeName();
     if (currentSchemeName != null && !isTempScheme(mySchemeManager.getActiveScheme())) {
-      myState.colorScheme = currentSchemeName;
+      myState.colorScheme = ("Default".equals(currentSchemeName) || (SchemeManager.EDITABLE_COPY_PREFIX + "Default").equals(
+        currentSchemeName)) ? null : currentSchemeName;
     }
     return myState;
   }

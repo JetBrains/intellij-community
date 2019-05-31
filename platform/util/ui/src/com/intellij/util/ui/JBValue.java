@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,7 +13,7 @@ import java.util.List;
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
 /**
- * A wrapper over an unscaled numeric value, auto-scaled via {@link JBUIScale#scale}.
+ * A wrapper over an unscaled numeric value, auto-scaled via {@link JBUI#scale}.
  * <p>
  * {@code JBValue} can be used separately or in a group, see {@link JBValueGroup}.
  * <p>
@@ -33,21 +32,21 @@ public abstract class JBValue {
    * Returns scaled rounded to int value.
    */
   public int get() {
-    return ROUND.round(JBUIScale.scale(getUnscaled()));
+    return ROUND.round(JBUI.scale(getUnscaled()));
   }
 
   /**
    * Returns scaled float value.
    */
   public float getFloat() {
-    return JBUIScale.scale(getUnscaled());
+    return JBUI.scale(getUnscaled());
   }
 
   /**
    * Returns scaled rounded to int (according to {@code rm}) value.
    */
   public int get(@NotNull RoundingMode rm) {
-    return rm.round(JBUIScale.scale(getUnscaled()));
+    return rm.round(JBUI.scale(getUnscaled()));
   }
 
   /**
@@ -120,7 +119,7 @@ public abstract class JBValue {
     }
 
     public void scaleAndCache() {
-      cachedScaledValue = JBUIScale.scale(getUnscaled());
+      cachedScaledValue = JBUI.scale(getUnscaled());
     }
   }
 
@@ -139,7 +138,7 @@ public abstract class JBValue {
     };
 
     public JBValueGroup() {
-      JBUIScale.addUserScaleChangeListener(listener);
+      JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, listener);
     }
 
     /**
@@ -152,7 +151,7 @@ public abstract class JBValue {
     }
 
     public void dispose() {
-      JBUIScale.removeUserScaleChangeListener(listener);
+      JBUI.removePropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, listener);
       group.clear();
     }
   }

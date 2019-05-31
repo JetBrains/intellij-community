@@ -4,6 +4,7 @@ import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,8 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Override
   @Nullable
   public T getRepositoryForFile(@NotNull FilePath file) {
-    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, false));
+    VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
+    return vFile != null ? getRepositoryForFile(vFile) : null;
   }
 
   @Override

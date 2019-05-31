@@ -465,7 +465,7 @@ public class PatternCompiler {
           options.addVariableConstraint(constraint);
         }
 
-        final SubstitutionHandler handler = result.createSubstitutionHandler(
+        SubstitutionHandler handler = result.createSubstitutionHandler(
           name,
           compiledName,
           constraint.isPartOfSearchResults(),
@@ -527,9 +527,9 @@ public class PatternCompiler {
       prevOffset = offset;
     }
 
-    final MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+    MatchVariableConstraint constraint = options.getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
     if (constraint != null) {
-      final SubstitutionHandler handler = result.createSubstitutionHandler(
+      SubstitutionHandler handler = result.createSubstitutionHandler(
         Configuration.CONTEXT_VAR_NAME,
         Configuration.CONTEXT_VAR_NAME,
         constraint.isPartOfSearchResults(),
@@ -552,18 +552,17 @@ public class PatternCompiler {
 
     buf.append(text.substring(prevOffset));
 
-    final PsiElement[] patternElements;
+    PsiElement[] patternElements;
     try {
       patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
                                                            options.getDialect(), options.getPatternContext(), project, false);
-      if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
+      if (patternElements.length == 0) throw new MalformedPatternException();
     } catch (IncorrectOperationException e) {
-      if (checkForErrors) throw new MalformedPatternException(e.getMessage());
-      return Collections.emptyList();
+      throw new MalformedPatternException(e.getMessage());
     }
 
-    final NodeFilter filter = LexicalNodesFilter.getInstance();
-    final List<PsiElement> elements = new SmartList<>();
+    NodeFilter filter = LexicalNodesFilter.getInstance();
+    List<PsiElement> elements = new SmartList<>();
     for (PsiElement element : patternElements) {
       if (!filter.accepts(element)) {
         elements.add(element);
@@ -571,12 +570,7 @@ public class PatternCompiler {
     }
 
     final GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
-    try {
-      compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
-    }
-    catch (MalformedPatternException e) {
-      if (checkForErrors) throw e;
-    }
+    compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
   }

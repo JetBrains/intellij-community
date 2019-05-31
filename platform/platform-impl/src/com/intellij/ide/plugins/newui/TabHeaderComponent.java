@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -117,8 +116,8 @@ public class TabHeaderComponent extends JComponent {
       }
 
       private Point getPopupPoint() {
-        int dH = UIUtil.isUnderWin10LookAndFeel() ? JBUIScale.scale(1) : 0;
-        return new Point(JBUIScale.scale(2), toolbarComponent.getComponent(0).getHeight() - dH);
+        int dH = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(1) : 0;
+        return new Point(JBUI.scale(2), toolbarComponent.getComponent(0).getHeight() - dH);
       }
     });
     toolbarComponent.setBorder(JBUI.Borders.empty());
@@ -276,7 +275,7 @@ public class TabHeaderComponent extends JComponent {
   @Override
   public Dimension getPreferredSize() {
     calculateSize();
-    return new Dimension(mySizeInfo.width, JBUIScale.scale(30));
+    return new Dimension(mySizeInfo.width, JBUI.scale(30));
   }
 
   private void calculateSize() {
@@ -290,7 +289,7 @@ public class TabHeaderComponent extends JComponent {
     mySizeInfo.tabs = new Rectangle[size];
     mySizeInfo.tabTitleX = new int[size];
 
-    int offset = JBUIScale.scale(22);
+    int offset = JBUI.scale(22);
     int x = 0;
     FontMetrics fm = getFontMetrics(getFont());
 
@@ -302,7 +301,7 @@ public class TabHeaderComponent extends JComponent {
     }
 
     Dimension toolbarSize = myToolbarComponent.getPreferredSize();
-    x += JBUIScale.scale(10);
+    x += JBUI.scale(10);
     mySizeInfo.width = x + toolbarSize.width;
     mySizeInfo.toolbarX = x;
   }

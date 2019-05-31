@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -105,8 +104,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myDeleted;
   private Boolean mySkipped;
 
-  private List<ListenerDescriptor> myListenerDescriptors;
-
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
     myPath = pluginPath;
     myBundled = bundled;
@@ -125,8 +122,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner);
   }
 
-  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude) throws IOException, JDOMException {
-    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), ignoreMissingInclude,
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
+    Application app = ApplicationManager.getApplication();
+    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), app != null && app.isUnitTestMode(),
                  JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner());
   }
 
@@ -141,14 +139,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    String pluginId = element.getChildTextTrim("id");
-    if (pluginId == null) pluginId = element.getChildTextTrim("name");
-    if (pluginId == null || !PluginManagerCore.disabledPlugins().contains(pluginId)) {
-      JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
-    }
-    else if (LOG.isDebugEnabled()) {
-      LOG.debug("Skipping resolving of " + pluginId + " from " + url);
-    }
+    JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
     readExternal(element, stringInterner);
   }
 
@@ -349,38 +340,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           readComponents(child, oldComponentConfigBeanBinding, (ArrayList<ComponentConfig>)myModuleComponents);
         }
         break;
-
-        case "applicationListeners": {
-          List<ListenerDescriptor> descriptors = myListenerDescriptors;
-          if (descriptors == null) {
-            descriptors = new ArrayList<>();
-            myListenerDescriptors = descriptors;
-          }
-          readListener(child, descriptors);
-        }
-        break;
       }
 
       child.getContent().clear();
-    }
-  }
-
-  private void readListener(@NotNull Element list, @NotNull List<ListenerDescriptor> descriptors) {
-    for (Content content : list.getContent()) {
-      if (!(content instanceof Element)) {
-        continue;
-      }
-
-      Element child = (Element)content;
-      String listenerClassName = child.getAttributeValue("class");
-      String topicClassName = child.getAttributeValue("topic");
-      if (listenerClassName == null || topicClassName == null) {
-        LOG.error("applicationListener descriptor is not correct: " + JDOMUtil.writeElement(child));
-      }
-      else {
-        String activeInTestMode = child.getAttributeValue("activeInTestMode");
-        descriptors.add(new ListenerDescriptor(listenerClassName, topicClassName, activeInTestMode == null || Boolean.parseBoolean(activeInTestMode), this));
-      }
     }
   }
 
@@ -643,11 +605,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @NotNull
-  public List<ListenerDescriptor> getListeners() {
-    return ContainerUtil.notNullize(myListenerDescriptors);
-  }
-
-  @NotNull
   public List<ServiceDescriptor> getProjectServices() {
     return ContainerUtil.notNullize(myProjectServices);
   }
@@ -810,8 +767,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myAppServices = concatOrNull(myAppServices, descriptor.myAppServices);
     myProjectServices = concatOrNull(myProjectServices, descriptor.myProjectServices);
     myModuleServices = concatOrNull(myModuleServices, descriptor.myModuleServices);
-
-    myListenerDescriptors = concatOrNull(myListenerDescriptors, descriptor.myListenerDescriptors);
   }
 
   @Nullable

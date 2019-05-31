@@ -16,26 +16,24 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private static final long serialVersionUID = 1L;
 
   private String name;
-  private Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
-  private final Collection<ExternalDependency> dependencies = new LinkedHashSet<ExternalDependency>();
+  private Map<IExternalSystemSourceType, ExternalSourceDirectorySet> sources;
+  private final Collection<ExternalDependency> dependencies;
   private Collection<File> artifacts;
   private String sourceCompatibility;
   private String targetCompatibility;
 
   public DefaultExternalSourceSet() {
-    sources = new HashMap<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>();
+    sources = new HashMap<IExternalSystemSourceType, ExternalSourceDirectorySet>();
+    dependencies = new LinkedHashSet<ExternalDependency>();
     artifacts = new ArrayList<File>();
   }
 
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
-
+    this();
     name = sourceSet.getName();
     sourceCompatibility = sourceSet.getSourceCompatibility();
     targetCompatibility = sourceSet.getTargetCompatibility();
-
-    Set<? extends Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet>> entrySet = sourceSet.getSources().entrySet();
-    sources = new HashMap<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>(entrySet.size());
-    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : entrySet) {
+    for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> entry : sourceSet.getSources().entrySet()) {
       sources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
     }
 
@@ -91,11 +89,11 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   @NotNull
   @Override
-  public Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> getSources() {
+  public Map<IExternalSystemSourceType, ExternalSourceDirectorySet> getSources() {
     return sources;
   }
 
-  public void setSources(Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
+  public void setSources(Map<IExternalSystemSourceType, ExternalSourceDirectorySet> sources) {
     this.sources = sources;
   }
 

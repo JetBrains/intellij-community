@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,7 +23,10 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
   public OneLineProgressIndicator(boolean withText) {
     super(true, task(withText ? "Downloading..." : ""));
 
-    if (!withText) {
+    if (withText) {
+      myText.putClientProperty("NoFillPanelColorForDarcula", Boolean.TRUE);
+    }
+    else {
       myText.getParent().remove(myText);
     }
     updateProgressNow();

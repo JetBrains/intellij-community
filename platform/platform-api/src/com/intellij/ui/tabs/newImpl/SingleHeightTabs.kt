@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.newImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.tabs.TabInfo
 import java.awt.Dimension
@@ -18,12 +19,16 @@ open class SingleHeightTabs(project: Project?,
   }
 
   open inner class SingleHeightLabel(tabs: JBTabsImpl, info: TabInfo) : TabLabel(tabs, info) {
+    var disposable: Disposable? = null
     var height: Int? = null
 
     init {
+      val ds = Disposer.newDisposable()
       TabsHeightController.registerAdjective(this, {
         height = it
-      }, this)
+        Unit
+      }, ds)
+      disposable = ds
     }
 
 

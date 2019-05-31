@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 
-public final class Main {
+public class Main {
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
@@ -31,10 +31,6 @@ public final class Main {
   public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
-  // External cmdline and IDE activation
-  public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
-  public static final int ACTIVATE_LISTENER_NOT_INITIALIZED = 14;
-  public static final int ACTIVATE_RESPONSE_TIMEOUT = 15;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -51,7 +47,7 @@ public final class Main {
 
   public static void main(String[] args) {
     LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
-    startupTimings.put("startup begin", System.nanoTime());
+    startupTimings.put("Startup begin", System.nanoTime());
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }

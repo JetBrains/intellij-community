@@ -26,11 +26,6 @@ public class ProgressIndicatorBase extends AbstractProgressIndicatorExBase imple
     super(reusable);
   }
 
-  public ProgressIndicatorBase(boolean reusable, boolean allowSystemActivity) {
-    super(reusable);
-    if (!allowSystemActivity) dontStartActivity();
-  }
-
   @Override
   public final void cancel() {
     super.cancel();

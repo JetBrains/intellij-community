@@ -6,10 +6,10 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -43,6 +43,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
@@ -539,8 +540,31 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static boolean hasMnemonic(@Nullable Container container, int keyCode) {
     Component component = UIUtil.uiTraverser(container)
       .traverse()
-      .find(c -> MnemonicHelper.hasMnemonic(c, keyCode));
+      .find(c -> hasMnemonic(c, keyCode));
     return component != null;
+  }
+
+  private static boolean hasMnemonic(@Nullable Component component, int keyCode) {
+    if (component instanceof AbstractButton) {
+      AbstractButton button = (AbstractButton)component;
+      if (button instanceof JBOptionButton) {
+        if (((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
+            button.getMnemonic() == keyCode) {
+          return true;
+        }
+      }
+      else {
+        if (button.getMnemonic() == keyCode) return true;
+      }
+    }
+    if (component instanceof JLabel) {
+      JLabel label = (JLabel)component;
+      if (label.getDisplayedMnemonic() == keyCode) return true;
+    }
+    if (component instanceof ActionButtonWithText) {
+      if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
+    }
+    return false;
   }
 
   private static boolean hasMnemonicInBalloons(Container container, int code) {

@@ -38,10 +38,6 @@ abstract class ServiceView extends JPanel implements Disposable {
     return myModel;
   }
 
-  ServiceViewUi getUi() {
-    return myUi;
-  }
-
   void saveState(@NotNull ServiceViewState state) {
     myModel.saveState(state);
   }
@@ -110,9 +106,6 @@ abstract class ServiceView extends JPanel implements Disposable {
         List<Navigatable> navigatables =
           ContainerUtil.mapNotNull(serviceView.getSelectedItems(), item -> item.getViewDescriptor().getNavigatable());
         return navigatables.toArray(new Navigatable[0]);
-      }
-      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        return new ServiceViewDeleteProvider(serviceView);
       }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);

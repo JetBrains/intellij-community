@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 @ApiStatus.Experimental
@@ -55,11 +54,6 @@ public interface ServiceViewDescriptor {
   }
 
   default boolean handleDoubleClick(@NotNull MouseEvent event) {
-    Navigatable navigatable = getNavigatable();
-    if (navigatable != null && navigatable.canNavigateToSource()) {
-      navigatable.navigate(true);
-      return true;
-    }
     return false;
   }
 
@@ -70,16 +64,6 @@ public interface ServiceViewDescriptor {
 
   @Nullable
   default Navigatable getNavigatable() {
-    return null;
-  }
-
-  @Nullable
-  default Color getItemBackgroundColor() {
-    return null;
-  }
-
-  @Nullable
-  default Runnable getRemover() {
     return null;
   }
 }

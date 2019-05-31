@@ -43,9 +43,11 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
@@ -350,7 +352,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
         Color foreground = JBColor.namedColor("DragAndDrop.areaForeground", Gray._120);
         g.setColor(foreground);
-        Font labelFont = StartupUiUtil.getLabelFont();
+        Font labelFont = UIUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
         String drop = "Drop files here to open";
         g.setFont(font);
@@ -411,7 +413,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private JComponent createErrorsLink() {
       IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
       panel.setBorder(JBUI.Borders.emptyRight(13));
-      panel.setOpaque(false);
       Disposer.register(this, panel);
       return panel;
     }
@@ -443,7 +444,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           panel.setVisible(false);
         }
         else {
-          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size(), false));
+          actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size()));
           panel.setVisible(true);
         }
       };
@@ -505,7 +506,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             text = text.substring(0, text.length() - 3);
           }
           Icon icon = presentation.getIcon();
-          if (icon == null || icon.getIconHeight() != JBUIScale.scale(16) || icon.getIconWidth() != JBUIScale.scale(16)) {
+          if (icon == null || icon.getIconHeight() != JBUI.scale(16) || icon.getIconWidth() != JBUI.scale(16)) {
             icon = JBUI.scale(EmptyIcon.create(16));
           }
           action = wrapGroups(action);
@@ -637,7 +638,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       JLabel appName = new JLabel(applicationName);
       Font font = getProductFont();
       appName.setForeground(JBColor.foreground());
-      appName.setFont(font.deriveFont(JBUIScale.scale(36f)).deriveFont(Font.PLAIN));
+      appName.setFont(font.deriveFont(JBUI.scale(36f)).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version ";
 
@@ -648,7 +649,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
 
       JLabel version = new JLabel(appVersion);
-      version.setFont(getProductFont().deriveFont(JBUIScale.scale(16f)));
+      version.setFont(getProductFont().deriveFont(JBUI.scale(16f)));
       version.setHorizontalAlignment(SwingConstants.CENTER);
       version.setForeground(Gray._128);
 
@@ -672,7 +673,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
         }
       }
-      return StartupUiUtil.getLabelFont();
+      return UIUtil.getLabelFont();
     }
 
     private JComponent createRecentProjects() {
@@ -963,7 +964,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     pane.setBackground(getProjectsBackground());
     actionsListPanel.add(pane, BorderLayout.CENTER);
 
-    int width = (int)Math.max(Math.min(Math.round(list.getPreferredSize().getWidth()), JBUIScale.scale(200)), JBUIScale.scale(100));
+    int width = (int)Math.max(Math.min(Math.round(list.getPreferredSize().getWidth()), JBUI.scale(200)), JBUI.scale(100));
     pane.setPreferredSize(JBUI.size(width + 14, -1));
 
     boolean singleProjectGenerator = list.getModel().getSize() == 1;

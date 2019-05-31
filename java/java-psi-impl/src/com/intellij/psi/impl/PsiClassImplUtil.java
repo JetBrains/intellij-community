@@ -29,8 +29,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconDeferrer;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.icons.RowIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -244,8 +243,7 @@ public class PsiClassImplUtil {
     Icon symbolIcon = r.symbolIcon != null
                       ? r.symbolIcon
                       : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
-    RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(r.psiClass, symbolIcon, ElementPresentationUtil.getFlags(r.psiClass, isLocked));
+    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
     Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
     Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
     return result;
@@ -261,7 +259,7 @@ public class PsiClassImplUtil {
       if (symbolIcon == null) {
         symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       }
-      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, symbolIcon, 0);
+      RowIcon baseIcon = ElementBase.createLayeredIcon(aClass, symbolIcon, 0);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 

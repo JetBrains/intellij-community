@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -45,6 +46,7 @@ import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
 import org.picocontainer.MutablePicoContainer;
 
@@ -375,5 +377,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   protected String activityNamePrefix() {
     return "project ";
+  }
+
+  @Override
+  protected void logMessageBusDelivery(Topic topic, Object handler, long durationNanos) {
+    super.logMessageBusDelivery(topic, handler, durationNanos);
+    if (topic == ProjectManager.TOPIC) {
+      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationNanos, handler.getClass(),
+                                                   StartUpMeasurer.Level.PROJECT);
+    }
   }
 }

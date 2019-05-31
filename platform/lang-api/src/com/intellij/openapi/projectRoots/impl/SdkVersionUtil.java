@@ -3,7 +3,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -12,17 +12,19 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
  * @author Anna.Kozlova
  */
 public class SdkVersionUtil {
+  private static final JdkVersionDetector.ActionRunner ACTION_RUNNER = (r) -> ApplicationManager.getApplication().executeOnPooledThread(r);
+
   private SdkVersionUtil() { }
 
   /** @deprecated use {@link #getJdkVersionInfo(String)} (to be removed in IDEA 2019) */
   @Deprecated
   @Nullable
   public static String detectJdkVersion(@NotNull String homePath) {
-    return JdkVersionDetector.getInstance().detectJdkVersion(homePath, AppExecutorUtil.getAppExecutorService());
+    return JdkVersionDetector.getInstance().detectJdkVersion(homePath, ACTION_RUNNER);
   }
 
   @Nullable
   public static JdkVersionDetector.JdkVersionInfo getJdkVersionInfo(@NotNull String homePath) {
-    return JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath, AppExecutorUtil.getAppExecutorService());
+    return JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath, ACTION_RUNNER);
   }
 }

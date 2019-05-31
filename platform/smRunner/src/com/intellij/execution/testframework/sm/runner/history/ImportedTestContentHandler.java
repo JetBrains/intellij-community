@@ -21,8 +21,6 @@ public class ImportedTestContentHandler extends DefaultHandler {
   private String myStatus;
   private final StringBuilder currentValue = new StringBuilder();
   private boolean myErrorOutput = false;
-  private String myExpected;
-  private String myActual;
 
   public ImportedTestContentHandler(GeneralTestEventsProcessor processor) {
     myProcessor = processor;
@@ -58,18 +56,11 @@ public class ImportedTestContentHandler extends DefaultHandler {
       currentValue.setLength(0);
     }
     else if (TestResultsXmlFormatter.ELEM_OUTPUT.equals(qName)) {
-      boolean isError = Comparing.equal(attributes.getValue(TestResultsXmlFormatter.ATTR_OUTPUT_TYPE), "stderr");
-      if (isError || !myErrorOutput) {
-        currentValue.setLength(0);
-      }
-      myErrorOutput = isError;
+      myErrorOutput = Comparing.equal(attributes.getValue(TestResultsXmlFormatter.ATTR_OUTPUT_TYPE), "stderr");
+      currentValue.setLength(0);
     }
     else if (TestResultsXmlFormatter.ROOT_ELEM.equals(qName)) {
       myProcessor.onRootPresentationAdded(attributes.getValue("name"), attributes.getValue("comment"), attributes.getValue("location"));
-    }
-    else if (TestResultsXmlFormatter.DIFF.equals(qName)) {
-      myExpected = attributes.getValue(TestResultsXmlFormatter.EXPECTED);
-      myActual = attributes.getValue(TestResultsXmlFormatter.ACTUAL);
     }
   }
 
@@ -91,7 +82,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
     else if (TestResultsXmlFormatter.ELEM_TEST.equals(qName)) {
       final boolean isError = TestResultsXmlFormatter.STATUS_ERROR.equals(myStatus);
       if (TestResultsXmlFormatter.STATUS_FAILED.equals(myStatus) || isError) {
-        myProcessor.onTestFailure(new TestFailedEvent(myCurrentTest, "", currentText, isError, myActual, myExpected));
+        myProcessor.onTestFailure(new TestFailedEvent(myCurrentTest, "", currentText, isError, null, null));
       }
       else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus) || TestResultsXmlFormatter.STATUS_SKIPPED.equals(myStatus)) {
         myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText) {
@@ -107,8 +98,6 @@ public class ImportedTestContentHandler extends DefaultHandler {
         currentValue.setLength(0);
       }
       myCurrentTest = null;
-      myActual = null;
-      myExpected = null;
     }
     else if (TestResultsXmlFormatter.ELEM_OUTPUT.equals(qName) && !StringUtil.isEmpty(currentText) && isTestOutput) {
       if (myCurrentTest != null) {

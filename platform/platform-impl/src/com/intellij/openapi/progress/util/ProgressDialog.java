@@ -17,10 +17,10 @@ import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +111,7 @@ class ProgressDialog implements Disposable {
     if (SystemInfoRt.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
-    myInnerPanel.setPreferredSize(new Dimension(SystemInfoRt.isMac ? 350 : JBUIScale.scale(450), -1));
+    myInnerPanel.setPreferredSize(new Dimension(SystemInfoRt.isMac ? 350 : JBUI.scale(450), -1));
 
     myCancelButton.addActionListener(__ -> doCancelAction());
 

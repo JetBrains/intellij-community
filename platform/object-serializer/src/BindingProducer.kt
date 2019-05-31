@@ -24,12 +24,10 @@ internal abstract class BindingProducer : BindingInitializationContext {
 
   abstract fun getNestedBinding(accessor: MutableAccessor): Binding
 
-  fun getRootBinding(aClass: Class<*>) = getRootBinding(aClass, aClass)
-
-  fun getRootBinding(aClass: Class<*>?, type: Type): Binding {
+  fun getRootBinding(aClass: Class<*>, type: Type = aClass): Binding {
     fun getByTypeOrByClass(): Binding? {
       var result = cache.get(type)
-      if (result == null && aClass !== type && aClass != null) {
+      if (result == null && aClass !== type) {
         result = cache.get(aClass)
       }
       return result
@@ -59,7 +57,7 @@ internal abstract class BindingProducer : BindingInitializationContext {
     }
   }
 
-  protected abstract fun createRootBinding(aClass: Class<*>?, type: Type): Binding
+  protected abstract fun createRootBinding(aClass: Class<*>, type: Type): Binding
 
   @Suppress("unused")
   fun clearBindingCache() {

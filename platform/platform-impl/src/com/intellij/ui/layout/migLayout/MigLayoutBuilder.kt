@@ -7,14 +7,13 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.*
+import kotlin.reflect.KProperty0
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagic: Boolean = true) : LayoutBuilderImpl {
   companion object {
@@ -22,7 +21,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     private var vRelatedGap = -1
 
     init {
-      JBUIScale.addUserScaleChangeListener {
+      JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY) {
         updatePlatformDefaults()
       }
     }

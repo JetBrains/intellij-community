@@ -30,8 +30,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -47,10 +47,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -114,12 +115,11 @@ public class StructuralSearchDialog extends DialogWrapper {
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
-  Editor myEditor;
   boolean myReplace;
   Configuration myConfiguration;
   @NonNls LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
   Language myDialect = null;
-  PatternContext myPatternContext = null;
+  String myContext = null;
   private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
 
   // ui management
@@ -162,17 +162,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     myReplace = replace;
     myEditConfigOnly = editConfigOnly;
     mySearchContext = searchContext;
-    myEditor = searchContext.getEditor();
-    final FileEditorManagerListener listener = new FileEditorManagerListener() {
-
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        removeMatchHighlights();
-        myEditor = event.getManager().getSelectedTextEditor();
-        addMatchHighlights();
-      }
-    };
-    searchContext.getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
@@ -193,7 +182,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   private EditorTextField createEditor() {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
-    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
+    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, "", profile);
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -273,19 +262,13 @@ public class StructuralSearchDialog extends DialogWrapper {
   private void initializeFilterPanel() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, false, false);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (compiledPattern != null) {
-        final SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(mySearchCriteriaEdit.getEditor());
-        if (handler != null) {
-          handler.updateEditorInlays();
-        }
-        myFilterPanel.setCompiledPattern(compiledPattern);
-      }
-      if (!myFilterPanel.isInitialized()) {
-        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
-      }
-      myFilterPanel.setValid(compiledPattern != null);
-    });
+    if (compiledPattern != null) {
+      myFilterPanel.setCompiledPattern(compiledPattern);
+    }
+    if (!myFilterPanel.isInitialized()) {
+      myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+    }
+    myFilterPanel.setValid(compiledPattern != null);
   }
 
   private Configuration createConfiguration(Configuration template) {
@@ -298,7 +281,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void setTextFromContext() {
-    final Editor editor = myEditor;
+    final Editor editor = mySearchContext.getEditor();
     if (editor != null) {
       final SelectionModel selectionModel = editor.getSelectionModel();
       final String selectedText = selectionModel.getSelectedText();
@@ -500,17 +483,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     myRecursive.setVisible(!myReplace);
     myMatchCase = new JCheckBox(FindBundle.message("find.popup.case.sensitive"), true);
     myFileType = UIUtil.detectFileType(mySearchContext);
-    myDialect = myFileType.getLanguage();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-    if (profile != null) {
-      final List<PatternContext> contexts = profile.getPatternContexts();
-      if (!contexts.isEmpty()) {
-        myPatternContext = contexts.get(0);
-      }
-    }
     myFileTypesComboBox = new FileTypeSelector();
     myFileTypesComboBox.setMinimumAndPreferredWidth(200);
-    myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myPatternContext);
+    myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myContext);
     myFileTypesComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -519,14 +494,14 @@ public class StructuralSearchDialog extends DialogWrapper {
           if (item == null) return;
           myFileType = item.getFileType();
           myDialect = item.getDialect();
-          myPatternContext = item.getContext();
+          myContext = item.getContext();
           final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
           assert profile != null;
           final Document searchDocument =
-            UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
+            UIUtil.createDocument(getProject(), myFileType, myDialect, mySearchCriteriaEdit.getText(), profile);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
           final Document replaceDocument =
-            UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
+            UIUtil.createDocument(getProject(), myFileType, myDialect, myReplaceCriteriaEdit.getText(), profile);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           myFilterPanel.setProfile(profile);
           initiateValidation();
@@ -684,7 +659,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   public void doCancelAction() {
     super.doCancelAction();
-    removeMatchHighlights();
+    highlightMatches(Collections.emptyList(), "");
   }
 
   @Override
@@ -728,7 +703,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
       reportMessage(null, false, mySearchCriteriaEdit);
-      addMatchHighlights();
+      highlightMatches(matchOptions);
       if (myReplace) {
         try {
           Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
@@ -746,7 +721,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       return compiledPattern;
     }
     catch (MalformedPatternException e) {
-      removeMatchHighlights();
+      highlightMatches(Collections.emptyList(), "");
       final String message = isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
@@ -754,74 +729,63 @@ public class StructuralSearchDialog extends DialogWrapper {
       return null;
     }
     catch (UnsupportedPatternException e) {
-      removeMatchHighlights();
+      highlightMatches(Collections.emptyList(), "");
       reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), true, mySearchCriteriaEdit);
       return null;
     }
     catch (NoMatchFoundException e) {
-      removeMatchHighlights();
+      highlightMatches(Collections.emptyList(), "");
       reportMessage(e.getMessage(), false, myScopePanel);
       return null;
     }
   }
 
-  void removeMatchHighlights() {
-    final Editor editor = myEditor;
-    if (editor == null) {
-      return;
-    }
-    final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(() -> {
-      final HighlightManager highlightManager = HighlightManager.getInstance(project);
-      for (RangeHighlighter highlighter : myRangeHighlighters) {
-        highlightManager.removeSegmentHighlighter(editor, highlighter);
-      }
-      WindowManager.getInstance().getStatusBar(project).setInfo("");
-      myRangeHighlighters.clear();
-    });
-  }
-
-  void addMatchHighlights() {
+  private void highlightMatches(MatchOptions matchOptions) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myDoingOkAction) {
-      removeMatchHighlights();
+      highlightMatches(Collections.emptyList(), "");
     }
     else {
       final Project project = getProject();
-      final Editor editor = myEditor;
+      final FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor();
       if (editor == null) {
         return;
       }
-      final Document document = editor.getDocument();
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      final VirtualFile vFile = editor.getFile();
+      if (vFile == null) {
+        return;
+      }
+      final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
       if (file == null) {
         return;
       }
-      final MatchOptions matchOptions = getConfiguration().getMatchOptions();
       matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
       final CollectingMatchResultSink sink = new CollectingMatchResultSink();
       new Matcher(project).findMatches(sink, matchOptions);
       final List<MatchResult> matches = sink.getMatches();
-      removeMatchHighlights();
-      addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
+      highlightMatches(matches, matches.size() + " results found in current file");
     }
   }
 
-  private void addMatchHighlights(@NotNull List<MatchResult> matchResults,
-                                  @NotNull Editor editor,
-                                  @NotNull PsiFile file,
-                                  @Nullable String statusBarText) {
+  private void highlightMatches(@NotNull List<MatchResult> matchResults, @Nullable String statusBarText) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final Project project = getProject();
       if (project.isDisposed()) {
         return;
       }
+      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor == null) {
+        return;
+      }
+      final HighlightManager highlightManager = HighlightManager.getInstance(getProject());
+      for (RangeHighlighter highlighter : myRangeHighlighters) {
+        highlightManager.removeSegmentHighlighter(editor, highlighter);
+      }
+      myRangeHighlighters.clear();
       if (!matchResults.isEmpty()) {
         final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
         final TextAttributes textAttributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager = HighlightManager.getInstance(project);
         for (MatchResult result : matchResults) {
-          final PsiElement match = result.getMatch();
-          if (match == null || match.getContainingFile() != file) continue;
           int start = -1;
           int end = -1;
           if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
@@ -838,7 +802,7 @@ public class StructuralSearchDialog extends DialogWrapper {
             }
           }
           else {
-            final TextRange range = match.getTextRange();
+            final TextRange range = result.getMatch().getTextRange();
             start = range.getStartOffset();
             end = range.getEndOffset();
           }
@@ -857,26 +821,24 @@ public class StructuralSearchDialog extends DialogWrapper {
     });
   }
 
-  Balloon myBalloon = null;
   void reportMessage(String message, boolean error, JComponent component) {
     com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
-      if (myBalloon != null) myBalloon.hide();
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
 
       if (message == null) return;
-      myBalloon = JBPopupFactory.getInstance()
+      final Balloon balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
         .setHideOnFrameResize(false)
         .createBalloon();
       if (component != myScopePanel) {
-        myBalloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
+        balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
       }
       else {
-        myBalloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
+        balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
       }
-      myBalloon.showInCenterOf(component);
-      Disposer.register(myDisposable, myBalloon);
+      balloon.showInCenterOf(component);
+      Disposer.register(myDisposable, balloon);
     });
   }
 
@@ -1036,7 +998,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
     matchOptions.setFileType(myFileType);
     matchOptions.setDialect(myDialect);
-    matchOptions.setPatternContext(myPatternContext);
+    matchOptions.setPatternContext(myContext);
     matchOptions.setSearchPattern(getPattern(mySearchCriteriaEdit));
     matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
 

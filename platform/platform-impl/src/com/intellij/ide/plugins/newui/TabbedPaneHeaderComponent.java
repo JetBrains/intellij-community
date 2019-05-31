@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +69,8 @@ public class TabbedPaneHeaderComponent extends JPanel {
       }
     });
 
-    setOpaque(false);
+    setBackground(JBUI.CurrentTheme.ToolWindow.headerBackground());
+    setOpaque(true);
 
     myTabbedPane.setOpaque(false);
 

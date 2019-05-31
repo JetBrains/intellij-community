@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
@@ -14,17 +14,17 @@ import org.junit.Test
 
 class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
 
-  private fun doValidateEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
+  private fun doValidateEventId(validator: CustomUtilsWhiteListRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
     doTest(ValidationResultType.ACCEPTED, validator, eventId, context)
   }
 
-  private fun doRejectEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
+  private fun doRejectEventId(validator: CustomUtilsWhiteListRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
     doTest(ValidationResultType.REJECTED, validator, eventId, context)
   }
 
-  private fun doTest(expected: ValidationResultType, validator: CustomWhiteListRule, data: String, context: EventContext) {
+  private fun doTest(expected: ValidationResultType, validator: CustomUtilsWhiteListRule, data: String, context: EventContext) {
     TestCase.assertEquals(expected, validator.validate(data, context))
   }
 

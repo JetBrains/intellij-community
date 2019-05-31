@@ -50,9 +50,6 @@ public class TerminalEscapeKeyListener {
 
   @Nullable
   private KeyStroke getKeyStroke() {
-    if (myTerminalSwitchFocusToEditorAction == null) {
-      return null;
-    }
     return KeymapUtil.getKeyStroke(myTerminalSwitchFocusToEditorAction.getShortcutSet());
   }
 

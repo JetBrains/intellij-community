@@ -16,7 +16,6 @@
 package org.intellij.plugins.xpathView.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -53,7 +52,7 @@ public class MultilineEditor extends JPanel {
 
     private static abstract class ItemAction extends AnAction {
         ItemAction(String id, JComponent component) {
-            ActionUtil.copyFrom(this, id);
+            copyFrom(ActionManager.getInstance().getAction(id));
             registerCustomShortcutSet(getShortcutSet(), component);
         }
     }
@@ -110,8 +109,8 @@ public class MultilineEditor extends JPanel {
             public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() < myModel.getSize() - 1);
-                presentation.setText("Previous History Entry");
-                presentation.setDescription("Navigate to the previous history entry");
+                presentation.setText("Previous history element");
+                presentation.setDescription("Navigate to the previous history element");
             }
 
             @Override
@@ -126,8 +125,8 @@ public class MultilineEditor extends JPanel {
             public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() > 0);
-                presentation.setText("Next History Entry");
-                presentation.setDescription("Navigate to the next history entry");
+                presentation.setText("Next history element");
+                presentation.setDescription("Navigate to the next history element");
             }
 
             @Override

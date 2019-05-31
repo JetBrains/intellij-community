@@ -10,7 +10,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
@@ -94,8 +93,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public SimpleColoredComponent() {
     myFragments = new ArrayList<>(3);
-    myIpad = JBInsets.create(1, 2);
-    myIconTextGap = JBUIScale.scale(2);
+    myIpad = JBUI.insets(1, 2);
+    myIconTextGap = JBUI.scale(2);
     myBorder = JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : 1);
     setOpaque(true);
     updateUI();
@@ -430,7 +429,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected int getMinHeight() {
-    return JBUIScale.scale(16);
+    return JBUI.scale(16);
   }
 
   private Rectangle computePaintArea() {

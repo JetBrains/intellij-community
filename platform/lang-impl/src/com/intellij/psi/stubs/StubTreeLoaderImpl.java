@@ -115,7 +115,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     if (size == 1) {
       SerializedStubTree stubTree = datas.get(0);
 
-      if (!checkLengthMatch(project, vFile, wasIndexedAlready, document, saved)) {
+      if (!checkLengthMatch(project, vFile, wasIndexedAlready, document, saved, stubTree)) {
         return null;
       }
 
@@ -143,11 +143,11 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
                                    VirtualFile vFile,
                                    boolean wasIndexedAlready,
                                    Document document,
-                                   boolean saved) {
+                                   boolean saved,
+                                   SerializedStubTree stubTree) {
     PsiFile cachedPsi = PsiManagerEx.getInstanceEx(project).getFileManager().getCachedPsiFile(vFile);
-    IndexingStampInfo indexingStampInfo = getIndexingStampInfo(vFile);
-    if (indexingStampInfo != null && !indexingStampInfo.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document, cachedPsi))) {
-      diagnoseLengthMismatch(vFile, wasIndexedAlready, document, saved, cachedPsi);
+    if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document, cachedPsi))) {
+      diagnoseLengthMismatch(vFile, wasIndexedAlready, document, saved, stubTree, cachedPsi);
       return false;
     }
     return true;
@@ -157,13 +157,15 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
                                       boolean wasIndexedAlready,
                                       @Nullable Document document,
                                       boolean saved,
+                                      @NotNull SerializedStubTree stubTree,
                                       @Nullable PsiFile cachedPsi) {
     String message = "Outdated stub in index: " + vFile + " " + getIndexingStampInfo(vFile) +
                      ", doc=" + document +
                      ", docSaved=" + saved +
                      ", wasIndexedAlready=" + wasIndexedAlready +
                      ", queried at " + vFile.getTimeStamp();
-    message += "\ndoc length=" + (document == null ? -1 : document.getTextLength()) +
+    message += "\nindexed lengths=" + stubTree.dumpLengths() +
+               "\ndoc length=" + (document == null ? -1 : document.getTextLength()) +
                "\nfile length=" + vFile.getLength();
     if (cachedPsi != null) {
       message += "\ncached PSI " + cachedPsi.getClass();

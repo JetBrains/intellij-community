@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
 import com.intellij.internal.statistic.utils.getCountingUsage
@@ -91,7 +91,7 @@ fun getReportableTypeId(type: XBreakpointType<*, *>): String {
   return if (info.isSafeToReport()) "custom.${info.id}" else "custom"
 }
 
-class BreakpointsUtilValidator : CustomWhiteListRule() {
+class BreakpointsUtilValidator : CustomUtilsWhiteListRule() {
   override fun acceptRuleId(ruleId: String?): Boolean {
     return "breakpoint" == ruleId
   }

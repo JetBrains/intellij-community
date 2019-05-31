@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -130,7 +130,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   protected int getCustomIndent() {
-    return JBUIScale.scale(Registry.intValue("ide.ui.tree.indent"));
+    return JBUI.scale(Registry.intValue("ide.ui.tree.indent"));
   }
 
   @Override

@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.testFramework.exceptionCases.ThrowableErrorCase;
+import com.intellij.testFramework.exceptionCases.AssertionErrorCase;
 
 /**
  * @author Roman Chernyatchik
@@ -73,7 +73,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     // enable debug mode
     enableDebugMode();
 
-    assertException(new ThrowableErrorCase() {
+    assertException(new AssertionErrorCase() {
       @Override
       public void tryClosure() {
         myTestSuiteStack.popSuite("some suite");
@@ -98,7 +98,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals(4, myTestSuiteStack.getStackSize());
     assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
 
-    assertException(new ThrowableErrorCase() {
+    assertException(new AssertionErrorCase() {
       @Override
       public void tryClosure() {
         myTestSuiteStack.popSuite(suiteName);

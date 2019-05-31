@@ -113,7 +113,6 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
       PreviewManager.SERVICE.close(myProject, getId(), file);
     }
 
-    @NotNull
     @Override
     protected EditorWindow createEditorWindow() {
       return new EditorWindow(this) {

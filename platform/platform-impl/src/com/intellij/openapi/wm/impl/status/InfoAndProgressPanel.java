@@ -36,7 +36,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -100,7 +99,6 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   InfoAndProgressPanel() {
 
     setOpaque(false);
-    setBorder(JBUI.Borders.empty());
 
     myRefreshIcon.setVisible(false);
 
@@ -445,15 +443,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
         Component c = getAnchor(pane);
-        int y = c.getHeight() - JBUIScale.scale(45);
+        int y = c.getHeight() - JBUI.scale(45);
         if (balloonLayout != null && !isBottomSideToolWindowsVisible(pane)) {
           Component component = balloonLayout.getTopBalloonComponent();
           if (component != null) {
-            y = SwingUtilities.convertPoint(component, 0, -JBUIScale.scale(45), c).y;
+            y = SwingUtilities.convertPoint(component, 0, -JBUI.scale(45), c).y;
           }
         }
 
-        return new RelativePoint(c, new Point(c.getWidth() - JBUIScale.scale(150), y));
+        return new RelativePoint(c, new Point(c.getWidth() - JBUI.scale(150), y));
       }
     }, Balloon.Position.above);
   }

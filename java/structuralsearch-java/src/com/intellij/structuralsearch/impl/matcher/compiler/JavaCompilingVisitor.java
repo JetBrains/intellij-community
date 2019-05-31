@@ -456,18 +456,11 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitTypeElement(PsiTypeElement type) {
-    super.visitTypeElement(type);
-
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(type);
-    GlobalCompilingVisitor.setFilter(handler, e -> e instanceof PsiTypeElement);
-  }
-
-  @Override
   public void visitClass(PsiClass psiClass) {
     super.visitClass(psiClass);
 
-    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final CompileContext context = myCompilingVisitor.getContext();
+    final CompiledPattern pattern = context.getPattern();
     final MatchingHandler handler = pattern.getHandler(psiClass);
 
     if (needsSupers(psiClass, handler)) {

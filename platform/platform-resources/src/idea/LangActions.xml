@@ -185,7 +185,7 @@
       <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
       <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
 
-      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ToolWindowsGroup"/>
     </group>
 
     <group id="CodeEditorBaseGroup">
@@ -1030,9 +1030,9 @@
     </group>
     <group>
       <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup"
-              text="Import Test Results" icon="AllIcons.Vcs.History" id="ImportTests"/>
+              text="Import Test Results" icon="AllIcons.ToolbarDecorator.Import" id="ImportTests"/>
       <action class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction"
-              text="Import Test From File" id="ImportTestsFromFile" icon="AllIcons.ToolbarDecorator.Import"/>
+              text="Import Test From File" id="ImportTestsFromFile"/>
       <add-to-group group-id="RunMenu" anchor="after" relative-to-action="editRunConfigurations"/>
     </group>
 
@@ -1162,7 +1162,7 @@
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
               text="Edit Configuration" icon="AllIcons.Actions.EditSource"
-              use-shortcut-of="EditSourceInNewWindow"/>
+              use-shortcut-of="EditSource"/>
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
               text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
@@ -1207,8 +1207,6 @@
       <reference id="ServiceView.SplitToNewTabs"/>
       <reference id="ServiceView.SplitByType"/>
       <separator/>
-      <reference id="$Delete"/>
-      <separator/>
       <reference id="EditSource"/>
     </group>
 
@@ -1233,14 +1231,14 @@
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
         </group>
-        <group id="TouchBarDefault_ctrl" text="Default with Ctrl Key">
+        <group id="TouchBarDefault_ctrl" text="Default with Ctrl key">
           <separator/>
         </group>
-        <group id="TouchBarDefault_alt" text="Default with Alt Key">
+        <group id="TouchBarDefault_alt" text="Default with Alt key">
           <reference ref="SelectInProjectView"/>
           <separator text="type.flexible"/>
         </group>
-        <group id="TouchBarDefault_cmd" text="Default with Cmd Key">
+        <group id="TouchBarDefault_cmd" text="Default with Cmd key">
           <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
           <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
           <reference ref="Back"/>
@@ -1251,11 +1249,11 @@
           <separator text="type.flexible"/>
           <reference ref="ShowUsages"/>
         </group>
-        <group id="TouchBarDefault_cmd.alt" text="Default with Alt+Cmd Key">
+        <group id="TouchBarDefault_cmd.alt" text="Default with Alt+Cmd key">
           <separator text="type.flexible"/>
           <reference ref="FindUsages"/>
         </group>
-        <group id="TouchBarDefault_shift" text="Default with Shift Key">
+        <group id="TouchBarDefault_shift" text="Default with Shift key">
           <!--Use Shift to show Refactor actions/-->
           <reference ref="RenameElement"/>
           <reference ref="ChangeSignature"/>
@@ -1278,7 +1276,7 @@
           <reference ref="StepOut"/>
         </group>
         <separator text="type.small"/>
-        <group id="TouchBarDebug_alt" text="Debugger with Alt Key">
+        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
           <reference ref="ViewBreakpoints"/>
           <separator text="type.flexible"/>
           <group id="TouchBarDebug.ForceStepButtons" compact="true" text="Debugger ForceStep Actions">

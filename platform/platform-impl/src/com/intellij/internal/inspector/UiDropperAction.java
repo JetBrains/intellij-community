@@ -21,7 +21,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -480,12 +479,12 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
 
       TableColumnModel columnModel = table.getColumnModel();
       TableColumn propertyColumn = columnModel.getColumn(0);
-      propertyColumn.setMinWidth(JBUIScale.scale(200));
-      propertyColumn.setMaxWidth(JBUIScale.scale(200));
+      propertyColumn.setMinWidth(JBUI.scale(200));
+      propertyColumn.setMaxWidth(JBUI.scale(200));
       propertyColumn.setResizable(false);
 
       TableColumn valueColumn = columnModel.getColumn(1);
-      valueColumn.setMinWidth(JBUIScale.scale(200));
+      valueColumn.setMinWidth(JBUI.scale(200));
       valueColumn.setResizable(false);
       valueColumn.setCellRenderer(new ValueCellRenderer());
       valueColumn.setCellEditor(new DefaultCellEditor(new JBTextField()) {

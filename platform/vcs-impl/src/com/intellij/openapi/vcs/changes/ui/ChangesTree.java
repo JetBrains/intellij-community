@@ -5,7 +5,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -24,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
@@ -63,8 +61,7 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
-  private boolean myShowCheckboxes;
-  @Nullable private ClickListener myCheckBoxClickHandler;
+  private final boolean myShowCheckboxes;
   private final int myCheckboxWidth;
   @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
@@ -105,9 +102,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
-    new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
-    showCheckboxesChanged();
-
+    if (myShowCheckboxes) {
+      new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+      installCheckBoxClickHandler();
+    }
     installEnterKeyHandler();
     installDoubleClickHandler();
     installTreeLinkHandler(nodeRenderer);
@@ -121,14 +119,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   /**
-   * There is special logic for {@link DnDAware} components in
-   * {@link IdeGlassPaneImpl#dispatch(AWTEvent)} that doesn't call
+   * There is special logic for {@link com.intellij.ide.dnd.DnDAware} components in
+   * {@link com.intellij.openapi.wm.impl.IdeGlassPaneImpl#dispatch(AWTEvent)} that doesn't call
    * {@link Component#processMouseEvent(MouseEvent)} in case of mouse clicks over selection.
    *
    * So we add "checkbox mouse clicks" handling as a listener.
    */
-  private ClickListener installCheckBoxClickHandler() {
-    ClickListener handler = new ClickListener() {
+  private void installCheckBoxClickHandler() {
+    new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (myShowCheckboxes && isEnabled()) {
@@ -144,10 +142,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         }
         return false;
       }
-    };
-    handler.installOn(this);
-
-    return handler;
+    }.installOn(this);
   }
 
   protected void installEnterKeyHandler() {
@@ -307,26 +302,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   public boolean isShowCheckboxes() {
     return myShowCheckboxes;
-  }
-
-  public void setShowCheckboxes(boolean value) {
-    boolean oldValue = myShowCheckboxes;
-    myShowCheckboxes = value;
-
-    if (oldValue != value) {
-      showCheckboxesChanged();
-    }
-  }
-
-  private void showCheckboxesChanged() {
-    if (isShowCheckboxes()) {
-      myCheckBoxClickHandler = installCheckBoxClickHandler();
-    }
-    else if (myCheckBoxClickHandler != null) {
-      myCheckBoxClickHandler.uninstall(this);
-      myCheckBoxClickHandler = null;
-    }
-    repaint();
   }
 
   private void changeGrouping() {
@@ -640,7 +615,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myCheckBox = new ThreeStateCheckBox();
       myTextRenderer = textRenderer;
 
-      add(myCheckBox, BorderLayout.WEST);
+      if (myShowCheckboxes) {
+        add(myCheckBox, BorderLayout.WEST);
+      }
+
       add(myTextRenderer, BorderLayout.CENTER);
       setOpaque(false);
     }
@@ -655,24 +633,25 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                   boolean hasFocus) {
 
       setBackground(null);
+      myCheckBox.setBackground(null);
+      myCheckBox.setOpaque(false);
 
       myTextRenderer.setOpaque(false);
       myTextRenderer.setTransparentIconBackground(true);
       myTextRenderer.setToolTipText(null);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-
-      myCheckBox.setBackground(null);
-      myCheckBox.setOpaque(false);
-      myCheckBox.setVisible(myShowCheckboxes);
-      if (myCheckBox.isVisible()) {
+      if (myShowCheckboxes) {
         State state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setState(state);
 
         myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
-      }
-      revalidate();
+        revalidate();
 
-      return this;
+        return this;
+      }
+      else {
+        return myTextRenderer;
+      }
     }
 
     @Override
@@ -731,11 +710,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(isShowCheckboxes());
-    }
-
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       List<Object> changes = getSelectedUserObjects();

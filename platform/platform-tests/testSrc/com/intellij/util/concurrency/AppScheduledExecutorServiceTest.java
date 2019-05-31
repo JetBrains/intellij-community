@@ -57,8 +57,6 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     service = new AppScheduledExecutorService(getName());
-    // LowMemoryManager submits something immediately
-    service.awaitQuiescence(1, TimeUnit.MINUTES);
   }
 
   @Override
@@ -163,7 +161,6 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     Future<?> future = service.submit(EmptyRunnable.getInstance());
     future.get();
     service.setBackendPoolCorePoolSize(1);
-    ((ThreadPoolExecutor)service.backendExecutorService).prestartCoreThread();
     assertEquals(1, service.getBackendPoolExecutorSize());
 
     long submitted = System.currentTimeMillis();
@@ -215,8 +212,8 @@ public class AppScheduledExecutorServiceTest extends TestCase {
       assertEquals(usedThreads.toString(), 1, usedThreads.size()); // must be executed in same thread
     }
     catch (AssertionError e) {
-      System.err.println("ThreadDump: " + ThreadDumper.dumpThreadsToString());
-      System.err.println("Process List: " + LogUtil.getProcessList());
+      System.err.println("ThreadDump: "+ThreadDumper.dumpThreadsToString());
+      System.err.println("Process List: "+LogUtil.getProcessList());
       throw e;
     }
   }

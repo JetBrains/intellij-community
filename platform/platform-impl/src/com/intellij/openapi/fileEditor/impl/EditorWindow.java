@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
@@ -164,11 +163,7 @@ public class EditorWindow {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
     final Integer second = info.getSecond();
     if (file != null) {
-      getManager().openFileImpl4(this, file, null,
-                                 new FileEditorOpenOptions()
-                                   .withCurrentTab(true)
-                                   .withFocusEditor(true)
-                                   .withIndex(second == null ? -1 : second.intValue()));
+      getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
     }
   }
 
@@ -179,10 +174,7 @@ public class EditorWindow {
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
       final Integer second = info.getSecond();
       if (file != null) {
-        getManager().openFileImpl4(this, file, null,
-                                   new FileEditorOpenOptions()
-                                     .withCurrentTab(true)
-                                     .withIndex(second == null ? -1 : second.intValue()));
+        getManager().openFileImpl4(this, file, null, true, false, null, second == null ? -1 : second.intValue(), false);
       }
     }
   }
@@ -235,8 +227,7 @@ public class EditorWindow {
           if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
             final EditorsSplitters owner = getOwner();
             if (owner != null) {
-              final ThreeComponentsSplitter splitter =
-                ComponentUtil.getParentOfType((Class<? extends ThreeComponentsSplitter>)ThreeComponentsSplitter.class, (Component)owner);
+              final ThreeComponentsSplitter splitter = UIUtil.getParentOfType(ThreeComponentsSplitter.class, owner);
               if (splitter != null) {
                 splitter.revalidate();
                 splitter.repaint();
@@ -723,7 +714,7 @@ public class EditorWindow {
         final EditorWindow[] siblings = findSiblings();
         final EditorWindow target = siblings[0];
         if (virtualFile != null) {
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).first;
+          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null, true).first;
           syncCaretIfPossible(editors);
         }
         return target;
@@ -769,11 +760,7 @@ public class EditorWindow {
 
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
           HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
-          final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
-                                                                       new FileEditorOpenOptions()
-                                                                         .withCurrentTab(true)
-                                                                         .withFocusEditor(focusNew)
-                                                                         .withExactState()).first;
+          final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState, true, focusNew, null, -1, true).first;
           syncCaretIfPossible(editors);
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
@@ -793,11 +780,7 @@ public class EditorWindow {
           final VirtualFile firstFile = firstEC.getFile();
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
           HistoryEntry currentState = firstEC.currentStateAsHistoryEntry();
-          fileEditorManager.openFileImpl4(res, nextFile, currentState,
-                                          new FileEditorOpenOptions()
-                                            .withCurrentTab(true)
-                                            .withFocusEditor(focusNew)
-                                            .withExactState());
+          fileEditorManager.openFileImpl4(res, nextFile, currentState, true, focusNew, null, -1, true);
           if (!focusNew) getGlobalInstance().requestFocus(oldComp, true);
         }
         return res;

@@ -355,19 +355,21 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Color currentColor, @NotNull ColorListener listener) {
-    LightCalloutPopup popup = new ColorPickerBuilder()
+    LightCalloutPopup dialog = new LightCalloutPopup();
+
+    JPanel panel = new ColorPickerBuilder()
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
       .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
       .addColorValuePanel().withFocus()
       //.addSeparator()
       //.addCustomComponent(MaterialColorPaletteProvider.INSTANCE)
-      .addColorListener(listener, false)
+      .addColorListener(listener)
       .focusWhenDisplay(true)
       .setFocusCycleRoot(true)
       .build();
 
-    popup.show(MouseInfo.getPointerInfo().getLocation());
+    dialog.show(panel, null, MouseInfo.getPointerInfo().getLocation());
   }
 
   private JComponent buildTopPanel(boolean enablePipette) throws ParseException {

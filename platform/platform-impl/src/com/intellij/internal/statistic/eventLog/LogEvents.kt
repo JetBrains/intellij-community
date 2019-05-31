@@ -131,7 +131,7 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
     }
 
     val escapedValue = if (value is String) escape(value) else value
-    data[escapeFieldName(key)] = escapedValue
+    data[escape(key)] = escapedValue
   }
 
   override fun equals(other: Any?): Boolean {
@@ -155,16 +155,10 @@ class LogEventAction(val id: String, var state: Boolean = false, var count: Int 
 }
 
 private val nonAscii = Regex("[^\\p{ASCII}]")
-private val systemSymbols = Regex("[ \t:;,]")
 
 fun escape(str: String): String {
-  return str.replace("\'", "").replace("\"", "").
-    replace(systemSymbols, "_").
+  return str.replace(" ", "_").replace("\t", "_").replace("\"", "").
     replace(nonAscii, "?")
-}
-
-fun escapeFieldName(str: String): String {
-  return escape(str).replace('.', '_')
 }
 
 fun copyEscaped(from: MutableMap<String, Any>): MutableMap<String, Any> {
@@ -175,7 +169,7 @@ fun copyEscaped(from: MutableMap<String, Any>): MutableMap<String, Any> {
   val data: MutableMap<String, Any> = HashMap()
   for (datum in from) {
     val escapedValue = if (datum.value is String) escape(datum.value as String) else datum.value
-    data[escapeFieldName(datum.key)] = escapedValue
+    data[escape(datum.key)] = escapedValue
   }
   return data
 }

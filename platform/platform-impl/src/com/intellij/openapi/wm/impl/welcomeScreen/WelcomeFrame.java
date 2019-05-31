@@ -18,7 +18,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -175,9 +174,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     ((JFrame)frame).setVisible(true);
     IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
     ourInstance = frame;
-    if (SystemInfoRt.isMac) {
-      ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
-    }
+    ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
   }
 
   public static void showIfNoProjectOpened() {

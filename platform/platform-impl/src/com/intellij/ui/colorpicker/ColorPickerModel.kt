@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.colorpicker
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.picker.ColorListener
 import java.awt.Color
 
@@ -24,7 +23,6 @@ val DEFAULT_PICKER_COLOR = Color(0xFF, 0xFF, 0xFF, 0xFF)
 class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
 
   private val listeners = mutableSetOf<ColorListener>()
-  private val instantListeners = mutableSetOf<ColorListener>()
 
   var color: Color = originalColor
     private set
@@ -33,22 +31,6 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
     color = newColor
     Color.RGBtoHSB(color.red, color.green, color.blue, hsb)
 
-    instantListeners.forEach { it.colorChanged(color, source) }
-  }
-
-  fun onClose() {
-    ApplicationManager.getApplication().invokeLater {
-      listeners.forEach { it.colorChanged(color, this) }
-    }
-  }
-
-  fun onCancel() {
-    //todo[kb] at the moment there is no any good way to close the color picker popup. Cancel outside triggers onCancel
-    onClose()
-  }
-
-  fun applyColorToSource(newColor: Color, source: Any? = null) {
-    setColor(newColor, source)
     listeners.forEach { it.colorChanged(color, source) }
   }
 
@@ -70,17 +52,7 @@ class ColorPickerModel(originalColor: Color = DEFAULT_PICKER_COLOR) {
 
   val brightness get() = hsb[2]
 
-  fun addListener(listener: ColorListener) = addListener(listener, true)
+  fun addListener(listener: ColorListener) = listeners.add(listener)
 
-  fun addListener(listener: ColorListener, invokeOnEveryColorChange: Boolean) {
-    listeners.add(listener)
-    if (invokeOnEveryColorChange) {
-      instantListeners.add(listener)
-    }
-  }
-
-  fun removeListener(listener: ColorListener) {
-    listeners.remove(listener)
-    instantListeners.remove(listener)
-  }
+  fun removeListener(listener: ColorListener) = listeners.remove(listener)
 }

@@ -76,7 +76,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
                                    @Nullable SnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappings) {
     super(extension, storage, forwardIndexMap, forwardIndexAccessor, null);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
-    mySnapshotInputMappings = IndexImporterMappingIndex.wrap(snapshotInputMappings, extension);
+    mySnapshotInputMappings = snapshotInputMappings;
     myUpdateMappings = snapshotInputMappings instanceof UpdatableSnapshotInputMappingIndex;
     installMemoryModeListener();
   }

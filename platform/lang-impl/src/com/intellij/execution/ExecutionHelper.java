@@ -445,7 +445,6 @@ public class ExecutionHelper {
         }
       }
     });
-    Throwable invocatorStack = new Throwable();
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
@@ -453,7 +452,7 @@ public class ExecutionHelper {
         try {
           final boolean finished = processHandler.waitFor(1000L * mode.getTimeout());
           if (!finished) {
-            mode.onTimeout(processHandler, presentableCmdline, outputCollected, invocatorStack);
+            mode.onTimeout(processHandler, presentableCmdline, outputCollected);
             processHandler.destroyProcess();
           }
         }

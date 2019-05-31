@@ -167,9 +167,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       for (int i = 0; i < results.length; i++) {
         final JavaResolveResult candidateInfo = results[i];
 
-        PsiElement element = candidateInfo.getElement();
-        if (genericParentOverloadResolution && element != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)element)) {
-          LOG.error("poly expression evaluation during overload resolution, processing " + results.length + " results");
+        if (genericParentOverloadResolution && PsiPolyExpressionUtil.isMethodCallPolyExpression(call, (PsiMethod)candidateInfo.getElement())) {
+          LOG.error("poly expression evaluation during overload resolution");
         }
 
         final PsiType type = getResultType(call, methodExpression, candidateInfo, languageLevel);

@@ -18,7 +18,6 @@ import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.history.EdgeData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
@@ -113,7 +112,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @Nullable
-  public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) throws IOException {
+  public Couple<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) throws IOException {
     Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
     if (renames == null) return null;
     int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path));
@@ -122,7 +121,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
           (!isChildPath && rename.first == pathId)) {
         FilePath path1 = getPath(rename.first);
         FilePath path2 = getPath(rename.second);
-        return new EdgeData<>(path1, path2);
+        return Couple.of(path1, path2);
       }
     }
     return null;

@@ -57,7 +57,6 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -255,7 +254,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       if (!myCbPreserveCase.isVisible()) {
         panelSize.width += myCbPreserveCase.getPreferredSize().width + 8;
       }
-      panelSize.width += JBUIScale.scale(24);//hidden 'loading' icon
+      panelSize.width += JBUI.scale(24);//hidden 'loading' icon
       panelSize.height *= 2;
       if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
       Window w = myDialog.getPeer().getWindow();
@@ -459,7 +458,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         Dimension size = super.getPreferredSize();
         Insets insets = getInsets();
         width += insets.left + insets.right;
-        size.width = Math.min(JBUIScale.scale(500), Math.max(JBUIScale.scale(80), width));
+        size.width = Math.min(JBUI.scale(500), Math.max(JBUI.scale(80), width));
         return size;
       }
     };
@@ -626,7 +625,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myResultsPreviewTable.transferFocus();
       }
     });
-    applyFont(JBFont.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
+    applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
     JComponent[] tableAware = {mySearchComponent, myReplaceComponent, myReplaceSelectedButton};
     for (JComponent component : tableAware) {
@@ -723,7 +722,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     JBSplitter splitter = new JBSplitter(true, .33f);
     splitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
-    splitter.setDividerWidth(JBUIScale.scale(2));
+    splitter.setDividerWidth(JBUI.scale(2));
     splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
     JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
       @Override
@@ -743,7 +742,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myNavigationHintLabel.setEnabled(false);
     myNavigationHintLabel.setFont(JBUI.Fonts.smallFont());
     Insets insets = myOKButton.getInsets();
-    String btnGapLeft = "gapleft " + Math.max(0, JBUIScale.scale(12) - insets.left - insets.right);
+    String btnGapLeft = "gapleft " + Math.max(0, JBUI.scale(12) - insets.left - insets.right);
 
     bottomPanel.add(myNavigationHintLabel, btnGapLeft);
     bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
@@ -762,7 +761,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myTitlePanel.add(myTitleLabel);
     myTitlePanel.add(myLoadingDecorator.getComponent(), "w 24, wmin 24");
     myTitlePanel.add(Box.createHorizontalGlue(), "growx, pushx");
-    JPanel regexpPanel = new JPanel(new BorderLayout(JBUIScale.scale(4), 0));
+    JPanel regexpPanel = new JPanel(new BorderLayout(JBUI.scale(4), 0));
     regexpPanel.add(myCbRegularExpressions, BorderLayout.CENTER);
     regexpPanel.add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), BorderLayout.EAST);
     int gap = 16;

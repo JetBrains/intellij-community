@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.ui.scale.JBUIScale;
-
 import java.awt.*;
 
 /**
@@ -13,7 +11,7 @@ public class JBRectangle extends Rectangle {
   }
 
   public JBRectangle(int x, int y, int width, int height) {
-    super(JBUIScale.scale(x), JBUIScale.scale(y), JBUIScale.scale(width), JBUIScale.scale(height));
+    super(JBUI.scale(x), JBUI.scale(y), JBUI.scale(width), JBUI.scale(height));
   }
 
   public JBRectangle(Rectangle r) {
@@ -23,10 +21,10 @@ public class JBRectangle extends Rectangle {
       width = r.width;
       height = r.height;
     } else {
-      x = JBUIScale.scale(r.x);
-      y = JBUIScale.scale(r.y);
-      width = JBUIScale.scale(r.width);
-      height = JBUIScale.scale(r.height);
+      x = JBUI.scale(r.x);
+      y = JBUI.scale(r.y);
+      width = JBUI.scale(r.width);
+      height = JBUI.scale(r.height);
     }
   }
 

@@ -26,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -1704,11 +1703,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         return;
       }
 
-      myMatchingVisitor.setResult((!method.isConstructor() || other.isConstructor()) &&
+      myMatchingVisitor.setResult(method.isConstructor() == other.isConstructor() &&
                                   (isTypedVar || myMatchingVisitor.matchText(methodNameNode, other.getNameIdentifier())) &&
                                   myMatchingVisitor.match(method.getModifierList(), other.getModifierList()) &&
                                   myMatchingVisitor.matchSons(method.getParameterList(), other.getParameterList()) &&
-                                  myMatchingVisitor.matchOptionally(method.getReturnTypeElement(), other.getReturnTypeElement()) &&
+                                  myMatchingVisitor.match(method.getReturnTypeElement(), other.getReturnTypeElement()) &&
                                   matchInAnyOrder(method.getThrowsList(), other.getThrowsList()) &&
                                   myMatchingVisitor.matchSonsOptionally(method.getBody(), other.getBody()));
     }
@@ -1717,7 +1716,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  @Nullable
   private <T extends PsiExpression> T getExpression(Class<T> aClass, PsiExpression patternExpression) {
     PsiElement other = myMatchingVisitor.getElement();
     if (!myMatchingVisitor.setResult(other instanceof PsiExpression)) {

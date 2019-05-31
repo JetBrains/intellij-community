@@ -137,9 +137,9 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   }
 
   private static GlobalSearchScope buildUnionScope(Project project, List<VirtualFile> testDirs) {
-    GlobalSearchScope scope = GlobalSearchScopesCore.directoryScope(project, testDirs.get(0), true);
+    GlobalSearchScope scope = GlobalSearchScopes.directoryScope(project, testDirs.get(0), true);
     for (int i = 1; i < testDirs.size(); i++) {
-      scope = scope.union(GlobalSearchScopesCore.directoryScope(project, testDirs.get(i), true));
+      scope = scope.union(GlobalSearchScopes.directoryScope(project, testDirs.get(i), true));
     }
     return scope;
   }

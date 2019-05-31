@@ -25,11 +25,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
 import gnu.trove.TIntObjectHashMap;
+import junit.framework.TestCase;
 import kotlin.reflect.KDeclarationContainer;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import javax.swing.*;
@@ -51,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author yole
  */
-public class AsmCodeGeneratorTest extends JpsBuildTestCase {
+public class AsmCodeGeneratorTest extends TestCase {
   private MyNestedFormLoader myNestedFormLoader;
   private MyClassFinder myClassFinder;
 
@@ -60,15 +57,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     super.setUp();
     myNestedFormLoader = new MyNestedFormLoader();
 
-    URL url;
-    JpsSdk<JpsDummyElement> jdk = getJdk();
-    if (JpsJavaSdkType.getJavaVersion(jdk) >= 9) {
-      url = InstrumentationClassFinder.createJDKPlatformUrl(jdk.getHomePath());
-    }
-    else {
-      String swingPath = PathUtil.getJarPathForClass(AbstractButton.class);
-      url = new File(swingPath).toURI().toURL();
-    }
+    final String swingPath = PathUtil.getJarPathForClass(AbstractButton.class);
 
     List<URL> cp = new ArrayList<>();
     appendPath(cp, JBTabbedPane.class);
@@ -85,7 +74,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, KDeclarationContainer.class);
     appendPath(cp, NotNullProducer.class);
     appendPath(cp, SimpleTextAttributes.class);
-    myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));
+    myClassFinder = new MyClassFinder(
+      new URL[] {new File(swingPath).toURI().toURL()},
+      cp.toArray(new URL[0])
+    );
   }
 
   private static void appendPath(Collection<URL> container, Class cls) throws MalformedURLException {
@@ -450,13 +442,6 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assert instance != null : mainClass;
   }
 
-  // For JDK 11 `TestProperties` bundle try load over class
-  public static class MyTestProperties extends PropertyResourceBundle {
-    public MyTestProperties() throws IOException {
-      super(new StringReader(MyClassFinder.TEST_PROPERTY_CONTENT));
-    }
-  }
-
   private static class MyClassFinder extends InstrumentationClassFinder {
     private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
     private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
@@ -475,14 +460,6 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       final byte[] bytes = myClassData.get(internalClassName);
       if (bytes != null) {
         return new ByteArrayInputStream(bytes);
-      }
-      return null;
-    }
-
-    @Override
-    protected Class findClass(String name) {
-      if ("TestProperties".equals(name)) {
-        return MyTestProperties.class;
       }
       return null;
     }

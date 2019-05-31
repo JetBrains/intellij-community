@@ -116,10 +116,6 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       "The project at $projectDir uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
       "Open Project", Messages.getQuestionIcon()) != Messages.YES
   }
-
-  override fun beforeDetach(module: Module) {
-    removeVcsMapping(module)
-  }
 }
 
 private fun findMainModule(project: Project, projectDir: Path): Module? {
@@ -141,13 +137,13 @@ private fun attachModule(project: Project, imlFile: Path): Module {
   if (primaryModule != null) {
     val dotIdeaDirParent = imlFile.parent?.parent?.let { LocalFileSystem.getInstance().findFileByPath(it.toString()) }
     if (dotIdeaDirParent != null) {
-      addVcsMapping(primaryModule, dotIdeaDirParent)
+      updateVcsMapping(primaryModule, dotIdeaDirParent)
     }
   }
   return newModule
 }
 
-private fun addVcsMapping(primaryModule: Module, addedModuleContentRoot: VirtualFile) {
+private fun updateVcsMapping(primaryModule: Module, addedModuleContentRoot: VirtualFile) {
   val project = primaryModule.project
   val vcsManager = ProjectLevelVcsManager.getInstance(project)
   val mappings = vcsManager.directoryMappings
@@ -177,19 +173,4 @@ private fun addPrimaryModuleDependency(project: Project, newModule: Module): Mod
     return module
   }
   return null
-}
-
-private fun removeVcsMapping(module: Module) {
-  val project = module.project
-  val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  val mappings = vcsManager.directoryMappings
-  val newMappings = ArrayList(mappings)
-  for (mapping in mappings) {
-    for (root in ModuleRootManager.getInstance(module).contentRoots) {
-      if (FileUtil.filesEqual(File(root.path), File(mapping.directory))) {
-        newMappings.remove(mapping)
-      }
-    }
-  }
-  vcsManager.directoryMappings = newMappings
 }

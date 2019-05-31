@@ -305,7 +305,6 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
               IOUtil.writeString(diffHyperlink.getLeft(), fileWriter);
               IOUtil.writeString(diffHyperlink.getRight(), fileWriter);
               IOUtil.writeString(diffHyperlink.getFilePath(), fileWriter);
-              IOUtil.writeString(diffHyperlink.getActualFilePath(), fileWriter);
             }
           }
           catch (FileNotFoundException e) {
@@ -345,7 +344,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
             final String firstToken = IOUtil.readString(reader);
             if (firstToken == null) break;
             if (firstToken.equals(HYPERLINK)) {
-              createHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false).printOn(printer);
+              createHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), null, false).printOn(printer);
             }
             else {
               ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);

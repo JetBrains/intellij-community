@@ -14,7 +14,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -278,7 +277,7 @@ class TabContentLayout extends ContentLayout {
     for (ContentTabLabel each : myTabs) {
       if (JBTabsFactory.getUseNewTabs()) {
         //TODO set borderThickness
-        int borderThickness = JBUIScale.scale(1);
+        int borderThickness = JBUI.scale(1);
         Rectangle r = each.getBounds();
 
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

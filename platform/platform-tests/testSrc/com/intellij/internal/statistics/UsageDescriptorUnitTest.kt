@@ -3,13 +3,12 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.testFramework.PlatformTestCase
 import com.intellij.util.containers.ContainerUtil.newArrayList
 import gnu.trove.THashSet
 import org.junit.Assert
 import org.junit.Test
 
-class UsageDescriptorUnitTest : PlatformTestCase() {
+class UsageDescriptorUnitTest {
 
   @Test
   fun `test compare usage descriptor`() {

@@ -1526,7 +1526,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
-      MavenActionsUsagesCollector.trigger(myProject, MavenActionsUsagesCollector.ActionID.ExecuteMavenRunConfigurationAction, TOOL_WINDOW_PLACE_ID, false, null);
+      MavenActionsUsagesCollector.trigger(myProject, "ExecuteMavenRunConfigurationAction", TOOL_WINDOW_PLACE_ID, false);
       ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }

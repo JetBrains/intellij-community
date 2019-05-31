@@ -32,7 +32,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -1010,8 +1009,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return null;
     }
 
-    boolean isInt = ElementType.INTEGER_LITERALS.contains(type);
-    boolean isFP = ElementType.REAL_LITERALS.contains(type);
+    boolean isInt = PsiLiteralExpressionImpl.INTEGER_LITERALS.contains(type);
+    boolean isFP = PsiLiteralExpressionImpl.REAL_LITERALS.contains(type);
     String text = isInt || isFP ? StringUtil.toLowerCase(literal.getText()) : literal.getText();
     Object value = expression.getValue();
 
@@ -3096,7 +3095,6 @@ public class HighlightUtil extends HighlightUtilBase {
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
     ENHANCED_SWITCH(LanguageLevel.JDK_12_PREVIEW, "feature.enhanced.switch"),
     SWITCH_EXPRESSION(LanguageLevel.JDK_12_PREVIEW, "feature.switch.expressions"),
-    TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
     RAW_LITERALS(LanguageLevel.JDK_X, "feature.raw.literals");
 
     private final LanguageLevel level;

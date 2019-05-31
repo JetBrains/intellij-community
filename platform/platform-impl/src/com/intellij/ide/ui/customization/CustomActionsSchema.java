@@ -24,12 +24,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.*;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
-public final class CustomActionsSchema implements PersistentStateComponent<Element> {
+public class CustomActionsSchema implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
 
   @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
@@ -72,13 +72,10 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
     myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar");
     myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
+    if (TouchBarsManager.isTouchBarAvailable())
+      myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
 
-    // todo is it safe to not check so early?
-    //if (TouchBarsManager.isTouchBarAvailable()) {
-    //  myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
-    //}
-
-    List<Couple<String>> extList = new ArrayList<>();
+    ArrayList<Couple<String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
       (groupId, groupTitle) -> extList.add(Couple.of(groupId, groupTitle));
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
@@ -87,15 +84,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     Collections.sort(extList, (o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
     for (Couple<String> couple : extList) {
       myIdToName.put(couple.first, couple.second);
-    }
-  }
-
-  public void touchBarAvailable(boolean value) {
-    if (value) {
-      myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
-    }
-    else {
-      myIdToName.remove(IdeActions.GROUP_TOUCHBAR);
     }
   }
 
@@ -171,9 +159,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     String activeName = element.getAttributeValue(ACTIVE);
     if (activeName != null) {
       for (Element toolbarElement : element.getChildren(ACTIONS_SCHEMA)) {
-        for (Element o : toolbarElement.getChildren("option")) {
-          if (Comparing.strEqual(o.getAttributeValue("name"), "myName") &&
-              Comparing.strEqual(o.getAttributeValue("value"), activeName)) {
+        for (Object o : toolbarElement.getChildren("option")) {
+          if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "myName") &&
+              Comparing.strEqual(((Element)o).getAttributeValue("value"), activeName)) {
             schElement = toolbarElement;
             break;
           }
@@ -255,17 +243,12 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return element;
   }
 
-  @Nullable
   public AnAction getCorrectedAction(String id) {
     if (!myIdToName.containsKey(id)) {
       return ActionManager.getInstance().getAction(id);
     }
-
     ActionGroup existing = myIdToActionGroup.get(id);
-    if (existing != null) {
-      return existing;
-    }
-
+    if (existing != null) return existing;
     ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
     if (actionGroup != null) { // if a plugin is disabled
       String name = myIdToName.get(id);
@@ -285,6 +268,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       }
     }
   }
+
 
   public boolean isCorrectActionGroup(ActionGroup group, String defaultGroupName) {
     if (myActions.isEmpty()) {
@@ -310,7 +294,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return true;
   }
 
-  @NotNull
   public List<ActionUrl> getChildActions(ActionUrl url) {
     ArrayList<ActionUrl> result = new ArrayList<>();
     ArrayList<String> groupPath = url.getGroupPath();

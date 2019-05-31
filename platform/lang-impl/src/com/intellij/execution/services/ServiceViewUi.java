@@ -17,7 +17,4 @@ interface ServiceViewUi {
   void setMasterPanel(@NotNull JComponent component, @NotNull ServiceViewActionProvider actionManager);
 
   void setDetailsComponent(@Nullable JComponent component);
-
-  @Nullable
-  JComponent getDetailsComponent();
 }

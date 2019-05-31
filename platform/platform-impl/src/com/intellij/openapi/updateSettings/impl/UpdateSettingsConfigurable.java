@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.ConfigurationException;
@@ -72,7 +73,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
-      UpdateCheckerService checker = UpdateCheckerService.getInstance();
+      UpdateCheckerComponent checker = ApplicationManager.getApplication().getComponent(UpdateCheckerComponent.class);
       if (checker != null) {
         if (wasEnabled) {
           checker.cancelChecks();

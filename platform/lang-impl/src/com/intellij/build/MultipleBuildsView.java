@@ -23,7 +23,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
@@ -65,7 +64,6 @@ import java.util.stream.IntStream;
  */
 @ApiStatus.Experimental
 public class MultipleBuildsView implements BuildProgressListener, Disposable {
-  private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
   @NonNls private static final String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
 
   protected final Project myProject;
@@ -129,32 +127,33 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     return Collections.unmodifiableMap(myViewMap);
   }
 
-  public boolean shouldConsume(@NotNull Object buildId, @NotNull BuildEvent event) {
-    return myBuildsMap.containsKey(buildId);
+  public boolean shouldConsume(BuildEvent event) {
+    return (event.getParentId() != null && myBuildsMap.containsKey(event.getParentId())) || myBuildsMap.containsKey(event.getId());
   }
 
   @Override
-  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
-    AbstractViewManager.BuildInfo buildInfo;
     if (event instanceof StartBuildEvent) {
       StartBuildEvent startBuildEvent = (StartBuildEvent)event;
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }
-      buildInfo = new AbstractViewManager.BuildInfo(
+      AbstractViewManager.BuildInfo buildInfo = new AbstractViewManager.BuildInfo(
         event.getId(), startBuildEvent.getBuildTitle(), startBuildEvent.getWorkingDir(), event.getEventTime());
-      myBuildsMap.put(buildId, buildInfo);
+      myBuildsMap.put(event.getId(), buildInfo);
     }
     else {
-      buildInfo = myBuildsMap.get(buildId);
-    }
-    if (buildInfo == null) {
-      LOG.warn("Build can not be found for buildId: '" + buildId + "'");
-      return;
+      if (event.getParentId() != null) {
+        AbstractViewManager.BuildInfo buildInfo = myBuildsMap.get(event.getParentId());
+        assert buildInfo != null;
+        myBuildsMap.put(event.getId(), buildInfo);
+      }
     }
 
     runOnEdt.add(() -> {
+      final AbstractViewManager.BuildInfo buildInfo = myBuildsMap.get(event.getId());
+      assert buildInfo != null;
       if (event instanceof StartBuildEvent) {
         StartBuildEvent startBuildEvent = (StartBuildEvent)event;
         buildInfo.message = startBuildEvent.getMessage();
@@ -194,7 +193,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           }
           return buildView;
         });
-        view.onEvent(buildId, startBuildEvent);
+        view.onEvent(startBuildEvent);
 
         myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
 
@@ -255,7 +254,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           buildInfo.statusMessage = event.getMessage();
         }
 
-        myViewMap.get(buildInfo).onEvent(buildId, event);
+        myViewMap.get(buildInfo).onEvent(event);
       }
     });
 

@@ -198,7 +198,7 @@ public class SliceTreeTest extends SliceTestCase {
   public void testNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
     JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
     JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
 
@@ -319,7 +319,7 @@ public class SliceTreeTest extends SliceTestCase {
   public void testDoubleNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DoubleNulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
     JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
 
     JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);

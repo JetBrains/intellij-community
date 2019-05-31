@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -26,13 +25,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
@@ -53,9 +52,6 @@ import static javax.swing.BorderFactory.createEmptyBorder;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
-
-  private static final EditorCustomization BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION = editor -> editor.setBackgroundColor(null);
-
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
 
@@ -90,15 +86,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     }
 
     setBorder(createEmptyBorder());
-
-    fixEditorBackgroundOnColorSchemeChange(project);
-  }
-
-  private void fixEditorBackgroundOnColorSchemeChange(@NotNull Project project) {
-    project.getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, scheme -> {
-      Editor editor = myEditorField.getEditor();
-      if (editor instanceof EditorEx) BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION.customize((EditorEx)editor);
-    });
   }
 
   @NotNull
@@ -157,7 +144,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
-    features.add(BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION);
+    features.add(editor -> editor.setBackgroundColor(null)); // use background from set color scheme
     if (runInspections) {
       features.add(ErrorStripeEditorCustomization.ENABLED);
       features.add(new InspectionCustomization(project));

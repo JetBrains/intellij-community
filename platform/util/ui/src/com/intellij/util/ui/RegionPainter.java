@@ -127,7 +127,7 @@ public interface RegionPainter<T> {
           updateImage(myImage);
         }
         if (myImage != null) {
-          StartupUiUtil.drawImage(g, myImage, null, x, y);
+          UIUtil.drawImage(g, myImage, null, x, y);
         }
       }
     }

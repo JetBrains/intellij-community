@@ -2,14 +2,15 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.ui.scale.*;
+import com.intellij.util.ui.JBUIScale.UserScaleContext;
+import com.intellij.util.ui.JBUIScale.UserScaleContextSupport;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
-import static com.intellij.ui.scale.ScaleType.*;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.DEV_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.*;
 
 /**
  * A scalable icon, {@link UserScaleContext} aware, assuming vector-based painting (system scale independent).
@@ -17,7 +18,7 @@ import static com.intellij.ui.scale.ScaleType.*;
  * @author tav
  */
 public abstract class JBScalableIcon extends UserScaleContextSupport implements ScalableIcon {
-  private final Scaler myScaler = new Scaler() {
+  private final JBUIScale.Scaler myScaler = new JBUIScale.Scaler() {
     @Override
     protected double currentScale() {
       if (autoUpdateScaleContext) getScaleContext().update();
@@ -73,7 +74,7 @@ public abstract class JBScalableIcon extends UserScaleContextSupport implements 
   }
 
   /**
-   * Sets whether the scale context should be auto-updated by the {@link Scaler}.
+   * Sets whether the scale context should be auto-updated by the {@link JBUIScale.Scaler}.
    * This ensures that {@link #scaleVal(double)} always uses up-to-date scale.
    * This is useful when the icon doesn't need to recalculate its internal sizes
    * on the scale context update and so it doesn't need the result of the update
@@ -108,7 +109,7 @@ public abstract class JBScalableIcon extends UserScaleContextSupport implements 
   /**
    * Returns the value scaled according to the provided scale type
    */
-  protected double scaleVal(double value, @NotNull ScaleType type) {
+  protected double scaleVal(double value, @NotNull JBUIScale.ScaleType type) {
     switch (type) {
       case USR_SCALE: return myScaler.scaleVal(value);
       case SYS_SCALE: return value * getScale(SYS_SCALE);
@@ -120,7 +121,7 @@ public abstract class JBScalableIcon extends UserScaleContextSupport implements 
   /**
    * Returns the value scaled according to the provided scale type
    */
-  protected double scaleVal(double value, @NotNull DerivedScaleType type) {
+  protected double scaleVal(double value, @NotNull JBUIScale.DerivedScaleType type) {
     switch (type) {
       case DEV_SCALE: return value * getScale(DEV_SCALE);
       case EFF_USR_SCALE:

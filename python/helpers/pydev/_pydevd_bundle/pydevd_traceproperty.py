@@ -2,8 +2,7 @@
 '''
 from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, IS_PY2
-import pydevd_tracing
-import traceback
+from _pydevd_bundle import pydevd_tracing
 
 #=======================================================================================================================
 # replace_builtin_property
@@ -18,14 +17,14 @@ def replace_builtin_property(new_property=None):
             __builtin__.__dict__['property'] = new_property
         except:
             if DebugInfoHolder.DEBUG_TRACE_LEVEL:
-                traceback.print_exc() #@Reimport
+                import traceback;traceback.print_exc() #@Reimport
     else:
         try:
             import builtins #Python 3.0 does not have the __builtin__ module @UnresolvedImport
             builtins.__dict__['property'] = new_property
         except:
             if DebugInfoHolder.DEBUG_TRACE_LEVEL:
-                traceback.print_exc() #@Reimport
+                import traceback;traceback.print_exc() #@Reimport
     return original
 
 
@@ -52,37 +51,40 @@ class DebugProperty(object):
         global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_getter_trace:
-                global_debugger.disable_tracing()
+                pydevd_tracing.SetTrace(None)
             if self.fget is None:
                 raise AttributeError("unreadable attribute")
             return self.fget(obj)
         finally:
             if global_debugger is not None:
-                global_debugger.enable_tracing()
+                pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
+
 
     def __set__(self, obj, value):
         global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_setter_trace:
-                global_debugger.disable_tracing()
+                pydevd_tracing.SetTrace(None)
             if self.fset is None:
                 raise AttributeError("can't set attribute")
             self.fset(obj, value)
         finally:
             if global_debugger is not None:
-                global_debugger.enable_tracing()
+                pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
+
 
     def __delete__(self, obj):
         global_debugger = get_global_debugger()
         try:
             if global_debugger is not None and global_debugger.disable_property_deleter_trace:
-                global_debugger.disable_tracing()
+                pydevd_tracing.SetTrace(None)
             if self.fdel is None:
                 raise AttributeError("can't delete attribute")
             self.fdel(obj)
         finally:
             if global_debugger is not None:
-                global_debugger.enable_tracing()
+                pydevd_tracing.SetTrace(global_debugger.trace_dispatch)
+
 
     def getter(self, fget):
         """Overriding getter decorator for the property

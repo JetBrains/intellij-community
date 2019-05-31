@@ -17,8 +17,7 @@ import java.util.concurrent.CompletableFuture
 /**
  * @author Vladislav.Soroka
  */
-open class BuildOutputInstantReaderImpl(private val buildId: Any,
-                                        private val parentEventId: Any,
+open class BuildOutputInstantReaderImpl(private val parentEventId: Any,
                                         buildProgressListener: BuildProgressListener,
                                         parsers: List<BuildOutputParser>) : BuildOutputInstantReader, Closeable, Appendable {
   private val readJob: Job
@@ -43,7 +42,7 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
       val messageConsumer = { event: BuildEvent ->
         //do not add duplicates, e.g. sometimes same messages can be added both to stdout and stderr
         if (event != lastMessage) {
-          buildProgressListener.onEvent(buildId, event)
+          buildProgressListener.onEvent(event)
         }
         lastMessage = event
       }

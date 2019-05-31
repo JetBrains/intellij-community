@@ -29,7 +29,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
@@ -56,7 +55,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
 
   static {
-    JBUIScale.addUserScaleChangeListener(__ -> {
+    JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, __ -> {
       ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();
       ((JBDimension)ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE).update();
     });
@@ -368,7 +367,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (clickable != null) {
       class ToolbarClicksCollectorListener extends MouseAdapter {
         @Override
-        public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace, e, getDataContext());}
+        public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace);}
       }
       if (Arrays.stream(clickable.getMouseListeners()).noneMatch(ml -> ml instanceof ToolbarClicksCollectorListener)) {
         clickable.addMouseListener(new ToolbarClicksCollectorListener());
@@ -982,10 +981,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     @Override
     public Dimension getPreferredSize() {
-      int gap = JBUIScale.scale(2);
-      int center = JBUIScale.scale(3);
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
       int width = gap * 2 + center;
-      int height = JBUIScale.scale(24);
+      int height = JBUI.scale(24);
 
       if (myOrientation == SwingConstants.HORIZONTAL) {
         if (myText != null) {
@@ -1009,8 +1008,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     protected void paintComponent(final Graphics g) {
       if (getParent() == null) return;
 
-      int gap = JBUIScale.scale(2);
-      int center = JBUIScale.scale(3);
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
       int offset;
       if (myOrientation == SwingConstants.HORIZONTAL) {
         offset = ActionToolbarImpl.this.getHeight() - getMaxButtonHeight() - 1;

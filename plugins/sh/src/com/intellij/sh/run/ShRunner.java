@@ -12,12 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public abstract class ShRunner {
-  protected final Project myProject;
-
-  protected ShRunner(@NotNull Project project) {
-    myProject = project;
-  }
-
   public abstract void run(@NotNull ShFile file);
 
   public abstract boolean isAvailable(@NotNull Project project);

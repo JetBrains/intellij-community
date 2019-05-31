@@ -38,10 +38,7 @@ public class BaseFixture implements IdeaTestFixture {
 
   @Override
   public void tearDown() throws Exception {
-    if (!myInitialized) {
-      return;
-    }
-
+    Assert.assertTrue("setUp() has not been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);
     new RunAll(
       () -> UsefulTestCase.waitForAppLeakingThreads(10, TimeUnit.SECONDS),

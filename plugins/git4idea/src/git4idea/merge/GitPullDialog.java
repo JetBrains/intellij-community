@@ -156,7 +156,7 @@ public class GitPullDialog extends DialogWrapper {
       setOKActionEnabled(false);
       return;
     }
-    setOKActionEnabled(getSelectedBranches().size() != 0);
+    setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
   }
 
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
@@ -189,7 +189,7 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--progress");
     }
 
-    final List<String> markedBranches = getSelectedBranches();
+    final List<String> markedBranches = myBranchChooser.getMarkedElements();
     String remote = getRemote();
     LOG.assertTrue(remote != null, "Selected remote can't be null here.");
     // git pull origin master (remote branch name in the format local to that remote)
@@ -198,11 +198,6 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters(removeRemotePrefix(branch, remote));
     }
     return h;
-  }
-
-  @NotNull
-  public List<String> getSelectedBranches() {
-    return myBranchChooser.getMarkedElements();
   }
 
   @NotNull

@@ -24,7 +24,6 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -288,32 +287,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
     return result.iterator();
-  }
-
-  public void processWithPluginDescriptor(@NotNull BiConsumer<T, PluginDescriptor> consumer) {
-    assertBeforeProcessing();
-    CHECK_CANCELED.run();
-
-    List<ExtensionComponentAdapter> adapters = myAdapters;
-    int size = adapters.size();
-    if (size == 0) {
-      return;
-    }
-
-    LoadingOrder.sort(adapters);
-
-    LOG.assertTrue(myListeners.length == 0);
-
-    int currentIndex = 0;
-    do {
-      ExtensionComponentAdapter adapter = adapters.get(currentIndex++);
-      T extension = processAdapter(adapter, null /* don't even pass it */, null, null, null);
-      if (extension == null) {
-        break;
-      }
-      consumer.accept(extension, adapter.getPluginDescriptor());
-    }
-    while (currentIndex < size);
   }
 
   @NotNull

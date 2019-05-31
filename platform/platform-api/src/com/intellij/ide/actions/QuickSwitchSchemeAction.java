@@ -9,20 +9,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
   protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
-
   protected static final Icon ourNotCurrentAction = new IconLoader.LazyIcon() {
     @Override
     protected Icon compute() {
-      return EmptyIcon.create(AllIcons.Actions.Forward.getIconWidth(), AllIcons.Actions.Forward.getIconHeight());
+      return EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
     }
   };
 
@@ -54,7 +50,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
 
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       getPopupTitle(e), group, e.getDataContext(), aid, true, null, -1,
-      (a) -> a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward,
+      (a) -> a.getTemplatePresentation().getIcon() != ourCurrentAction,
       myActionPlace);
 
     showPopup(e, popup);

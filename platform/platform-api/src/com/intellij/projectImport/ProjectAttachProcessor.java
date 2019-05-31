@@ -2,7 +2,6 @@
 package com.intellij.projectImport;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +25,6 @@ public class ProjectAttachProcessor {
   public boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
     return false;
   }
-
-  public void beforeDetach(@NotNull Module module) {}
 
   public static boolean canAttachToProject() {
     return EP_NAME.getPoint(null).hasAnyExtensions();

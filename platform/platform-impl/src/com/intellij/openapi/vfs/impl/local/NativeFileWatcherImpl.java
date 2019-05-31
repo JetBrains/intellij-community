@@ -119,9 +119,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
    * Subclasses should override this method if they want to use custom logic to disable their file watcher.
    */
   protected boolean isDisabled() {
-    if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
-    Application app = ApplicationManager.getApplication();
-    return app.isCommandLine() || app.isUnitTestMode();
+    return Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
   }
 
   /**
@@ -251,7 +249,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   public void resetChangedPaths() {
     synchronized (myLastChangedPaths) {
       myLastChangedPathIndex = 0;
-      Arrays.fill(myLastChangedPaths, null);
+      for (int i = 0; i < myLastChangedPaths.length; ++i) myLastChangedPaths[i] = null;
     }
   }
 
@@ -264,6 +262,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     @Override public boolean withSeparators() { return false; }
   };
 
+  @SuppressWarnings("SpellCheckingInspection")
   private enum WatcherOp { GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY }
 
   private class MyProcessHandler extends OSProcessHandler {

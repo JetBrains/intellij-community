@@ -30,11 +30,11 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.JdkBundleList;
 import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -277,7 +277,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
         warningLabel.setIcon(UIUtil.getWarningIcon());
         warningLabel.setForeground(JBColor.RED);
 
-        JPanel panel = new NonOpaquePanel(new BorderLayout(0, JBUIScale.scale(20)));
+        JPanel panel = new NonOpaquePanel(new BorderLayout(0, JBUI.scale(20)));
         panel.add(warningLabel, BorderLayout.NORTH);
         panel.add(new JBLabel("Select Boot JDK"), BorderLayout.CENTER);
         return panel;

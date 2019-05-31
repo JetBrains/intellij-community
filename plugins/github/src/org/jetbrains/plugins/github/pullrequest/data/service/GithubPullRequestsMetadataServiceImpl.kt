@@ -334,11 +334,12 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
       : SelectionListCellRenderer<GithubUser>() {
 
       override fun getText(value: GithubUser) = value.login
-      override fun getIcon(value: GithubUser) = iconsProvider.getIcon(value.avatarUrl)
+      override fun getIcon(value: GithubUser) = iconsProvider.getIcon(value)
 
     }
 
-    class Labels : SelectionListCellRenderer<GithubIssueLabel>() {
+    class Labels
+      : SelectionListCellRenderer<GithubIssueLabel>() {
 
       override fun getText(value: GithubIssueLabel) = value.name
       override fun getIcon(value: GithubIssueLabel) = ColorIcon(16, ColorUtil.fromHex(value.color))

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -22,10 +22,11 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-final class BreadcrumbsInitializingActivity implements StartupActivity, DumbAware {
+public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     if (project.isDefault() || ApplicationManager.getApplication().isUnitTestMode() || project.isDisposed()) {
@@ -45,7 +46,7 @@ final class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwar
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> reinitBreadcrumbsInAllEditors(project));
   }
 
-  private static final class MyFileEditorManagerListener implements FileEditorManagerListener {
+  private static class MyFileEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
       reinitBreadcrumbsComponent(source, file);

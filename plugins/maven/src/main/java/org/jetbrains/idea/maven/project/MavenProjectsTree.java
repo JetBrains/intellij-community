@@ -39,7 +39,6 @@ import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
@@ -1269,9 +1268,11 @@ public class MavenProjectsTree {
             if (FileUtil.pathsEqual(mavenProject.getDirectory(), cause.getDirectory())) {
               showNotificationInvalidConfig(project, mavenProject, cause.getMessage());
               mavenProject.setConfigFileError(cause.getMessage());
+              MavenProjectsManager.getInstance(myProject).getSyncConsole().addRootError(RunnerBundle.message("maven.invalid.config.file", cause.getMessage()), cause);
             }
           }
-        } else {
+        }
+        else {
           throw t;
         }
       }
@@ -1311,7 +1312,7 @@ public class MavenProjectsTree {
     Throwable cause = ExceptionUtil.getRootCause(t);
     if (cause instanceof InvocationTargetException) {
       Throwable target = ((InvocationTargetException)cause).getTargetException();
-      if (target != null) {
+      if (target == null) {
         return ExceptionUtil.findCause(target, MavenConfigParseException.class);
       }
     }
@@ -1393,8 +1394,8 @@ public class MavenProjectsTree {
           }
         }
         if(artifacts.isEmpty()) {
-          MavenProjectsManager.getInstance(myProject)
-            .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).showError(each.getMavenId().getKey());
+          process.startTask(MavenSyncConsole.PLUGINS_RESOLVE_PREFIX + each.getMavenId());
+          process.completeTask(MavenSyncConsole.PLUGINS_RESOLVE_PREFIX + each.getMavenId(), "Cannot Resolve plugin");
         }
 
       }

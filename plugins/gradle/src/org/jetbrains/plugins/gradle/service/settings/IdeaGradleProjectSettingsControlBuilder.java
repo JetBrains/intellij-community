@@ -680,9 +680,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   private void updateDeprecatedControls() {
-    if (myModulePerSourceSetPanel != null) {
-      myModulePerSourceSetPanel.setVisible(myModulePerSourceSetPanel.getClientProperty(HIDDEN_KEY) == Boolean.TRUE);
-    }
+    myModulePerSourceSetPanel.setVisible(myModulePerSourceSetPanel.getClientProperty(HIDDEN_KEY) == Boolean.TRUE);
   }
 
   protected void resetGradleJdkComboBox(@Nullable final Project project,

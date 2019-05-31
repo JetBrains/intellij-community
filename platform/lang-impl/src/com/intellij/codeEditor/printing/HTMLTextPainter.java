@@ -155,7 +155,6 @@ public class HTMLTextPainter {
           if (closeTag != null && c == '\n') {
             writer.write(closeTag);
             closeTag = null;
-            prevAttributes = null;
           }
           if (c == '\n') {
             writeLineSeparatorAndNumber(writer, hStart);

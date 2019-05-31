@@ -6,12 +6,8 @@ import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +21,7 @@ import java.util.List;
  * the tag attributes in ApplicationInfo.xsd file.
  */
 public final class Splash extends Window {
-  private static final float JBUI_INIT_SCALE = JBUIScale.scale(1f);
+  private static final float JBUI_INIT_SCALE = JBUI.scale(1f);
 
   private final ApplicationInfoEx myInfo;
   private final int myWidth;
@@ -74,7 +70,7 @@ public final class Splash extends Window {
 
   @NotNull
   private static Image loadImage(@NotNull String path) {
-    Image result = ImageLoader.loadFromUrl(path, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
+    Image result = ImageLoader.loadFromUrl(path, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, JBUIScale.ScaleContext.create());
     if (result == null) {
       throw new IllegalStateException("Cannot find image: " + path);
     }

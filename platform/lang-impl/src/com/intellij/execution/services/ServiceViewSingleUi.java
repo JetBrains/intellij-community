@@ -3,22 +3,14 @@ package com.intellij.execution.services;
 
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class ServiceViewSingleUi implements ServiceViewUi {
+public class ServiceViewSingleUi implements ServiceViewUi {
   private final SimpleToolWindowPanel myMainPanel = new SimpleToolWindowPanel(false);
   private final JPanel myMessagePanel = new JBPanelWithEmptyText().withEmptyText("No content available");
-
-  ServiceViewSingleUi() {
-    UIUtil.putClientProperty(myMainPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
-                             (Iterable<JComponent>)() -> JBIterable.of((JComponent)myMessagePanel)
-                               .filter(component -> myMainPanel != component.getParent()).iterator());
-  }
 
   @NotNull
   @Override
@@ -47,12 +39,5 @@ class ServiceViewSingleUi implements ServiceViewUi {
     if (component.getParent() == myMainPanel) return;
 
     myMainPanel.setContent(component);
-  }
-
-  @Nullable
-  @Override
-  public JComponent getDetailsComponent() {
-    JComponent content = myMainPanel.getContent();
-    return content == myMessagePanel ? null : content;
   }
 }

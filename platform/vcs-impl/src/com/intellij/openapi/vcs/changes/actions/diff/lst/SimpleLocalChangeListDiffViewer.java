@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.ui.InplaceButton;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -529,7 +528,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       Dimension size = myCheckbox.getPreferredSize();
       EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
       int gutterWidth = gutter.getLineMarkerFreePaintersAreaOffset();
-      return new Dimension(Math.max(gutterWidth + JBUIScale.scale(2), size.width), size.height);
+      return new Dimension(Math.max(gutterWidth + JBUI.scale(2), size.width), size.height);
     }
 
     private void updateLayout() {

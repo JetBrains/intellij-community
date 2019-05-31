@@ -7,11 +7,10 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -22,20 +21,20 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<DiffRequestProducer> {
+  private static final Logger LOG = Logger.getInstance(CacheDiffRequestChainProcessor.class);
+
   @NotNull private final DiffRequestChain myRequestChain;
   private int myIndex;
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project, requestChain);
     myRequestChain = requestChain;
+    myIndex = myRequestChain.getIndex();
 
     if (myRequestChain instanceof AsyncDiffRequestChain) {
       ((AsyncDiffRequestChain)myRequestChain).onAssigned(true);
-      // listener should be added after `onAssigned` call to avoid notification about synchronously loaded requests
       ((AsyncDiffRequestChain)myRequestChain).addListener(new MyChangeListener(), this);
     }
-
-    myIndex = myRequestChain.getIndex();
   }
 
   @Override
@@ -121,16 +120,12 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
 
   @NotNull
   private AnAction createGoToChangeAction() {
-    AnAction action = GoToChangePopupBuilder.create(myRequestChain, index -> {
+    return GoToChangePopupBuilder.create(myRequestChain, index -> {
       if (index >= 0 && index < myRequestChain.getRequests().size() && index != myIndex) {
         myIndex = index;
         updateRequest();
       }
     }, myIndex);
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-      patchShortcutSet(action, "GotoClass", null);
-    }
-    return action;
   }
 
   private class MyChangeListener implements AsyncDiffRequestChain.Listener {

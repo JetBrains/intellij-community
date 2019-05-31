@@ -98,18 +98,17 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                             @NotNull final GitVcs vcs,
                                                             @NotNull final List<VirtualFile> roots,
                                                             boolean isToolWindowTab) {
-    Disposable disposable = Disposer.newDisposable();
     final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (VirtualFile root : roots) {
-      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, disposable, true));
+      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, GitExternalLogTabsProperties.class),
                                               ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
-    Disposer.register(disposable, () -> manager.dispose(() -> {
+    Disposable disposable = () -> manager.dispose(() -> {
       for (VirtualFile root : roots) {
         repositoryManager.removeExternalRepository(root);
       }
-    }));
+    });
     AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab);
     Disposer.register(disposable, ui);
     return new MyContentComponent(new VcsLogPanel(manager, ui), roots, disposable);

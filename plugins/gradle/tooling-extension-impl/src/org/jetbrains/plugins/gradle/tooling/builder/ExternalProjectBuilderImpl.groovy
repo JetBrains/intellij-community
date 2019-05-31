@@ -255,7 +255,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalSourceSet.artifacts = [jarTask.archivePath]
       }
 
-      def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
+      def sources = [:] as Map<ExternalSystemSourceType, ExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs

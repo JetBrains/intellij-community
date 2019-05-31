@@ -136,7 +136,7 @@ abstract class GitImplBase implements Git {
     }
 
     if (project != null && handler.isRemote()) {
-      try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler, version)) {
+      try (GitHandlerAuthenticationManager authenticationManager = prepareAuthentication(project, handler)) {
         GitCommandResult result = doRun(handler, version, outputCollector);
         return GitCommandResult.withAuthentication(result, authenticationManager.isHttpAuthFailed());
       }
@@ -147,6 +147,12 @@ abstract class GitImplBase implements Git {
     else {
       return doRun(handler, version, outputCollector);
     }
+  }
+
+  @NotNull
+  protected GitHandlerAuthenticationManager prepareAuthentication(@NotNull Project project, @NotNull GitLineHandler handler)
+    throws IOException {
+    return GitHandlerAuthenticationManager.prepare(project, handler);
   }
 
   /**

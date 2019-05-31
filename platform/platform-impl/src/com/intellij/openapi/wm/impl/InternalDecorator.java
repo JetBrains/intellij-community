@@ -7,7 +7,6 @@ import com.intellij.ide.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -550,7 +549,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
 
     HideAction() {
-      ActionUtil.copyFrom(this, HIDE_ACTIVE_WINDOW_ACTION_ID);
+      copyFrom(ActionManager.getInstance().getAction(HIDE_ACTIVE_WINDOW_ACTION_ID));
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }
 
@@ -571,7 +570,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     private boolean myHadSeveralContents;
 
     private ToggleContentUiTypeAction() {
-      ActionUtil.copyFrom(this, TOGGLE_CONTENT_UI_TYPE_ACTION_ID);
+      copyFrom(ActionManager.getInstance().getAction(TOGGLE_CONTENT_UI_TYPE_ACTION_ID));
     }
 
     @Override

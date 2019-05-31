@@ -32,16 +32,15 @@ public class WindowsCommandLineProcessor {
    * NOTE: This method is called through JNI by the Windows launcher. Please do not delete or rename it.
    */
   @SuppressWarnings("unused")
-  public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
+  public static void processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
     if (ourMainRunnerClass != null) {
       try {
         Method method = ourMainRunnerClass.getMethod("processWindowsLauncherCommandLine", String.class, String[].class);
-        return (Integer)method.invoke(null, currentDirectory, args);
+        method.invoke(null, currentDirectory, args);
       }
       catch (NoSuchMethodException ignored) { }
       catch (InvocationTargetException ignored) { }
       catch (IllegalAccessException ignored) { }
     }
-    return 1;
   }
 }

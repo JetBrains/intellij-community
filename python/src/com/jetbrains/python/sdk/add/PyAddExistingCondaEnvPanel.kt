@@ -65,7 +65,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
         condaPathField.text = respectiveCondaExecutable.orEmpty()
       }
     }
-
+    
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Interpreter:", sdkComboBox)
@@ -73,22 +73,15 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
+    ApplicationManager.getApplication().executeOnPooledThread(object: Runnable {
       override fun run() {
         if (module != null && module.isDisposed) return
-        ApplicationManager.getApplication().invokeLater({ sdkComboBox.setBusy(true) }, ModalityState.any())
-        var sdks = emptyList<Sdk>()
-        try {
-          sdks = detectCondaEnvs(module, existingSdks)
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater({
-                                                            sdkComboBox.setBusy(false)
-                                                            sdks.forEach {
-                                                              sdkComboBox.childComponent.addItem(it)
-                                                            }
-                                                          }, ModalityState.any())
-        }
+        val sdks = detectCondaEnvs(module, existingSdks)
+        ApplicationManager.getApplication().invokeLater({
+          sdks.forEach {
+            sdkComboBox.childComponent.addItem(it)
+          }
+        }, ModalityState.any())
       }
     })
   }

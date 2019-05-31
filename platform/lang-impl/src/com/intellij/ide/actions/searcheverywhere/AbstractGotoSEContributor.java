@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.EditSourceUtil;
@@ -15,10 +14,8 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -32,7 +29,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -110,27 +105,7 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
     if (Registry.is("search.everywhere.show.scopes")) {
       result.add(new ScopeChooserAction() {
         final GlobalSearchScope everywhereScope = GlobalSearchScope.everythingScope(myProject);
-        final GlobalSearchScope projectScope;
-        final boolean canToggleEverywhere;
-
-        {
-          GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
-          if (!everywhereScope.equals(scope)) {
-            projectScope = scope;
-            canToggleEverywhere = true;
-          }
-          else {
-            // just get the second scope, i.e. Attached Directories in DataGrip
-            Ref<GlobalSearchScope> result = Ref.create();
-            ScopeChooserCombo.processScopes(myProject, SimpleDataContext.getProjectContext(myProject), 0, o -> {
-              if (o.scopeEquals(everywhereScope)) return true;
-              result.set((GlobalSearchScope)o.getScope());
-              return false;
-            });
-            projectScope = ObjectUtils.notNull(result.get());
-            canToggleEverywhere = false;
-          }
-        }
+        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
 
         @Override
         void onScopeSelected(@NotNull ScopeDescriptor o) {
@@ -142,11 +117,6 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
         @Override
         ScopeDescriptor getSelectedScope() {
           return myScopeDescriptor;
-        }
-
-        @Override
-        void onProjectScopeToggled() {
-          setEverywhere(!myScopeDescriptor.scopeEquals(everywhereScope));
         }
 
         @Override
@@ -162,7 +132,6 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
 
         @Override
         public boolean canToggleEverywhere() {
-          if (!canToggleEverywhere) return false;
           return myScopeDescriptor.scopeEquals(everywhereScope) ||
                  myScopeDescriptor.scopeEquals(projectScope);
         }
@@ -392,16 +361,12 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
   abstract static class ScopeChooserAction extends ActionGroup
     implements CustomComponentAction, DumbAware, SearchEverywhereUI.EverywhereToggleAction {
 
-    static final char CHOOSE = 'O';
-    static final char TOGGLE = 'P';
-    static final String TOGGLE_ACTION_NAME = "toggleProjectScope";
+    static char MNEMONIC = 'P';
 
     abstract void onScopeSelected(@NotNull ScopeDescriptor o);
 
     @NotNull
     abstract ScopeDescriptor getSelectedScope();
-
-    abstract void onProjectScopeToggled();
 
     @Override public boolean canBePerformed(@NotNull DataContext context) { return true; }
     @Override public boolean isPopup() { return true; }
@@ -409,47 +374,28 @@ public abstract class AbstractGotoSEContributor implements SearchEverywhereContr
 
     @NotNull @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      JComponent component = new ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-      UIUtil.putClientProperty(component, MnemonicHelper.MNEMONIC_CHECKER, keyCode ->
-        KeyEvent.getExtendedKeyCodeForChar(TOGGLE) == keyCode ||
-        KeyEvent.getExtendedKeyCodeForChar(CHOOSE) == keyCode);
-
-      MnemonicHelper.registerMnemonicAction(component, CHOOSE);
-      InputMap map = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-      int mask = MnemonicHelper.getFocusAcceleratorKeyMask();
-      map.put(KeyStroke.getKeyStroke(TOGGLE, mask, false), TOGGLE_ACTION_NAME);
-      component.getActionMap().put(TOGGLE_ACTION_NAME, new AbstractAction() {
+      JComponent c = new ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
-        public void actionPerformed(ActionEvent e) {
-          // mimic AnAction event invocation to trigger myEverywhereAutoSet=false logic
-          DataContext dataContext = DataManager.getInstance().getDataContext(component);
-          KeyEvent inputEvent = new KeyEvent(
-            component, KeyEvent.KEY_PRESSED, e.getWhen(), MnemonicHelper.getFocusAcceleratorKeyMask(),
-            KeyEvent.getExtendedKeyCodeForChar(TOGGLE), TOGGLE);
-          AnActionEvent event = AnActionEvent.createFromAnAction(
-            ScopeChooserAction.this, inputEvent, ActionPlaces.TOOLBAR, dataContext);
-          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(ScopeChooserAction.this, dataContext, event);
-          onProjectScopeToggled();
-          actionManager.fireAfterActionPerformed(ScopeChooserAction.this, dataContext, event);
+        public int getMnemonic() {
+          return KeyEvent.getExtendedKeyCodeForChar(MNEMONIC);
         }
-      });
-      return component;
+      };
+      MnemonicHelper.registerMnemonicAction(c, MNEMONIC);
+      return c;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       ScopeDescriptor selection = getSelectedScope();
       String name = StringUtil.trimMiddle(selection.getDisplayName(), 30);
-      String text = StringUtil.escapeMnemonics(name).replaceFirst("(?i)([" + TOGGLE + CHOOSE + "])", "_$1");
+      String text = StringUtil.escapeMnemonics(name)
+        .replace(String.valueOf(Character.toLowerCase(MNEMONIC)), "_" + Character.toLowerCase(MNEMONIC))
+        .replace(String.valueOf(Character.toUpperCase(MNEMONIC)), "_" + Character.toUpperCase(MNEMONIC));
       e.getPresentation().setText(text);
       e.getPresentation().setIcon(OffsetIcon.getOriginalIcon(selection.getIcon()));
       String shortcutText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(
-        CHOOSE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
-      String shortcutText2 = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(
-        TOGGLE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
-      e.getPresentation().setDescription("Choose scope (" + shortcutText + ")\n" +
-                                         "Toggle scope (" + shortcutText2 + ")");
+        MNEMONIC, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
+      e.getPresentation().setDescription("Choose scope (" + shortcutText +")");
     }
 
     @Override

@@ -12,7 +12,7 @@ import com.intellij.ui.win.WinDockDelegate;
 /**
  * @author Denis Fokin
  */
-public final class SystemDock {
+public class SystemDock {
   private static final Delegate ourDelegate;
 
   static {

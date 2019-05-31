@@ -53,17 +53,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final ImmutableList<String> LOGIN_CLI_OPTIONS = ImmutableList.of("--login", "-l");
   private static final String LOGIN_CLI_OPTION = LOGIN_CLI_OPTIONS.get(0);
-  private static final String INTERACTIVE_CLI_OPTION = "-i";
-  private static final String BASH_NAME = "bash";
-  private static final String SH_NAME = "sh";
-  private static final String ZSH_NAME = "zsh";
-  private static final String FISH_NAME = "fish";
 
   private final Charset myDefaultCharset;
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = StandardCharsets.UTF_8;
+  }
+
+  private static boolean hasLoginArgument(String name) {
+    return name.equals("bash") || name.equals("sh") || name.equals("zsh");
   }
 
   private static String getShellName(@Nullable String path) {
@@ -79,13 +78,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = null;
     //noinspection IfCanBeSwitch
-    if (BASH_NAME.equals(shellName) || SH_NAME.equals(shellName)) {
+    if ("bash".equals(shellName) || "sh".equals(shellName)) {
       rcfile = "jediterm-bash.in";
     }
-    else if (ZSH_NAME.equals(shellName)) {
+    else if ("zsh".equals(shellName)) {
       rcfile = ".zshrc";
     }
-    else if (FISH_NAME.equals(shellName)) {
+    else if ("fish".equals(shellName)) {
       rcfile = "fish/config.fish";
     }
     if (rcfile != null) {
@@ -255,13 +254,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       if (shellName != null) {
         command.remove(0);
 
-        if (!containsLoginOrInteractiveOption(command)) {
-          if (isLoginOptionAvailable(shellName) && SystemInfoRt.isMac) {
+        if (!loginOrInteractive(command)) {
+          if (hasLoginArgument(shellName) && SystemInfoRt.isMac) {
             command.add(LOGIN_CLI_OPTION);
           }
-          if (isInteractiveOptionAvailable(shellName)) {
-            command.add(INTERACTIVE_CLI_OPTION);
-          }
+          command.add("-i");
         }
 
         List<String> result = Lists.newArrayList(shellCommand);
@@ -269,13 +266,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         String rcFilePath = findRCFile(shellName);
 
         if (rcFilePath != null && shellIntegration) {
-          if (shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME))) {
+          if (shellName.equals("bash") || (SystemInfoRt.isMac && shellName.equals("sh"))) {
             addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
             // remove --login to enable --rcfile sourcing
             boolean loginShell = command.removeAll(LOGIN_CLI_OPTIONS);
             setLoginShellEnv(envs, loginShell);
           }
-          else if (shellName.equals(ZSH_NAME)) {
+          else if (shellName.equals("zsh")) {
             String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
             if (StringUtil.isNotEmpty(zdotdir)) {
               envs.put("_OLD_ZDOTDIR", zdotdir);
@@ -286,7 +283,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
             }
             envs.put(ZDOTDIR, new File(rcFilePath).getParent());
           }
-          else if (shellName.equals(FISH_NAME)) {
+          else if (shellName.equals("fish")) {
             String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
             if (StringUtil.isNotEmpty(xdgConfig)) {
               File fishConfig = new File(new File(FileUtil.expandUserHome(xdgConfig), "fish"), "config.fish");
@@ -314,15 +311,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
-  private static boolean isLoginOptionAvailable(@NotNull String shellName) {
-    return shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME)) || shellName.equals(ZSH_NAME);
-  }
-
-  private static boolean isInteractiveOptionAvailable(@NotNull String shellName) {
-    return shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME)) ||
-           shellName.equals(ZSH_NAME) || shellName.equals(FISH_NAME);
-  }
-
   private static void setLoginShellEnv(@NotNull Map<String, String> envs, boolean loginShell) {
     if (loginShell) {
       envs.put(LOGIN_SHELL, "1");
@@ -345,8 +333,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
-  private static boolean containsLoginOrInteractiveOption(List<String> command) {
-    return isLogin(command) || command.contains(INTERACTIVE_CLI_OPTION);
+  private static boolean loginOrInteractive(List<String> command) {
+    return command.contains("-i") || isLogin(command);
   }
 
   private static boolean isLogin(@NotNull List<String> command) {

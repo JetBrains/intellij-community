@@ -17,7 +17,6 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryCreator;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,8 +32,8 @@ public class HgRepositoryCreator extends VcsRepositoryCreator {
   }
 
   @Override
-  public Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
-    return HgUtil.isHgRoot(root) ? HgRepositoryImpl.getInstance(root, myProject, parentDisposable) : null;
+  public Repository createRepositoryIfValid(@NotNull VirtualFile root) {
+    return HgUtil.isHgRoot(root) ? HgRepositoryImpl.getInstance(root, myProject, myProject) : null;
   }
 
   @NotNull

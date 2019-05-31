@@ -48,7 +48,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
   @Override
   public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     if (isApplicable(file) && isMvnDependency(text)) {
-      GradleActionsUsagesCollector.trigger(project, GradleActionsUsagesCollector.ActionID.PasteMvnDependency);
+      GradleActionsUsagesCollector.trigger(project, "PasteMvnDependency");
       return toGradleDependency(text);
     }
     return text;

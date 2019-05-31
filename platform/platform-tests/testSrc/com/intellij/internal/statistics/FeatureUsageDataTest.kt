@@ -5,11 +5,10 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.util.Version
-import com.intellij.testFramework.PlatformTestCase
 import org.junit.Assert
 import org.junit.Test
 
-class FeatureUsageDataTest : PlatformTestCase() {
+class FeatureUsageDataTest {
 
   @Test
   fun `test empty data`() {

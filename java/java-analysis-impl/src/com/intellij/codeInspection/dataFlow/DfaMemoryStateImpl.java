@@ -1419,16 +1419,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private DfaVariableValue canonicalize(DfaVariableValue var) {
     DfaVariableValue qualifier = var.getQualifier();
     if (qualifier != null) {
-      Integer index = myIdToEqClassesIndices.get(qualifier.getID());
-      if (index == null) {
-        qualifier = canonicalize(qualifier);
-        index = myIdToEqClassesIndices.get(qualifier.getID());
-        if (index == null) {
-          return var.withQualifier(qualifier);
-        }
-      }
-
-      return var.withQualifier(Objects.requireNonNull(myEqClasses.get(index).getCanonicalVariable()));
+      EqClass eqClass = getEqClass(qualifier);
+      return var.withQualifier(eqClass == null ? canonicalize(qualifier) : Objects.requireNonNull(eqClass.getCanonicalVariable()));
     }
     return var;
   }

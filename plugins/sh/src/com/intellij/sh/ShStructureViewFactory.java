@@ -130,7 +130,7 @@ public class ShStructureViewFactory implements PsiStructureViewFactory {
     public Icon getIcon(boolean open) {
       if (!myElement.isValid()) return null;
       if (myElement instanceof ShFunctionDefinition) {
-        return AllIcons.Nodes.Lambda;
+        return AllIcons.Nodes.Function;
       }
       return myElement.getIcon(0);
     }

@@ -19,7 +19,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
@@ -104,7 +103,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     private static String getPreviewText(@NotNull VirtualFile file) {
       if (file.getLength() <= MAX_PREVIEW_LENGTH) {
         try {
-          return StringUtil.convertLineSeparators(VfsUtilCore.loadText(file));
+          return VfsUtilCore.loadText(file);
         }
         catch (IOException e) {
           // Ignore

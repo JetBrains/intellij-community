@@ -34,7 +34,10 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -703,10 +706,7 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
   private static int groupByPath(@NotNull List<? extends VFileEvent> events,
                                  int startIndex,
                                  @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
-                                 @NotNull Set<? super String> middleDirsInvolved,
-                                 @NotNull Set<? super String> deletedPaths,
-                                 @NotNull Set<? super String> createdPaths,
-                                 @NotNull Set<? super VFileEvent> eventsToRemove) {
+                                 @NotNull Set<? super String> middleDirsInvolved) {
     // store all paths from all events (including all parents)
     // check the each new event's path against this set and if it's there, this event is conflicting
 
@@ -714,65 +714,32 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     for (i = startIndex; i < events.size(); i++) {
       VFileEvent event = events.get(i);
       String path = event.getPath();
-      if (event instanceof VFileDeleteEvent && removeNestedDelete(path, deletedPaths)) {
-        eventsToRemove.add(event);
-        continue;
-      }
-      if (event instanceof VFileCreateEvent && !createdPaths.add(path)) {
-        eventsToRemove.add(event);
-        continue;
-      }
-
       if (checkIfConflictingPaths(event, path, filesInvolved, middleDirsInvolved)) {
         break;
       }
       // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent,
       // so both paths should be checked for conflicts
-      String path2 = getAlternativePath(event);
+      String path2 = null;
+      if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+        VirtualFile parent = pce.getFile().getParent();
+        String newName = (String)pce.getNewValue();
+        path2 = parent == null ? newName : parent.getPath()+"/"+newName;
+      }
+      else if (event instanceof VFileCopyEvent) {
+        path2 = ((VFileCopyEvent)event).getFile().getPath();
+      }
+      else if (event instanceof VFileMoveEvent) {
+        VFileMoveEvent vme = (VFileMoveEvent)event;
+        String newName = vme.getFile().getName();
+        path2 = vme.getNewParent().getPath() + "/" + newName;
+      }
       if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingPaths(event, path2, filesInvolved, middleDirsInvolved)) {
         break;
       }
     }
 
     return i;
-  }
-
-  @Nullable
-  private static String getAlternativePath(@NotNull VFileEvent event) {
-    String path2 = null;
-    if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
-      VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
-      VirtualFile parent = pce.getFile().getParent();
-      String newName = (String)pce.getNewValue();
-      path2 = parent == null ? newName : parent.getPath()+"/"+newName;
-    }
-    else if (event instanceof VFileCopyEvent) {
-      path2 = ((VFileCopyEvent)event).getFile().getPath();
-    }
-    else if (event instanceof VFileMoveEvent) {
-      VFileMoveEvent vme = (VFileMoveEvent)event;
-      String newName = vme.getFile().getName();
-      path2 = vme.getNewParent().getPath() + "/" + newName;
-    }
-    return path2;
-  }
-
-  private static boolean removeNestedDelete(@NotNull String path, @NotNull Set<? super String> deletedPaths) {
-    if (!deletedPaths.add(path)) {
-      return true;
-    }
-    int li = path.length();
-    while (true) {
-      int liPrev = path.lastIndexOf('/', li - 1);
-      if (liPrev == -1) break;
-      path = path.substring(0, liPrev);
-      li = liPrev;
-      if (deletedPaths.contains(path)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private static boolean checkIfConflictingPaths(@NotNull VFileEvent event,
@@ -830,13 +797,11 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
                                @NotNull List<? super VFileEvent> outValidatedEvents,
                                @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
                                @NotNull Set<? super String> middleDirsInvolved) {
-    Set<VFileEvent> toIgnore = new THashSet<>(ContainerUtil.identityStrategy()); // VFileEvents override equals()
-    int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved, new THashSet<>(FileUtil.PATH_HASHING_STRATEGY), new THashSet<>(FileUtil.PATH_HASHING_STRATEGY),
-                               toIgnore);
+    int endIndex = groupByPath(events, startIndex, filesInvolved, middleDirsInvolved);
     assert endIndex > startIndex : events.get(startIndex) +"; files: "+filesInvolved+"; middleDirs: "+middleDirsInvolved;
     // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
-    groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents, toIgnore);
-    groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents, toIgnore);
+    groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
+    groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
     groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
 
     return endIndex;
@@ -848,13 +813,12 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
                               int start,
                               int end,
                               @NotNull List<? super VFileEvent> outValidated,
-                              @NotNull List<? super Runnable> outApplyEvents,
-                              @NotNull Set<? extends VFileEvent> toIgnore) {
+                              @NotNull List<? super Runnable> outApplyEvents) {
     MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = null;
 
     for (int i = start; i < end; i++) {
       VFileEvent e = events.get(i);
-      if (!(e instanceof VFileCreateEvent) || toIgnore.contains(e)) continue;
+      if (!(e instanceof VFileCreateEvent)) continue;
       VFileCreateEvent event = (VFileCreateEvent)e;
       VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getParent();
       if (grouped == null) {
@@ -896,13 +860,12 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
                               int start,
                               int end,
                               @NotNull List<? super VFileEvent> outValidated,
-                              @NotNull List<? super Runnable> outApplyEvents,
-                              @NotNull Set<? extends VFileEvent> toIgnore) {
+                              @NotNull List<? super Runnable> outApplyEvents) {
     MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = null;
     boolean hasValidEvents = false;
     for (int i = start; i < end; i++) {
       VFileEvent event = events.get(i);
-      if (!(event instanceof VFileDeleteEvent) || toIgnore.contains(event) || !event.isValid()) continue;
+      if (!(event instanceof VFileDeleteEvent) || !event.isValid()) continue;
       VFileDeleteEvent de = (VFileDeleteEvent)event;
       @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)de.getFile().getParent();
       if (grouped == null) {

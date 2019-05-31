@@ -227,14 +227,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     final VirtualFile vFile = psiFile.getVirtualFile()
 
-    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject())
-
     CodeStyleManager.getInstance(project).reformat(psiFile)
 
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     PsiManager.getInstance(project).reloadFromDisk(psiFile)
-
-    assertEquals(stamp, ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject()))
 
     FileContentUtilCore.reparseFiles(vFile)
 
@@ -1091,15 +1087,5 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert !findClass('Foo')
     }
-  }
-
-  void "test stub updating index stamp"() {
-    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
-    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-    VfsUtil.saveText(vFile, "class Foo { void m() {} }")
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-    VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
-    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
 }

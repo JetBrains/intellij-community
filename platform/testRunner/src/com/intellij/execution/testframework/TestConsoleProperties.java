@@ -196,7 +196,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) { }
 
   @Nullable
-  protected AnAction[] createImportActions() {
+  protected AnAction createImportAction() {
     return null;
   }
 
@@ -226,15 +226,5 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   public String getWindowId() {
     return isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
-  }
-
-  /**
-   * Override to customize presentation of comparison difference visible before link to open diff window
-   * @param printer {@code Printer} to write on 
-   * @param expected text to be shown on the left of the diff window
-   * @param actual   text to be shown on the right of the diff window
-   */
-  public void printExpectedActualHeader(Printer printer, String expected, String actual) {
-    Printer.printExpectedActualHeader(printer, expected, actual);
   }
 }

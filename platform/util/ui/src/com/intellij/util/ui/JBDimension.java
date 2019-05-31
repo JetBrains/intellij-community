@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleType;
-import com.intellij.ui.scale.Scaler;
+import com.intellij.util.ui.JBUIScale.ScaleType;
+import com.intellij.util.ui.JBUIScale.Scaler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.UIResource;
@@ -61,7 +60,7 @@ public class JBDimension extends Dimension {
   }
 
   private double scale(double size) {
-    return Math.max(-1, JBUIScale.scale((float)size));
+    return Math.max(-1, JBUI.scale((float)size));
   }
 
   @NotNull
@@ -196,11 +195,11 @@ public class JBDimension extends Dimension {
 class MyScaler extends Scaler {
   @Override
   protected double currentScale() {
-    return JBUIScale.scale(1f);
+    return JBUI.scale(1f);
   }
 
   boolean needUpdate() {
-    return initialScale != JBUIScale.scale(1f);
+    return initialScale != JBUI.scale(1f);
   }
 
   public void update() {

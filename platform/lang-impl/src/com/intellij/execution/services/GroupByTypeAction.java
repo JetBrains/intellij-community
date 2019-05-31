@@ -11,7 +11,6 @@ import static com.intellij.execution.services.ServiceViewActionProvider.getSelec
 public class GroupByTypeAction extends ToggleAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     ServiceView selectedView = getSelectedView(e);
     e.getPresentation().setEnabled(selectedView != null && !selectedView.isFlat());
   }

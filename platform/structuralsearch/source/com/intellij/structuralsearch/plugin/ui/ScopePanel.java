@@ -25,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -68,7 +67,7 @@ public class ScopePanel extends JPanel {
     myModulesComboBox.setModules(Arrays.asList(allModules));
     if (allModules.length > 0) myModulesComboBox.setSelectedModule(allModules[0]);
     myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE, false));
-    myModulesComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300));
+    myModulesComboBox.setMinimumAndPreferredWidth(JBUI.scale(300));
     myScopesComboBox.init(project, true, false, "", SCOPE_FILTER);
     myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED, false));
     Disposer.register(parent, myScopesComboBox);

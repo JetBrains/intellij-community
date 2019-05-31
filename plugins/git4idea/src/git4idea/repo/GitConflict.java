@@ -47,9 +47,8 @@ public class GitConflict {
   }
 
   public enum Status {
-    MODIFIED,
-    DELETED,
-    ADDED
+    MODIFIED, // modified on the branch
+    DELETED // deleted on the branch
   }
 
   /**

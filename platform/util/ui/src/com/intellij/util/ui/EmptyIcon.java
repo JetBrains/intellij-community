@@ -3,17 +3,18 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
 
 /**
  * @author max
@@ -22,8 +23,8 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
  *
  * @see ColorIcon
  */
- public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
-//public class EmptyIcon extends JBUI.CachingScalableJBIcon<JBUI.CachingScalableJBIcon> { // backward compatible version
+// public class EmptyIcon extends JBCachingScalableIcon<EmptyIcon> {
+public class EmptyIcon extends JBUI.CachingScalableJBIcon<JBUI.CachingScalableJBIcon> { // backward compatible version
   private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
 
   public static final Icon ICON_18 = JBUI.scale(create(18));
@@ -37,7 +38,12 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
   private final boolean myUseCache;
 
   static {
-    JBUIScale.addUserScaleChangeListener(event -> cache.clear());
+    JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        cache.clear();
+      }
+    });
   }
 
   /**
@@ -94,11 +100,11 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
     myUseCache = icon.myUseCache;
   }
 
-  //@NotNull
-  //@Override
-  //public /*EmptyIcon*/ JBUI.CachingScalableJBIcon scale(float scale) { // backward compatible version
-  //  return super.scale(scale);
-  //}
+  @NotNull
+  @Override
+  public /*EmptyIcon*/ JBUI.CachingScalableJBIcon scale(float scale) { // backward compatible version
+    return super.scale(scale);
+  }
 
   @NotNull
   @Override

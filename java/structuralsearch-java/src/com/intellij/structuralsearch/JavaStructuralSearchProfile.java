@@ -288,7 +288,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
                                         @NotNull PatternTreeContext context,
                                         @NotNull LanguageFileType fileType,
                                         @NotNull Language language,
-                                        String contextId,
+                                        String contextName,
                                         @NotNull Project project,
                                         boolean physical) {
     if (physical) {
@@ -311,7 +311,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (shouldTryExpressionPattern(result)) {
         try {
           final PsiElement[] expressionPattern =
-            createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextId, project, false);
+            createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextName, project, false);
           if (expressionPattern.length == 1) {
             return expressionPattern;
           }
@@ -319,7 +319,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
       else if (shouldTryClassPattern(result)) {
         final PsiElement[] classPattern =
-          createPatternTree(text, PatternTreeContext.Class, fileType, language, contextId, project, false);
+          createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, project, false);
         if (classPattern.length <= result.size()) {
           return classPattern;
         }
@@ -416,7 +416,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiCodeFragment createCodeFragment(Project project, String text, String contextId) {
+  public PsiCodeFragment createCodeFragment(Project project, String text) {
     return JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(text, null, true);
   }
 
@@ -939,9 +939,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (greatGrandParent instanceof PsiTypeElement) {
         final PsiType type = ((PsiTypeElement)greatGrandParent).getType();
         return type instanceof PsiWildcardType && ((PsiWildcardType)type).isExtends();
-      }
-      if (greatGrandParent instanceof PsiMethod) {
-        return true;
       }
     }
     if (grandParent instanceof PsiExpressionStatement) {

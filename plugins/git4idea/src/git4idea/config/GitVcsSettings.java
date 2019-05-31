@@ -247,7 +247,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsOptions>, 
   }
 
   public void setPreviewPushProtectedOnly(boolean value) {
-    myState.setPreviewPushProtectedOnly(value);
+    myState.setPreviewPushOnCommitAndPush(value);
   }
 
   public boolean isCommitRenamesSeparately() {

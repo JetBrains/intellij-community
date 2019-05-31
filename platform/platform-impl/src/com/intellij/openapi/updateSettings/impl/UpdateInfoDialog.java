@@ -27,7 +27,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -45,7 +44,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
+import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -265,7 +264,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       String text = (SystemInfoRt.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") +
                     StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
       FileUtil.writeToFile(file, text);
-      FileUtil.setExecutable(file);
+      FileUtil.setExecutableAttribute(file.getPath(), true);
     }
     catch (Exception e) {
       Logger.getInstance(UpdateInstaller.class).error(e);
@@ -348,7 +347,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         @Override
         public Dimension getPreferredScrollableViewportSize() {
           Dimension size = super.getPreferredScrollableViewportSize();
-          size.height = Math.min(size.height, JBUIScale.scale(400));
+          size.height = Math.min(size.height, JBUI.scale(400));
           return size;
         }
       };

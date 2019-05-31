@@ -200,10 +200,6 @@ public class EditorSearchSession implements SearchSession,
     }, myDisposable);
   }
 
-  public Editor getEditor() {
-    return myEditor;
-  }
-
   @Nullable
   public static EditorSearchSession get(@Nullable Editor editor) {
     JComponent headerComponent = editor != null ? editor.getHeaderComponent() : null;

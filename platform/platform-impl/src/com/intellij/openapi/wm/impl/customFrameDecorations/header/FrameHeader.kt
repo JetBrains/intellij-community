@@ -5,17 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
-import com.intellij.util.ui.JBFont
-import java.awt.Font
-import java.awt.Frame
-import java.awt.Toolkit
+import com.intellij.util.ui.JBUI
+import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
-import java.util.*
-import javax.swing.Action
-import javax.swing.JFrame
-import javax.swing.JMenu
-import javax.swing.JSeparator
+import java.util.ArrayList
+import javax.swing.*
 
 open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
     private val myIconifyAction: Action = CustomFrameAction("Minimize", AllIcons.Windows.MinimizeSmall) { iconify() }
@@ -94,7 +89,7 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         menu.add(JSeparator())
 
         val closeMenuItem = menu.add(myCloseAction)
-        closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
+        closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
     }
 
     override fun getHitTestSpots(): ArrayList<RelativeRectangle> {

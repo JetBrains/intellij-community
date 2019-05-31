@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -46,7 +46,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
@@ -59,7 +58,6 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -269,12 +267,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     return mySelectedTab.getID();
   }
 
-  @Nullable
-  public Object getSelectionIdentity() {
-    Object value = myResultsList.getSelectedValue();
-    return value == null ? null : Objects.hashCode(value);
-  }
-
   @Override
   public void dispose() {
     stopSearching();
@@ -400,7 +392,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
           @Override
           public int getIconGap() {
-            return JBUIScale.scale(10);
+            return JBUI.scale(10);
           }
         };
       }
@@ -444,10 +436,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     SETab(@Nullable SearchEverywhereContributor<?> contributor) {
       super(contributor == null ? IdeBundle.message("searcheverywhere.allelements.tab.name") : contributor.getGroupName());
       this.contributor = contributor;
-      Runnable onChanged = () -> {
-        myToolbar.updateActionsImmediately();
-        rebuildList();
-      };
       if (contributor == null) {
         actions = Arrays.asList(new SearchEverywhereUI.CheckBoxAction(
           IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName())) {
@@ -460,12 +448,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
           @Override
           public void setEverywhere(boolean state) {
             seManager.setEverywhere(state);
-            onChanged.run();
+            rebuildList();
           }
-        }, new FiltersAction(myContributorsFilter, onChanged));
+        }, new FiltersAction(myContributorsFilter, SearchEverywhereUI.this::rebuildList));
       }
       else {
-        actions = new ArrayList<>(contributor.getActions(onChanged));
+        actions = new ArrayList<>(contributor.getActions(SearchEverywhereUI.this::rebuildList));
       }
       everywhereAction = (EverywhereToggleAction)ContainerUtil.find(actions, o -> o instanceof EverywhereToggleAction);
       Insets insets = JBUI.CurrentTheme.BigPopup.tabInsets();
@@ -498,7 +486,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      size.height = JBUIScale.scale(29);
+      size.height = JBUI.scale(29);
       return size;
     }
 
@@ -1000,7 +988,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
       setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
       append("... more", SMALL_LABEL_ATTRS);
-      setIpad(JBInsets.create(1, 7));
+      setIpad(JBUI.insets(1, 7));
       setMyBorder(null);
     }
   };
@@ -1614,17 +1602,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       hasMoreContributors.forEach(myListModel::setHasMore);
 
       mySelectionTracker.resetSelectionIfNeeded();
-
-      Object prevSelection = ((SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject))
-        .getPrevSelection(getSelectedContributorID());
-      if (prevSelection instanceof Integer) {
-        for (SearchEverywhereFoundElementInfo info : myListModel.listElements) {
-          if (Objects.hashCode(info.element) == ((Integer)prevSelection).intValue()) {
-            myResultsList.setSelectedValue(info.element, true);
-            break;
-          }
-        }
-      }
     }
   }
 

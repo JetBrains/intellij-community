@@ -71,9 +71,4 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
   public boolean isGutterMarkEnabledForSingleLine() {
     return myHostRegion.isGutterMarkEnabledForSingleLine();
   }
-
-  @Override
-  public void setPlaceholderText(@NotNull String text) {
-    myHostRegion.setPlaceholderText(text);
-  }
 }

@@ -120,9 +120,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       //myNextStepLabel.setIcon(PopupIcons.EMPTY_ICON);
     }
 
-    setSelected(myComponent, isSelected && isSelectable);
-    setSelected(myTextLabel, isSelected && isSelectable);
-    setSelected(myNextStepLabel, isSelected && isSelectable);
+    setSelected(myNextStepLabel, isSelected);
+
 
     if (myShortcutLabel != null) {
       myShortcutLabel.setEnabled(isSelectable);
@@ -136,8 +135,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
           }
         }
       }
-      setSelected(myShortcutLabel, isSelected && isSelectable);
-      myShortcutLabel.setForeground(isSelected && isSelectable ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
+      setSelected(myShortcutLabel, isSelected);
+      myShortcutLabel.setForeground(isSelected ? UIManager.getColor("MenuItem.acceleratorSelectionForeground") : UIManager.getColor("MenuItem.acceleratorForeground"));
     }
   }
 }

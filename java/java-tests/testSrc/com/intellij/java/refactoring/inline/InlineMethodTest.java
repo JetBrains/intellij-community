@@ -526,10 +526,6 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInvertMethod() {
     doTest();
   }
-  
-  public void testUnusedParameter() {
-    doTest();
-  }
 
   @Override
   protected Sdk getProjectJDK() {

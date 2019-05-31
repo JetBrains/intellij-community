@@ -1,41 +1,44 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
-import icons.SHIcons;
+import com.intellij.util.SingleAlarm;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class ShFailoverRunner extends ShRunner {
-  protected ShFailoverRunner(@NotNull Project project) {
-    super(project);
-  }
-
   @Override
   public void run(@NotNull ShFile file) {
-    ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(myProject, DefaultRunExecutor.getRunExecutorInstance())
+    Project project = file.getProject();
+    ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance())
         .runProfile(new RunProfile() {
           @Override
           public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
@@ -45,15 +48,15 @@ public class ShFailoverRunner extends ShRunner {
           @NotNull
           @Override
           public String getName() {
-            return file.getName();
+            return "Run " + file.getName();
           }
 
           @Override
           public Icon getIcon() {
-            return SHIcons.ShFile;
+            return AllIcons.Actions.Install;
           }
         });
-    ExecutionManager.getInstance(myProject).restartRunProfile(builder.build());
+    ExecutionManager.getInstance(project).restartRunProfile(builder.build());
   }
 
   @Override
@@ -79,7 +82,48 @@ public class ShFailoverRunner extends ShRunner {
         throw new ExecutionException("Cannot determine shell script parent directory");
       }
       GeneralCommandLine commandLine = createCommandLine(dir);
-      return ShFailoverRunnerUtil.buildExecutionResult(myProject, commandLine);
+      ProcessHandler processHandler = createProcessHandler(commandLine);
+      ProcessTerminatedListener.attach(processHandler);
+      ConsoleView console = new TerminalExecutionConsole(myProject, processHandler);
+      console.attachToProcess(processHandler);
+
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          new SingleAlarm(() -> ReadAction.run(() -> {
+            if (!myProject.isDisposed()) {
+              LocalFileSystem.getInstance().refresh(true);
+            }
+          }), 300, Alarm.ThreadToUse.POOLED_THREAD, myProject).request();
+        }
+      });
+      return new DefaultExecutionResult(console, processHandler);
+    }
+
+    @NotNull
+    private static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
+      return new KillableProcessHandler(commandLine) {
+        @NotNull
+        @Override
+        protected BaseOutputReader.Options readerOptions() {
+          return new BaseOutputReader.Options() {
+            @Override
+            public BaseDataReader.SleepingPolicy policy() {
+              return BaseDataReader.SleepingPolicy.BLOCKING;
+            }
+
+            @Override
+            public boolean splitToLines() {
+              return false;
+            }
+
+            @Override
+            public boolean withSeparators() {
+              return true;
+            }
+          };
+        }
+      };
     }
 
     @NotNull

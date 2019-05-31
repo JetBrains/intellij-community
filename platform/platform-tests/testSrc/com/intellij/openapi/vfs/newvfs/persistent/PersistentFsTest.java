@@ -373,41 +373,6 @@ public class PersistentFsTest extends PlatformTestCase {
                 new VFileDeleteEvent(this, vFile, false));
   }
 
-  public void testProcessEventsMustBeAwareOfDeleteEventsDominations() throws IOException {
-    File temp = createTempDirectory();
-
-    File d = new File(temp, "d");
-    assertTrue(d.mkdir());
-    File x = new File(d, "x.txt");
-    assertTrue(x.createNewFile());
-    VirtualFile vXTxt = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(x);
-
-    checkEvents("Before:[VFileDeleteEvent->d]\n" +
-                "After:[VFileDeleteEvent->d]\n",
-
-                new VFileDeleteEvent(this, vXTxt.getParent(), false),
-                new VFileDeleteEvent(this, vXTxt, false),
-                new VFileDeleteEvent(this, vXTxt, false)
-                );
-  }
-
-  public void testProcessCreateEventsMustFilterOutDuplicates() throws IOException {
-    File temp = createTempDirectory();
-
-    File d = new File(temp, "d");
-    assertTrue(d.mkdir());
-    File x = new File(d, "x.txt");
-    assertTrue(x.createNewFile());
-    VirtualFile vXTxt = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(x);
-
-    checkEvents("Before:[VFileCreateEvent->xx.created]\n" +
-                "After:[VFileCreateEvent->xx.created]\n",
-
-                new VFileCreateEvent(this, vXTxt.getParent(), "xx.created", false, null, null, false, null),
-                new VFileCreateEvent(this, vXTxt.getParent(), "xx.created", false, null, null, false, null)
-                );
-  }
-
   public void testProcessEventsMustGroupDependentEventsCorrectly2() throws IOException {
     File file = new File(createTempDirectory(), "a/b/c/test.txt");
     assertTrue(file.getParentFile().mkdirs());

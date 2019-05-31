@@ -4,9 +4,10 @@ package com.intellij.serialization
 import com.amazon.ion.IonException
 import com.amazon.ion.IonType
 import com.amazon.ion.IonWriter
-import com.amazon.ion.impl.bin._Private_IonManagedBinaryWriterBuilder
+import com.amazon.ion.system.IonBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.amazon.ion.system.IonTextWriterBuilder
+import com.amazon.ion.system.IonWriterBuilder
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
 import java.io.IOException
@@ -16,7 +17,7 @@ import java.lang.reflect.Type
 import java.nio.file.Path
 import kotlin.experimental.or
 
-private const val FORMAT_VERSION = 2
+private const val FORMAT_VERSION = 1
 
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
@@ -28,7 +29,7 @@ internal class IonObjectSerializer {
 
   @Throws(IOException::class)
   fun writeVersioned(obj: Any, out: OutputStream, expectedVersion: Int, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
-    createIonWriterBuilder(configuration.binary, out).use { writer ->
+    createIonWriterBuilder(configuration.binary).build(out).use { writer ->
       writer.stepIn(IonType.STRUCT)
 
       writer.setFieldName("version")
@@ -107,8 +108,8 @@ internal class IonObjectSerializer {
     }
   }
 
-  fun write(obj: Any, out: OutputStream, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
-    createIonWriterBuilder(configuration.binary, out).use { writer ->
+  fun write(obj: Any, outputStream: OutputStream, configuration: WriteConfiguration = defaultWriteConfiguration, originalType: Type? = null) {
+    createIonWriterBuilder(configuration.binary).build(outputStream).use { writer ->
       doWrite(obj, writer, configuration, originalType)
     }
   }
@@ -182,22 +183,15 @@ private data class ReadContextImpl(override val reader: ValueReader,
   override fun createSubContext(reader: ValueReader) = ReadContextImpl(reader, objectIdReader, bindingProducer, configuration)
 }
 
-internal val binaryWriterBuilder by lazy {
-  val binaryWriterBuilder = _Private_IonManagedBinaryWriterBuilder
-    .create(PooledBlockAllocatorProvider())
-    .withPaddedLengthPreallocation(0)
-    .withStreamCopyOptimization(true)
-  binaryWriterBuilder
-}
-
+private val binaryWriterBuilder by lazy { IonBinaryWriterBuilder.standard().immutable() }
 private val textWriterBuilder by lazy {
   // line separator is not configurable and platform-dependent (https://github.com/amzn/ion-java/issues/57)
   IonTextWriterBuilder.pretty().immutable()
 }
 
-private fun createIonWriterBuilder(binary: Boolean, out: OutputStream): IonWriter {
+private fun createIonWriterBuilder(binary: Boolean): IonWriterBuilder {
   return when {
-    binary -> binaryWriterBuilder.newWriter(out)
-    else -> textWriterBuilder.build(out)
+    binary -> binaryWriterBuilder
+    else -> textWriterBuilder
   }
 }

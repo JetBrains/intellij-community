@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -36,7 +35,7 @@ public final class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
   }
 
   private static void addKeymapAction(@NotNull DefaultActionGroup group, @NotNull KeymapManagerEx manager, @Nullable Keymap current, @NotNull Keymap keymap) {
-    group.add(new DumbAwareAction(keymap.getPresentableName(), "", keymap == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
+    group.add(new DumbAwareAction(keymap.getPresentableName(), "", keymap == current ? ourCurrentAction : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         manager.setActiveKeymap(keymap);

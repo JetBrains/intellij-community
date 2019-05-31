@@ -40,7 +40,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
     mySplitter.setSecondComponent(myDetailsPanel);
 
     UIUtil.putClientProperty(myMainPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() ->
-      JBIterable.from(myDetailsComponents).append(myMessagePanel).filter(component -> myDetailsPanel != component.getParent()).iterator());
+      JBIterable.from(myDetailsComponents).filter(component -> myDetailsPanel != component.getParent()).iterator());
   }
 
   @NotNull
@@ -83,15 +83,5 @@ class ServiceViewTreeUi implements ServiceViewUi {
     myDetailsPanel.add(component, BorderLayout.CENTER);
     myDetailsPanel.revalidate();
     myDetailsPanel.repaint();
-  }
-
-  @Nullable
-  @Override
-  public JComponent getDetailsComponent() {
-    int count = myDetailsPanel.getComponentCount();
-    if (count == 0) return null;
-
-    Component component = myDetailsPanel.getComponent(0);
-    return component == myMessagePanel ? null : (JComponent)component;
   }
 }

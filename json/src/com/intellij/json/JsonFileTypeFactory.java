@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
- *
  */
 public class JsonFileTypeFactory extends FileTypeFactory {
   @Override

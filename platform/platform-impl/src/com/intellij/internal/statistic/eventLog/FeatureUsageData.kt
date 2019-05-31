@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.execution.Executor
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.addPluginInfoTo
@@ -52,13 +51,6 @@ class FeatureUsageData {
     return this
   }
 
-  /**
-   * Project data is added automatically for project state collectors and project-wide counter events.
-   *
-   * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String)
-   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String, FeatureUsageData)
-   */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
       data["project"] = getProjectId(project)
@@ -81,10 +73,6 @@ class FeatureUsageData {
     return this
   }
 
-  /**
-   * Group by OS will be available without adding OS explicitly to event data.
-   */
-  @Deprecated("Don't add OS to event data")
   fun addOS(): FeatureUsageData {
     data["os"] = getOS()
     return this
@@ -169,10 +157,6 @@ class FeatureUsageData {
 
   private fun isCommonPlace(place: String): Boolean {
     return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
-  }
-
-  fun addExecutor(executor: Executor): FeatureUsageData {
-    return addData("executor", executor.id)
   }
 
   fun addValue(value: Any): FeatureUsageData {

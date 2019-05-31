@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.InferredAnnotationsManager;
+import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -198,12 +200,17 @@ public class ReturnNullInspection extends BaseInspection {
         }
       }
       final Project project = method.getProject();
-      final NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findEffectiveNullabilityInfo(method);
-      if (info != null && info.getNullability() == Nullability.NULLABLE && !info.isInferred()) {
+      final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(project);
+      final PsiAnnotation annotation = nullableNotNullManager.getNullableAnnotation(method, false);
+      final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
+      if (annotation != null && !inferredAnnotationsManager.isInferredAnnotation(annotation)) {
         return;
       }
-      if (DfaPsiUtil.getTypeNullability(returnType) == Nullability.NULLABLE) {
-        return;
+      for (PsiAnnotation typeAnnotation : returnType.getAnnotations()) {
+        if (NullableNotNullManager.isNullabilityAnnotation(typeAnnotation) &&
+            !inferredAnnotationsManager.isInferredAnnotation(typeAnnotation)) {
+          return;
+        }
       }
 
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {

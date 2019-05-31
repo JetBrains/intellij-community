@@ -2,8 +2,7 @@
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.idea.Main;
-import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,62 +19,42 @@ import java.util.Set;
 public class EAPUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
-  public String getGroupId() {
-    return "user.advanced.info";
-  }
-
-  @Override
-  public int getVersion() {
-    return 2;
+  public Set<UsageDescriptor> getUsages() {
+    return collectUsages();
   }
 
   @NotNull
-  @Override
-  public Set<MetricEvent> getMetrics() {
-    return collectMetrics();
-  }
-
-  @NotNull
-  private static Set<MetricEvent> collectMetrics() {
+  private static Set<UsageDescriptor> collectUsages() {
     try {
       if (!Main.isHeadless()) {
-        final Set<MetricEvent> result = new HashSet<>();
+        final Set<UsageDescriptor> result = new HashSet<>();
         if (ApplicationInfoEx.getInstanceEx().isEAP()) {
-          result.add(MetricEventFactoryKt.newMetric("eap"));
-          result.add(newBuildMetric("eap"));
+          result.add(new UsageDescriptor("eap", 1));
         }
         else {
-          result.add(MetricEventFactoryKt.newMetric("release"));
-          result.add(newBuildMetric("release"));
+          result.add(new UsageDescriptor("release", 1));
         }
         final LicensingFacade facade = LicensingFacade.getInstance();
         if (facade != null) {
           // non-eap commercial version
           if (facade.isEvaluationLicense()) {
-            result.add(MetricEventFactoryKt.newMetric("evaluation"));
-            result.add(newLicencingMetric("evaluation"));
+            result.add(new UsageDescriptor("evaluation", 1));
           }
           else if (!StringUtil.isEmpty(facade.getLicensedToMessage())){
-            result.add(MetricEventFactoryKt.newMetric("license"));
-            result.add(newLicencingMetric("license"));
+            result.add(new UsageDescriptor("license", 1));
           }
         }
         return result;
       }
     }
     catch (Throwable e) {
-      //ignore
     }
     return Collections.emptySet();
   }
 
   @NotNull
-  private static MetricEvent newLicencingMetric(@NotNull String value) {
-    return MetricEventFactoryKt.newMetric("licencing", value);
-  }
-
-  @NotNull
-  private static MetricEvent newBuildMetric(@NotNull String value) {
-    return MetricEventFactoryKt.newMetric("build", value);
+  @Override
+  public String getGroupId() {
+    return "user.advanced.info";
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -23,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -71,14 +67,6 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
       myFixture = null;
       super.tearDown();
     }
-  }
-
-  public void testAddedAnnotationInCodeWhenAlreadyPresent() {
-    PsiFile file = myFixture.configureByFile("src/withAnnotation/Foo.java");
-    PsiMethod method = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiMethod.class, false);
-    assertNotNull(method);
-    AddAnnotationPsiFix.createAddNullableFix(method).invoke(myFixture.getProject(), file, method, method);
-    myFixture.checkResultByFile("src/withAnnotation/Foo_after.java");
   }
 
   public void testRenameClassWithExternalAnnotations() {

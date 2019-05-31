@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
@@ -32,7 +31,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
     myWindow = window;
     AnAction original = ActionManager.getInstance().getAction(ACTION_ID);
     new ShadowAction(this, original, c, parentDisposable);
-    ActionUtil.copyFrom(this, ACTION_ID);
+    copyFrom(original);
   }
 
   @Override

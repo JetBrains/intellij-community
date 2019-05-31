@@ -16,13 +16,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import org.editorconfig.Utils;
-import org.editorconfig.core.EditorConfig;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.psi.EditorConfigElementTypes;
 import org.editorconfig.language.psi.EditorConfigHeader;
@@ -31,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.icons.AllIcons.General.InspectionsEye;
 
@@ -109,7 +108,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       VirtualFile previewFile =
-        choosePreviewFile(myHeader.getProject(), getRootDir(myHeader), getPattern(myHeader.getText()));
+        choosePreviewFile(myHeader.getProject(), getRootDir(myHeader), EditorConfigPreviewManager.extractExtensions(myHeader));
       if (previewFile != null) {
         VirtualFile editorConfigFile = myHeader.getContainingFile().getVirtualFile();
         openPreview(myHeader.getProject(), editorConfigFile, previewFile);
@@ -117,19 +116,15 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     }
   }
 
-  private static String getPattern(@NotNull String header) {
-    return StringUtil.trimEnd(StringUtil.trimStart(header, "["), "]");
-  }
-
   @Nullable
-  private static VirtualFile choosePreviewFile(@NotNull Project project, @NotNull VirtualFile rootDir, @NotNull String pattern) {
+  private static VirtualFile choosePreviewFile(@NotNull Project project, @NotNull VirtualFile rootDir, @NotNull List<String> extensions) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return (showHiddenFiles || !FileElement.isFileHidden(file))
           && !(Utils.EDITOR_CONFIG_FILE_NAME.equals(file.getName()))
           && (file.getLength() <= EditorConfigEditorProvider.MAX_PREVIEW_LENGTH)
-          && matchesPattern(rootDir, pattern, file.getPath()) || file.isDirectory();
+          && (extensions.isEmpty() || extensions.contains(file.getExtension()));
       }
 
       @Override
@@ -141,10 +136,6 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
       .createFileChooser(descriptor, project, null);
     final VirtualFile[] virtualFiles = fileChooser.choose(project, VirtualFile.EMPTY_ARRAY);
     return virtualFiles.length > 0 ? virtualFiles[0] : null;
-  }
-
-  private static boolean matchesPattern(@NotNull VirtualFile rootDir, @NotNull String pattern, @NotNull String filePath) {
-    return EditorConfig.filenameMatches(rootDir.getPath(), pattern, filePath);
   }
 
   @NotNull

@@ -5,7 +5,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
@@ -16,15 +15,14 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -36,16 +34,14 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 
 @SuppressWarnings("WeakerAccess")
-public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileListener {
+public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
   private final CompilerReferenceServiceBase<?> myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
@@ -204,25 +200,8 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
     return getDirtyScope().contains(file);
   }
 
-  @Nullable
   @Override
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-    final List<Module> modulesToBeMarkedDirty = getModulesToBeMarkedDirtyBefore(events);
-
-    return new ChangeApplier() {
-      @Override
-      public void beforeVfsChange() {
-        modulesToBeMarkedDirty.forEach(DirtyScopeHolder.this::addToDirtyModules);
-      }
-
-      @Override
-      public void afterVfsChange() {
-        after(events);
-      }
-    };
-  }
-
-  private void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent || event instanceof VFileCopyEvent || event instanceof VFileMoveEvent) {
         VirtualFile file = event.getFile();
@@ -240,20 +219,12 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
     }
   }
 
-  @Contract(pure=true)
-  @NotNull
-  private List<Module> getModulesToBeMarkedDirtyBefore(@NotNull List<? extends VFileEvent> events) {
-    final List<Module> modulesToBeMarkedDirty = new ArrayList<>();
-
+  @Override
+  public void before(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
-      ProgressManager.checkCanceled();
-
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFileContentChangeEvent) {
         VirtualFile file = event.getFile();
-        if (file != null) {
-          final Module module = getModuleForSourceContentFile(file);
-          ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
-        }
+        fileChanged(file);
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
@@ -262,17 +233,16 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
           final String path = pce.getFile().getPath();
           for (Module module : ModuleManager.getInstance(myService.getProject()).getModules()) {
             if (FileUtil.isAncestor(path, module.getModuleFilePath(), true)) {
-              modulesToBeMarkedDirty.add(module);
+              addToDirtyModules(module);
             }
           }
         }
       }
     }
-    return modulesToBeMarkedDirty;
   }
 
-  public void installVFSListener(@NotNull Disposable parentDisposable) {
-    VirtualFileManager.getInstance().addAsyncFileListener(this, parentDisposable);
+  public void installVFSListener() {
+    myService.getProject().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
   private void fileChanged(@NotNull VirtualFile file) {
@@ -281,7 +251,6 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
       addToDirtyModules(module);
     }
   }
-
   private void addToDirtyModules(@NotNull Module module) {
     synchronized (myLock) {
       if (myCompilationPhase) {

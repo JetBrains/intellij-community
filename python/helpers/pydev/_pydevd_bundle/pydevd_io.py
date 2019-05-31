@@ -3,41 +3,28 @@ from _pydevd_bundle import pydevd_constants
 IS_PY3K = pydevd_constants.IS_PY3K
 
 class IORedirector:
+    '''This class works to redirect the write function to many streams
     '''
-    This class works to wrap a stream (stdout/stderr) with an additional redirect.
-    '''
 
-    def __init__(self, original, new_redirect, wrap_buffer=False):
-        '''
-        :param stream original:
-            The stream to be wrapped (usually stdout/stderr).
-
-        :param stream new_redirect:
-            Usually IOBuf (below).
-
-        :param bool wrap_buffer:
-            Whether to create a buffer attribute (needed to mimick python 3 s
-            tdout/stderr which has a buffer to write binary data).
-        '''
-        self._redirect_to = (original, new_redirect)
-        if wrap_buffer and hasattr(original, 'buffer'):
-            self.buffer = IORedirector(original.buffer, new_redirect.buffer, False)
+    def __init__(self, *args):
+        self._redirectTo = args
 
     def write(self, s):
-        # Note that writing to the original stream may fail for some reasons
-        # (such as trying to write something that's not a string or having it closed).
-        for r in self._redirect_to:
-            r.write(s)
+        for r in self._redirectTo:
+            try:
+                r.write(s)
+            except:
+                pass
 
     def isatty(self):
-        return self._redirect_to[0].isatty()
+        return False
 
     def flush(self):
-        for r in self._redirect_to:
+        for r in self._redirectTo:
             r.flush()
 
     def __getattr__(self, name):
-        for r in self._redirect_to:
+        for r in self._redirectTo:
             if hasattr(r, name):
                 return r.__getattribute__(name)
         raise AttributeError(name)
@@ -45,6 +32,7 @@ class IORedirector:
 class IOBuf:
     '''This class works as a replacement for stdio and stderr.
     It is a buffer and when its contents are requested, it will erase what
+    
     it has so far so that the next return will not return the same contents again.
     '''
     def __init__(self):
@@ -54,17 +42,13 @@ class IOBuf:
 
     def getvalue(self):
         b = self.buflist
-        self.buflist = []  # clear it
-        return ''.join(b)  # bytes on py2, str on py3.
+        self.buflist = [] #clear it
+        return ''.join(b)
     
     def write(self, s):
         if not IS_PY3K:
             if isinstance(s, unicode):
-                # can't use 'errors' as kwargs in py 2.6
-                s = s.encode(self.encoding, 'replace')
-        else:
-            if isinstance(s, bytes):
-                s = s.decode(self.encoding, errors='replace')
+                s = s.encode(self.encoding)
         self.buflist.append(s)
 
     def isatty(self):
@@ -99,7 +83,7 @@ def start_redirect(keep_original_redirection=False, std='stdout'):
         stack.append(original)
 
         if keep_original_redirection:
-            setattr(sys, std, IORedirector(getattr(sys, std), buf))
+            setattr(sys, std, IORedirector(buf, getattr(sys, std)))
         else:
             setattr(sys, std, buf)
     return buf

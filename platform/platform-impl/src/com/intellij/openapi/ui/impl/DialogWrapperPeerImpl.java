@@ -37,7 +37,10 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
+import com.intellij.ui.AppIcon;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
@@ -421,12 +424,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDialog.getWindow().setAutoRequestFocus(!Registry.is("suppress.focus.stealing"));
 
-    if (SystemInfoRt.isMac) {
-      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
-      if (tb != null) {
-        myDisposeActions.add(() -> Disposer.dispose(tb));
-      }
-    }
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
+    if (tb != null)
+      myDisposeActions.add(() -> Disposer.dispose(tb));
 
     try {
       myDialog.show();
@@ -436,8 +436,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         commandProcessor.leaveModal();
         if (perProjectModality) {
           LaterInvocator.leaveModal(project, myDialog.getWindow());
-        }
-        else {
+        } else {
           LaterInvocator.leaveModal(myDialog);
         }
       }
@@ -467,8 +466,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       if (StackingPopupDispatcher.getInstance().isPopupFocused()) return;
-      JTree tree = ComponentUtil.getParentOfType((Class<? extends JTree>)JTree.class, focusOwner);
-      JTable table = ComponentUtil.getParentOfType((Class<? extends JTable>)JTable.class, focusOwner);
+      JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
+      JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
 
       if (tree != null || table != null) {
         if (hasNoEditingTreesOrTablesUpward(focusOwner)) {
@@ -821,10 +820,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
             c.invalidate();
           });
 
-          JComponent rootPane = ((JDialog)e.getComponent()).getRootPane();
-          if (rootPane != null) {
-            rootPane.revalidate();
-          }
           e.getComponent().repaint();
 
           if (activeWrapper == null) {

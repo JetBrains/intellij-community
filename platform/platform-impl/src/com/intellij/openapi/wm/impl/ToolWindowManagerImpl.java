@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.ex.*;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -131,7 +130,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     awtFocusListener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
-        if (myProject.isDisposed()) return;
         assert event instanceof FocusEvent;
         FocusEvent focusEvent = (FocusEvent)event;
         if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
@@ -1418,7 +1416,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Component owner = getFocusManager().getFocusOwner();
-    EditorsSplitters splitters = ComponentUtil.getParentOfType((Class<? extends EditorsSplitters>)EditorsSplitters.class, owner);
+    EditorsSplitters splitters = UIUtil.getParentOfType(EditorsSplitters.class, owner);
     return splitters != null;
   }
 

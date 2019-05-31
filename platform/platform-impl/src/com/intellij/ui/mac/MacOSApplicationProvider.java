@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,6 +80,8 @@ public final class MacOSApplicationProvider {
       if (JnaLoader.isLoaded()) {
         installAutoUpdateMenu();
       }
+
+      TouchBarsManager.onApplicationInitialized();
     }
 
     private static void installAutoUpdateMenu() {

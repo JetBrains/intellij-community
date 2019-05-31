@@ -19,9 +19,9 @@ import java.util.stream.Stream;
 
 public class TroveUtil {
   @NotNull
-  public static <T> Stream<T> streamValues(@NotNull TIntObjectHashMap<? extends T> map) {
-    TIntObjectIterator<? extends T> it = map.iterator();
-    return Stream.<T>generate(() -> {
+  public static <T> Stream<T> streamValues(@NotNull TIntObjectHashMap<T> map) {
+    TIntObjectIterator<T> it = map.iterator();
+    return Stream.generate(() -> {
       it.advance();
       return it.value();
     }).limit(map.size());
@@ -44,13 +44,13 @@ public class TroveUtil {
 
   @Nullable
   public static TIntHashSet intersect(@NotNull TIntHashSet... sets) {
+    TIntHashSet result = null;
 
     Arrays.sort(sets, (set1, set2) -> {
       if (set1 == null) return -1;
       if (set2 == null) return 1;
       return set1.size() - set2.size();
     });
-    TIntHashSet result = null;
     for (TIntHashSet set : sets) {
       result = intersect(result, set);
     }
@@ -60,7 +60,12 @@ public class TroveUtil {
 
   public static boolean intersects(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
     if (set1.size() <= set2.size()) {
-      return !set1.forEach(value -> !set2.contains(value));
+      return !set1.forEach(value -> {
+        if (set2.contains(value)) {
+          return false;
+        }
+        return true;
+      });
     }
     return intersects(set2, set1);
   }
@@ -247,7 +252,11 @@ public class TroveUtil {
   }
 
   public static <T> void add(@NotNull Map<? super T, TIntHashSet> targetMap, @NotNull T key, int value) {
-    TIntHashSet set = targetMap.computeIfAbsent(key, __ -> new TIntHashSet());
+    TIntHashSet set = targetMap.get(key);
+    if (set == null) {
+      set = new TIntHashSet();
+      targetMap.put(key, set);
+    }
     set.add(value);
   }
 

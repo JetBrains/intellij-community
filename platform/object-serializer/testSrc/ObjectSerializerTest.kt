@@ -22,11 +22,6 @@ class ObjectSerializerTest {
   }
 
   @Test
-  fun threadLocalPooledBlockAllocatorProvider() {
-    testThreadLocalPooledBlockAllocatorProvider()
-  }
-
-  @Test
   fun `same bean binding regardless of type parameters`() {
     val serializer = ObjectSerializer()
     getBinding(TestGenericBean::class.java, serializer)
@@ -124,7 +119,6 @@ class ObjectSerializerTest {
   fun `file and path`() {
     assumeTrue(!SystemInfoRt.isWindows)
 
-    @Suppress("unused")
     class TestBean {
       @JvmField
       var f = File("/foo")
@@ -188,7 +182,7 @@ private class Rectangle : Shape {
 
 
 internal enum class TestEnum {
-  RED, BLUE
+  RED, GREEN, BLUE
 }
 
 private class TestEnumBean {

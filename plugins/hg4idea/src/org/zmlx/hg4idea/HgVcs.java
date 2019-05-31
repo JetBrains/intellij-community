@@ -124,7 +124,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
     historyProvider = new HgHistoryProvider(project);
-    checkinEnvironment = new HgCheckinEnvironment(this);
+    checkinEnvironment = new HgCheckinEnvironment(project);
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
     committedChangesProvider = new HgCommittedChangesProvider(project, this);

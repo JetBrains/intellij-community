@@ -105,8 +105,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         }
         final MethodCandidateInfo currentMethod = session.getCurrentMethod(((PsiCall)myExpression).getArgumentList());
         final JavaResolveResult resolveResult = currentMethod != null ? currentMethod : PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)myExpression);
-        if (resolveResult instanceof MethodCandidateInfo && callSession.isErased()) {
-          ((MethodCandidateInfo)resolveResult).setErased();
+        if (resolveResult instanceof MethodCandidateInfo) {
+          ((MethodCandidateInfo)resolveResult).setErased(callSession.isErased());
         }
       }
       return true;

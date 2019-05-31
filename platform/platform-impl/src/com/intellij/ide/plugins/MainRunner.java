@@ -17,10 +17,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public final class MainRunner {
+// NOTE: If you move this class to a different module, make sure to update BootstrapClassLoaderUtil.MAIN_RUNNER_JAR
+public class MainRunner {
   public static WindowsCommandLineListener LISTENER;
 
   @SuppressWarnings("StaticNonFinalField")
@@ -30,9 +33,13 @@ public final class MainRunner {
    * Called via reflection
    */
   @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
-  private static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args,
-                            @NotNull LinkedHashMap<String, Long> startupTimings) {
-    StartUpMeasurer.addTimings(startupTimings, "bootstrap");
+  protected static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args,
+                              @NotNull LinkedHashMap<String, Long> startupTimings) {
+    ArrayList<Map.Entry<String, Long>> entries = new ArrayList<>(startupTimings.entrySet());
+    for (int i = 0; i < entries.size(); i++) {
+      long end = i == entries.size() - 1 ? System.nanoTime() : entries.get(i + 1).getValue();
+      StartUpMeasurer.record(entries.get(i).getKey(), entries.get(i).getValue(), end);
+    }
 
     startupStart = StartUpMeasurer.start(StartUpMeasurer.Phases.PREPARE_TO_INIT_APP);
 
@@ -165,10 +172,9 @@ public final class MainRunner {
 
   // Called via reflection from WindowsCommandLineProcessor.processWindowsLauncherCommandLine
   @SuppressWarnings("unused")
-  public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
+  public static void processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
     if (LISTENER != null) {
-      return LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
+      LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
     }
-    return 1;
   }
 }

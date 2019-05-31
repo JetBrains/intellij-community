@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,6 @@ public class SvnEditCommitMessageDialog extends DialogWrapper {
     wrapper.add(labelPanel, BorderLayout.WEST);
     parentPanel.add(wrapper, BorderLayout.NORTH);
     myCommitMessage = new CommitMessage(myProject, false, true, true);
-    Disposer.register(getDisposable(), myCommitMessage);
     myCommitMessage.setText(myOldText);
     parentPanel.add(myCommitMessage, BorderLayout.CENTER);
     return parentPanel;

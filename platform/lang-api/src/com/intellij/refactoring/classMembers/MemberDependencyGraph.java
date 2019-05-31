@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +21,23 @@ import com.intellij.psi.PsiElement;
 import java.util.Set;
 
 public interface MemberDependencyGraph<T extends PsiElement, M extends MemberInfoBase<T>> {
-
   /**
-   * Call this to notify that a new memberInfo has been added
-   * or the state of some memberInfo has been changed.
+   * Call this to notify that a new member info have been added
+   * or a state of some memberInfo have been changed.
+   * @param memberInfo
    */
   void memberChanged(M memberInfo);
 
   /**
    * Returns class members that are dependent on checked MemberInfos.
-   *
    * @return set of PsiMembers
    */
   Set<? extends T> getDependent();
 
   /**
    * Returns PsiMembers of checked MemberInfos that member depends on.
-   * Member should belong to {@link #getDependent()}.
-   *
+   * member should belong to getDependent()
+   * @param member
    * @return set of PsiMembers
    */
   Set<? extends T> getDependenciesOf(T member);

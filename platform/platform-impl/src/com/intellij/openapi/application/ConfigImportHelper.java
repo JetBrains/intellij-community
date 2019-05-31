@@ -10,7 +10,6 @@ import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,15 +73,15 @@ public final class ConfigImportHelper {
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
 
-    Ref<Pair<Path, Path>> result = new Ref<>();
-    SplashManager.executeWithHiddenSplash(dialog, () -> {
-      dialog.setVisible(true);
-      result.set(dialog.getSelectedFile());
-      dialog.dispose();
-    });
+    SplashManager.setVisible(false);
+    dialog.setVisible(true);
 
-    if (!result.isNull()) {
-      doImport(result.get().first, newConfigDir, result.get().second, log);
+    Pair<Path, Path> result = dialog.getSelectedFile();
+    dialog.dispose();
+    SplashManager.setVisible(true);
+
+    if (result != null) {
+      doImport(result.first, newConfigDir, result.second, log);
       if (settings != null) {
         settings.importFinished(newConfigDir);
       }

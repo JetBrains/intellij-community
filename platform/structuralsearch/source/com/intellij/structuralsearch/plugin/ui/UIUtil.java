@@ -25,7 +25,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -198,9 +197,6 @@ public class UIUtil {
     completeMatchInfo.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent ignore) {
-        if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips") && Registry.is("ssr.use.new.search.dialog")) {
-          return;
-        }
         final Configuration configuration = configurationProducer.get();
         if (configuration == null) {
           return;
@@ -262,10 +258,10 @@ public class UIUtil {
 
   public static LanguageFileType detectFileType(@NotNull SearchContext searchContext) {
     final PsiFile file = searchContext.getFile();
-    PsiElement context = null;
+    PsiElement context = file;
 
     final Editor editor = searchContext.getEditor();
-    if (editor != null && file != null) {
+    if (editor != null && context != null) {
       final int offset = editor.getCaretModel().getOffset();
       context = InjectedLanguageManager.getInstance(searchContext.getProject()).findInjectedElementAt(file, offset);
       if (context == null) {
@@ -273,9 +269,6 @@ public class UIUtil {
       }
       if (context != null) {
         context = context.getParent();
-      }
-      if (context == null) {
-        context = file;
       }
     }
     if (context != null) {
@@ -290,10 +283,9 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect,
-                                        PatternContext patternContext, @NotNull String text, @NotNull StructuralSearchProfile profile) {
-    final String contextId = (patternContext == null) ? null : patternContext.getId();
-    PsiFile codeFragment = profile.createCodeFragment(project, text, contextId);
+  public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
+                                        @NotNull StructuralSearchProfile profile) {
+    PsiFile codeFragment = profile.createCodeFragment(project, text);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }
@@ -310,7 +302,7 @@ public class UIUtil {
   @NotNull
   public static Editor createEditor(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
                                     @NotNull StructuralSearchProfile profile) {
-    PsiFile codeFragment = profile.createCodeFragment(project, text, null);
+    PsiFile codeFragment = profile.createCodeFragment(project, text);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }

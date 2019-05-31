@@ -4,7 +4,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -177,8 +176,7 @@ public class JBScrollPane extends JScrollPane {
                 }
                 if (!event.isConsumed()) {
                   // try to process a mouse wheel event by outer scroll pane
-                  MouseEventAdapter.redispatch(event, ComponentUtil
-                    .getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)pane.getParent()));
+                  MouseEventAdapter.redispatch(event, UIUtil.getParentOfType(JScrollPane.class, pane.getParent()));
                 }
               }
             }

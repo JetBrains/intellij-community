@@ -71,20 +71,6 @@ class JBNavigateCommandTest : PlatformTestCase() {
   }
 
   @Bombed(year = 2019, month = 7, day = 1, user = "dima")
-  fun testFqnMultipleMethods() {
-    val project = configureProject()
-
-    navigate(project.name, mapOf("fqn1" to "A1#main1",
-                                 "fqn2" to "A2#main2"))
-
-    UIUtil.dispatchAllInvocationEvents()
-    val elements = getCurrentElements(project)
-    TestCase.assertEquals(elements[0].name, "main1")
-    TestCase.assertEquals(elements[1].name, "main2")
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-  }
-
-  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
   fun testFqnConstant() {
     val project = configureProject()
 
@@ -142,18 +128,13 @@ class JBNavigateCommandTest : PlatformTestCase() {
   }
 
   private fun getCurrentElement(project: Project): NavigatablePsiElement {
-    return getCurrentElements(project)[0]
-  }
+    val editor = FileEditorManager.getInstance(project).selectedEditor
+    val textEditor = editor as TextEditor
+    val offset = textEditor.editor.caretModel.offset
+    val file = editor.file
+    val psiFile = PsiManager.getInstance(project).findFile(file!!)
 
-  private fun getCurrentElements(project: Project): List<NavigatablePsiElement> {
-    return FileEditorManager.getInstance(project).allEditors.map {
-      val textEditor = it as TextEditor
-      val offset = textEditor.editor.caretModel.offset
-      val file = it.file
-      val psiFile = PsiManager.getInstance(project).findFile(file!!)
-
-      PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
-    }
+    return PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
   }
 
   private fun navigate(projectName: String, parameters: Map<String, String>) {

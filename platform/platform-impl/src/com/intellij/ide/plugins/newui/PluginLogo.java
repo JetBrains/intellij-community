@@ -194,7 +194,7 @@ public class PluginLogo {
       downloadFile(idPlugin, darkFile, "&theme=DARCULA");
     }
     catch (Exception e) {
-      LOG.debug(e);
+      LOG.error(e);
     }
 
     if (ApplicationManager.getApplication().isDisposed()) {
@@ -242,7 +242,7 @@ public class PluginLogo {
       }
     }
     catch (Exception e) {
-      LOG.debug(e);
+      LOG.error(e);
     }
     return false;
   }
@@ -260,7 +260,7 @@ public class PluginLogo {
     catch (HttpRequests.HttpStatusException ignore) {
     }
     catch (IOException e) {
-      LOG.debug(e);
+      LOG.info(e);
     }
   }
 
@@ -319,7 +319,7 @@ public class PluginLogo {
       return new HiDPIPluginLogoIcon(logo40, logo80);
     }
     catch (IOException e) {
-      LOG.debug(e);
+      LOG.error(e);
       return null;
     }
   }

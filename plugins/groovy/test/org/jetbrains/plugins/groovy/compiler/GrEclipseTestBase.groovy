@@ -6,21 +6,18 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.JarFileSystem
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.RepositoryTestLibrary
 
 @CompileStatic
 abstract class GrEclipseTestBase extends GroovyCompilerTest {
 
-  protected abstract String getGrEclipseArtifactID()
+  protected abstract String getGrEclipsePath()
 
   @Override
   protected void setUp() {
     super.setUp()
     ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).defaultCompiler = new GreclipseIdeaCompiler(project)
-    def jarRoot = RepositoryTestLibrary.loadRoots(project, grEclipseArtifactID)[0].file
-    GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = JarFileSystem.instance.getVirtualFileForJar(jarRoot).path
+    GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = grEclipsePath
   }
 
   @Override

@@ -15,11 +15,8 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.history.EMPTY_HISTORY
-import com.intellij.vcs.log.history.FileHistoryBuilder
 import com.intellij.vcs.log.history.FileHistoryData
 import com.intellij.vcs.log.history.removeTrivialMerges
 import com.intellij.vcs.log.impl.HashImpl
@@ -31,7 +28,6 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromHashes
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
 import gnu.trove.TIntHashSet
-import java.util.function.BiConsumer
 import java.util.stream.Collectors
 
 class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvider>,
@@ -134,28 +130,22 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                          matchingHeads: Set<Int>?,
                          matchingCommits: Set<Int>?,
                          fileHistoryData: FileHistoryData? = null): VisibleGraph<Int> {
-    if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
-      return EmptyVisibleGraph.getInstance()
+    return if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
+      EmptyVisibleGraph.getInstance()
     }
-
-    val permanentGraph = dataPack.permanentGraph
-    if (permanentGraph !is PermanentGraphImpl || fileHistoryData == null) {
-      return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits)
-    }
-
-    if (fileHistoryData.startPaths.size == 1 && fileHistoryData.startPaths.single().isDirectory) {
-      val unmatchedRenames = matchingCommits?.let { fileHistoryData.getCommitsWithRenames().subtract(it) } ?: emptySet()
-      val preprocessor = FileHistoryBuilder(null, fileHistoryData.startPaths.single(), fileHistoryData,
-                                            EMPTY_HISTORY, unmatchedRenames)
-      return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits?.union(unmatchedRenames), preprocessor)
-    }
-
-    val preprocessor = BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> { controller, permanentGraphInfo ->
-      removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
-        LOG.debug("Removed ${trivialMerges.size} trivial merges")
+    else {
+      val permanentGraph = dataPack.permanentGraph
+      if (permanentGraph !is PermanentGraphImpl || fileHistoryData == null) {
+        permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits)
+      }
+      else {
+        permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits) { controller, permanentGraphInfo ->
+          removeTrivialMerges(controller, permanentGraphInfo, fileHistoryData) { trivialMerges ->
+            LOG.debug("Removed ${trivialMerges.size} trivial merges")
+          }
+        }
       }
     }
-    return permanentGraph.createVisibleGraph(sortType, matchingHeads, matchingCommits, preprocessor)
   }
 
   private fun filterByDetails(dataPack: DataPack,
@@ -261,7 +251,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val structureFilter = detailsFilters.filterIsInstance(VcsLogStructureFilter::class.java).singleOrNull()
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
-    val historyData = dataGetter.createFileHistoryData(structureFilter.files).build()
+    val historyData = dataGetter.createFileHistoryData(structureFilter.files)
     val candidates = TroveUtil.intersect(TroveUtil.createTroveSet(historyData.getCommits()), commitCandidates)
 
     val filtersWithoutStructure = detailsFilters.filterNot { it is VcsLogStructureFilter }

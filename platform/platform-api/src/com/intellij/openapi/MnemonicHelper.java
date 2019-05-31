@@ -4,17 +4,14 @@ package com.intellij.openapi;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentTreeWatcher;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +24,6 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.IntPredicate;
 
 /**
  * Automatically locates &amp; characters in texts of buttons and labels on a component or dialog,
@@ -36,13 +32,11 @@ import java.util.function.IntPredicate;
  * @author lesya
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
-  private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.MnemonicHelper");
 
-  public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
+  public static final String TEXT_CHANGED_PROPERTY = "text";
 
-  private static final String TEXT_CHANGED_PROPERTY = "text";
-
-  private static final PropertyChangeListener ourTextPropertyListener = new PropertyChangeListener() {
+  public static final PropertyChangeListener ourTextPropertyListener = new PropertyChangeListener() {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
       Object source = event.getSource();
@@ -168,24 +162,6 @@ public class MnemonicHelper extends ComponentTreeWatcher {
     else {
       ourMnemonicFixer.addTo(component);
     }
-  }
-
-  public static boolean hasMnemonic(@Nullable Component component, int keyCode) {
-    if (component instanceof AbstractButton) {
-      AbstractButton button = (AbstractButton)component;
-      if (button instanceof JBOptionButton) {
-        return ((JBOptionButton)button).isOkToProcessDefaultMnemonics() ||
-               button.getMnemonic() == keyCode;
-      }
-      else {
-        return button.getMnemonic() == keyCode;
-      }
-    }
-    if (component instanceof JLabel) {
-      return ((JLabel)component).getDisplayedMnemonic() == keyCode;
-    }
-    IntPredicate checker = UIUtil.getClientProperty(component, MNEMONIC_CHECKER);
-    return checker != null && checker.test(keyCode);
   }
 
   private static final MnemonicFixer ourMnemonicFixer = new MnemonicFixer();

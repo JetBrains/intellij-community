@@ -181,12 +181,10 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     }
   }
 
-  @NotNull
-  public JList<T> getList() {
+  public JList getList() {
     return myList;
   }
 
-  @NotNull
   public JScrollPane getScrollPane() {
     return myScrollPane;
   }

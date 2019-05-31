@@ -5,7 +5,6 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -53,9 +52,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   @Override
   public void tearDown() {
     Project project = getProject();
-    if (project != null) {
-      CodeStyle.dropTemporarySettings(project);
-    }
+    CodeStyle.dropTemporarySettings(project);
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -66,17 +63,13 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
         }
       })
       .append(() -> {
-        if (project != null) {
-          PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
-        }
+        PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
       })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
       .append(() -> {
         myProject = null;
         myModule = null;
-        if (project != null) {
-          LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
-        }
+        LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
       })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> {
@@ -86,11 +79,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
         }
       })
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
-      .append(() -> {
-        if (ApplicationManager.getApplication() != null) {
-          PersistentFS.getInstance().clearIdCache();
-        }
-      })
+      .append(() -> PersistentFS.getInstance().clearIdCache())
       .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
       .run();
   }

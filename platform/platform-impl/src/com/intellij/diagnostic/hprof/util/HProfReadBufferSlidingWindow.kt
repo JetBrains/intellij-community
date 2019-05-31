@@ -16,7 +16,7 @@
 package com.intellij.diagnostic.hprof.util
 
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
-import com.intellij.util.io.ByteBufferUtil
+import sun.nio.ch.DirectBuffer
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
@@ -34,7 +34,12 @@ class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HPr
   }
 
   override fun close() {
-    ByteBufferUtil.cleanBuffer(buffer)
+    try {
+      (buffer as? DirectBuffer)?.cleaner()?.clean()
+    }
+    catch (ex: Exception) {
+      // ignore
+    }
   }
 
   override fun position(newPosition: Long) {
@@ -53,7 +58,7 @@ class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HPr
     bufferOffset = newPosition
 
     // Force clean up previous buffer
-    ByteBufferUtil.cleanBuffer(oldBuffer)
+    (oldBuffer as? DirectBuffer)?.cleaner()?.clean()
   }
 
   override fun isEof(): Boolean {

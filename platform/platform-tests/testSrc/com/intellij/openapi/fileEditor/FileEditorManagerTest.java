@@ -31,6 +31,7 @@ import java.util.List;
  */
 @SuppressWarnings("ConstantConditions")
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
+
   public void testTabOrder() throws Exception {
 
     openFiles(STRING);

@@ -35,7 +35,6 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -86,12 +85,12 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   @Override
-  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+  public void onEvent(@NotNull BuildEvent event) {
     if (event instanceof StartBuildEvent) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        onStartBuild(buildId, (StartBuildEvent)event);
+        onStartBuild((StartBuildEvent)event);
         for (BuildEvent buildEvent : myAfterStartEvents) {
-          processEvent(buildId, buildEvent);
+          processEvent(buildEvent);
         }
         myAfterStartEvents.clear();
         isBuildStartEventProcessed.set(true);
@@ -103,26 +102,26 @@ public class BuildView extends CompositeView<ExecutionConsole>
       myAfterStartEvents.add(event);
     }
     else {
-      processEvent(buildId, event);
+      processEvent(event);
     }
   }
 
-  private void processEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
+  private void processEvent(BuildEvent event) {
     if (event instanceof OutputBuildEvent && (event.getParentId() == null || event.getParentId() == myBuildDescriptor.getId())) {
       ExecutionConsole consoleView = getConsoleView();
       if (consoleView instanceof BuildProgressListener) {
-        ((BuildProgressListener)consoleView).onEvent(buildId, event);
+        ((BuildProgressListener)consoleView).onEvent(event);
       }
     }
     else {
       BuildTreeConsoleView eventView = getEventView();
       if (eventView != null) {
-        EdtExecutorService.getInstance().execute(() -> eventView.onEvent(buildId, event));
+        EdtExecutorService.getInstance().execute(() -> eventView.onEvent(event));
       }
     }
   }
 
-  private void onStartBuild(@NotNull Object buildId, @NotNull StartBuildEvent startBuildEvent) {
+  private void onStartBuild(StartBuildEvent startBuildEvent) {
     myStartBuildEventRef.set(startBuildEvent);
     if (startBuildEvent instanceof StartBuildEventImpl) {
       myViewSettingsProvider = ((StartBuildEventImpl)startBuildEvent).getBuildViewSettingsProvider();
@@ -182,7 +181,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
     }
 
     if (eventView != null) {
-      eventView.onEvent(buildId, startBuildEvent);
+      eventView.onEvent(startBuildEvent);
     }
   }
 
@@ -291,8 +290,11 @@ public class BuildView extends CompositeView<ExecutionConsole>
     StartBuildEvent startBuildEvent = myStartBuildEventRef.get();
     if (startBuildEvent != null && startBuildEvent.getProcessHandler() != null) {
       stopAction = new StopProcessAction("Stop", "Stop", startBuildEvent.getProcessHandler());
-      ActionUtil.copyFrom(stopAction, IdeActions.ACTION_STOP_PROGRAM);
-      stopAction.registerCustomShortcutSet(stopAction.getShortcutSet(), this);
+      AnAction generalStopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
+      if (generalStopAction != null) {
+        stopAction.copyFrom(generalStopAction);
+        stopAction.registerCustomShortcutSet(generalStopAction.getShortcutSet(), this);
+      }
     }
     final DefaultActionGroup consoleActionGroup = new DefaultActionGroup() {
       @Override

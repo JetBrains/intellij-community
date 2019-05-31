@@ -42,7 +42,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   private Dimension myBalloonFullSize;
 
   private final SearchHistoryList myHistoryList = new SearchHistoryList();
-  private final Map<String, Object> myPrevSelections = new HashMap<>();
   private HistoryIterator myHistoryIterator;
   private boolean myEverywhere;
 
@@ -270,12 +269,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     if (!searchText.isEmpty()) {
       myHistoryList.saveText(searchText, mySearchEverywhereUI.getSelectedContributorID());
     }
-    myPrevSelections.put(mySearchEverywhereUI.getSelectedContributorID(), mySearchEverywhereUI.getSelectionIdentity());
-  }
-
-  @Nullable
-  Object getPrevSelection(String contributorID) {
-    return myPrevSelections.remove(contributorID);
   }
 
   private void saveSize() {

@@ -34,7 +34,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
@@ -332,13 +331,13 @@ public class AboutPopup {
       GraphicsConfig config = new GraphicsConfig(g);
       UISettings.setupAntialiasing(g);
 
-      Font labelFont = JBFont.label();
+      Font labelFont = JBUI.Fonts.label();
       if (SystemInfoRt.isWindows) {
         labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
       }
 
       int startFontSize = 14;
-      for (int labelSize = JBUIScale.scale(startFontSize); labelSize != JBUIScale.scale(6); labelSize -= 1) {
+      for (int labelSize = JBUI.scale(startFontSize); labelSize != JBUI.scale(6); labelSize -= 1) {
         myLinks.clear();
         g2.setPaint(myColor);
         myImage.paintIcon(this, g2, 0, 0);
@@ -722,7 +721,7 @@ public class AboutPopup {
 
       @Override
       protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(JBUIScale.scale(5), JBUIScale.scale(5)));
+        JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
 
         JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         viewer.setFocusable(true);
@@ -737,7 +736,7 @@ public class AboutPopup {
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
         styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
-        styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)14) + "pt;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(14) + "pt;}");
 
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
@@ -761,7 +760,7 @@ public class AboutPopup {
 
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
-          matcher.appendReplacement(sb, JBUIScale.scale(Integer.parseInt(matcher.group(1))) + "px");
+          matcher.appendReplacement(sb, JBUI.scale(Integer.parseInt(matcher.group(1))) + "px");
         }
         matcher.appendTail(sb);
 
@@ -773,7 +772,7 @@ public class AboutPopup {
     dialog.setTitle(String.format("Third-Party Software Used by %s %s",
                                   ApplicationNamesInfo.getInstance().getFullProductName(),
                                   ApplicationInfo.getInstance().getFullVersion()));
-    dialog.setSize(JBUIScale.scale(750), JBUIScale.scale(650));
+    dialog.setSize(JBUI.scale(750), JBUI.scale(650));
     dialog.show();
   }
 }

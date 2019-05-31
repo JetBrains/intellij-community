@@ -1,23 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.google.common.jimfs.Jimfs;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.Rule;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.StringUtil;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -25,32 +22,59 @@ import static org.junit.Assume.assumeTrue;
  * @author Irina.Chernushina, lene
  */
 public class FileUtilHeavyTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  private static File myTempDirectory;
+  private static File myVisitorTestDirectory;
+  private static File myFindTestDirectory;
+  private static File myFindTestFirstFile;
+  private static File myFindTestSecondFile;
+
+  @BeforeClass
+  public static void setUp() throws IOException {
+    myTempDirectory = FileUtil.createTempDirectory("FileUtilHeavyTest.", ".tmp");
+
+    myVisitorTestDirectory = IoTestUtil.createTestDir(myTempDirectory, "visitor_test_dir");
+    File dir1 = IoTestUtil.createTestDir(myVisitorTestDirectory, "dir1");
+    IoTestUtil.createTestFile(dir1, "1");
+    IoTestUtil.createTestFile(dir1, "2");
+    File dir2 = IoTestUtil.createTestDir(myVisitorTestDirectory, "dir2");
+    IoTestUtil.createTestFile(dir2, "1");
+    IoTestUtil.createTestFile(dir2, "2");
+    File dir21 = IoTestUtil.createTestDir(dir2, "inner");
+    IoTestUtil.createTestFile(dir21, "1");
+    IoTestUtil.createTestFile(dir21, "2");
+
+    myFindTestDirectory = IoTestUtil.createTestDir(myTempDirectory, "find_file_test_dir");
+    myFindTestFirstFile = IoTestUtil.createTestFile(myFindTestDirectory, "first");
+    myFindTestSecondFile = IoTestUtil.createTestFile(myFindTestDirectory, "second");
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    if (myTempDirectory != null) {
+      FileUtil.delete(myTempDirectory);
+    }
+  }
 
   @Test
-  public void testProcessSimple() throws IOException {
-    setupVisitorTestDirectories();
-
-    Map<String, Integer> result = new HashMap<>();
-    FileUtil.processFilesRecursively(tempDir.getRoot(), file -> {
+  public void testProcessSimple() {
+    final Map<String, Integer> result = new HashMap<>();
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
       Integer integer = result.get(file.getName());
       result.put(file.getName(), integer == null ? 1 : (integer + 1));
       return true;
     });
 
     assertEquals(6, result.size());
-    assertEquals(1, result.get(tempDir.getRoot().getName()).intValue());
+    assertEquals(1, result.get(myVisitorTestDirectory.getName()).intValue());
     assertEquals(3, result.get("1").intValue());
     assertEquals(3, result.get("2").intValue());
     assertEquals(1, result.get("dir1").intValue());
   }
 
   @Test
-  public void testProcessStops() throws IOException {
-    setupVisitorTestDirectories();
-
-    int[] cnt = {0};
-    FileUtil.processFilesRecursively(tempDir.getRoot(), file -> {
+  public void testProcessStops() {
+    final int[] cnt = new int[]{0};
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
       ++cnt[0];
       return false;
     });
@@ -59,19 +83,16 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  @SuppressWarnings("deprecation")
-  public void testProcessDirectoryFilter() throws IOException {
-    setupVisitorTestDirectories();
-
-    Map<String, Integer> result = new HashMap<>();
-    FileUtil.processFilesRecursively(tempDir.getRoot(), file -> {
+  public void testProcessDirectoryFilter() {
+    final Map<String, Integer> result = new HashMap<>();
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, file -> {
       Integer integer = result.get(file.getName());
       result.put(file.getName(), integer == null ? 1 : (integer + 1));
       return true;
     }, file -> ! "dir2".equals(file.getName()));
 
     assertEquals(5, result.size());
-    assertEquals(1, result.get(tempDir.getRoot().getName()).intValue());
+    assertEquals(1, result.get(myVisitorTestDirectory.getName()).intValue());
     assertEquals(1, result.get("1").intValue());
     assertEquals(1, result.get("2").intValue());
     assertEquals(1, result.get("dir1").intValue());
@@ -79,77 +100,66 @@ public class FileUtilHeavyTest {
     assertNull(result.get("dir21"));
   }
 
-  private void setupVisitorTestDirectories() throws IOException {
-    tempDir.newFile("dir1/1");
-    tempDir.newFile("dir1/2");
-    tempDir.newFile("dir2/1");
-    tempDir.newFile("dir2/2");
-    tempDir.newFile("dir2/inner/1");
-    tempDir.newFile("dir2/inner/2");
-  }
-
   @Test
   public void nonExistingFileInNonExistentDirectory() {
-    assertThat(FileUtil.findFileInProvidedPath("123", "zero")).isNullOrEmpty();
+    String path = FileUtil.findFileInProvidedPath("123", "zero");
+    assertTrue(StringUtil.isEmpty(path));
   }
 
   @Test
   public void nonExistingFileInDirectory() {
-    assertThat(FileUtil.findFileInProvidedPath(tempDir.getRoot().getPath(), "zero")).isNullOrEmpty();
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "zero");
+    assertTrue(StringUtil.isEmpty(path));
   }
 
   @Test
-  public void nonExistingFile() throws IOException {
-    File first = tempDir.newFile("first");
-    assertThat(FileUtil.findFileInProvidedPath(first.getPath() + "123", first.getName() + "123")).isNullOrEmpty();
+  public void nonExistingFile() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath() + "123", myFindTestFirstFile.getName() + "123");
+    assertTrue(StringUtil.isEmpty(path));
   }
 
   @Test
-  public void existingFileInDirectory() throws IOException {
-    File first = tempDir.newFile("first");
-    assertThat(FileUtil.findFileInProvidedPath(tempDir.getRoot().getPath(), "first")).isEqualTo(first.getPath());
+  public void existingFileInDirectory() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "first");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
   }
 
   @Test
-  public void existingFile() throws IOException {
-    File first = tempDir.newFile("first");
-    assertThat(FileUtil.findFileInProvidedPath(first.getPath(), "first")).isEqualTo(first.getPath());
+  public void existingFile() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "first");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
   }
 
   @Test
-  public void twoFilesOrderInDirectory() throws IOException {
-    File first = tempDir.newFile("first");
-    tempDir.newFile("second");
-    assertThat(FileUtil.findFileInProvidedPath(tempDir.getRoot().getPath(), "first", "second")).isEqualTo(first.getPath());
+  public void twoFilesOrderInDirectory() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "first", "second");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
   }
 
   @Test
-  public void twoFilesOrderInDirectory2() throws IOException {
-    tempDir.newFile("first");
-    File second = tempDir.newFile("second");
-    assertThat(FileUtil.findFileInProvidedPath(tempDir.getRoot().getPath(), "second", "first")).isEqualTo(second.getPath());
+  public void twoFilesOrderInDirectory2() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "second", "first");
+    assertEquals(path, myFindTestSecondFile.getAbsolutePath());
   }
 
   @Test
-  public void twoFilesOrder() throws IOException {
-    File first = tempDir.newFile("first");
-    tempDir.newFile("second");
-    assertThat(FileUtil.findFileInProvidedPath(first.getPath(), "first", "second")).isEqualTo(first.getPath());
+  public void twoFilesOrder() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "first", "second");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
   }
 
   @Test
-  public void twoFilesOrder2() throws IOException {
-    File first = tempDir.newFile("first");
-    tempDir.newFile("second");
-    assertThat(FileUtil.findFileInProvidedPath(first.getPath(), "first", "second")).isEqualTo(first.getPath());
+  public void twoFilesOrder2() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "second", "first");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
   }
 
   @Test
   public void testDeleteFail() throws IOException {
-    File targetDir = tempDir.newFolder("dir");
-    File file = tempDir.newFile("dir/file");
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "failed_delete");
+    File file = IoTestUtil.createTestFile(targetDir, "file");
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       try (RandomAccessFile rw = new RandomAccessFile(file, "rw"); FileLock ignored = rw.getChannel().tryLock()) {
         assertFalse(FileUtil.delete(file));
       }
@@ -199,76 +209,50 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testSymlinkDeletion() throws IOException {
+  public void testSymlinkDeletion() {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File targetDir = tempDir.newFolder("target");
-    File targetFile = tempDir.newFile("target/file");
-    File directDirLink = new File(tempDir.getRoot(), "dirLink");
-    Files.createSymbolicLink(directDirLink.toPath(), targetDir.toPath());
-    File directFileLink = new File(tempDir.getRoot(), "fileLink");
-    Files.createSymbolicLink(directFileLink.toPath(), targetFile.toPath());
-    File linkParentDir = tempDir.newFolder("linkParent");
-    Files.createSymbolicLink(new File(linkParentDir, "link").toPath(), targetDir.toPath());
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "lnk_del_test_1");
+    IoTestUtil.createTestFile(targetDir, "file");
+    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "lnk_del_test_2");
+    IoTestUtil.createTestFile(linkDir, "file");
+    IoTestUtil.createSymLink(targetDir.getPath(), linkDir.getPath() + "/link");
 
-    FileUtil.delete(directFileLink);
-    FileUtil.delete(directDirLink);
-    FileUtil.delete(linkParentDir);
-
-    assertThat(directFileLink).doesNotExist();
-    assertThat(directDirLink).doesNotExist();
-    assertThat(linkParentDir).doesNotExist();
-    assertThat(targetFile).exists();
+    assertEquals(1, targetDir.list().length);
+    FileUtil.delete(linkDir);
+    assertFalse(linkDir.exists());
+    assertEquals(1, targetDir.list().length);
   }
 
   @Test
-  public void testJunctionDeletion() throws IOException {
-    assumeTrue("Windows-only", SystemInfo.isWindows);
+  public void testJunctionDeletion() {
+    assumeTrue("windows only", SystemInfoRt.isWindows);
 
-    File targetDir = tempDir.newFolder("target");
-    File targetFile = tempDir.newFile("target/file");
-    File directDirLink = new File(tempDir.getRoot(), "dirLink");
-    IoTestUtil.createJunction(targetDir.getPath(), directDirLink.getPath());
-    File linkParentDir = tempDir.newFolder("linkParent");
-    IoTestUtil.createJunction(targetDir.getPath(), new File(linkParentDir, "link").getPath());
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_1");
+    IoTestUtil.createTestFile(targetDir, "file");
+    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "jct_del_test_2");
+    IoTestUtil.createTestFile(linkDir, "file");
+    IoTestUtil.createJunction(targetDir.getPath(), linkDir.getPath() + "/link");
 
-    FileUtil.delete(directDirLink);
-    FileUtil.delete(linkParentDir);
-
-    assertThat(directDirLink).doesNotExist();
-    assertThat(linkParentDir).doesNotExist();
-    assertThat(targetFile).exists();
-  }
-
-  @Test
-  public void nioDeletion() throws IOException {
-    try (FileSystem fs = Jimfs.newFileSystem()) {
-      Path dir = Files.createDirectory(fs.getPath("dir"));
-      Path file1 = Files.createFile(fs.getPath("dir", "file1"));
-      Path file2 = Files.createFile(fs.getPath("dir", "file2"));
-      assertThat(Files.list(dir)).containsExactlyInAnyOrder(file1, file2);
-
-      FileUtil.delete(dir);
-      assertThat(dir).doesNotExist();
-
-      Path nonExisting = fs.getPath("non-existing");
-      assertThat(nonExisting).doesNotExist();
-      FileUtil.delete(nonExisting);
-    }
+    assertEquals(1, targetDir.list().length);
+    FileUtil.delete(linkDir);
+    assertFalse(linkDir.exists());
+    assertEquals(1, targetDir.list().length);
   }
 
   @Test
   public void testToCanonicalPathSymLinksAware() throws IOException {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File rootDir = tempDir.newFolder("root");
-    tempDir.newFolder("root/dir1/dir2/dir3/dir4");
+    File rootDir = IoTestUtil.createTestDir(myTempDirectory, "root");
+    assertTrue(new File(rootDir, "dir1/dir2/dir3/dir4").mkdirs());
+
     String root = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(rootDir.getPath()));
 
     // non-recursive link
-    Files.createSymbolicLink(new File(rootDir, "dir1/dir2_link").toPath(), new File(rootDir, "dir1/dir2").toPath());
+    IoTestUtil.createSymLink(new File(rootDir, "dir1/dir2").getPath(), new File(rootDir, "dir1/dir2_link").getPath());
     // recursive links to a parent dir
-    Files.createSymbolicLink(new File(rootDir, "dir1/dir1_link").toPath(), new File(rootDir, "dir1").toPath());
+    IoTestUtil.createSymLink(new File(rootDir, "dir1").getPath(), new File(rootDir, "dir1/dir1_link").getPath());
 
     // I) links should NOT be resolved when ../ stays inside the linked path
     // I.I) non-recursive links
@@ -299,15 +283,14 @@ public class FileUtilHeavyTest {
     // the rules seems to be different when ../ goes over recursive link:
     // * on Windows ../ goes to link's parent
     // * on Unix ../ goes to target's parent
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../", true));
       assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../dir2", true));
       assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../../dir1/dir2", true));
       assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../../dir2", true));
       assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/dir2/../../../dir1/dir2", true));
       assertEquals(root + "/dir1/dir2", FileUtil.toCanonicalPath(root + "/dir1/../dir1/dir1_link/../dir2", true));
-    }
-    else {
+    } else {
       assertEquals(root, FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../", true));
       assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../dir1", true));
       assertEquals(root + "/dir1", FileUtil.toCanonicalPath(root + "/dir1/dir1_link/../../root/dir1", true));
@@ -325,15 +308,15 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testCaseSensitivityDetection() throws IOException {
-    File probe = tempDir.newFile("probe");
-    assertEquals(SystemInfo.isFileSystemCaseSensitive, FileUtil.isFileSystemCaseSensitive(probe.getPath()));
+    String path = myFindTestFirstFile.getPath();
+    assertEquals(SystemInfo.isFileSystemCaseSensitive, FileUtil.isFileSystemCaseSensitive(path));
   }
 
   @Test
   public void testFileRelativePath() {
     String relativePath = FileUtil.toSystemDependentName("relative/path.file");
 
-    File existingDir = tempDir.getRoot();
+    File existingDir = myTempDirectory;
     assertEquals(relativePath, FileUtil.getRelativePath(existingDir, new File(existingDir, relativePath)));
 
     File notExistingDirOrFile = new File("not/existing/path");

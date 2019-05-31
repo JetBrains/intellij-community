@@ -1,13 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter2D;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +14,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.font.LineMetrics;
-import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,7 +65,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     @Override
     public void paint(Graphics2D g, double x, double y, double width, double height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
-        int h = JBUIScale.scale(Registry.intValue("editor.bold.underline.height", 2));
+        int h = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
         RectanglePainter2D.FILL.paint(g, x, y, width, h);
       }
       else {
@@ -161,7 +158,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     if (width > 0 && height > 0) {
       if (Registry.is("ide.text.effect.new.metrics")) {
         if (font == null) font = g.getFont();
-        RoundingMode roundingMode = !JreHiDpiUtil.isJreHiDPIEnabled() || painter != WAVE_UNDERSCORE || font.getSize2D() / UISettings.getDefFontSize() > 1 ?
+        RoundingMode roundingMode = !UIUtil.isJreHiDPIEnabled() || painter != WAVE_UNDERSCORE || font.getSize2D() / UISettings.getDefFontSize() > 1 ?
                                     RoundingMode.FLOOR : RoundingMode.CEIL;
         LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
         double devPixel = PaintUtil.devPixel(g);
@@ -186,7 +183,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           y += height - max;
           height = max;
           if (thickness > 1 && height > 3) {
-            thickness = JBUIScale.scale((float)thickness);
+            thickness = JBUI.scale((float)thickness);
           }
         }
         drawLineCentered(g, x, y, width, height, thickness, painter);
@@ -200,14 +197,14 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
   }
 
   private static double maybeScaleFontMetricsThickness(double fontMetricsThickness, @NotNull Font font) {
-    float fontScale = JBUIScale.getFontScale(font.getSize2D());
+    float fontScale = JBUI.getFontScale(font.getSize2D());
     float normalizedFontScale = font.getSize2D() / UISettings.getDefFontSize();
     if (normalizedFontScale > 1) {
       // k==1.0 with normalizedFontScale==1.0, k->0.5 fast enough with normalizedFontScale increasing
       double k = 1 / (Math.pow(normalizedFontScale, 2) + 1) + 0.5;
       fontScale *= k;
     }
-    if (!JreHiDpiUtil.isJreHiDPIEnabled()) fontScale = Math.max(1, Math.round(fontScale));
+    if (!UIUtil.isJreHiDPIEnabled()) fontScale = Math.max(1, Math.round(fontScale));
     return Math.max(fontMetricsThickness, fontScale);
   }
 
@@ -244,7 +241,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
       @Override
       void paintImage(Graphics2D g, double width, double height, double period) {
-        Double round = period <= 2 && !JreHiDpiUtil.isJreHiDPI(g) ? null : period;
+        Double round = period <= 2 && !UIUtil.isJreHiDPI(g) ? null : period;
         for (int dx = 0; dx < width; dx += period + period) {
           RectanglePainter2D.FILL.paint(g, dx, 0, period, period, round, LinePainter2D.StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
         }
@@ -325,8 +322,8 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
     @Nullable
     BufferedImage getImage(@NotNull Graphics2D g, Color color, double height) {
-      ConcurrentHashMap<Integer, BufferedImage> cache = JreHiDpiUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
-      int key = Objects.hash(color.getRGB(), JBUIScale.sysScale(g), height);
+      ConcurrentHashMap<Integer, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
+      int key = Objects.hash(color.getRGB(), JBUI.sysScale(g), height);
       BufferedImage image = cache.get(key);
       if (image == null) {
         image = createImage(g, color, height);
@@ -361,7 +358,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       double offset = (x % period + period) % period; // normalize
       g.translate(-offset, 0);
       for (double dx = -offset; dx < width; dx += period) {
-        StartupUiUtil.drawImage(g, image, 0, 0, null);
+        UIUtil.drawImage(g, image, 0, 0, null);
         g.translate(period, 0);
       }
       g.dispose();

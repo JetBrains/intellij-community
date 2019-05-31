@@ -2,7 +2,6 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.*
-import com.intellij.testFramework.PlatformTestCase
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -10,7 +9,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class FeatureUsageEventLoggerTest : PlatformTestCase() {
+class FeatureUsageEventLoggerTest {
 
   @Test
   fun testSingleEvent() {

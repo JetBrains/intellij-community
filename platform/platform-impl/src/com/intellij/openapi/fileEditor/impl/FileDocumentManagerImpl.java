@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -37,10 +36,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.AbstractFileViewProvider;
@@ -52,7 +47,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +64,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements AsyncFileListener, VetoableProjectManagerListener, SafeWriteRequestor {
+public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, VetoableProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -118,7 +112,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
   };
 
   public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
-    virtualFileManager.addAsyncFileListener(this, ApplicationManager.getApplication());
+    virtualFileManager.addVirtualFileListener(this);
     projectManager.addProjectManagerListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
@@ -392,7 +386,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
     return !myConflictResolver.hasConflict(file) &&
-           FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
+           (FileDocumentSynchronizationVetoer.EP_NAME).getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
   }
 
   private void doSaveDocumentInWriteAction(@NotNull final Document document, @NotNull final VirtualFile file) throws IOException {
@@ -561,7 +555,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
     return document.getUserData(BIG_FILE_PREVIEW) == Boolean.TRUE;
   }
 
-  private void propertyChanged(@NotNull VFilePropertyChangeEvent event) {
+  @Override
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     final VirtualFile file = event.getFile();
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       final Document document = getCachedDocument(file);
@@ -596,63 +591,37 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
     return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
   }
 
+  private static final Key<Document> DOCUMENT_WAS_SAVED_TEMPORARILY = Key.create("DOCUMENT_WAS_SAVED_TEMPORARILY");
   @Override
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-    List<VirtualFile> toRecompute = new ArrayList<>();
-    Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
-    for (VFileContentChangeEvent event : ContainerUtil.findAll(events, VFileContentChangeEvent.class)) {
-      ProgressManager.checkCanceled();
-      VirtualFile virtualFile = event.getFile();
+  public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+    VirtualFile virtualFile = event.getFile();
 
-      // when an empty unknown file is written into, re-run file type detection
-      long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
-      if (lastRecordedLength == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) { // check file type last to avoid content detection running
-        toRecompute.add(virtualFile);
-      }
-
-      if (ourConflictsSolverEnabled) {
-        myConflictResolver.beforeContentChange(event);
-      }
-
-      Document document = getCachedDocument(virtualFile);
-      if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
-        // re-create document with the old contents prior to this event
-        // then contentChanged() will diff the document with the new contents and update the markers
-        document = getDocument(virtualFile);
-      }
-      // save document strongly to make it live until contentChanged()
-      strongRefsToDocuments.put(virtualFile, document);
+    // when an empty unknown file is written into, re-run file type detection
+    long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
+    if (lastRecordedLength == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) { // check file type last to avoid content detection running
+      virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
 
-    return new ChangeApplier() {
-      @Override
-      public void beforeVfsChange() {
-        for (VirtualFile file : toRecompute) {
-          file.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
-        }
-      }
+    if (ourConflictsSolverEnabled) {
+      myConflictResolver.beforeContentChange(event);
+    }
 
-      @Override
-      public void afterVfsChange() {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileContentChangeEvent) {
-            contentsChanged((VFileContentChangeEvent)event);
-          }
-          else if (event instanceof VFileDeleteEvent) {
-            fileDeleted((VFileDeleteEvent)event);
-          }
-          else if (event instanceof VFilePropertyChangeEvent) {
-            propertyChanged((VFilePropertyChangeEvent)event);
-          }
-        }
-        ObjectUtils.reachabilityFence(strongRefsToDocuments);
-      }
-    };
+    Document document = getCachedDocument(virtualFile);
+    if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
+      // re-create document with the old contents prior to this event
+      // then contentChanged() will diff the document with the new contents and update the markers
+      document = getDocument(virtualFile);
+    }
+    // save document strongly to make it live until contentChanged()
+    virtualFile.putUserData(DOCUMENT_WAS_SAVED_TEMPORARILY, document);
   }
 
-  public void contentsChanged(VFileContentChangeEvent event) {
-    VirtualFile virtualFile = event.getFile();
-    Document document = getCachedDocument(virtualFile);
+  @Override
+  public void contentsChanged(@NotNull VirtualFileEvent event) {
+    final VirtualFile virtualFile = event.getFile();
+    final Document document = getCachedDocument(virtualFile);
+    // remove strong ref to allow document to gc
+    virtualFile.putUserData(DOCUMENT_WAS_SAVED_TEMPORARILY, null);
 
     if (event.isFromSave()) return;
 
@@ -725,7 +694,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
     Disposer.register(disposable, () -> myConflictResolver = old);
   }
 
-  private void fileDeleted(@NotNull VFileDeleteEvent event) {
+  @Override
+  public void fileDeleted(@NotNull VirtualFileEvent event) {
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);

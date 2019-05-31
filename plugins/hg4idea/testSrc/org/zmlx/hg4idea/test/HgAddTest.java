@@ -14,8 +14,10 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.lang.reflect.Method;
 
 import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
 
@@ -24,10 +26,10 @@ import static org.zmlx.hg4idea.test.HgTestOutputParser.added;
  */
 public class HgAddTest extends HgSingleUserTest {
 
-  @Before
+  @BeforeMethod
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     doNothingSilently(VcsConfiguration.StandardConfirmation.ADD);
   }
 

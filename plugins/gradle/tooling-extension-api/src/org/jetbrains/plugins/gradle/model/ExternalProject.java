@@ -59,7 +59,7 @@ public interface ExternalProject extends Model, Serializable {
   //List<ExternalRepository> getRepositories();
 
   @NotNull
-  Map<String, ? extends ExternalPlugin> getPlugins();
+  Map<String, ExternalPlugin> getPlugins();
 
   //@NotNull
   //ExternalProjectBuild getBuild();

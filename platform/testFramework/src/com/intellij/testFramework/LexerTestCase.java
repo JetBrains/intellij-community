@@ -1,4 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.testFramework;
 
 import com.intellij.lang.TokenWrapper;
@@ -10,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,15 +37,15 @@ import java.util.List;
  * @author peter
  */
 public abstract class LexerTestCase extends UsefulTestCase {
-  protected void doTest(String text) {
+  protected void doTest(@NonNls String text) {
     doTest(text, null);
   }
 
-  protected void doTest(String text, @Nullable String expected) {
+  protected void doTest(@NonNls String text, @Nullable String expected) {
     doTest(text, expected, createLexer());
   }
 
-  protected void doTest(String text, @Nullable String expected, @NotNull Lexer lexer) {
+  protected void doTest(@NonNls String text, @Nullable String expected, @NotNull Lexer lexer) {
     String result = printTokens(text, 0, lexer);
 
     if (expected != null) {
@@ -163,12 +178,12 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return tokenType + " ('" + getTokenText(tokenType, fileText, start, end) + "')\n";
   }
 
-  protected void doFileTest(String fileExt) {
+  protected void doFileTest(@NonNls String fileExt) {
     doTest(loadTestDataFile("." + fileExt));
   }
 
   @NotNull
-  protected String loadTestDataFile(String fileExt) {
+  protected String loadTestDataFile(@NonNls String fileExt) {
     String fileName = getPathToTestDataFile(fileExt);
     String text = "";
     try {
@@ -187,9 +202,11 @@ public abstract class LexerTestCase extends UsefulTestCase {
 
   @NotNull
   private static String getTokenText(IElementType tokenType, CharSequence sequence, int start, int end) {
-    return tokenType instanceof TokenWrapper
-           ? ((TokenWrapper)tokenType).getValue()
-           : StringUtil.replace(sequence.subSequence(start, end).toString(), "\n", "\\n");
+    if (tokenType instanceof TokenWrapper) {
+      return ((TokenWrapper)tokenType).getValue();
+    }
+
+    return StringUtil.replace(sequence.subSequence(start, end).toString(), "\n", "\\n");
   }
 
   protected abstract Lexer createLexer();

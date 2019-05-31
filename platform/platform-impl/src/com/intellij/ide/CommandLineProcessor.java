@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,67 +22,51 @@ import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Future;
-
-import static com.intellij.ide.CliResult.error;
-import static com.intellij.ide.CliResult.ok;
 
 /**
  * @author yole
  */
 public class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CommandLineProcessor");
-  private static final String WAIT_KEY = "--wait";
 
   private CommandLineProcessor() { }
 
-  @NotNull
-  private static Pair<Project, Future<? extends CliResult>> doOpenFileOrProject(VirtualFile file, boolean shouldWait) {
+  @Nullable
+  private static Project doOpenFileOrProject(VirtualFile file) {
     String path = file.getPath();
     if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
       if (project == null) {
-        final String message = "Cannot open project '" + FileUtil.toSystemDependentName(path) + "'";
-        Messages.showErrorDialog(message, "Cannot Open Project");
-        return of(error(1, message));
+        Messages.showErrorDialog("Cannot open project '" + FileUtil.toSystemDependentName(path) + "'", "Cannot Open Project");
       }
-
-      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project)
-                                    : ok());
+      return project;
     }
     else {
-      return doOpenFile(file, -1, false, shouldWait);
+      return doOpenFile(file, -1, false);
     }
   }
 
-  @NotNull
-  private static Pair<Project, Future<? extends CliResult>> doOpenFile(VirtualFile file, int line, boolean tempProject, boolean shouldWait) {
+  @Nullable
+  private static Project doOpenFile(VirtualFile file, int line, boolean tempProject) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
       if (project == null) {
-        final String message = "No project found to open file in";
-        Messages.showErrorDialog(message, "Cannot Open File");
-        return of(error(1, message));
+        Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       }
-
-      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file)
-                                    : ok());
+      return project;
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
-
-      return of(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file)
-                                    : ok());
+      return project;
     }
   }
 
@@ -106,14 +89,13 @@ public class CommandLineProcessor {
     return projects[0];
   }
 
-  @NotNull
-  public static Pair<Project, Future<? extends CliResult>> processExternalCommandLine(@NotNull List<String> args,
-                                                                                      @Nullable String currentDirectory) {
+  @Nullable
+  public static Project processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
     LOG.info("-----");
-    if (args.isEmpty()) return of(ok());
+    if (args.isEmpty()) return null;
 
     String command = args.get(0);
     for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getIterable()) {
@@ -124,25 +106,24 @@ public class CommandLineProcessor {
       if (command.equals(starter.getCommandName())) {
         if (starter.canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          return of(starter.processExternalCommandLineAsync(ArrayUtilRt.toStringArray(args), currentDirectory));
+          starter.processExternalCommandLine(ArrayUtilRt.toStringArray(args), currentDirectory);
         }
         else {
           String title = "Cannot execute command '" + command + "'";
           String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
           Messages.showErrorDialog(message, title);
-          return of(error(1, message));
         }
+        return null;
       }
     }
 
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
       ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      return of(ok());
+      return null;
     }
 
-    final boolean shouldWait = args.contains(WAIT_KEY);
-    Pair<Project, Future<? extends CliResult>> projectAndCallback = null;
+    Project lastOpenedProject = null;
     int line = -1;
     boolean tempProject = false;
 
@@ -171,9 +152,6 @@ public class CommandLineProcessor {
         tempProject = true;
         continue;
       }
-      if (arg.equals(WAIT_KEY)) {
-        continue;
-      }
 
       if (StringUtil.isQuotedString(arg)) {
         arg = StringUtil.unquoteString(arg);
@@ -185,24 +163,18 @@ public class CommandLineProcessor {
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
       if (line != -1 || tempProject) {
         if (file != null && !file.isDirectory()) {
-          projectAndCallback = doOpenFile(file, line, tempProject, shouldWait);
-          if (shouldWait) break;
+          lastOpenedProject = doOpenFile(file, line, tempProject);
         }
         else {
-          final String message = "Cannot find file '" + arg + "'";
-          Messages.showErrorDialog(message, "Cannot Find File");
-          return of(error(1, message));
+          Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
         }
       }
       else {
         if (file != null) {
-          projectAndCallback = doOpenFileOrProject(file, shouldWait);
-          if (shouldWait) break;
+          lastOpenedProject = doOpenFileOrProject(file);
         }
         else {
-          final String message = "Cannot find file '" + arg + "'";
-          Messages.showErrorDialog(message, "Cannot Find File");
-          return of(error(1, message));
+          Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
         }
       }
 
@@ -210,21 +182,6 @@ public class CommandLineProcessor {
       tempProject = false;
     }
 
-    if (shouldWait && projectAndCallback == null) {
-      return of(error(1, "--wait must be supplied with file or project to wait for"));
-    }
-
-    return ObjectUtils.coalesce(projectAndCallback, of(ok()));
+    return lastOpenedProject;
   }
-
-  @NotNull
-  public static Pair<Project, Future<? extends CliResult>> of(@Nullable Project project, @NotNull Future<? extends CliResult> future) {
-    return Pair.create(project, future);
-  }
-
-  @NotNull
-  public static Pair<Project, Future<? extends CliResult>> of(@NotNull Future<? extends CliResult> future) {
-    return Pair.create(null, future);
-  }
-
 }

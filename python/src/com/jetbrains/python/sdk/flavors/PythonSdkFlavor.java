@@ -56,6 +56,14 @@ public abstract class PythonSdkFlavor {
     PythonEnvUtil.addToPythonPath(envs, pythonPathList);
   }
 
+  /**
+   * @deprecated Use {@link #suggestHomePaths(Module)}. To be removed in 2019.2.
+   */
+  @Deprecated
+  public Collection<String> suggestHomePaths() {
+    return suggestHomePaths(null);
+  }
+
   public Collection<String> suggestHomePaths(@Nullable Module module) {
     return Collections.emptyList();
   }

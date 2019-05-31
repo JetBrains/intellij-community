@@ -25,9 +25,7 @@ class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Inte
 
     @Override
     public void save(@NotNull DataOutput out, IndexedStubs indexedStubs) throws IOException {
-      byte[] hash = indexedStubs.getStubTreeHash();
-      DataInputOutputUtil.writeINT(out, hash.length);
-      out.write(hash);
+      DataInputOutputUtil.writeINT(out, indexedStubs.getFileId());
       Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = indexedStubs.getStubIndicesValueMap();
       DataInputOutputUtil.writeINT(out, stubIndicesValueMap.size());
       if (!stubIndicesValueMap.isEmpty()) {
@@ -43,8 +41,7 @@ class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Inte
 
     @Override
     public IndexedStubs read(@NotNull DataInput in) throws IOException {
-      byte[] hash = new byte[DataInputOutputUtil.readINT(in)];
-      in.readFully(hash);
+      int fileId = DataInputOutputUtil.readINT(in);
       if (!myEnsuredStubElementTypesLoaded) {
         ProgressManager.getInstance().executeNonCancelableSection(() -> {
           SerializationManager.getInstance().initSerializers();
@@ -65,9 +62,9 @@ class StubUpdatingForwardIndexAccessor extends AbstractForwardIndexAccessor<Inte
             stubIndicesValueMap.put(stubIndexKey, stubIndex.deserializeIndexValue(in, stubIndexKey));
           }
         }
-        return new IndexedStubs(hash, stubIndicesValueMap);
+        return new IndexedStubs(fileId, stubIndicesValueMap);
       }
-      return new IndexedStubs(hash, Collections.emptyMap());
+      return new IndexedStubs(fileId, Collections.emptyMap());
     }
   });}
 

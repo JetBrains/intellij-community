@@ -3,11 +3,11 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ActionRuleValidator extends CustomWhiteListRule {
+public class ActionRuleValidator extends CustomUtilsWhiteListRule {
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "action".equals(ruleId);

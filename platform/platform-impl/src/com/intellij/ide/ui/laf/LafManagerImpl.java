@@ -26,21 +26,27 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -331,7 +337,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
-        AppUIUtil.updateForDarcula(true);
+        updateForDarcula(true);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -423,10 +429,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
   public static void updateForDarcula(boolean isDarcula) {
-    AppUIUtil.updateForDarcula(isDarcula);
+    JBColor.setDark(isDarcula);
+    IconLoader.setUseDarkIcons(isDarcula);
   }
 
   @Nullable
@@ -474,6 +479,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
+    patchTreeRowHeight(uiDefaults,false); // will be scaled in #patchHiDPI
 
     patchHiDPI(uiDefaults);
 
@@ -558,6 +564,39 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
       defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
     }
+
+    Object rowHeight = defaults.get("Tree.rowHeight");
+    if (rowHeight != null && !(rowHeight instanceof Integer)) {
+      LOG.error("unexpected Tree.rowHeight: '" + rowHeight + "' " + rowHeight.getClass());
+      try {
+        rowHeight = Double.valueOf(String.valueOf(rowHeight)).intValue();
+      }
+      catch (NumberFormatException e) {
+        rowHeight = 0;
+      }
+      defaults.put("Tree.rowHeight", rowHeight);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void patchTreeRowHeight(UIDefaults defaults) {
+    patchTreeRowHeight(defaults, true);
+  }
+
+  private static void patchTreeRowHeight(UIDefaults defaults, boolean scaled) {
+    Object value = defaults.get("Tree.rowHeight");
+    if (value != null && !(value instanceof Integer)) {
+      int height = 0;
+      try {
+        height = Double.valueOf(String.valueOf(value)).intValue();
+        if (scaled) height = JBUI.scale(height);
+      }
+      catch (NumberFormatException ignored) {
+      }
+      defaults.put("Tree.rowHeight", height);
+      LOG.error(new RuntimeException(height + " instead of unexpected Tree.rowHeight: '" + value + "' " + value.getClass()
+                                     + "; L&F: " + UIManager.getLookAndFeel() + "; OS: " + SystemInfoRt.OS_NAME));
+    }
   }
 
   /**
@@ -575,7 +614,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
-    if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
+    if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
@@ -605,11 +644,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
-          entry.setValue(Integer.valueOf(JBUIScale.scale(normValue)));
+          entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
         }
       }
     }
-    defaults.put("hidpi.scaleFactor", JBUIScale.scale(1f));
+    defaults.put("hidpi.scaleFactor", JBUI.scale(1f));
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
@@ -718,7 +757,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
       initFontDefaults(uiDefaults, UIUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
-      JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(uiSettings.getFontSize()));
+      JBUI.setUserScaleFactor(JBUI.getFontScale(uiSettings.getFontSize()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -733,7 +772,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(JBFont.label().getSize()));
+    JBUI.setUserScaleFactor(JBUI.getFontScale(JBUI.Fonts.label().getSize()));
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
