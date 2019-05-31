@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 
-public class Main {
+public final class Main {
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
@@ -47,7 +47,7 @@ public class Main {
 
   public static void main(String[] args) {
     LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
-    startupTimings.put("Startup begin", System.nanoTime());
+    startupTimings.put("startup begin", System.nanoTime());
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }

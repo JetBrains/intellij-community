@@ -2,11 +2,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.util.containers.ObjectLongHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
@@ -119,9 +119,7 @@ public final class StartUpMeasurer {
     }
   }
 
-  /**
-   * Internal use only.
-   */
+  @ApiStatus.Internal
   public static long getClassInitStartTime() {
     return classInitStartTime;
   }
@@ -134,14 +132,29 @@ public final class StartUpMeasurer {
     addPluginCost(activity.getPluginId(), phase, activity.getEnd() - activity.getStart());
   }
 
-  public static void record(String name, long start, long end) {
-    ActivityImpl activity = new ActivityImpl(name,null, start, null, Level.APPLICATION, null, null);
-    activity.setEnd(end);
-    add(activity);
+  public static void addTimings(@NotNull LinkedHashMap<String, Long> timings, @NotNull String groupName) {
+    if (timings.isEmpty()) {
+      return;
+    }
+
+    List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
+
+    ActivityImpl parent = new ActivityImpl(groupName, null, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
+    parent.setEnd(getCurrentTime());
+
+    for (int i = 0; i < entries.size(); i++) {
+      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), null, entries.get(i).getValue(), parent, Level.APPLICATION, null, null);
+      activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
+      items.add(activity);
+    }
+    items.add(parent);
   }
 
   public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
-    if (pluginId == null || !measuringPluginStartupCosts) return;
+    if (pluginId == null || !measuringPluginStartupCosts) {
+      return;
+    }
+
     synchronized (pluginCostMap) {
       ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
       if (costPerPhaseMap == null) {
