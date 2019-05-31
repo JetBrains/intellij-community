@@ -2,6 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.google.gson.Gson;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -380,7 +381,7 @@ public class UITheme {
       return parseGrayFilter(value);
     }
     else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
+      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
       if (icon != null) {
         return new IconUIResource(icon);
       }

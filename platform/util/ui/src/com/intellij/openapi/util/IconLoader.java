@@ -148,7 +148,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
+  public static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
     try {
       @NonNls String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
       Class cur = Class.forName(pckg + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
