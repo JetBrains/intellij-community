@@ -24,8 +24,10 @@ class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
     project.messageBus
       .connect()
       .subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
-        ApplicationManager.getApplication().executeOnPooledThread {
-          generateVcsIgnoreFileInStoreDirIfNeeded(project)
+        StartupManager.getInstance(project).runWhenProjectIsInitialized {
+          ApplicationManager.getApplication().executeOnPooledThread {
+            generateVcsIgnoreFileInStoreDirIfNeeded(project)
+          }
         }
       })
 
