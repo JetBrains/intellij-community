@@ -4,7 +4,7 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,7 +228,7 @@ public class DataNode<T> implements UserDataHolderEx {
 
     if (data == null) {
       dataClassName = null;
-      rawData = ArrayUtil.EMPTY_BYTE_ARRAY;
+      rawData = ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
     else {
       dataClassName = data.getClass().getName();

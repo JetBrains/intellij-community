@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
@@ -272,7 +272,7 @@ public class FileSystemUtil {
     @Override
     protected FileAttributes getAttributes(@NotNull String path) throws Exception {
       try {
-        Object pathObj = myGetPath.invoke(null, path, ArrayUtil.EMPTY_STRING_ARRAY);
+        Object pathObj = myGetPath.invoke(null, path, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
         Object attributes = myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
         boolean isSymbolicLink = (Boolean)myIsSymbolicLink.invoke(attributes) ||
@@ -315,7 +315,7 @@ public class FileSystemUtil {
 
     @Override
     protected String resolveSymLink(@NotNull String path) throws Exception {
-      Object pathObj = myGetPath.invoke(null, path, ArrayUtil.EMPTY_STRING_ARRAY);
+      Object pathObj = myGetPath.invoke(null, path, ArrayUtilRt.EMPTY_STRING_ARRAY);
       try {
         return myToRealPath.invoke(pathObj, myLinkOptions).toString();
       }
@@ -329,8 +329,8 @@ public class FileSystemUtil {
     @Override
     protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
       if (SystemInfoRt.isUnix) {
-        Object sourcePath = myGetPath.invoke(null, source, ArrayUtil.EMPTY_STRING_ARRAY);
-        Object targetPath = myGetPath.invoke(null, target, ArrayUtil.EMPTY_STRING_ARRAY);
+        Object sourcePath = myGetPath.invoke(null, source, ArrayUtilRt.EMPTY_STRING_ARRAY);
+        Object targetPath = myGetPath.invoke(null, target, ArrayUtilRt.EMPTY_STRING_ARRAY);
         Collection sourcePermissions = getPermissions(sourcePath);
         Collection targetPermissions = getPermissions(targetPath);
         if (sourcePermissions != null && targetPermissions != null) {

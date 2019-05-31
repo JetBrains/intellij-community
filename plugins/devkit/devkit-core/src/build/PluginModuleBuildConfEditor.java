@@ -75,7 +75,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     myWholePanel.add(myPluginXMLLabel, gc);
     myWholePanel.add(myPluginXML, gc);
     JPanel manifestPanel = new JPanel(new GridBagLayout());
-    manifestPanel.setBorder(IdeBorderFactory.createTitledBorder(DevKitBundle.message("manifest.settings"), true));
+    manifestPanel.setBorder(IdeBorderFactory.createTitledBorder(DevKitBundle.message("manifest.settings")));
     gc.insets.left = 0;
     manifestPanel.add(myUseUserManifest, gc);
     gc.insets.left = 2;

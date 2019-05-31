@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -396,13 +397,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  @TestOnly
-  void doClearAdoptedNames() {
-    synchronized (myData) {
-      myData.clearAdoptedNames();
-    }
-  }
-
   private void assertConsistency(boolean caseSensitive, @NotNull Object details) {
     if (!CHECK || ApplicationInfoImpl.isInStressTest()) return;
     int[] childrenIds = myData.myChildrenIds;
@@ -595,7 +589,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
       if (o != newIds.length) {
-        newIds = o == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
+        newIds = o == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
       }
       myData.myChildrenIds = newIds;
 

@@ -3,6 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,7 +75,9 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
 
     AsyncEventSupport.startListening();
 
+    Activity activity = StartUpMeasurer.start("PersistentFS#FSRecords.connect");
     FSRecords.connect();
+    activity.end();
   }
 
   @Override
@@ -541,7 +545,7 @@ public class PersistentFSImpl extends PersistentFS implements Disposable {
     catch (IOException e) {
       FSRecords.handleError(e);
     }
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
   @Override

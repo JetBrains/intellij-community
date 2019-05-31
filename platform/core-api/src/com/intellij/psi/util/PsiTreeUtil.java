@@ -146,7 +146,7 @@ public class PsiTreeUtil {
   }
 
   @Contract(pure = true)
-  private static int getDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
+  public static int getDepth(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
     int depth=0;
     PsiElement parent = element;
     while (parent != topLevel && parent != null) {

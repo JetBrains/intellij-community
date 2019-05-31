@@ -36,12 +36,10 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +167,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
-        boolean needUninstall = UIUtil.isUnderDarcula();
+        boolean needUninstall = StartupUiUtil.isUnderDarcula();
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
         updateWizardLAF(needUninstall);
       }
@@ -184,7 +182,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
     if (WelcomeWizardUtil.getWizardLAF() != null) {
-      if (UIUtil.isUnderDarcula()) {
+      if (StartupUiUtil.isUnderDarcula()) {
         DarculaInstaller.install();
       }
       else if (wasUnderDarcula) {
@@ -402,7 +400,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    boolean dark = UIUtil.isUnderDarcula();
+    boolean dark = StartupUiUtil.isUnderDarcula();
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme current = colorsManager.getGlobalScheme();
     boolean wasUITheme = oldLaf instanceof UIThemeBasedLookAndFeelInfo;
@@ -478,6 +476,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     patchListUI(uiDefaults);
     patchTreeUI(uiDefaults);
+    patchTreeRowHeight(uiDefaults,false); // will be scaled in #patchHiDPI
 
     patchHiDPI(uiDefaults);
 
@@ -562,17 +561,26 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       defaults.put("Tree.expandedIcon", LafIconLookup.getIcon("treeExpanded"));
       defaults.put("Tree.expandedSelectedIcon", LafIconLookup.getSelectedIcon("treeExpanded"));
     }
+  }
 
-    Object rowHeight = defaults.get("Tree.rowHeight");
-    if (rowHeight != null && !(rowHeight instanceof Integer)) {
-      LOG.error("unexpected Tree.rowHeight: '" + rowHeight + "' " + rowHeight.getClass());
+  @ApiStatus.Internal
+  public static void patchTreeRowHeight(UIDefaults defaults) {
+    patchTreeRowHeight(defaults, true);
+  }
+
+  private static void patchTreeRowHeight(UIDefaults defaults, boolean scaled) {
+    Object value = defaults.get("Tree.rowHeight");
+    if (value != null && !(value instanceof Integer)) {
+      int height = 0;
       try {
-        rowHeight = Double.valueOf(String.valueOf(rowHeight)).intValue();
+        height = Double.valueOf(String.valueOf(value)).intValue();
+        if (scaled) height = JBUI.scale(height);
       }
-      catch (NumberFormatException e) {
-        rowHeight = 0;
+      catch (NumberFormatException ignored) {
       }
-      defaults.put("Tree.rowHeight", rowHeight);
+      defaults.put("Tree.rowHeight", height);
+      LOG.error(new RuntimeException(height + " instead of unexpected Tree.rowHeight: '" + value + "' " + value.getClass()
+                                     + "; L&F: " + UIManager.getLookAndFeel() + "; OS: " + SystemInfoRt.OS_NAME));
     }
   }
 
@@ -638,7 +646,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
-    } else if ((SystemInfoRt.isLinux || SystemInfoRt.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+    } else if ((SystemInfoRt.isLinux || SystemInfoRt.isWindows) && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 
@@ -653,7 +661,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixProgressBar(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
       uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
       uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
     }
@@ -664,7 +672,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * and default UI is created there directly.
    */
   static void fixOptionButton(UIDefaults uiDefaults) {
-    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderIntelliJLaF() && !StartupUiUtil.isUnderDarcula()) {
       uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     }
   }
@@ -978,7 +986,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
-    private static final boolean invert = UIUtil.isUnderDarcula();
+    private static final boolean invert = StartupUiUtil.isUnderDarcula();
     private DefaultMenuArrowIcon(@NotNull Icon icon) {
       super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
             IconUtil.brighter(icon, 8),

@@ -2,8 +2,12 @@
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,9 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.NotNull;
 
 public class RecordStateStatisticsEventLogAction extends AnAction {
@@ -40,20 +41,18 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
           return;
         }
 
+        FeatureUsageLogger.INSTANCE.rollOver();
         myStatesLogger.logApplicationStates(whitelist, true);
         myStatesLogger.logProjectStates(project, whitelist, true);
 
         ApplicationManager.getApplication().invokeLater(
-          () -> showNotification(project, e, "Collecting and recording events was finished")
+          () -> showNotification(project, "Finished collecting and recording events")
         );
       }
     });
   }
 
-  protected void showNotification(@NotNull Project project, @NotNull AnActionEvent event, @NotNull String message) {
-    JBPopupFactory.getInstance().
-      createHtmlTextBalloonBuilder(message, MessageType.INFO, null).
-      setFadeoutTime(2000).setDisposable(project).createBalloon().
-      show(JBPopupFactory.getInstance().guessBestPopupLocation(event.getDataContext()), Balloon.Position.below);
+  protected void showNotification(@NotNull Project project, @NotNull String message) {
+    Notifications.Bus.notify(new Notification("FeatureUsageStatistics", "Feature Usage Statistics", message, NotificationType.INFORMATION), project);
   }
 }

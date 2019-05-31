@@ -56,7 +56,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
@@ -2389,8 +2388,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void updateEditorCursor() {
-    if (IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) return;
-
     Cursor customCursor = getCustomCursor();
     if (customCursor == null && myCursorSetExternally && myEditorComponent.isCursorSet()) {
       Cursor cursor = myEditorComponent.getCursor();

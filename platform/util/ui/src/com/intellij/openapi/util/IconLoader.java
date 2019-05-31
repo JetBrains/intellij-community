@@ -10,14 +10,11 @@ import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.JBUIScale.ScaleContextAware;
 import com.intellij.util.ui.JBUIScale.ScaleContextSupport;
 import com.intellij.util.ui.JBUIScale.UserScaleContext.UpdateListener;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -151,7 +148,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
+  public static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
     try {
       @NonNls String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
       Class cur = Class.forName(pckg + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
@@ -229,6 +226,10 @@ public final class IconLoader {
   }
 
   private static boolean isReflectivePath(@NotNull String path) {
+    if (path.isEmpty() || path.charAt(0) == '/') {
+      return false;
+    }
+
     List<String> paths = StringUtil.split(path, ".");
     return paths.size() > 1 && paths.get(0).endsWith("Icons");
   }
@@ -315,7 +316,7 @@ public final class IconLoader {
                                    .createCompatibleImage(ROUND.round(ctx.apply(icon.getIconWidth(), DEV_SCALE)),
                                                           ROUND.round(ctx.apply(icon.getIconHeight(), DEV_SCALE)),
                                                           Transparency.TRANSLUCENT);
-        if (UIUtil.isJreHiDPI(ctx)) {
+        if (StartupUiUtil.isJreHiDPI(ctx)) {
           image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, icon.getIconWidth(), icon.getIconHeight());
         }
       }
@@ -400,7 +401,7 @@ public final class IconLoader {
         scale = (float)((ScaleContextAware)icon).getScale(SYS_SCALE);
       }
       else {
-        scale = UIUtil.isJreHiDPI() ? JBUI.sysScale(ancestor) : 1f;
+        scale = StartupUiUtil.isJreHiDPI() ? JBUI.sysScale(ancestor) : 1f;
       }
       @SuppressWarnings("UndesirableClassUsage")
       BufferedImage image = new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
@@ -414,7 +415,7 @@ public final class IconLoader {
       graphics.dispose();
 
       Image img = ImageUtil.filter(image, filterSupplier.get());
-      if (UIUtil.isJreHiDPI(ancestor)) img = RetinaImage.createFrom(img, scale, null);
+      if (StartupUiUtil.isJreHiDPI(ancestor)) img = RetinaImage.createFrom(img, scale, null);
 
       icon = new JBImageIcon(img);
     }
@@ -723,8 +724,18 @@ public final class IconLoader {
     @Nullable
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
       URL url = getURL();
-      if (url == null) return null;
-      return ImageLoader.loadFromUrl(url, null, true, myUseCacheOnLoad, dark, getFilters(), ctx);
+      if (url == null) {
+        return null;
+      }
+
+      int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+      if (myUseCacheOnLoad) {
+        flags |= ImageLoader.USE_CACHE;
+      }
+      if (dark) {
+        flags |= ImageLoader.DARK;
+      }
+      return ImageLoader.loadFromUrl(url, null, flags, getFilters(), ctx);
     }
 
     private class MyScaledIconsCache {
@@ -1065,7 +1076,7 @@ public final class IconLoader {
     }
 
     public static IconTransform getDefault() {
-      return new IconTransform(UIUtil.isUnderDarcula(), new IconPathPatcher[0], null);
+      return new IconTransform(StartupUiUtil.isUnderDarcula(), new IconPathPatcher[0], null);
     }
   }
 }

@@ -38,6 +38,12 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
   private val boundShortcuts = THashMap<String, String>()
   private val schemeManager: SchemeManager<Keymap>
 
+  companion object {
+    @JvmStatic
+    var isKeymapManagerInitialized = false
+      private set
+  }
+
   init {
     schemeManager = factory.create(KEYMAPS_DIR_PATH, object : LazySchemeProcessor<Keymap, KeymapImpl>() {
       override fun createScheme(dataHolder: SchemeDataHolder<KeymapImpl>,
@@ -67,7 +73,7 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     }
     schemeManager.loadSchemes()
 
-    ourKeymapManagerInitialized = true
+    isKeymapManagerInitialized = true
 
     if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
       CtrlYActionChooser.askAboutShortcut()
@@ -79,11 +85,6 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
     for (listener in listeners) {
       listener.activeKeymapChanged(newScheme)
     }
-  }
-
-  companion object {
-    @JvmField
-    var ourKeymapManagerInitialized: Boolean = false
   }
 
   override fun getAllKeymaps(): Array<Keymap> = getKeymaps(null).toTypedArray()

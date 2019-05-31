@@ -13,7 +13,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public final class HgCommandResult {
   @NotNull private final byte[] myByteArrayOutput;
 
   public HgCommandResult(@NotNull ProcessOutput processOutput) {
-    this(processOutput, ArrayUtil.EMPTY_BYTE_ARRAY);
+    this(processOutput, ArrayUtilRt.EMPTY_BYTE_ARRAY);
   }
 
   public HgCommandResult(@NotNull ProcessOutput processOutput, @NotNull byte[] byteArrayOutput) {

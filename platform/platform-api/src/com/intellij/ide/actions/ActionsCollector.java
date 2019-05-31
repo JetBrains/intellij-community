@@ -19,6 +19,11 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public abstract class ActionsCollector {
+
+  public static ActionsCollector getInstance() {
+    return ServiceManager.getService(ActionsCollector.class);
+  }
+
   /**
    * @deprecated use {@link #record(Project, AnAction, AnActionEvent)} instead
    */
@@ -48,11 +53,9 @@ public abstract class ActionsCollector {
    */
   public abstract void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang);
 
-  public abstract State getState();
+  public abstract void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId);
 
-  public static ActionsCollector getInstance() {
-    return ServiceManager.getService(ActionsCollector.class);
-  }
+  public abstract State getState();
 
   public final static class State {
     @Tag("counts")

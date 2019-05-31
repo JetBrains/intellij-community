@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Internal
 public class AsyncEventSupport {
@@ -56,9 +58,18 @@ public class AsyncEventSupport {
   static List<AsyncFileListener.ChangeApplier> runAsyncListeners(@NotNull List<? extends VFileEvent> events) {
     if (events.isEmpty()) return Collections.emptyList();
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Processing " + events.toString());
+    }
+
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
-    for (AsyncFileListener listener : EP_NAME.getExtensionList()) {
+    List<AsyncFileListener> allListeners = ContainerUtil.concat(
+      EP_NAME.getExtensionList(),
+      ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).getAsyncFileListeners());
+    for (AsyncFileListener listener : allListeners) {
       ProgressManager.checkCanceled();
+      long startNs = System.nanoTime();
+      boolean canceled = false;
       try {
         if (listener.needsReadAction()) {
           ReadAction.run(() -> ContainerUtil.addIfNotNull(appliers, listener.prepareChange(events)));
@@ -67,10 +78,17 @@ public class AsyncEventSupport {
         }
       }
       catch (ProcessCanceledException e) {
+        canceled = true;
         throw e;
       }
       catch (Throwable e) {
         LOG.error(e);
+      }
+      finally {
+        long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
+        if (elapsedMs > 10_000) {
+          LOG.warn(listener + " took too long (" + elapsedMs + "ms) on " + events.size() + " events" + (canceled ? ", canceled" : ""));
+        }
       }
     }
     return appliers;

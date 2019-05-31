@@ -20,10 +20,6 @@
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.keymap.KeymapManager</interface-class>
-      <implementation-class>com.intellij.openapi.keymap.impl.KeymapManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.IdeTooltipManager</implementation-class>
     </component>
     <component>

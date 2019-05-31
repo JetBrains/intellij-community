@@ -1,23 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.execution.services.ServiceViewDragHelper.ServiceViewDragBean;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.util.Collections;
-import java.util.List;
+import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedView;
 
 public class ShowInNewTabAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    List<ServiceViewItem> items = getSelectedItems(e);
-    e.getPresentation().setEnabled(!items.isEmpty());
+    ServiceView serviceView = getSelectedView(e);
+    boolean enabled = serviceView != null && !serviceView.getSelectedItems().isEmpty();
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
   }
 
   @Override
@@ -25,17 +24,10 @@ public class ShowInNewTabAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    List<ServiceViewItem> items = getSelectedItems(e);
-    if (items.isEmpty()) return;
+    ServiceView serviceView = getSelectedView(e);
+    if (serviceView == null) return;
 
-    ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).extract(new ServiceViewDragBean(items));
-  }
-
-  private static List<ServiceViewItem> getSelectedItems(@NotNull AnActionEvent e) {
-    Component contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
-      contextComponent = contextComponent.getParent();
-    }
-    return contextComponent == null ? Collections.emptyList() : ((ServiceView)contextComponent).getSelectedItems();
+    ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project))
+      .extract(new ServiceViewDragBean(serviceView, serviceView.getSelectedItems()));
   }
 }

@@ -3,16 +3,15 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,25 +44,21 @@ public class AddTestGroupToLocalWhitelistAction extends AnAction {
             EventLogTestWhitelistPersistence.addGroupWithCustomRules(recorderId, dialog.getGroupId(), dialog.getCustomRules());
           }
           else {
-            EventLogTestWhitelistPersistence.addTestGroup(recorderId, dialog.getGroupId(), dialog.getEventData());
+            EventLogTestWhitelistPersistence.addTestGroup(recorderId, dialog.getGroupId());
           }
           validator.reload();
-          showNotification(project, e, MessageType.INFO, "Group '" + dialog.getGroupId() + "' was added to local whitelist");
+          showNotification(project, NotificationType.INFORMATION, "Group '" + dialog.getGroupId() + "' was added to local whitelist");
         }
         catch (IOException ex) {
-          showNotification(project, e, MessageType.ERROR, "Failed updating local list: " + ex.getMessage());
+          showNotification(project, NotificationType.ERROR, "Failed updating local list: " + ex.getMessage());
         }
       }
     });
   }
 
   protected void showNotification(@NotNull Project project,
-                                  @NotNull AnActionEvent event,
-                                  @NotNull MessageType type,
+                                  @NotNull NotificationType type,
                                   @NotNull String message) {
-    ApplicationManager.getApplication().invokeLater(() -> JBPopupFactory.getInstance().
-      createHtmlTextBalloonBuilder(message, type, null).
-      setFadeoutTime(2000).setDisposable(project).createBalloon().
-      show(JBPopupFactory.getInstance().guessBestPopupLocation(event.getDataContext()), Balloon.Position.below));
+    Notifications.Bus.notify(new Notification("FeatureUsageStatistics", "Feature Usage Statistics", message, type), project);
   }
 }

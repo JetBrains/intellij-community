@@ -297,7 +297,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     leftBox.add(myCbUseAccessorsWhenAccessible);
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title"), true));
+      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title")));
     leftPanel.add(leftBox, BorderLayout.CENTER);
     leftPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -321,7 +321,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     fieldsBox.add(myRbFieldAsIs);
     JPanel fieldsVisibilityPanel = new JPanel(new BorderLayout());
     fieldsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title"), true));
+      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title")));
     fieldsVisibilityPanel.add(fieldsBox, BorderLayout.CENTER);
     fieldsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -332,7 +332,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     methodsBox.add(myRbAccessorPrivate);
     JPanel methodsVisibilityPanel = new JPanel(new BorderLayout());
     methodsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title"), true));
+      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title")));
     methodsVisibilityPanel.add(methodsBox, BorderLayout.CENTER);
     methodsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 

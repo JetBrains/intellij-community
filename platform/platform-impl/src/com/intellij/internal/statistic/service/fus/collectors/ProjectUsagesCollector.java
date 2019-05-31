@@ -39,7 +39,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   }
 
   /**
-   * @deprecated user {@link ProjectUsagesCollector#getMetrics(Project)}
+   * @deprecated use {@link ProjectUsagesCollector#getMetrics(Project)}
    */
   @NotNull
   @Deprecated

@@ -18,7 +18,7 @@ package com.siyeh.ig.ui;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.OrderedSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +48,7 @@ public class ExternalizableStringSet extends OrderedSet<String>
    * note: when it's not empty, a reference to the defaultValues array is retained by this set!
    */
   public ExternalizableStringSet(@NonNls String... defaultValues) {
-    this.defaultValues = defaultValues.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : defaultValues;
+    this.defaultValues = defaultValues.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : defaultValues;
     Collections.addAll(this, defaultValues);
   }
 

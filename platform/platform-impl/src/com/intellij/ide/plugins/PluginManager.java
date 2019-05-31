@@ -2,27 +2,18 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.*;
-import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.IdeBundle;
-import com.intellij.idea.IdeaApplication;
-import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,56 +21,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
 /**
  * @author mike
  */
 public class PluginManager extends PluginManagerCore {
   public static final String INSTALLED_TXT = "installed.txt";
-
-  @SuppressWarnings("StaticNonFinalField")
-  public static Activity startupStart;
-
-  /**
-   * Called via reflection
-   */
-  @SuppressWarnings({"UnusedDeclaration", "HardCodedStringLiteral"})
-  protected static void start(@NotNull String mainClass, @NotNull String methodName, @NotNull String[] args) {
-    startupStart = StartUpMeasurer.start(Phases.PREPARE_TO_INIT_APP);
-
-    Main.setFlags(args);
-
-    ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-        processException(e);
-      }
-    };
-
-    Runnable runnable = () -> {
-      try {
-        Activity activity = startupStart.startChild(Phases.LOAD_MAIN_CLASS);
-        ClassUtilCore.clearJarURLCache();
-
-        Class<?> aClass = Class.forName(mainClass);
-        Method method = aClass.getDeclaredMethod(methodName, ArrayUtil.EMPTY_STRING_ARRAY.getClass());
-        method.setAccessible(true);
-        Object[] argsArray = {args};
-        activity.end();
-        method.invoke(null, argsArray);
-      }
-      catch (Throwable t) {
-        throw new StartupAbortedException(t);
-      }
-    };
-
-    new Thread(threadGroup, runnable, "Idea Main Thread").start();
-  }
 
   /**
    * @return file with list of once installed plugins if it exists, null otherwise
@@ -90,84 +39,14 @@ public class PluginManager extends PluginManagerCore {
     return onceInstalledFile.isFile() ? onceInstalledFile : null;
   }
 
-  public static void processException(@NotNull Throwable t) {
-    if (!IdeaApplication.isLoaded()) {
-      EssentialPluginMissingException pluginMissingException = findCause(t, EssentialPluginMissingException.class);
-      if (pluginMissingException != null && pluginMissingException.pluginIds != null) {
-        Main.showMessage("Corrupted Installation",
-                         "Missing essential " + (pluginMissingException.pluginIds.size() == 1 ? "plugin" : "plugins") + ":\n\n" +
-                         pluginMissingException.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")) +
-                         "Please reinstall " + getProductNameSafe() + " from scratch.", true);
-        System.exit(Main.INSTALLATION_CORRUPTED);
-      }
-
-      StartupAbortedException startupException = findCause(t, StartupAbortedException.class);
-      if (startupException == null) startupException = new StartupAbortedException(t);
-      PluginException pluginException = findCause(t, PluginException.class);
-      PluginId pluginId = pluginException != null ? pluginException.getPluginId() : null;
-
-      if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
-        try {
-          getLogger().error(t);
-        }
-        catch (Throwable ignore) { }
-
-        // workaround for SOE on parsing PAC file (JRE-247)
-        if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
-          return;
-        }
-      }
-
-      ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
-      if (conflictException != null) {
-        PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
-      }
-
-      if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
-        disablePlugin(pluginId.getIdString());
-
-        StringWriter message = new StringWriter();
-        message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
-        message.append(" Please restart ").append(getProductNameSafe()).append('.');
-        message.append("\n\n");
-        pluginException.getCause().printStackTrace(new PrintWriter(message));
-
-        Main.showMessage("Plugin Error", message.toString(), false);
-        System.exit(Main.PLUGIN_ERROR);
-      }
-      else {
-        Main.showMessage("Start Failed", t);
-        System.exit(startupException.exitCode());
-      }
-    }
-    else if (!(t instanceof ProcessCanceledException)) {
-      getLogger().error(t);
-    }
-  }
-
-  private static String getProductNameSafe() {
-    try {
-      return ApplicationNamesInfo.getInstance().getFullProductName();
-    }
-    catch (Throwable ignore) {
-      return "the IDE";
-    }
-  }
-
-  private static <T extends Throwable> T findCause(Throwable t, Class<T> clazz) {
-    while (t != null) {
-      if (clazz.isInstance(t)) {
-        return clazz.cast(t);
-      }
-      t = t.getCause();
-    }
-    return null;
-  }
-
-  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> processException(e);
+  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> MainRunner.processException(e);
 
   public static void installExceptionHandler() {
     Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
+  }
+
+  public static void processException(@NotNull Throwable t) {
+    MainRunner.processException(t);
   }
 
   public static void reportPluginError() {
@@ -225,8 +104,8 @@ public class PluginManager extends PluginManagerCore {
       ExceptionUtil.rethrow(t);
     }
 
-    if (t instanceof StartupAbortedException) {
-      throw (StartupAbortedException)t;
+    if (t instanceof MainRunner.StartupAbortedException) {
+      throw (MainRunner.StartupAbortedException)t;
     }
 
     if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
@@ -241,37 +120,15 @@ public class PluginManager extends PluginManagerCore {
     }
 
     if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-      throw new StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
+      throw new MainRunner.StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
     }
     else {
-      throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
+      throw new MainRunner.StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);
     }
   }
 
   // return plugin mentioned in this exception (only if all plugins are initialized, to avoid stack overflow when exception is thrown during plugin init)
   public static IdeaPluginDescriptor findPluginIfInitialized(@NotNull Throwable t) {
     return arePluginsInitialized() ? getPlugin(IdeErrorsDialog.findPluginId(t)) : null;
-  }
-
-  private static class StartupAbortedException extends RuntimeException {
-    private int exitCode = Main.STARTUP_EXCEPTION;
-
-    StartupAbortedException(Throwable cause) {
-      super(cause);
-    }
-
-    StartupAbortedException(String message, Throwable cause) {
-      super(message, cause);
-    }
-
-    public int exitCode() {
-      return exitCode;
-    }
-
-    @NotNull
-    public StartupAbortedException exitCode(int exitCode) {
-      this.exitCode = exitCode;
-      return this;
-    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services;
 
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -12,7 +12,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
@@ -53,7 +53,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   }
 
   public static String[] getServiceUrls(final Project project) {
-    return ArrayUtil.toStringArray(getInstance(project).getUrls());
+    return ArrayUtilRt.toStringArray(getInstance(project).getUrls());
   }
 
   @NotNull

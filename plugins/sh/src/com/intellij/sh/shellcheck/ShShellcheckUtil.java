@@ -38,6 +38,7 @@ import java.util.TreeMap;
 class ShShellcheckUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
+  private static final String WINDOWS_EXTENSION = ".exe";
   static final String SHELLCHECK = "shellcheck";
   static final String SHELLCHECK_VERSION = "0.6.0-1";
   static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
@@ -53,7 +54,7 @@ class ShShellcheckUtil {
       directory.mkdirs();
     }
 
-    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK);
+    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
     if (shellcheck.exists()) {
       try {
         String path = ShSettings.getShellcheckPath();
@@ -114,14 +115,22 @@ class ShShellcheckUtil {
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
+    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
+    processIndicator.setIndeterminate(false);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
+  }
+
+  static boolean isExecutionValidPath(@Nullable String path) {
+    if (path == null || ShSettings.I_DO_MIND.equals(path)) return false;
+    File file = new File(path);
+    return file.canExecute() && file.getName().contains(SHELLCHECK);
   }
 
   static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
     if (ShSettings.I_DO_MIND.equals(path)) return true;
     File file = new File(path);
-    return file.canExecute() && file.getName().contains("shellcheck");
+    return file.canExecute() && file.getName().contains(SHELLCHECK);
 
 //    try {
 //      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
@@ -155,7 +164,7 @@ class ShShellcheckUtil {
     FileUtil.delete(tmpDir);
     FileUtil.delete(archive);
 
-    File shellcheck = new File(directory, SHELLCHECK + (SystemInfoRt.isWindows ? ".exe" : ""));
+    File shellcheck = new File(directory, SHELLCHECK + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
     return shellcheck.exists() ? shellcheck.getCanonicalPath() : "";
   }
 

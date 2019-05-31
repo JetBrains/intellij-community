@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc
 
 import com.google.gson.Gson
@@ -39,7 +39,7 @@ private val INT_LIST_TYPE_ADAPTER_FACTORY = object : TypeAdapterFactory {
     }
 
     if (typeAdapter == null) {
-      typeAdapter = IntArrayListTypeAdapter<TIntArrayList>()
+      typeAdapter = IntArrayListTypeAdapter()
     }
     @Suppress("UNCHECKED_CAST")
     return typeAdapter as TypeAdapter<T>?
@@ -140,7 +140,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
             }
           }
           else {
-            client.send(encodeMessage(client.byteBufAllocator, messageId, params = if (result == null) ArrayUtil.EMPTY_OBJECT_ARRAY else arrayOf(result)))
+            client.send(encodeMessage(client.byteBufAllocator, messageId, params = if (result == null) ArrayUtilRt.EMPTY_OBJECT_ARRAY else arrayOf(result)))
           }
         }
         return
@@ -196,7 +196,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
                             domain: String? = null,
                             command: String? = null,
                             rawData: ByteBuf? = null,
-                            params: Array<*> = ArrayUtil.EMPTY_OBJECT_ARRAY): ByteBuf {
+                            params: Array<*> = ArrayUtilRt.EMPTY_OBJECT_ARRAY): ByteBuf {
     val buffer = doEncodeMessage(byteBufAllocator, messageId, domain, command, params, rawData)
     if (LOG.isDebugEnabled) {
       LOG.debug("OUT ${buffer.toString(Charsets.UTF_8)}")

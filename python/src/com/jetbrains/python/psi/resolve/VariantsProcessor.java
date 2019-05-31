@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiNamedElement;
@@ -79,7 +79,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
             if (!expr.isValid()) {
               throw new PsiInvalidElementAccessException(expr, "Definer: " + definer);
             }
-            final String name = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile)expr).getName()) : expr.getName();
+            final String name = expr instanceof PyFile ? FileUtilRt.getNameWithoutExtension(((PyFile)expr).getName()) : expr.getName();
             if (nameIsAcceptable(name)) {
               addImportedElement(name, expr);
             }

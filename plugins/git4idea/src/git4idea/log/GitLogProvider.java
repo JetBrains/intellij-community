@@ -35,9 +35,9 @@ import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.history.GitLogHistoryHandler;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
+import git4idea.history.GitLogHistoryHandler;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -287,7 +287,7 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     Set<VcsRef> refs = new HashSet<>();
     Set<VcsCommitMetadata> commits = new HashSet<>();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
-      String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
+      String[] parameters = ArrayUtilRt.toStringArray(ContainerUtil.concat(params, tagsChunk));
       DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());

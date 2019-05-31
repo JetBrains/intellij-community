@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -228,7 +229,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     Set<String> names = new LinkedHashSet<>();
     if (propertyName != null) {
-      String[] namesByName = ArrayUtil.toStringArray(getSuggestionsByName(propertyName, kind, correctKeywords));
+      String[] namesByName = ArrayUtilRt.toStringArray(getSuggestionsByName(propertyName, kind, correctKeywords));
       sortVariableNameSuggestions(namesByName, kind, propertyName, null);
       ContainerUtil.addAll(names, namesByName);
     }
@@ -236,7 +237,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final NamesByExprInfo namesByExpr;
     if (expr != null) {
       namesByExpr = suggestVariableNameByExpression(expr, kind);
-      String[] suggestions = ArrayUtil.toStringArray(getSuggestionsByNames(namesByExpr.names, kind, correctKeywords));
+      String[] suggestions = ArrayUtilRt.toStringArray(getSuggestionsByNames(namesByExpr.names, kind, correctKeywords));
       if (namesByExpr.propertyName != null) {
         sortVariableNameSuggestions(suggestions, kind, namesByExpr.propertyName, null);
       }
@@ -262,7 +263,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     addNamesFromStatistics(names, kind, _propertyName, type);
 
-    String[] namesArray = ArrayUtil.toStringArray(names);
+    String[] namesArray = ArrayUtilRt.toStringArray(names);
     sortVariableNameSuggestions(namesArray, kind, _propertyName, type);
 
     final PsiType _type = type;
@@ -316,7 +317,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private String[] suggestVariableNameByType(@NotNull PsiType type, @NotNull final VariableKind variableKind, final boolean correctKeywords, boolean skipIndices) {
     Collection<String> byTypeNames = doSuggestNamesByType(type, variableKind, skipIndices);
-    return ArrayUtil.toStringArray(getSuggestionsByNames(byTypeNames, variableKind, correctKeywords));
+    return ArrayUtilRt.toStringArray(getSuggestionsByNames(byTypeNames, variableKind, correctKeywords));
   }
 
   @NotNull
@@ -769,7 +770,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (currentWord.length() > 0) {
       result.add(currentWord.toString());
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   @NotNull
@@ -1009,7 +1010,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       uniqueNames.add(unique);
     }
 
-    return new SuggestedNameInfo(ArrayUtil.toStringArray(uniqueNames)) {
+    return new SuggestedNameInfo(ArrayUtilRt.toStringArray(uniqueNames)) {
       @Override
       public void nameChosen(String name) {
         baseNameInfo.nameChosen(name);
@@ -1183,7 +1184,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final String propertyName = ContainerUtil.getFirstItem(semanticNames);
     addNamesFromStatistics(suggestions, kind, propertyName, type);
 
-    String[] namesArray = ArrayUtil.toStringArray(suggestions);
+    String[] namesArray = ArrayUtilRt.toStringArray(suggestions);
     sortVariableNameSuggestions(namesArray, kind, propertyName, type);
     return new SuggestedNameInfo(namesArray) {
       @Override

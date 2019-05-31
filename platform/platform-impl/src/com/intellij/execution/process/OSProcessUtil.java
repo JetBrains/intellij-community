@@ -2,10 +2,9 @@
 
 package com.intellij.execution.process;
 
-import com.intellij.execution.MachineType;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ public class OSProcessUtil {
   }
 
   public static boolean killProcessTree(@NotNull Process process) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
           int pid = ((WinPtyProcess) process).getChildProcessId();
@@ -51,7 +50,7 @@ public class OSProcessUtil {
         LOG.info("Cannot kill process tree", e);
       }
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigKillToProcessTree(process);
     }
     return false;
@@ -62,7 +61,7 @@ public class OSProcessUtil {
   }
 
   public static void killProcess(int pid) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       try {
         if (!Registry.is("disable.winp")) {
           try {
@@ -79,7 +78,7 @@ public class OSProcessUtil {
         LOG.info("Cannot kill process", e);
       }
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGKILL);
     }
   }
@@ -95,7 +94,7 @@ public class OSProcessUtil {
   }
 
   public static int getProcessID(@NotNull Process process) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
           return ((WinPtyProcess)process).getChildProcessId();
@@ -112,13 +111,13 @@ public class OSProcessUtil {
       }
       catch (Throwable e) {
         throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()
-                                        + ", OS: " + SystemInfoRt.OS_NAME, e);
+                                        + ", OS: " + SystemInfo.OS_NAME, e);
       }
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       return UnixProcessManager.getProcessId(process);
     }
-    throw new IllegalStateException("Unknown OS: " + SystemInfoRt.OS_NAME);
+    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
   }
 
   @SuppressWarnings("deprecation")
@@ -136,38 +135,25 @@ public class OSProcessUtil {
     return new WinProcess(pid);
   }
 
-  private static String getCurrentProcessId() {
+  public static int getCurrentProcessId() {
     int pid;
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       pid = WinProcessManager.getCurrentProcessId();
     }
     else {
       pid = UnixProcessManager.getCurrentProcessId();
     }
 
-    return String.valueOf(pid);
+    return pid;
   }
 
   public static String getApplicationPid() {
     if (ourPid == null) {
-      ourPid = getCurrentProcessId();
+      ourPid = String.valueOf(getCurrentProcessId());
     }
 
     return ourPid;
-  }
-
-  @NotNull
-  public static MachineType getProcessMachineType(int pid) {
-    if (SystemInfoRt.isWindows) {
-      return WinProcessManager.getProcessMachineType(pid);
-    }
-    if (SystemInfoRt.isLinux) {
-      return UnixProcessManager.getProcessMachineType(pid);
-    }
-    else {
-      throw new IllegalStateException("getProcessMachineType() is not implemented for macOS processes");
-    }
   }
 
   /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */

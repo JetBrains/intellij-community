@@ -17,7 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
@@ -388,6 +388,6 @@ public class MavenFoldersImporter {
 
   private static File[] getChildren(File dir) {
     File[] result = dir.listFiles();
-    return result == null ? ArrayUtil.EMPTY_FILE_ARRAY : result;
+    return result == null ? ArrayUtilRt.EMPTY_FILE_ARRAY : result;
   }
 }

@@ -672,7 +672,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiExpression orElseArgument = getOrElseArgument(call, myType);
       if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
-      PsiLocalVariable returnVar = tryCast(call.getParent(), PsiLocalVariable.class);
+      PsiLocalVariable returnVar = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiLocalVariable.class);
       if (returnVar == null) return null;
       PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, true);
       if (statement == null) return null;
@@ -908,7 +908,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return OPTIONAL_IF_PRESENT;
     }
 
-    class Context {
+    static class Context {
       @Nullable PsiMethodCallExpression myMapBefore;
       @Nullable PsiExpression myMapLambdaBodyAfter;
       @NotNull String myOuterIfPresentVarName;

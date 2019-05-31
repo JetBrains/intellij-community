@@ -125,7 +125,7 @@ public class JavaPostfixTemplateEditor extends PostfixTemplateEditorBase<JavaPos
     private String getFqn() {
       String title = "Choose Class";
       if (myProject == null || myProject.isDefault()) {
-        return Messages.showInputDialog(myPanel, title, title, null);
+        return Messages.showInputDialog(myPanel, "Enter fully qualified class name", "Choose Class", null);
       }
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(title);
       chooser.showDialog();

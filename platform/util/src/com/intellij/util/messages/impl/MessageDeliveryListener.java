@@ -6,5 +6,5 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public interface MessageDeliveryListener {
-  void messageDelivered(Topic topic, Object handler, long durationNanos);
+  void messageDelivered(Topic topic, String messageName, Object handler, long durationNanos);
 }

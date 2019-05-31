@@ -56,6 +56,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", PooledThreadExecutor.INSTANCE, 1, this);
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
+  private int myBusyThreads = 0;
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
 
@@ -84,22 +85,19 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void queueSession(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
     myQueue.execute(() -> {
-      myRefreshIndicator.start();
+      startRefreshActivity();
       try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session)) {
         doScan(session);
       }
       finally {
-        myRefreshIndicator.stop();
+        finishRefreshActivity();
         TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> myEventProcessingQueue.submit(() -> {
-          List<? extends VFileEvent> events = session.getEvents();
-          while (true) {
-            AtomicBoolean success = new AtomicBoolean();
-            ProgressIndicatorUtils.runWithWriteActionPriority(() -> success.set(processAndFireEvents(session, transaction, events)), new SensitiveProgressWrapper(myRefreshIndicator));
-            if (success.get()) {
-              break;
-            }
-
-            ProgressIndicatorUtils.yieldToPendingWriteActions();
+          startRefreshActivity();
+          try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
+            processAndFireEvents(session, transaction);
+          }
+          finally {
+            finishRefreshActivity();
           }
         }));
       }
@@ -107,20 +105,42 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     myEventCounter.eventHappened(session);
   }
 
-  private static boolean processAndFireEvents(@NotNull RefreshSessionImpl session,
-                                              @Nullable TransactionId transaction,
-                                              @NotNull List<? extends VFileEvent> events) {
-    List<? extends VFileEvent> validEvents = ContainerUtil.filter(events, e -> {
+  private synchronized void startRefreshActivity() {
+    if (myBusyThreads++ == 0) {
+      myRefreshIndicator.start();
+    }
+  }
+
+  private synchronized void finishRefreshActivity() {
+    if (--myBusyThreads == 0) {
+      myRefreshIndicator.stop();
+    }
+  }
+
+  private void processAndFireEvents(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+    while (true) {
+      AtomicBoolean success = new AtomicBoolean();
+      ProgressIndicatorUtils.runWithWriteActionPriority(() -> success.set(tryProcessingEvents(session, transaction)), new SensitiveProgressWrapper(myRefreshIndicator));
+      if (success.get()) {
+        break;
+      }
+
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
+    }
+  }
+
+  private static boolean tryProcessingEvents(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+    List<? extends VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       return file == null || file.isValid();
     });
 
-    List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(validEvents);
+    List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(events);
 
     Semaphore semaphore = new Semaphore(1);
     TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> {
       semaphore.up();
-      session.fireEvents(validEvents, appliers);
+      session.fireEvents(events, appliers);
     });
 
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();

@@ -104,7 +104,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     variables = _variables;
     myConfiguration = configuration;
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
-    myCompiledPattern = PatternCompiler.compilePattern(project, matchOptions, false);
+    myCompiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, false);
     myProfile = StructuralSearchUtil.getProfileByFileType(fileType);
 
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));

@@ -22,6 +22,8 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(name: "Amazon Ion Java", libraryName: "ion", license: "Apache 2.0", url: "https://github.com/amzn/ion-java"),
 
+    new LibraryLicense(name: "Android Aia Manifest Proto", libraryName: "aia-manifest-proto-1.0-jarjar.jar", license: "Apache 2.0",
+                       url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics", attachedTo: "intellij.android.core", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Crash", libraryName: "com.android.tools.analytics-library:crash",
@@ -285,7 +287,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.15", license: "LGPL 3",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.16", license: "LGPL 3",
                        url: "https://github.com/JetBrains/jediterm",
                        licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/LICENSE-LGPLv3.txt"),
     new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "17.0.0", license: "Apache 2.0",

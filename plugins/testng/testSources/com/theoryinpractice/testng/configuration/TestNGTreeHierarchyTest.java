@@ -2,7 +2,7 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -129,7 +129,7 @@ public class TestNGTreeHierarchyTest {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
     listener.onStart((ISuite)null);
-    listener.onTestFailure(new MockTestNGResult("ATest", "testName", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY));
+    listener.onTestFailure(new MockTestNGResult("ATest", "testName", createExceptionWithoutTrace(), ArrayUtilRt.EMPTY_OBJECT_ARRAY));
     listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
@@ -247,7 +247,7 @@ public class TestNGTreeHierarchyTest {
     final IDEATestNGRemoteListener listener = createListener(buf);
     final String className = "a.ATest";
     listener.onSuiteStart(className, true);
-    final MockTestNGResult setUp = new MockTestNGResult(className, "setUp", createExceptionWithoutTrace(), ArrayUtil.EMPTY_OBJECT_ARRAY);
+    final MockTestNGResult setUp = new MockTestNGResult(className, "setUp", createExceptionWithoutTrace(), ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     listener.onConfigurationStart(setUp);
     listener.onConfigurationFailure(setUp);
     listener.onSuiteFinish(className);
@@ -401,7 +401,7 @@ public class TestNGTreeHierarchyTest {
     }
 
     private MockTestNGResult(String className, String methodName) {
-     this(className, methodName, null, ArrayUtil.EMPTY_OBJECT_ARRAY);
+     this(className, methodName, null, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     }
 
     @Override

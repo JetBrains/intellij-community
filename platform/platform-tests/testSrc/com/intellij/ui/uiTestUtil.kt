@@ -18,8 +18,8 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.TestScaleHelper
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.paint.ImageComparator
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
@@ -82,7 +82,7 @@ suspend fun changeLafIfNeeded(lafName: String) {
     if (lafName == "Darcula") {
       // static init it is hell - UIUtil static init is called too early, so, call it to init properly
       // (otherwise null stylesheet added and it leads to NPE on set comment text)
-      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet())
+      UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet())
     }
   }
 }

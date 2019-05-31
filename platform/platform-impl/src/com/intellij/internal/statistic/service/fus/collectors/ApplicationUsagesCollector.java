@@ -38,7 +38,7 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
   }
 
   /**
-   * @deprecated user {@link ApplicationUsagesCollector#getMetrics()}
+   * @deprecated use {@link ApplicationUsagesCollector#getMetrics()}
    */
   @NotNull
   @Deprecated

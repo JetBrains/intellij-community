@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -348,7 +348,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       // Cannot do anything if we have already single branch and we cannot restore flow due to non-terminal breaks
       return allBranches.size() != 1 || BreakConverter.from(statement) != null;
     }
-    // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either 
+    // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
     return (allBranches.size() <= 2 &&
            !allBranches.stream().allMatch(branch -> branch == labelStatement || branch.isDefaultCase())) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
@@ -720,7 +720,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         reportConstantBoolean(reporter, psiAnchor, true);
       }
     }
-    else if (psiAnchor != null && 
+    else if (psiAnchor != null &&
              (!(psiAnchor instanceof PsiExpression) || PsiImplUtil.getSwitchLabel((PsiExpression)psiAnchor) == null) &&
              !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
@@ -910,7 +910,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         final LocalQuickFix[] fixes =
           PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
           ? LocalQuickFix.EMPTY_ARRAY
-          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls()))};
+          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtilRt.toStringArray(manager.getNotNulls()))};
         reporter.registerProblem(expr, text, fixes);
       }
     }

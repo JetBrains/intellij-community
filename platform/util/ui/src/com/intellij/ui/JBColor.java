@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +12,7 @@ import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -71,13 +71,13 @@ public class JBColor extends Color {
     Object value = UIManager.get("*");
 
     if (value instanceof Map) {
-      Map<?,?> map = (Map<?, ?>)value;
+      Map<?, ?> map = (Map<?, ?>)value;
       Object o = UIManager.get("*cache");
-      if (! (o instanceof Map)) {
-        o = new java.util.HashMap<String, Color>();
+      if (!(o instanceof Map)) {
+        o = new HashMap<String, Color>();
         UIManager.put("*cache", o);
       }
-      Map<String,Color> cache = (Map)o;
+      Map<String, Color> cache = (Map)o;
       if (cache.containsKey(name)) {
         return cache.get(name);
       }

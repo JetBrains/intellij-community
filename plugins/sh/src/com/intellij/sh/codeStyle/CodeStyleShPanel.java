@@ -78,6 +78,12 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     });
     myWarningLabel.setIcon(AllIcons.General.Warning);
 
+    myBinaryOpsStartLine.setText("Binary ops like & and | may start a line");
+    mySwitchCasesIndented.setText("Switch cases will be indented");
+    myRedirectFollowedBySpace.setText("Redirect operators will be followed by a space");
+    myKeepColumnAlignmentPadding.setText("Keep column alignment padding");
+    myMinifyProgram.setText("Minify program to reduce its size");
+
     addPanelToWatch(myPanel);
   }
 

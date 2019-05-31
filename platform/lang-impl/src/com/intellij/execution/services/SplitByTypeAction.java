@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedView;
 
 public class SplitByTypeAction extends DumbAwareAction {
   @Override
@@ -16,16 +19,16 @@ public class SplitByTypeAction extends DumbAwareAction {
       return;
     }
 
-    ServiceViewManagerImpl serviceViewManager = (ServiceViewManagerImpl)ServiceViewManager.getInstance(project);
-    ServiceView selectedView = serviceViewManager.getSelectedView();
+    ServiceView selectedView = getSelectedView(e);
     if (selectedView == null || selectedView.getModel().getFilter() != null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     Presentation presentation = e.getPresentation();
-    presentation.setVisible(true);
-    presentation.setEnabled(serviceViewManager.isSplitByTypeEnabled());
+    boolean enabled = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).isSplitByTypeEnabled();
+    presentation.setEnabled(enabled);
+    presentation.setVisible(enabled || !ActionPlaces.isPopupPlace(e.getPlace()));
   }
 
   @Override

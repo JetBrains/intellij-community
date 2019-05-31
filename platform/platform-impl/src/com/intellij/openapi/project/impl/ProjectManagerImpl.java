@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,6 +38,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -510,7 +511,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
+  public Project loadAndOpenProject(@NotNull final String originalFilePath) {
     final String filePath = toCanonicalName(originalFilePath);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
     final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
@@ -520,20 +521,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
     else {
       project = doCreateProject(null, filePath);
-      ProgressManager.getInstance()
-        .run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
-        protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-          if (!loadProjectWithProgress(project)) {
-            return null;
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            if (!loadProjectWithProgress(project)) {
+              return;
+            }
+          }
+          catch (IOException e) {
+            LOG.error(e);
+            return;
           }
           if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
             StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
           }
           openProject(project);
-          return project;
         }
-      });
+      }));
     }
 
     if (project == null) {
@@ -940,5 +945,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public String[] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
+  }
+
+  @NotNull
+  @Override
+  public String[] getAllProjectUrls() {
+    return ContainerUtil.map(myOpenProjects, project -> VfsUtilCore.pathToUrl(project.getBasePath()), ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }

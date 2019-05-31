@@ -21,7 +21,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -260,7 +260,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
     final Set<String> keySet = myWidgetMap.keySet();
-    final String[] keys = ArrayUtil.toStringArray(keySet);
+    final String[] keys = ArrayUtilRt.toStringArray(keySet);
     for (final String key : keys) {
       final WidgetBean value = myWidgetMap.get(key);
       if (value.widget instanceof CustomStatusBarWidget && value.component == c) {

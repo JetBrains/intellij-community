@@ -59,7 +59,7 @@ public class HgHistoryUtil {
     HgVersion version = hgvcs.getVersion();
     List<String> templateList = HgBaseLogParser.constructDefaultTemplate(version);
     templateList.add("{desc}");
-    String[] templates = ArrayUtil.toStringArray(templateList);
+    String[] templates = ArrayUtilRt.toStringArray(templateList);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
     HgBaseLogParser<VcsCommitMetadata> baseParser = new HgBaseLogParser<VcsCommitMetadata>() {
 
@@ -360,7 +360,7 @@ public class HgHistoryUtil {
     final HgVersion version = hgvcs.getVersion();
     List<String> templateList = HgBaseLogParser.constructDefaultTemplate(version);
     templateList.add("{desc}");
-    final String[] templates = ArrayUtil.toStringArray(templateList);
+    final String[] templates = ArrayUtilRt.toStringArray(templateList);
 
     return VcsFileUtil.foreachChunk(prepareHashes(hashes), 2,
                                     strings -> {
@@ -407,7 +407,7 @@ public class HgHistoryUtil {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     HgVersion version = hgvcs.getVersion();
-    String[] templates = ArrayUtil.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
+    String[] templates = ArrayUtilRt.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
     HgCommandResult result = getLogResult(project, root, version, limit, params, HgChangesetUtil.makeTemplate(templates));
     return getCommitRecords(project, result, new HgBaseLogParser<TimedVcsCommit>() {
 

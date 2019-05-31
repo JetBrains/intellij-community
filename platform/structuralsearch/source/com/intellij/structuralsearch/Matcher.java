@@ -75,7 +75,7 @@ public class Matcher {
 
     if (matchOptions != null) {
       matchContext.setOptions(matchOptions);
-      matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false));
+      matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false, true));
     }
     myDumbService = DumbService.getInstance(project);
   }
@@ -110,7 +110,7 @@ public class Matcher {
   }
 
   public static void validate(Project project, MatchOptions options) {
-    PatternCompiler.compilePattern(project, options, true);
+    PatternCompiler.compilePattern(project, options, true, true);
   }
 
   public static boolean checkIfShouldAttemptToMatch(MatchContext context, NodeIterator matchedNodes) {
@@ -170,9 +170,9 @@ public class Matcher {
   }
 
   private void configureOptions(MatchContext context,
-                                final Configuration configuration,
+                                Configuration configuration,
                                 PsiElement psiFile,
-                                final PairProcessor<? super MatchResult, ? super Configuration> processor) {
+                                PairProcessor<? super MatchResult, ? super Configuration> processor) {
     if (psiFile == null) return;
     matchContext.clear();
     matchContext.setMatcher(visitor);
@@ -206,7 +206,7 @@ public class Matcher {
       matchContext.setOptions(matchOptions);
 
       try {
-        matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false));
+        matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false, false));
         out.put(configuration, matchContext);
       }
       catch (StructuralSearchException e) {
@@ -296,12 +296,12 @@ public class Matcher {
     }
   }
 
-  private CompiledPattern prepareMatching(final MatchResultSink sink, final MatchOptions options) {
+  private CompiledPattern prepareMatching(MatchResultSink sink, MatchOptions options) {
     matchContext.clear();
     matchContext.setSink(new DuplicateFilteringResultSink(sink));
     matchContext.setOptions(options);
     matchContext.setMatcher(visitor);
-    matchContext.setPattern(PatternCompiler.compilePattern(project, options, false));
+    matchContext.setPattern(PatternCompiler.compilePattern(project, options, false, true));
     visitor.setMatchContext(matchContext);
 
     return matchContext.getPattern();
@@ -449,7 +449,7 @@ public class Matcher {
    * Initiates the matching process for given element
    * @param element the current search tree element
    */
-  void match(@NotNull PsiElement element, final Language language) {
+  void match(@NotNull PsiElement element, Language language) {
     final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
     final Language elementLanguage = element.getLanguage();

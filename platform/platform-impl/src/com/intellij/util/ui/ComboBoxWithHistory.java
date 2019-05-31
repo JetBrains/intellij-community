@@ -1,9 +1,9 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -18,6 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -42,7 +43,7 @@ public class ComboBoxWithHistory extends JComboBox {
   }
 
   public ComboBoxWithHistory(String historyId) {
-    this(null, historyId, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    this(null, historyId, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   public void setModelFrom(Object... items) {

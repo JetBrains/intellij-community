@@ -1,14 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -21,8 +25,10 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformLiteFixture;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
@@ -40,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
 
@@ -289,7 +296,22 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test(timeout = 20_000)
+  public void testScanNewChildrenMustNotBeRunOutsideOfProjectRoots() throws Exception {
+    checkNewDirAndRefresh(__->{}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
+  }
+
+  @Test(timeout = 20_000)
   public void testRefreshAndEspeciallyScanChildrenMustBeRunOutsideOfReadActionToAvoidUILags() throws Exception {
+    checkNewDirAndRefresh(temp ->
+        WriteCommandAction.runWriteCommandAction(null, ()->{
+          Project project = PlatformTestCase.createProject(temp, ExceptionUtil.currentStackTrace());
+          ProjectManagerEx.getInstanceEx().openProject(project);
+          Disposer.register(getTestRootDisposable(), () -> ProjectUtil.closeAndDispose(project));
+        }),
+    getAllExcludedCalled->assertTrue(getAllExcludedCalled.get()));
+  }
+
+  private void checkNewDirAndRefresh(Consumer<? super File> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
     ProjectManagerImpl test = new ProjectManagerImpl() {
       @NotNull
@@ -303,12 +325,14 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     ProjectManager old = ProjectManager.getInstance();
     PlatformLiteFixture.registerComponentInstance(ApplicationManager.getApplication(), ProjectManager.class, test);
     assertSame(test, ProjectManager.getInstance());
+
+
     try {
-      File temp = myTempDir.newFolder();
+      final File temp = myTempDir.newFolder();
       VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
       assertNotNull(vTemp);
       vTemp.getChildren(); //to force full dir refresh?!
-
+      dirCreatedCallback.accept(temp);
       File d = new File(temp, "d");
       assertTrue(d.mkdir());
       File d1 = new File(d, "d1");
@@ -324,7 +348,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       while (refreshed.getCount() != 0) {
         UIUtil.pump();
       }
-      assertTrue(getAllExcludedCalled.get());
+      getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
     finally {
       if (old != null) {

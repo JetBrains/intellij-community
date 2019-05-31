@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +34,9 @@ public final class SplashManager {
     }
 
     assert SPLASH_WINDOW == null;
+    Activity splashInitialization = StartUpMeasurer.start("splash initialization");
     SPLASH_WINDOW = new Splash(ApplicationInfoImpl.getShadowInstance());
+    splashInitialization.end();
   }
 
   public static void setVisible(boolean value) {

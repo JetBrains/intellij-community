@@ -7,19 +7,14 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
@@ -74,12 +69,12 @@ public final class Splash extends Window {
   }
 
   @NotNull
-  private static Image loadImage(@NotNull String url) {
-    URL imageUrl = Splash.class.getResource(url);
-    if (imageUrl == null) {
-      throw new IllegalStateException("Cannot find image: " + url);
+  private static Image loadImage(@NotNull String path) {
+    Image result = ImageLoader.loadFromUrl(path, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, JBUIScale.ScaleContext.create());
+    if (result == null) {
+      throw new IllegalStateException("Cannot find image: " + path);
     }
-    return Objects.requireNonNull(ImageLoader.loadFromUrl(imageUrl, Splash.class, true, false, false, null, JBUIScale.ScaleContext.create()));
+    return result;
   }
 
   @NotNull
@@ -103,7 +98,7 @@ public final class Splash extends Window {
 
   @Override
   public void paint(Graphics g) {
-    UIUtil.drawImage(g, myImage, 0, 0, null);
+    StartupUiUtil.drawImage(g, myImage, 0, 0, null);
     paintProgress(g);
   }
 
@@ -124,7 +119,7 @@ public final class Splash extends Window {
     if (SystemInfoRt.isWindows) {
       JBInsets.removeFrom(bounds, ScreenUtil.getScreenInsets(getGraphicsConfiguration()));
     }
-    setLocation(UIUtil.getCenterPoint(bounds, getSize()));
+    setLocation(StartupUiUtil.getCenterPoint(bounds, getSize()));
   }
 
   public void showProgress(double progress) {
@@ -169,7 +164,7 @@ public final class Splash extends Window {
   private void paintSlides(@NotNull Graphics g) {
     for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
       if (progressSlide.slide.getProgressRation() <= myProgress) {
-        UIUtil.drawImage(g, progressSlide.image, 0, 0, null);
+        StartupUiUtil.drawImage(g, progressSlide.image, 0, 0, null);
       }
     }
   }

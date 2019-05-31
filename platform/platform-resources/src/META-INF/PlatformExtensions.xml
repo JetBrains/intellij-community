@@ -12,6 +12,9 @@
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
+                        serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
+
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
     <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
       <description>Forces closing of WSL process input stream to prevent process zombification. See
@@ -162,7 +165,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"/>
-    <applicationService serviceImplementation="com.intellij.ide.plugins.InstalledPluginsState"/>
     <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
                         serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
 
@@ -653,5 +655,7 @@
     </obsoleteStorage>
 
     <postStartupActivity implementation="com.intellij.diagnostic.StartUpPerformanceReporter" order="last"/>
+
+    <httpRequestHandler implementation="com.intellij.ide.FavIconHttpRequestHandler" order="last"/>
   </extensions>
 </idea-plugin>

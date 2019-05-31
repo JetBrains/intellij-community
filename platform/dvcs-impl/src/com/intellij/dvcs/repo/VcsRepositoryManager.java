@@ -5,10 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -85,6 +82,13 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @Nullable
   public Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
+    final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
+    if (vcsRoot == null) return null;
+    return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
+  }
+
+  @Nullable
+  public Repository getRepositoryForFile(@NotNull FilePath file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) return null;
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());

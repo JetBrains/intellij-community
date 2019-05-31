@@ -56,42 +56,26 @@
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties>
-                      <selected value="false"/>
-                      <text value="Binary ops like &amp; and | may start a line"/>
-                    </properties>
                   </component>
                   <component id="44a8f" class="javax.swing.JCheckBox" binding="mySwitchCasesIndented">
                     <constraints>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties>
-                      <text value="Switch cases will be indented"/>
-                    </properties>
                   </component>
                   <component id="73c96" class="javax.swing.JCheckBox" binding="myRedirectFollowedBySpace">
                     <constraints>
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties>
-                      <text value="Redirect operators will be followed by a space"/>
-                    </properties>
                   </component>
                   <component id="df240" class="javax.swing.JCheckBox" binding="myKeepColumnAlignmentPadding">
                     <constraints>
                       <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties>
-                      <text value="Keep column alignment padding"/>
-                    </properties>
                   </component>
                   <component id="f05d5" class="javax.swing.JCheckBox" binding="myMinifyProgram">
                     <constraints>
                       <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties>
-                      <text value="Minify program to reduce its size"/>
-                    </properties>
                   </component>
                   <vspacer id="15d8d">
                     <constraints>

@@ -63,7 +63,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
-  private ExternalSystemProjectsWatcherImpl myWatcher;
+  private final ExternalSystemProjectsWatcherImpl myWatcher;
 
   public ExternalProjectsManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -72,6 +72,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     myTaskActivator = new ExternalSystemTaskActivator(project);
     myRunManagerListener = new ExternalSystemRunManagerListener(this);
     myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
+    Disposer.register(this, myWatcher);
   }
 
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
@@ -88,7 +89,11 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   public void setStoreExternally(boolean value) {
-    ExternalStorageConfigurationManager.getInstance(myProject).setEnabled(value);
+    ExternalStorageConfigurationManager externalStorageConfigurationManager =
+      ExternalStorageConfigurationManager.getInstance(myProject);
+    if (externalStorageConfigurationManager.isEnabled() == value) return;
+    externalStorageConfigurationManager.setEnabled(value);
+
     // force re-save
     try {
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
@@ -306,10 +311,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     myPostInitializationActivities.clear();
     myProjectsViews.clear();
     myRunManagerListener.detach();
-    if (myWatcher != null) {
-      myWatcher.stop();
-    }
-    myWatcher = null;
   }
 
   public interface ExternalProjectsStateProvider {
@@ -334,5 +335,10 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath);
 
     Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull ProjectSystemId systemId);
+  }
+
+  public static void disableProjectWatcherAutoUpdate(@NotNull Project project) {
+    ExternalProjectsManagerImpl projectsManager = getInstance(project);
+    projectsManager.myWatcher.disableAutoUpdate();
   }
 }

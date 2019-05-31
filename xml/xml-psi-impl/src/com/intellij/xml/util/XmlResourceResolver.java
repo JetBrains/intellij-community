@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
@@ -22,7 +22,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.index.XmlNamespaceIndex;
@@ -68,7 +68,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   }
 
   public String[] getResourcePaths() {
-    return ArrayUtil.toStringArray(myExternalResourcesMap.values());
+    return ArrayUtilRt.toStringArray(myExternalResourcesMap.values());
   }
 
   @Nullable

@@ -29,6 +29,7 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
@@ -340,7 +341,7 @@ public class TipUIUtil {
         }
       );
       URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      HTMLEditorKit kit = new UIUtil.JBHtmlEditorKit(false) {
+      HTMLEditorKit kit = new JBHtmlEditorKit(false) {
         private final ViewFactory myFactory = createViewFactory();
         //SVG support
         private ViewFactory createViewFactory() {

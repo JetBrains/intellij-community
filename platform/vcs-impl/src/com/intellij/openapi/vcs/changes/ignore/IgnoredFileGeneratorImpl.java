@@ -36,6 +36,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
 import static com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY;
+import static java.lang.System.lineSeparator;
 
 public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
@@ -89,7 +90,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     String projectCharsetName = EncodingProjectManager.getInstance(myProject).getDefaultCharsetName();
     try {
       if (append) {
-        FileUtil.writeToFile(ignoreFile, ignoreFileContent.getBytes(projectCharsetName), true);
+        FileUtil.writeToFile(ignoreFile, (lineSeparator() + ignoreFileContent).getBytes(projectCharsetName), true);
       }
       else {
         //create ignore file with VFS to prevent externally added files detection

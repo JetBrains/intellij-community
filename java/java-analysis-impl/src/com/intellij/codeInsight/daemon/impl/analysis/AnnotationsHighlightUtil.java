@@ -204,7 +204,10 @@ public class AnnotationsHighlightUtil {
       if (metaAnno == null) {
         String explanation = JavaErrorMessages.message("annotation.non.repeatable", annotationType.getQualifiedName());
         String description = JavaErrorMessages.message("annotation.duplicate.explained", explanation);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCollapseAnnotationsFix(annotationToCheck));
+        return info;
       }
 
       String explanation = doCheckRepeatableAnnotation(metaAnno);

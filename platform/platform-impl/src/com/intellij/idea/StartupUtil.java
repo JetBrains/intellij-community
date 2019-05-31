@@ -28,9 +28,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.*;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -55,6 +58,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -122,6 +126,9 @@ public class StartupUtil {
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
     throws InvocationTargetException, InterruptedException, ExecutionException {
+    //noinspection SpellCheckingInspection
+    System.setProperty("sun.awt.noerasebackground", "true");
+
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     checkHiDPISettings();
 
@@ -129,19 +136,14 @@ public class StartupUtil {
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     System.setProperty("idea.ui.util.static.init.enabled", "false");
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
-      // see note about UIUtil static init - it is required even if headless
+      // see note about StartupUiUtil static init - it is required even if headless
       try {
-        UIUtil.initDefaultLaF();
-
+        StartupUiUtil.initDefaultLaF();
         if (!Main.isHeadless()) {
           SplashManager.show(args);
-
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init Batik cursors");
-          SVGLoader.prepareBatikInAwt();
-          activity.end();
         }
       }
-      catch (Throwable e) {
+      catch (Exception e) {
         throw new CompletionException(e);
       }
     }, runnable -> {
@@ -262,7 +264,7 @@ public class StartupUtil {
 
         // UIUtil.initDefaultLaF must be called before this call
         Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
-        UIUtil.initSystemFontData(log);
+        StartupUiUtil.initSystemFontData(log);
         activity.end();
       }
       catch (Exception e) {
@@ -271,13 +273,15 @@ public class StartupUtil {
 
       // updateWindowIcon must be after UIUtil.initSystemFontData because uses computed system font data for scale context
       if (!Main.isHeadless()) {
-        // no need to wait - doesn't affect other functionality
-        executorService.execute(() -> {
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
-          // most of the time consumed to load SVG - so, can be done in parallel
-          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-          activity.end();
-        });
+        if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
+          // no need to wait - doesn't affect other functionality
+          executorService.execute(() -> {
+            Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
+            // most of the time consumed to load SVG - so, can be done in parallel
+            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+            activity.end();
+          });
+        }
 
         if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
           System.setProperty("com.jetbrains.suppressWindowRaise", "true");

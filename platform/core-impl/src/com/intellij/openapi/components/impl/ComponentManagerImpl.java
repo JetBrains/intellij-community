@@ -341,12 +341,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
     myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
     if (myMessageBus instanceof MessageBusImpl) {
-      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, handler, duration) -> logMessageBusDelivery(topic, handler, duration));
+      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener((topic, messageName, handler, duration) -> logMessageBusDelivery(topic, messageName, handler, duration));
     }
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
   }
 
-  protected void logMessageBusDelivery(Topic topic, Object handler, long durationNanos) {
+  protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
     ClassLoader loader = handler.getClass().getClassLoader();
     String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationNanos);

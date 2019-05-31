@@ -22,6 +22,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   private final VirtualFileSystem[] myPhysicalFileSystems;
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<AsyncFileListener> myAsyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
 
   public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> fileSystems) {
@@ -193,6 +195,17 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener) {
     myVirtualFileManagerListeners.remove(listener);
+  }
+
+  @Override
+  public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
+    myAsyncFileListeners.add(listener);
+    Disposer.register(parentDisposable, () -> myAsyncFileListeners.remove(listener));
+  }
+
+  @ApiStatus.Internal
+  public List<AsyncFileListener> getAsyncFileListeners() {
+    return Collections.unmodifiableList(myAsyncFileListeners);
   }
 
   @Override

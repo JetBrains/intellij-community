@@ -43,6 +43,7 @@ public class ShShfmtFormatterUtil {
   private static final String ARCH_i386 = "_386";
   private static final String ARCH_x86_64 = "_amd64";
   private static final String WINDOWS = "_windows";
+  private static final String WINDOWS_EXTENSION = ".exe";
   private static final String MAC = "_darwin";
   private static final String LINUX = "_linux";
   private static final String FREE_BSD = "_freebsd";
@@ -55,7 +56,7 @@ public class ShShfmtFormatterUtil {
     }
 
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-    File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT);
+    File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
     if (formatter.exists()) {
       try {
         String formatterPath = formatter.getCanonicalPath();
@@ -78,9 +79,10 @@ public class ShShfmtFormatterUtil {
       }
     }
 
+    String downloadName = SHFMT + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : "");
     DownloadableFileService service = DownloadableFileService.getInstance();
-    DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), SHFMT);
-    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), SHFMT);
+    DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), downloadName);
+    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
 
     Task.Backgroundable task = new Task.Backgroundable(project, "Download Shfmt Formatter") {
       @Override
@@ -106,7 +108,9 @@ public class ShShfmtFormatterUtil {
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
+    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
+    processIndicator.setIndeterminate(false);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
   }
 
   public static boolean isValidPath(@Nullable String path) {
@@ -114,7 +118,7 @@ public class ShShfmtFormatterUtil {
     if (ShSettings.I_DO_MIND.equals(path)) return true;
     File file = new File(path);
     if (!file.canExecute()) return false;
-    return file.getName().contains("shfmt");
+    return file.getName().contains(SHFMT);
 
 //    try {
 //      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("-version");
@@ -154,6 +158,9 @@ public class ShShfmtFormatterUtil {
     }
     else {
       baseUrl.append(ARCH_i386);
+    }
+    if (SystemInfoRt.isWindows) {
+      baseUrl.append(WINDOWS_EXTENSION);
     }
     return baseUrl.toString();
   }

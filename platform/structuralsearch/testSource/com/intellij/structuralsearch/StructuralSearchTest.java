@@ -2614,6 +2614,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern3 = "'_st;" +
                       "// tokamak";
     assertEquals("find statement followed by comment", 1, findMatchesCount(source3, pattern3));
+
+    String source4 = "/*";
+    String pattern4 = "//'_comment:[regex( .* )]";
+    assertEquals("no error on broken code", 1, findMatchesCount(source4, pattern4));
   }
 
   public void testCaseInsensitive() {

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -51,7 +52,7 @@ public class TestDiscoveryBasicListener implements TestListener {
   protected Object getData() throws Exception {
     return Class.forName("com.intellij.rt.coverage.data.TestDiscoveryProjectData")
                 .getMethod("getProjectData", ArrayUtil.EMPTY_CLASS_ARRAY)
-                .invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
+                .invoke(null, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
   private static String getMethodName(Test test) {

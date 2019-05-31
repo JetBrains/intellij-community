@@ -46,9 +46,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
               highlight = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
             } else {
               highlight = ProblemHighlightType.INFORMATION;
-            }
-            if (highlight == ProblemHighlightType.INFORMATION && !isOnTheFly) {
-              return;
+              if (!isOnTheFly) return;
             }
             holder.registerProblem(call, message, highlight, new ReplaceWithWriteStringFix(highlight == ProblemHighlightType.INFORMATION));
           }

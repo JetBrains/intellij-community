@@ -44,6 +44,8 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
   override val muteActionText: String = message("ignore.to.exclude.notification.action.mute")
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = message("ignore.to.exclude.notification.message")
+  override val viewFilesDialogTitle: String? = message("ignore.to.exclude.view.dialog.title")
+  override val viewFilesDialogOkActionName: String = message("ignore.to.exclude.view.dialog.exclude.action")
 
   init {
     project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {

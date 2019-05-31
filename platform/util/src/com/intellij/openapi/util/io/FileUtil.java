@@ -511,7 +511,7 @@ public class FileUtil extends FileUtilRt {
    * @throws IOException in case of any IO troubles
    */
   public static void copyDirContent(@NotNull File fromDir, @NotNull File toDir) throws IOException {
-    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY);
+    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY);
     for (File child : children) {
       copyFileOrDir(child, new File(toDir, child.getName()));
     }
@@ -551,7 +551,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String getNameWithoutExtension(@NotNull File file) {
-    return getNameWithoutExtension(file.getName());
+    return FileUtilRt.getNameWithoutExtension(file.getName());
   }
 
   @NotNull
@@ -1258,7 +1258,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File[] notNullize(@Nullable File[] files) {
-    return notNullize(files, ArrayUtil.EMPTY_FILE_ARRAY);
+    return notNullize(files, ArrayUtilRt.EMPTY_FILE_ARRAY);
   }
 
   @NotNull

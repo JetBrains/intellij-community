@@ -7,6 +7,7 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
@@ -326,10 +327,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
               }
 
               if (cursor != null && !cursor.equals(target.getCursor())) {
-                if (target instanceof JComponent) {
-                  savePreProcessedCursor((JComponent)target, target.getCursor());
-                }
-                UIUtil.setCursor(target, cursor);
+                setCursor(target, cursor);
               }
             }
 
@@ -353,6 +351,34 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
   }
 
+  private static void setCursor(@NotNull Component target, Cursor cursor) {
+    if (target instanceof EditorComponentImpl) {
+      ((EditorComponentImpl)target).getEditor().setCustomCursor(IdeGlassPaneImpl.class, cursor);
+    }
+    else {
+      if (target instanceof JComponent) {
+        savePreProcessedCursor((JComponent)target, target.getCursor());
+      }
+      UIUtil.setCursor(target, cursor);
+    }
+  }
+
+  private static void resetCursor(@NotNull Component target, Cursor lastCursor) {
+    if (target instanceof EditorComponentImpl) {
+      ((EditorComponentImpl)target).getEditor().setCustomCursor(IdeGlassPaneImpl.class, null);
+    }
+    else {
+      Cursor cursor = null;
+      if (target instanceof JComponent) {
+        JComponent jComponent = (JComponent)target;
+        cursor = (Cursor)jComponent.getClientProperty(PREPROCESSED_CURSOR_KEY);
+        jComponent.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
+      }
+      cursor = cursor != null ? cursor : lastCursor;
+      UIUtil.setCursor(target, cursor);
+    }
+  }
+
   private static boolean canProcessCursorFor(Component target) {
     return !(target instanceof JMenuItem) &&
            !(target instanceof Divider) &&
@@ -372,14 +398,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private void restoreLastComponent(Component newC) {
     if (myLastCursorComponent != null && myLastCursorComponent != newC) {
-      Cursor cursor = null;
-      if (myLastCursorComponent instanceof JComponent) {
-        JComponent jComponent = (JComponent)myLastCursorComponent;
-        cursor = (Cursor) jComponent.getClientProperty(PREPROCESSED_CURSOR_KEY);
-        jComponent.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
-      }
-      cursor = cursor != null ? cursor : myLastOriginalCursor;
-      UIUtil.setCursor(myLastCursorComponent, cursor);
+      resetCursor(myLastCursorComponent, myLastOriginalCursor);
     }
   }
 

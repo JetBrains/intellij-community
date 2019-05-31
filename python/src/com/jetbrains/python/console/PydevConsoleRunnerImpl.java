@@ -24,6 +24,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -55,7 +56,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.TimeoutUtil;
@@ -287,7 +288,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     NewErrorTreeViewPanel errorViewPanel = new NewErrorTreeViewPanel(myProject, null, false, false, null);
 
-    String[] messages = StringUtil.isNotEmpty(e.getMessage()) ? StringUtil.splitByLines(e.getMessage()) : ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] messages = StringUtil.isNotEmpty(e.getMessage()) ? StringUtil.splitByLines(e.getMessage()) : ArrayUtilRt.EMPTY_STRING_ARRAY;
     if (messages.length == 0) {
       messages = new String[]{"Unknown error"};
     }
@@ -781,7 +782,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
     private RestartAction(PydevConsoleRunnerImpl runner) {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
+      ActionUtil.copyFrom(this, IdeActions.ACTION_RERUN);
       getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
       myConsoleRunner = runner;
     }

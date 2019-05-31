@@ -1085,7 +1085,7 @@ public class ContainerUtil extends ContainerUtilRt {
         result.add(t);
       }
     }
-    return result.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : result.toNativeArray();
+    return result.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : result.toNativeArray();
   }
 
   @NotNull

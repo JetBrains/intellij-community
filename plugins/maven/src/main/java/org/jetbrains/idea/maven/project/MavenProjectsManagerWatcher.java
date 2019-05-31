@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.externalSystem.service.project.autoimport.FileChangeListenerBase;
+import com.intellij.openapi.externalSystem.service.project.autoimport.AsyncFileChangeListenerBase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
@@ -102,8 +102,8 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void start() {
     final MessageBusConnection myBusConnection = myProject.getMessageBus().connect(myChangedDocumentsQueue);
-    myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyFileChangeListener());
     myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
+    VirtualFileManager.getInstance().addAsyncFileListener(new MyFileChangeListener(), myBusConnection);
 
     myChangedDocumentsQueue.makeUserAware(myProject);
     myChangedDocumentsQueue.activate();
@@ -364,7 +364,7 @@ public class MavenProjectsManagerWatcher {
     return path.endsWith(MavenConstants.JVM_CONFIG_RELATIVE_PATH) || path.endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
   }
 
-  class MyFileChangeListener extends FileChangeListenerBase {
+  class MyFileChangeListener extends AsyncFileChangeListenerBase {
 
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
@@ -382,8 +382,8 @@ public class MavenProjectsManagerWatcher {
     }
 
     @Override
-    protected void deleteFile(VirtualFile file, VFileEvent event) {
-      doUpdateFile(file, event, true);
+    protected void prepareFileDeletion(@NotNull VirtualFile file) {
+      doUpdateFile(file, null, true);
     }
 
     private void doUpdateFile(VirtualFile file, VFileEvent event, boolean remove) {
@@ -482,7 +482,7 @@ public class MavenProjectsManagerWatcher {
         }
       }
 
-      clearLists();
+      reset();
     }
 
     private boolean areFileSetsInitialised() {
@@ -504,7 +504,8 @@ public class MavenProjectsManagerWatcher {
       forceImportAndResolve = false;
     }
 
-    private void clearLists() {
+    @Override
+    public void reset() {
       filesToUpdate = null;
       filesToRemove = null;
     }

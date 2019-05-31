@@ -31,10 +31,7 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author max
- */
-public class MacOSApplicationProvider {
+public final class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
 
   private MacOSApplicationProvider() { }

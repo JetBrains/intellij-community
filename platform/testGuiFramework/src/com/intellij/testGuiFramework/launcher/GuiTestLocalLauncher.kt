@@ -287,7 +287,7 @@ object GuiTestLocalLauncher {
       .plus("-Dnative.mac.file.chooser.enabled=false")
       .plus("-Didea.config.path=${GuiTestOptions.configPath}")
       .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
-      .plus("-Didea.gui.tests.log.file=${GuiTestOptions.guiTestLogFile}")
+      .plus("-Didea.log.config.file=${GuiTestOptions.guiTestLogFile}")
       .plus("-Dfile.encoding=${GuiTestOptions.encoding}")
       .plus("-Djb.privacy.policy.text=<!--999.999-->")
       .plus("-Djb.consents.confirmation.enabled=false")

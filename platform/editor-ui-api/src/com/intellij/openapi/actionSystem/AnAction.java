@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,6 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
-  private boolean myIsGlobal; // action is registered in ActionManager
 
 
   /**
@@ -168,8 +168,9 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   /**
    * Copies template presentation and shortcuts set from {@code sourceAction}.
+   * Consider using {@link com.intellij.openapi.actionSystem.ex.ActionUtil#copyFrom(AnAction, String)} instead.
    */
-  public final void copyFrom(@NotNull AnAction sourceAction){
+  public final void copyFrom(@NotNull AnAction sourceAction) {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
     presentation.copyFrom(sourcePresentation);
@@ -272,7 +273,11 @@ public abstract class AnAction implements PossiblyDumbAware {
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
-    if (myIsGlobal && myShortcutSet != shortcutSet) {
+    if (myShortcutSet != shortcutSet &&
+        !"ProxyShortcutSet".equals(shortcutSet.getClass().getSimpleName()) && // avoid CyclicDependencyException
+        ApplicationManager.getApplication() != null &&
+        ActionManager.getInstance() != null &&
+        ActionManager.getInstance().getId(this) != null) {
       LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
                "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
                "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
@@ -333,14 +338,6 @@ public abstract class AnAction implements PossiblyDumbAware {
   @Override
   public String toString() {
     return getTemplatePresentation().toString();
-  }
-
-  public final boolean isGlobal() {
-    return myIsGlobal;
-  }
-
-  void markAsGlobal() {
-    myIsGlobal = true;
   }
 
   /**

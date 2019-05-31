@@ -2,6 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.google.gson.Gson;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -345,40 +346,55 @@ public class UITheme {
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
-    } else if (key.endsWith("Border") || key.endsWith("border")) {
+    }
+    else if (key.endsWith("Border") || key.endsWith("border")) {
       try {
         List<String> ints = StringUtil.split(value, ",");
         if (ints.size() == 4) {
           return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
-        } else if (ints.size() == 5) {
+        }
+        else if (ints.size() == 5) {
           return asUIResource(customLine(ColorUtil.fromHex(ints.get(4)),
                                          Integer.parseInt(ints.get(0)),
                                          Integer.parseInt(ints.get(1)),
                                          Integer.parseInt(ints.get(2)),
                                          Integer.parseInt(ints.get(3))));
-        } else if (ColorUtil.fromHex(value, null) != null) {
+        }
+        else if (ColorUtil.fromHex(value, null) != null) {
           return asUIResource(customLine(ColorUtil.fromHex(value), 1));
-        } else {
+        }
+        else {
           return Class.forName(value).newInstance();
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.warn(e);
       }
-    } else if (key.endsWith("Size")) {
+    }
+    else if (key.endsWith("Size")) {
       return parseSize(value);
-    } else if (key.endsWith("Width")) {
+    }
+    else if (key.endsWith("Width")) {
       return getInteger(value);
-    } else if (key.endsWith("grayFilter")) {
+    }
+    else if (key.endsWith("grayFilter")) {
       return parseGrayFilter(value);
-    } else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
-      if (icon != null) return new IconUIResource(icon);
+    }
+    else {
+      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
+      if (icon != null) {
+        return new IconUIResource(icon);
+      }
 
       Color color = parseColor(value);
-      if (color != null) return new ColorUIResource(color);
+      if (color != null) {
+        return new ColorUIResource(color);
+      }
 
       Integer invVal = getInteger(value);
-      if (invVal != null) return invVal;
+      if (invVal != null) {
+        return invVal;
+      }
     }
     return value;
   }

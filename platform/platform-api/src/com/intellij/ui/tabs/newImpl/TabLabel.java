@@ -3,6 +3,7 @@ package com.intellij.ui.tabs.newImpl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -27,7 +28,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
-public class TabLabel extends JPanel implements Accessible {
+public class TabLabel extends JPanel implements Accessible, Disposable {
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
@@ -146,6 +147,10 @@ public class TabLabel extends JPanel implements Accessible {
         }
       });
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private void setHovered(boolean value) {

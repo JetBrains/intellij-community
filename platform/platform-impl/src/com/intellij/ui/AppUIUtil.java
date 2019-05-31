@@ -118,7 +118,7 @@ public class AppUIUtil {
     }
   }
 
-  private static boolean isWindowIconAlreadyExternallySet() {
+  public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfoRt.isMac) {
       return !RUNNING_FROM_SOURCES;
     }
@@ -277,7 +277,7 @@ public class AppUIUtil {
   @Nullable
   public static String findIcon() {
     String iconsPath = PathManager.getBinPath();
-    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtil.EMPTY_STRING_ARRAY);
+    String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     // 1. look for .svg icon
     for (String child : childFiles) {
@@ -415,7 +415,7 @@ public class AppUIUtil {
           JEditorPane html = SwingHelper.createHtmlLabel(
             "EAP builds report usage statistics by default per "+
             (isPrivacyPolicy? "this Privacy Policy." : "the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.") +
-            "\nNo personal or sensitive data are sent. You may disable this in the settings.", null, null
+            "<br/>No personal or sensitive data are sent. You may disable this in the settings.", null, null
           );
           eapPanel.add(html, BorderLayout.CENTER);
           bottomPanel.add(eapPanel, BorderLayout.NORTH);

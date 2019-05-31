@@ -106,7 +106,7 @@ public abstract class AbstractExternalSystemConfigurable<
       return;
     }
 
-    myComponent.add(new TitledSeparator(ExternalSystemBundle.message("settings.title.system.settings",
+    myComponent.add(new TitledSeparator(ExternalSystemBundle.message("settings.title.projects.settings",
                                                                      myExternalSystemId.getReadableName())),
                     ExternalSystemUiUtil.getFillLineConstraints(0));
 
@@ -233,6 +233,7 @@ public abstract class AbstractExternalSystemConfigurable<
       List<ProjectSettings> projectSettings = new ArrayList<>();
       for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
         ProjectSettings s = newProjectSettings();
+        s.setupNewProjectDefault();
         control.apply(s);
         projectSettings.add(s);
       }

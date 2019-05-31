@@ -80,6 +80,10 @@ public abstract class NullableNotNullManager {
   @NotNull
   public abstract String getDefaultNullable();
 
+  /**
+   * Returns an annotation which marks given element as Nullable, if any. Usage of this method is discouraged.
+   * Use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
+   */
   @Nullable
   public PsiAnnotation getNullableAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullityAnnotationWithDefault(owner, checkBases, true);
@@ -90,6 +94,10 @@ public abstract class NullableNotNullManager {
   @NotNull
   public abstract String getDefaultNotNull();
 
+  /**
+   * Returns an annotation which marks given element as NotNull, if any. Usage of this method is discouraged.
+   * Use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
+   */
   @Nullable
   public PsiAnnotation getNotNullAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     return findNullityAnnotationWithDefault(owner, checkBases, false);

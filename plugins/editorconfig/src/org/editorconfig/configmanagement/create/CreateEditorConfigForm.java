@@ -31,8 +31,8 @@ public class CreateEditorConfigForm {
   private final static int MAX_LANGUAGES_ROWS = 10;
 
   public CreateEditorConfigForm() {
-    myPropertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.properties.title"), true));
-    myLanguagesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.languages.title"), true));
+    myPropertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.properties.title")));
+    myLanguagesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.languages.title")));
     myLanguagesPanel.setLayout(new BoxLayout(myLanguagesPanel, BoxLayout.X_AXIS));
     myLanguageCheckBoxes = creteLanguageCheckBoxes(myLanguagesPanel);
     setLanguagePanelEnabled(false);

@@ -33,13 +33,11 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
   private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
   internal fun getIconsClassInfo(module: JpsModule) : IconsClassInfo? {
-    val customLoad: Boolean
     val packageName: String
     val className: String
     val outFile: Path
     when {
       "intellij.platform.icons" == module.name -> {
-        customLoad = false
         packageName = "com.intellij.icons"
         className = "AllIcons"
 
@@ -49,14 +47,12 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
       "intellij.android.artwork" == module.name -> {
         // backward compatibility - AndroidIcons class should be not modified
         packageName = "icons"
-        customLoad = true
         className = "AndroidArtworkIcons"
 
         val dir = module.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath
         outFile = Paths.get(dir, "icons", "AndroidArtworkIcons.java")
       }
       else -> {
-        customLoad = true
         packageName = "icons"
 
         val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return null
@@ -98,7 +94,7 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
         outFile = targetRoot.resolve("$className.java")
       }
     }
-    return IconsClassInfo(customLoad, packageName, className, outFile)
+    return IconsClassInfo(true, packageName, className, outFile)
   }
 
   fun processModule(module: JpsModule) {

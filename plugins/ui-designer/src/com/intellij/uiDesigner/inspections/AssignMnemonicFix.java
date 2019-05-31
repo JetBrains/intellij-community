@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.ui.Messages;
@@ -16,7 +16,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 
 import java.util.ArrayList;
 
@@ -88,6 +88,6 @@ public class AssignMnemonicFix extends QuickFix {
     if (variants.size() == 0) {
       variants.add(value);
     }
-    return ArrayUtil.toStringArray(variants);
+    return ArrayUtilRt.toStringArray(variants);
   }
 }

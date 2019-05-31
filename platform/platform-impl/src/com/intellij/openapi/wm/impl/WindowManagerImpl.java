@@ -432,7 +432,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   // this method is called when there is some opened project (IDE will not open Welcome Frame, but project)
-  public void showFrame(@Nullable Runnable beforeSetVisible) {
+  public IdeFrame showFrame(@Nullable Runnable beforeSetVisible) {
     final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager);
     myProjectToFrame.put(null, frame);
 
@@ -448,6 +448,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     addFrameStateListener(frame);
     IdeMenuBar.installAppMenuIfNeeded(frame);
+    return frame;
   }
 
   @NotNull

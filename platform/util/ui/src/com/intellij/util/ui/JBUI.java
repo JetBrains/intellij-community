@@ -63,7 +63,7 @@ public class JBUI {
       if (!SystemProperties.getBooleanProperty("hidpi", true)) {
         return 1f;
       }
-      if (UIUtil.isJreHiDPIEnabled()) {
+      if (StartupUiUtil.isJreHiDPIEnabled()) {
         GraphicsDevice gd = null;
         try {
           gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
@@ -75,8 +75,8 @@ public class JBUI {
       }
 
       // in production initSystemFontData must be already called, probably only in a test mode will be not yet initialized
-      UIUtil.initSystemFontData(getLogger());
-      Pair<String, Integer> fdata = UIUtil.getSystemFontData();
+      StartupUiUtil.initSystemFontData(getLogger());
+      Pair<String, Integer> fdata = StartupUiUtil.getSystemFontData();
 
       int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
       return getFontScale(size);
@@ -84,7 +84,7 @@ public class JBUI {
 
     @Override
     protected void onInitialized(@NotNull Float scale) {
-      getLogger().info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+      getLogger().info("System scale factor: " + scale + " (" + (StartupUiUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
 
     @TestOnly
@@ -130,7 +130,7 @@ public class JBUI {
   /**
    * The user scale factor, see {@link ScaleType#USR_SCALE}.
    */
-  private static float userScaleFactor = setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.get());
+  private static float userScaleFactor = setUserScaleFactor(StartupUiUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.get());
 
   /**
    * Adds property change listener. Supported properties:
@@ -159,9 +159,9 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
     public static float sysScale(@Nullable GraphicsConfiguration gc) {
-    if (UIUtil.isJreHiDPIEnabled() && gc != null) {
+    if (StartupUiUtil.isJreHiDPIEnabled() && gc != null) {
       if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
-        if (SystemInfoRt.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
+        if (SystemInfoRt.isMac && StartupUiUtil.isJreHiDPI_earlierVersion()) {
           return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
         }
         return (float)gc.getDefaultTransform().getScaleX();
@@ -176,7 +176,7 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
   public static float sysScale(@Nullable Graphics2D g) {
-    if (UIUtil.isJreHiDPIEnabled() && g != null) {
+    if (StartupUiUtil.isJreHiDPIEnabled() && g != null) {
       GraphicsConfiguration gc = g.getDeviceConfiguration();
       if (gc == null ||
           gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER ||
@@ -212,7 +212,7 @@ public class JBUI {
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
   public static float pixScale() {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale() * scale(1f) : scale(1f);
+    return StartupUiUtil.isJreHiDPIEnabled() ? sysScale() * scale(1f) : scale(1f);
   }
 
   /**
@@ -227,7 +227,7 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable GraphicsConfiguration gc) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(gc) * scale(1f) : scale(1f);
+    return StartupUiUtil.isJreHiDPIEnabled() ? sysScale(gc) * scale(1f) : scale(1f);
   }
 
   /**
@@ -235,7 +235,7 @@ public class JBUI {
    * In the IDE-managed HiDPI mode defaults to {@link #pixScale()}
    */
   public static float pixScale(@Nullable Graphics2D g) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(g) * scale(1f) : scale(1f);
+    return StartupUiUtil.isJreHiDPIEnabled() ? sysScale(g) * scale(1f) : scale(1f);
   }
 
   /**
@@ -294,7 +294,7 @@ public class JBUI {
     }
 
     // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
-    if (SystemInfoRt.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
+    if (SystemInfoRt.isLinux && scale == 1.25f && StartupUiUtil.DEF_SYSTEM_FONT_SIZE == 12) {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
@@ -330,7 +330,7 @@ public class JBUI {
    * @return the scale factor of {@code fontSize} relative to the standard font size (currently 12pt)
    */
   public static float getFontScale(float fontSize) {
-    return fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
+    return fontSize / StartupUiUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
   @NotNull
@@ -820,7 +820,7 @@ public class JBUI {
 
       @NotNull
       public static Color underlinedTabInactiveForeground() {
-        return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", ToolWindow.underlinedTabForeground());
+        return JBColor.namedColor("ToolWindow.HeaderTab.underlinedTabInactiveForeground", underlinedTabForeground());
       }
 
 
@@ -1010,8 +1010,8 @@ public class JBUI {
 
       @NotNull
       public static Color defaultButtonColor() {
-        return UIUtil.isUnderDarcula() ? JBColor.namedColor("Button.default.focusColor",
-                                           JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3)) : focusColor();
+        return StartupUiUtil.isUnderDarcula() ? JBColor.namedColor("Button.default.focusColor",
+                                    JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3)) : focusColor();
       }
 
       @NotNull
@@ -1215,9 +1215,8 @@ public class JBUI {
         );
       }
 
-      @NotNull
       public static int fieldsSeparatorWidth() {
-        return getInt("NewClass.separatorWidth", JBUI.scale(10));
+        return getInt("NewClass.separatorWidth", scale(10));
       }
     }
   }

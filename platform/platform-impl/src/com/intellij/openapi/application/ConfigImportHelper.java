@@ -47,11 +47,7 @@ import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 
-/**
- * @author max
- * @noinspection SSBasedInspection
- */
-public class ConfigImportHelper {
+public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
 

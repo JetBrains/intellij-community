@@ -22,12 +22,6 @@ public final class CoreIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon getIcon(@NotNull String path) {
-    return IconLoader.getIcon(path);
-  }
-
-  @NotNull
-  @Override
   public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
     return IconLoader.getIcon(path, aClass);
   }
@@ -50,6 +44,7 @@ public final class CoreIconManager implements IconManager {
     return IconUtil.getAnalyzeIcon();
   }
 
+  @Override
   public void registerIconLayer(int flagMask, @NotNull Icon icon) {
     for (IconLayer iconLayer : ourIconLayers) {
       if (iconLayer.flagMask == flagMask) return;

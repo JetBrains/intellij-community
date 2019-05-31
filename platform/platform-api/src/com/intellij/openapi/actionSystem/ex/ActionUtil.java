@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +44,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -286,12 +286,7 @@ public class ActionUtil {
   }
 
   public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
-    list.sort(new Comparator<AnAction>() {
-      @Override
-      public int compare(AnAction o1, AnAction o2) {
-        return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
-      }
-    });
+    list.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }
 
   /**
@@ -385,7 +380,11 @@ public class ActionUtil {
    * @param actionId action id
    */
   public static AnAction copyFrom(@NotNull AnAction action, @NotNull String actionId) {
-    action.copyFrom(ActionManager.getInstance().getAction(actionId));
+    AnAction from = ActionManager.getInstance().getAction(actionId);
+    if (from != null) {
+      action.copyFrom(from);
+    }
+    ActionsCollector.getInstance().onActionConfiguredByActionId(action, actionId);
     return action;
   }
 
@@ -413,6 +412,7 @@ public class ActionUtil {
     if (ss1 == CustomShortcutSet.EMPTY) {
       a1.copyShortcutFrom(a2);
     }
+    ActionsCollector.getInstance().onActionConfiguredByActionId(action, actionId);
     return a1;
   }
 

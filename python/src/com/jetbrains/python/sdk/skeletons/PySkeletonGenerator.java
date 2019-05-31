@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -144,7 +144,7 @@ public class PySkeletonGenerator {
       env.put("IS_PREGENERATED_SKELETONS", "1");
     }
 
-    return getProcessOutput(parent_dir, ArrayUtil.toStringArray(commandLine), env, MINUTE * 10);
+    return getProcessOutput(parent_dir, ArrayUtilRt.toStringArray(commandLine), env, MINUTE * 10);
   }
 
   @NotNull
@@ -218,7 +218,7 @@ public class PySkeletonGenerator {
     }
 
     final ProcessOutput process = getProcessOutput(parentDir,
-                                                   ArrayUtil.toStringArray(cmd),
+                                                   ArrayUtilRt.toStringArray(cmd),
                                                    PythonSdkType.activateVirtualEnv(sdk),
                                                    MINUTE * 4); // see PY-3898
 

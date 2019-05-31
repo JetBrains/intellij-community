@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -28,7 +28,7 @@ public abstract class PyIntentionTestCase extends PyTestCase {
     if (files.length > 0) {
       final PsiFile[] allFiles = myFixture.configureByFiles(files);
       file = allFiles[0];
-      testFileName = FileUtil.getNameWithoutExtension(file.getName());
+      testFileName = FileUtilRt.getNameWithoutExtension(file.getName());
     }
     else {
       testFileName = getTestName(true);

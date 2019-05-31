@@ -10,8 +10,8 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
-import com.jetbrains.rdclient.util.idea.createLifetime
-import com.jetbrains.rdclient.util.idea.createNestedDisposable
+import com.intellij.openapi.rd.createLifetime
+import com.intellij.openapi.rd.createNestedDisposable
 import javax.swing.JComponent
 
 class TabsHeightController {

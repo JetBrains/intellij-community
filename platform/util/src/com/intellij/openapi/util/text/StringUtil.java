@@ -479,7 +479,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String toTitleCase(@NotNull String s) {
-    return fixCapitalization(s, ArrayUtil.EMPTY_STRING_ARRAY, true);
+    return fixCapitalization(s, ArrayUtilRt.EMPTY_STRING_ARRAY, true);
   }
 
   @NotNull

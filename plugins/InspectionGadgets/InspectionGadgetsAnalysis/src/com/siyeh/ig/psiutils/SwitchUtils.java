@@ -22,8 +22,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -153,7 +155,10 @@ public class SwitchUtils {
     return false;
   }
 
+  @Contract("null -> null")
+  @Nullable
   public static PsiExpression getSwitchSelectorExpression(PsiExpression expression) {
+    if (expression == null) return null;
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
     final PsiExpression selectorExpression = getPossibleSwitchSelectorExpression(expression, languageLevel);
     return canBeSwitchSelectorExpression(selectorExpression, languageLevel) ? selectorExpression : null;

@@ -75,6 +75,12 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     return vFile != null ? getRepositoryForFile(vFile) : null;
   }
 
+  @Override
+  @Nullable
+  public T getRepositoryForFileQuick(@NotNull FilePath file) {
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, true));
+  }
+
   @NotNull
   protected List<T> getRepositories(Class<T> type) {
     return ContainerUtil.findAll(myGlobalRepositoryManager.getRepositories(), type);

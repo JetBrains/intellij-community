@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -301,7 +301,7 @@ public class GitChangeUtils {
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
     final String revisionNumber = s.line();
     final String parentsLine = s.line();
-    final String[] parents = parentsLine.length() == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : parentsLine.split(" ");
+    final String[] parents = parentsLine.length() == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : parentsLine.split(" ");
     String authorName = s.line();
     String committerName = s.line();
     committerName = GitUtil.adjustAuthorName(authorName, committerName);

@@ -54,7 +54,7 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.WaitFor;
 import org.intellij.lang.annotations.Language;
@@ -533,7 +533,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInFileUnderLibraryUnderProject() {
     initProject("libUnderProject", "src");
     String libDir = JavaTestUtil.getJavaTestDataPath() + "/find/libUnderProject/lib";
-    PsiTestUtil.addLibrary(myModule, "lib", libDir, new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
+    PsiTestUtil.addLibrary(myModule, "lib", libDir, new String[]{""}, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     FindModel findModel = new FindModel();
     findModel.setStringToFind("TargetWord");
