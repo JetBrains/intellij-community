@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
-
 /**
  * Manages virtual file systems.
  *
@@ -119,10 +117,6 @@ public abstract class VirtualFileManager implements ModificationTracker {
   
   public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
   
-  public abstract void removeAsyncFileListener(@NotNull AsyncFileListener listener);
-
-  public abstract void runAsyncListeners(@NotNull Consumer<AsyncFileListener> listenerAction);
-
   /**
    * Constructs URL by specified protocol and path. URL is a string which uniquely identifies file in all
    * file systems.

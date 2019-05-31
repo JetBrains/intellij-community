@@ -22,6 +22,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,15 +201,10 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
     myAsyncFileListeners.add(listener);
-    Disposer.register(parentDisposable, () -> removeAsyncFileListener(listener));
+    Disposer.register(parentDisposable, () -> myAsyncFileListeners.remove(listener));
   }
 
-  @Override
-  public void removeAsyncFileListener(@NotNull AsyncFileListener listener) {
-    myAsyncFileListeners.remove(listener);
-  }
-
-  @Override
+  @ApiStatus.Internal
   public void runAsyncListeners(@NotNull Consumer<AsyncFileListener> listenerAction) {
     myAsyncFileListeners.forEach(listenerAction);
   }
