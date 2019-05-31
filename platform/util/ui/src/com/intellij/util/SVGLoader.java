@@ -1,31 +1,27 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.ui.svg.MyTranscoder;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import org.apache.batik.anim.dom.*;
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
+import org.apache.batik.anim.dom.SVGOMDocument;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
-import org.apache.batik.bridge.UserAgent;
-import org.apache.batik.dom.AbstractDocument;
 import org.apache.batik.transcoder.SVGAbstractTranscoder;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.svg.SVGDocument;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -34,7 +30,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -42,7 +37,6 @@ import java.net.URL;
  * @author tav
  */
 public final class SVGLoader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.SVGLoader");
   private static SvgColorPatcher ourColorPatcher = null;
 
   public static final int ICON_DEFAULT_SIZE = 16;
@@ -66,52 +60,6 @@ public final class SVGLoader {
   private final double myScale;
   private final double myOverriddenWidth;
   private final double myOverriddenHeight;
-  private BufferedImage myImage;
-  private MyTranscoder myTranscoder;
-
-  private final class MyTranscoder extends ImageTranscoder {
-    float myOrigDocWidth;
-    float myOrigDocHeight;
-
-    private MyTranscoder() {
-      width = ICON_DEFAULT_SIZE;
-      height = ICON_DEFAULT_SIZE;
-    }
-
-    @Override
-    protected void setImageSize(float docWidth, float docHeight) {
-      myOrigDocWidth = docWidth;
-      myOrigDocHeight = docHeight;
-      super.setImageSize((float)(docWidth * myScale), (float)(docHeight * myScale));
-    }
-
-    @Override
-    public BufferedImage createImage(int w, int h) {
-      //noinspection UndesirableClassUsage
-      return new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-    }
-
-    @Override
-    public void writeImage(BufferedImage img, TranscoderOutput output) {
-      SVGLoader.this.myImage = img;
-    }
-
-    @Override
-    protected UserAgent createUserAgent() {
-      return new SVGAbstractTranscoderUserAgent() {
-        @Override
-        public SVGDocument getBrokenLinkDocument(Element e, String url, String message) {
-          LOG.warn(url + " " + message);
-          return createFallbackPlaceholder();
-        }
-      };
-    }
-
-    @Override
-    public BridgeContext createBridgeContext(SVGOMDocument doc) {
-      return super.createBridgeContext(doc);
-    }
-  }
 
   public static Image load(@NotNull URL url, float scale) throws IOException {
     return load(url, url.openStream(), scale);
@@ -127,15 +75,16 @@ public final class SVGLoader {
 
   static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable Dimension2D docSize /*OUT*/) throws IOException {
     try {
-      SVGLoader loader = new SVGLoader(url, stream, scale);
-      Image img = loader.createImage();
+      MyTranscoder transcoder = new SVGLoader(url, stream, scale).createImage();
       if (docSize != null) {
-        docSize.setSize(loader.myTranscoder.myOrigDocWidth, loader.myTranscoder.myOrigDocHeight);
+        docSize.setSize(transcoder.getOrigDocWidth(), transcoder.getOrigDocHeight());
       }
-      return img;
+      return transcoder.getImage();
     }
     catch (TranscoderException ex) {
-      if (docSize != null) docSize.setSize(0, 0);
+      if (docSize != null) {
+        docSize.setSize(0, 0);
+      }
       throw new IOException(ex);
     }
   }
@@ -146,7 +95,7 @@ public final class SVGLoader {
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
     try {
       double s = ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE);
-      return new SVGLoader(url, stream, width * s, height * s, 1).createImage();
+      return new SVGLoader(url, stream, width * s, height * s, 1).createImage().getImage();
     }
     catch (TranscoderException ex) {
       throw new IOException(ex);
@@ -226,7 +175,7 @@ public final class SVGLoader {
     }
     catch (URISyntaxException ignore) { }
 
-    Document document = new MySAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName()).createDocument(uri, stream);
+    Document document = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName()).createDocument(uri, stream);
     if (document == null) {
       throw new IOException("document not created");
     }
@@ -248,44 +197,28 @@ public final class SVGLoader {
     IconLoader.clearCache();
   }
 
-  private BufferedImage createImage() throws TranscoderException {
-    myTranscoder = new MyTranscoder();
+  @NotNull
+  private MyTranscoder createImage() throws TranscoderException {
+    MyTranscoder transcoder = new MyTranscoder(myScale);
     if (myOverriddenWidth != -1) {
-      myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(myOverriddenWidth));
+      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(myOverriddenWidth));
     }
     if (myOverriddenHeight != -1) {
-      myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(myOverriddenHeight));
+      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(myOverriddenHeight));
     }
-    myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_WIDTH, new Float(ICON_MAX_SIZE.get()));
-    myTranscoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_HEIGHT, new Float(ICON_MAX_SIZE.get()));
-    myTranscoder.transcode(myTranscoderInput, null);
-    return myImage;
+    transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_WIDTH, new Float(ICON_MAX_SIZE.get()));
+    transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_HEIGHT, new Float(ICON_MAX_SIZE.get()));
+    transcoder.transcode(myTranscoderInput, null);
+    return transcoder;
   }
 
   private Dimension2D getDocumentSize() {
     SVGOMDocument document = (SVGOMDocument)myTranscoderInput.getDocument();
-    BridgeContext ctx = new MyTranscoder().createBridgeContext(document);
+    BridgeContext ctx = new MyTranscoder(myScale).createBridgeContext(document);
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();
     size.setSize(size.getWidth() * myScale, size.getHeight() * myScale);
     return size;
-  }
-
-  @NotNull
-  private static SVGDocument createFallbackPlaceholder() {
-    try {
-      String fallbackIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\">\n" +
-                            "  <rect x=\"1\" y=\"1\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"red\" stroke-width=\"2\"/>\n" +
-                            "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
-                            "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
-                            "</svg>\n";
-
-      SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName());
-      return (SVGDocument)factory.createDocument(null, new StringReader(fallbackIcon));
-    }
-    catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
   }
 
   public interface SvgColorPatcher {
@@ -295,35 +228,6 @@ public final class SVGLoader {
 
     default void patchColors(URL url, Element svg) {
       patchColors(svg);
-    }
-  }
-
-  /**
-   * A workaround for https://issues.apache.org/jira/browse/BATIK-1220
-   */
-  private static class MySAXSVGDocumentFactory extends SAXSVGDocumentFactory {
-    MySAXSVGDocumentFactory(String parser) {
-      super(parser);
-      implementation = new MySVGDOMImplementation();
-    }
-  }
-
-  private static class MySVGDOMImplementation extends SVGDOMImplementation {
-    static {
-      SVGDOMImplementation.svg11Factories.put("rect", new SVGDOMImplementation.RectElementFactory() {
-        @Override
-        public Element create(String prefix, Document doc) {
-          return new SVGOMRectElement(prefix, (AbstractDocument)doc) {
-            @Override
-            protected SVGOMAnimatedLength createLiveAnimatedLength(String ns, String ln, String def, short dir, boolean nonNeg) {
-              if (def == null && ("width".equals(ln) || "height".equals(ln))) {
-                def = "0"; // used in case of missing width/height attr to avoid org.apache.batik.bridge.BridgeException
-              }
-              return super.createLiveAnimatedLength(ns, ln, def, dir, nonNeg);
-            }
-          };
-        }
-      });
     }
   }
 }
