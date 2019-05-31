@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -115,7 +116,7 @@ public class AnnotationTargetUtil {
       }
     }
     else if (value instanceof PsiArrayInitializerMemberValue) {
-      Set <TargetType> targets = new HashSet<>();
+      Set <TargetType> targets = EnumSet.noneOf(TargetType.class);
       for (PsiAnnotationMemberValue initializer : ((PsiArrayInitializerMemberValue)value).getInitializers()) {
         if (initializer instanceof PsiReference) {
           TargetType targetType = translateTargetRef((PsiReference)initializer);
