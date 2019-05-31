@@ -38,6 +38,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -943,5 +945,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public String[] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
+  }
+
+  @NotNull
+  @Override
+  public String[] getAllProjectUrls() {
+    return ContainerUtil.map(myOpenProjects, project -> VfsUtilCore.pathToUrl(project.getBasePath()), ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }
