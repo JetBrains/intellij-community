@@ -350,8 +350,10 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "    def my_cls_method(cls):\n" +
                          "        <warning descr=\"'a' is 'Final' and could not be reassigned\">cls.a</warning> = 6\n" +
                          "\n" +
-                         "<warning descr=\"'a' is 'Final' and could not be reassigned\">" +
-                         "B.a</warning> = 7")
+                         "<warning descr=\"'a' is 'Final' and could not be reassigned\">B.a</warning> = 7\n" +
+                         "\n" +
+                         "class C(A):\n" +
+                         "    <warning descr=\"'A.a' is 'Final' and could not be reassigned\">a</warning> = 8\n")
     );
   }
 

@@ -111,6 +111,14 @@ class PyFinalInspection : PyInspection() {
         else if (PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node && it is PyTargetExpression && isFinal(it) }) {
           registerProblem(node, "'${node.name}' is 'Final' and could not be reassigned")
         }
+        else {
+          if (!node.isQualified) {
+            val scopeOwner = ScopeUtil.getScopeOwner(node)
+            if (scopeOwner is PyClass) {
+              checkInheritedClassFinalReassignmentOnClassLevel(node, scopeOwner)
+            }
+          }
+        }
       }
 
       if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
@@ -261,6 +269,19 @@ class PyFinalInspection : PyInspection() {
             registerProblem(target, "'$qualifier$name' is 'Final' and could not be reassigned")
             break
           }
+        }
+      }
+    }
+
+    private fun checkInheritedClassFinalReassignmentOnClassLevel(target: PyTargetExpression, cls: PyClass) {
+      val name = target.name ?: return
+
+      for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
+        val ancestorClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
+
+        if (ancestorClassAttribute != null && ancestorClassAttribute.hasAssignedValue() && isFinal(ancestorClassAttribute)) {
+          registerProblem(target, "'${ancestor.name}.$name' is 'Final' and could not be reassigned")
+          break
         }
       }
     }
