@@ -41,7 +41,7 @@ import java.net.URL;
 /**
  * @author tav
  */
-public class SVGLoader {
+public final class SVGLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.SVGLoader");
   private static SvgColorPatcher ourColorPatcher = null;
 
@@ -69,11 +69,11 @@ public class SVGLoader {
   private BufferedImage myImage;
   private MyTranscoder myTranscoder;
 
-  private class MyTranscoder extends ImageTranscoder {
+  private final class MyTranscoder extends ImageTranscoder {
     float myOrigDocWidth;
     float myOrigDocHeight;
 
-    protected MyTranscoder() {
+    private MyTranscoder() {
       width = ICON_DEFAULT_SIZE;
       height = ICON_DEFAULT_SIZE;
     }
@@ -289,8 +289,9 @@ public class SVGLoader {
   }
 
   public interface SvgColorPatcher {
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
-    default void patchColors(Element svg) {}
+    default void patchColors(@SuppressWarnings("unused") Element svg) {}
 
     default void patchColors(URL url, Element svg) {
       patchColors(svg);
