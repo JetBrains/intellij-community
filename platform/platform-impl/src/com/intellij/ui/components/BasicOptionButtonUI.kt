@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package com.intellij.ui.components
@@ -125,9 +125,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun configureMainButton() {
     mainButton.isFocusable = false
+    mainButton.action = optionButton.action
   }
 
   protected open fun unconfigureMainButton() {
+    mainButton.action = null
   }
 
   protected open fun createArrowButton(): JButton = ArrowButton().apply { icon = AllIcons.General.ArrowDown }
