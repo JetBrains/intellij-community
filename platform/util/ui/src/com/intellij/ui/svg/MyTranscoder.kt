@@ -7,16 +7,51 @@ import org.apache.batik.anim.dom.SVGOMDocument
 import org.apache.batik.bridge.BridgeContext
 import org.apache.batik.bridge.UserAgent
 import org.apache.batik.transcoder.SVGAbstractTranscoder
+import org.apache.batik.transcoder.TranscoderException
+import org.apache.batik.transcoder.TranscoderInput
 import org.apache.batik.transcoder.TranscoderOutput
 import org.apache.batik.transcoder.image.ImageTranscoder
 import org.apache.batik.util.XMLResourceDescriptor
 import org.w3c.dom.Element
 import org.w3c.dom.svg.SVGDocument
+import java.awt.GraphicsEnvironment
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.StringReader
 
 internal class MyTranscoder(private val scale: Double) : ImageTranscoder() {
+  companion object {
+    @JvmStatic
+    val iconMaxSize: Double by lazy {
+      var maxSize = Integer.MAX_VALUE.toDouble()
+      if (!GraphicsEnvironment.isHeadless()) {
+        val device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
+        val bounds = device.defaultConfiguration.bounds
+        val tx = device.defaultConfiguration.defaultTransform
+        maxSize = Math.max(bounds.width * tx.scaleX, bounds.height * tx.scaleY).toInt().toDouble()
+      }
+      maxSize
+    }
+
+    @Throws(TranscoderException::class)
+    @JvmStatic
+    @JvmOverloads
+    fun createImage(scale: Double, input: TranscoderInput, overriddenWidth: Float = -1f, overriddenHeight: Float = -1f): MyTranscoder {
+      val transcoder = MyTranscoder(scale)
+      if (overriddenWidth != -1f) {
+        transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, overriddenWidth)
+      }
+      if (overriddenHeight != -1f) {
+        transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, overriddenHeight)
+      }
+
+      val iconMaxSize = iconMaxSize.toFloat()
+      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_WIDTH, iconMaxSize)
+      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_HEIGHT, iconMaxSize)
+      transcoder.transcode(input, null)
+      return transcoder
+    }
+  }
   var origDocWidth = 0f
   var origDocHeight = 0f
   var image: BufferedImage? = null

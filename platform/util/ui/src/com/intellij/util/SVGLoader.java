@@ -4,7 +4,6 @@ package com.intellij.util;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.ui.svg.MyTranscoder;
-import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale;
@@ -13,7 +12,6 @@ import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGOMDocument;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
-import org.apache.batik.transcoder.SVGAbstractTranscoder;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.util.XMLResourceDescriptor;
@@ -24,7 +22,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -41,24 +38,6 @@ public final class SVGLoader {
 
   public static final int ICON_DEFAULT_SIZE = 16;
 
-  public static final NotNullValue<Double> ICON_MAX_SIZE = new NotNullValue<Double>() {
-    @NotNull
-    @Override
-    public Double initialize() {
-      double maxSize = Integer.MAX_VALUE;
-      if (!GraphicsEnvironment.isHeadless()) {
-        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        Rectangle bounds = device.getDefaultConfiguration().getBounds();
-        AffineTransform tx = device.getDefaultConfiguration().getDefaultTransform();
-        maxSize = (int)Math.max(bounds.width * tx.getScaleX(), bounds.height * tx.getScaleY());
-      }
-      return maxSize;
-    }
-  };
-
-  private final double myOverriddenWidth;
-  private final double myOverriddenHeight;
-
   public static Image load(@NotNull URL url, float scale) throws IOException {
     return load(url, url.openStream(), scale);
   }
@@ -73,7 +52,7 @@ public final class SVGLoader {
 
   static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable Dimension2D docSize /*OUT*/) throws IOException {
     try {
-      MyTranscoder transcoder = new SVGLoader().createImage(scale, createTranscodeInput(url, stream));
+      MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, stream));
       if (docSize != null) {
         docSize.setSize(transcoder.getOrigDocWidth(), transcoder.getOrigDocHeight());
       }
@@ -93,7 +72,7 @@ public final class SVGLoader {
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
     try {
       double s = ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE);
-      return new SVGLoader(width * s, height * s).createImage(1, createTranscodeInput(url, stream)).getImage();
+      return MyTranscoder.createImage(1, createTranscodeInput(url, stream), (float)(width * s), (float)(height * s)).getImage();
     }
     catch (TranscoderException ex) {
       throw new IOException(ex);
@@ -154,16 +133,11 @@ public final class SVGLoader {
 
   public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
     Dimension2D size = getDocumentSize(ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE), createTranscodeInput(url, stream));
-    return Math.min(ICON_MAX_SIZE.get() / size.getWidth(), ICON_MAX_SIZE.get() / size.getHeight());
+    double iconMaxSize = MyTranscoder.getIconMaxSize();
+    return Math.min(iconMaxSize / size.getWidth(), iconMaxSize / size.getHeight());
   }
 
   private SVGLoader() {
-    this(-1, -1);
-  }
-
-  private SVGLoader(double width, double height) {
-    myOverriddenWidth = width;
-    myOverriddenHeight = height;
   }
 
   @NotNull
@@ -197,21 +171,6 @@ public final class SVGLoader {
   public static void setColorPatcher(@Nullable SvgColorPatcher colorPatcher) {
     ourColorPatcher = colorPatcher;
     IconLoader.clearCache();
-  }
-
-  @NotNull
-  private MyTranscoder createImage(double scale, @NotNull TranscoderInput input) throws TranscoderException {
-    MyTranscoder transcoder = new MyTranscoder(scale);
-    if (myOverriddenWidth != -1) {
-      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(myOverriddenWidth));
-    }
-    if (myOverriddenHeight != -1) {
-      transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(myOverriddenHeight));
-    }
-    transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_WIDTH, new Float(ICON_MAX_SIZE.get()));
-    transcoder.addTranscodingHint(SVGAbstractTranscoder.KEY_MAX_HEIGHT, new Float(ICON_MAX_SIZE.get()));
-    transcoder.transcode(input, null);
-    return transcoder;
   }
 
   private static Dimension2D getDocumentSize(double scale, @NotNull TranscoderInput input) {
