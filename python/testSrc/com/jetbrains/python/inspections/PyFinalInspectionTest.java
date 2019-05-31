@@ -416,6 +416,39 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "    <warning descr=\"'a' is 'Final' and could not be reassigned\">a</warning> = 2")
     );
   }
+  
+  // PY-34945
+  public void testNonLocalReassignment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import List\n" +
+                         "from typing_extensions import Final\n" +
+                         "\n" +
+                         "def outer():\n" +
+                         "    x: Final[List[int]] = [1, 2, 3]\n" +
+                         "\n" +
+                         "    def inner():\n" +
+                         "        nonlocal x\n" +
+                         "        <warning descr=\"'x' is 'Final' and could not be reassigned\">x</warning> = [4, 5]\n" +
+                         "\n" +
+                         "    inner()")
+    );
+  }
+
+  // PY-34945
+  public void testGlobalReassignment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import List\n" +
+                         "from typing_extensions import Final\n" +
+                         "\n" +
+                         "y: Final[List[int]] = [0, 1]\n" +
+                         "\n" +
+                         "def foo():\n" +
+                         "    global y\n" +
+                         "    <warning descr=\"'y' is 'Final' and could not be reassigned\">y</warning> = [4, 5]\n")
+    );
+  }
 
   // PY-34945
   public void testClassFinalOverriding() {
