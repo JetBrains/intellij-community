@@ -196,7 +196,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) { }
 
   @Nullable
-  protected AnAction createImportAction() {
+  protected AnAction[] createImportActions() {
     return null;
   }
 
