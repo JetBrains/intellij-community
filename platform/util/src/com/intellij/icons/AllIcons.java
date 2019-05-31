@@ -1700,7 +1700,6 @@ public class AllIcons {
     public static final Icon Warning_notifications = AllIcons.General.Warning;
 
   }
-  /** 500x500 */ public static final Icon Idea_logo_background = load("/idea_logo_background.png");
   /** 100x100 */ public static final Icon Idea_logo_welcome = load("/idea_logo_welcome.png");
 
   public final static class Javaee {
