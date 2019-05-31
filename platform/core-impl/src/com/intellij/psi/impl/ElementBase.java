@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
@@ -233,7 +232,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return flags;
   }
 
+  @Deprecated
   public static void registerIconLayer(int flagMask, @NotNull Icon icon) {
-    ((CoreIconManager)IconManager.getInstance()).registerIconLayer(flagMask, icon);
+    IconManager.getInstance().registerIconLayer(flagMask, icon);
   }
 }

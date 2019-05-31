@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
@@ -185,31 +186,32 @@ public class ElementPresentationUtil implements PlatformIcons {
 
   private static String getFlagsDescription(final PsiModifierListOwner aClass) {
     int flags = getFlags(aClass, false);
-    String adj = "";
+    StringBuilder adj = new StringBuilder();
     for (IconLayerProvider provider : IconLayerProvider.EP_NAME.getExtensionList()) {
       if (provider.getLayerIcon(aClass, false) != null) {
-        adj += " " + provider.getLayerDescription();
+        adj.append(" ").append(provider.getLayerDescription());
       }
     }
-    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj += " " + CodeInsightBundle.message("node.abstract.flag.tooltip");
-    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj += " " + CodeInsightBundle.message("node.final.flag.tooltip");
-    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj += " " + CodeInsightBundle.message("node.static.flag.tooltip");
+    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj.append(" ").append(CodeInsightBundle.message("node.abstract.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj.append(" ").append(CodeInsightBundle.message("node.final.flag.tooltip"));
+    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj.append(" ").append(CodeInsightBundle.message("node.static.flag.tooltip"));
     PsiModifierList list = aClass.getModifierList();
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
       if (level != PsiUtil.ACCESS_LEVEL_PUBLIC) {
-        adj += " " + StringUtil.capitalize(PsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level)));
+        adj.append(" ").append(StringUtil.capitalize(PsiBundle.visibilityPresentation(PsiUtil.getAccessModifier(level))));
       }
     }
-    return adj;
+    return adj.toString();
   }
 
 
   static {
-    ElementBase.registerIconLayer(FLAGS_STATIC, AllIcons.Nodes.StaticMark);
-    ElementBase.registerIconLayer(FLAGS_FINAL, AllIcons.Nodes.FinalMark);
-    ElementBase.registerIconLayer(FLAGS_JUNIT_TEST, AllIcons.Nodes.JunitTestMark);
-    ElementBase.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
+    IconManager iconManager = IconManager.getInstance();
+    iconManager.registerIconLayer(FLAGS_STATIC, AllIcons.Nodes.StaticMark);
+    iconManager.registerIconLayer(FLAGS_FINAL, AllIcons.Nodes.FinalMark);
+    iconManager.registerIconLayer(FLAGS_JUNIT_TEST, AllIcons.Nodes.JunitTestMark);
+    iconManager.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {
