@@ -102,7 +102,7 @@ public final class IdeaApplication {
 
         ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
         app.load(null, SplashManager.getProgressIndicator());
-        if (!app.isUnitTestMode() && !Main.isHeadless()) {
+        if (!Main.isHeadless()) {
           addActivateAndWindowsCliListeners(app);
         }
         ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
@@ -167,14 +167,12 @@ public final class IdeaApplication {
     LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
     boolean headless = Main.isHeadless();
-    {
-      Activity activity = StartUpMeasurer.start("patch system");
-      ApplicationImpl.patchSystem();
-      if (!headless) {
-        patchSystemForUi();
-      }
-      activity.end();
+    Activity patchActivity = StartUpMeasurer.start("patch system");
+    ApplicationImpl.patchSystem();
+    if (!headless) {
+      patchSystemForUi();
     }
+    patchActivity.end();
 
     ApplicationStarter starter = getStarter(args, pluginsLoaded);
 
@@ -184,21 +182,14 @@ public final class IdeaApplication {
     }
 
     boolean isInternal = Boolean.getBoolean(ApplicationImpl.IDEA_IS_INTERNAL_PROPERTY);
-    boolean isUnitTest = Boolean.getBoolean(ApplicationImpl.IDEA_IS_UNIT_TEST);
     boolean isCommandLine = Main.isCommandLine();
 
     Activity activity = StartUpMeasurer.start("create app");
-    new ApplicationImpl(isInternal, isUnitTest, headless, isCommandLine, ApplicationManagerEx.IDEA_APPLICATION);
+    new ApplicationImpl(isInternal, false, headless, isCommandLine, ApplicationManagerEx.IDEA_APPLICATION);
     activity.end();
 
     if (isCommandLine && CommandLineApplication.ourInstance == null) {
       new CommandLineApplication();
-      if (isUnitTest) {
-        String[] newArgs = {"inspect", "", "", ""};
-        Main.setFlags(newArgs);
-        System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
-        starter = getStarter(newArgs, pluginsLoaded);
-      }
     }
 
     starter.premain(args);
