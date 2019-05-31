@@ -82,7 +82,7 @@ public class Main {
 
   public static void setFlags(@NotNull String[] args) {
     isHeadless = isHeadless(args);
-    isCommandLine = isHeadless || isCommandLine(args);
+    isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
@@ -99,10 +99,6 @@ public class Main {
 
     String firstArg = args[0];
     return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
-  }
-
-  private static boolean isCommandLine(String[] args) {
-    return isHeadless(args) || args.length > 0 && GUI_COMMANDS.contains(args[0]);
   }
 
   private static boolean checkGraphics() {
