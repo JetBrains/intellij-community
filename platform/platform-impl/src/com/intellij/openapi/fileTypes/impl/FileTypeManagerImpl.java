@@ -1391,7 +1391,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private static void setFileTypeAttributes(@NotNull UserFileType fileType, @Nullable String name, @Nullable String description, @Nullable String iconPath) {
     if (!StringUtil.isEmptyOrSpaces(iconPath)) {
-      fileType.setIcon(IconLoader.getIcon(iconPath));
+      fileType.setIconPath(iconPath);
     }
     if (description != null) {
       fileType.setDescription(description);
