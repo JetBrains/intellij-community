@@ -5,11 +5,8 @@ import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
@@ -45,12 +42,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.ApiStatus;
@@ -1409,6 +1408,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     return ((IdeaPluginDescriptorImpl)pluginDescriptor).getAppServices();
   }
+
+  @Override
+  protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
+    super.logMessageBusDelivery(topic, messageName, handler, durationNanos);
+    if (topic == ProjectManager.TOPIC) {
+      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationNanos, handler.getClass(),
+                                                   StartUpMeasurer.Level.PROJECT);
+    }
+    else if (topic == VirtualFileManager.VFS_CHANGES) {
+      if (TimeUnit.NANOSECONDS.toMillis(durationNanos) > 50) {
+        LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(durationNanos)));
+      }
+    }
+  }
+
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {
