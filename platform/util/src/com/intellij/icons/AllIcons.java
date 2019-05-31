@@ -840,16 +840,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon XsdFile = load("/fileTypes/xsdFile.svg");
     /** 16x16 */ public static final Icon Yaml = load("/fileTypes/yaml.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JsfIcons.Facelets */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Facelets = load("/fileTypes/facelets.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use JsfIcons.FacesConfig */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon FacesConfig = load("/fileTypes/facesConfig.svg");
-
     /** @deprecated to be removed in IDEA 2020 - use JavaScriptPsiIcons.FileTypes.TypeScriptFile */
     @SuppressWarnings("unused")
     @Deprecated
