@@ -30,11 +30,11 @@ class PyFinalInspection : PyInspection() {
     override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      node.superClassExpressions.forEach {
-        val cls = (myTypeEvalContext.getType(it) as? PyClassType)?.pyClass
-        if (cls != null && isFinal(cls)) {
-          registerProblem(it, "'${cls.name}' is marked as '@final' and should not be subclassed")
-        }
+      node.getSuperClasses(myTypeEvalContext).filter { isFinal(it) }.let { finalSuperClasses ->
+        if (finalSuperClasses.isEmpty()) return@let
+
+        val postfix = " ${if (finalSuperClasses.size == 1) "is" else "are"} marked as '@final' and should not be subclassed"
+        registerProblem(node.nameIdentifier, finalSuperClasses.joinToString(postfix = postfix) { "'${it.name}'" ?: "" })
       }
 
       if (PyiUtil.isInsideStub(node)) {
