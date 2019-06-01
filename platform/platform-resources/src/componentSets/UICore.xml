@@ -13,7 +13,7 @@
     <component>
       <interface-class>com.intellij.ide.DataManager</interface-class>
       <implementation-class>com.intellij.ide.impl.DataManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.idea.CommandLineApplication$MyDataManagerImpl</headless-implementation-class>
+      <headless-implementation-class>com.intellij.ide.impl.HeadlessDataManager</headless-implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.actionSystem.ActionManager</interface-class>

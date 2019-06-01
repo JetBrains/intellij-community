@@ -187,10 +187,6 @@ public final class IdeaApplication {
     new ApplicationImpl(isInternal, false, headless, isCommandLine, ApplicationManagerEx.IDEA_APPLICATION);
     activity.end();
 
-    if (isCommandLine && CommandLineApplication.ourInstance == null) {
-      new CommandLineApplication();
-    }
-
     starter.premain(args);
 
     return starter;

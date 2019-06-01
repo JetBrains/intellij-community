@@ -3,6 +3,8 @@ package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -16,36 +18,35 @@ import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class IdeaTestApplication extends CommandLineApplication implements Disposable {
-  private DataProvider myDataContext;
+public final class IdeaTestApplication implements Disposable {
+  private static IdeaTestApplication ourInstance;
 
-  private IdeaTestApplication() {
+  private IdeaTestApplication() { }
+
+  public void setDataProvider(@Nullable DataProvider provider) {
+    getDataManager().setTestDataProvider(provider);
   }
 
-  public void setDataProvider(@Nullable DataProvider dataContext) {
-    myDataContext = dataContext;
+  public void setDataProvider(@Nullable DataProvider provider, Disposable parentDisposable) {
+    getDataManager().setTestDataProvider(provider, parentDisposable);
   }
 
-  public void setDataProvider(@Nullable DataProvider dataContext, Disposable parentDisposable) {
-    DataProvider oldDataContext = myDataContext;
-    myDataContext = dataContext;
-    Disposer.register(parentDisposable, () -> myDataContext = oldDataContext);
+  public @Nullable Object getData(@NotNull String dataId) {
+    return getDataManager().getDataContext().getData(dataId);
   }
 
-  @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    return myDataContext == null ? null : myDataContext.getData(dataId);
+  private static HeadlessDataManager getDataManager() {
+    return (HeadlessDataManager)ApplicationManager.getApplication().getComponent(DataManager.class);
   }
 
   public static IdeaTestApplication getInstance() {
     return getInstance(null);
   }
 
-  public static synchronized IdeaTestApplication getInstance(@Nullable final String configPath) {
+  public static synchronized IdeaTestApplication getInstance(@Nullable String configPath) {
     if (ourInstance == null) {
       PlatformTestCase.doAutodetectPlatformPrefix();
-      new IdeaTestApplication();
+      ourInstance = new IdeaTestApplication();
 
       String[] args = {"inspect", "", "", ""};
       Main.setFlags(args);
@@ -60,7 +61,8 @@ public final class IdeaTestApplication extends CommandLineApplication implements
       app.load(configPath, null);
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
     }
-    return (IdeaTestApplication)ourInstance;
+
+    return ourInstance;
   }
 
   @Override
@@ -68,7 +70,7 @@ public final class IdeaTestApplication extends CommandLineApplication implements
     disposeInstance();
   }
 
-  private static void disposeInstance() {
+  private static synchronized void disposeInstance() {
     if (ourInstance != null) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {

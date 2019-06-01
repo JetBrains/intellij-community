@@ -119,7 +119,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
    * Subclasses should override this method if they want to use custom logic to disable their file watcher.
    */
   protected boolean isDisabled() {
-    return Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
+    if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
+    Application app = ApplicationManager.getApplication();
+    return app.isCommandLine() || app.isUnitTestMode();
   }
 
   /**
