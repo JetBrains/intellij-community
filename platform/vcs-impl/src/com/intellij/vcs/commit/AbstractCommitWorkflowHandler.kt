@@ -82,7 +82,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   override fun getExecutor(executorId: String): CommitExecutor? = workflow.commitExecutors.find { it.id == executorId }
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
-    !isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired())
+    executor in workflow.commitExecutors && (!isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired()))
   override fun execute(executor: CommitExecutor) {
     val session = executor.createCommitSession(commitContext)
 

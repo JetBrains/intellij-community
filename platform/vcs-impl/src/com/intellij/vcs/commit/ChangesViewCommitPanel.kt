@@ -155,6 +155,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
       defaultCommitAction.isEnabled = value
     }
 
+  override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
+
   override fun activate(): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     val contentManager = ChangesViewContentManager.getInstance(project)

@@ -1,13 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
+import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.Weighted
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
+import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.KeyStroke.getKeyStroke
@@ -27,6 +31,10 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
         repaint()
       }
     }
+
+  fun setOptions(actions: List<AnAction>?) {
+    options = actions?.map { AnActionWrapper(it) }?.toTypedArray()
+  }
 
   var optionTooltipText: String? = null
     set(value) {
@@ -104,4 +112,12 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
     @JvmStatic
     fun getDefaultTooltip() = "Show drop-down menu (${getFirstKeyboardShortcutText(getDefaultShowPopupShortcut())})"
   }
+}
+
+private class AnActionWrapper(action: AnAction) : AbstractAction() {
+  init {
+    putValue(OptionAction.AN_ACTION, action)
+  }
+
+  override fun actionPerformed(e: ActionEvent) = Unit
 }

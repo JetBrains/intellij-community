@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -8,6 +11,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
+import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 
 class ChangesViewCommitWorkflowHandler(
@@ -50,11 +54,20 @@ class ChangesViewCommitWorkflowHandler(
 
     initCommitHandlers()
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
+
+    ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
   private fun updateDefaultCommitAction() {
     ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
+  }
+
+  private fun createCommitExecutorActions(): List<AnAction> {
+    val executors = workflow.commitExecutors.ifEmpty { return emptyList() }
+    val group = ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions") as ActionGroup
+
+    return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
   }
 
   fun setCommitState(items: Collection<*>, forceIfNotEmpty: Boolean) {
