@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
@@ -30,26 +31,28 @@ class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
   }
 
   override fun createCenterPanel(): JComponent {
-    val tableData = StartUpMeasurer.pluginCostMap.mapNotNull { (pluginId, costMap) ->
-      val name = PluginManager.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
+    val pluginCostMap = StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter::class.java).pluginCostMap!!
+    val tableData = pluginCostMap
+      .mapNotNull { (pluginId, costMap) ->
+        val name = PluginManager.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
 
-      var totalCost = 0L
-      costMap.forEachValue {
-        totalCost += it
-        true
+        var totalCost = 0L
+        costMap.forEachValue {
+          totalCost += it
+          true
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        val ids = costMap.keys()
+        ids.sort()
+        val costDetails = StringBuilder()
+        for (id in ids) {
+          costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap[id as String]))
+          costDetails.append('\n')
+        }
+
+        PluginStartupCostEntry(name, totalCost, costDetails.toString())
       }
-
-      @Suppress("UNCHECKED_CAST")
-      val ids = costMap.keys()
-      ids.sort()
-      val costDetails = StringBuilder()
-      for (id in ids) {
-        costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap[id as String]))
-        costDetails.append('\n')
-      }
-
-      PluginStartupCostEntry(name, totalCost, costDetails.toString())
-    }
       .sortedByDescending { it.cost }
 
     val model = ListTableModel<PluginStartupCostEntry>(

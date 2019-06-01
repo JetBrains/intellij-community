@@ -57,7 +57,8 @@ public final class StartUpMeasurer {
     public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";
   }
 
-  private static boolean measuringPluginStartupCosts = true;
+  @SuppressWarnings("StaticNonFinalField")
+  public static boolean measuringPluginStartupCosts = true;
 
   public static void stopPluginCostMeasurement() {
     measuringPluginStartupCosts = false;
@@ -85,11 +86,12 @@ public final class StartUpMeasurer {
 
   private static boolean isEnabled = true;
 
+  @ApiStatus.Internal
+  public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
+
   public static long getCurrentTime() {
     return System.nanoTime();
   }
-
-  public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
 
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
@@ -154,16 +156,21 @@ public final class StartUpMeasurer {
     }
 
     synchronized (pluginCostMap) {
-      ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
-      if (costPerPhaseMap == null) {
-        costPerPhaseMap = new ObjectLongHashMap<>();
-        pluginCostMap.put(pluginId, costPerPhaseMap);
-      }
-      long oldCost = costPerPhaseMap.get(phase);
-      if (oldCost == -1) {
-        oldCost = 0L;
-      }
-      costPerPhaseMap.put(phase, oldCost + timeNanos);
+      doAddPluginCost(pluginId, phase, timeNanos, pluginCostMap);
     }
+  }
+
+  @ApiStatus.Internal
+  public static void doAddPluginCost(@NotNull String pluginId, @NotNull String phase, long timeNanos, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
+    ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
+    if (costPerPhaseMap == null) {
+      costPerPhaseMap = new ObjectLongHashMap<>();
+      pluginCostMap.put(pluginId, costPerPhaseMap);
+    }
+    long oldCost = costPerPhaseMap.get(phase);
+    if (oldCost == -1) {
+      oldCost = 0L;
+    }
+    costPerPhaseMap.put(phase, oldCost + timeNanos);
   }
 }

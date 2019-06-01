@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
+import kotlin.Comparator
 
 private val LOG = logger<StartUpMeasurer>()
 
@@ -31,6 +33,9 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()
 
   private var startUpEnd = AtomicLong(-1)
+
+  var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
+    private set
 
   var lastReport: ByteArray? = null
     private set
@@ -104,6 +109,8 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
     sortItems(items)
 
+    val pluginCostMap = computePluginCostMap()
+
     val stringWriter = StringWriter()
     val logPrefix = "=== Start: StartUp Measurement ===\n"
     stringWriter.write(logPrefix)
@@ -138,14 +145,16 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
                 totalDuration += duration
               }
 
-              StartUpMeasurer.addPluginCost(item.pluginId, item.parallelActivity?.name ?: "unknown", duration)
+              item.pluginId?.let {
+                StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
+              }
               writeItemTimeInfo(item, duration, startTime, writer)
             }
           }
           totalDuration += writeUnknown(writer, items.last().end, end, startTime)
         }
 
-        writeParallelActivities(activities, startTime, writer)
+        writeParallelActivities(activities, startTime, writer, pluginCostMap)
 
         writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
         writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
@@ -158,6 +167,25 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       stringWriter.write("\n=== Stop: StartUp Measurement ===")
       LOG.info(stringWriter.toString())
     }
+  }
+
+  private fun computePluginCostMap(): MutableMap<String, ObjectLongHashMap<String>> {
+    var pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>
+    synchronized(StartUpMeasurer.pluginCostMap) {
+      pluginCostMap = THashMap(StartUpMeasurer.pluginCostMap)
+      StartUpMeasurer.pluginCostMap.clear()
+    }
+    this.pluginCostMap = pluginCostMap
+
+
+    for (plugin in PluginManagerCore.getLoadedPlugins()) {
+      val id = plugin.pluginId.idString
+      val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginClassLoader ?: continue
+      val costPerPhaseMap = pluginCostMap.getOrPut(id) { ObjectLongHashMap() }
+      costPerPhaseMap.put("classloading (EDT)", classLoader.edtTime)
+      costPerPhaseMap.put("classloading (background)", classLoader.backgroundTime)
+    }
+    return pluginCostMap
   }
 }
 
@@ -182,7 +210,7 @@ private class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
   }
 }
 
-private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonGenerator) {
+private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonGenerator, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
   val ownDurations = ObjectLongHashMap<ActivityImpl>()
 
   // sorted to get predictable JSON
@@ -196,7 +224,7 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
       computeOwnTime(list, ownDurations)
     }
 
-    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations)
+    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap)
   }
 }
 
@@ -284,7 +312,7 @@ private fun activityNameToJsonFieldName(name: String): String {
   }
 }
 
-private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonGenerator, fieldName: String, ownDurations: ObjectLongHashMap<ActivityImpl>) {
+private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonGenerator, fieldName: String, ownDurations: ObjectLongHashMap<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
   if (activities.isEmpty()) {
     return
   }
@@ -297,7 +325,9 @@ private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer
         continue
       }
 
-      StartUpMeasurer.addPluginCost(item.pluginId, item.parallelActivity?.name ?: "unknown", duration)
+      item.pluginId?.let {
+        StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
+      }
 
       writer.obj {
         writer.writeStringField("name", item.name)
