@@ -40,11 +40,11 @@ class PluginStartupCostDialog(project: Project) : DialogWrapper(project) {
       }
 
       @Suppress("UNCHECKED_CAST")
-      val ids = costMap.keys() as Array<String>
+      val ids = costMap.keys()
       ids.sort()
       val costDetails = StringBuilder()
       for (id in ids) {
-        costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap[id]))
+        costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap[id as String]))
         costDetails.append('\n')
       }
 

@@ -128,8 +128,6 @@ public final class StartUpMeasurer {
     if (isEnabled) {
       items.add(activity);
     }
-    String phase = activity.getParallelActivity() != null ? activity.getParallelActivity().name() : "unknown";
-    addPluginCost(activity.getPluginId(), phase, activity.getEnd() - activity.getStart());
   }
 
   public static void addTimings(@NotNull LinkedHashMap<String, Long> timings, @NotNull String groupName) {

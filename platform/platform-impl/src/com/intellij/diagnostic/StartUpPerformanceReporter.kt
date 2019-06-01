@@ -138,6 +138,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
                 totalDuration += duration
               }
 
+              StartUpMeasurer.addPluginCost(item.pluginId, item.parallelActivity?.name ?: "unknown", duration)
               writeItemTimeInfo(item, duration, startTime, writer)
             }
           }
@@ -148,7 +149,6 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
 
         writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
         writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
-
       }
     }
 
@@ -296,6 +296,8 @@ private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer
       if (duration <= ParallelActivity.MEASURE_THRESHOLD) {
         continue
       }
+
+      StartUpMeasurer.addPluginCost(item.pluginId, item.parallelActivity?.name ?: "unknown", duration)
 
       writer.obj {
         writer.writeStringField("name", item.name)
