@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -58,6 +59,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.util.ui.UIUtil.useSafely;
 
 public class BalloonImpl implements Balloon, IdeTooltip.Ui {
+
+  private static final Logger LOG = Logger.getInstance(BalloonImpl.class);
+
   /**
    * This key is supposed to be used as client property of content component (with value Boolean.TRUE) to suppress shadow painting
    * when builder is being created indirectly and client cannot call its methods
@@ -537,8 +541,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       myLayeredPane.remove(myComp);
 
       createComponent();
-      if (!new Rectangle(myLayeredPane.getSize())
-        .contains(new Rectangle(myComp.getSize()))) { // Balloon is bigger than window, don't show it at all.
+      Dimension availSpace = myLayeredPane.getSize();
+      Dimension reqSpace = myComp.getSize();
+      if (!new Rectangle(availSpace).contains(new Rectangle(reqSpace))) {
+        // Balloon is bigger than window, don't show it at all.
+        LOG.warn("Not enough space to show: " +
+                 "required [" + reqSpace.width + " x " + reqSpace.height + "], " +
+                 "available [" + availSpace.width + " x " + availSpace.height + "]");
         myComp.removeAll();
         myLayeredPane.remove(myComp);
         myLayeredPane = null;
