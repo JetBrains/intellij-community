@@ -16,8 +16,8 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBOptionButton.PROP_OPTIONS
-import com.intellij.ui.components.JBOptionButton.PROP_OPTION_TOOLTIP
+import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTIONS
+import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup.getActionItems

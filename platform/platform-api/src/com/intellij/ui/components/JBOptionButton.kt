@@ -1,175 +1,94 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.components;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ui.components
 
-import com.intellij.openapi.util.Weighted;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Weighted
+import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import java.util.*
+import javax.swing.Action
+import javax.swing.JButton
 
-import javax.swing.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(action), Weighted {
+  var options: Array<Action>? = null
+    set(value) {
+      val oldOptions = options
+      field = value
 
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.UtilKt.stream;
-import static java.util.stream.Collectors.toSet;
-
-public class JBOptionButton extends JButton implements Weighted {
-
-  public static final String PROP_OPTIONS = "OptionActions";
-  public static final String PROP_OPTION_TOOLTIP = "OptionTooltip";
-
-  private Action[] myOptions;
-  private String myOptionTooltipText;
-  private final Set<OptionInfo> myOptionInfos = new HashSet<>();
-  private boolean myOkToProcessDefaultMnemonics = true;
-
-  public JBOptionButton(Action action, Action[] options) {
-    super(action);
-    setOptions(options);
-  }
-
-  @Override
-  public String getUIClassID() {
-    return "OptionButtonUI";
-  }
-
-  @Override
-  public OptionButtonUI getUI() {
-    return (OptionButtonUI)super.getUI();
-  }
-
-  @Override
-  public double getWeight() {
-    return 0.5;
-  }
-
-  public void togglePopup() {
-    getUI().togglePopup();
-  }
-
-  public void showPopup(@Nullable Action actionToSelect, boolean ensureSelection) {
-    getUI().showPopup(actionToSelect, ensureSelection);
-  }
-
-  public void closePopup() {
-    getUI().closePopup();
-  }
-
-  @Nullable
-  public Action[] getOptions() {
-    return myOptions;
-  }
-
-  public void setOptions(@Nullable Action[] options) {
-    Action[] oldOptions = myOptions;
-    myOptions = options;
-
-    fillOptionInfos();
-    firePropertyChange(PROP_OPTIONS, oldOptions, myOptions);
-    if (!Arrays.equals(oldOptions, myOptions)) {
-      revalidate();
-      repaint();
-    }
-  }
-
-  /**
-   * @deprecated Use {@link JBOptionButton#setOptions(Action[])} instead.
-   */
-  @Deprecated
-  public void updateOptions(@Nullable Action[] options) {
-    setOptions(options);
-  }
-
-  public boolean isSimpleButton() {
-    return myOptions == null || myOptions.length == 0;
-  }
-
-  private void fillOptionInfos() {
-    myOptionInfos.clear();
-    myOptionInfos.addAll(stream(myOptions).filter(action -> action != getAction()).map(this::getMenuInfo).collect(toSet()));
-  }
-
-  public boolean isOkToProcessDefaultMnemonics() {
-    return myOkToProcessDefaultMnemonics;
-  }
-
-  public static class OptionInfo {
-
-    String myPlainText;
-    int myMnemonic;
-    int myMnemonicIndex;
-    JBOptionButton myButton;
-    Action myAction;
-
-    OptionInfo(String plainText, int mnemonic, int mnemonicIndex, JBOptionButton button, Action action) {
-      myPlainText = plainText;
-      myMnemonic = mnemonic;
-      myMnemonicIndex = mnemonicIndex;
-      myButton = button;
-      myAction = action;
-    }
-
-    public String getPlainText() {
-      return myPlainText;
-    }
-
-    public int getMnemonic() {
-      return myMnemonic;
-    }
-
-    public int getMnemonicIndex() {
-      return myMnemonicIndex;
-    }
-
-    public JBOptionButton getButton() {
-      return myButton;
-    }
-
-    public Action getAction() {
-      return myAction;
-    }
-  }
-
-  @NotNull
-  private OptionInfo getMenuInfo(@NotNull Action each) {
-    final String text = notNullize((String)each.getValue(Action.NAME));
-    int mnemonic = -1;
-    int mnemonicIndex = -1;
-    StringBuilder plainText = new StringBuilder();
-    for (int i = 0; i < text.length(); i++) {
-      char ch = text.charAt(i);
-      if (ch == '&' || ch == '_') {
-        if (i + 1 < text.length()) {
-          final char mnemonicsChar = text.charAt(i + 1);
-          mnemonic = Character.toUpperCase(mnemonicsChar);
-          mnemonicIndex = i;          
-        }
-        continue;
+      fillOptionInfos()
+      firePropertyChange(PROP_OPTIONS, oldOptions, options)
+      if (!Arrays.equals(oldOptions, options)) {
+        revalidate()
+        repaint()
       }
-      plainText.append(ch);
     }
 
-    return new OptionInfo(plainText.toString(), mnemonic, mnemonicIndex, this, each);
+  var optionTooltipText: String? = null
+    set(value) {
+      val oldValue = optionTooltipText
+      field = value
+      firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, optionTooltipText)
+    }
+
+  var isOkToProcessDefaultMnemonics = true
+
+  val isSimpleButton: Boolean get() = options.isNullOrEmpty()
+
+  private val _optionInfos = mutableSetOf<OptionInfo>()
+  val optionInfos: Set<OptionInfo> get() = unmodifiableOrEmptySet(_optionInfos)
+
+  init {
+    this.options = options
   }
 
-  @NotNull
-  public Set<OptionInfo> getOptionInfos() {
-    return myOptionInfos;
+  override fun getUIClassID(): String = "OptionButtonUI"
+  override fun getUI(): OptionButtonUI = super.getUI() as OptionButtonUI
+
+  override fun getWeight(): Double = 0.5
+
+  fun togglePopup() = getUI().togglePopup()
+  fun showPopup(actionToSelect: Action?, ensureSelection: Boolean) = getUI().showPopup(actionToSelect, ensureSelection)
+  fun closePopup() = getUI().closePopup()
+
+  @Deprecated("Use setOptions(Action[]) instead", ReplaceWith("setOptions(options)"))
+  fun updateOptions(options: Array<Action>?) {
+    this.options = options
   }
 
-  @Nullable
-  public String getOptionTooltipText() {
-    return myOptionTooltipText;
+  private fun fillOptionInfos() {
+    _optionInfos.clear()
+    _optionInfos += options.orEmpty().filter { it !== action }.map { getMenuInfo(it) }
   }
 
-  public void setOptionTooltipText(@Nullable String text) {
-    String oldValue = myOptionTooltipText;
-    myOptionTooltipText = text;
-    firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, myOptionTooltipText);
+  private fun getMenuInfo(each: Action): OptionInfo {
+    val text = (each.getValue(Action.NAME) as? String).orEmpty()
+    var mnemonic = -1
+    var mnemonicIndex = -1
+    val plainText = StringBuilder()
+    for (i in 0 until text.length) {
+      val ch = text[i]
+      if (ch == '&' || ch == '_') {
+        if (i + 1 < text.length) {
+          val mnemonicsChar = text[i + 1]
+          mnemonic = Character.toUpperCase(mnemonicsChar).toInt()
+          mnemonicIndex = i
+        }
+        continue
+      }
+      plainText.append(ch)
+    }
+
+    return OptionInfo(plainText.toString(), mnemonic, mnemonicIndex, this, each)
   }
 
-  public void setOkToProcessDefaultMnemonics(boolean ok) {
-    myOkToProcessDefaultMnemonics = ok;
+  class OptionInfo internal constructor(
+    val plainText: String,
+    val mnemonic: Int,
+    val mnemonicIndex: Int,
+    val button: JBOptionButton,
+    val action: Action
+  )
+
+  companion object {
+    const val PROP_OPTIONS = "OptionActions"
+    const val PROP_OPTION_TOOLTIP = "OptionTooltip"
   }
 }
