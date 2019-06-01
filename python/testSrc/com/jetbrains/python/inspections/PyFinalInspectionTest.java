@@ -16,8 +16,33 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                  "@final\n" +
                  "class A:\n" +
                  "    pass\n" +
-                 "class B(<warning descr=\"'A' is marked as '@final' and should not be subclassed\">A</warning>):\n" +
+                 "class <warning descr=\"'A' is marked as '@final' and should not be subclassed\">B</warning>(A):\n" +
                  "    pass");
+
+    doTestByText("from typing_extensions import final\n" +
+                 "@final\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "@final\n" +
+                 "class B:\n" +
+                 "    pass\n" +
+                 "class <warning descr=\"'A', 'B' are marked as '@final' and should not be subclassed\">C</warning>(A, B):\n" +
+                 "    pass");
+  }
+
+  // PY-34945
+  public void testFinalClassAsMetaclass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTestByText("from typing_extensions import final\n" +
+                         "\n" +
+                         "@final\n" +
+                         "class MT(type):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "class A(metaclass=MT):\n" +
+                         "    pass")
+    );
   }
 
   // PY-34945
@@ -416,7 +441,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "    <warning descr=\"'a' is 'Final' and could not be reassigned\">a</warning> = 2")
     );
   }
-  
+
   // PY-34945
   public void testNonLocalReassignment() {
     runWithLanguageLevel(
