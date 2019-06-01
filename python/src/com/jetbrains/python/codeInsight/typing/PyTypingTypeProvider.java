@@ -360,7 +360,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  static PyExpression getReturnTypeAnnotation(@NotNull PyFunction function, TypeEvalContext context) {
+  public static PyExpression getReturnTypeAnnotation(@NotNull PyFunction function, TypeEvalContext context) {
     final PyExpression returnAnnotation = getAnnotationValue(function, context);
     if (returnAnnotation != null) {
       return returnAnnotation;
