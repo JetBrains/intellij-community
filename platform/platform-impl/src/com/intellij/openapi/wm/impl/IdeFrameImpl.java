@@ -203,23 +203,18 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
             }
           }
         }
-      } else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-
+      }
+      else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
         String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-        if (toolWindow != null) {
-          Content content = toolWindow.getContentManager().getContent(0);
-          if (content != null) {
-            JComponent component = content.getPreferredFocusableComponent();
-            if (component != null) {
-              LOG.warn("The content (" +
-                       content.getDisplayName() +
-                       ") does not have a default focused component." +
-                       "This may cause focus issues");
-            }
-            return component == null ? getComponentToRequestFocus(toolWindow)  : component;
-
+        Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
+        if (content != null) {
+          JComponent component = content.getPreferredFocusableComponent();
+          if (component == null) {
+            LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
+                     toolWindowId + " tool window to avoid focus-related problems.");
           }
+          return component == null ? getComponentToRequestFocus(toolWindow)  : component;
         }
       }
     }
