@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -62,7 +63,8 @@ class PyFinalInspection : PyInspection() {
     override fun visitPyFunction(node: PyFunction) {
       super.visitPyFunction(node)
 
-      if (node.containingClass != null) {
+      val cls = node.containingClass
+      if (cls != null) {
         PySuperMethodsSearch
           .search(node, myTypeEvalContext)
           .firstOrNull { it is PyFunction && isFinal(it) }
@@ -76,6 +78,20 @@ class PyFinalInspection : PyInspection() {
           }
 
           checkInstanceFinalsOutsideInit(node)
+        }
+
+        if (PyKnownDecoratorUtil.hasAbstractDecorator(node, myTypeEvalContext)) {
+          if (isFinal(node)) {
+            registerProblem(node.nameIdentifier, "'Final' could not be mixed with abstract decorators")
+          }
+          else if (isFinal(cls)) {
+            val message = "'Final' class could not contain abstract methods"
+            registerProblem(node.nameIdentifier, message)
+            registerProblem(cls.nameIdentifier, message)
+          }
+        }
+        else if (isFinal(node) && isFinal(cls)) {
+          registerProblem(node.nameIdentifier, "No need to mark method in 'Final' class as '@final'", ProblemHighlightType.WEAK_WARNING)
         }
       }
       else if (isFinal(node)) {

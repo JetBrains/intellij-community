@@ -536,6 +536,40 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-34945
+  public void testMixingFinalAndAbstractDecorators() {
+    doTestByText("from typing_extensions import final\n" +
+                 "from abc import ABC, abstractmethod\n" +
+                 "\n" +
+                 "@final\n" +
+                 "class <warning descr=\"'Final' class could not contain abstract methods\">A</warning>(ABC):\n" +
+                 "    @abstractmethod\n" +
+                 "    def <warning descr=\"'Final' class could not contain abstract methods\">method</warning>(self):\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "class B(ABC):\n" +
+                 "    @final\n" +
+                 "    def method(self):\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "class C(ABC):\n" +
+                 "    @final\n" +
+                 "    @abstractmethod\n" +
+                 "    def <warning descr=\"'Final' could not be mixed with abstract decorators\">method</warning>(self):\n" +
+                 "        pass");
+  }
+
+  // PY-34945
+  public void testMixingFinalMethodAndClass() {
+    doTestByText("from typing_extensions import final\n" +
+                 "\n" +
+                 "@final\n" +
+                 "class A:\n" +
+                 "    @final\n" +
+                 "    def <weak_warning descr=\"No need to mark method in 'Final' class as '@final'\">method</weak_warning>(self):\n" +
+                 "        pass");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
