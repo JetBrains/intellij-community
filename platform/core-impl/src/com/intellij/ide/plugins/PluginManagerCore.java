@@ -1213,9 +1213,9 @@ public class PluginManagerCore {
 
   @NotNull
   public static IdeaPluginDescriptorImpl[] loadDescriptors(@NotNull List<? super String> errors) {
-    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_PLUGIN_DESCRIPTORS);
+
+    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
@@ -1434,6 +1434,7 @@ public class PluginManagerCore {
 
   @NotNull
   private static IdeaPluginDescriptorImpl[] initializePlugins() {
+    Activity loadPluginsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
     configureExtensions();
 
     List<String> errors = new ArrayList<>();
@@ -1475,6 +1476,8 @@ public class PluginManagerCore {
       }
     }
 
+    loadPluginsActivity.end("plugin count: " + pluginDescriptors.length);
+    Activity registerExtensionsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_EXTENSIONS);
     registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getRootArea(), result);
     //noinspection deprecation
     Extensions.AREA_LISTENER_EXTENSION_POINT.getPoint(null).registerExtension(new AreaListener() {
@@ -1483,6 +1486,7 @@ public class PluginManagerCore {
         registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getArea(areaInstance), result);
       }
     });
+    registerExtensionsActivity.end();
 
     ourLoadedPlugins = Collections.unmodifiableList(result);
     ourPlugins.set(pluginDescriptors);
@@ -1619,7 +1623,6 @@ public class PluginManagerCore {
 
   @NotNull
   private static synchronized IdeaPluginDescriptorImpl[] initPlugins() {
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
     IdeaPluginDescriptorImpl[] result;
     try {
       result = initializePlugins();
@@ -1631,7 +1634,6 @@ public class PluginManagerCore {
       getLogger().error(e);
       throw e;
     }
-    activity.end("plugin count: " + result.length);
     logPlugins(result);
     return result;
   }
