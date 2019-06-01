@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="batik-transcoder" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.batik:batik-transcoder:1.12.0-5">
+    <properties maven-id="org.jetbrains.intellij.deps.batik:batik-transcoder:1.12.0-6">
       <exclude>
         <dependency maven-id="org.apache.xmlgraphics:xmlgraphics-commons" />
         <dependency maven-id="xalan:xalan" />
@@ -9,20 +9,20 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-transcoder/1.12.0-5/batik-transcoder-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-awt-util/1.12.0-5/batik-awt-util-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-bridge/1.12.0-5/batik-bridge-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-anim/1.12.0-5/batik-anim-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-css/1.12.0-5/batik-css-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-parser/1.12.0-5/batik-parser-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.12.0-5/batik-svg-dom-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-dom/1.12.0-5/batik-dom-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-ext/1.12.0-5/batik-ext-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-gvt/1.12.0-5/batik-gvt-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svggen/1.12.0-5/batik-svggen-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-util/1.12.0-5/batik-util-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-constants/1.12.0-5/batik-constants-1.12.0-5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-xml/1.12.0-5/batik-xml-1.12.0-5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-transcoder/1.12.0-6/batik-transcoder-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-awt-util/1.12.0-6/batik-awt-util-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-bridge/1.12.0-6/batik-bridge-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-anim/1.12.0-6/batik-anim-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-css/1.12.0-6/batik-css-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-parser/1.12.0-6/batik-parser-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svg-dom/1.12.0-6/batik-svg-dom-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-dom/1.12.0-6/batik-dom-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-ext/1.12.0-6/batik-ext-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-gvt/1.12.0-6/batik-gvt-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-svggen/1.12.0-6/batik-svggen-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-util/1.12.0-6/batik-util-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-constants/1.12.0-6/batik-constants-1.12.0-6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/batik/batik-xml/1.12.0-6/batik-xml-1.12.0-6.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
