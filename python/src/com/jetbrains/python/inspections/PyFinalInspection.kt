@@ -3,8 +3,10 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
@@ -124,6 +126,16 @@ class PyFinalInspection : PyInspection() {
       super.visitPyReferenceExpression(node)
 
       checkFinalIsOuterMost(node)
+    }
+
+    override fun visitPyForStatement(node: PyForStatement) {
+      super.visitPyForStatement(node)
+      checkFinalInsideLoop(node)
+    }
+
+    override fun visitPyWhileStatement(node: PyWhileStatement) {
+      super.visitPyWhileStatement(node)
+      checkFinalInsideLoop(node)
     }
 
     private fun getClassLevelFinalsAndInitAttributes(cls: PyClass): Pair<Map<String?, PyTargetExpression>, Map<String, PyTargetExpression>> {
@@ -311,6 +323,24 @@ class PyFinalInspection : PyInspection() {
       if (isInAnnotationOrTypeComment(node) && resolvesToFinal(node)) {
         registerProblem(node, "'Final' could only be used as the outermost type")
       }
+    }
+
+    private fun checkFinalInsideLoop(loop: PyLoopStatement) {
+      loop.acceptChildren(
+        object : PyRecursiveElementVisitor() {
+          override fun visitElement(element: PsiElement) {
+            if (element !is ScopeOwner) super.visitElement(element)
+          }
+
+          override fun visitPyForStatement(node: PyForStatement) {}
+
+          override fun visitPyWhileStatement(node: PyWhileStatement) {}
+
+          override fun visitPyTargetExpression(node: PyTargetExpression) {
+            if (isFinal(node)) registerProblem(node, "'Final' could not be used inside a loop")
+          }
+        }
+      )
     }
 
     private fun isFinal(decoratable: PyDecoratable) = isFinal(decoratable, myTypeEvalContext)
