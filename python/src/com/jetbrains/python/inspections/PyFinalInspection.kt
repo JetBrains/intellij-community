@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
 import com.jetbrains.python.documentation.doctest.PyDocstringFile
@@ -84,6 +85,12 @@ class PyFinalInspection : PyInspection() {
       getFunctionTypeAnnotation(node)?.let { comment ->
         if (comment.parameterTypeList.parameterTypes.any { resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it) }) {
           registerProblem(node.typeComment, "'Final' could not be used in annotations for function parameters")
+        }
+      }
+
+      getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
+        if (resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it)) {
+          registerProblem(node.typeComment ?: node.annotation, "'Final' could not be used in annotation for function return value")
         }
       }
     }
@@ -354,9 +361,11 @@ class PyFinalInspection : PyInspection() {
     }
 
     private fun isTopLevelInAnnotationOrTypeComment(node: PyExpression): Boolean {
-      if (node.parent is PyAnnotation) return true
-      if (node.parent is PyExpressionStatement && node.parent.parent is PyDocstringFile) return true
-      if (node.parent is PyParameterTypeList) return true
+      val parent = node.parent
+      if (parent is PyAnnotation) return true
+      if (parent is PyExpressionStatement && parent.parent is PyDocstringFile) return true
+      if (parent is PyParameterTypeList) return true
+      if (parent is PyFunctionTypeAnnotation) return true
       return false
     }
   }
