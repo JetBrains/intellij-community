@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -56,6 +55,8 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.ui.components.JBOptionButton.getDefaultShowPopupShortcut;
+import static com.intellij.ui.components.JBOptionButton.getDefaultTooltip;
 import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 
@@ -130,7 +131,6 @@ public abstract class DialogWrapper {
   public static final Border ourDefaultBorder = new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
 
   private static final String NO_AUTO_RESIZE = "NoAutoResizeAndFit";
-  private static final KeyStroke SHOW_OPTION_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_MASK | InputEvent.SHIFT_MASK);
 
   protected final @NotNull Disposable myDisposable = new Disposable() {
     @Override
@@ -786,8 +786,7 @@ public abstract class DialogWrapper {
   @NotNull
   private static JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    String tooltip = String.format("Show drop-down menu (%s)", KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE));
-    optionButton.setOptionTooltipText(tooltip);
+    optionButton.setOptionTooltipText(getDefaultTooltip());
     optionButton.setOkToProcessDefaultMnemonics(false);
     return optionButton;
   }
@@ -1283,9 +1282,8 @@ public abstract class DialogWrapper {
     //};
     myPeer.setContentPane(root);
 
-    final CustomShortcutSet sc = new CustomShortcutSet(SHOW_OPTION_KEYSTROKE);
     AnAction toggleShowOptions = DumbAwareAction.create(e -> expandNextOptionButton());
-    toggleShowOptions.registerCustomShortcutSet(sc, root, myDisposable);
+    toggleShowOptions.registerCustomShortcutSet(getDefaultShowPopupShortcut(), root, myDisposable);
 
     JComponent titlePane = createTitlePane();
     if (titlePane != null) {

@@ -27,6 +27,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
@@ -89,6 +90,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
     init {
       background = BACKGROUND_COLOR
+      optionTooltipText = getDefaultTooltip()
+      isOkToProcessDefaultMnemonics = false
     }
 
     override fun isDefaultButton() = true
@@ -131,7 +134,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
-  fun setupShortcuts(component: JComponent) = DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component)
+  fun setupShortcuts(component: JComponent) {
+    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component)
+    DumbAwareAction.create {
+      if (commitButton.isEnabled) commitButton.showPopup()
+    }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component)
+  }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 

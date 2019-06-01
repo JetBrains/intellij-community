@@ -1,11 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
+import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.util.Weighted
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.util.*
 import javax.swing.Action
 import javax.swing.JButton
+import javax.swing.KeyStroke.getKeyStroke
+
+private val DEFAULT_SHOW_POPUP_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_MASK or InputEvent.SHIFT_MASK))
 
 open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(action), Weighted {
   var options: Array<Action>? = null
@@ -45,7 +52,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   override fun getWeight(): Double = 0.5
 
   fun togglePopup() = getUI().togglePopup()
-  fun showPopup(actionToSelect: Action?, ensureSelection: Boolean) = getUI().showPopup(actionToSelect, ensureSelection)
+  fun showPopup(actionToSelect: Action? = null, ensureSelection: Boolean = true) = getUI().showPopup(actionToSelect, ensureSelection)
   fun closePopup() = getUI().closePopup()
 
   @Deprecated("Use setOptions(Action[]) instead", ReplaceWith("setOptions(options)"))
@@ -90,5 +97,11 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   companion object {
     const val PROP_OPTIONS = "OptionActions"
     const val PROP_OPTION_TOOLTIP = "OptionTooltip"
+
+    @JvmStatic
+    fun getDefaultShowPopupShortcut() = DEFAULT_SHOW_POPUP_SHORTCUT
+
+    @JvmStatic
+    fun getDefaultTooltip() = "Show drop-down menu (${getFirstKeyboardShortcutText(getDefaultShowPopupShortcut())})"
   }
 }
