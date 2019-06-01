@@ -500,6 +500,27 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doMultiFileTest);
   }
 
+  // PY-34945
+  public void testFinalInsideLoop() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing_extensions import Final\n" +
+                         "\n" +
+                         "for i in undefined:\n" +
+                         "    if undefined:\n" +
+                         "        <warning descr=\"'Final' could not be used inside a loop\">x</warning>: Final[int] = 1\n" +
+                         "while undefined:\n" +
+                         "    <warning descr=\"'Final' could not be used inside a loop\">y</warning>: Final[str] = '1'\n" +
+                         "    \n" +
+                         "def foo():\n" +
+                         "    for i in undefined:\n" +
+                         "        if undefined:\n" +
+                         "            <warning descr=\"'Final' could not be used inside a loop\">x</warning>: Final[int] = 1\n" +
+                         "    while undefined:\n" +
+                         "        <warning descr=\"'Final' could not be used inside a loop\">y</warning>: Final[str] = '1'")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
