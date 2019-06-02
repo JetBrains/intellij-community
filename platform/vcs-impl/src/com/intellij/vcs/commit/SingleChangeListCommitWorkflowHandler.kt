@@ -6,8 +6,6 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
@@ -80,11 +78,6 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun addUnversionedFiles() = addUnversionedFiles(getChangeList())
-
-  override fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
-
-  override fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) =
-    workflow.executeCustom(executor, session, getCommitState())
 
   private fun initCommitMessage() {
     commitMessagePolicy.init(getChangeList(), getIncludedChanges())

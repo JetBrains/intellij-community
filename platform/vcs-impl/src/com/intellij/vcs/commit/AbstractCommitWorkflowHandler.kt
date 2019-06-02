@@ -135,8 +135,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     e.show()
   }
 
-  protected abstract fun canExecute(executor: CommitExecutor): Boolean
-  protected abstract fun doExecuteCustom(executor: CommitExecutor, session: CommitSession)
+  private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
+  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) = workflow.executeCustom(executor, session)
 
   private fun checkEmptyCommitMessage(): Boolean =
     getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()

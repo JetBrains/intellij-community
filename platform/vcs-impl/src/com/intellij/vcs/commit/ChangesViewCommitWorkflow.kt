@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.CommitResultHandler
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
@@ -41,6 +38,15 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) {
     if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
+  }
+
+  override fun executeCustom(executor: CommitExecutor, session: CommitSession) =
+    executeCustom(executor, session, commitState.changes, commitState.commitMessage)
+
+  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) {
+    if (result == CheckinHandler.ReturnResult.COMMIT) {
+      doCommitCustom(executor, session, commitState.changes, commitState.commitMessage)
+    }
   }
 
   private fun doCommit() {

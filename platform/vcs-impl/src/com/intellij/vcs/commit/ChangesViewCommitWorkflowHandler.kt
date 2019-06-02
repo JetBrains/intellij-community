@@ -9,8 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 
@@ -92,9 +90,6 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   override fun addUnversionedFiles(): Boolean = addUnversionedFiles(workflow.getChangeListFor(getIncludedChanges().firstOrNull()))
-
-  override fun canExecute(executor: CommitExecutor): Boolean = false
-  override fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) = Unit
 
   override fun saveCommitOptions(): Boolean {
     ensureCommitOptions()
