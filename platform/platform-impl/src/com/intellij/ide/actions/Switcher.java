@@ -146,9 +146,8 @@ public class Switcher extends AnAction implements DumbAware {
       boolean sameShortcut = Comparing.equal(switcher.myTitle, title);
       if (sameShortcut) {
         if (switcher.isCheckboxMode() &&
-            (!ToggleCheckBoxAction.isEnabled() ||
-             e.getInputEvent() instanceof KeyEvent &&
-             KeymapUtil.isEventForAction(((KeyEvent)e.getInputEvent()), TOGGLE_CHECK_BOX_ACTION_ID))) {
+            e.getInputEvent() instanceof KeyEvent &&
+            KeymapUtil.isEventForAction((KeyEvent)e.getInputEvent(), TOGGLE_CHECK_BOX_ACTION_ID)) {
           switcher.toggleShowEditedFiles();
         }
         else {
