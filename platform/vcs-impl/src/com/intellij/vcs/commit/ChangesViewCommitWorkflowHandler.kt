@@ -78,7 +78,7 @@ class ChangesViewCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles(): Boolean = addUnversionedFiles(changeListManager.defaultChangeList)
+  override fun addUnversionedFiles(): Boolean = addUnversionedFiles(workflow.getChangeListFor(getIncludedChanges().firstOrNull()))
 
   override fun canExecute(executor: CommitExecutor): Boolean = false
   override fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) = Unit

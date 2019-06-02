@@ -9,7 +9,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
@@ -18,6 +20,7 @@ internal class CommitState(val changes: List<Change>, val commitMessage: String)
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
+  private val changeListManager = ChangeListManager.getInstance(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
@@ -32,6 +35,9 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
       runInEdt { updateVcses(vcsManager.allActiveVcss.toSet()) }
     })
   }
+
+  internal fun getChangeListFor(change: Change?): LocalChangeList =
+    change?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
 
   override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) {
     if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
