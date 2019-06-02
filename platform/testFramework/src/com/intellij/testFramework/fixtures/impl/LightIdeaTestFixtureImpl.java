@@ -86,7 +86,11 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
         }
       })
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
-      .append(() -> PersistentFS.getInstance().clearIdCache())
+      .append(() -> {
+        if (ApplicationManager.getApplication() != null) {
+          PersistentFS.getInstance().clearIdCache();
+        }
+      })
       .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
       .run();
   }
