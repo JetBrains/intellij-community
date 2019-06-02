@@ -258,7 +258,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           if (hasLoginArgument(shellName) && SystemInfoRt.isMac) {
             command.add(LOGIN_CLI_OPTION);
           }
-          command.add("-i");
         }
 
         List<String> result = Lists.newArrayList(shellCommand);
