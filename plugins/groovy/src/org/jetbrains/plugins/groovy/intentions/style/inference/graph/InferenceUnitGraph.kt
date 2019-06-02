@@ -74,11 +74,16 @@ private fun condensate(graph: InferenceUnitGraph): InferenceUnitGraph {
   val builder = InferenceUnitGraphBuilder()
   for (component in components) {
     val representative = component.sortedBy { it.toString() }.first()
+    var isForbidden = false
     component.forEach {
       representativeMap[it.core] = representative.core
+      isForbidden = isForbidden || it.forbidInstantiation
       if (it != representative) {
         builder.setType(it.core, representative.core.type).setDirect(it.core)
       }
+    }
+    if (isForbidden) {
+      builder.forbidInstantiation(representative.core)
     }
   }
   graph.units.filter { representativeMap[it.core] == it.core }.forEach { unit ->

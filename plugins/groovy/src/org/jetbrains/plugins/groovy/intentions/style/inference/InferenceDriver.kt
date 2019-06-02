@@ -31,6 +31,7 @@ class InferenceDriver(val method: GrMethod) {
   private val defaultTypeParameterList: PsiTypeParameterList = (method.typeParameterList?.copy()
                                                                 ?: elementFactory.createTypeParameterList()) as PsiTypeParameterList
   private val parameterIndex: MutableMap<GrParameter, PsiTypeParameter> = LinkedHashMap()
+  val contravariantTypes = mutableSetOf<PsiType>()
   val virtualMethod: GrMethod
   val virtualParametersMapping: Map<String, GrParameter>
   val appearedClassTypes: MutableMap<String, List<PsiClass?>> = mutableMapOf()
@@ -54,7 +55,7 @@ class InferenceDriver(val method: GrMethod) {
   }
 
   val forbiddingTypes: List<PsiType> by lazy {
-    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType }
+    virtualMethod.parameters.mapNotNull { (it.type as? PsiArrayType)?.componentType } + contravariantTypes
   }
 
   /**
@@ -176,7 +177,8 @@ class InferenceDriver(val method: GrMethod) {
 
     virtualMethod.accept(object : GroovyRecursiveElementVisitor() {
       override fun visitCallExpression(callExpression: GrCallExpression) {
-        val candidate = (callExpression.advancedResolve() as? GroovyMethodResult)?.candidate
+        val resolveResult = callExpression.advancedResolve() as? GroovyMethodResult
+        val candidate = resolveResult?.candidate
         val receiver = candidate?.receiver as? PsiClassType
         receiver?.run {
           boundsCollector.computeIfAbsent(receiver.className) { mutableListOf() }.add(candidate.method.containingClass)
@@ -186,6 +188,7 @@ class InferenceDriver(val method: GrMethod) {
           argumentType?.run {
             boundsCollector.computeIfAbsent(argumentType.className) { mutableListOf() }.add((type as? PsiClassType)?.resolve())
           }
+          resolveResult.contextSubstitutor.substitute(type)?.run { contravariantTypes.add(this) }
         }
         inferenceSession.addConstraint(ExpressionConstraint(null, callExpression))
         super.visitCallExpression(callExpression)
@@ -226,11 +229,11 @@ class InferenceDriver(val method: GrMethod) {
 
       override fun visitClassType(classType: PsiClassType?): PsiType? {
         classType ?: return classType
-        val resolveElement = classType.resolveGenerics().element
-        if (resolveElement is PsiTypeParameter) {
-          if (resolveElement.name !in necessaryTypeParameters.map { it.name }) {
-            necessaryTypeParameters.add(resolveElement)
-            resolveElement.extendsList.referencedTypes.forEach { it.accept(this) }
+        val resolvedClass = classType.resolveGenerics().element
+        if (resolvedClass is PsiTypeParameter) {
+          if (resolvedClass.name !in necessaryTypeParameters.map { it.name }) {
+            necessaryTypeParameters.add(resolvedClass)
+            resolvedClass.extendsList.referencedTypes.forEach { it.accept(this) }
           }
         }
         classType.parameters.forEach { it.accept(this) }
