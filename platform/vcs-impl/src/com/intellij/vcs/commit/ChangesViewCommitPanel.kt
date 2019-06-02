@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -41,6 +42,7 @@ import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.KeyStroke.getKeyStroke
+import javax.swing.LayoutFocusTraversalPolicy
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
 private val BACKGROUND_COLOR = JBColor { getTreeBackground() }
@@ -152,12 +154,16 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   override fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext) {
     val commitOptionsPanel = CommitOptionsPanel { defaultCommitActionName }.apply {
+      focusTraversalPolicy = LayoutFocusTraversalPolicy()
+      isFocusCycleRoot = true
+
       setOptions(options)
       border = empty(0, 10)
       MnemonicHelper.init(this)
     }
+    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
     val commitOptionsPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(commitOptionsPanel, null)
+      .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
       .setRequestFocus(true)
       .createPopup()
 
