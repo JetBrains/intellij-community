@@ -7,9 +7,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -17,7 +19,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -51,8 +52,12 @@ public class MessageBusImpl implements MessageBus {
   private final ConcurrentMap<Topic, List<MessageBusConnectionImpl>> mySubscriberCache = ContainerUtil.newConcurrentMap();
   private final List<MessageBusImpl> myChildBuses = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  private volatile ConcurrentMap<String, List<ListenerDescriptor>> myTopicClassToListenerClass = null;
+
   private static final Object NA = new Object();
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private MessageBusImpl myParentBus;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   protected RootBus myRootBus;
 
   //is used for debugging purposes
@@ -63,11 +68,16 @@ public class MessageBusImpl implements MessageBus {
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     this(owner);
+
     myParentBus = (MessageBusImpl)parentBus;
     myRootBus = myParentBus.myRootBus;
     myParentBus.onChildBusCreated(this);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
     LOG.assertTrue(myOrder != null);
+  }
+
+  public void setLazyListeners(@NotNull ConcurrentMap<String, List<ListenerDescriptor>> map) {
+    myTopicClassToListenerClass = map;
   }
 
   private MessageBusImpl(Object owner) {
@@ -161,29 +171,72 @@ public class MessageBusImpl implements MessageBus {
     return connection;
   }
 
+  @NotNull
+  protected MessageBusConnection createConnectionForLazyListeners() {
+    return connect();
+  }
+
   @Override
   @NotNull
-  public <L> L syncPublisher(@NotNull final Topic<L> topic) {
+  public <L> L syncPublisher(@NotNull Topic<L> topic) {
     checkNotDisposed();
-    //noinspection unchecked
+    @SuppressWarnings("unchecked")
     L publisher = (L)myPublishers.get(topic);
-    if (publisher == null) {
-      final Class<L> listenerClass = topic.getListenerClass();
-      InvocationHandler handler = new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) {
-          if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
-            return EventDispatcher.handleObjectMethod(proxy, args, method.getName());
-          }
-          sendMessage(new Message(topic, method, args));
-          return NA;
-        }
-      };
-      Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
-      //noinspection unchecked
-      publisher = (L)ConcurrencyUtil.cacheOrGet(myPublishers, topic, newInstance);
+    if (publisher != null) {
+      return publisher;
     }
-    return publisher;
+
+    Class<L> listenerClass = topic.getListenerClass();
+
+    if (myTopicClassToListenerClass == null) {
+      Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
+      Object prev = myPublishers.putIfAbsent(topic, newInstance);
+      //noinspection unchecked
+      return (L)(prev == null ? newInstance : prev);
+    }
+
+    // remove is atomic operation, so, even if topic concurrently created and our topic instance will be not used, still, listeners will be added,
+    // but problem is that if another topic will be returned earlier, then these listeners will not get fired event
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (topic) {
+      //noinspection unchecked
+      publisher = (L)myPublishers.get(topic);
+      if (publisher != null) {
+        return publisher;
+      }
+
+      List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
+      if (listenerDescriptors != null) {
+        MessageBusConnection connection = createConnectionForLazyListeners();
+        for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
+          ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
+          try {
+            @SuppressWarnings("unchecked")
+            L listener = (L)ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false);
+            connection.subscribe(topic, listener);
+          }
+          catch (ClassNotFoundException e) {
+            LOG.error(e);
+          }
+        }
+      }
+
+      //noinspection unchecked
+      publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
+      myPublishers.put(topic, publisher);
+      return publisher;
+    }
+  }
+
+  @NotNull
+  private <L> InvocationHandler createTopicHandler(@NotNull Topic<L> topic) {
+    return (proxy, method, args) -> {
+      if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
+        return EventDispatcher.handleObjectMethod(proxy, args, method.getName());
+      }
+      sendMessage(new Message(topic, method, args));
+      return NA;
+    };
   }
 
   @Override
@@ -457,7 +510,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  public static class RootBus extends MessageBusImpl {
+  public static final class RootBus extends MessageBusImpl {
     /**
      * Holds the counts of pending messages for all message buses in the hierarchy
      * This field is null for non-root buses
@@ -467,7 +520,15 @@ public class MessageBusImpl implements MessageBus {
      */
     private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<>();
 
+    private final MessageBusConnection myLazyConnection = connect();
+
     volatile boolean myClearedSubscribersCache;
+
+    @NotNull
+    @Override
+    protected MessageBusConnection createConnectionForLazyListeners() {
+      return myLazyConnection;
+    }
 
     @Override
     void clearSubscriberCache() {

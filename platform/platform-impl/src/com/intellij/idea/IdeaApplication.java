@@ -64,6 +64,13 @@ public final class IdeaApplication {
     EventQueue.invokeLater(() -> {
       String[] args = processProgramArguments(rawArgs);
       ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
+      boolean isInternal = Boolean.getBoolean(ApplicationImpl.IDEA_IS_INTERNAL_PROPERTY);
+      boolean isCommandLine = Main.isCommandLine();
+
+      Activity createAppActivity = StartUpMeasurer.start("create app");
+      ApplicationImpl app = new ApplicationImpl(isInternal, false, Main.isHeadless(), isCommandLine, ApplicationManagerEx.IDEA_APPLICATION);
+      createAppActivity.end();
+      starter.premain(args);
 
       CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
         .thenCompose(pluginDescriptors -> {
@@ -71,6 +78,10 @@ public final class IdeaApplication {
             Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
             RegistryKeyBean.addKeysFromPlugins();
             activity.end();
+
+            Activity busActivity = ParallelActivity.PREPARE_APP_INIT.start("add message bus listeners");
+            ApplicationImpl.registerMessageBusListeners(app, pluginDescriptors, false);
+            busActivity.end();
           }, AppExecutorUtil.getAppExecutorService());
 
           Activity activity = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
@@ -99,7 +110,6 @@ public final class IdeaApplication {
           throw new CompletionException(e);
         }
 
-        ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
         app.load(null, SplashManager.getProgressIndicator());
         if (!Main.isHeadless()) {
           addActivateAndWindowsCliListeners(app);
@@ -179,16 +189,6 @@ public final class IdeaApplication {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
       System.exit(Main.NO_GRAPHICS);
     }
-
-    boolean isInternal = Boolean.getBoolean(ApplicationImpl.IDEA_IS_INTERNAL_PROPERTY);
-    boolean isCommandLine = Main.isCommandLine();
-
-    Activity activity = StartUpMeasurer.start("create app");
-    new ApplicationImpl(isInternal, false, headless, isCommandLine, ApplicationManagerEx.IDEA_APPLICATION);
-    activity.end();
-
-    starter.premain(args);
-
     return starter;
   }
 

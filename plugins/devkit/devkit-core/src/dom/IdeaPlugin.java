@@ -12,7 +12,6 @@ import java.util.List;
 @Presentation(icon = "AllIcons.Nodes.Plugin", typeName = "Plugin")
 @Stubbed
 public interface IdeaPlugin extends DomElement {
-
   String TAG_NAME = "idea-plugin";
 
   @Nullable
@@ -132,14 +131,17 @@ public interface IdeaPlugin extends DomElement {
 
   ModuleComponents addModuleComponents();
 
-
   @NotNull
   @SubTagList("actions")
   @Stubbed
   List<Actions> getActions();
 
-  Actions addActions();
+  @NotNull
+  @SubTagList("applicationListeners")
+  @Stubbed
+  List<Listeners> getApplicationListeners();
 
+  Actions addActions();
 
   /**
    * @deprecated not used anymore

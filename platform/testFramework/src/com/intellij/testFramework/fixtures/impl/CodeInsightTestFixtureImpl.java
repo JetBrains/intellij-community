@@ -1180,14 +1180,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
+        if (ApplicationManager.getApplication() == null) {
+          return;
+        }
+
         Project project = getProject();
         if (project != null) {
           CodeStyle.dropTemporarySettings(project);
           AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
         }
         DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-        closeOpenFiles();
         if (project != null) {
+          closeOpenFiles();
           ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
           // needed for myVirtualFilePointerTracker check below
           ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();

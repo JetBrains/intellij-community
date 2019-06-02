@@ -47,9 +47,12 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.ApiStatus;
@@ -168,6 +171,29 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // replaces system event queue
     //noinspection ResultOfMethodCallIgnored
     IdeEventQueue.getInstance();
+  }
+
+  // this method not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
+  public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
+    ConcurrentMap<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
+    for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
+      List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
+      if (!listeners.isEmpty()) {
+        for (ListenerDescriptor listener : listeners) {
+          if (isUnitTestMode && !listener.activeInTestMode) {
+            continue;
+          }
+
+          List<ListenerDescriptor> list = map.get(listener.topicClassName);
+          if (list == null) {
+            list = new SmartList<>();
+            map.put(listener.topicClassName, list);
+          }
+          list.add(listener);
+        }
+      }
+    }
+    ((MessageBusImpl)app.getMessageBus()).setLazyListeners(map);
   }
 
   /**

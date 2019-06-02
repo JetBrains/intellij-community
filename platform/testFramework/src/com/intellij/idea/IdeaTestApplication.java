@@ -5,6 +5,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -17,6 +18,8 @@ import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class IdeaTestApplication implements Disposable {
   private static IdeaTestApplication ourInstance;
@@ -55,8 +58,10 @@ public final class IdeaTestApplication implements Disposable {
       System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
       IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
       ApplicationImpl.patchSystem();
+      List<IdeaPluginDescriptor> loadedPlugins = PluginManagerCore.getLoadedPlugins();
       ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
-      app.registerComponents(PluginManagerCore.getLoadedPlugins());
+      ApplicationImpl.registerMessageBusListeners(app, loadedPlugins, true);
+      app.registerComponents(loadedPlugins);
       RegistryKeyBean.addKeysFromPlugins();
       app.load(configPath, null);
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
