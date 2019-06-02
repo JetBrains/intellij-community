@@ -146,8 +146,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (pluginId == null) pluginId = element.getChildTextTrim("name");
     if (pluginId == null || !PluginManagerCore.disabledPlugins().contains(pluginId)) {
       JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
-    } else {
-      if (LOG.isDebugEnabled()) LOG.debug("Skipping resolving of " + pluginId + " from " + url);
+    }
+    else if (LOG.isDebugEnabled()) {
+      LOG.debug("Skipping resolving of " + pluginId + " from " + url);
     }
     readExternal(element, stringInterner);
   }

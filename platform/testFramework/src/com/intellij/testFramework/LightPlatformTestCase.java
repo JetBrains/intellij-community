@@ -394,12 +394,26 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      () -> CodeStyle.dropTemporarySettings(project),
-      () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
-      () -> doTearDown(project, ourApplication),
       () -> {
-        // needed for myVirtualFilePointerTracker check below
-        ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+        if (ApplicationManager.getApplication() != null) {
+          CodeStyle.dropTemporarySettings(project);
+        }
+      },
+      () -> {
+        if (myCodeStyleSettingsTracker != null) {
+          myCodeStyleSettingsTracker.checkForSettingsDamage();
+        }
+      },
+      () -> {
+        if (project != null && ourApplication != null) {
+          doTearDown(project, ourApplication);
+        }
+      },
+      () -> {
+        if (project != null) {
+          // needed for myVirtualFilePointerTracker check below
+          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+        }
       },
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),

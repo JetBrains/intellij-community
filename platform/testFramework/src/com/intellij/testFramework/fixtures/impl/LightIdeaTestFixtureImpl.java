@@ -53,7 +53,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   @Override
   public void tearDown() {
     Project project = getProject();
-    if (ApplicationManager.getApplication() != null) {
+    if (project != null) {
       CodeStyle.dropTemporarySettings(project);
     }
 

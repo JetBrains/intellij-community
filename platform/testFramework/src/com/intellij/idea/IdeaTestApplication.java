@@ -16,13 +16,20 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public final class IdeaTestApplication implements Disposable {
-  private static IdeaTestApplication ourInstance;
+  private static volatile IdeaTestApplication ourInstance;
+  private static volatile RuntimeException bootstrapError;
+  private static boolean isBootstrappingAppNow;
 
   private IdeaTestApplication() { }
 
@@ -46,27 +53,67 @@ public final class IdeaTestApplication implements Disposable {
     return getInstance(null);
   }
 
-  public static synchronized IdeaTestApplication getInstance(@Nullable String configPath) {
-    if (ourInstance == null) {
-      PlatformTestCase.doAutodetectPlatformPrefix();
-      ourInstance = new IdeaTestApplication();
+  public static IdeaTestApplication getInstance(@Nullable String configPath) {
+    IdeaTestApplication instance = ourInstance;
+    if (instance == null) {
+      try {
+        instance = createInstance(configPath);
+      }
+      catch (RuntimeException e) {
+        bootstrapError = e;
+        isBootstrappingAppNow = false;
+        throw e;
+      }
+    }
+    return instance;
+  }
 
-      String[] args = {"inspect", "", "", ""};
-      Main.setFlags(args);
-      assert Main.isHeadless();
-      assert Main.isCommandLine();
-      System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
-      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-      ApplicationImpl.patchSystem();
-      List<IdeaPluginDescriptor> loadedPlugins = PluginManagerCore.getLoadedPlugins();
-      ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
-      ApplicationImpl.registerMessageBusListeners(app, loadedPlugins, true);
-      app.registerComponents(loadedPlugins);
-      RegistryKeyBean.addKeysFromPlugins();
-      app.load(configPath, null);
-      LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
+  @NotNull
+  private static synchronized IdeaTestApplication createInstance(@Nullable String configPath) {
+    if (ourInstance != null) {
+      return ourInstance;
     }
 
+    if (bootstrapError != null) {
+      throw bootstrapError;
+    }
+
+
+    if (isBootstrappingAppNow) {
+      throw new IllegalStateException("App bootstrap is already in process");
+    }
+    isBootstrappingAppNow = true;
+
+    PlatformTestCase.doAutodetectPlatformPrefix();
+
+    String[] args = {"inspect", "", "", ""};
+    Main.setFlags(args);
+    assert Main.isHeadless();
+    assert Main.isCommandLine();
+    System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+
+    Future<List<IdeaPluginDescriptor>> loadedPluginFuture = AppExecutorUtil.getAppExecutorService().submit(() -> PluginManagerCore.getLoadedPlugins());
+    ApplicationImpl.patchSystem();
+    ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
+    List<IdeaPluginDescriptor> loadedPlugins = null;
+    try {
+      loadedPlugins = loadedPluginFuture.get(5, TimeUnit.SECONDS);
+    }
+    catch (ExecutionException e) {
+      ExceptionUtil.rethrow(e.getCause() == null ? e : e.getCause());
+    }
+    catch (Exception e) {
+      ExceptionUtil.rethrow(e);
+    }
+    ApplicationImpl.registerMessageBusListeners(app, loadedPlugins, true);
+    app.registerComponents(loadedPlugins);
+    RegistryKeyBean.addKeysFromPlugins();
+    app.load(configPath, null);
+    LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
+
+    isBootstrappingAppNow = false;
+    ourInstance = new IdeaTestApplication();
     return ourInstance;
   }
 
