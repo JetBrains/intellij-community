@@ -2,7 +2,6 @@
 package com.intellij.notification.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.EventLog;
@@ -10,14 +9,16 @@ import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.ui.NotificationsUtil;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
@@ -37,19 +38,33 @@ import java.util.List;
  */
 public class IdeNotificationArea extends JLabel implements UISettingsListener, CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
+  private final Project myProject;
   private StatusBar myStatusBar;
 
-  public IdeNotificationArea() {
+  public IdeNotificationArea(@NotNull Project project) {
+    myProject = project;
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        EventLog.toggleLog(getProject(), null);
+        if (!myProject.isDisposed()) {
+          EventLog.toggleLog(myProject, null);
+        }
         return true;
       }
     }.installOn(this);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED,
-                                                                                () -> ApplicationManager.getApplication()
-                                                                                                        .invokeLater(() -> updateStatus()));
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () ->
+      ApplicationManager.getApplication().invokeLater(() -> updateStatus()));
+    Disposable onToolWindowRegistration = Disposer.newDisposable("EventLog#onToolWindowRegistration");
+    Disposer.register(this, onToolWindowRegistration);
+    myProject.getMessageBus().connect(onToolWindowRegistration).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+      @Override
+      public void toolWindowRegistered(@NotNull String id) {
+        if (EventLog.LOG_TOOL_WINDOW_ID.equals(id)) {
+          Disposer.dispose(onToolWindowRegistration);
+          ApplicationManager.getApplication().invokeLater(() -> updateStatus());
+        }
+      }
+    });
     setBorder(WidgetBorder.ICON);
   }
 
@@ -73,11 +88,6 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     updateStatus();
   }
 
-  @Nullable
-  private Project getProject() {
-    return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component)myStatusBar));
-  }
-
   @Override
   @NotNull
   public String ID() {
@@ -85,9 +95,11 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   }
 
   private void updateStatus() {
-    final Project project = getProject();
-    ArrayList<Notification> notifications = EventLog.getLogModel(project).getNotifications();
-    updateIconOnStatusBarAndToolWindow(project, notifications);
+    if (myProject.isDisposed()) {
+      return;
+    }
+    ArrayList<Notification> notifications = EventLog.getLogModel(myProject).getNotifications();
+    updateIconOnStatusBarAndToolWindow(notifications);
 
     int count = notifications.size();
     setToolTipText(count > 0 ? String.format("%s notification%s pending", count, count == 1 ? "" : "s") : "No new notifications");
@@ -95,13 +107,13 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     myStatusBar.updateWidget(ID());
   }
 
-  private void updateIconOnStatusBarAndToolWindow(Project project, ArrayList<Notification> notifications) {
+  private void updateIconOnStatusBarAndToolWindow(ArrayList<Notification> notifications) {
     if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().getPresentationMode()) {
       setVisible(true);
       setIcon(createIconWithNotificationCount(notifications, false));
     }
     else {
-      ToolWindow eventLog = EventLog.getEventLog(project);
+      ToolWindow eventLog = EventLog.getEventLog(myProject);
       if (eventLog != null) {
         eventLog.setIcon(createIconWithNotificationCount(notifications, true));
       }
