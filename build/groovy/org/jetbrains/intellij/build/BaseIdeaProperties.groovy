@@ -57,7 +57,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.android.smali",
     "intellij.statsCollector",
     "intellij.sh",
-    "intellij.vcs.changeReminder"
+    "intellij.vcs.changeReminder",
+    "intellij.markdown"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     "": "1.8",
