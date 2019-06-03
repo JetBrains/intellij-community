@@ -2,7 +2,6 @@
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.HyperlinkLabel;
