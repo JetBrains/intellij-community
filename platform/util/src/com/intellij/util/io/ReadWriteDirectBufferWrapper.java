@@ -24,13 +24,15 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
 
   @Override
   protected ByteBuffer create() throws IOException {
-    RandomAccessFile file = new FileContext(myFile).file;
-    assert file != null;
-    FileChannel channel = file.getChannel();
-    channel.position(myPosition);
-    ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
-    channel.read(buffer);
-    return buffer;
+    try (FileContext context = new FileContext(myFile)) {
+      RandomAccessFile file = context.file;
+      assert file != null;
+      FileChannel channel = file.getChannel();
+      channel.position(myPosition);
+      ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
+      channel.read(buffer);
+      return buffer;
+    }
   }
 
   static class FileContext implements AutoCloseable {
