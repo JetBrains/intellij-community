@@ -213,7 +213,8 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
       Color originalColor = g.getColor();
       g.setFont(myFont);
 
-      x += (getIconWidth() - myWidth - 1) / 2;
+      int center = getIconWidth() - myWidth;
+      x += (center % 2 == 0 ? center - 1 : center) / 2;
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
 
       int length = myStr.length();
