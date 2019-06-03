@@ -66,10 +66,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     myDefaultCharset = StandardCharsets.UTF_8;
   }
 
-  private static boolean isLoginOptionAvailable(@NotNull String shellName) {
-    return shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME)) || shellName.equals(ZSH_NAME);
-  }
-
   private static String getShellName(@Nullable String path) {
     if (path == null) {
       return null;
@@ -263,7 +259,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           if (isLoginOptionAvailable(shellName) && SystemInfoRt.isMac) {
             command.add(LOGIN_CLI_OPTION);
           }
-          command.add(INTERACTIVE_CLI_OPTION);
+          if (isInteractiveOptionAvailable(shellName)) {
+            command.add(INTERACTIVE_CLI_OPTION);
+          }
         }
 
         List<String> result = Lists.newArrayList(shellCommand);
@@ -314,6 +312,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     else {
       return new String[]{shellPath};
     }
+  }
+
+  private static boolean isLoginOptionAvailable(@NotNull String shellName) {
+    return shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME)) || shellName.equals(ZSH_NAME);
+  }
+
+  private static boolean isInteractiveOptionAvailable(@NotNull String shellName) {
+    return shellName.equals(BASH_NAME) || (SystemInfoRt.isMac && shellName.equals(SH_NAME)) ||
+           shellName.equals(ZSH_NAME) || shellName.equals(FISH_NAME);
   }
 
   private static void setLoginShellEnv(@NotNull Map<String, String> envs, boolean loginShell) {
