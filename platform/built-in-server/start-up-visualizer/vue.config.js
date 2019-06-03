@@ -4,4 +4,14 @@ module.exports = {
     devtool: "source-map",
   },
   integrity: true,
+  configureWebpack: config => {
+    if (process.env.NODE_ENV === "production") {
+      config.optimization.splitChunks.cacheGroups.amcharts = {
+        name: "amcharts",
+        test: /[\\/]node_modules[\\/]@amcharts[\\/]/,
+        priority: -5,
+        chunks: "initial"
+      }
+    }
+  }
 }

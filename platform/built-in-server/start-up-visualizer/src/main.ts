@@ -6,6 +6,9 @@ import router from "./router"
 import {store} from "./state/state"
 import locale from "element-ui/lib/locale/lang/en"
 
+import "element-ui/lib/theme-chalk/reset.css"
+import "element-ui/lib/theme-chalk/index.css"
+
 Vue.use(ElementUI, {locale})
 
 Vue.config.productionTip = false
