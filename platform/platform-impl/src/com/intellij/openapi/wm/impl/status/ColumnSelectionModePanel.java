@@ -72,11 +72,9 @@ public class ColumnSelectionModePanel extends EditorBasedWidget implements Statu
     final Editor editor = getFocusedEditor();
     if (editor != null && !isOurEditor(editor)) return;
     if (editor == null || !editor.isColumnMode()) {
-      myTextPanel.setBorder(null);
       myTextPanel.setVisible(false);
     } 
     else {
-      myTextPanel.setBorder(WidgetBorder.INSTANCE);
       myTextPanel.setVisible(true);
       myTextPanel.setText(UIBundle.message("status.bar.column.status.text"));
       myTextPanel.setToolTipText("Column selection mode");

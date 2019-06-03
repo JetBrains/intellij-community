@@ -14,10 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ClickListener;
@@ -481,6 +478,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private static JComponent wrap(@NotNull final StatusBarWidget widget) {
     if (widget instanceof CustomStatusBarWidget) {
       JComponent component = ((CustomStatusBarWidget)widget).getComponent();
+      if (component.getBorder() == null) {
+        component.setBorder(widget instanceof IconLikeCustomStatusBarWidget ? StatusBarWidget.WidgetBorder.ICON
+                                                                            : StatusBarWidget.WidgetBorder.INSTANCE);
+      }
       if (component instanceof JLabel) {
         // wrap with panel so it will fill entire status bar height
         return UI.Panels.simplePanel(component);

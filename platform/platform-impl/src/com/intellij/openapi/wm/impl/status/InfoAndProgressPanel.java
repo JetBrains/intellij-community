@@ -99,6 +99,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   InfoAndProgressPanel() {
 
     setOpaque(false);
+    setBorder(JBUI.Borders.empty());
 
     myRefreshIcon.setVisible(false);
 

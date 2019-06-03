@@ -47,6 +47,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   private boolean wasExited = false;
 
   ToolWindowsWidget(@NotNull Disposable parent) {
+    setBorder(JBUI.Borders.empty());
     new BaseButtonBehavior(this, TimedDeadzone.NULL) {
       @Override
       protected void execute(MouseEvent e) {
