@@ -22,6 +22,7 @@ import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.formatter.ShShfmtFormatterUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.labels.ActionLink;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
   private IntegerField myIndentField;
   private JLabel myIndentLabel;
   private JLabel myWarningLabel;
+  private JLabel myErrorLabel;
 
   private JCheckBox myBinaryOpsStartLine;
   private JCheckBox mySwitchCasesIndented;
@@ -77,6 +79,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
       }
     });
     myWarningLabel.setIcon(AllIcons.General.Warning);
+    myErrorLabel.setForeground(JBColor.RED);
 
     myBinaryOpsStartLine.setText("Binary ops like & and | may start a line");
     mySwitchCasesIndented.setText("Switch cases will be indented");
@@ -94,7 +97,9 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
       public void actionPerformed(@NotNull AnActionEvent event) {
         CodeStyleSettings settings = getSettings();
         ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-        ShShfmtFormatterUtil.download(event.getProject(), settings, () -> myShfmtPathSelector.setText(shSettings.SHFMT_PATH));
+        ShShfmtFormatterUtil.download(event.getProject(), settings,
+                                      () -> myShfmtPathSelector.setText(shSettings.SHFMT_PATH),
+                                      () -> myErrorLabel.setVisible(true));
       }
     });
   }
@@ -137,6 +142,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     shSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
     shSettings.SHFMT_PATH = myShfmtPathSelector.getText();
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
+    myErrorLabel.setVisible(false);
   }
 
   @Override
@@ -174,6 +180,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     myMinifyProgram.setSelected(shSettings.MINIFY_PROGRAM);
     myShfmtPathSelector.setText(shSettings.SHFMT_PATH);
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(shSettings.SHFMT_PATH));
+    myErrorLabel.setVisible(false);
   }
 
   private static boolean isFieldModified(@NotNull JCheckBox checkBox, boolean value) {

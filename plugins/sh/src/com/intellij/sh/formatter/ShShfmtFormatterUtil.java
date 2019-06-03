@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.formatter;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +45,7 @@ public class ShShfmtFormatterUtil {
   private static final String LINUX = "_linux";
   private static final String FREE_BSD = "_freebsd";
 
-  public static void download(@Nullable Project project, @NotNull CodeStyleSettings settings, @Nullable Runnable onSuccess) {
+  public static void download(@Nullable Project project, @NotNull CodeStyleSettings settings, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
@@ -65,16 +62,13 @@ public class ShShfmtFormatterUtil {
         }
         else {
           shSettings.SHFMT_PATH = formatterPath;
-          showInfoNotification();
         }
-        if (onSuccess != null) {
-          ApplicationManager.getApplication().invokeLater(onSuccess);
-        }
+        ApplicationManager.getApplication().invokeLater(onSuccess);
         return;
       }
       catch (IOException e) {
         LOG.debug("Can't evaluate formatter path", e);
-        showErrorNotification();
+        ApplicationManager.getApplication().invokeLater(onFailure);
         return;
       }
     }
@@ -95,16 +89,13 @@ public class ShShfmtFormatterUtil {
             String path = file.getCanonicalPath();
             FileUtilRt.setExecutableAttribute(path, true);
             shSettings.SHFMT_PATH = path;
-            showInfoNotification();
-            if (onSuccess != null) {
-              ApplicationManager.getApplication().invokeLater(onSuccess);
-            }
+            ApplicationManager.getApplication().invokeLater(onSuccess);
             ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
           }
         }
         catch (IOException e) {
           LOG.warn("Can't download shfmt formatter", e);
-          showErrorNotification();
+          ApplicationManager.getApplication().invokeLater(onFailure);
         }
       }
     };
@@ -163,15 +154,5 @@ public class ShShfmtFormatterUtil {
       baseUrl.append(WINDOWS_EXTENSION);
     }
     return baseUrl.toString();
-  }
-
-  private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Shell script formatter was successfully installed",
-        NotificationType.INFORMATION));
-  }
-
-  private static void showErrorNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shfmt formatter. Please install it manually",
-        NotificationType.ERROR));
   }
 }

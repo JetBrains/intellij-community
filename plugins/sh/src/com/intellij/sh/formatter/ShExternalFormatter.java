@@ -66,7 +66,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     String shFmtExecutable = shSettings.SHFMT_PATH;
-    if(ShSettings.I_DO_MIND.equals(shFmtExecutable)) return;
+    if (ShSettings.I_DO_MIND.equals(shFmtExecutable)) return;
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       Notification notification =
@@ -74,7 +74,11 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
       notification.addAction(
         NotificationAction.createSimple("Install", () -> {
           notification.expire();
-          ShShfmtFormatterUtil.download(project, settings, null);
+          ShShfmtFormatterUtil.download(project, settings, () -> Notifications.Bus
+            .notify(new Notification("Shell Script", "", "Shell script formatter was successfully installed",
+                                     NotificationType.INFORMATION)), () -> Notifications.Bus
+            .notify(new Notification("Shell Script", "", "Can't download sh shfmt formatter. Please install it manually",
+                                     NotificationType.ERROR)));
         }));
       notification.addAction(NotificationAction.createSimple("No, thanks", () -> {
         notification.expire();
