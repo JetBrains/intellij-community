@@ -848,6 +848,23 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testAnnotatingNonSelfAttribute() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def method(self, b):\n" +
+                         "        <warning descr=\"Non-self attribute could not be type hinted\">b.a</warning>: int = 1\n" +
+                         "\n" +
+                         "class B:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "<warning descr=\"Non-self attribute could not be type hinted\">B.a</warning>: str = \"2\"\n" +
+                         "\n" +
+                         "def func(a):\n" +
+                         "    <warning descr=\"Non-self attribute could not be type hinted\">a.xxx</warning>: str = \"2\"")
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
