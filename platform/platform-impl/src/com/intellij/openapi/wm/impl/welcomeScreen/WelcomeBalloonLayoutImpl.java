@@ -91,7 +91,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       });
 
       myPopupBalloon =
-        new BalloonImpl(pane, BORDER_COLOR, new Insets(0, 0, 0, 0), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
+        new BalloonImpl(pane, BORDER_COLOR, JBUI.emptyInsets(), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
                         null, false, 0, 0, 0, 0, false, null, null, false, false, true, null, false, null, -1);
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(
@@ -183,6 +183,8 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private static class BalloonPanel extends NonOpaquePanel {
+    private static final int VERTICAL_GAP = JBUI.scale(2);
+
     BalloonPanel() {
       super(new AbstractLayoutManager() {
         @Override
@@ -195,7 +197,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
             width = Math.max(width, size.width);
             height += size.height;
           }
-          height += count - 1;
+          height += VERTICAL_GAP * (count - 1);
           return new Dimension(Math.max(width + JBUI.scale(32), BalloonLayoutConfiguration.MaxWidth()), height);
         }
 
@@ -213,7 +215,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
               Component component = parent.getComponent(i);
               Dimension size = component.getPreferredSize();
               component.setBounds(JBUI.scale(16), y, width, size.height);
-              y += size.height + JBUI.scale(2);
+              y += size.height + VERTICAL_GAP;
             }
           }
         }
@@ -233,7 +235,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
         for (int i = 0; i < count; i++) {
           Dimension size = getComponent(i).getPreferredSize();
-          y += size.height + 1;
+          y += size.height + VERTICAL_GAP;
           g.drawLine(JBUI.scale(16), y, x2, y);
         }
       }
