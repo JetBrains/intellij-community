@@ -29,7 +29,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
@@ -1390,18 +1389,21 @@ public class PluginManagerCore {
                                 @Nullable String untilBuild,
                                 @Nullable String descriptorName,
                                 @Nullable String descriptorDebugString) {
-    JBIterable<String> messages = JBIterable.empty();
+    List<String> messages = null;
     BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName, null);
     if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
-      messages = messages.append("since build " + sinceBuildNumber + " > " + buildNumber);
+      messages = new SmartList<>("since build " + sinceBuildNumber + " > " + buildNumber);
     }
 
     BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName, null);
     if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
-      messages = messages.append("until build " + untilBuildNumber + " < " + buildNumber);
+      if (messages == null) {
+        messages = new SmartList<>();
+      }
+      messages.add("until build " + untilBuildNumber + " < " + buildNumber);
     }
-    if (messages.isNotEmpty()) {
-      getLogger().warn(ObjectUtils.coalesce(descriptorName, descriptorDebugString) + " not loaded: " + StringUtil.join(messages, ", "));
+    if (messages != null) {
+      getLogger().warn(ObjectUtils.chooseNotNull(descriptorName, descriptorDebugString) + " not loaded: " + StringUtil.join(messages, ", "));
       return true;
     }
 
@@ -1425,7 +1427,13 @@ public class PluginManagerCore {
   private static void checkEssentialPluginsAreAvailable(IdeaPluginDescriptorImpl[] plugins) {
     Set<String> available = ContainerUtil.map2Set(plugins, plugin -> plugin.getPluginId().getIdString());
     List<String> required = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
-    Set<String> missing = JBIterable.from(required).filter(id -> !available.contains(id)).toSet();
+
+    List<String> missing = new SmartList<>();
+    for (String id : required) {
+      if (!available.contains(id)) {
+        missing.add(id);
+      }
+    }
     if (!missing.isEmpty()) {
       throw new EssentialPluginMissingException(missing);
     }
@@ -1642,10 +1650,10 @@ public class PluginManagerCore {
     return Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
   }
 
-  static class EssentialPluginMissingException extends RuntimeException {
-    final Set<String> pluginIds;
+  static final class EssentialPluginMissingException extends RuntimeException {
+    final List<String> pluginIds;
 
-    EssentialPluginMissingException(@NotNull Set<String> ids) {
+    EssentialPluginMissingException(@NotNull List<String> ids) {
       super("Missing essential plugins: " + StringUtil.join(ids, ", "));
       pluginIds = ids;
     }
