@@ -52,10 +52,13 @@ public class DirectoryMappingListTest extends PlatformTestCase {
     vcses.registerManually(new MockAbstractVcs(myProject, "mock"));
     vcses.registerManually(new MockAbstractVcs(myProject, "CVS"));
     vcses.registerManually(new MockAbstractVcs(myProject, "mock2"));
-    myMappings = new NewMappings(myProject, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject),
+
+    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+    myMappings = new NewMappings(myProject, vcsManager,
                                  FileStatusManager.getInstance(myProject), DefaultVcsRootPolicy.getInstance(myProject));
     Disposer.register(getTestRootDisposable(), myMappings);
     startupManager.runPostStartupActivities();
+    vcsManager.waitForInitialized();
   }
 
   public void testMappingsFilter() {
