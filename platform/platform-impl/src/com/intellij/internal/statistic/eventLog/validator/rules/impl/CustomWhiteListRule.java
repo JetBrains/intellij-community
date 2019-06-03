@@ -12,9 +12,9 @@ import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CustomUtilsWhiteListRule extends PerformanceCareRule implements FUSRule {
-  public static final ExtensionPointName<CustomUtilsWhiteListRule> EP_NAME =
-    ExtensionPointName.create("com.intellij.statistics.validation.customUtilWhiteListRule");
+public abstract class CustomWhiteListRule extends PerformanceCareRule implements FUSRule {
+  public static final ExtensionPointName<CustomWhiteListRule> EP_NAME =
+    ExtensionPointName.create("com.intellij.statistics.validation.customWhiteListRule");
 
   public abstract boolean acceptRuleId(@Nullable String ruleId);
 

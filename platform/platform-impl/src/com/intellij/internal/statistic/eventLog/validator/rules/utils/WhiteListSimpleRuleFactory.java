@@ -61,8 +61,8 @@ public class WhiteListSimpleRuleFactory {
                             Pair.create(REGEXP_REF_PREFIX, s -> new RegexpWhiteListRule(contextData.getRegexp(s)))); }
 
   @Nullable
-  private static CustomUtilsWhiteListRule getCustomUtilRule(String s) {
-    for (CustomUtilsWhiteListRule extension : CustomUtilsWhiteListRule.EP_NAME.getExtensions()) {
+  private static CustomWhiteListRule getCustomUtilRule(String s) {
+    for (CustomWhiteListRule extension : CustomWhiteListRule.EP_NAME.getExtensions()) {
       if (extension.acceptRuleId(s)) return extension;
     }
 
@@ -141,8 +141,8 @@ public class WhiteListSimpleRuleFactory {
         if (!string.contains(UTIL_PREFIX)) return UNPARSED_EXPRESSION;
 
         FUSRule simpleRule = createRule(unwrapRuleNode(string));
-        if (simpleRule instanceof CustomUtilsWhiteListRule) {
-          fusRule = (CustomUtilsWhiteListRule)simpleRule;
+        if (simpleRule instanceof CustomWhiteListRule) {
+          fusRule = (CustomWhiteListRule)simpleRule;
         }
         else {
           return UNPARSED_EXPRESSION;
