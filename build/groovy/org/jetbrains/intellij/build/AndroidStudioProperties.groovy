@@ -98,6 +98,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "intellij.android.smali",
                                            "test-recorder",
                                            "url-assistant",
+                                           "intellij.android.wizardTemplate.impl",
+                                           "intellij.android.wizardTemplate.plugin"
                                          ]
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
