@@ -105,7 +105,11 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     if (addCheckBox) {
-      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(StringUtil.toLowerCase(consent.getName())), consent.isAccepted());
+      String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
+      if (consent.getId().equals(ConsentOptions.STATISTICS_OPTION_ID) && ConsentOptions.getInstance().isEAP()) {
+        checkBoxText += " when using EAP versions";
+      }
+      final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);
