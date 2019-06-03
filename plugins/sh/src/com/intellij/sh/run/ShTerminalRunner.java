@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
+import static com.intellij.sh.ShStringUtil.quote;
+
 public class ShTerminalRunner extends ShRunner {
   @Override
   public void run(@NotNull ShFile file) {
@@ -70,7 +72,7 @@ public class ShTerminalRunner extends ShRunner {
     }
     String filePath = virtualFile.getPath() + "\n";
     if (VfsUtilCore.virtualToIoFile(virtualFile).canExecute()) {
-      return Pair.create(filePath, null);
+      return Pair.create(quote(filePath), null);
     }
     String executable = ShRunner.getShebangExecutable(file);
     if (executable == null) {
@@ -80,6 +82,6 @@ public class ShTerminalRunner extends ShRunner {
         executable = shellPath;
       }
     }
-    return executable != null ? Pair.create(executable + " " + filePath, null) : Pair.create(filePath, null);
+    return executable != null ? Pair.create(executable + " " + quote(filePath), null) : Pair.create(quote(filePath), null);
   }
 }
