@@ -65,6 +65,7 @@ import org.jetbrains.idea.maven.project.MavenProjectReaderResult;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerEmbedder;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -90,7 +91,6 @@ import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
-import static org.jetbrains.idea.maven.server.MavenServerProgressIndicator.DEPENDENCIES_RESOLVE_PREFIX;
 
 public class MavenUtil {
   @ApiStatus.Experimental
@@ -463,12 +463,9 @@ public class MavenUtil {
       if (project.isDisposed()) return;
 
       try {
-        manager.getSyncConsole().startTask(title);
         task.run(indicator);
-        manager.getSyncConsole().completeTask(title);
       }
       catch (MavenProcessCanceledException | ProcessCanceledException e) {
-        manager.getSyncConsole().completeTask(title, e);
         indicator.cancel();
       }
     };
@@ -841,8 +838,7 @@ public class MavenUtil {
 
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
     for (MavenId id : unresolvedIds) {
-      syncConsole.startTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey());
-      syncConsole.completeTask(DEPENDENCIES_RESOLVE_PREFIX + id.getKey(), new RuntimeException(id + " not resolved"));
+      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).showError(id.getKey());
     }
   }
 

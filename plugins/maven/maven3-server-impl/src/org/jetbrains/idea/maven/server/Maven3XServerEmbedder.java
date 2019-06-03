@@ -41,7 +41,10 @@ import org.apache.maven.model.validation.ModelValidator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
-import org.apache.maven.profiles.activation.*;
+import org.apache.maven.profiles.activation.JdkPrefixProfileActivator;
+import org.apache.maven.profiles.activation.OperatingSystemProfileActivator;
+import org.apache.maven.profiles.activation.ProfileActivator;
+import org.apache.maven.profiles.activation.SystemPropertyProfileActivator;
 import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
@@ -104,7 +107,7 @@ import java.util.*;
  * org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2 <-> org.apache.maven.model.interpolation.StringSearchModelInterpolator
  * org.jetbrains.idea.maven.server.embedder.CustomModelValidator <-> org.apache.maven.model.validation.ModelValidator
  */
-public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
+public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull private final DefaultPlexusContainer myContainer;
   @NotNull private final Settings myMavenSettings;
@@ -126,7 +129,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @NotNull private final RepositorySystem myRepositorySystem;
 
-  public Maven3ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
+  public Maven3XServerEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
 
     if (settings.getWorkingDirectory() != null) {
@@ -207,7 +210,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       //noinspection SSBasedInspection
       cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
 
-      for (String each : new String[]{"initialize", "cli", "logging", "properties"}) {
+      for (String each : new String[]{"initialize", "cli", "logging", "properties", "populateRequest"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
         m.setAccessible(true);
         m.invoke(cli, cliRequest);
@@ -387,7 +390,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               break;
             }
           }
-          catch (ProfileActivationException e) {
+          catch (Exception e) {
             Maven3ServerGlobals.getLogger().warn(e);
           }
         }
@@ -625,7 +628,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
           RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
           if (repositorySession instanceof DefaultRepositorySystemSession) {
             DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-            session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+            session
+              .setTransferListener(new TransferListenerAdapter(myCurrentIndicator, MavenServerProgressIndicator.ResolveType.DEPENDENCY));
 
             if (myWorkspaceMap != null) {
               session.setWorkspaceReader(new Maven3WorkspaceReader(myWorkspaceMap));
@@ -1083,6 +1087,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       final MavenExecutionRequest request =
         createRequest(null, null, null, null);
+      request.setTransferListener(new TransferListenerAdapter(myCurrentIndicator, MavenServerProgressIndicator.ResolveType.PLUGIN));
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
@@ -1204,18 +1209,14 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         request.addRemoteRepository(artifactRepository);
       }
 
-      Maven3Sl4jLoggerWrapper.setCurrentWrapper(myConsoleWrapper);
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
 
-      final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
-
-      // Don't try calling setLoggerFactory() removed by MRESOLVER-36 when Maven 3.6.0+ is used.
-      // For more information and link to the MRESOLVER-36 see IDEA-201282.
-
+      initLogging(myConsoleWrapper);
 
       // do not use request.getRemoteRepositories() here,
       // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
+      final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
       List<RemoteRepository> repositories = RepositoryUtils.toRepos(repos);
       repositories = repositorySystem.newResolutionRepositories(repositorySystemSession, repositories);
 
@@ -1225,6 +1226,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       return RepositoryUtils.toArtifact(artifactResult.getArtifact());
     }
   }
+
+  protected abstract void initLogging(Maven3ServerConsoleLogger consoleWrapper);
 
   @Override
   @NotNull

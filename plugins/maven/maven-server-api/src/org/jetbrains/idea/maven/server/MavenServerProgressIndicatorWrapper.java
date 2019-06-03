@@ -50,6 +50,21 @@ public class MavenServerProgressIndicatorWrapper implements MavenServerProgressI
   }
 
   @Override
+  public void startedDownload(ResolveType type, String dependencyId) throws RemoteException {
+    myDelegate.startedDownload(type, dependencyId);
+  }
+
+  @Override
+  public void completedDownload(ResolveType type, String dependencyId) throws RemoteException {
+    myDelegate.completedDownload(type, dependencyId);
+  }
+
+  @Override
+  public void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) throws RemoteException {
+    myDelegate.failedDownload(type, dependencyId, errorMessage, stackTrace);
+  }
+
+  @Override
   public boolean isCanceled() throws RemoteException {
     if (myCanceled) {
       return true;
@@ -77,15 +92,5 @@ public class MavenServerProgressIndicatorWrapper implements MavenServerProgressI
   @Override
   public void setFraction(double fraction) throws RemoteException {
     myDelegate.setFraction(fraction);
-  }
-
-  @Override
-  public void startTask(String text) throws RemoteException {
-    myDelegate.startTask(text);
-  }
-
-  @Override
-  public void completeTask(String text, String errorMessage) throws RemoteException {
-    myDelegate.completeTask(text, errorMessage);
   }
 }
