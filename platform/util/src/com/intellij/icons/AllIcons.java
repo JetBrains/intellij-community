@@ -1638,6 +1638,11 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Readonly = load("/ide/readonly.svg");
     /** 16x16 */ public static final Icon Readwrite = load("/ide/readwrite.svg");
 
+    public final static class RunAnything {
+      /** 16x16 */ public static final Icon OpenRecentProject = load("/ide/runAnything/openRecentProject.svg");
+
+    }
+
     public final static class Shadow {
       /** 4x14 */ public static final Icon Bottom = load("/ide/shadow/bottom.svg");
       /** 18x22 */ public static final Icon BottomLeft = load("/ide/shadow/bottomLeft.svg");
