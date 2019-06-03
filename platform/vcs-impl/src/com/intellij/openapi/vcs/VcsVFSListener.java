@@ -110,7 +110,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     myProjectConfigurationFilesProcessor.install();
     myExternalFilesProcessor.install();
-    new IgnoreFilesProcessorImpl(myProject, this).install();
+    new IgnoreFilesProcessorImpl(myProject, myVcs, this).install();
   }
 
   @Override
