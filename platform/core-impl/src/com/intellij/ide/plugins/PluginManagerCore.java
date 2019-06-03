@@ -69,6 +69,7 @@ public class PluginManagerCore {
   public static final String CORE_PLUGIN_ID = "com.intellij";
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
+  private static final String ALL_MODULES_MARKER = "com.intellij.modules.all";
 
   /** @noinspection StaticNonFinalField*/
   public static String BUILD_NUMBER;
@@ -462,6 +463,24 @@ public class PluginManagerCore {
     return false;
   }
 
+  /**
+   * In 191.* and earlier builds Java plugin was part of the platform, so any plugin installed in IntelliJ IDEA might be able to use its
+   * classes without declaring explicit dependency on the Java module. This method is intended to add implicit dependency on the Java plugin
+   * for such plugins to avoid breaking compatibility with them.
+   */
+  private static IdeaPluginDescriptor getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor) {
+    if (!ourModulesToContainingPlugins.containsKey(ALL_MODULES_MARKER) || descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
+      return null;
+    }
+
+    //if a plugin does not include any module dependency tags in its plugin.xml,it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin
+    boolean isLegacyPlugin = !hasModuleDependencies(descriptor);
+    //many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency on some other platform modules).
+    //this is definitely a misconfiguration but let's temprary add the Java plugin to their dependencies to avoid breaking compatibility
+    boolean isCustomPlugin = !descriptor.isBundled();
+    return isLegacyPlugin || isCustomPlugin ? ourModulesToContainingPlugins.get("com.intellij.modules.java") : null;
+  }
+
   private static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId[] dependentPluginIds = descriptor.getDependentPluginIds();
     for (PluginId dependentPluginId : dependentPluginIds) {
@@ -571,14 +590,20 @@ public class PluginManagerCore {
 
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
-                                                @NotNull PluginId[] pluginIds) {
+                                                @NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
     if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return new ClassLoader[0];
 
+    PluginId[] pluginIds = pluginDescriptor.getDependentPluginIds();
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
+    IdeaPluginDescriptor implicitDep = getImplicitDependency(pluginDescriptor);
+    if (implicitDep != null) {
+      loaders.add(implicitDep.getPluginClassLoader());
+    }
+
     for (PluginId id : pluginIds) {
-      IdeaPluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
-      if (pluginDescriptor != null) {  // might be an optional dependency
-        ClassLoader loader = pluginDescriptor.getPluginClassLoader();
+      IdeaPluginDescriptor depPluginDescriptor = idToDescriptorMap.get(id);
+      if (depPluginDescriptor != null) {  // might be an optional dependency
+        ClassLoader loader = depPluginDescriptor.getPluginClassLoader();
         if (loader == null) {
           getLogger().error("Plugin class loader should be initialized for plugin " + id);
         }
@@ -667,6 +692,10 @@ public class PluginManagerCore {
       public Iterator<PluginId> getIn(PluginId pluginId) {
         IdeaPluginDescriptor descriptor = idToDescriptorMap.get(pluginId);
         List<PluginId> plugins = new ArrayList<>();
+        IdeaPluginDescriptor implicitDep = getImplicitDependency(descriptor);
+        if (implicitDep != null) {
+          plugins.add(implicitDep.getPluginId());
+        }
         for (PluginId dependentPluginId : descriptor.getDependentPluginIds()) {
           // check for missing optional dependency
           IdeaPluginDescriptor dep = idToDescriptorMap.get(dependentPluginId);
@@ -1317,7 +1346,7 @@ public class PluginManagerCore {
     // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
     // If a plugin does not include any module dependency tags in its plugin.xml,
     // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
-    boolean checkModuleDependencies = !ourModulesToContainingPlugins.isEmpty() && !ourModulesToContainingPlugins.containsKey("com.intellij.modules.all");
+    boolean checkModuleDependencies = !ourModulesToContainingPlugins.isEmpty() && !ourModulesToContainingPlugins.containsKey(ALL_MODULES_MARKER);
     if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
       return "Plugin does not include any module dependency tags in its plugin.xml therefore is assumed legacy and can be loaded only in IntelliJ IDEA";
     }
@@ -1477,7 +1506,7 @@ public class PluginManagerCore {
       }
       else {
         File[] classPath = pluginDescriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
-        ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor.getDependentPluginIds());
+        ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor);
         if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
         pluginDescriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, pluginDescriptor));
       }
