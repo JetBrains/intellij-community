@@ -28,18 +28,12 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
     String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-    String toolTipText;
-    String panelText;
-    if (lineSeparator != null) {
-      toolTipText = String.format("Line Separator: %s", StringUtil.escapeLineBreak(lineSeparator));
-      panelText = LineSeparator.fromString(lineSeparator).toString();
+    if (lineSeparator == null) {
+      return WidgetState.HIDDEN;
     }
-    else {
-      toolTipText = "No Line Separator";
-      panelText = "n/a";
-    }
-
-    return new WidgetState(toolTipText, panelText, lineSeparator != null);
+    String toolTipText = String.format("Line Separator: %s", StringUtil.escapeLineBreak(lineSeparator));
+    String panelText = LineSeparator.fromString(lineSeparator).toString();
+    return new WidgetState(toolTipText, panelText, true);
   }
 
   @Nullable
