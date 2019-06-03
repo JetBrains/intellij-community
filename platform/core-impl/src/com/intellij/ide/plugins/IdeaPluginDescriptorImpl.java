@@ -139,11 +139,12 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return;
     }
 
-    Element id = element.getChild("id");
-    if (id == null || !PluginManagerCore.disabledPlugins().contains(id.getTextTrim())) {
+    String pluginId = element.getChildTextTrim("id");
+    if (pluginId == null) pluginId = element.getChildTextTrim("name");
+    if (pluginId == null || !PluginManagerCore.disabledPlugins().contains(pluginId)) {
       JDOMXIncluder.resolveNonXIncludeElement(element, url, ignoreMissingInclude, pathResolver);
     } else {
-      if (LOG.isDebugEnabled()) LOG.debug("Skipping resolving of " + id.getTextTrim() + " from " + url);
+      if (LOG.isDebugEnabled()) LOG.debug("Skipping resolving of " + pluginId + " from " + url);
     }
     readExternal(element, stringInterner);
   }
