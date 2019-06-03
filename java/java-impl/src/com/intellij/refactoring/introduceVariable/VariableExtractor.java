@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -342,6 +343,7 @@ class VariableExtractor {
     return child;
   }
 
+  @Nullable
   public static PsiVariable introduce(final Project project,
                                       final PsiExpression expr,
                                       final Editor editor,
