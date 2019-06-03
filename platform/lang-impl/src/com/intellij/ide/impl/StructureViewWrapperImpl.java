@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.module.InternalModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -305,7 +304,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       if (file.isDirectory()) {
         if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
           Module module = ModuleUtilCore.findModuleForFile(file, myProject);
-          if (module != null && !(ModuleType.get(module) instanceof InternalModuleType)) {
+          if (module != null && !ModuleType.isInternal(module)) {
             myModuleStructureComponent = new ModuleStructureComponent(module);
             createSinglePanel(myModuleStructureComponent.getComponent());
             Disposer.register(this, myModuleStructureComponent);

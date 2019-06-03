@@ -2,9 +2,8 @@
 package com.intellij.terminal;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
@@ -14,6 +13,7 @@ import com.jediterm.terminal.ui.TerminalPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 
 /**
@@ -22,25 +22,38 @@ import java.awt.event.KeyEvent;
  */
 public class TerminalEscapeKeyListener {
   private final TerminalPanel myTerminalPanel;
-  private boolean myEscapePressed = false;
+  private final AnAction myTerminalSwitchFocusToEditorAction;
+  private boolean myShortcutPressed = false;
 
   public TerminalEscapeKeyListener(@NotNull TerminalPanel terminalPanel) {
     myTerminalPanel = terminalPanel;
+    myTerminalSwitchFocusToEditorAction = ActionManager.getInstance().getAction("Terminal.SwitchFocusToEditor");
   }
 
   public void handleKeyEvent(@NotNull KeyEvent e) {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
-      myEscapePressed = e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+      myShortcutPressed = isMatched(e);
     }
     else if (e.getID() == KeyEvent.KEY_RELEASED) {
-      if (myEscapePressed && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0) {
-        performIdeEscapeAction();
+      if (myShortcutPressed && isMatched(e)) {
+        switchFocusToEditorIfSuitable();
       }
-      myEscapePressed = false;
+      myShortcutPressed = false;
     }
   }
 
-  private void performIdeEscapeAction() {
+  private boolean isMatched(@NotNull KeyEvent e) {
+    KeyStroke stroke = getKeyStroke();
+    return stroke != null && stroke.getKeyCode() == e.getKeyCode() &&
+           stroke.getModifiers() == (e.getModifiers() | e.getModifiersEx());
+  }
+
+  @Nullable
+  private KeyStroke getKeyStroke() {
+    return KeymapUtil.getKeyStroke(myTerminalSwitchFocusToEditorAction.getShortcutSet());
+  }
+
+  private void switchFocusToEditorIfSuitable() {
     if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
       DataContext dataContext = DataManager.getInstance().getDataContext(myTerminalPanel);
       Project project = dataContext.getData(CommonDataKeys.PROJECT);

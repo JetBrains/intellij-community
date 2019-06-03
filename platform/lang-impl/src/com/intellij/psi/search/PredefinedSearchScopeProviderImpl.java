@@ -14,7 +14,10 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -103,7 +106,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
           if (module == null) {
             module = LangDataKeys.MODULE.getData(dataContext);
           }
-          if (module != null && !(ModuleType.get(module) instanceof InternalModuleType)) {
+          if (module != null && !ModuleType.isInternal(module)) {
             result.add(module.getModuleScope());
           }
         }

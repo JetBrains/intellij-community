@@ -11,12 +11,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remote.RemoteSshProcess;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
+import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +59,8 @@ public class TerminalUtil {
   public static boolean hasRunningCommands(@NotNull ProcessTtyConnector connector) throws IllegalStateException {
     Process process = connector.getProcess();
     if (!process.isAlive()) return false;
-    if (SystemInfo.isUnix) {
+    if (process instanceof RemoteSshProcess) return true;
+    if (SystemInfo.isUnix && process instanceof UnixPtyProcess) {
       int shellPid = OSProcessUtil.getProcessID(process);
       MultiMap<Integer, Integer> pidToChildPidsMap = MultiMap.create();
       UnixProcessManager.processPSOutput(UnixProcessManager.getPSCmd(false, false), new Processor<String>() {
@@ -72,7 +75,7 @@ public class TerminalUtil {
       });
       return !pidToChildPidsMap.get(shellPid).isEmpty();
     }
-    else if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows && process instanceof WinPtyProcess) {
       WinPtyProcess winPty = (WinPtyProcess)process;
       try {
         String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(getExecutable(winPty.getChildProcessId())));
@@ -86,7 +89,8 @@ public class TerminalUtil {
         throw new IllegalStateException(e);
       }
     }
-    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
+    throw new IllegalStateException("Cannot determine if there are running processes: "  + SystemInfo.OS_NAME +
+                                    ", " + process.getClass().getName());
   }
 
   @Nullable

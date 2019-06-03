@@ -16,11 +16,14 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -50,7 +53,8 @@ public class PluginPathManager {
 
     @NotNull
     private static File[] getSortedGitRoots(@NotNull File dir) {
-      File[] gitRoots = dir.listFiles(child -> child.isDirectory() && new File(child, ".git").exists());
+      Set<String> names = ContainerUtil.newTroveSet("community", "contrib", "android", "CIDR");
+      File[] gitRoots = dir.listFiles(child -> child.isDirectory() && names.contains(child.getName()));
       if (gitRoots == null) {
         return new File[0];
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.navigationToolbar;
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -115,8 +116,8 @@ public class NavBarModel {
 
   private Object calculateRoot(DataContext dataContext) {
     // Narrow down the root element to the first interesting one
-    Object root = LangDataKeys.MODULE.getData(dataContext);
-    if (root != null) return root;
+    Module root = LangDataKeys.MODULE.getData(dataContext);
+    if (root != null && !ModuleType.isInternal(root)) return root;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;

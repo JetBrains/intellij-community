@@ -173,6 +173,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildFinished(CompileContext context) {
+    myRefRegistrars.clear();
     final ConcurrentMap<String, Collection<String>> stats = COMPILER_USAGE_STATISTICS.get(context);
     if (stats.size() == 1) {
       final Map.Entry<String, Collection<String>> entry = stats.entrySet().iterator().next();

@@ -5,41 +5,40 @@ It supports any runner, but well-known runners (py.test and unittest) are switch
 better support
 """
 import os
-
+import pluggy
 from tox import config as tox_config, session as tox_session
+from tox.session import Session
 
 from tcmessages import TeamcityServiceMessages
 from tox import exception
 
 teamcity = TeamcityServiceMessages()
 
+hookimpl = pluggy.HookimplMarker("tox")
 helpers_dir = str(os.path.split(__file__)[0])
 
 
-class _MySession(tox_session.Session):
+class JbToxHook(object):
     """
-    Session is extended to overwrite "setupenv" as "env begin" ans "_summary" as "end of all"
-    Hooks API is not enough to cover each case, reporter is not enough as well
-    Session inheritance is the only way to go, even it is not stable and should be checked
-    against each version
+    Hook to report test start and test end.
     """
 
-    def __init__(self, *args, **kwargs):
-        tox_session.Session.__init__(self, *args, **kwargs)
+    def __init__(self, config):
         self.current_env = None
+        self.config = config
 
-    def setupenv(self, venv):
+    @hookimpl
+    def tox_runtest_pre(self, venv):
         """
         Launched before each setup.
         It means prev env (if any) just finished and new is going to be created
         :param venv: current virtual env
         """
-        self._finish_current_env_if_need()
         self.current_env = venv
         teamcity.testSuiteStarted(venv.name, location="tox_env://" + str(venv.name))
-        return tox_session.Session.setupenv(self, venv)
 
-    def _finish_current_env_if_need(self):
+    @hookimpl
+    def tox_runtest_post(self, venv):
         """
         Finishes currently running env. reporting its state
         """
@@ -73,15 +72,9 @@ class _MySession(tox_session.Session):
         else:
             teamcity.testFailed(state, str(message))
 
-    def _summary(self):
-        """
-        To be called after whole suite.
-        """
-        self._finish_current_env_if_need()
-
 
 class _Unit2(object):
-    def fix(self, command,  bin):
+    def fix(self, command, bin):
         if command[0] == "unit2":
             return [bin, os.path.join(helpers_dir, "utrunner.py")] + command[1:] + ["true"]
         elif command == ["python", "-m", "unittest", "discover"]:
@@ -106,7 +99,9 @@ class _Nose(object):
 _RUNNERS = [_Unit2(), _PyTest(), _Nose()]
 
 import sys
+
 config = tox_config.parseconfig(args=sys.argv[1:])
+config.pluginmanager.register(JbToxHook(config), "jbtoxplugin")
 for env, tmp_config in config.envconfigs.items():
     if not tmp_config.setenv:
         tmp_config.setenv = dict()
@@ -123,6 +118,6 @@ for env, tmp_config in config.envconfigs.items():
                     commands[i] = fixed_command
     tmp_config.commands = commands
 
-session = _MySession(config)
+session = Session(config)
 teamcity.testMatrixEntered()
 session.runcommand()

@@ -158,6 +158,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
       return VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)).toArray(new Change[0]);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {

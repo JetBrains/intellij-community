@@ -118,6 +118,28 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
+  @Throws(Exception::class)
+  fun `test history through merged rename`() {
+    val commits = ArrayList<TestCommit>()
+
+    val branchingPoint = last()
+    add("unrelated.txt", ourCurrentDir())
+
+    repo.checkoutNew("newBranch", branchingPoint)
+
+    commits.add(add("a.txt", ourCurrentDir()))
+    commits.add(modify(commits.last().file))
+
+    repo.checkout("master")
+    git.merge(repo, "newBranch", mutableListOf("--no-ff", "--no-commit"))
+
+    commits.add(rename(commits.last().file, File(Executor.mkdir("dir"), "b.txt")))
+    commits.reverse()
+    
+    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(commits.first().file))
+    assertSameHistory(commits, history)
+  }
+
   private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>) {
     TestCase.assertEquals("History size doesn't match. Actual history: \n" + toReadable(actual), expected.size, actual.size)
     TestCase.assertEquals("History is different.", toReadable(expected), toReadable(actual))

@@ -165,8 +165,8 @@ NS_PLAIN_FIRST_second_line = [^\n\t\r\ :] | ( ":" {NS_PLAIN_SAFE_block} )
 NS_PLAIN_CHAR_flow  = {NS_CHAR} "#" | !(!{NS_PLAIN_SAFE_flow}|[:#])  | ":" {NS_PLAIN_SAFE_flow}
 NS_PLAIN_CHAR_block = {NS_CHAR} "#" | !(!{NS_PLAIN_SAFE_block}|[:#]) | ":" {NS_PLAIN_SAFE_block}
 
-NB_NS_PLAIN_IN_LINE_flow  = ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_flow})*
-NB_NS_PLAIN_IN_LINE_block = ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_block})*
+NB_NS_PLAIN_IN_LINE_flow  = "#"* ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_flow})*
+NB_NS_PLAIN_IN_LINE_block = "#"* ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_block})*
 
 NS_PLAIN_ONE_LINE_flow  = {NS_PLAIN_FIRST_flow}  {NB_NS_PLAIN_IN_LINE_flow}
 NS_PLAIN_ONE_LINE_block = {NS_PLAIN_FIRST_block} {NB_NS_PLAIN_IN_LINE_block}

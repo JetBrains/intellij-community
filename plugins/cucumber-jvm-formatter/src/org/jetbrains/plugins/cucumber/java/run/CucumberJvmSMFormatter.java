@@ -80,8 +80,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
     outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), uri + ":" + scenario.getLine(), getName(currentScenario));
 
     while (queue.size() > 0) {
-      String smMessage = queue.poll();
-      outCommand(smMessage);
+      printLine(queue.poll());
     }
   }
 
@@ -283,16 +282,20 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       queue.add(line);
     }
     else {
-      try {
-        if (!endedByNewLine) {
-          appendable.append("\n");
-        }
-        appendable.append(line);
+      printLine(line);
+    }
+  }
+
+  private void printLine(String line) {
+    try {
+      if (!endedByNewLine) {
         appendable.append("\n");
-        endedByNewLine = true;
       }
-      catch (IOException ignored) {
-      }
+      appendable.append(line);
+      appendable.append("\n");
+      endedByNewLine = true;
+    }
+    catch (IOException ignored) {
     }
   }
 

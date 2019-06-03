@@ -100,6 +100,10 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return moduleType.getId().equals(module.getModuleTypeName());
   }
 
+  public static boolean isInternal(@NotNull Module module) {
+    return get(module) instanceof InternalModuleType;
+  }
+
   @NotNull
   public static ModuleType get(@NotNull Module module) {
     final ModuleTypeManager instance = ModuleTypeManager.getInstance();

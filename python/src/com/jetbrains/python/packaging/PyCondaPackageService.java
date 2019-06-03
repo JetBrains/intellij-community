@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -30,6 +29,9 @@ import java.util.*;
 @State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
+  
+  private static final String CONDA_ENVS_DIR = "envs";
+  
   @Nullable @SystemDependent public String PREFERRED_CONDA_PATH = null;
 
   @Override
@@ -47,8 +49,8 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  public static String getCondaPython() {
-    final String conda = getSystemCondaExecutable();
+  public String getCondaPython() {
+    final String conda = StringUtil.defaultIfEmpty(PREFERRED_CONDA_PATH, getSystemCondaExecutable());
     if (conda != null) {
       final String python = getCondaBasePython(conda);
       if (python != null) return python;
@@ -96,21 +98,38 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     return getSystemCondaExecutable();
   }
 
+  @Nullable
   private static String findCondaExecutableRelativeToEnv(@NotNull String sdkPath) {
-    VirtualFile sdkHomeDir = StandardFileSystems.local().findFileByPath(sdkPath);
-    if (sdkHomeDir == null) {
+    final VirtualFile pyExecutable = StandardFileSystems.local().findFileByPath(sdkPath);
+    if (pyExecutable == null) {
       return null;
     }
-    final VirtualFile bin = sdkHomeDir.getParent();
-    String condaName = "conda";
+    final VirtualFile pyExecutableDir = pyExecutable.getParent();
+    final boolean isBaseConda = pyExecutableDir.findChild(CONDA_ENVS_DIR) != null;
+    final String condaName;
+    final VirtualFile condaFolder;
     if (SystemInfo.isWindows) {
-      condaName = bin.findChild("envs") != null ? "conda.exe" : "conda.bat";
+      condaName = "conda.exe";
+      // On Windows python.exe is directly inside base interpreter/environment directory. 
+      // On other systems executable normally resides in "bin" subdirectory.
+      condaFolder = pyExecutableDir;
     }
-    final VirtualFile conda = bin.findChild(condaName);
-    if (conda != null) return conda.getPath();
-    final VirtualFile condaFolder = bin.getParent();
+    else {
+      condaName = "conda";
+      condaFolder = pyExecutableDir.getParent();
+    }
 
-    return findExecutable(condaName, condaFolder);
+    // XXX Do we still need to support this? When did they drop per-environment conda executable?
+    final String localCondaName = SystemInfo.isWindows && !isBaseConda ? "conda.bat" : condaName;
+    final String immediateConda = findExecutable(localCondaName, condaFolder);
+    if (immediateConda != null) {
+      return immediateConda;
+    }
+    final VirtualFile envsDir = condaFolder.getParent();
+    if (!isBaseConda && envsDir != null && envsDir.getName().equals(CONDA_ENVS_DIR)) {
+      return findExecutable(condaName, envsDir.getParent());
+    }
+    return null;
   }
 
   @Nullable
@@ -125,6 +144,11 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
           final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
           executableFile = findExecutable(condaName, appData);
           if (executableFile != null) return executableFile;
+
+          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\ProgramData\\" + root);
+          executableFile = findExecutable(condaName, condaFolder);
+          if (executableFile != null) return executableFile;
+          
           condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
         }
         else {
@@ -189,10 +213,11 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @NotNull
-  private static String runCondaPackagingHelper(@NotNull String... args) throws ExecutionException {
+  private String runCondaPackagingHelper(@NotNull String... args) throws ExecutionException {
     final List<String> commandArgs = new ArrayList<>();
     commandArgs.add(PythonHelpersLocator.getHelperPath("conda_packaging_tool.py"));
     commandArgs.addAll(Arrays.asList(args));
+    // "conda" module required for conda_packaging_tool.py is available only in a base interpreter 
     final String condaPython = getCondaPython();
     if (condaPython == null) {
       throw new PyExecutionException("Cannot find Python executable for conda",

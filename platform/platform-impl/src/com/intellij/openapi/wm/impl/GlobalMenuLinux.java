@@ -717,7 +717,7 @@ Android Studio: b/67589184 */
     try {
       if (!SystemInfo.isLinux
           || Registry.is("linux.native.menu.force.disable")
-          || (isCLionSwiftPluginInstalled() && _isUnderVMWare())
+          || isCLionSwiftPluginInstalled()
       )
         return null;
       if (!Experiments.isFeatureEnabled("linux.native.menu"))

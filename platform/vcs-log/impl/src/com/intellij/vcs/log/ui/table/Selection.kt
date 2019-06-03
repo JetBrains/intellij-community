@@ -42,7 +42,7 @@ internal class Selection(private val table: VcsLogGraphTable) {
     else {
       isOnTop = visibleRows.first == 0
 
-      val visibleRow = selectedRowsToCommits.values.find { visibleRows.contains(it) } ?: visibleRows.first
+      val visibleRow = selectedRowsToCommits.keys.find { visibleRows.contains(it) } ?: visibleRows.first
       val visibleCommit = selectedRowsToCommits[visibleRow] ?: table.visibleGraph.getRowInfo(visibleRow).commit
       scrollingTarget = ScrollingTarget(visibleCommit, getTopGap(visibleRow))
     }

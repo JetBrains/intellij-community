@@ -1,5 +1,5 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import org.apache.tools.ant.taskdefs.condition.Os
-
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -17,7 +17,7 @@ plugins {
  * PYCHARM_USE_CONDA -- use conda (cPython will be used if not set)
  *
  * PYCHARM_ZIP_REPOSITORY -- to download unpacked pythons for Windows (default cpython does not support unattended installation)
- * Recommended value: http://repo.labs.intellij.net/pycharm/python-archives-windows/
+ * Recommended value: https://repo.labs.intellij.net/pycharm/python-archives-windows/
  *
  * Pitfall: TMP var on windows points to very long path inside of user local dir and may lead to errors.
  * It is recommended to create "c:\temp\" with full write access and set TMP="c:\temp\" on Windows.
@@ -90,7 +90,7 @@ envs {
 
   createPython("py2_django11_full",
                "2.7.15",
-               ["django==1.11", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
+               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
                 + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ) //win32api is required for pypiwin32
                ,
                "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose",
@@ -102,17 +102,17 @@ envs {
                "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose\nbehave-django\ndjango20",
                true)
 
-  // Mostly for tox
-  createPython("py34",
-               "3.4.4",
-                [],
-               "python3.4",
-               true)
-
   createPython("py36_django2_1",
                "3.6.8",
                ["django==2.1", "jinja2", "pandas"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
+               true)
+
+  // For tox
+  createPython("py36",
+               "3.6.8",
+               [],
+               "python3.6",
                true)
 
   createPython("py37",

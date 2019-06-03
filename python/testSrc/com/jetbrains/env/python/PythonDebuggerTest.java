@@ -1951,4 +1951,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  @StagingOn(os = TestEnv.WINDOWS)
+  public void testExecutableScriptDebug() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_executable_script_debug.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_executable_script_debug_helper.py"), 4);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Subprocess exited with return code: 0");
+      }
+    });
+  }
 }

@@ -125,6 +125,9 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control COMMA"/>
   </action>
+  <action id="SwitcherRecentEditedChangedToggleCheckBox">
+    <keyboard-shortcut first-keystroke="control COMMA"/>
+  </action>
   <action id="Refactorings.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="shift control R"/>
   </action>

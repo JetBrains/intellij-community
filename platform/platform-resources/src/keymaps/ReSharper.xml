@@ -58,6 +58,9 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="control COMMA"/>
   </action>
+  <action id="SwitcherRecentEditedChangedToggleCheckBox">
+    <keyboard-shortcut first-keystroke="control COMMA"/>
+  </action>
   <action id="RenameElement">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
   </action>

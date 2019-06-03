@@ -386,9 +386,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
         return when {
           uiSettings != null -> uiSettings
           else -> {
-            val result = UISettings()
-            result.notRoamableOptions.state.initDefFont()
-            return result
+            return UISettings()
           }
         }
       }
