@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public final class IdeaTestApplication implements Disposable {
   private static volatile IdeaTestApplication ourInstance;
   private static volatile RuntimeException bootstrapError;
-  private static boolean isBootstrappingAppNow;
+  private static volatile boolean isBootstrappingAppNow;
 
   private IdeaTestApplication() { }
 

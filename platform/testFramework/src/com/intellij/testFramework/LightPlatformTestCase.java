@@ -26,7 +26,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -271,13 +270,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   @Override
   protected void setUp() throws Exception {
+    if (isPerformanceTest()) {
+      Timings.getStatistics();
+    }
+
+    initApplication();
+
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
-      ApplicationInfoImpl.setInStressTest(isStressTest());
-      if (isPerformanceTest()) {
-        Timings.getStatistics();
-      }
-      initApplication();
 
       ourApplication.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
