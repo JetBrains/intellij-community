@@ -52,11 +52,14 @@ object PyTypeShed {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return true
       }
-      val topLevelPackage = name.firstComponent ?: return false
-      val pyPIPackages = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: emptyList()
-      val packages = PyPackageManagers.getInstance().forSdk(sdk).packages ?: return true
-      return PyPackageUtil.findPackage(packages, topLevelPackage) != null ||
-             pyPIPackages.any { PyPackageUtil.findPackage(packages, it) != null }
+      val possiblePackage = name.firstComponent ?: return false
+      val alternativePossiblePackages = PyPIPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: emptyList()
+
+      val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
+      val installedPackages = packageManager.packages ?: return true
+
+      return packageManager.parseRequirement(possiblePackage)?.match(installedPackages) != null ||
+             alternativePossiblePackages.any { PyPackageUtil.findPackage(installedPackages, it) != null }
     }
     return false
   }
