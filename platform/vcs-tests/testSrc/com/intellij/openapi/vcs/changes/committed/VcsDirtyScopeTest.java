@@ -41,6 +41,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     myVcsManager.registerVcs(myVcs);
     myVcsManager.setDirectoryMapping(myProjectFixture.getProject().getBasePath(), myVcs.getName());
+    myVcsManager.waitForInitialized();
   }
 
   @Override
@@ -101,8 +102,8 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     final HashSet<VirtualFile> removed = new HashSet<>(set);
     removeMarked(set, scope, virtualFile -> removed.remove(virtualFile));
 
-    Assert.assertTrue(scope.isEmpty());
-    Assert.assertTrue(removed.isEmpty());
+    Assert.assertTrue(scope.toString(), scope.isEmpty());
+    Assert.assertTrue(removed.toString(), removed.isEmpty());
   }
 
   @Test
