@@ -79,6 +79,26 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
     };
   }
 
+  private static boolean containsStopSymbol(int startIndex, @NotNull CharSequence text, boolean leftDirection) {
+    int i = startIndex;
+    while (true) {
+
+      if (leftDirection) i--; else i++;
+
+      if (leftDirection) {
+        if (i < 0) return false;
+      } else {
+        if (i >= text.length()) return false;
+      }
+
+      char c = text.charAt(i);
+      if (Lazy.STOP_SYMBOLS.contains(c)) return true;
+      if (!Lazy.WHITE_SPACE_OR_EOL_SYMBOLS.contains(c) && !Character.isWhitespace(c)) {
+        return false;
+      }
+    }
+  }
+
   @NotNull
   private static Set<LighterASTNode> findCallsWithNulls(@NotNull LighterAST lighterAst,
                                                         @NotNull CharSequence text) {
