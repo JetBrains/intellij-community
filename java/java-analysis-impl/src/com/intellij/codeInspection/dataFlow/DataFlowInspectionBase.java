@@ -46,7 +46,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
@@ -227,6 +227,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (name != null) { // Might be null for synthetic methods like JSP page.
       holder.registerProblem(name, message, ProblemHighlightType.WEAK_WARNING);
     }
+  }
+
+  @NotNull
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -697,11 +702,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
-      LocalQuickFix fix = null;
+      List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, reporter.isOnTheFly()));
       if (reporter.isOnTheFly()) {
-        fix = createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType());
+        fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       }
-      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fix);
+      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
