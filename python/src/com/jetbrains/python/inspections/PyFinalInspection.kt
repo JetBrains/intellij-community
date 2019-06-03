@@ -161,6 +161,15 @@ class PyFinalInspection : PyInspection() {
       checkFinalInsideLoop(node)
     }
 
+    override fun visitPyAugAssignmentStatement(node: PyAugAssignmentStatement) {
+      super.visitPyAugAssignmentStatement(node)
+
+      val target = node.target
+      if (target is PyQualifiedExpression) {
+        checkFinalReassignment(target)
+      }
+    }
+
     private fun getClassLevelFinalsAndInitAttributes(cls: PyClass): Pair<Map<String?, PyTargetExpression>, Map<String, PyTargetExpression>> {
       val classLevelFinals = mutableMapOf<String?, PyTargetExpression>()
       cls.classAttributes.forEach { if (isFinal(it)) classLevelFinals[it.name] = it }
@@ -259,16 +268,16 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
-    private fun checkFinalReassignment(node: PyTargetExpression) {
-      val qualifierType = node.qualifier?.let { myTypeEvalContext.getType(it) }
+    private fun checkFinalReassignment(target: PyQualifiedExpression) {
+      val qualifierType = target.qualifier?.let { myTypeEvalContext.getType(it) }
       if (qualifierType is PyClassType && !qualifierType.isDefinition) {
-        checkInstanceFinalReassignment(node, qualifierType.pyClass)
+        checkInstanceFinalReassignment(target, qualifierType.pyClass)
         return
       }
 
-      val resolved = PyUtil.multiResolveTopPriority(node, resolveContext)
+      val resolved = PyUtil.multiResolveTopPriority(target, resolveContext)
       if (resolved.any { it is PyTargetExpression && isFinal(it) }) {
-        registerProblem(node, "'${node.name}' is 'Final' and could not be reassigned")
+        registerProblem(target, "'${target.name}' is 'Final' and could not be reassigned")
         return
       }
 
@@ -276,30 +285,29 @@ class PyFinalInspection : PyInspection() {
         if (myTypeEvalContext.maySwitchToAST(e) &&
             e.parent.let { it is PyNonlocalStatement || it is PyGlobalStatement } &&
             PyUtil.multiResolveTopPriority(e, resolveContext).any { it is PyTargetExpression && isFinal(it) }) {
-          registerProblem(node, "'${node.name}' is 'Final' and could not be reassigned")
+          registerProblem(target, "'${target.name}' is 'Final' and could not be reassigned")
           return
         }
       }
 
-      if (!node.isQualified) {
-        val scopeOwner = ScopeUtil.getScopeOwner(node)
+      if (!target.isQualified) {
+        val scopeOwner = ScopeUtil.getScopeOwner(target)
         if (scopeOwner is PyClass) {
-          checkInheritedClassFinalReassignmentOnClassLevel(node, scopeOwner)
+          checkInheritedClassFinalReassignmentOnClassLevel(target, scopeOwner)
         }
       }
     }
 
-    private fun checkInstanceFinalReassignment(target: PyTargetExpression, cls: PyClass) {
+    private fun checkInstanceFinalReassignment(target: PyQualifiedExpression, cls: PyClass) {
       val name = target.name ?: return
 
       val classAttribute = cls.findClassAttribute(name, false, myTypeEvalContext)
       if (classAttribute != null && !classAttribute.hasAssignedValue() && isFinal(classAttribute)) {
-        val scopeOwner = ScopeUtil.getScopeOwner(target)
-        val insideClsInit = scopeOwner is PyFunction && PyUtil.isInit(scopeOwner) && cls == scopeOwner.containingClass
-        if (!insideClsInit) {
-          registerProblem(target, "'$name' is 'Final' and could not be reassigned")
+        if (target is PyTargetExpression &&
+            ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.isInit(it) && cls == it.containingClass }) {
+          return
         }
-        return
+        registerProblem(target, "'$name' is 'Final' and could not be reassigned")
       }
 
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
@@ -324,7 +332,7 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
-    private fun checkInheritedClassFinalReassignmentOnClassLevel(target: PyTargetExpression, cls: PyClass) {
+    private fun checkInheritedClassFinalReassignmentOnClassLevel(target: PyQualifiedExpression, cls: PyClass) {
       val name = target.name ?: return
 
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {

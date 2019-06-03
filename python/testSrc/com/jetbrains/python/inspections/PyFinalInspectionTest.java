@@ -339,7 +339,13 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing_extensions import Final\n" +
                          "\n" +
                          "a: Final[int] = 1\n" +
-                         "<warning descr=\"'a' is 'Final' and could not be reassigned\">a</warning> = 2")
+                         "<warning descr=\"'a' is 'Final' and could not be reassigned\">a</warning> = 2\n" +
+                         "\n" +
+                         "b: Final[str] = \"3\"\n" +
+                         "<warning descr=\"'b' is 'Final' and could not be reassigned\">b</warning> += \"4\"\n" +
+                         "\n" +
+                         "c: Final[int] = 5\n" +
+                         "<warning descr=\"'c' is 'Final' and could not be reassigned\">c</warning> += 6")
     );
   }
 
@@ -359,23 +365,29 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "\n" +
                          "    def __init__(self):\n" +
                          "        self.a = 2\n" +
+                         "        self.a += 2\n" +
                          "\n" +
                          "    def method(self):\n" +
                          "        self.a = 3\n" +
+                         "        self.a += 3\n" +
                          "\n" +
                          "    @classmethod\n" +
                          "    def cls_method(cls):\n" +
                          "        <warning descr=\"'a' is 'Final' and could not be reassigned\">cls.a</warning> = 5\n" +
+                         "        <warning descr=\"'a' is 'Final' and could not be reassigned\">cls.a</warning> += 5\n" +
                          "\n" +
                          "<warning descr=\"'a' is 'Final' and could not be reassigned\">A.a</warning> = 4\n" +
+                         "<warning descr=\"'a' is 'Final' and could not be reassigned\">A.a</warning> += 4\n" +
                          "\n" +
                          "class B(A):\n" +
                          "\n" +
                          "    @classmethod\n" +
                          "    def my_cls_method(cls):\n" +
                          "        <warning descr=\"'a' is 'Final' and could not be reassigned\">cls.a</warning> = 6\n" +
+                         "        <warning descr=\"'a' is 'Final' and could not be reassigned\">cls.a</warning> += 6\n" +
                          "\n" +
                          "<warning descr=\"'a' is 'Final' and could not be reassigned\">B.a</warning> = 7\n" +
+                         "<warning descr=\"'a' is 'Final' and could not be reassigned\">B.a</warning> += 7\n" +
                          "\n" +
                          "class C(A):\n" +
                          "    <warning descr=\"'A.a' is 'Final' and could not be reassigned\">a</warning> = 8\n")
@@ -396,32 +408,41 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "class A:\n" +
                          "    def __init__(self):\n" +
                          "        self.a: Final[int] = 1\n" +
+                         "        <warning descr=\"'a' is 'Final' and could not be reassigned\">self.a</warning> += 1\n" +
                          "\n" +
                          "    def method(self):\n" +
                          "        <warning descr=\"'a' is 'Final' and could not be reassigned\">self.a</warning> = 2\n" +
+                         "        <warning descr=\"'a' is 'Final' and could not be reassigned\">self.a</warning> = +2\n" +
                          "\n" +
                          "<warning descr=\"'a' is 'Final' and could not be reassigned\">A().a</warning> = 3\n" +
+                         "<warning descr=\"'a' is 'Final' and could not be reassigned\">A().a</warning> = +3\n" +
                          "\n" +
                          "class B:\n" +
                          "    b: Final[int]\n" +
                          "\n" +
                          "    def __init__(self):\n" +
                          "        self.b = 1\n" +
+                         "        <warning descr=\"'b' is 'Final' and could not be reassigned\">self.b</warning> += 1\n" +
                          "\n" +
                          "    def method(self):\n" +
                          "        <warning descr=\"'b' is 'Final' and could not be reassigned\">self.b</warning> = 2\n" +
+                         "        <warning descr=\"'b' is 'Final' and could not be reassigned\">self.b</warning> += 2\n" +
                          "\n" +
                          "<warning descr=\"'b' is 'Final' and could not be reassigned\">B().b</warning> = 3\n" +
+                         "<warning descr=\"'b' is 'Final' and could not be reassigned\">B().b</warning> += 3\n" +
                          "\n" +
                          "class C(B):\n" +
                          "    def __init__(self):\n" +
                          "        super().__init__()\n" +
                          "        <warning descr=\"'B.b' is 'Final' and could not be reassigned\">self.b</warning> = 4\n" +
+                         "        <warning descr=\"'B.b' is 'Final' and could not be reassigned\">self.b</warning> += 4\n" +
                          "\n" +
                          "    def my_method(self):\n" +
                          "        <warning descr=\"'B.b' is 'Final' and could not be reassigned\">self.b</warning> = 5\n" +
+                         "        <warning descr=\"'B.b' is 'Final' and could not be reassigned\">self.b</warning> += 5\n" +
                          "\n" +
-                         "<warning descr=\"'B.b' is 'Final' and could not be reassigned\">C().b</warning> = 6")
+                         "<warning descr=\"'B.b' is 'Final' and could not be reassigned\">C().b</warning> = 6\n" +
+                         "<warning descr=\"'B.b' is 'Final' and could not be reassigned\">C().b</warning> += 6")
     );
   }
 
@@ -438,7 +459,11 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "\n" +
                          "def foo():\n" +
                          "    a: Final[int] = 1\n" +
-                         "    <warning descr=\"'a' is 'Final' and could not be reassigned\">a</warning> = 2")
+                         "    <warning descr=\"'a' is 'Final' and could not be reassigned\">a</warning> = 2\n" +
+                         "\n" +
+                         "def bar():\n" +
+                         "    b: Final[int] = 3\n" +
+                         "    <warning descr=\"'b' is 'Final' and could not be reassigned\">b</warning> += 4")
     );
   }
 
@@ -472,6 +497,18 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "def foo():\n" +
                          "    global y\n" +
                          "    <warning descr=\"'y' is 'Final' and could not be reassigned\">y</warning> = [4, 5]\n")
+    );
+  }
+
+  // PY-34945
+  public void testMutableReassignment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import List\n" +
+                         "from typing_extensions import Final\n" +
+                         "\n" +
+                         "y: Final[List[int]] = [0, 1]\n" +
+                         "<warning descr=\"'y' is 'Final' and could not be reassigned\">y</warning> += [4, 5]\n")
     );
   }
 
