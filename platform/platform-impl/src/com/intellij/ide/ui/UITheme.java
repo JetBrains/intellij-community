@@ -372,8 +372,8 @@ public class UITheme {
     else if (key.endsWith("Size")) {
       return parseSize(value);
     }
-    else if (key.endsWith("Width")) {
-      return getInteger(value);
+    else if (key.endsWith("Width") || key.endsWith("Height")) {
+      return getInteger(value, key);
     }
     else if (key.endsWith("grayFilter")) {
       return parseGrayFilter(value);
@@ -387,7 +387,7 @@ public class UITheme {
       if (color != null) {
         return new ColorUIResource(color);
       }
-      Integer invVal = getInteger(value);
+      Integer invVal = getInteger(value, null);
       if (invVal != null) {
         return invVal;
       }
@@ -428,11 +428,14 @@ public class UITheme {
     return ColorUtil.fromHex(value, null);
   }
 
-  private static Integer getInteger(String value) {
+  private static Integer getInteger(String value, @Nullable String key) {
     try {
-      return Integer.parseInt(value);
+      return Integer.parseInt(StringUtil.trimEnd(value, ".0"));
     }
     catch (NumberFormatException e) {
+      if (key != null) {
+        LOG.warn(key + " = " + value);
+      }
       return null;
     }
   }
