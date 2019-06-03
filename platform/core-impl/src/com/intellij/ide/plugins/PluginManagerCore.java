@@ -64,6 +64,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class PluginManagerCore {
   public static final String META_INF = "META-INF/";
+  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
   public static final String CORE_PLUGIN_ID = "com.intellij";
@@ -88,7 +89,10 @@ public class PluginManagerCore {
   private static MultiMap<String, String> ourBrokenPluginVersions;
   private static final AtomicReference<IdeaPluginDescriptor[]> ourPlugins = new AtomicReference<>();
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
-  private static boolean ourUnitTestWithBundledPlugins = SystemProperties.getBooleanProperty("idea.run.tests.with.bundled.plugins", false);
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
+  private static boolean ourUnitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
   private static final String PLUGIN_IS_DISABLED_REASON = "Plugin is disabled";
 
@@ -272,11 +276,6 @@ public class PluginManagerCore {
     }
 
     return ourBrokenPluginVersions;
-  }
-
-  private static boolean isUnitTestMode() {
-    final Application app = ApplicationManager.getApplication();
-    return app != null && app.isUnitTestMode();
   }
 
   public static void addDisablePluginListener(@NotNull Runnable listener) {
@@ -517,7 +516,7 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (isUnitTestMode() && !ourUnitTestWithBundledPlugins) return null;
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return null;
 
     try {
       List<URL> urls = new ArrayList<>(classPath.length);
@@ -574,7 +573,7 @@ public class PluginManagerCore {
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
                                                 @NotNull PluginId[] pluginIds) {
-    if (isUnitTestMode() && !ourUnitTestWithBundledPlugins) return new ClassLoader[0];
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return new ClassLoader[0];
 
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
     for (PluginId id : pluginIds) {
@@ -600,7 +599,7 @@ public class PluginManagerCore {
     if (!errors.isEmpty()) {
       String errorMessage = IdeBundle.message("error.problems.found.loading.plugins") + StringUtil.join(errors, "<p/>");
       Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode()) {
+      if (app != null && !app.isHeadlessEnvironment() && !isUnitTestMode) {
         if (myPluginError == null) {
           myPluginError = errorMessage;
         }
@@ -629,7 +628,7 @@ public class PluginManagerCore {
 
     String cyclePresentation;
     Application app = ApplicationManager.getApplication();
-    if (app != null ? app.isInternal() : SystemProperties.is("idea.is.internal")) {
+    if (app != null ? app.isInternal() : SystemProperties.is(IDEA_IS_INTERNAL_PROPERTY)) {
       cyclePresentation = cycles.stream().map(c -> StringUtil.join(c, " ")).collect(Collectors.joining("; "));
     }
     else {
@@ -698,7 +697,7 @@ public class PluginManagerCore {
 
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), loadingContext.isBundled);
-      descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory());
+      descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory(), isUnitTestMode);
       return descriptor;
     }
     catch (SerializationException | JDOMException | IOException e) {

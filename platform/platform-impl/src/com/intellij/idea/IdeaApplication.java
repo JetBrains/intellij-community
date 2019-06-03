@@ -64,11 +64,10 @@ public final class IdeaApplication {
     EventQueue.invokeLater(() -> {
       String[] args = processProgramArguments(rawArgs);
       ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
-      boolean isInternal = Boolean.getBoolean(ApplicationImpl.IDEA_IS_INTERNAL_PROPERTY);
-      boolean isCommandLine = Main.isCommandLine();
 
       Activity createAppActivity = StartUpMeasurer.start("create app");
-      ApplicationImpl app = new ApplicationImpl(isInternal, false, Main.isHeadless(), isCommandLine, ApplicationManagerEx.IDEA_APPLICATION);
+      ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(),
+                                                Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION);
       createAppActivity.end();
       starter.premain(args);
 

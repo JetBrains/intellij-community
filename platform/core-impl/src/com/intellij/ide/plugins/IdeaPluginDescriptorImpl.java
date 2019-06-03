@@ -125,9 +125,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     readExternal(element, url, app != null && app.isUnitTestMode(), pathResolver, stringInterner);
   }
 
-  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory) throws IOException, JDOMException {
-    Application app = ApplicationManager.getApplication();
-    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), app != null && app.isUnitTestMode(),
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude) throws IOException, JDOMException {
+    readExternal(JDOMUtil.load(file, factory), file.toURI().toURL(), ignoreMissingInclude,
                  JDOMXIncluder.DEFAULT_PATH_RESOLVER, factory == null ? null : factory.stringInterner());
   }
 

@@ -75,9 +75,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
-  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
-  public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
-
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 

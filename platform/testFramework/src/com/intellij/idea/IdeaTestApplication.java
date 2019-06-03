@@ -90,7 +90,7 @@ public final class IdeaTestApplication implements Disposable {
     Main.setFlags(args);
     assert Main.isHeadless();
     assert Main.isCommandLine();
-    System.setProperty(ApplicationImpl.IDEA_IS_UNIT_TEST, Boolean.TRUE.toString());
+    PluginManagerCore.isUnitTestMode = true;
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
     Future<List<IdeaPluginDescriptor>> loadedPluginFuture = AppExecutorUtil.getAppExecutorService().submit(() -> PluginManagerCore.getLoadedPlugins());
