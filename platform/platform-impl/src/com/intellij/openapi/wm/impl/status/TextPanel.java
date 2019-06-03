@@ -25,7 +25,7 @@ public class TextPanel extends JComponent implements Accessible {
   protected float myAlignment;
 
   protected TextPanel() {
-    setOpaque(false);
+    setOpaque(true);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class TextPanel extends JComponent implements Accessible {
     int panelWidth = getWidth();
     int panelHeight = getHeight();
     Color background = getBackground();
-    if (background != null) {
+    if (background != null && isOpaque()) {
       g.setColor(background);
       g.fillRect(0, 0, panelWidth, panelHeight);
     }
