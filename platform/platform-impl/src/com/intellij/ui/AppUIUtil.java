@@ -11,6 +11,7 @@ import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
@@ -361,7 +362,9 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-      DialogWrapper dialog = new DialogWrapper(true) {
+    LafManagerImpl.initIntelliJLafIfNeeded();
+
+    DialogWrapper dialog = new DialogWrapper(true) {
       private JEditorPane myViewer;
 
       @Override
@@ -419,7 +422,7 @@ public class AppUIUtil {
         bottomPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.CENTER);
         centerPanel.add(JBUI.Borders.emptyTop(8).wrap(bottomPanel), BorderLayout.SOUTH);
         checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
-        centerPanel.setPreferredSize(JBUI.size(500, 450));
+        centerPanel.setPreferredSize(JBUI.size(520, 450));
         return centerPanel;
       }
 
