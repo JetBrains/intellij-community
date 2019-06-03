@@ -124,6 +124,12 @@ class PyTypeHintsInspection : PyInspection() {
       checkTypeCommentAndParameters(node)
     }
 
+    override fun visitPyTargetExpression(node: PyTargetExpression) {
+      super.visitPyTargetExpression(node)
+
+      checkAnnotatedNonSelfAttribute(node)
+    }
+
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
       if (target == null) {
         registerProblem(call, "A 'TypeVar()' expression must always directly be assigned to a variable")
@@ -594,6 +600,23 @@ class PyTypeHintsInspection : PyInspection() {
           registerProblem(node.typeComment,
                           "The type of self '$commentSelfTypeDescription' is not a supertype of its class '$actualSelfTypeDescription'")
         }
+      }
+    }
+
+    private fun checkAnnotatedNonSelfAttribute(node: PyTargetExpression) {
+      val qualifier = node.qualifier ?: return
+      if (node.annotation == null && node.typeComment == null) return
+
+      val scopeOwner = ScopeUtil.getScopeOwner(node)
+      if (scopeOwner !is PyFunction) {
+        registerProblem(node, "Non-self attribute could not be type hinted")
+        return
+      }
+
+      val self = scopeOwner.parameterList.parameters.firstOrNull()?.takeIf { it.isSelf }
+      if (self == null ||
+          PyUtil.multiResolveTopPriority(qualifier, resolveContext).let { it.isNotEmpty() && it.all { e -> e != self }}) {
+        registerProblem(node, "Non-self attribute could not be type hinted")
       }
     }
 
