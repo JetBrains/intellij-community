@@ -30,6 +30,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -112,6 +114,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
+  Editor myEditor;
   boolean myReplace;
   Configuration myConfiguration;
   @NonNls LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
@@ -159,6 +162,17 @@ public class StructuralSearchDialog extends DialogWrapper {
     myReplace = replace;
     myEditConfigOnly = editConfigOnly;
     mySearchContext = searchContext;
+    myEditor = searchContext.getEditor();
+    final FileEditorManagerListener listener = new FileEditorManagerListener() {
+
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        removeMatchHighlights();
+        myEditor = event.getManager().getSelectedTextEditor();
+        addMatchHighlights();
+      }
+    };
+    searchContext.getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
@@ -278,7 +292,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void setTextFromContext() {
-    final Editor editor = mySearchContext.getEditor();
+    final Editor editor = myEditor;
     if (editor != null) {
       final SelectionModel selectionModel = editor.getSelectionModel();
       final String selectedText = selectionModel.getSelectedText();
@@ -700,7 +714,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
       reportMessage(null, false, mySearchCriteriaEdit);
-      addMatchHighlights(matchOptions);
+      addMatchHighlights();
       if (myReplace) {
         try {
           Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
@@ -737,12 +751,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void removeMatchHighlights() {
-    final Project project = getProject();
-    final Editor editor = mySearchContext.getEditor();
+  void removeMatchHighlights() {
+    final Editor editor = myEditor;
     if (editor == null) {
       return;
     }
+    final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(() -> {
       final HighlightManager highlightManager = HighlightManager.getInstance(project);
       for (RangeHighlighter highlighter : myRangeHighlighters) {
@@ -753,13 +767,13 @@ public class StructuralSearchDialog extends DialogWrapper {
     });
   }
 
-  private void addMatchHighlights(MatchOptions matchOptions) {
+  void addMatchHighlights() {
     if (myDoingOkAction) {
       removeMatchHighlights();
     }
     else {
       final Project project = getProject();
-      final Editor editor = mySearchContext.getEditor();
+      final Editor editor = myEditor;
       if (editor == null) {
         return;
       }
@@ -768,6 +782,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       if (file == null) {
         return;
       }
+      final MatchOptions matchOptions = getConfiguration().getMatchOptions();
       matchOptions.setScope(new LocalSearchScope(file, IdeBundle.message("scope.current.file")));
       final CollectingMatchResultSink sink = new CollectingMatchResultSink();
       new Matcher(project).findMatches(sink, matchOptions);
