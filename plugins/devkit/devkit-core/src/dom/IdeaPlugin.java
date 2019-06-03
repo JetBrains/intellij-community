@@ -136,12 +136,12 @@ public interface IdeaPlugin extends DomElement {
   @Stubbed
   List<Actions> getActions();
 
+  Actions addActions();
+
   @NotNull
   @SubTagList("applicationListeners")
   @Stubbed
   List<Listeners> getApplicationListeners();
-
-  Actions addActions();
 
   /**
    * @deprecated not used anymore
