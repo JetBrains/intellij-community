@@ -1596,8 +1596,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon IncomingChangesOn = load("/ide/incomingChangesOn.svg");
     /** 12x12 */ public static final Icon Link = load("/ide/link.svg");
     /** 16x16 */ public static final Icon LocalScope = load("/ide/localScope.svg");
-    /** 12x12 */ public static final Icon LookupAlphanumeric = load("/ide/lookupAlphanumeric.svg");
-    /** 12x12 */ public static final Icon LookupRelevance = load("/ide/lookupRelevance.svg");
 
     public final static class Macro {
       /** 16x16 */ public static final Icon Recording_1 = load("/ide/macro/recording_1.svg");
@@ -1683,6 +1681,16 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Info_notifications = AllIcons.General.Information;
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon LookupAlphanumeric = load("/ide/lookupAlphanumeric.svg");
+
+    /** @deprecated to be removed in IDEA 2020 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon LookupRelevance = load("/ide/lookupRelevance.svg");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
