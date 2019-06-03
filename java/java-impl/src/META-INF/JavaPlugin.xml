@@ -879,7 +879,6 @@
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineParameterHandler"/>
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
-    <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <fileIconPatcher id="javaFileIconPatcher" implementation="com.intellij.ide.JavaFileIconPatcher"/>
