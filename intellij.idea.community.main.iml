@@ -140,5 +140,7 @@
     <orderEntry type="module" module-name="intellij.android.kotlin.idea" />
     <orderEntry type="module" module-name="intellij.android.kotlin.extensions" />
     <orderEntry type="module" module-name="intellij.android.kotlin.output.parser" />
+    <orderEntry type="module" module-name="intellij.android.wizard.template.plugin" />
+    <orderEntry type="module" module-name="intellij.android.wizard.template.impl" />
   </component>
 </module>

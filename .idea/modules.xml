@@ -485,6 +485,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard/intellij.android.wizard.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" filepath="$PROJECT_DIR$/../adt/idea/wizard-model/intellij.android.wizard.model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/wizard/templates/intellij.android.wizard.template.impl.iml" filepath="$PROJECT_DIR$/../base/wizard/templates/intellij.android.wizard.template.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../base/wizard/template-plugin/intellij.android.wizard.template.plugin.iml" filepath="$PROJECT_DIR$/../base/wizard/template-plugin/intellij.android.wizard.template.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/intellij.ant.iml" filepath="$PROJECT_DIR$/plugins/ant/intellij.ant.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/intellij.c.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/intellij.c.iml" />

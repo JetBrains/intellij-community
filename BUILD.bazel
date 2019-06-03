@@ -189,6 +189,8 @@ iml_project(
         "//tools/base/testutils:studio.testutils-tests",
         "//tools/base/tracer:studio.android.sdktools.tracer",
         "//tools/base/usb-devices:studio.usb-devices",
+        "//tools/base/wizard/template-plugin:intellij.android.wizard.template.plugin",
+        "//tools/base/wizard/templates:intellij.android.wizard.template.impl",
         "//tools/data-binding:studio.baseLibrary",
         "//tools/data-binding:studio.baseLibrarySupport",
         "//tools/data-binding:studio.compiler",
@@ -861,6 +863,8 @@ iml_module(
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.idea[module]",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.extensions[module]",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.output.parser[module]",
+        "//tools/base/wizard/template-plugin:intellij.android.wizard.template.plugin[module, test]",
+        "//tools/base/wizard/templates:intellij.android.wizard.template.impl[module, test]",
     ],
 )
 
