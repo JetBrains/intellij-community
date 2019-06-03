@@ -15,6 +15,18 @@ bare-key = "value"
 "" = "value"
 '' = "value"
 
+name = "Orange"
+physical.color = "orange"
+physical.shape = "round"
+site."google.com" = true
+
+a.b.c = 1
+a.d = 2
+
+# INVALID
+a. = ""
+.a = ""
+
 # INVALID don't parse next key as a value if the value is not provided
 key1 =
 "key2" = ""

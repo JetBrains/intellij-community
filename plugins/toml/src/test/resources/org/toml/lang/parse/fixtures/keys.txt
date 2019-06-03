@@ -116,6 +116,92 @@ TOML File
     TomlLiteral
       PsiElement(BASIC_STRING)('"value"')
   PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('name')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('"Orange"')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('physical')
+      PsiElement(.)('.')
+      PsiElement(BARE_KEY)('color')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('"orange"')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('physical')
+      PsiElement(.)('.')
+      PsiElement(BARE_KEY)('shape')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('"round"')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('site')
+      PsiElement(.)('.')
+      PsiElement(BASIC_STRING)('"google.com"')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BOOLEAN)('true')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('a')
+      PsiElement(.)('.')
+      PsiElement(BARE_KEY)('b')
+      PsiElement(.)('.')
+      PsiElement(BARE_KEY)('c')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('1')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('a')
+      PsiElement(.)('.')
+      PsiElement(BARE_KEY)('d')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('2')
+  PsiWhiteSpace('\n\n')
+  PsiComment(COMMENT)('# INVALID')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('a')
+    PsiElement(.)('.')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:BARE_KEY, BASIC_STRING or LITERAL_STRING expected, got '='
+      PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n')
+  PsiErrorElement:'.' unexpected
+    PsiElement(.)('.')
+  PsiElement(BARE_KEY)('a')
+  PsiWhiteSpace(' ')
+  PsiElement(=)('=')
+  PsiWhiteSpace(' ')
+  PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n\n')
   PsiComment(COMMENT)('# INVALID don't parse next key as a value if the value is not provided')
   PsiWhiteSpace('\n')
   TomlKeyValue

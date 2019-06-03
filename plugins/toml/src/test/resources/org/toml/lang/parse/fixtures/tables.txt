@@ -220,7 +220,7 @@ TOML File
     TomlKeyValue
       TomlKey
         PsiElement(BARE_KEY)('key')
-      PsiErrorElement:'=' expected, got '['
+      PsiErrorElement:'.' or '=' expected, got '['
         <empty list>
   PsiWhiteSpace('\n')
   TomlTable
