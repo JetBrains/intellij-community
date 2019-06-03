@@ -35,6 +35,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.Language;
@@ -47,7 +48,7 @@ import java.util.stream.Stream;
 
 public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-  private static final String MISMATCH_COLOR = UIUtil.isUnderDarcula() ? "ff6464" : "red";
+  private static final String MISMATCH_COLOR = StartupUiUtil.isUnderDarcula() ? "ff6464" : "red";
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
   private HighlightMethodUtil() { }
@@ -632,7 +633,7 @@ public class HighlightMethodUtil {
 
           return XmlStringUtil.wrapInHtml("<body>" + XmlStringUtil.escapeString(message) +
                                           " <a href=\"#assignment/" + XmlStringUtil.escapeString(createMismatchedArgumentsHtmlTooltip(candidateInfo, list)) + "\"" +
-                                          (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
+                                          (StartupUiUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
                                           ">" + DaemonBundle.message("inspection.extended.description") + "</a></body>");
         }
       }
@@ -878,8 +879,8 @@ public class HighlightMethodUtil {
     PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
     if (expectedTypeByParent != null) {
       PsiType methodCallType = methodCall.getType();
-      if (methodCallType != null && 
-          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) && 
+      if (methodCallType != null &&
+          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) &&
           !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
       }
@@ -970,7 +971,7 @@ public class HighlightMethodUtil {
     );
   }
 
-  @NotNull 
+  @NotNull
   private static String escTrim(@NotNull String s) {
     return XmlStringUtil.escapeString(trimNicely(s));
   }
@@ -1032,12 +1033,12 @@ public class HighlightMethodUtil {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       boolean showShort = showShortType(i, parameters, expressions, substitutor);
-      String mismatchColor = showShort ? null : UIUtil.isUnderDarcula() ? "FF6B68" : "red";
+      String mismatchColor = showShort ? null : StartupUiUtil.isUnderDarcula() ? "FF6B68" : "red";
 
       s.append("<tr");
       if (i % 2 == 0) {
         //noinspection SpellCheckingInspection
-        String bg = UIUtil.isUnderDarcula() ? ColorUtil.toHex(ColorUtil.shift(UIUtil.getToolTipBackground(), 1.1)) : "eeeeee";
+        String bg = StartupUiUtil.isUnderDarcula() ? ColorUtil.toHex(ColorUtil.shift(UIUtil.getToolTipBackground(), 1.1)) : "eeeeee";
         s.append(" style='background-color: #").append(bg).append("'");
       }
       s.append(">");
@@ -1713,7 +1714,7 @@ public class HighlightMethodUtil {
           else {
             applicable = false;
           }
-        } 
+        }
         else {
           applicable = result != null && result.isApplicable();
         }

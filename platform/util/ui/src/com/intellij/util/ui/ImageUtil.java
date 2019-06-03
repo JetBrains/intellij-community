@@ -131,7 +131,7 @@ public class ImageUtil {
   @Contract("null, _ -> null; !null, _ -> !null")
   public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx) {
     if (image == null) return null;
-    if (UIUtil.isJreHiDPI(ctx)) {
+    if (StartupUiUtil.isJreHiDPI(ctx)) {
       return RetinaImage.createFrom(image, ctx.getScale(SYS_SCALE), null);
     }
     return image;
@@ -162,7 +162,7 @@ public class ImageUtil {
   @Contract("null, _, _, _ -> null; !null, _, _, _ -> !null")
   public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx, double userWidth, double userHeight) {
     if (image == null) return null;
-    if (UIUtil.isJreHiDPI(ctx)) {
+    if (StartupUiUtil.isJreHiDPI(ctx)) {
       return new JBHiDPIScaledImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;

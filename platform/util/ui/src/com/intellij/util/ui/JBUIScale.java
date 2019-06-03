@@ -631,7 +631,7 @@ public class JBUIScale {
     @Override
     public double getScale(@NotNull DerivedScaleType type) {
       switch (type) {
-        case DEV_SCALE: return UIUtil.isJreHiDPIEnabled() ? sysScale.value : 1;
+        case DEV_SCALE: return StartupUiUtil.isJreHiDPIEnabled() ? sysScale.value : 1;
         case EFF_USR_SCALE: return usrScale.value * objScale.value;
         case PIX_SCALE: return pixScale;
       }

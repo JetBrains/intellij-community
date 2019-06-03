@@ -14,7 +14,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.imgscalr.Scalr;
 import org.intellij.lang.annotations.MagicConstant;
@@ -428,7 +428,7 @@ public final class ImageLoader implements Serializable {
     if (useCache) {
       flags |= USE_CACHE;
     }
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       flags |= DARK;
     }
     return loadFromUrl(url, null, flags, filters, ctx);
@@ -526,7 +526,7 @@ public final class ImageLoader implements Serializable {
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
     ScaleContext scaleContext = ScaleContext.create();
     int flags = FIND_SVG | ALLOW_FLOAT_SCALING;
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       flags |= DARK;
     }
     return ImageDescriptorList.create(path, flags, scaleContext)

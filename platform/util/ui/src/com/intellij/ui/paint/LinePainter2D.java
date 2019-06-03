@@ -6,7 +6,7 @@ import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.JBUIScale.ScaleType;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -266,7 +266,7 @@ public class LinePainter2D {
                                   @NotNull Object valueAA)
   {
     double x1, x2, y1, y2;
-    boolean thickPixel = UIUtil.isJreHiDPIEnabled() && PaintUtil.devValue(strokeWidth, g) > 1;
+    boolean thickPixel = StartupUiUtil.isJreHiDPIEnabled() && PaintUtil.devValue(strokeWidth, g) > 1;
     boolean prevStraight = nPoints <= 1 || isStraightLine(xPoints, yPoints, nPoints, nPoints);
 
     for (int p = 0; p < nPoints; p++) {

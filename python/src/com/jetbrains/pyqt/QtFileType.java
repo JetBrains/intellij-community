@@ -5,7 +5,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
@@ -76,7 +76,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
 
   @Override
   public boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file) {
-    String qtTool = findQtTool(ModuleUtil.findModuleForFile(file, project), getToolName());
+    String qtTool = findQtTool(ModuleUtilCore.findModuleForFile(file, project), getToolName());
     if (qtTool == null) {
       return false;
     }

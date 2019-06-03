@@ -70,7 +70,7 @@ public class AppleBoldDottedPainter {
     try {
       g.setComposite(AlphaComposite.SrcOver);
       g.setClip(lineClip);
-      UIUtil.drawImage(g, myImage, dotX0, y, null);
+      StartupUiUtil.drawImage(g, myImage, dotX0, y, null);
     }
     finally {
       g.setComposite(oldComposite);

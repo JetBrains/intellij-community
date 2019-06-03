@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -8,7 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -295,7 +295,7 @@ public class PackageUtil {
 
   private static PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles, @NotNull Module module, PsiManager manager) {
     for (VirtualFile vFile : vFiles) {
-      if (ModuleUtil.findModuleForFile(vFile, module.getProject()) != module) continue;
+      if (ModuleUtilCore.findModuleForFile(vFile, module.getProject()) != module) continue;
       PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {
         return directory;

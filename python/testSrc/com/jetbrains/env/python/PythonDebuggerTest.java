@@ -2028,11 +2028,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       private void loadEnvTags() {
-        List<String> roots = PythonDebuggerTest.getPythonRoots();
+        List<String> roots = PyEnvTestCase.getPythonRoots();
 
         roots.forEach((root) -> {
           Set<String> tags = Sets.newHashSet();
-          tags.addAll(PythonDebuggerTest.loadEnvTags(root));
+          tags.addAll(PyEnvTestCase.loadEnvTags(root));
           myEnvTags.put(root, tags);
         });
       }
