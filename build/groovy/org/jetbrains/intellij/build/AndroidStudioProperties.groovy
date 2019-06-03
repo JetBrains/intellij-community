@@ -53,8 +53,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       "$home/../vendor/google/firebase/lib/licenses",
     )
 
-    productLayout.productApiModules = JAVA_API_MODULES
-    productLayout.productImplementationModules = JAVA_IMPLEMENTATION_MODULES +
+    productLayout.productApiModules = JAVA_IDE_API_MODULES
+    productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   [
                                                     // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
                                                     "intellij.cidr.common",
@@ -65,7 +65,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                     "intellij.c.doxygen",
                                                     "intellij.cmake.psi",
                                                   ] +
-                                                  ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"] -
+                                                  ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
     productLayout.additionalPlatformJars.putAll("resources.jar", "intellij.idea.community.resources", "intellij.android.adt.branding")
 
@@ -99,6 +99,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                          ]
     productLayout.mainModules = ["intellij.idea.community.main"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+      JavaPluginLayout.javaPlugin(false),
       androidPluginInStudio([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
