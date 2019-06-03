@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,12 +140,7 @@ public class ShelvedChange {
   @Nullable
   public TextFilePatch loadFilePatch(final Project project, CommitContext commitContext) throws IOException, PatchSyntaxException {
     List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, myPatchPath, commitContext);
-    for(TextFilePatch patch: filePatches) {
-      if (myBeforePath.equals(patch.getBeforeName())) {
-        return patch;
-      }
-    }
-    return null;
+    return ContainerUtil.find(filePatches, patch -> myBeforePath.equals(patch.getBeforeName()));
   }
 
   @Override
