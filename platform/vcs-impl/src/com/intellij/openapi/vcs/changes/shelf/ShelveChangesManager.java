@@ -1166,8 +1166,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     try {
       final CommitContext commitContext = new CommitContext();
       final List<FilePatch> patches = new ArrayList<>();
-      for (ShelvedChange change : listCopy.getChanges(myProject)) {
-        patches.add(change.loadFilePatch(myProject, commitContext));
+      List<TextFilePatch> filePatches = loadPatches(myProject, listCopy.PATH, commitContext);
+      for (ShelvedChange change : Objects.requireNonNull(listCopy.getChanges(myProject))) {
+        patches.add(find(filePatches, patch -> change.getBeforePath().equals(patch.getBeforeName())));
       }
       writePatchesToFile(myProject, listCopy.PATH, patches, commitContext);
     }
