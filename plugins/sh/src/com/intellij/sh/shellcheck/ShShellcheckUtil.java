@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +44,7 @@ class ShShellcheckUtil {
                                        "org/jetbrains/intellij/deps/shellcheck/";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
-  static void download(@Nullable Project project, @Nullable Runnable onSuccess) {
+  static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
@@ -64,16 +61,13 @@ class ShShellcheckUtil {
         }
         else {
           ShSettings.setShellcheckPath(shellcheckPath);
-          showInfoNotification();
         }
-        if (onSuccess != null) {
-          ApplicationManager.getApplication().invokeLater(onSuccess);
-        }
+        ApplicationManager.getApplication().invokeLater(onSuccess);
         return;
       }
       catch (IOException e) {
         LOG.debug("Can't evaluate shellcheck path", e);
-        showErrorNotification();
+        ApplicationManager.getApplication().invokeLater(onFailure);
         return;
       }
     }
@@ -101,17 +95,14 @@ class ShShellcheckUtil {
             if (StringUtil.isNotEmpty(path)) {
               FileUtilRt.setExecutableAttribute(path, true);
               ShSettings.setShellcheckPath(path);
-              showInfoNotification();
-              if (onSuccess != null) {
-                ApplicationManager.getApplication().invokeLater(onSuccess);
-              }
+              ApplicationManager.getApplication().invokeLater(onSuccess);
               ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
             }
           }
         }
         catch (IOException e) {
           LOG.warn("Can't download shellcheck", e);
-          showErrorNotification();
+          ApplicationManager.getApplication().invokeLater(onFailure);
         }
       }
     };
@@ -181,16 +172,6 @@ class ShShellcheckUtil {
     if (SystemInfoRt.isLinux) return "linux";
     if (SystemInfoRt.isWindows) return "windows";
     return null;
-  }
-
-  private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Shellcheck has been successfully installed",
-        NotificationType.INFORMATION));
-  }
-
-  private static void showErrorNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shellcheck. Please install it manually",
-        NotificationType.ERROR));
   }
 
   static final Map<String, String> shellCheckCodes = new TreeMap<String, String>(){{
