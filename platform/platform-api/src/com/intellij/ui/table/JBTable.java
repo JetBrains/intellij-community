@@ -910,6 +910,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       TableColumnModel columnModel = getColumnModel();
       return resizingAllowed && columnModel.getColumn(columnIdx).getResizable();
     }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      JBValue.UIInteger height = new JBValue.UIInteger("TableHeader.height", 25);
+      return new Dimension(size.width, height.get());
+    }
   }
 
   public int getExpandedColumnWidth(int columnToExpand) {

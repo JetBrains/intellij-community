@@ -3,7 +3,7 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -29,7 +29,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     final Graphics2D g = (Graphics2D)g2;
     final GraphicsConfig config = new GraphicsConfig(g);
     final Color bg = c.getBackground();
-    g.setPaint(new GradientPaint(0, 0, ColorUtil.shift(bg, 1.4), 0, c.getHeight(), ColorUtil.shift(bg, 0.9)));
+    g.setPaint(bg);
     final int h = c.getHeight();
     final int w = c.getWidth();
     g.fillRect(0, 0, w, h);
@@ -39,8 +39,7 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
 
     final Enumeration<TableColumn> columns = ((JTableHeader)c).getColumnModel().getColumns();
 
-    final Color lineColor = ColorUtil.shift(bg, 0.7);
-    final Color shadow = Gray._255.withAlpha(30);
+    final Color lineColor = JBColor.namedColor("TableHeader.separatorColor", ColorUtil.shift(bg, 0.7));
     int offset = 0;
     while (columns.hasMoreElements()) {
       final TableColumn column = columns.nextElement();
@@ -48,8 +47,6 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
         offset += column.getWidth();
         g.setColor(lineColor);
         UIUtil.drawLine(g, offset - 1, 1, offset - 1, h - 3);
-        g.setColor(shadow);
-        UIUtil.drawLine(g, offset, 1, offset, h - 3);
       }
     }
 
