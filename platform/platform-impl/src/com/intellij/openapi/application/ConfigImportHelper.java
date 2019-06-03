@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -65,6 +66,7 @@ public final class ConfigImportHelper {
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(@NotNull Path newConfigDir, @NotNull Logger log) {
+    LafManagerImpl.initIntelliJLafIfNeeded();
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = getConfigImportSettings();
