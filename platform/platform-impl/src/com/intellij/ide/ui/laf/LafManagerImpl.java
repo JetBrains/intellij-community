@@ -802,6 +802,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
   }
 
+  public static void initIntelliJLafIfNeeded() {
+    if (ApplicationManager.getApplication() != null) return;
+    try {
+      UIManager.setLookAndFeel(IntelliJLaf.class.getName());
+      updateForDarcula(false);
+    } catch (Exception ignore) {}
+  }
+
   private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys) {
     String copyActionKey = useSimpleActionKeys ? "copy" : DefaultEditorKit.copyAction;
     String pasteActionKey = useSimpleActionKeys ? "paste" : DefaultEditorKit.pasteAction;
