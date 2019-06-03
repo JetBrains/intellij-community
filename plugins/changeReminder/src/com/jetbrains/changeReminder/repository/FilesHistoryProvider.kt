@@ -20,7 +20,7 @@ internal class FilesHistoryProvider(private val project: Project, private val da
     return dataGetter.filter(listOf(structureFilter))
   }
 
-  private fun getCommitsData(root: VirtualFile, commits: Collection<Int>): Map<Int, Commit> {
+  private fun getCommitsData(root: VirtualFile, commits: Collection<Int>): Collection<Commit> {
     val hashes = mutableMapOf<String, Int>()
     for (commit in commits) {
       val commitId = dataGetter.logStorage.getCommitId(commit) ?: continue
@@ -28,7 +28,7 @@ internal class FilesHistoryProvider(private val project: Project, private val da
       hashes[hash] = commit
     }
 
-    val commitsData = mutableMapOf<Int, Commit>()
+    val commitsData = mutableSetOf<Commit>()
 
     processCommitsFromHashes(project, root, hashes.keys.toList()) consume@{ commit ->
       if (commit.changes.isNotEmpty()) {
@@ -36,7 +36,7 @@ internal class FilesHistoryProvider(private val project: Project, private val da
         val time = commit.commitTime
         val files = commit.changes.mapNotNull { ChangesUtil.getFilePath(it) }.toSet()
         val author = commit.author
-        commitsData[id] = Commit(id, time, author.name, files)
+        commitsData.add(Commit(id, time, author.name, files))
       }
     }
     return commitsData
@@ -48,9 +48,8 @@ internal class FilesHistoryProvider(private val project: Project, private val da
     filesHistoryCache.putAll(files.filter { it !in filesHistoryCache }
                                .associateWith { getCommitHashesWithFile(it) })
     val commits = files.mapNotNull { filesHistoryCache[it] }.flatten()
-    val commitsData = getCommitsData(root, commits)
 
-    return commitsData.values
+    return getCommitsData(root, commits)
   }
 
   fun clear() {
