@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ui.AnimatedIcon.Blinking;
 
 import javax.swing.*;
+import java.awt.*;
 
 import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
@@ -20,10 +21,16 @@ class IdeErrorsIcon extends JLabel {
     if (state != null && state != MessagePool.State.NoErrors) {
       setIcon(state == MessagePool.State.ReadErrors ? AllIcons.Ide.FatalError_read : myUnreadIcon);
       setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
+      if (!myEnableBlink) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      }
     }
     else {
       setIcon(ICON_16);
       setToolTipText(null);
+      if (!myEnableBlink) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      }
     }
   }
 }
