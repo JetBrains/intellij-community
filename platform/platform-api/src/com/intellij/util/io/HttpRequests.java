@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
@@ -616,7 +618,13 @@ public final class HttpRequests {
                      "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");
 
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
-      int responseCode = httpURLConnection.getResponseCode();
+      int responseCode;
+      try {
+        responseCode = httpURLConnection.getResponseCode();
+      }
+      catch (SSLHandshakeException e) {
+        throw !NetUtils.isSniEnabled() ? new SSLException("SSL error probably caused by disabled SNI", e) : e;
+      }
       if (LOG.isDebugEnabled()) LOG.debug("response from " + url + ": " + responseCode);
 
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
