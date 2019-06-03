@@ -251,7 +251,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val structureFilter = detailsFilters.filterIsInstance(VcsLogStructureFilter::class.java).singleOrNull()
                           ?: return Pair(dataGetter.filter(detailsFilters, commitCandidates), null)
 
-    val historyData = dataGetter.createFileHistoryData(structureFilter.files)
+    val historyData = dataGetter.createFileHistoryData(structureFilter.files).build()
     val candidates = TroveUtil.intersect(TroveUtil.createTroveSet(historyData.getCommits()), commitCandidates)
 
     val filtersWithoutStructure = detailsFilters.filterNot { it is VcsLogStructureFilter }
