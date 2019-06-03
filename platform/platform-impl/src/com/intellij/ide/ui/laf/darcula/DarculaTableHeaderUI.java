@@ -33,9 +33,9 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     final int h = c.getHeight();
     final int w = c.getWidth();
     g.fillRect(0, 0, w, h);
-    g.setPaint(ColorUtil.shift(bg, 0.75));
+    JBColor bottomSeparatorColor = JBColor.namedColor("TableHeader.bottomSeparatorColor", ColorUtil.shift(bg, 0.75));
+    g.setPaint(bottomSeparatorColor);
     UIUtil.drawLine(g, 0, h - 1, w, h - 1);
-    UIUtil.drawLine(g, w - 1, 0, w - 1, h - 1);
 
     final Enumeration<TableColumn> columns = ((JTableHeader)c).getColumnModel().getColumns();
 
