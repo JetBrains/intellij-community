@@ -940,6 +940,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         final PsiType type = ((PsiTypeElement)greatGrandParent).getType();
         return type instanceof PsiWildcardType && ((PsiWildcardType)type).isExtends();
       }
+      if (greatGrandParent instanceof PsiMethod) {
+        return true;
+      }
     }
     if (grandParent instanceof PsiExpressionStatement) {
       final PsiElement greatGrandParent = grandParent.getParent();
