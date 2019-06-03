@@ -467,8 +467,11 @@ class DistributionJARsBuilder {
 
           CompatibleBuildRange compatibleBuildRange = publishingSpec.compatibleBuildRange
           if (compatibleBuildRange == null) {
-            def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
-            compatibleBuildRange = includeInCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+            def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+                                                   publishingSpec.includeInCustomPluginRepository &&
+                                                   buildContext.proprietaryBuildTools.artifactsServer != null
+            //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
+            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
           }
 
           setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
