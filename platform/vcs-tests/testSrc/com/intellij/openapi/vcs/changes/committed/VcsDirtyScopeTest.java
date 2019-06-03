@@ -118,9 +118,9 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
     Assert.assertNotNull(dirtyDirs);
     Assert.assertNotNull(dirtyFiles);
-    Assert.assertTrue(dirtyFiles.contains(VcsUtil.getFilePath(data.baseDir)));
-    Assert.assertTrue(dirtyDirs.contains(VcsUtil.getFilePath(data.dir1)));
-    Assert.assertTrue(dirtyDirs.contains(VcsUtil.getFilePath(data.dir2)));
+    Assert.assertTrue(dirtyFiles.toString(), dirtyFiles.contains(VcsUtil.getFilePath(data.baseDir)));
+    Assert.assertTrue(dirtyDirs.toString(), dirtyDirs.contains(VcsUtil.getFilePath(data.dir1)));
+    Assert.assertTrue(dirtyDirs.toString(), dirtyDirs.contains(VcsUtil.getFilePath(data.dir2)));
   }
 
   private Data createData() throws IOException {
