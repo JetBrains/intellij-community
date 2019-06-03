@@ -30,8 +30,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -47,11 +45,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -659,7 +656,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   public void doCancelAction() {
     super.doCancelAction();
-    highlightMatches(Collections.emptyList(), "");
+    removeMatchHighlights();
   }
 
   @Override
@@ -703,7 +700,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
       reportMessage(null, false, mySearchCriteriaEdit);
-      highlightMatches(matchOptions);
+      addMatchHighlights(matchOptions);
       if (myReplace) {
         try {
           Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
@@ -721,7 +718,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       return compiledPattern;
     }
     catch (MalformedPatternException e) {
-      highlightMatches(Collections.emptyList(), "");
+      removeMatchHighlights();
       final String message = isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
@@ -729,33 +726,45 @@ public class StructuralSearchDialog extends DialogWrapper {
       return null;
     }
     catch (UnsupportedPatternException e) {
-      highlightMatches(Collections.emptyList(), "");
+      removeMatchHighlights();
       reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), true, mySearchCriteriaEdit);
       return null;
     }
     catch (NoMatchFoundException e) {
-      highlightMatches(Collections.emptyList(), "");
+      removeMatchHighlights();
       reportMessage(e.getMessage(), false, myScopePanel);
       return null;
     }
   }
 
-  private void highlightMatches(MatchOptions matchOptions) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  private void removeMatchHighlights() {
+    final Project project = getProject();
+    final Editor editor = mySearchContext.getEditor();
+    if (editor == null) {
+      return;
+    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final HighlightManager highlightManager = HighlightManager.getInstance(project);
+      for (RangeHighlighter highlighter : myRangeHighlighters) {
+        highlightManager.removeSegmentHighlighter(editor, highlighter);
+      }
+      WindowManager.getInstance().getStatusBar(project).setInfo("");
+      myRangeHighlighters.clear();
+    });
+  }
+
+  private void addMatchHighlights(MatchOptions matchOptions) {
     if (myDoingOkAction) {
-      highlightMatches(Collections.emptyList(), "");
+      removeMatchHighlights();
     }
     else {
       final Project project = getProject();
-      final FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor();
+      final Editor editor = mySearchContext.getEditor();
       if (editor == null) {
         return;
       }
-      final VirtualFile vFile = editor.getFile();
-      if (vFile == null) {
-        return;
-      }
-      final PsiFile file = PsiManager.getInstance(project).findFile(vFile);
+      final Document document = editor.getDocument();
+      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file == null) {
         return;
       }
@@ -763,29 +772,27 @@ public class StructuralSearchDialog extends DialogWrapper {
       final CollectingMatchResultSink sink = new CollectingMatchResultSink();
       new Matcher(project).findMatches(sink, matchOptions);
       final List<MatchResult> matches = sink.getMatches();
-      highlightMatches(matches, matches.size() + " results found in current file");
+      removeMatchHighlights();
+      addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
     }
   }
 
-  private void highlightMatches(@NotNull List<MatchResult> matchResults, @Nullable String statusBarText) {
+  private void addMatchHighlights(@NotNull List<MatchResult> matchResults,
+                                  @NotNull Editor editor,
+                                  @NotNull PsiFile file,
+                                  @Nullable String statusBarText) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final Project project = getProject();
       if (project.isDisposed()) {
         return;
       }
-      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) {
-        return;
-      }
-      final HighlightManager highlightManager = HighlightManager.getInstance(getProject());
-      for (RangeHighlighter highlighter : myRangeHighlighters) {
-        highlightManager.removeSegmentHighlighter(editor, highlighter);
-      }
-      myRangeHighlighters.clear();
       if (!matchResults.isEmpty()) {
         final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
         final TextAttributes textAttributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+        final HighlightManager highlightManager = HighlightManager.getInstance(project);
         for (MatchResult result : matchResults) {
+          final PsiElement match = result.getMatch();
+          if (match == null || match.getContainingFile() != file) continue;
           int start = -1;
           int end = -1;
           if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
@@ -802,7 +809,7 @@ public class StructuralSearchDialog extends DialogWrapper {
             }
           }
           else {
-            final TextRange range = result.getMatch().getTextRange();
+            final TextRange range = match.getTextRange();
             start = range.getStartOffset();
             end = range.getEndOffset();
           }
