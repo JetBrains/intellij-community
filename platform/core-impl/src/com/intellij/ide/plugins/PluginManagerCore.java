@@ -1480,7 +1480,7 @@ public class PluginManagerCore {
     }
     // Android Studio: In unit test mode, the android plugin may not be present, even though it is marked as "essential".
     if (PlatformUtils.isAndroidStudio() && isUnitTestMode) {
-      missing = missing.stream().filter(id -> !"org.jetbrains.android".equals(id)).collect(Collectors.toSet());
+      missing = missing.stream().filter(id -> !"org.jetbrains.android".equals(id)).collect(Collectors.toList());
     }
     if (!missing.isEmpty()) {
       throw new EssentialPluginMissingException(missing);
