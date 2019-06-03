@@ -4,7 +4,6 @@ package com.intellij.psi;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
-import org.jetbrains.annotations.ApiStatus;
 
 @SuppressWarnings("SpellCheckingInspection")
 public interface JavaTokenType extends TokenType {
