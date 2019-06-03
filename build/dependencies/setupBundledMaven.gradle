@@ -35,6 +35,7 @@ def mavenDistName = "apache-maven-$bundledMavenVersion"
 task unpackMavenDistribution(type: Copy) {
   from zipTree(project.configurations.maven3Distribution.singleFile)
   into "$mavenServerLibDir/maven3"
+
   onlyIf { (!destinationDir.exists()) || destinationDir.list() == null || destinationDir.list().length == 0 }
 }
 
@@ -43,8 +44,15 @@ task setupCommonLibs(type: Copy) {
   into "$communityPluginsDir/maven/maven3-server-common/lib"
 }
 
+task deletePreviousMinorVersionIfRequired(type: Delete) {
+  delete mavenServerLibDir
+  onlyIf {
+    new File("$mavenServerLibDir/maven3/lib").exists() && !new File("$mavenServerLibDir/maven3/lib/maven-core-${bundledMavenVersion}.jar").
+      exists()
+  }
+}
 //there is no friendly way to unpack gradle zip without parent dir
-task setupBundledMaven(dependsOn: [unpackMavenDistribution, setupCommonLibs], type: Copy) {
+task setupBundledMaven(dependsOn: [deletePreviousMinorVersionIfRequired, unpackMavenDistribution, setupCommonLibs], type: Copy) {
   def unzippedDir = new File("$mavenServerLibDir/maven3/$mavenDistName")
   from fileTree(unzippedDir)
   into "$mavenServerLibDir/maven3/"
