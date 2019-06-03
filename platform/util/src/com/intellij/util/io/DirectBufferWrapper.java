@@ -1,15 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 abstract class DirectBufferWrapper extends ByteBufferWrapper {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.DirectBufferWrapper");
-
   private volatile ByteBuffer myBuffer;
 
   DirectBufferWrapper(File file, long offset, long length) {
