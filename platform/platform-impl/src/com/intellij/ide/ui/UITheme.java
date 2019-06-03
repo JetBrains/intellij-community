@@ -387,9 +387,9 @@ public class UITheme {
       if (color != null) {
         return new ColorUIResource(color);
       }
-      Integer invVal = getInteger(value, null);
-      if (invVal != null) {
-        return invVal;
+      Integer intVal = getInteger(value, null);
+      if (intVal != null) {
+        return intVal;
       }
     }
 
