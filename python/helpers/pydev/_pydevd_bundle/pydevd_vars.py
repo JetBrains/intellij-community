@@ -270,7 +270,7 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     :return: a dictionary of variables's fields
 
     :note: PyCharm supports progressive loading of large collections and uses the `attrs`
-           parameter to pass the offset, e.g. 300\t\obj\tattr1\tattr2 should return
+           parameter to pass the offset, e.g. 300\t\\obj\tattr1\tattr2 should return
            the value of attr2 starting from the 300th element. This hack makes it possible
            to add the support of progressive loading without extending of the protocol.
     """
