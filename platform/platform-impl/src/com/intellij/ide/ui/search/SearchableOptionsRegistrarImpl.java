@@ -253,6 +253,9 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                             @NotNull String option,
                                             @Nullable Project project) {
     Collection<Configurable> effectiveConfigurables;
+    if (ContainerUtil.isEmpty(configurables)) {
+      configurables = null;
+    }
     if (configurables == null) {
       effectiveConfigurables = new LinkedHashSet<>();
       Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
