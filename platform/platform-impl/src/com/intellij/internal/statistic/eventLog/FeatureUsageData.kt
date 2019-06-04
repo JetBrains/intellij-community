@@ -51,6 +51,13 @@ class FeatureUsageData {
     return this
   }
 
+  /**
+   * Project data is added automatically for project state collectors and project-wide counter events.
+   *
+   * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String)
+   * @see com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger.logEvent(Project, String, String, FeatureUsageData)
+   */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
       data["project"] = getProjectId(project)
@@ -73,6 +80,10 @@ class FeatureUsageData {
     return this
   }
 
+  /**
+   * Group by OS will be available without adding OS explicitly to event data.
+   */
+  @Deprecated("Don't add OS to event data")
   fun addOS(): FeatureUsageData {
     data["os"] = getOS()
     return this
