@@ -33,6 +33,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
@@ -47,10 +48,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -989,12 +987,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     PsiExpression initializer = variable.getInitializer();
     if (firstRef == null) {
-      if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
-        RemoveUnusedVariableUtil.replaceElementWithExpression(initializer, PsiElementFactory.getInstance(myProject), variable);
+      PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
+      if (initializer != null) {
+        List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
+        for (PsiStatement statement : StatementExtractor.generateStatements(sideEffects, initializer)) {
+          declaration.getParent().addBefore(statement, declaration);
+        }
       }
-      else {
-        variable.getParent().delete();
-      }
+      declaration.delete();
       return;
     }
 
