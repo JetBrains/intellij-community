@@ -97,8 +97,8 @@ public final class ApiStatus {
    * <strong>only implemented or overridden</strong> but not called by clients of the declaring library.
    * If a class or interface is marked with this annotation it means that all its methods can be only overridden.
    * <p/>
-   * Although there is a standard mechanism of <code>protected</code> methods, it is not applicable to interface's methods.
-   * Also API method may be made <code>public</code> to allow calls only from different parts of the declaring library but not outside it.
+   * Although there is a standard mechanism of {@code protected} methods, it is not applicable to interface's methods.
+   * Also API method may be made {@code public} to allow calls only from different parts of the declaring library but not outside it.
    * <br/>
    * Signatures of such methods may be changed in new versions of the library in the following steps. Firstly, a method with new signature
    * is added to the library delegating to the old method by default. Secondly, all clients implement the new method and remove

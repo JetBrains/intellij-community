@@ -108,15 +108,15 @@ public class RefreshWorker {
 
     while (!myRefreshQueue.isEmpty()) {
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.pullFirst();
-      boolean fullSync = dir.allChildrenLoaded(), succeed;
-
+      boolean fullSync = dir.allChildrenLoaded();
+      boolean succeeded;
       do {
         myHelper.beginTransaction();
-        succeed = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
-        myHelper.endTransaction(succeed);
-        if (!succeed && LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
+        succeeded = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
+        myHelper.endTransaction(succeeded);
+        if (!succeeded && LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
       }
-      while (!succeed);
+      while (!succeeded);
 
       if (myIsRecursive) {
         dir.markClean();
@@ -336,8 +336,10 @@ public class RefreshWorker {
     }
 
     if (!childAttributes.isDirectory()) {
-      long oltTS = persistence.getTimeStamp(child), newTS = childAttributes.lastModified;
-      long oldLength = persistence.getLastRecordedLength(child), newLength = childAttributes.length;
+      long oltTS = persistence.getTimeStamp(child);
+      long newTS = childAttributes.lastModified;
+      long oldLength = persistence.getLastRecordedLength(child);
+      long newLength = childAttributes.length;
       myHelper.checkContentChanged(child, oltTS, newTS, oldLength, newLength);
 
       child.markClean();

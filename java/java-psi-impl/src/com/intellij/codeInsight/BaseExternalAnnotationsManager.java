@@ -373,6 +373,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element) {
     throw new UnsupportedOperationException();

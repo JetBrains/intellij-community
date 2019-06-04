@@ -425,7 +425,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       TransactionGuard.getInstance().submitTransactionAndWait(doLoad);
-    } else {
+    }
+    else {
       assertInTransaction();
       doLoad.run();
     }
