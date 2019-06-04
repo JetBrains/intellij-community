@@ -82,6 +82,15 @@ enum class PluginType {
   }
 }
 
+fun findPluginTypeByValue(value: String): PluginType? {
+  for (type in PluginType.values()) {
+    if (type.name == value) {
+      return type
+    }
+  }
+  return null
+}
+
 class PluginInfo(val type: PluginType, val id: String?) {
 
   fun isDevelopedByJetBrains(): Boolean {
