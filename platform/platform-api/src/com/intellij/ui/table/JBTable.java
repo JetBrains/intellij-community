@@ -835,6 +835,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     @Override
+    protected TableCellRenderer createDefaultRenderer() {
+      TableCellRenderer renderer = super.createDefaultRenderer();
+      if (renderer instanceof JComponent) {
+        JComponent c = (JComponent)renderer;
+        Dimension size = c.getPreferredSize();
+        JBValue.UIInteger height = new JBValue.UIInteger("TableHeader.height", 25);
+        c.setPreferredSize(new Dimension(size.width, height.get()));
+      }
+      return renderer;
+    }
+
+    @Override
     public void paint(@NotNull Graphics g) {
       if (myEnableAntialiasing) {
         GraphicsUtil.setupAntialiasing(g);
@@ -925,13 +937,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       TableColumnModel columnModel = getColumnModel();
       return resizingAllowed && columnModel.getColumn(columnIdx).getResizable();
     }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      JBValue.UIInteger height = new JBValue.UIInteger("TableHeader.height", 25);
-      return new Dimension(size.width, height.get());
-    }
   }
 
   public int getExpandedColumnWidth(int columnToExpand) {
@@ -970,13 +975,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       // need a header to resize/drag columns, so use header that is not visible
       setDefaultRenderer(new EmptyTableCellRenderer());
       setReorderingAllowed(true);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      if (size == null) return null;
-      return new Dimension(size.width, 0);
     }
 
     @Override
