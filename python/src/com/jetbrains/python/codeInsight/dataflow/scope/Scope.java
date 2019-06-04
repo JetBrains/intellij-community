@@ -36,10 +36,13 @@ public interface Scope {
   @Nullable
   ScopeVariable getDeclaredVariable(@NotNull PsiElement anchorElement, @NotNull String name) throws DFALimitExceededException;
 
+  boolean hasGlobals();
   boolean isGlobal(String name);
 
+  boolean hasNonLocals();
   boolean isNonlocal(String name);
 
+  boolean hasNestedScopes();
   boolean containsDeclaration(String name);
 
   @NotNull
