@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRu
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupContextData;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -63,10 +65,14 @@ public class WhiteListSimpleRuleFactory {
   @Nullable
   private static CustomWhiteListRule getCustomUtilRule(String s) {
     for (CustomWhiteListRule extension : CustomWhiteListRule.EP_NAME.getExtensions()) {
-      if (extension.acceptRuleId(s)) return extension;
+      if (isDevelopedByJetBrains(extension) && extension.acceptRuleId(s)) return extension;
     }
 
     return null;
+  }
+
+  private static boolean isDevelopedByJetBrains(CustomWhiteListRule extension) {
+    return ApplicationManager.getApplication().isUnitTestMode() || PluginInfoDetectorKt.getPluginInfo(extension.getClass()).isDevelopedByJetBrains();
   }
 
   @Nullable
