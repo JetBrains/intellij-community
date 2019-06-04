@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
   </component>
 </module>
