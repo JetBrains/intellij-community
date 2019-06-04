@@ -224,7 +224,8 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
       computeOwnTime(list, ownDurations)
     }
 
-    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap)
+    val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
+    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap, measureThreshold = measureThreshold)
   }
 }
 
@@ -312,7 +313,12 @@ private fun activityNameToJsonFieldName(name: String): String {
   }
 }
 
-private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer: JsonGenerator, fieldName: String, ownDurations: ObjectLongHashMap<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
+private fun writeActivities(activities: List<ActivityImpl>,
+                            offset: Long, writer: JsonGenerator,
+                            fieldName: String,
+                            ownDurations: ObjectLongHashMap<ActivityImpl>,
+                            pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
+                            measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD) {
   if (activities.isEmpty()) {
     return
   }
@@ -321,7 +327,7 @@ private fun writeActivities(activities: List<ActivityImpl>, offset: Long, writer
     for (item in activities) {
       val computedOwnDuration = ownDurations.get(item)
       val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
-      if (duration <= ParallelActivity.MEASURE_THRESHOLD) {
+      if (duration <= measureThreshold) {
         continue
       }
 

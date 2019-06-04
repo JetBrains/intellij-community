@@ -12,7 +12,7 @@ import com.intellij.ide.CliResult;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.jna.JnaLoader;
@@ -76,6 +76,8 @@ public class StartupUtil {
 
   private StartupUtil() { }
 
+  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> MainRunner.processException(e);
+
   public static synchronized void addExternalInstanceListener(@Nullable SocketLock.CliRequestProcessor processor) {
     // method called by app after startup
     if (ourSocketLock != null) {
@@ -86,6 +88,10 @@ public class StartupUtil {
   @Nullable
   public static synchronized BuiltInServer getServer() {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
+  }
+
+  public static void installExceptionHandler() {
+    Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
   }
 
   @FunctionalInterface
@@ -127,27 +133,31 @@ public class StartupUtil {
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
     throws InvocationTargetException, InterruptedException, ExecutionException {
-    //noinspection SpellCheckingInspection
-    System.setProperty("sun.awt.noerasebackground", "true");
-
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
-    checkHiDPISettings();
 
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
+      checkHiDPISettings();
+
+      //noinspection SpellCheckingInspection
+      System.setProperty("sun.awt.noerasebackground", "true");
+
       // see note about StartupUiUtil static init - it is required even if headless
       try {
         StartupUiUtil.initDefaultLaF();
         if (!Main.isHeadless()) {
           SplashManager.show(args);
         }
+
+        // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
+        StartupUiUtil.configureHtmlKitStylesheet();
       }
       catch (Exception e) {
         throw new CompletionException(e);
       }
     }, runnable -> {
-      PluginManager.installExceptionHandler();
+      installExceptionHandler();
       EventQueue.invokeLater(runnable);
     });
 
@@ -197,7 +207,7 @@ public class StartupUtil {
         appStarter.beforeImportConfigs();
         Path newConfigDir = Paths.get(PathManager.getConfigPath());
         EventQueue.invokeAndWait(() -> {
-          PluginManager.installExceptionHandler();
+          installExceptionHandler();
           ConfigImportHelper.importConfigsTo(newConfigDir, log);
         });
         appStarter.importFinished(newConfigDir);

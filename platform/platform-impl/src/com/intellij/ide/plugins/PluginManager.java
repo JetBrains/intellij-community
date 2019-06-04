@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.IdeErrorsDialog;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -37,12 +38,6 @@ public class PluginManager extends PluginManagerCore {
   public static File getOnceInstalledIfExists() {
     File onceInstalledFile = new File(PathManager.getConfigPath(), INSTALLED_TXT);
     return onceInstalledFile.isFile() ? onceInstalledFile : null;
-  }
-
-  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> MainRunner.processException(e);
-
-  public static void installExceptionHandler() {
-    Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
   }
 
   public static void processException(@NotNull Throwable t) {

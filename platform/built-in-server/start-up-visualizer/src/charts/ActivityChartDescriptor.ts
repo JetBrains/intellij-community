@@ -30,14 +30,14 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     sourceNames: ["appExtensions", "projectExtensions", "moduleExtensions"],
   },
   {
-    label: "Options Top Hit Providers",
-    id: "topHitProviders",
-    sourceNames: ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"],
-  },
-  {
     label: "Prepare App Init",
     id: "prepareAppInitActivities",
     groupByThread: true,
+  },
+  {
+    label: "Options Top Hit Providers",
+    id: "topHitProviders",
+    sourceNames: ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"],
   },
   {
     label: "Project Post-Startup",

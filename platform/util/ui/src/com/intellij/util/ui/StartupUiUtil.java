@@ -5,7 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -38,7 +38,7 @@ public class StartupUiUtil {
       return ourSystemLaFClassName;
     }
 
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       // Normally, GTK LaF is considered "system" when:
       // 1) Gnome session is run
       // 2) gtk lib is available
@@ -49,15 +49,18 @@ public class StartupUiUtil {
         String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
         Class cls = Class.forName(name);
         LookAndFeel laf = (LookAndFeel)cls.newInstance();
-        if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
-          return ourSystemLaFClassName = name;
+        // if gtk lib is available
+        if (laf.isSupportedLookAndFeel()) {
+          ourSystemLaFClassName = name;
+          return ourSystemLaFClassName;
         }
       }
       catch (Exception ignore) {
       }
     }
 
-    return ourSystemLaFClassName = UIManager.getSystemLookAndFeelClassName();
+    ourSystemLaFClassName = UIManager.getSystemLookAndFeelClassName();
+    return ourSystemLaFClassName;
   }
 
   public static void initDefaultLaF()
@@ -68,11 +71,6 @@ public class StartupUiUtil {
     // separate activity to make clear that it is not our code takes time
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init AWT Toolkit");
     Toolkit.getDefaultToolkit();
-    activity = activity.endAndStart("configure html kit");
-
-    // this will use toolkit, order of code is critically important
-    configureHtmlKitStylesheet();
-
     activity = activity.endAndStart(ActivitySubNames.INIT_DEFAULT_LAF);
     UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
@@ -83,6 +81,8 @@ public class StartupUiUtil {
       return;
     }
 
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start("configure html kit");
+
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();
     ourDefaultHtmlKitCss = kit.getStyleSheet();
@@ -91,6 +91,7 @@ public class StartupUiUtil {
 
     // Applied to all JLabel instances, including subclasses. Supported in JBR only.
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
+    activity.end();
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -104,7 +105,7 @@ public class StartupUiUtil {
    */
   static void blockATKWrapper() {
     // registry must be not used here, because this method called before application loading
-    if (!SystemInfo.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
+    if (!SystemInfoRt.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
       return;
     }
 

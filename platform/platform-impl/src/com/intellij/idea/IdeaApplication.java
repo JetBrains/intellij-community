@@ -98,7 +98,7 @@ public final class IdeaApplication {
       Activity placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
       EventQueue.invokeLater(() -> {
         placeOnEventQueueActivity.end();
-        PluginManager.installExceptionHandler();
+        StartupUtil.installExceptionHandler();
         initAppActivity.end();
         try {
           Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
