@@ -1,15 +1,21 @@
 package circlet.plugins.pipelines.services
 
+import circlet.components.*
+import klogging.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.compile.util.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.viewmodel.*
+import circlet.utils.*
+import com.intellij.ide.plugins.cl.*
 import com.intellij.openapi.project.*
 import runtime.reactive.*
 import java.io.*
 
 class ScriptModelBuilder {
+    companion object : KLogging()
+
     suspend fun build(lifetime: Lifetime, project: Project): ScriptViewModel {
 
         val basePath = project.basePath
@@ -23,15 +29,29 @@ class ScriptModelBuilder {
             return createEmptyScriptViewModel(lifetime)
         }
 
-        val kotlinCompilerPath = KotlinCompilerFinder().find()
-        val dslJarPath = findDslJarPath()
+        try
+        {
+            val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
+            val path = normalizePath(automationSettingsComponent.state.kotlincFolderPath)
+            val kotlinCompilerPath = KotlinCompilerFinder().find(if (path.endsWith('/')) path else "$path/")
 
-        val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
-        val sourceCodeResolver = LocalSourceCodeResolver()
-        DslJarCompiler().compile(expectedFile.absolutePath, targetJar, sourceCodeResolver, kotlinCompilerPath, dslJarPath)
+            //todo refac search for jar with script definition
+            val url = (ScriptModelBuilder::class.java.classLoader as PluginClassLoader).urls.firstOrNull {
+                x -> x.file.contains("/pipelines-config-dsl-compile")  }
+                ?: error("can't find pipelines-config-dsl-compile jar")
 
-        val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
+            val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
+            val sourceCodeResolver = LocalSourceCodeResolver()
+            DslJarCompiler().compile(expectedFile.absolutePath, targetJar, sourceCodeResolver, kotlinCompilerPath, url.file)
 
-        return ScriptViewModel(lifetime, config)
+            val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
+
+            return ScriptViewModel(lifetime, config)
+        }
+        catch (e: Exception)
+        {
+            logger.error(e)
+            return createEmptyScriptViewModel(lifetime)
+        }
     }
 }
