@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
@@ -37,7 +38,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TextEditorProvider implements FileEditorProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider, DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");

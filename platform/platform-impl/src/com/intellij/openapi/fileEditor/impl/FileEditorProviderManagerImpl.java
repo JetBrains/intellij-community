@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +38,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   public FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
     List<FileEditorProvider> sharedProviders = new ArrayList<>();
-    boolean doNotShowTextEditor = false;
+    boolean hideDefaultEditor = false;
     for (final FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
       if (ReadAction.compute(() -> {
         if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
@@ -48,13 +47,13 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
         return provider.accept(project, file);
       })) {
         sharedProviders.add(provider);
-        doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+        hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
       }
     }
 
     // Throw out default editors provider if necessary
-    if (doNotShowTextEditor) {
-      ContainerUtil.retainAll(sharedProviders, provider -> !(provider instanceof TextEditorProvider));
+    if (hideDefaultEditor) {
+      ContainerUtil.retainAll(sharedProviders, provider -> !(provider instanceof DefaultPlatformFileEditorProvider));
     }
 
     // Sort editors according policies
