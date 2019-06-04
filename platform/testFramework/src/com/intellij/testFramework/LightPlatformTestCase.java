@@ -418,9 +418,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
-      () -> myThreadTracker.checkLeak(),
+      () -> {
+        if (myThreadTracker != null) {
+          myThreadTracker.checkLeak();
+        }
+      },
       () -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project),
-      () -> myVirtualFilePointerTracker.assertPointersAreDisposed()
+      () -> {
+        if (myVirtualFilePointerTracker != null) {
+          myVirtualFilePointerTracker.assertPointersAreDisposed();
+        }
+      }
     ).run();
   }
 
