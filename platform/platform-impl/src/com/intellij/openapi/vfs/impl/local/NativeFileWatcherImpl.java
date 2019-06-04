@@ -251,7 +251,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   public void resetChangedPaths() {
     synchronized (myLastChangedPaths) {
       myLastChangedPathIndex = 0;
-      for (int i = 0; i < myLastChangedPaths.length; ++i) myLastChangedPaths[i] = null;
+      Arrays.fill(myLastChangedPaths, null);
     }
   }
 
@@ -264,7 +264,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     @Override public boolean withSeparators() { return false; }
   };
 
-  @SuppressWarnings("SpellCheckingInspection")
   private enum WatcherOp { GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY }
 
   private class MyProcessHandler extends OSProcessHandler {
