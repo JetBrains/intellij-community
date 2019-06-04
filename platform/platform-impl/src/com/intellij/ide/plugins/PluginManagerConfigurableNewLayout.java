@@ -647,6 +647,7 @@ public class PluginManagerConfigurableNewLayout
                       result.descriptors.add(descriptor);
                     }
                   }
+                  ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
                   return;
                 }
@@ -668,6 +669,7 @@ public class PluginManagerConfigurableNewLayout
                       }
                     }
                   }
+                  ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
                   return;
                 }
@@ -695,6 +697,8 @@ public class PluginManagerConfigurableNewLayout
 
                   result.descriptors.addAll(0, builtinList);
                 }
+
+                ContainerUtil.removeDuplicates(result.descriptors);
 
                 if (!result.descriptors.isEmpty()) {
                   String title = "Sort By";
