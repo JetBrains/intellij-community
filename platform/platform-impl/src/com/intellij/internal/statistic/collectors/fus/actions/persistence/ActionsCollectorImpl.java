@@ -18,7 +18,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,6 +55,12 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   public static boolean isCustomAllowedAction(@NotNull String actionId) {
     return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
+  }
+
+  public ActionsCollectorImpl(@NotNull DefaultKeymap defaultKeymap) {
+    for (Keymap keymap : defaultKeymap.getKeymaps()) {
+      myXmlActionIds.addAll(keymap.getActionIdList());
+    }
   }
 
   @Override
@@ -117,7 +123,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
       return DEFAULT_ID;
     }
     String actionId = ActionManager.getInstance().getId(action);
-    if (actionId != null && !isSafeActionId(actionId)) {
+    if (actionId != null && !canReportActionId(actionId)) {
       return action.getClass().getName();
     }
     if (actionId == null) {
@@ -126,16 +132,8 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     return actionId != null ? actionId : action.getClass().getName();
   }
 
-  private boolean isSafeActionId(@NotNull String actionId) {
-    if (myXmlActionIds.contains(actionId)) {
-      return true;
-    }
-    KeymapManager instance = KeymapManager.getInstance();
-    Keymap keymap = instance == null ? null : instance.getKeymap(KeymapManager.DEFAULT_IDEA_KEYMAP);
-    if (keymap != null && keymap.getActionIdList().contains(actionId)) {
-      return true;
-    }
-    return false;
+  private boolean canReportActionId(@NotNull String actionId) {
+    return myXmlActionIds.contains(actionId);
   }
 
   private final State myState = new State();
@@ -152,7 +150,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   @Override
   public void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId) {
-    if (isSafeActionId(actionId)) {
+    if (canReportActionId(actionId)) {
       myOtherActions.put(action, actionId);
     }
   }
