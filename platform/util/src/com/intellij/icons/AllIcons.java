@@ -2022,6 +2022,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon KeymapMainMenu = load("/nodes/keymapMainMenu.svg");
     /** 16x16 */ public static final Icon KeymapOther = load("/nodes/keymapOther.svg");
     /** 16x16 */ public static final Icon KeymapTools = load("/nodes/keymapTools.svg");
+    /** 16x16 */ public static final Icon Lambda = load("/nodes/lambda.svg");
     /** 16x16 */ public static final Icon Locked = load("/nodes/locked.svg");
     /** 16x16 */ public static final Icon LogFolder = load("/nodes/logFolder.svg");
     /** 16x16 */ public static final Icon Method = load("/nodes/method.svg");
