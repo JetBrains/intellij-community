@@ -5,13 +5,13 @@ import circlet.utils.*
 import com.intellij.openapi.components.*
 import runtime.reactive.*
 
-val circletSettings get() = application.getComponent<CircletSettingsComponent>()
+val circletServerSettings get() = application.getComponent<CircletServerSettingsComponent>()
 
 @State(
-    name = "CircletConfigurable",
-    storages = [Storage(value = "Circlet.xml", roamingType = RoamingType.DEFAULT)]
+    name = "CircletServerConfigurable",
+    storages = [Storage(value = "CircletServer.xml", roamingType = RoamingType.DEFAULT)]
 )
-class CircletSettingsComponent : PersistentStateComponent<CircletServerSettings> {
+class CircletServerSettingsComponent : PersistentStateComponent<CircletServerSettings> {
 
     val settings = mutableProperty(CircletServerSettings())
 
@@ -22,6 +22,26 @@ class CircletSettingsComponent : PersistentStateComponent<CircletServerSettings>
     }
 
     fun applySettings(state: CircletServerSettings) {
+        settings.value = state
+    }
+
+}
+
+@State(
+    name = "CircletAutomationConfigurable",
+    storages = [Storage(value = "CircletAutomation.xml", roamingType = RoamingType.DEFAULT)]
+)
+class CircletAutomationSettingsComponent : PersistentStateComponent<CircletAutomationSettings> {
+
+    private val settings = mutableProperty(CircletAutomationSettings())
+
+    override fun getState() = settings.value
+
+    override fun loadState(state: CircletAutomationSettings) {
+        settings.value = state
+    }
+
+    fun applySettings(state: CircletAutomationSettings) {
         settings.value = state
     }
 

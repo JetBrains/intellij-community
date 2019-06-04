@@ -4,6 +4,7 @@ import circlet.client.api.*
 import circlet.components.*
 import circlet.messages.*
 import circlet.platform.api.oauth.*
+import circlet.utils.*
 import circlet.workspaces.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.ui.*
@@ -16,6 +17,9 @@ import runtime.reactive.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.Action.*
+import java.awt.FlowLayout
+import javax.swing.event.*
+
 
 val log = logger<CircletConfigurable>()
 
@@ -36,78 +40,107 @@ class CircletConfigurable : SearchableConfigurable {
         return LoginState.Connected(workspace.client.server, workspace)
     }
 
-    private val panel = JPanel(FlowLayout())
+    private val panel = JPanel()
+    private val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
+    private val automationSettings: MutableProperty<CircletAutomationSettings>
 
     init {
+        panel.layout = BorderLayout()
+        val settings = circletServerSettings.settings
         circletWorkspace.workspace.forEach(uiLifetime) { ws ->
             if (ws == null) {
-                state.value = LoginState.Disconnected(circletSettings.settings.value.server, "")
+                state.value = LoginState.Disconnected(settings.value.server, "")
             }
             else {
                 state.value = LoginState.Connected(ws.client.server, ws)
             }
         }
 
+
+        automationSettings = mutableProperty(automationSettingsComponent.state)
+        panel.add(createAutomationView(automationSettings), BorderLayout.PAGE_START)
+        val connectionPanel = JPanel(FlowLayout())
+
         state.forEach(uiLifetime) { st ->
-            panel.removeAll()
-            when (st) {
-                is LoginState.Disconnected -> {
-                    val server = JTextField(20).apply {
-                        text = st.server
-                    }
-                    panel.add(
-                        JPanel(FlowLayout()).apply {
-                            add(JLabel().apply {
-                                text = "Server:"
-                            })
-                            add(server)
-                            val connectButton = JButton("Sign In")
-                            add(connectButton.apply {
-                                addActionListener {
-                                    connectButton.isEnabled = false
-                                    val serverName = server.text
-                                    signIn(serverName)
-                                }
-                            })
-                            if (st.error != null) {
-                                add(JLabel().apply {
-                                    text = st.error
-                                })
-                            }
-                        }
-                    )
-                }
-                is LoginState.Connecting -> {
-                    panel.add(
-                        JPanel(FlowLayout()).apply {
-                            add(JLabel("Connection to ${st.server}..."))
-                            val connectButton = JButton("Cancel")
-                            add(connectButton.apply {
-                                addActionListener {
-                                    st.lt.terminate()
-                                    state.value = LoginState.Disconnected(st.server, null)
-                                }
-                            })
-                        }
-                    )
-                }
-                is LoginState.Connected -> {
-                    panel.add(
-                        JPanel(FlowLayout()).apply {
-                            add(JLabel("Connected to ${st.server} as ${st.workspace.me.value.englishFullName()}"))
-                            val connectButton = JButton("Disconnect")
-                            add(connectButton.apply {
-                                addActionListener {
-                                    circletWorkspace.signOut()
-                                    state.value = LoginState.Disconnected(st.server, null)
-                                }
-                            })
-                        }
-                    )
-                }
-            }
+            connectionPanel.removeAll()
+            connectionPanel.add(createView(st))
             panel.revalidate()
             panel.repaint()
+        }
+
+        panel.add(connectionPanel)
+    }
+
+    private fun createAutomationView(settings: MutableProperty<CircletAutomationSettings>): JComponent {
+
+        val automationSettings = settings.value
+        val panel = JPanel()
+        panel.layout = BorderLayout()
+        panel.add(JLabel("Kotlin compiler folder"), BorderLayout.LINE_START)
+        val kotlincFolderValueField = JTextField().apply {
+            val textField = this
+            textField.document.addDocumentListener(object : DocumentAdapter() {
+                override fun textChanged(e: DocumentEvent) {
+                    settings.value = CircletAutomationSettings(textField.text)
+                }
+            })
+        }
+        kotlincFolderValueField.text = automationSettings.kotlincFolderPath
+        panel.add(kotlincFolderValueField)
+
+        return panel
+    }
+
+    private fun createView(st: LoginState): JComponent {
+        when (st) {
+            is LoginState.Disconnected -> {
+                val server = JTextField(20).apply {
+                    text = st.server
+                }
+                return JPanel(FlowLayout()).apply {
+                        add(JLabel().apply {
+                            text = "Server:"
+                        })
+                        add(server)
+                        val connectButton = JButton("Sign In")
+                        add(connectButton.apply {
+                            addActionListener {
+                                connectButton.isEnabled = false
+                                val serverName = server.text
+                                signIn(serverName)
+                            }
+                        })
+                        if (st.error != null) {
+                            add(JLabel().apply {
+                                text = st.error
+                            })
+                        }
+                    }
+            }
+            is LoginState.Connecting -> {
+                return JPanel(FlowLayout()).apply {
+                        add(JLabel("Connection to ${st.server}..."))
+                        val connectButton = JButton("Cancel")
+                        add(connectButton.apply {
+                            addActionListener {
+                                st.lt.terminate()
+                                state.value = LoginState.Disconnected(st.server, null)
+                            }
+                        })
+                    }
+            }
+            is LoginState.Connected -> {
+                return JPanel(FlowLayout()).apply {
+                        add(JLabel("Connected to ${st.server} as ${st.workspace.me.value.englishFullName()}"))
+                        val connectButton = JButton("Disconnect")
+                        add(connectButton.apply {
+                            addActionListener {
+                                circletWorkspace.signOut()
+                                state.value = LoginState.Disconnected(st.server, null)
+                            }
+                        })
+                    }
+            }
         }
     }
 
@@ -133,7 +166,7 @@ class CircletConfigurable : SearchableConfigurable {
     }
 
     override fun isModified(): Boolean {
-        return false
+        return automationSettingsComponent.state != automationSettings.value
     }
 
     override fun getId(): String = "circlet.settings.connection"
@@ -141,7 +174,7 @@ class CircletConfigurable : SearchableConfigurable {
     override fun getDisplayName(): String = CircletBundle.message("connection-configurable.display-name")
 
     override fun apply() {
-        // do nothing.
+        automationSettingsComponent.applySettings(automationSettings.value)
     }
 
     override fun reset() {
@@ -153,6 +186,10 @@ class CircletConfigurable : SearchableConfigurable {
         uiLifetime.terminate()
     }
 }
+
+data class CircletAutomationSettings(
+    var kotlincFolderPath: String = ""
+)
 
 data class CircletServerSettings(
     var enabled: Boolean = false,
@@ -181,4 +218,3 @@ class LoginDialogWrapper : DialogWrapper(true) {
         }
     }
 }
-

@@ -51,7 +51,10 @@
             <implementation-class>circlet.components.CircletWorkspaceComponent</implementation-class>
         </component>
         <component>
-            <implementation-class>circlet.components.CircletSettingsComponent</implementation-class>
+            <implementation-class>circlet.components.CircletServerSettingsComponent</implementation-class>
+        </component>
+        <component>
+            <implementation-class>circlet.components.CircletAutomationSettingsComponent</implementation-class>
         </component>
     </application-components>
 
