@@ -52,6 +52,7 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
   private boolean myDetachingMode;
   private boolean myCancelled;
   private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
+  private boolean myStopped;
 
   public MouseDragHelper(@NotNull Disposable parent, @NotNull JComponent dragComponent) {
     myDragComponent = dragComponent;
@@ -92,6 +93,9 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
       myDetachPostponed = false;
       return;
     }
+    if (myStopped) {
+      return;
+    }
     myGlassPane = IdeGlassPaneUtil.find(myDragComponent);
     myGlassPaneListenersDisposable = Disposer.newDisposable("myGlassPaneListeners");
     Disposer.register(myParentDisposable, myGlassPaneListenersDisposable);
@@ -100,6 +104,7 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
   }
 
   public void stop() {
+    myStopped = true;
     detach(false);
   }
 
