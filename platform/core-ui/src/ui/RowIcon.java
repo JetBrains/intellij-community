@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.IconLoader.DarkIconProvider;
+import com.intellij.ui.icons.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,7 +14,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
 public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconProvider, CompositeIcon {

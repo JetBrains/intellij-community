@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.standalone;
 
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.TestScaleHelper;
 import org.junit.Test;
 
@@ -21,7 +21,7 @@ public class UserScalePropTest {
 
     System.setProperty(IDE_UI_SCALE_PROP, "1.0");
 
-    JBUI.setUserScaleFactor(2f);
-    assertEquals(IDE_UI_SCALE_PROP + " system property is ignored", 1f, JBUI.scale(1f));
+    JBUIScale.setUserScaleFactor(2f);
+    assertEquals(IDE_UI_SCALE_PROP + " system property is ignored", 1f, JBUIScale.scale(1f));
   }
 }

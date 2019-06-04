@@ -25,10 +25,11 @@ import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.FrameState;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
@@ -707,7 +708,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   /**
    * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
-   * See {@link UIUtil#isJreHiDPIEnabled()}
+   * See {@link JreHiDpiUtil#isJreHiDPIEnabled()}
    */
   static class FrameBoundsConverter {
     /**
@@ -760,15 +761,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         return false;
       }
       // device space equals user space
-      return UIUtil.isJreHiDPIEnabled();
+      return JreHiDpiUtil.isJreHiDPIEnabled();
     }
 
     private static void scaleUp(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      scale(bounds, gc.getBounds(), JBUI.sysScale(gc));
+      scale(bounds, gc.getBounds(), JBUIScale.sysScale(gc));
     }
 
     private static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      float scale = JBUI.sysScale(gc);
+      float scale = JBUIScale.sysScale(gc);
       assert scale != 0;
       scale(bounds, gc.getBounds(), 1 / scale);
     }

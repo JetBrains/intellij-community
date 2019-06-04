@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.avatars
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUIScale
 import com.intellij.util.ui.JBValue
 import icons.GithubIcons
 import org.jetbrains.annotations.CalledInAwt
@@ -27,7 +27,7 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
                                                 private val iconSize: JBValue,
                                                 private val component: Component) {
 
-  private val scaleContext = JBUIScale.ScaleContext.create(component)
+  private val scaleContext = ScaleContext.create(component)
   private var defaultIcon = createDefaultIcon(iconSize.get())
   private val icons = mutableMapOf<GithubUser, Icon>()
 
@@ -42,7 +42,7 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
     val iconSize = iconSize.get()
 
     // so that icons are rescaled when any scale changes (be it font size or current DPI)
-    if (scaleContext.update(JBUIScale.ScaleContext.create(component))) {
+    if (scaleContext.update(ScaleContext.create(component))) {
       defaultIcon = createDefaultIcon(iconSize)
       icons.clear()
     }

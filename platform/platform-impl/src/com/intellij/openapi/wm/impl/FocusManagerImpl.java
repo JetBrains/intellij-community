@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -285,7 +286,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
     if (c == null) return;
 
-    final Window window = UIUtil.getParentOfType(Window.class, c);
+    final Window window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, (Component)c);
     if (window != null && window.isShowing()) {
       doWhenFocusSettlesDown(() -> {
         if (ApplicationManager.getApplication().isActive()) {

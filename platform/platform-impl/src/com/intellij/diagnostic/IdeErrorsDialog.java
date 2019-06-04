@@ -39,6 +39,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.ComponentsKt;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -307,7 +308,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     commentPanel.add(commentLabel, BorderLayout.NORTH);
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER);
 
-    JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
+    JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUIScale.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
     attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
     attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 350), BorderLayout.WEST);
@@ -608,7 +609,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     Container parentComponent = getRootPane();
     if (dialogClosed) {
-      IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, parentComponent);
+      IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)parentComponent);
       parentComponent = frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame();
     }
 

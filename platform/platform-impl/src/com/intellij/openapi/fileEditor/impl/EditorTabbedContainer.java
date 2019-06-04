@@ -48,10 +48,7 @@ import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.ui.tabs.newImpl.SingleHeightTabs;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -784,7 +781,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       }
       setBorder(new MyShadowBorder(this));
-      setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(2, 8)));
+      setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBInsets.create(2, 8)));
     }
 
     private IdeEventQueue.EventDispatcher createFocusDispatcher() {

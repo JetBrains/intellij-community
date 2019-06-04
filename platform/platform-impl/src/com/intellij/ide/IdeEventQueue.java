@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
@@ -222,7 +223,8 @@ public final class IdeEventQueue extends EventQueue {
       case HierarchyEvent.ANCESTOR_MOVED:
       case HierarchyEvent.ANCESTOR_RESIZED:
         Object source = event.getSource();
-        if (source instanceof Component && null != UIUtil.getParentOfType(CellRendererPane.class, (Component)source)) {
+        if (source instanceof Component &&
+            ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)source) != null) {
           return true;
         }
     }
@@ -750,7 +752,7 @@ public final class IdeEventQueue extends EventQueue {
     final Window eventWindow = we.getWindow();
 
     if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      Component frame = UIUtil.findUltimateParent(eventWindow);
+      Component frame = ComponentUtil.findUltimateParent(eventWindow);
       Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
       IdeFrame[] allProjectFrames = WindowManager.getInstance().getAllProjectFrames();
 
@@ -977,7 +979,7 @@ public final class IdeEventQueue extends EventQueue {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(() -> {
                 try {
-                  final Window window = UIUtil.getWindow(component);
+                  final Window window = ComponentUtil.getWindow(component);
                   if (window == null || !window.isActive()) {
                     return;
                   }
@@ -1010,7 +1012,7 @@ public final class IdeEventQueue extends EventQueue {
           && e instanceof KeyEvent
           && e.getID() == KeyEvent.KEY_RELEASED
           && (((KeyEvent)e).getKeyCode() == KeyEvent.VK_UP || ((KeyEvent)e).getKeyCode() == KeyEvent.VK_DOWN)) {
-        Component parent = UIUtil.getWindow(((KeyEvent)e).getComponent());
+        Component parent = ComponentUtil.getWindow(((KeyEvent)e).getComponent());
         if (parent instanceof JDialog) {
           final JDialog dialog = (JDialog)parent;
           SwingUtilities.invokeLater(() -> {
@@ -1034,7 +1036,7 @@ public final class IdeEventQueue extends EventQueue {
     public boolean dispatch(@NotNull AWTEvent e) {
       if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE &&
           !getInstance().getPopupManager().isPopupActive()) {
-        final Component owner = UIUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
+        final Component owner = ComponentUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
                                                              component -> component instanceof JTable || component instanceof JTree);
 
         if (owner instanceof JTable && ((JTable)owner).isEditing()) {

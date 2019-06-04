@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
@@ -213,10 +214,10 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
       if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
-        insets.right -= JBUI.scale(4);
+        insets.right -= JBUIScale.scale(4);
       }
       else {
-        insets.left -= JBUI.scale(4);
+        insets.left -= JBUIScale.scale(4);
       }
     }
     return insets;

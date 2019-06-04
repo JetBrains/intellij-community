@@ -12,9 +12,12 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.JBUI;
@@ -203,8 +206,8 @@ public abstract class PluginsTab {
     mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
-    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(6));
-    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(-1));
+    editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);

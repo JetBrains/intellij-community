@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +58,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = JBUI.insets(4, 8);
+    gbConstraints.insets = JBInsets.create(4, 8);
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;
     gbConstraints.gridy = 0;

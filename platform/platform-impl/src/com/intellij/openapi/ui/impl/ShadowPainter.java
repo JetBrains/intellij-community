@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextAware;
+import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale.ScaleContextAware;
-import com.intellij.util.ui.JBUIScale.ScaleContextSupport;
+import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -139,8 +141,8 @@ public class ShadowPainter extends ScaleContextSupport {
   }
 
   private static void fill(Graphics g, Icon pattern, int x, int y, int from, int to, boolean horizontally) {
-    double scale = JBUI.sysScale((Graphics2D)g);
-    if (StartupUiUtil.isJreHiDPIEnabled() && Math.ceil(scale) > scale) {
+    double scale = JBUIScale.sysScale((Graphics2D)g);
+    if (JreHiDpiUtil.isJreHiDPIEnabled() && Math.ceil(scale) > scale) {
       // Direct painting for fractional scale
       BufferedImage img = ImageUtil.toBufferedImage(IconUtil.toImage(pattern));
       int patternSize = horizontally ? img.getWidth() : img.getHeight();

@@ -55,6 +55,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.UpdatableDefaultActionGroup;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -774,7 +775,7 @@ public abstract class DiffRequestProcessor implements Disposable {
                                                      "You can disable this feature in " + DiffUtil.getSettingsConfigurablePath());
 
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-    Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUI.scale(40) : JBUI.scale(40));
+    Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
 
     if (editor == null) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();

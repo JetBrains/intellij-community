@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.*;
@@ -552,9 +553,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     int modelRows = model == null ? 0 : model.getSize();
     if (modelRows <= 0) {
       if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
-      if (fixedWidth <= 0) fixedWidth = JBUI.scale(256); // scaled value from JDK
+      if (fixedWidth <= 0) fixedWidth = JBUIScale.scale(256); // scaled value from JDK
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16); // scaled value from JDK
+      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
     }
     int visibleRows = list.getVisibleRowCount();
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
@@ -594,7 +595,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     int modelRows = tree.getRowCount();
     if (modelRows <= 0) {
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16);
+      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16);
     }
     int visibleRows = tree.getVisibleRowCount();
     if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");

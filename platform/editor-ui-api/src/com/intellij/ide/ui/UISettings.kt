@@ -10,11 +10,13 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
 import java.awt.Graphics
@@ -380,7 +382,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
     @JvmStatic
     private fun verbose(msg: String, vararg args: Any) {
-      if (UIUtil.SCALE_VERBOSE) {
+      if (JBUIScale.SCALE_VERBOSE) {
         LOG.info(String.format(msg, *args))
       }
     }
@@ -480,7 +482,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
      */
     @JvmStatic
     val defFontScale: Float
-      get() = if (UIUtil.isJreHiDPIEnabled()) 1f else JBUI.sysScale()
+      get() = if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else JBUIScale.sysScale()
 
     /**
      * Returns the default font size scaled by #defFontScale
@@ -497,18 +499,16 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       if (readScale == null || readScale <= 0) {
         verbose("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
+        if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfoRt.isMac) size = UISettingsState.defFontSize
       }
       else {
         var oldDefFontScale = defFontScale
         if (SystemInfo.isLinux) {
-          val fontData = UIUtil.getSystemFontData()
-          if (fontData != null) {
-            // [tav] todo: temp workaround for transitioning IDEA 173 to 181
-            // not converting fonts stored with scale equal to the old calculation
-            oldDefFontScale = fontData.second / 12f
-            verbose("oldDefFontScale=%.2f", oldDefFontScale)
-          }
+          val fontData = JBUIScale.getSystemFontData()
+          // [tav] todo: temp workaround for transitioning IDEA 173 to 181
+          // not converting fonts stored with scale equal to the old calculation
+          oldDefFontScale = fontData.second / 12f
+          verbose("oldDefFontScale=%.2f", oldDefFontScale)
         }
         if (readScale != defFontScale && readScale != oldDefFontScale) {
           size = ((readSize / readScale) * defFontScale).roundToInt()

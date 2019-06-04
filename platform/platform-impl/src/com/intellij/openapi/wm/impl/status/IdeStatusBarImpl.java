@@ -23,10 +23,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -660,7 +657,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     @Override
     public Font getFont() {
-      return SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label();
+      return SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBFont.label();
     }
 
     @Override

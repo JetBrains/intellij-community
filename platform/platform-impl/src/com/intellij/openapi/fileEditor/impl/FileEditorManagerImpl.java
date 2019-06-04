@@ -50,6 +50,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
@@ -1588,7 +1589,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
       if (newData.first != null) {
         final JComponent component = newData.second.getComponent();
-        final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);
+        final EditorWindowHolder holder =
+          ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
         if (holder != null) {
           addSelectionRecord(newData.first, holder.getEditorWindow());
         }

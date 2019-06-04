@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -339,7 +340,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      Dimension pointerSize,
                      int cornerToPointerDistance) {
     myBorderColor = borderColor;
-    myBorderInsets = borderInsets != null ? borderInsets : JBUI.insets(5, 8);
+    myBorderInsets = borderInsets != null ? borderInsets : JBInsets.create(5, 8);
     myFillColor = fillColor;
     myContent = content;
     myHideOnMouse = hideOnMouse;
@@ -725,8 +726,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           int iconHeight = icon.getIconHeight();
           Insets borderInsets = getShadowBorderInsets();
 
-          myCloseButton.setBounds(lpBounds.x + lpBounds.width - iconWidth - borderInsets.right - JBUI.scale(8),
-                                  lpBounds.y + borderInsets.top + JBUI.scale(6), iconWidth, iconHeight);
+          myCloseButton.setBounds(lpBounds.x + lpBounds.width - iconWidth - borderInsets.right - JBUIScale.scale(8),
+                                  lpBounds.y + borderInsets.top + JBUIScale.scale(6), iconWidth, iconHeight);
         }
       };
     }
@@ -1179,7 +1180,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         shape = getPointingShape(bounds, pointTarget, balloon);
       }
       else {
-        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUI.scale(1), bounds.height - JBUI.scale(1), balloon.getArc(), balloon.getArc());
+        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUIScale.scale(1), bounds.height - JBUIScale.scale(1), balloon.getArc(), balloon.getArc());
       }
 
       g.setColor(balloon.myFillColor);
@@ -1196,10 +1197,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         inset.left += borderInsets.left;
         inset.right += borderInsets.right;
 
-        titleBounds.x -= inset.left + JBUI.scale(1);
-        titleBounds.width += inset.left + inset.right + JBUI.scale(50);
-        titleBounds.y -= inset.top + JBUI.scale(1);
-        titleBounds.height += inset.top + inset.bottom + JBUI.scale(1);
+        titleBounds.x -= inset.left + JBUIScale.scale(1);
+        titleBounds.width += inset.left + inset.right + JBUIScale.scale(50);
+        titleBounds.y -= inset.top + JBUIScale.scale(1);
+        titleBounds.height += inset.top + inset.bottom + JBUIScale.scale(1);
 
         Area area = new Area(shape);
         area.intersect(new Area(titleBounds));
@@ -1334,7 +1335,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected Insets getTitleInsets(int normalInset, int pointerLength) {
       //noinspection UseDPIAwareInsets
-      return new Insets(pointerLength, JBUI.scale(normalInset), JBUI.scale(normalInset), JBUI.scale(normalInset));
+      return new Insets(pointerLength, JBUIScale.scale(normalInset), JBUIScale.scale(normalInset), JBUIScale.scale(normalInset));
     }
 
     @Override
@@ -1408,7 +1409,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     protected Shape getPointingShape(final Rectangle bounds, Point pointTarget, final BalloonImpl balloon) {
       pointTarget = new Point(pointTarget.x, Math.max((int) bounds.getMaxY(), pointTarget.y));
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.BOTTOM);
-      shaper.line(-balloon.getPointerWidth(this) / 2, -balloon.getPointerLength(this) + JBUI.scale(1));
+      shaper.line(-balloon.getPointerWidth(this) / 2, -balloon.getPointerLength(this) + JBUIScale.scale(1));
       shaper.toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown().toBottomCurve().line(0, 2)
         .roundLeftDown().lineTo(pointTarget.x + balloon.getPointerWidth(this) / 2, shaper.getCurrent().y)
         .lineTo(pointTarget.x, pointTarget.y)
@@ -1470,7 +1471,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected Insets getTitleInsets(int normalInset, int pointerLength) {
       //noinspection UseDPIAwareInsets
-      return new Insets(JBUI.scale(normalInset), pointerLength, JBUI.scale(normalInset), JBUI.scale(normalInset));
+      return new Insets(JBUIScale.scale(normalInset), pointerLength, JBUIScale.scale(normalInset), JBUIScale.scale(normalInset));
     }
 
     @Override
@@ -1538,7 +1539,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     @Override
     protected Insets getTitleInsets(int normalInset, int pointerLength) {
       //noinspection UseDPIAwareInsets
-      return new Insets(JBUI.scale(normalInset), pointerLength, JBUI.scale(normalInset), JBUI.scale(normalInset));
+      return new Insets(JBUIScale.scale(normalInset), pointerLength, JBUIScale.scale(normalInset), JBUIScale.scale(normalInset));
     }
 
     @Override
@@ -1546,7 +1547,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       pointTarget = new Point(Math.max((int) bounds.getMaxX(), pointTarget.x), pointTarget.y);
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingConstants.RIGHT);
       shaper
-        .lineTo((int)bounds.getMaxX() - shaper.getTargetDelta(SwingConstants.RIGHT) - JBUI.scale(1), pointTarget.y + balloon.getPointerWidth(this) / 2);
+        .lineTo((int)bounds.getMaxX() - shaper.getTargetDelta(SwingConstants.RIGHT) - JBUIScale.scale(1), pointTarget.y + balloon.getPointerWidth(this) / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
         .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
       return shaper.getShape();
@@ -1618,7 +1619,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
       if (myEnableButtons) {
         final boolean pressed = myButton.isPressedByMouse();
-        icon.paintIcon(this, g, pressed ? JBUI.scale(1) : 0, pressed ? JBUI.scale(1) : 0);
+        icon.paintIcon(this, g, pressed ? JBUIScale.scale(1) : 0, pressed ? JBUIScale.scale(1) : 0);
       }
     }
   }
@@ -1742,8 +1743,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       Graphics2D g2d = (Graphics2D)g.create();
       try {
-        if (UIUtil.isJreHiDPI(g2d)) {
-          float s = 1 / JBUI.sysScale(g2d);
+        if (JreHiDpiUtil.isJreHiDPI(g2d)) {
+          float s = 1 / JBUIScale.sysScale(g2d);
           g2d.scale(s, s);
         }
         UIUtil.drawImage(g2d, makeColorTransparent(image, myFillColor), 0, 0, null);
@@ -1810,9 +1811,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       if (myShadow != null) {
         Graphics2D g2d = (Graphics2D)graphics;
         try {
-          if (UIUtil.isJreHiDPI(g2d)) {
+          if (JreHiDpiUtil.isJreHiDPI(g2d)) {
             g2d = (Graphics2D)graphics.create();
-            float s = 1 / JBUI.sysScale(this);
+            float s = 1 / JBUIScale.sysScale(this);
             g2d.scale(s, s);
           }
           UIUtil.drawImage(g2d, myShadow.getImage(), myShadow.getX(), myShadow.getY(), null);
@@ -1834,8 +1835,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       else {
         shape = new RoundRectangle2D.Double(bounds.x,
                                             bounds.y,
-                                            bounds.width - JBUI.scale(1),
-                                            bounds.height - JBUI.scale(1),
+                                            bounds.width - JBUIScale.scale(1),
+                                            bounds.height - JBUIScale.scale(1),
                                             myBalloon.getArc(), myBalloon.getArc());
       }
       return shape.contains(x, y);
@@ -1988,12 +1989,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     public Shaper toRightCurve() {
-      myPath.lineTo((int)myBounds.getMaxX() - myBalloon.getArc() - getTargetDelta(SwingConstants.RIGHT) - JBUI.scale(1), getCurrent().y);
+      myPath.lineTo((int)myBounds.getMaxX() - myBalloon.getArc() - getTargetDelta(SwingConstants.RIGHT) - JBUIScale.scale(1), getCurrent().y);
       return this;
     }
 
     public Shaper toBottomCurve() {
-      myPath.lineTo(getCurrent().x, (int)myBounds.getMaxY() - myBalloon.getArc() - getTargetDelta(SwingConstants.BOTTOM) - JBUI.scale(1));
+      myPath.lineTo(getCurrent().x, (int)myBounds.getMaxY() - myBalloon.getArc() - getTargetDelta(SwingConstants.BOTTOM) -
+                                    JBUIScale.scale(1));
       return this;
     }
 

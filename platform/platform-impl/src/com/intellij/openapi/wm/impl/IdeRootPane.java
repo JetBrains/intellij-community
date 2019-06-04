@@ -24,10 +24,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
@@ -364,7 +361,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     for (IdeRootPaneNorthExtension component : myNorthComponents) {
       component.uiSettingsChanged(uiSettings);
     }
-    IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
+    IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
     BalloonLayout layout = frame != null ? frame.getBalloonLayout() : null;
     if (layout instanceof BalloonLayoutImpl) ((BalloonLayoutImpl)layout).queueRelayout();
   }

@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Pair
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
@@ -86,4 +87,4 @@ private class FontFilter : SerializationFilter {
 }
 
 private val systemFontFaceAndSize: Pair<String, Int>
-  get() = UIUtil.getSystemFontData() ?: Pair.create("Dialog", 12)
+  get() = JBUIScale.getSystemFontData()

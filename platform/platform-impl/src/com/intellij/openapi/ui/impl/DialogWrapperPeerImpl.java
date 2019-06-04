@@ -37,10 +37,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.AppIcon;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
@@ -466,8 +463,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       if (StackingPopupDispatcher.getInstance().isPopupFocused()) return;
-      JTree tree = UIUtil.getParentOfType(JTree.class, focusOwner);
-      JTable table = UIUtil.getParentOfType(JTable.class, focusOwner);
+      JTree tree = ComponentUtil.getParentOfType((Class<? extends JTree>)JTree.class, focusOwner);
+      JTable table = ComponentUtil.getParentOfType((Class<? extends JTable>)JTable.class, focusOwner);
 
       if (tree != null || table != null) {
         if (hasNoEditingTreesOrTablesUpward(focusOwner)) {

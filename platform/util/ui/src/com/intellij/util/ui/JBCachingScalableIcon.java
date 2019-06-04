@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.CopyableIcon;
 import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.ui.icons.CopyableIcon;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 
 /**
  * A {@link JBScalableIcon} providing an immutable caching implementation of the {@link ScalableIcon#scale(float)} method.

@@ -31,12 +31,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -369,7 +370,7 @@ public class AppUIUtil {
 
       @Override
       protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(0, JBUI.scale(8)));
+        JPanel centerPanel = new JPanel(new BorderLayout(0, JBUIScale.scale(8)));
         myViewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         myViewer.setFocusable(true);
         myViewer.addHyperlinkListener(new HyperlinkAdapter() {
@@ -388,12 +389,12 @@ public class AppUIUtil {
         StyleSheet styleSheet = ((HTMLDocument)myViewer.getDocument()).getStyleSheet();
         styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
-        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
-        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+        styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
+        styleSheet.addRule("h2, em {margin-top:" + JBUIScale.scaleFontSize((float)20) + "pt;}");
         styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
-        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
-        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
-        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+        styleSheet.addRule("p, h1 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+        styleSheet.addRule("li {margin-bottom:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+        styleSheet.addRule("h2 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
         myViewer.setCaretPosition(0);
         myViewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(JBUI.Borders.emptyTop(8).wrap(
@@ -524,7 +525,7 @@ public class AppUIUtil {
     dialog.setTitle("Data Sharing");
     dialog.pack();
     if (consents.size() < 2) {
-      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUI.scale(75));
+      dialog.setSize(dialog.getWindow().getWidth(), dialog.getWindow().getHeight() + JBUIScale.scale(75));
     }
     dialog.show();
 

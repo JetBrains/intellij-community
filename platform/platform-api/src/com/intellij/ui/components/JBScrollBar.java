@@ -4,7 +4,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -277,7 +277,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       }
       JViewport viewport = getViewport();
       Font font = viewport == null ? null : getViewFont(viewport);
-      int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
+      int size = font == null ? JBUIScale.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
     if (ScrollSettings.isHighPrecisionEnabled()) {

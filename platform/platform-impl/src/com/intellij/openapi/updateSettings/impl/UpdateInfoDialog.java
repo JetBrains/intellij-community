@@ -27,6 +27,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -347,7 +348,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         @Override
         public Dimension getPreferredScrollableViewportSize() {
           Dimension size = super.getPreferredScrollableViewportSize();
-          size.height = Math.min(size.height, JBUI.scale(400));
+          size.height = Math.min(size.height, JBUIScale.scale(400));
           return size;
         }
       };

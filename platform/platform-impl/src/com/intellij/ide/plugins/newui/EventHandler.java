@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,7 +105,7 @@ public abstract class EventHandler {
   @NotNull
   protected static CellPluginComponent get(@NotNull ComponentEvent event) {
     //noinspection ConstantConditions
-    return UIUtil.getParentOfType(CellPluginComponent.class, event.getComponent());
+    return ComponentUtil.getParentOfType((Class<? extends CellPluginComponent>)CellPluginComponent.class, event.getComponent());
   }
 
   @Nullable

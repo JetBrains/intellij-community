@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,7 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setFocusable(false);
 
     setOpaque(true);
-    setLayout(new BorderLayout(JBUI.scale(8), 0));
+    setLayout(new BorderLayout(JBUIScale.scale(8), 0));
     setBorder(JBUI.Borders.empty(5, 10, 10, 10));
 
     createButtons(pluginForUpdate);

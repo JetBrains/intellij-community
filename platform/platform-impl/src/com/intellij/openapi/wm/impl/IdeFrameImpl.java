@@ -36,8 +36,12 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -600,7 +604,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     if (shouldPaintSelfie()) {
       try {
         if (mySelfie == null) {
-          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), JBUIScale.ScaleContext.create(this));
+          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), ScaleContext.create(this));
         }
       } catch (IOException ignored) {}
       StartupUiUtil.drawImage(g, mySelfie, 0, 0, null);

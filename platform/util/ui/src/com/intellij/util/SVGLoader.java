@@ -3,12 +3,12 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
 import com.intellij.ui.svg.SaxSvgDocumentFactory;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.apache.batik.anim.dom.SVGOMDocument;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
@@ -70,7 +70,7 @@ public final class SVGLoader {
    */
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx, double width, double height) throws IOException {
     try {
-      double s = ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE);
+      double s = ctx.getScale(DerivedScaleType.PIX_SCALE);
       return MyTranscoder.createImage(1, createTranscodeInput(url, stream), (float)(width * s), (float)(height * s)).getImage();
     }
     catch (TranscoderException ex) {
@@ -95,7 +95,7 @@ public final class SVGLoader {
    * Loads a HiDPI-aware image of the size specified in the svg file.
    */
   public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream, ScaleContext ctx) throws IOException {
-    BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE));
+    BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(DerivedScaleType.PIX_SCALE));
     @SuppressWarnings("unchecked") T t = (T)ImageUtil.ensureHiDPI(image, ctx);
     return t;
   }
@@ -131,7 +131,7 @@ public final class SVGLoader {
   }
 
   public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
-    Dimension2D size = getDocumentSize(ctx.getScale(JBUIScale.DerivedScaleType.PIX_SCALE), createTranscodeInput(url, stream));
+    Dimension2D size = getDocumentSize(ctx.getScale(DerivedScaleType.PIX_SCALE), createTranscodeInput(url, stream));
     double iconMaxSize = MyTranscoder.getIconMaxSize();
     return Math.min(iconMaxSize / size.getWidth(), iconMaxSize / size.getHeight());
   }

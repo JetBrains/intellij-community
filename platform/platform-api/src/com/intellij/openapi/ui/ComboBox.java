@@ -16,11 +16,10 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
 /**
  * Due to many bugs and "features" in {@link JComboBox} implementation we provide
@@ -76,7 +75,51 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   private void init(int width) {
     myMinimumAndPreferredWidth = width;
     registerCancelOnEscape();
-    UIUtil.installComboBoxCopyAction(this);
+    installComboBoxCopyAction(this);
+  }
+
+  private static void installComboBoxCopyAction(@NotNull JComboBox comboBox) {
+    final ComboBoxEditor editor = comboBox.getEditor();
+    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
+    if (!(editorComponent instanceof JTextComponent)) return;
+    final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
+    for (KeyStroke keyStroke : inputMap.allKeys()) {
+      if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
+        comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
+      }
+    }
+    comboBox.getActionMap().put(DefaultEditorKit.copyAction, new AbstractAction() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        if (!(e.getSource() instanceof JComboBox)) return;
+        final JComboBox comboBox = (JComboBox)e.getSource();
+        final String text;
+        final Object selectedItem = comboBox.getSelectedItem();
+        if (selectedItem instanceof String) {
+          text = (String)selectedItem;
+        }
+        else {
+          final Component component =
+            comboBox.getRenderer().getListCellRendererComponent(new JList(), selectedItem, 0, false, false);
+          if (component instanceof JLabel) {
+            text = ((JLabel)component).getText();
+          }
+          else if (component != null) {
+            final String str = component.toString();
+            // skip default Component.toString and handle SimpleColoredComponent case
+            text = str == null || str.startsWith(component.getClass().getName() + "[") ? null : str;
+          }
+          else {
+            text = null;
+          }
+        }
+        if (text != null) {
+          final JTextField textField = new JTextField(text);
+          textField.selectAll();
+          textField.copy();
+        }
+      }
+    });
   }
 
   public static void registerTableCellEditor(@NotNull JComboBox comboBox, @NotNull TableCellEditor cellEditor) {

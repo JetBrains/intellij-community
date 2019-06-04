@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -7,6 +7,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -254,7 +255,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           }
 
           Icon icon = getArrowIcon(this);
-          int x = JBUI.scale(5);
+          int x = JBUIScale.scale(5);
           int y = (getHeight() - icon.getIconHeight()) / 2;
           icon.paintIcon(this, g2, x, y);
         }
@@ -328,7 +329,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           @Override
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
-            return new Dimension(size.width, Math.max(JBUI.scale(18), size.height));
+            return new Dimension(size.width, Math.max(JBUIScale.scale(18), size.height));
           }
         };
       }
@@ -596,7 +597,8 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public void show(Component invoker, int x, int y) {
-        int yOffset = JBUI.scale(DarculaUIUtil.isTableCellEditor(comboBox) ? 0 : 1);
+        int i = DarculaUIUtil.isTableCellEditor(comboBox) ? 0 : 1;
+        int yOffset = JBUIScale.scale(i);
         super.show(invoker, x, y - yOffset);
       }
     };

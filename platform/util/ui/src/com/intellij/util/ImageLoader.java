@@ -9,11 +9,11 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.imgscalr.Scalr;
@@ -36,11 +36,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.ui.scale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.SVG;
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
-import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
 public final class ImageLoader implements Serializable {
   public static final int ALLOW_FLOAT_SCALING = 0x01;
@@ -303,7 +303,7 @@ public final class ImageLoader implements Serializable {
       // Prefer retina images for HiDPI scale, because downscaling
       // retina images provides a better result than up-scaling non-retina images.
       double pixScale = scaleContext.getScale(PIX_SCALE);
-      boolean retina = JBUI.isHiDPI(pixScale);
+      boolean retina = JBUIScale.isHiDPI(pixScale);
 
       ImageDescriptorListBuilder builder = new ImageDescriptorListBuilder(FileUtilRt.getNameWithoutExtension(path),
                                                                           FileUtilRt.getExtension(path),
@@ -470,7 +470,7 @@ public final class ImageLoader implements Serializable {
   }
 
   private static double adjustScaleFactor(boolean allowFloatScaling, double scale) {
-    return allowFloatScaling ? scale : JBUI.isHiDPI(scale) ? 2f : 1f;
+    return allowFloatScaling ? scale : JBUIScale.isHiDPI(scale) ? 2f : 1f;
   }
 
   @NotNull

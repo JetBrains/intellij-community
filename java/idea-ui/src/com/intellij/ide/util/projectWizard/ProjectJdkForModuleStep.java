@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
@@ -56,7 +57,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     final JLabel label = new JLabel(IdeBundle.message("prompt.please.select.module.jdk", type.getPresentableName()));
     label.setUI(new MultiLineLabelUI());
     myPanel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                              GridBagConstraints.HORIZONTAL, JBUI.insets(8, 10), 0, 0));
+                                              GridBagConstraints.HORIZONTAL, JBInsets.create(8, 10), 0, 0));
 
     final JLabel jdkLabel = new JLabel(IdeBundle.message("label.project.jdk"));
     jdkLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));

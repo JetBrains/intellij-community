@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class JBColor extends Color {
   public static final Color PanelBackground = namedColor("Panel.background", 0xffffff);
 
-  private static class Lazy {
+  private static final class Lazy {
     private static volatile boolean DARK = StartupUiUtil.isUnderDarcula();
   }
 
@@ -53,7 +52,6 @@ public class JBColor extends Color {
     return namedColor(propertyName, new Color(defaultValueRGB));
   }
 
-
   @NotNull
   public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
@@ -78,6 +76,7 @@ public class JBColor extends Color {
         o = new HashMap<String, Color>();
         UIManager.put("*cache", o);
       }
+      @SuppressWarnings("unchecked")
       Map<String, Color> cache = (Map)o;
       if (cache.containsKey(name)) {
         return cache.get(name);
@@ -101,25 +100,8 @@ public class JBColor extends Color {
   @NotNull
   @Deprecated
   public static Color link() {
-    return JBUI.CurrentTheme.Link.linkColor();
-  }
-
-  @NotNull
-  @Deprecated
-  public static Color linkHover() {
-    return JBUI.CurrentTheme.Link.linkHoverColor();
-  }
-
-  @NotNull
-  @Deprecated
-  public static Color linkPressed() {
-    return JBUI.CurrentTheme.Link.linkPressedColor();
-  }
-
-  @NotNull
-  @Deprecated
-  public static Color linkVisited() {
-    return JBUI.CurrentTheme.Link.linkVisitedColor();
+    //noinspection UnnecessaryFullyQualifiedName
+    return com.intellij.util.ui.JBUI.CurrentTheme.Link.linkColor();
   }
 
   public static void setDark(boolean dark) {
@@ -235,16 +217,16 @@ public class JBColor extends Color {
 
   @Override
   @NotNull
-  public float[] getComponents(@NotNull ColorSpace cspace, float[] compArray) {
+  public float[] getComponents(@NotNull ColorSpace colorSpace, float[] compArray) {
     final Color c = getColor();
-    return c == this ? super.getComponents(cspace, compArray) : c.getComponents(cspace, compArray);
+    return c == this ? super.getComponents(colorSpace, compArray) : c.getComponents(colorSpace, compArray);
   }
 
   @Override
   @NotNull
-  public float[] getColorComponents(@NotNull ColorSpace cspace, float[] compArray) {
+  public float[] getColorComponents(@NotNull ColorSpace colorSpace, float[] compArray) {
     final Color c = getColor();
-    return c == this ? super.getColorComponents(cspace, compArray) : c.getColorComponents(cspace, compArray);
+    return c == this ? super.getColorComponents(colorSpace, compArray) : c.getColorComponents(colorSpace, compArray);
   }
 
   @Override
@@ -256,9 +238,9 @@ public class JBColor extends Color {
 
   @Override
   @NotNull
-  public synchronized PaintContext createContext(ColorModel cm, Rectangle r, Rectangle2D r2d, AffineTransform xform, RenderingHints hints) {
+  public synchronized PaintContext createContext(ColorModel cm, Rectangle r, Rectangle2D r2d, AffineTransform affineTransform, RenderingHints hints) {
     final Color c = getColor();
-    return c == this ? super.createContext(cm, r, r2d, xform, hints) : c.createContext(cm, r, r2d, xform, hints);
+    return c == this ? super.createContext(cm, r, r2d, affineTransform, hints) : c.createContext(cm, r, r2d, affineTransform, hints);
   }
 
   @Override

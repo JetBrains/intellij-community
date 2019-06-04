@@ -70,6 +70,7 @@ import com.intellij.ui.mac.MacGestureSupportForEditor;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -1506,7 +1507,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public float getScale() {
     if (!Registry.is("editor.scale.gutter.icons")) return 1f;
     float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
-    return normLineHeight / JBUI.scale(16f);
+    return normLineHeight / JBUIScale.scale(16f);
   }
 
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {

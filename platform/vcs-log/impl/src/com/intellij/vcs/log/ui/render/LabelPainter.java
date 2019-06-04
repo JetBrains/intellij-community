@@ -9,10 +9,10 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
@@ -51,7 +51,7 @@ public class LabelPainter {
   @NotNull private final LabelIconCache myIconCache;
 
   @NotNull private List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
-  private int myHeight = JBUI.scale(22);
+  private int myHeight = JBUIScale.scale(22);
   private int myWidth = 0;
   @NotNull private Color myBackground = UIUtil.getTableBackground();
   @Nullable private Color myGreyBackground = null;

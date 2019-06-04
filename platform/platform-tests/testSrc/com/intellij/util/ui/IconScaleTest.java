@@ -8,10 +8,11 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextAware;
+import com.intellij.ui.scale.UserScaleContext;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale.ScaleContextAware;
-import com.intellij.util.ui.JBUIScale.UserScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -24,9 +25,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
 
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.EFF_USR_SCALE;
-import static com.intellij.util.ui.JBUIScale.ScaleType.*;
+import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
+import static com.intellij.ui.scale.DerivedScaleType.EFF_USR_SCALE;
+import static com.intellij.ui.scale.ScaleType.*;
 import static com.intellij.util.ui.TestScaleHelper.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
@@ -69,8 +70,8 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   public void test(double usrScale, double sysScale) throws MalformedURLException {
-    JBUI.setUserScaleFactor((float)usrScale);
-    JBUI.setSystemScaleFactor((float)sysScale);
+    JBUIScale.setUserScaleFactor((float)usrScale);
+    JBUIScale.setSystemScaleFactor((float)sysScale);
 
     ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale));
 

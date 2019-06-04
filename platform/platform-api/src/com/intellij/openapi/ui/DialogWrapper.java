@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -607,7 +608,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets();
+    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBInsets.create(0, 8) : JBUI.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -694,7 +695,8 @@ public abstract class DialogWrapper {
 
       buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUI.scale(8);
+        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUIScale
+          .scale(8);
         buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }
     }
@@ -2036,7 +2038,7 @@ public abstract class DialogWrapper {
     private Border createErrorTextBorder() {
       Border border = createContentPaneBorder();
       Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
-      Insets baseInsets = JBUI.insets(16, 13);
+      Insets baseInsets = JBInsets.create(16, 13);
 
       //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.
       return new EmptyBorder(baseInsets.top,

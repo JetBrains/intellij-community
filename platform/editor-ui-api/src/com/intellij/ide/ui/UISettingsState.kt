@@ -3,11 +3,12 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import javax.swing.SwingConstants
+import kotlin.math.roundToInt
 
 class UISettingsState : BaseState() {
   companion object {
@@ -18,9 +19,8 @@ class UISettingsState : BaseState() {
      */
     @JvmStatic
     val defFontSize: Int
-      get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale)
+      get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale).roundToInt()
   }
-
 
   @get:OptionTag("FONT_FACE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontFace"))

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.ui.Control;
 import com.intellij.ui.tree.ui.DefaultControl;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
@@ -127,7 +128,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         if (myHeader == null) {
           myHeader = new JLabel();
           myHeader.setForeground(UIUtil.getTreeForeground());
-          myHeader.setIconTextGap(JBUI.scale(ICON_GAP));
+          myHeader.setIconTextGap(JBUIScale.scale(ICON_GAP));
           myHeader.setBorder(JBUI.Borders.empty(2, 10 + getLeftMargin(0), 0, 0));
         }
         myHeader.setFont(myTree.getFont());
@@ -578,10 +579,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     Pair<Component, ConfigurableTreeRenderer.Layout> myRenderInfo;
 
     MyRenderer() {
-      setLayout(new BorderLayout(JBUI.scale(ICON_GAP - 1), 0));
+      setLayout(new BorderLayout(JBUIScale.scale(ICON_GAP - 1), 0));
       myNodeIcon.setName(NODE_ICON);
       myTextLabel.setOpaque(false);
-      myTextLabel.setIpad(JBUI.insets(1, 0));
+      myTextLabel.setIpad(JBInsets.create(1, 0));
       add(BorderLayout.CENTER, myTextLabel);
       add(BorderLayout.WEST, myNodeIcon);
       add(BorderLayout.EAST, myProjectIcon);
@@ -904,7 +905,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     @Override
     protected int getRowX(int row, int depth) {
-      return JBUI.scale(getLeftMargin(depth - 1));
+      return JBUIScale.scale(getLeftMargin(depth - 1));
     }
   }
 

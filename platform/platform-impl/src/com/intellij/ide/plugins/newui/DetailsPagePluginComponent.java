@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -18,6 +18,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -60,7 +61,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
                                     @NotNull LinkListener<String> searchListener,
                                     @NotNull IdeaPluginDescriptor plugin,
                                     boolean update) {
-    super(new BorderLayout(0, JBUI.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
+    super(new BorderLayout(0, JBUIScale.scale(32)), PluginManagerConfigurableNew.MAIN_BG_COLOR);
     myPluginsModel = pluginsModel;
     myTagBuilder = tagBuilder;
     mySearchListener = searchListener;
@@ -181,7 +182,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   @NotNull
   private JPanel createButtons(boolean update) {
-    JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(6)));
+    JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(6)));
     buttons.setBorder(JBUI.Borders.emptyTop(1));
 
     InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
@@ -229,7 +230,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   @NotNull
   private JPanel createHeaderPanel() {
-    JPanel header = new NonOpaquePanel(new BorderLayout(JBUI.scale(20), 0));
+    JPanel header = new NonOpaquePanel(new BorderLayout(JBUIScale.scale(20), 0));
     header.setBorder(JBUI.Borders.emptyRight(20));
     add(header, BorderLayout.NORTH);
 
@@ -255,7 +256,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     java.util.List<String> tags = PluginManagerConfigurableNew.getTags(myPlugin);
 
     if (!tags.isEmpty()) {
-      NonOpaquePanel tagPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(6)));
+      NonOpaquePanel tagPanel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(6)));
       tagPanel.setBorder(JBUI.Borders.emptyTop(2));
       myCenterPanel.add(tagPanel);
 
@@ -278,7 +279,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     String rating = PluginManagerConfigurableNew.getRating(myPlugin);
 
     if (downloads != null || date != null || rating != null) {
-      JPanel metrics = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(20)));
+      JPanel metrics = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(20)));
       metrics.setBorder(JBUI.Borders.emptyTop(3));
       myCenterPanel.add(metrics);
 
@@ -306,7 +307,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   private void createErrorPanel() {
     if (myPluginsModel.hasErrors(myPlugin)) {
-      int offset = JBUI.scale(8);
+      int offset = JBUIScale.scale(8);
       JPanel errorPanel = new NonOpaquePanel(new HorizontalLayout(offset) {
         @Override
         public void layoutContainer(Container parent) {
@@ -470,7 +471,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
           descriptionComponent.setCaretPosition(0);
         }
 
-        bottomPanel.add(descriptionComponent, JBUI.scale(700), -1);
+        bottomPanel.add(descriptionComponent, JBUIScale.scale(700), -1);
       }
 
       boolean topBorder = false;

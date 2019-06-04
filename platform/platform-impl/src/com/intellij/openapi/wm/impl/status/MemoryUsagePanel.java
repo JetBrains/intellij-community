@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -159,7 +160,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
       g2.setColor(pressed ? UIUtil.getLabelDisabledForeground() : JBColor.foreground());
       String text = UIBundle.message("memory.usage.panel.message.text", usedMem / MEGABYTE, maxMem / MEGABYTE);
       int textX = insets.left;
-      int textY = insets.top + (size.height - insets.top - insets.bottom - textHeight) / 2 + textHeight - JBUI.scale(1);
+      int textY = insets.top + (size.height - insets.top - insets.bottom - textHeight) / 2 + textHeight - JBUIScale.scale(1);
       g2.drawString(text, textX, textY);
 
       g2.dispose();
@@ -172,8 +173,8 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
   public Dimension getPreferredSize() {
     FontMetrics metrics = getFontMetrics(getWidgetFont());
     Insets insets = getInsets();
-    int width = metrics.stringWidth(mySample) + insets.left + insets.right + JBUI.scale(2) + INDENT;
-    int height = metrics.getHeight() + insets.top + insets.bottom + JBUI.scale(2);
+    int width = metrics.stringWidth(mySample) + insets.left + insets.right + JBUIScale.scale(2) + INDENT;
+    int height = metrics.getHeight() + insets.top + insets.bottom + JBUIScale.scale(2);
     return new Dimension(width, height);
   }
 

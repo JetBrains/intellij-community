@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-
-import static com.intellij.util.ui.JBUI.scale;
 
 /**
  * @author Konstantin Bulenkov
@@ -22,7 +21,11 @@ public class JBInsets extends Insets {
    * @param right  the inset from the right.
    */
   public JBInsets(int top, int left, int bottom, int right) {
-    super(scale(top), scale(left), scale(bottom), scale(right));
+    super(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right));
+  }
+
+  private JBInsets(int topBottom, int leftRight, @SuppressWarnings("unused") boolean _scaled) {
+    super(topBottom, leftRight, topBottom, leftRight);
   }
 
   public int width() {
@@ -33,6 +36,14 @@ public class JBInsets extends Insets {
     return top + bottom;
   }
 
+  @NotNull
+  public static JBInsets create(int topBottom, int leftRight) {
+    int topBottomScaled = JBUIScale.scale(topBottom);
+    int leftRightScaled = JBUIScale.scale(leftRight);
+    return new JBInsets(topBottomScaled, leftRightScaled, true);
+  }
+
+  @NotNull
   public static JBInsets create(@NotNull Insets insets) {
     if (insets instanceof JBInsets) {
       JBInsets copy = new JBInsets(0, 0, 0, 0);

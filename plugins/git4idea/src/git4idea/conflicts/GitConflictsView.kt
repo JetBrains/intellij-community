@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
@@ -181,7 +182,7 @@ class GitConflictsView(private val project: Project) : Disposable {
       val button = JButton(presentation.text)
       button.isFocusable = false
       button.addActionListener {
-        val toolbar = UIUtil.getParentOfType(ActionToolbar::class.java, button)
+        val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)
         val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
         actionPerformed(AnActionEvent.createFromAnAction(this@ButtonAction, null, place, dataContext))
       }

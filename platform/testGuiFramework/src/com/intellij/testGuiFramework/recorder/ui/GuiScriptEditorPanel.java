@@ -10,6 +10,7 @@ import com.intellij.testGuiFramework.recorder.actions.PerformScriptAction;
 import com.intellij.testGuiFramework.recorder.actions.StartPauseRecAction;
 import com.intellij.testGuiFramework.recorder.actions.StopRecAction;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ public class GuiScriptEditorPanel {
 
     public GuiScriptEditorPanel() {
         super();
-        myStatusLabel.setFont(SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label());
+        myStatusLabel.setFont(SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBFont.label());
         progressIcon.setVisible(false);
 
         myEditor = new GuiScriptEditor();

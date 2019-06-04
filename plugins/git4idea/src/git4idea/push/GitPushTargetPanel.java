@@ -22,6 +22,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -295,7 +296,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         if (newRemoteBranch) {
           renderer.setIconOnTheRight(true);
           NEW_BRANCH_LABEL.setInsets(JBUI.insets(2));
-          NEW_BRANCH_LABEL.setRound(JBUI.scale(4));
+          NEW_BRANCH_LABEL.setRound(JBUIScale.scale(4));
           NEW_BRANCH_LABEL.setFont(NEW_BRANCH_LABEL_FONT.derive(renderer.getFont()));
           NEW_BRANCH_LABEL.setForeground(isSelected ? NEW_BRANCH_LABEL_SELECTION_FG : NEW_BRANCH_LABEL_FG);
           NEW_BRANCH_LABEL.setBackground(isSelected ? NEW_BRANCH_LABEL_SELECTION_BG : NEW_BRANCH_LABEL_BG);

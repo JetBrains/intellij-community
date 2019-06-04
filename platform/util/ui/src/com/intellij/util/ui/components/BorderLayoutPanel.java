@@ -2,7 +2,7 @@
 package com.intellij.util.ui.components;
 
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   }
 
   public BorderLayoutPanel(int hgap, int vgap) {
-    super(new BorderLayout(JBUI.scale(hgap), JBUI.scale(vgap)));
+    super(new BorderLayout(JBUIScale.scale(hgap), JBUIScale.scale(vgap)));
   }
 
   @NotNull

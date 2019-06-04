@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
@@ -59,7 +60,6 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -135,7 +135,6 @@ public class StartupUtil {
 
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    System.setProperty("idea.ui.util.static.init.enabled", "false");
     CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
       // see note about StartupUiUtil static init - it is required even if headless
       try {
@@ -270,7 +269,7 @@ public class StartupUtil {
 
         // UIUtil.initDefaultLaF must be called before this call
         Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
-        StartupUiUtil.initSystemFontData(log);
+        JBUIScale.getSystemFontData();
         activity.end();
       }
       catch (Exception e) {
@@ -601,9 +600,7 @@ public class StartupUtil {
 
     appStarter.beforeStartupWizard();
     CustomizeIDEWizardDialog dialog = new CustomizeIDEWizardDialog(provider, appStarter);
-    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> {
-      dialog.show();
-    });
+    SplashManager.executeWithHiddenSplash(dialog.getWindow(), () -> dialog.show());
 
     PluginManagerCore.invalidatePlugins();
     appStarter.startupWizardFinished();

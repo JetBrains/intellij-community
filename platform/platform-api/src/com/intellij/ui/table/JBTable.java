@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
@@ -1144,7 +1145,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     private boolean isOnBorder(@NotNull MouseEvent e) {
-      return Math.abs(header.getTable().getWidth() - e.getPoint().x) <= JBUI.scale(3);
+      return Math.abs(header.getTable().getWidth() - e.getPoint().x) <= JBUIScale.scale(3);
     }
 
     private boolean canMoveOrResizeColumn(@NotNull MouseEvent e) {

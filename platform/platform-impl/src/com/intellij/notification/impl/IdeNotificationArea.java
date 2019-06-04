@@ -23,7 +23,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,7 +191,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
       myComponent = component;
       myTextColor = textColor;
       myBaseIcon = baseIcon;
-      myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, JBUI.scale(9));
+      myFont = new Font(NotificationsUtil.getFontName(), Font.BOLD, JBUIScale.scale(9));
       myWidth = myComponent.getFontMetrics(myFont).stringWidth(myStr);
     }
 
@@ -231,14 +231,14 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
 
       int length = myStr.length();
       if (SystemInfoRt.isMac || (SystemInfoRt.isWindows && length == 2)) {
-        x += JBUI.scale(1);
+        x += JBUIScale.scale(1);
       }
 
       g.setColor(myTextColor);
       g.drawString(myStr.substring(0, 1), x, y);
 
       if (length == 2) {
-        x += g.getFontMetrics().charWidth(myStr.charAt(0)) - JBUI.scale(1);
+        x += g.getFontMetrics().charWidth(myStr.charAt(0)) - JBUIScale.scale(1);
         g.drawString(myStr.substring(1), x, y);
       }
 

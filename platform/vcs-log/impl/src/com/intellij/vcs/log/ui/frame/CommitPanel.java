@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.IdeTooltipManager;
@@ -12,6 +12,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -293,7 +294,7 @@ public class CommitPanel extends JBPanel {
     public Dimension getPreferredSize() {
       if (myIcon == null) return new Dimension(0, 0);
       Dimension size = super.getPreferredSize();
-      return new Dimension(myIcon.getIconWidth() + JBUI.scale(ROOT_GAP), size.height);
+      return new Dimension(myIcon.getIconWidth() + JBUIScale.scale(ROOT_GAP), size.height);
     }
 
     public void setRoot(@NotNull VirtualFile root) {

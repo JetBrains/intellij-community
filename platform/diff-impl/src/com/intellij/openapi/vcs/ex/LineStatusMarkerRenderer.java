@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
@@ -33,8 +19,8 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -421,7 +407,7 @@ public abstract class LineStatusMarkerRenderer {
     }
     if (borderColor != null) {
       Stroke oldStroke = g.getStroke();
-      g.setStroke(new BasicStroke(JBUI.scale(1)));
+      g.setStroke(new BasicStroke(JBUIScale.scale(1)));
       g.setColor(borderColor);
       UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
       UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
@@ -433,7 +419,7 @@ public abstract class LineStatusMarkerRenderer {
   private static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
                                     int x1, int x2, int y) {
     float editorScale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
-    int size = (int)JBUI.scale(4 * editorScale);
+    int size = (int)JBUIScale.scale(4 * editorScale);
 
     final int[] xPoints = new int[]{x1, x1, x2};
     final int[] yPoints = new int[]{y - size, y + size, y};
@@ -444,7 +430,7 @@ public abstract class LineStatusMarkerRenderer {
     }
     if (borderColor != null) {
       Stroke oldStroke = g.getStroke();
-      g.setStroke(new BasicStroke(JBUI.scale(1)));
+      g.setStroke(new BasicStroke(JBUIScale.scale(1)));
       g.setColor(borderColor);
       g.drawPolygon(xPoints, yPoints, xPoints.length);
       g.setStroke(oldStroke);

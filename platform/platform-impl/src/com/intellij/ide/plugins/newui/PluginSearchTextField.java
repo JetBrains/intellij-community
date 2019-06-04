@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ui.SearchTextField;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -32,7 +32,7 @@ public class PluginSearchTextField extends SearchTextField {
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    size.height = JBUI.scale(38);
+    size.height = JBUIScale.scale(38);
     return size;
   }
 

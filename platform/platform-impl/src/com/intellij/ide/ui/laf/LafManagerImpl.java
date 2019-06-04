@@ -32,6 +32,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IconUtil;
@@ -576,7 +577,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     // used to normalize previously patched values
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
-    if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
+    if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
                                            "Tree.rightChildIndent",
@@ -606,11 +607,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
-          entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
+          entry.setValue(Integer.valueOf(JBUIScale.scale(normValue)));
         }
       }
     }
-    defaults.put("hidpi.scaleFactor", JBUI.scale(1f));
+    defaults.put("hidpi.scaleFactor", JBUIScale.scale(1f));
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
@@ -719,7 +720,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
       initFontDefaults(uiDefaults, UIUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
-      JBUI.setUserScaleFactor(JBUI.getFontScale(uiSettings.getFontSize()));
+      JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(uiSettings.getFontSize()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -734,7 +735,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUI.setUserScaleFactor(JBUI.getFontScale(JBUI.Fonts.label().getSize()));
+    JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(JBFont.label().getSize()));
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {

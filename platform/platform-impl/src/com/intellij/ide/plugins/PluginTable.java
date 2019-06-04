@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -28,7 +28,7 @@ public class PluginTable extends JBTable {
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
       column.setCellEditor(columnInfo.getEditor(null));
       if (columnInfo.getColumnClass() == Boolean.class) {
-        TableUtil.setupCheckboxColumn(column, JBUI.scale(16));
+        TableUtil.setupCheckboxColumn(column, JBUIScale.scale(16));
       }
     }
 

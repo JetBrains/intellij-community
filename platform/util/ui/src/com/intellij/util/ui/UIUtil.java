@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
-import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,11 +13,12 @@ import com.intellij.ui.*;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
@@ -66,20 +66,14 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
 /**
  * @author max
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
-public class UIUtil extends StartupUiUtil {
-  static {
-    LoadingPhase.assertAtLeast(LoadingPhase.SPLASH);
-  }
-
+public final class UIUtil extends StartupUiUtil {
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
@@ -373,134 +367,14 @@ public class UIUtil extends StartupUiUtil {
   public static final int DEFAULT_VGAP = 4;
   public static final int LARGE_VGAP = 12;
 
-  public static final Insets PANEL_REGULAR_INSETS = JBUI.insets(8, 12);
-  public static final Insets PANEL_SMALL_INSETS = JBUI.insets(5, 8);
-
-  @Deprecated
-  public static final Border DEBUG_MARKER_BORDER = new Border() {
-    @NotNull
-    @Override
-    public Insets getBorderInsets(Component c) {
-      return JBUI.emptyInsets();
-    }
-
-    @Override
-    public void paintBorder(Component c, @NotNull Graphics g, int x, int y, int width, int height) {
-      Graphics g2 = g.create();
-      try {
-        g2.setColor(JBColor.RED);
-        drawDottedRectangle(g2, x, y, x + width - 1, y + height - 1);
-      }
-      finally {
-        g2.dispose();
-      }
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
-    }
-  };
+  public static final Insets PANEL_REGULAR_INSETS = JBInsets.create(8, 12);
+  public static final Insets PANEL_SMALL_INSETS = JBInsets.create(5, 8);
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
   private static final Ref<Boolean> ourRetina = Ref.create(SystemInfoRt.isMac ? null : false);
 
   private UIUtil() {
-  }
-
-  /**
-   * Utility class for retina routine
-   */
-  static final class DetectRetinaKit {
-
-    private static final Map<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = ContainerUtil.createWeakMap();
-
-    /**
-     * The best way to understand whether we are on a retina device is [NSScreen backingScaleFactor]
-     * But we should not invoke it from any thread. We do not have access to the AppKit thread
-     * on the other hand. So let's use a dedicated method. It is rather safe because it caches a
-     * value that has been got on AppKit previously.
-     */
-    static boolean isOracleMacRetinaDevice(GraphicsDevice device) {
-      Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
-
-      if (isRetina != null) {
-        return isRetina;
-      }
-
-      Method getScaleFactorMethod = null;
-      try {
-        getScaleFactorMethod = Class.forName("sun.awt.CGraphicsDevice").getMethod("getScaleFactor");
-      } catch (ClassNotFoundException | NoSuchMethodException e) {
-        // not an Oracle Mac JDK or API has been changed
-        getLogger().debug("CGraphicsDevice.getScaleFactor(): not an Oracle Mac JDK or API has been changed");
-      }
-      catch (Exception e) {
-        getLogger().debug(e);
-        getLogger().debug("CGraphicsDevice.getScaleFactor(): probably it is Java 9");
-      }
-
-      try {
-        isRetina =  getScaleFactorMethod == null || (Integer)getScaleFactorMethod.invoke(device) != 1;
-      } catch (IllegalAccessException e) {
-        getLogger().debug("CGraphicsDevice.getScaleFactor(): Access issue");
-        isRetina = false;
-      } catch (InvocationTargetException e) {
-        getLogger().debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
-        isRetina = false;
-      } catch (IllegalArgumentException e) {
-        getLogger().debug("object is not an instance of declaring class: " + device.getClass().getName());
-        isRetina = false;
-      }
-
-      devicesToRetinaSupportCacheMap.put(device, isRetina);
-
-      return isRetina;
-    }
-
-    /**
-     * This method perfectly detects retina Graphics2D for jdk7+
-     * @param g graphics to be tested
-     * @return false if the device of the Graphics2D is not a retina device,
-     * jdk is an Apple JDK or Oracle API has been changed.
-     */
-    private static boolean isMacRetina(@NotNull Graphics2D g) {
-      GraphicsConfiguration configuration = g.getDeviceConfiguration();
-      if (configuration == null) {
-        return false;
-      }
-
-      GraphicsDevice device = configuration.getDevice();
-      return isOracleMacRetinaDevice(device);
-    }
-
-    /**
-     * Checks that at least one retina device is present.
-     * Do not use this method if your are going to make decision for a particular screen.
-     * isRetina(Graphics2D) is more preferable
-     *
-     * @return true if at least one device is a retina device
-     */
-    private static boolean isRetina() {
-      // Oracle JDK
-
-      if (SystemInfoRt.isMac) {
-        GraphicsEnvironment e
-          = GraphicsEnvironment.getLocalGraphicsEnvironment();
-
-        GraphicsDevice[] devices = e.getScreenDevices();
-
-        //now get the configurations for each device
-        for (GraphicsDevice device : devices) {
-          if (isOracleMacRetinaDevice(device)) {
-            return true;
-          }
-        }
-      }
-
-      return false;
-    }
   }
 
   public static boolean isRetina(@NotNull Graphics2D graphics) {
@@ -807,7 +681,7 @@ public class UIUtil extends StartupUiUtil {
   @NotNull
   public static String[] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<>();
-    String currentLine = "";
+    StringBuilder currentLine = new StringBuilder();
     StringBuilder currentAtom = new StringBuilder();
 
     for (int i = 0; i < text.length(); i++) {
@@ -815,17 +689,17 @@ public class UIUtil extends StartupUiUtil {
       currentAtom.append(ch);
 
       if (ch == separator) {
-        currentLine += currentAtom.toString();
+        currentLine.append(currentAtom.toString());
         currentAtom.setLength(0);
       }
 
-      String s = currentLine + currentAtom;
+      String s = currentLine.toString() + currentAtom;
       int width = fontMetrics.stringWidth(s);
 
       if (width >= widthLimit - fontMetrics.charWidth('w')) {
-        if (!currentLine.isEmpty()) {
-          lines.add(currentLine);
-          currentLine = "";
+        if (currentLine.length() > 0) {
+          lines.add(currentLine.toString());
+          currentLine = new StringBuilder();
         }
         else {
           lines.add(currentAtom.toString());
@@ -834,7 +708,7 @@ public class UIUtil extends StartupUiUtil {
       }
     }
 
-    String s = currentLine + currentAtom;
+    String s = currentLine.toString() + currentAtom;
     if (!s.isEmpty()) {
       lines.add(s);
     }
@@ -875,9 +749,9 @@ public class UIUtil extends StartupUiUtil {
     int defSize = getLabelFont().getSize();
     switch (size) {
       case SMALL:
-        return Math.max(defSize - JBUI.scale(2f), JBUI.scale(11f));
+        return Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
       case MINI:
-        return Math.max(defSize - JBUI.scale(4f), JBUI.scale(9f));
+        return Math.max(defSize - JBUIScale.scale(4f), JBUIScale.scale(9f));
       default:
         return defSize;
     }
@@ -1201,24 +1075,11 @@ public class UIUtil extends StartupUiUtil {
   }
 
   @Deprecated
-  public static void setLineStyleAngled(@NotNull final ClientPropertyHolder component) {
-  }
-
-  @Deprecated
   public static void setLineStyleAngled(@NotNull final JTree component) {
   }
 
   public static Color getTableFocusCellForeground() {
     return UIManager.getColor("Table.focusCellForeground");
-  }
-
-  /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getPanelBackground() instead
-   */
-  @NotNull
-  @Deprecated
-  public static Color getPanelBackgound() {
-    return getPanelBackground();
   }
 
   public static Border getTextFieldBorder() {
@@ -1335,16 +1196,6 @@ public class UIUtil extends StartupUiUtil {
    * @deprecated
    */
   @Deprecated
-  public static boolean isUnderAlloyLookAndFeel() {
-    return false;
-  }
-
-  /**
-   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
-   * @return false
-   * @deprecated
-   */
-  @Deprecated
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
   }
@@ -1365,7 +1216,6 @@ public class UIUtil extends StartupUiUtil {
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
-
 
   /**
    * Nimbus Look-n-Feel is deprecated and does not supported by IntelliJ Platform
@@ -1508,12 +1358,12 @@ public class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Insets getListCellPadding() {
-    return JBUI.insets(getListCellVPadding(), getListCellHPadding());
+    return JBInsets.create(getListCellVPadding(), getListCellHPadding());
   }
 
   @NotNull
   public static Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) : JBUI.emptyInsets();
+    return isUnderNativeMacLookAndFeel() ? JBInsets.create(1, 0) : JBUI.emptyInsets();
   }
 
   public static boolean isToUseDottedCellBorder() {
@@ -1687,7 +1537,7 @@ public class UIUtil extends StartupUiUtil {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
-    if (isJreHiDPI(g)) {
+    if (JreHiDpiUtil.isJreHiDPI(g)) {
       GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
       g.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
       c.restore();
@@ -1872,7 +1722,7 @@ public class UIUtil extends StartupUiUtil {
    */
   @NotNull
   public static BufferedImage createImage(GraphicsConfiguration gc, int width, int height, int type) {
-    if (isJreHiDPI(gc)) {
+    if (JreHiDpiUtil.isJreHiDPI(gc)) {
       return RetinaImage.create(gc, width, height, type);
     }
     //noinspection UndesirableClassUsage
@@ -1893,7 +1743,7 @@ public class UIUtil extends StartupUiUtil {
    */
   @NotNull
   public static BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
-    if (isJreHiDPI(gc)) {
+    if (JreHiDpiUtil.isJreHiDPI(gc)) {
       return RetinaImage.create(gc, width, height, type, rm);
     }
     //noinspection UndesirableClassUsage
@@ -1937,7 +1787,7 @@ public class UIUtil extends StartupUiUtil {
   public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
     if (g instanceof Graphics2D) {
       Graphics2D g2d = (Graphics2D)g;
-      if (isJreHiDPI(g2d)) {
+      if (JreHiDpiUtil.isJreHiDPI(g2d)) {
         return RetinaImage.create(g2d, width, height, type, rm);
       }
       //noinspection UndesirableClassUsage
@@ -1980,7 +1830,7 @@ public class UIUtil extends StartupUiUtil {
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
                                           @NotNull Consumer<? super Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !isJreHiDPI((Graphics2D)g) || Registry.is("ide.mac.retina.disableDrawingFix")) {
+    if (!useRetinaCondition || !JreHiDpiUtil.isJreHiDPI((Graphics2D)g) || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
@@ -2060,23 +1910,6 @@ public class UIUtil extends StartupUiUtil {
     }
   }
 
-  /** @see #dispatchAllInvocationEvents() */
-  @TestOnly
-  public static void pump() {
-    assert !SwingUtilities.isEventDispatchThread();
-    final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
-    SwingUtilities.invokeLater(() -> {
-      //noinspection CollectionAddedToSelf
-      queue.offer(queue);
-    });
-    try {
-      queue.take();
-    }
-    catch (InterruptedException e) {
-      getLogger().error(e);
-    }
-  }
-
   public static void addAwtListener(@NotNull final AWTEventListener listener, long mask, @NotNull Disposable parent) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
     Disposer.register(parent, new Disposable() {
@@ -2134,8 +1967,8 @@ public class UIUtil extends StartupUiUtil {
 
   public static void drawStringWithHighlighting(@NotNull Graphics g, @NotNull String s, int x, int y, Color foreground, Color highlighting) {
     g.setColor(highlighting);
-    boolean isRetina = isJreHiDPI((Graphics2D)g);
-    float scale = 1 / JBUI.sysScale((Graphics2D)g);
+    boolean isRetina = JreHiDpiUtil.isJreHiDPI((Graphics2D)g);
+    float scale = 1 / JBUIScale.sysScale((Graphics2D)g);
     for (float i = x - 1; i <= x + 1; i += isRetina ? scale : 1) {
       for (float j = y - 1; j <= y + 1; j += isRetina ? scale : 1) {
         ((Graphics2D)g).drawString(s, i, j);
@@ -2217,17 +2050,12 @@ public class UIUtil extends StartupUiUtil {
 
   @Nullable
   public static Component findNearestOpaque(Component c) {
-    return findParentByCondition(c, Component::isOpaque);
+    return ComponentUtil.findParentByCondition(c, Component::isOpaque);
   }
 
-  @Nullable
+  @Deprecated
   public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
-    Component eachParent = c;
-    while (eachParent != null) {
-      if (condition.value(eachParent)) return eachParent;
-      eachParent = eachParent.getParent();
-    }
-    return null;
+    return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
   }
 
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
@@ -2278,17 +2106,6 @@ public class UIUtil extends StartupUiUtil {
     builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
     builder.append("ul {list-style:disc; margin-left:15px;}\n");
     return builder.append("</style>").toString();
-  }
-
-  @Deprecated
-  public static boolean isWinLafOnVista() {
-    return SystemInfo.isWinVistaOrNewer && "Windows".equals(UIManager.getLookAndFeel().getName());
-  }
-
-  @Deprecated
-  public static boolean isStandardMenuLAF() {
-    return isWinLafOnVista() ||
-           isUnderGTKLookAndFeel();
   }
 
   @NotNull
@@ -2371,14 +2188,8 @@ public class UIUtil extends StartupUiUtil {
   }
 
   @Nullable
-  public static Component findUltimateParent(Component c) {
-    if (c == null) return null;
-
-    Component eachParent = c;
-    while (true) {
-      if (eachParent.getParent() == null) return eachParent;
-      eachParent = eachParent.getParent();
-    }
+  public static Component findUltimateParent(@Nullable Component c) {
+    return c == null ? null : ComponentUtil.findUltimateParent(c);
   }
 
   @NotNull
@@ -2463,7 +2274,7 @@ public class UIUtil extends StartupUiUtil {
     return new JBHtmlEditorKit(noGapsBetweenParagraphs);
   }
 
-  public static class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
+  public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
     private final HTMLFactory myFactory = new HTMLFactory() {
       @Override
       public View create(Element e) {
@@ -2550,7 +2361,7 @@ public class UIUtil extends StartupUiUtil {
     html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUI.scale(11);
+    int size = font != null ? font.getSize() : JBUIScale.scale(11);
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
@@ -2595,11 +2406,12 @@ public class UIUtil extends StartupUiUtil {
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
+    EdtInvocationManager edtInvocationManager = EdtInvocationManager.getInstance();
+    if (edtInvocationManager.isEventDispatchThread()) {
       runnable.run();
     }
     else {
-      EdtInvocationManager.getInstance().invokeLater(runnable);
+      edtInvocationManager.invokeLater(runnable);
     }
   }
 
@@ -2715,50 +2527,6 @@ public class UIUtil extends StartupUiUtil {
     );
   }
 
-  public static void installComboBoxCopyAction(@NotNull JComboBox comboBox) {
-    final ComboBoxEditor editor = comboBox.getEditor();
-    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
-    if (!(editorComponent instanceof JTextComponent)) return;
-    final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
-    for (KeyStroke keyStroke : inputMap.allKeys()) {
-      if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
-        comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
-      }
-    }
-    comboBox.getActionMap().put(DefaultEditorKit.copyAction, new AbstractAction() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        if (!(e.getSource() instanceof JComboBox)) return;
-        final JComboBox comboBox = (JComboBox)e.getSource();
-        final String text;
-        final Object selectedItem = comboBox.getSelectedItem();
-        if (selectedItem instanceof String) {
-          text = (String)selectedItem;
-        }
-        else {
-          final Component component =
-            comboBox.getRenderer().getListCellRendererComponent(new JList(), selectedItem, 0, false, false);
-          if (component instanceof JLabel) {
-            text = ((JLabel)component).getText();
-          }
-          else if (component != null) {
-            final String str = component.toString();
-            // skip default Component.toString and handle SimpleColoredComponent case
-            text = str == null || str.startsWith(component.getClass().getName() + "[") ? null : str;
-          }
-          else {
-            text = null;
-          }
-        }
-        if (text != null) {
-          final JTextField textField = new JTextField(text);
-          textField.selectAll();
-          textField.copy();
-        }
-      }
-    });
-  }
-
   @Nullable
   public static ComboPopup getComboBoxPopup(@NotNull JComboBox comboBox) {
     final ComboBoxUI ui = comboBox.getUI();
@@ -2866,14 +2634,7 @@ public class UIUtil extends StartupUiUtil {
   @Nullable
   @Contract(pure = true)
   public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
-    while (component != null) {
-      if (type.isInstance(component)) {
-        //noinspection unchecked
-        return (T)component;
-      }
-      component = component.getParent();
-    }
-    return null;
+    return ComponentUtil.getParentOfType(type, component);
   }
 
   @NotNull
@@ -3186,7 +2947,7 @@ public class UIUtil extends StartupUiUtil {
 
   @Nullable
   public static JRootPane getRootPane(Component c) {
-    JRootPane root = getParentOfType(JRootPane.class, c);
+    JRootPane root = ComponentUtil.getParentOfType((Class<? extends JRootPane>)JRootPane.class, c);
     if (root != null) return root;
     Component eachParent = c;
     while (eachParent != null) {
@@ -3220,6 +2981,7 @@ public class UIUtil extends StartupUiUtil {
       }
     };
   }
+
   @NotNull
   public static Timer createNamedTimer(@NonNls @NotNull final String name, int delay) {
     return new Timer(delay, null) {
@@ -3596,8 +3358,7 @@ public class UIUtil extends StartupUiUtil {
    */
   @Nullable
   public static Window getWindow(@Nullable Component component) {
-    return component == null ? null :
-           component instanceof Window ? (Window)component : SwingUtilities.getWindowAncestor(component);
+    return ComponentUtil.getWindow(component);
   }
 
   /**
@@ -3747,7 +3508,7 @@ public class UIUtil extends StartupUiUtil {
   }
 
   public static boolean isRetina(@NotNull GraphicsDevice device) {
-    return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
+    return DetectRetinaKit.isOracleMacRetinaDevice(device);
   }
 
   /** Employs a common pattern to use {@code Graphics}. This is a non-distractive approach
@@ -3988,5 +3749,15 @@ public class UIUtil extends StartupUiUtil {
   @Deprecated
   public static Color getTableSelectionForeground() {
     return UIManager.getColor("Table.selectionForeground");
+  }
+
+  @Deprecated
+  public static Pair<String, Integer> getSystemFontData() {
+    return JBUIScale.getSystemFontData();
+  }
+
+  @Deprecated
+  public static boolean isJreHiDPIEnabled() {
+    return JreHiDpiUtil.isJreHiDPIEnabled();
   }
 }

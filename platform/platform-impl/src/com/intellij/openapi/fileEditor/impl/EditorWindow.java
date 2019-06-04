@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
@@ -227,7 +228,8 @@ public class EditorWindow {
           if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
             final EditorsSplitters owner = getOwner();
             if (owner != null) {
-              final ThreeComponentsSplitter splitter = UIUtil.getParentOfType(ThreeComponentsSplitter.class, owner);
+              final ThreeComponentsSplitter splitter =
+                ComponentUtil.getParentOfType((Class<? extends ThreeComponentsSplitter>)ThreeComponentsSplitter.class, (Component)owner);
               if (splitter != null) {
                 splitter.revalidate();
                 splitter.repaint();

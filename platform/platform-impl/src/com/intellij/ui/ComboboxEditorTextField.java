@@ -74,7 +74,7 @@ public class ComboboxEditorTextField extends EditorTextField {
     // TODO:
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || (SystemInfoRt.isMac && UIUtil.isUnderAquaLookAndFeel())) {
       IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(() -> {
-        JComboBox comboBox = UIUtil.getParentOfType(JComboBox.class, this);
+        JComboBox comboBox = ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)this);
         if (comboBox != null) {
           comboBox.repaint();
         }

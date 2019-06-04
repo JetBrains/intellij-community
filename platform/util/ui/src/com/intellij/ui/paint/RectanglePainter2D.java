@@ -4,8 +4,8 @@ package com.intellij.ui.paint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.paint.LinePainter2D.Align;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale.ScaleType;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
