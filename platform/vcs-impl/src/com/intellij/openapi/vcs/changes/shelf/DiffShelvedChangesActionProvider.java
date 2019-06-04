@@ -99,7 +99,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     List<ShelvedChangeList> changeLists = ShelvedChangesViewManager.getShelvedLists(dc);
     ShelvedChangeList changeList = assertNotNull(ContainerUtil.getFirstItem(changeLists));
 
-    final List<ShelvedChange> textChanges = changeList.getChanges(project);
+    final List<ShelvedChange> textChanges = Objects.requireNonNull(changeList.getChanges());
     final List<ShelvedBinaryFile> binaryChanges = changeList.getBinaryFiles();
 
     final List<ShelveDiffRequestProducer> diffRequestProducers = new ArrayList<>();

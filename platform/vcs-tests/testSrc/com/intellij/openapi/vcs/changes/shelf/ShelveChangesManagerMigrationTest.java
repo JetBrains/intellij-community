@@ -74,7 +74,7 @@ public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
     throws IOException {
     for (ShelvedChangeList list : shelveChangesManager.getAllLists()) {
       File newPatchDir = new File(shelveChangesManager.getShelfResourcesDirectory(), list.getName());
-      ShelvedChangeList migrated = shelveChangesManager.createChangelistCopy(list, newPatchDir);
+      ShelvedChangeList migrated = shelveChangesManager.createChangelistCopyWithChanges(list, newPatchDir);
       shelveChangesManager.saveListAsScheme(migrated);
       shelveChangesManager.clearShelvedLists(Collections.singletonList(list), false);
     }

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 public class VcsShelveUtils {
   private static final Logger LOG = Logger.getInstance(VcsShelveUtils.class.getName());
@@ -41,7 +42,9 @@ public class VcsShelveUtils {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
-    final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
+
+    shelvedChangeList.loadChangesIfNeeded(project);
+    final List<ShelvedChange> changes = Objects.requireNonNull(shelvedChangeList.getChanges());
     List<ShelvedBinaryFile> binaryFiles = shelvedChangeList.getBinaryFiles();
 
     LOG.info("refreshing files ");

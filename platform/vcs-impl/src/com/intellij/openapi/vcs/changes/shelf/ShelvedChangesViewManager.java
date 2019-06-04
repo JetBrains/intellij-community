@@ -82,6 +82,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.UtilKt.isEmpty;
 import static java.util.Comparator.comparing;
+import static java.util.Objects.requireNonNull;
 
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
@@ -246,10 +247,12 @@ public class ShelvedChangesViewManager implements Disposable {
       createShelvedListsWithChangesNode(shelvedLists, createTagNode("Recently Deleted"));
     }
 
+    @CalledInBackground
     private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
       shelvedLists.forEach(changeList -> {
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
-        changeList.getChanges(myProject).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
+        changeList.loadChangesIfNeeded(myProject);
+        requireNonNull(changeList.getChanges()).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
         changeList.getBinaryFiles().stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
 
         shelvedChanges.sort(comparing(s -> s.getChange(myProject), CHANGE_COMPARATOR));
@@ -542,9 +545,8 @@ public class ShelvedChangesViewManager implements Disposable {
     private List<ShelvedChange> getChangesNotInLists(@NotNull List<? extends ShelvedChangeList> listsToDelete,
                                                      @NotNull List<? extends ShelvedChange> shelvedChanges) {
       List<ShelvedChange> result = new ArrayList<>(shelvedChanges);
-      for (ShelvedChangeList list : listsToDelete) {
-        result.removeAll(list.getChanges(myProject));
-      }
+      // all changes should be loaded because action performed from loaded shelf tab
+      listsToDelete.stream().map(list -> requireNonNull(list.getChanges())).forEach(result::removeAll);
       return result;
     }
 
