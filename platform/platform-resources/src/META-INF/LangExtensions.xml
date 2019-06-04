@@ -924,7 +924,7 @@
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator" />
-    <statistics.validation.customWhiteListRule implementation="com.intellij.execution.impl.statistics.AbstractRunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator" />
+    <statistics.validation.customWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector$RunConfigurationUtilValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector$RunConfigurationExecutorUtilValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithIdValidator"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
@@ -933,7 +933,6 @@
     <postStartupActivity implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeExtensionUsagesCollectorStartupActivity"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.TemporaryRunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector$ProjectUsages"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$EnabledBundledToolsUsagesCollector"/>
