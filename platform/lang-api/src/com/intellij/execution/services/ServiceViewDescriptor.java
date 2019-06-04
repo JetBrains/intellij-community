@@ -77,4 +77,9 @@ public interface ServiceViewDescriptor {
   default Color getItemBackgroundColor() {
     return null;
   }
+
+  @Nullable
+  default Runnable getRemover() {
+    return null;
+  }
 }

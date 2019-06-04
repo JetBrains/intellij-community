@@ -1207,6 +1207,8 @@
       <reference id="ServiceView.SplitToNewTabs"/>
       <reference id="ServiceView.SplitByType"/>
       <separator/>
+      <reference id="$Delete"/>
+      <separator/>
       <reference id="EditSource"/>
     </group>
 
