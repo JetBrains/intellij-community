@@ -9,6 +9,7 @@ import runtime.reactive.*
 
 class ScriptWindowViewModel(private val lifetime: Lifetime, private val project: Project) {
     val script = PropertyImpl<ScriptViewModel?>(null)
+    val logData = PropertyImpl<LogData?>(null)
 }
 
 
@@ -16,6 +17,8 @@ class ScriptViewModel(
     private val lifetime: Lifetime,
     val config: ProjectConfig) {
 }
+
+class LogData(val dummy: String)
 
 
 fun createEmptyScriptViewModel(lifetime: Lifetime) : ScriptViewModel {

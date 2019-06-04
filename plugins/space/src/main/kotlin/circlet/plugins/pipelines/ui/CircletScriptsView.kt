@@ -26,13 +26,32 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         val splitPane = Splitter(false)
         val modelTreeView = createModelTreeView()
         splitPane.firstComponent = modelTreeView
-        splitPane.secondComponent = JBLabel("your ad could be here")
+        val logPanel = JPanel()
+        logPanel.add(JBLabel("your ad could be here"))
+        splitPane.secondComponent = logPanel
+        viewModel.logData.forEach(lifetime) {
+            logPanel.removeAll()
+            logPanel.add(JBLabel(it?.dummy ?: "select task to run"))
+            logPanel.revalidate()
+            logPanel.repaint()
+        }
         return splitPane
     }
 
     private fun createModelTreeView() : JComponent {
         val tree = Tree()
+        tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         val root = tree.model.root as DefaultMutableTreeNode
+        tree.selectionModel.addTreeSelectionListener {
+            val selectedNode = it.path.lastPathComponent
+            if (selectedNode is CircletModelTreeNode) {
+                viewModel.logData.value = if (selectedNode.isRunnable) LogData(selectedNode.userObject.toString()) else null
+            }
+            else {
+                viewModel.logData.value = null
+            }
+
+        }
         resetNodes(root, viewModel.script.value)
         expandTree(tree)
         tree.isRootVisible = false
@@ -77,27 +96,27 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
     private fun resetNodes(root: DefaultMutableTreeNode, model: ScriptViewModel?) {
         root.removeAllChildren()
         if (model == null) {
-            root.add(DefaultMutableTreeNode("model is empty"))
+            root.add(CircletModelTreeNode("model is empty"))
             return
         }
 
         val config = model.config
         val tasks = config.tasks
         if (tasks.any()) {
-            val tasksCollectionNode = DefaultMutableTreeNode("tasks")
+            val tasksCollectionNode = CircletModelTreeNode("tasks")
             config.tasks.forEach {
-                val taskNode = DefaultMutableTreeNode(it.name)
+                val taskNode = CircletModelTreeNode(it.name, true)
                 val triggers = it.triggers
                 if (triggers.any()) {
-                    val triggersNode = DefaultMutableTreeNode("triggers")
+                    val triggersNode = CircletModelTreeNode("triggers")
                     triggers.forEach {
-                        triggersNode.add(DefaultMutableTreeNode(it::class.java.simpleName))
+                        triggersNode.add(CircletModelTreeNode(it::class.java.simpleName))
                     }
 
                     taskNode.add(triggersNode)
                 }
 
-                val jobsNode = DefaultMutableTreeNode("jobs")
+                val jobsNode = CircletModelTreeNode("jobs")
                 it.jobs.forEach {
                     jobsNode.add(it.traverseJobs())
                 }
@@ -109,30 +128,34 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         }
 
         config.targets.forEach {
-            val child = DefaultMutableTreeNode("target + ${it.name}. not implemented in UI yet")
+            val child = CircletModelTreeNode("target + ${it.name}. not implemented in UI yet")
             root.add(child)
         }
         config.pipelines.forEach {
-            val child = DefaultMutableTreeNode("pipelines + ${it.name}. not implemented in UI yet")
+            val child = CircletModelTreeNode("pipelines + ${it.name}. not implemented in UI yet")
             root.add(child)
         }
     }
 }
 
+class CircletModelTreeNode(text: String? = null, val isRunnable: Boolean = false) : DefaultMutableTreeNode(text) {
 
-fun ProjectJob.traverseJobs() : DefaultMutableTreeNode {
-    val res = DefaultMutableTreeNode()
+}
+
+
+fun ProjectJob.traverseJobs() : CircletModelTreeNode {
     when (val job = this) {
         is ProjectJob.CompositeJob -> {
-            res.userObject = job::class.java.simpleName
+            val res = CircletModelTreeNode(job::class.java.simpleName)
             job.children.forEach {
                 val child = it.traverseJobs()
                 res.add(child)
             }
+            return res
         }
 
         is ProjectJob.Process.Container -> {
-            res.userObject = "container: ${job.image}"
+            val res = CircletModelTreeNode("container: ${job.image}")
             val execPrefix = "exec: "
             val execNode = DefaultMutableTreeNode("exec:")
             val exec = job.data.exec
@@ -148,13 +171,12 @@ fun ProjectJob.traverseJobs() : DefaultMutableTreeNode {
                 }
             }
             res.add(execNode)
+            return res
         }
         is ProjectJob.Process.VM -> {
-            res.userObject = "vm: ${job.image}. VM is not implemented in UI yet"
+            return CircletModelTreeNode("vm: ${job.image}. VM is not implemented in UI yet")
         }
     }
-
-    return res
 }
 
 private fun List<String>.presentArgs() : String {
