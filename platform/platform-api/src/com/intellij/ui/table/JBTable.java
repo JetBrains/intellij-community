@@ -64,6 +64,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private TableCell rollOverCell;
 
+  private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
+
   public JBTable() {
     this(new DefaultTableModel());
   }
@@ -403,14 +405,21 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void paint(@NotNull Graphics g) {
-    if (!isEnabled()) {
-      g = new Grayer((Graphics2D)g, getBackground());
-    }
     super.paint(g);
     if (myBusyIcon != null) {
       myBusyIcon.updateLocation(this);
     }
   }
+
+  @Override
+  public Color getForeground() {
+    return isEnabled() ? super.getForeground() : disabledForeground;
+  }
+
+  //@Override
+  //public Color getSelectionBackground() {
+  //  return isEnabled() ? super.getSelectionBackground() : UIUtil.getTableSelectionBackground(false);
+  //}
 
   public void setPaintBusy(boolean paintBusy) {
     if (myBusy == paintBusy) return;
@@ -809,6 +818,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   protected class JBTableHeader extends JTableHeader {
+
+    private final Color disabledForeground = JBColor.namedColor("TableHeader.disabledForeground", JBColor.gray);
+
     public JBTableHeader() {
       super(JBTable.this.columnModel);
       JBTable.this.addPropertyChangeListener(new PropertyChangeListener() {
@@ -826,10 +838,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       if (myEnableAntialiasing) {
         GraphicsUtil.setupAntialiasing(g);
       }
-      if (!JBTable.this.isEnabled()) {
-        g = new Grayer((Graphics2D)g, getBackground());
-      }
       super.paint(g);
+    }
+
+    @Override
+    public Color getForeground() {
+      return JBTable.this.isEnabled() ? super.getForeground() : disabledForeground;
     }
 
     @Override
