@@ -2030,6 +2030,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Models = load("/nodes/models.svg");
     /** 16x16 */ public static final Icon Module = load("/nodes/Module.svg");
     /** 16x16 */ public static final Icon ModuleGroup = load("/nodes/moduleGroup.svg");
+    /** 16x16 */ public static final Icon MultipleTypeDefinitions = load("/nodes/multipleTypeDefinitions.svg");
     /** 16x16 */ public static final Icon NativeLibrariesFolder = load("/nodes/nativeLibrariesFolder.svg");
     /** 16x16 */ public static final Icon NewParameter = load("/nodes/newParameter.svg");
     /** 16x16 */ public static final Icon NodePlaceholder = load("/nodes/nodePlaceholder.svg");
