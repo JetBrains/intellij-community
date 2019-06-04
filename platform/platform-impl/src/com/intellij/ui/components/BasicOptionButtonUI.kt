@@ -138,6 +138,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     arrowButton.isFocusable = false
     arrowButton.preferredSize = arrowButtonPreferredSize
     arrowButton.isVisible = !isSimpleButton
+    arrowButton.isEnabled = optionButton.isEnabled
 
     arrowButtonActionListener = createArrowButtonActionListener()?.apply(arrowButton::addActionListener)
     arrowButtonMouseListener = createArrowButtonMouseListener()?.apply(arrowButton::addMouseListener)
@@ -310,6 +311,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   open inner class BaseButton : JButton() {
     override fun hasFocus(): Boolean = optionButton.hasFocus()
     override fun isDefaultButton(): Boolean = optionButton.isDefaultButton
+    override fun getBackground(): Color? = optionButton.background
 
     override fun paint(g: Graphics): Unit = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }
     open fun paintNotSimple(g: Graphics2D): Unit = super.paint(g)
