@@ -6,11 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "soon, i swear")
 public abstract class RefResolveService {
   /**
    * if true then PsiElement.getUseScope() returns scope restricted to only relevant files which are stored in {@link com.intellij.psi.RefResolveService}
