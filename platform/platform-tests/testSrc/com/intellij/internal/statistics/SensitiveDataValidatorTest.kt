@@ -114,36 +114,36 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_simple_regexp_rules() {
-    // custom regexp is:   (.+)\s*:\s*(.*)  => matches  'aaa:java.lang.String'
+    // custom regexp is:   (.+)\s*:\s*(.*)  => matches  'aaa/java.lang.String'
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_regexp_rules.json"))
 
     var elg = EventLogGroup("my.simple.regexp.value", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
 
      elg = EventLogGroup("my.simple.regexp.node.value", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
 
     elg = EventLogGroup("my.simple.regexp.ref", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
 
     elg = EventLogGroup("my.simple.regexp.node.ref", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
   }
 
   @Test
   fun test_simple_expression_rules() {
-    // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_],xxx:{enum:AAA|BBB|CCC},zzz{enum#myEnum},yyy"
+    // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_]_xxx_{enum:AAA|BBB|CCC}_zzz{enum#myEnum}_yyy"
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_expression_rules.json"))
     var elg = EventLogGroup("my.simple.expression", 1)
 
     assertSize(1, validator.getEventRules(elg))
 
-    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_],xxx:CCC,zzzREF_AAA,yyy")
-    assertEventRejected(validator, elg, "JUST_TEXT[_FOO_],xxx:CCC,zzzREF_AAA,yyy")
+    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]_xxx_CCC_zzzREF_AAA_yyy")
+    assertEventRejected(validator, elg, "JUST_TEXT[_FOO_]_xxx_CCC_zzzREF_AAA_yyy")
     assertEventRejected(validator, elg, "")
 
     //  {enum:AAA|}foo
