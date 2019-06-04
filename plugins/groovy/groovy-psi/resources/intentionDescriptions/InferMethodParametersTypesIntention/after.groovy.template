@@ -1,3 +1,6 @@
-def hello(<spot>Integer </spot>x, <spot>Integer </spot>y) {
-    return java.lang.Math.max(x, y)
+<spot>def <T0></spot> void append(<spot>List<T0></spot> a, <spot>T0</spot> b) {
+  a.add(b)
 }
+
+append([], 1)
+append([], 'q')

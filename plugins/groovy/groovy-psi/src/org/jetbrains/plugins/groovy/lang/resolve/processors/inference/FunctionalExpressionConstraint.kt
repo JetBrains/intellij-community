@@ -14,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.sam.isSamConversionAllowed
 class FunctionalExpressionConstraint(private val expression: GrFunctionalExpression, private val leftType: PsiType) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    constraints.add(TypeConstraint(leftType, expression.type, expression))
     if (leftType !is PsiClassType) return true
     val returnType by lazy(LazyThreadSafetyMode.NONE) {
       expression.returnType
