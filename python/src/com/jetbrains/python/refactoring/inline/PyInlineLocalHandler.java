@@ -51,7 +51,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
   private static final Pair<PyStatement, Boolean> EMPTY_DEF_RESULT = Pair.create(null, false);
-  private static final String HELP_ID = "python.reference.inline";
+  private static final String HELP_ID = "refactoring.inlineVariable";
 
   public static PyInlineLocalHandler getInstance() {
     return EP_NAME.findExtensionOrFail(PyInlineLocalHandler.class);
