@@ -46,7 +46,7 @@ public class TipOfTheDayStartupActivity implements StartupActivity, DumbAware {
       ToolWindowManager.getInstance(project).invokeLater(() -> runImpl(project, delayCount - 1));
     }
     else {
-      TipsOfTheDayUsagesCollector.trigger("shown.automatically");
+      TipsOfTheDayUsagesCollector.triggerShow("automatically");
       TipDialog.showForProject(project);
     }
   }
