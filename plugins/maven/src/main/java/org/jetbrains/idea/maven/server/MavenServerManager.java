@@ -115,8 +115,17 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         eventListenerJar = new File(root, "maven-event-listener.jar");
       }
 
+      if (!myBundledMaven3Home.exists()) {
+        if (ApplicationManager.getApplication().isInternal()) {
+          MavenLog.LOG.error("Cannot find bundled maven " + myBundledMaven3Home + " please run setupBundledMaven.gradle script");
+        }
+        else {
+          MavenLog.LOG.error("Cannot find bundled maven " + myBundledMaven3Home);
+        }
+      }
+
       if (!eventListenerJar.exists()) {
-        MavenLog.LOG.error("Event listener does not exist" + eventListenerJar);
+        MavenLog.LOG.error("Event listener does not exist " + eventListenerJar);
       }
     }
 
