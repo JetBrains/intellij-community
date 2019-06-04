@@ -972,6 +972,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      if (size == null) return null;
+      return new Dimension(size.width, 0);
+    }
+
+    @Override
     public void setTable(JTable table) {
       JTable oldTable = getTable();
       if (oldTable != null) {
