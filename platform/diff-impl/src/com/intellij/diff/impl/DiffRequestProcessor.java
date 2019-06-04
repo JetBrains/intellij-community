@@ -879,20 +879,23 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private static void patchShortcutSet(@NotNull AnAction action,
-                                       @NotNull String originalActionId,
-                                       @NotNull String replacementActionId) {
+  protected static void patchShortcutSet(@NotNull AnAction action,
+                                         @NotNull String originalActionId,
+                                         @Nullable String replacementActionId) {
     //noinspection ConstantConditions
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] originalShortcuts = keymap.getShortcuts(originalActionId);
-    Shortcut[] replacementShortcuts = keymap.getShortcuts(replacementActionId);
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     Set<Shortcut> newShortcuts = new HashSet<>(Arrays.asList(shortcuts));
     boolean hadOriginalShortcut = ContainerUtil.removeAll(newShortcuts, originalShortcuts);
     if (!hadOriginalShortcut) return;
 
-    ContainerUtil.addAll(newShortcuts, replacementShortcuts);
+    if (replacementActionId != null) {
+      Shortcut[] replacementShortcuts = keymap.getShortcuts(replacementActionId);
+      ContainerUtil.addAll(newShortcuts, replacementShortcuts);
+    }
+
     action.registerCustomShortcutSet(new CustomShortcutSet(newShortcuts.toArray(Shortcut.EMPTY_ARRAY)), null);
   }
 

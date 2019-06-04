@@ -7,7 +7,9 @@ import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -120,12 +122,16 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
 
   @NotNull
   private AnAction createGoToChangeAction() {
-    return GoToChangePopupBuilder.create(myRequestChain, index -> {
+    AnAction action = GoToChangePopupBuilder.create(myRequestChain, index -> {
       if (index >= 0 && index < myRequestChain.getRequests().size() && index != myIndex) {
         myIndex = index;
         updateRequest();
       }
     }, myIndex);
+    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
+      patchShortcutSet(action, "GotoClass", null);
+    }
+    return action;
   }
 
   private class MyChangeListener implements AsyncDiffRequestChain.Listener {
