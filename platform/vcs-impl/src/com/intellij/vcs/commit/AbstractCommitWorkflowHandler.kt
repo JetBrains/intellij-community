@@ -31,6 +31,8 @@ internal fun CommitWorkflowUi.getDisplayedPaths(): List<FilePath> =
 internal fun CommitWorkflowUi.getIncludedPaths(): List<FilePath> =
   getIncludedChanges().map { getFilePath(it) } + getIncludedUnversionedFiles().map { getFilePath(it) }
 
+internal val CheckinProjectPanel.isNonModalCommit: Boolean get() = commitWorkflowHandler is ChangesViewCommitWorkflowHandler
+
 private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
 abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : CommitWorkflowUi> :

@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.disableWhenDumb
 import com.intellij.openapi.vcs.configurable.CommitOptionsConfigurable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.isNonModalCommit
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -23,7 +23,7 @@ open class BooleanCommitOption(private val checkinPanel: CheckinProjectPanel,
   }
 
   private val isInSettings get() = checkinPanel is CommitOptionsConfigurable.CheckinPanel
-  private val isInNonModalOptionsPopup get() = checkinPanel.commitWorkflowHandler is ChangesViewCommitWorkflowHandler
+  private val isInNonModalOptionsPopup get() = checkinPanel.isNonModalCommit
 
   override fun refresh() {
   }

@@ -52,6 +52,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcs.commit.AmendCommitHandler;
 import com.intellij.vcs.commit.AmendCommitModeListener;
+import com.intellij.vcs.commit.ToggleAmendCommitOption;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -93,6 +94,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
+import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
 import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
@@ -133,7 +135,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new GitCheckinOptions(myProject, commitPanel);
+    return new GitCheckinOptions(myProject, commitPanel, isAmendCommitOptionSupported(commitPanel, this));
   }
 
   @Override
@@ -1157,7 +1159,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
     @Nullable private Balloon myAuthorBalloon;
 
-    GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+    GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel, boolean showAmendOption) {
       myExplicitMovementProviders = collectActiveMovementProviders(myProject);
 
       myCheckinProjectPanel = panel;
@@ -1189,6 +1191,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
       authorLabel.setLabelFor(myAuthorField);
 
+      ToggleAmendCommitOption amendOption = showAmendOption ? new ToggleAmendCommitOption(myCheckinProjectPanel, this) : null;
+
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
       mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
@@ -1200,6 +1204,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       myPanel = new JPanel(new GridBagLayout());
       myPanel.add(authorLabel, gb.nextLine().next());
       myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
+      if (amendOption != null) myPanel.add(amendOption, gb.nextLine().next().coverLine());
       myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
       myPanel.add(myCommitRenamesSeparatelyCheckbox, gb.nextLine().next().coverLine());
 

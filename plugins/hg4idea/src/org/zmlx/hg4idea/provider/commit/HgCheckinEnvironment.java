@@ -34,6 +34,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcs.commit.AmendCommitHandler;
 import com.intellij.vcs.commit.AmendCommitModeListener;
+import com.intellij.vcs.commit.ToggleAmendCommitOption;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
+import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
 import static org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutorKt.isPushAfterCommit;
 import static org.zmlx.hg4idea.util.HgUtil.getRepositoryManager;
 
@@ -77,9 +79,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     reset();
 
     Collection<HgRepository> repos = HgActionUtil.collectRepositoriesFromFiles(getRepositoryManager(myProject), commitPanel.getRoots());
-    if (!ContainerUtil.exists(repos, HgRepository::hasSubrepos)) return null;
+    boolean hasSubrepos = ContainerUtil.exists(repos, HgRepository::hasSubrepos);
+    boolean showAmendOption = isAmendCommitOptionSupported(commitPanel, this);
 
-    return new HgCommitAdditionalComponent(commitPanel);
+    if (!hasSubrepos && !showAmendOption) return null;
+
+    return new HgCommitAdditionalComponent(commitPanel, hasSubrepos, showAmendOption);
   }
 
   private void reset() {
@@ -323,10 +328,14 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     @NotNull private final JPanel myPanel;
     @NotNull private final JCheckBox myCommitSubrepos;
     @NotNull private final CheckinProjectPanel myCommitPanel;
+    @Nullable private final ToggleAmendCommitOption myAmendOption;
 
-    HgCommitAdditionalComponent(@NotNull CheckinProjectPanel panel) {
+    HgCommitAdditionalComponent(@NotNull CheckinProjectPanel panel, boolean hasSubrepos, boolean showAmendOption) {
       myCommitPanel = panel;
+      myAmendOption = showAmendOption ? new ToggleAmendCommitOption(myCommitPanel, this) : null;
+
       myCommitSubrepos = new JCheckBox("Commit subrepositories", false);
+      myCommitSubrepos.setVisible(hasSubrepos);
       myCommitSubrepos.setToolTipText(XmlStringUtil.wrapInHtml(
         "Commit all subrepos for selected repositories.<br>" +
         " <code>hg ci <i><b>files</b></i> -S <i><b>subrepos</b></i></code>"));
@@ -339,6 +348,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
         setDefaultWeightX(1).
         setDefaultFill(GridBagConstraints.HORIZONTAL);
       myPanel = new JPanel(new GridBagLayout());
+      if (myAmendOption != null) myPanel.add(myAmendOption, gb.nextLine().next());
       myPanel.add(myCommitSubrepos, gb.nextLine().next());
 
       getAmendHandler().addAmendCommitModeListener(this, this);
@@ -392,6 +402,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
     private void updateAmendState(boolean enable) {
       getAmendHandler().setAmendCommitModeTogglingEnabled(enable);
+      if (myAmendOption != null) myAmendOption.setEnabled(enable);
       if (!enable) getAmendHandler().setAmendCommitMode(false);
     }
   }
