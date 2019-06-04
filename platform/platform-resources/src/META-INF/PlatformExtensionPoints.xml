@@ -38,6 +38,11 @@
       <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>
 
+    <extensionPoint name="fileType"
+                    beanClass="com.intellij.openapi.fileTypes.FileTypeBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.FileType"/>
+    </extensionPoint>
+
     <extensionPoint name="selectInTarget"
                     interface="com.intellij.ide.SelectInTarget"
                     area="IDEA_PROJECT"/>
