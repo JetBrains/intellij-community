@@ -1271,9 +1271,9 @@ public class MavenProjectsTree {
               mavenProject.setConfigFileError(cause.getMessage());
             }
           }
-          throw cause;
+        } else {
+          throw t;
         }
-        throw t;
       }
       finally {
         embeddersManager.release(embedder);

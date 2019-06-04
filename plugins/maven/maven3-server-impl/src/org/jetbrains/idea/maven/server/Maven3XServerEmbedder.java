@@ -210,7 +210,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       //noinspection SSBasedInspection
       cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
 
-      for (String each : new String[]{"initialize", "cli", "logging", "properties", "populateRequest"}) {
+      for (String each : new String[]{"initialize", "cli", "logging", "properties"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
         m.setAccessible(true);
         m.invoke(cli, cliRequest);
