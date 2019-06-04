@@ -12,8 +12,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 
-import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.migrateResourcesTo;
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getInstance;
 
 public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
 
@@ -55,26 +57,26 @@ public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
     File beforeXmlInfo = new File(testDataPath, "before.xml");
     assert (beforeXmlInfo.exists());
     Element element = JDOMUtil.load(beforeXmlInfo);
-    ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
+    ShelveChangesManager shelveChangesManager = getInstance(myProject);
     shelveChangesManager.loadState(element);
     if (migrateResources) {
       checkAndMigrateOldPatchResourcesToNewSchemeStorage(shelveChangesManager);
     }
-    shelfDir.refresh(false, true);
     PlatformTestUtil.saveProject(myProject);
+    shelfDir.refresh(false, true);
     PlatformTestUtil.assertDirectoriesEqual(afterDir, shelfDir);
   }
 
   /**
    * Should be called only once: when Settings Repository plugin runs first time
    */
-  private static void checkAndMigrateOldPatchResourcesToNewSchemeStorage(@NotNull ShelveChangesManager shelveChangesManager) {
+  private static void checkAndMigrateOldPatchResourcesToNewSchemeStorage(@NotNull ShelveChangesManager shelveChangesManager)
+    throws IOException {
     for (ShelvedChangeList list : shelveChangesManager.getAllLists()) {
       File newPatchDir = new File(shelveChangesManager.getShelfResourcesDirectory(), list.getName());
-      // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
-      if (!newPatchDir.exists() && newPatchDir.mkdirs()) {
-        migrateResourcesTo(list, newPatchDir, true);
-      }
+      ShelvedChangeList migrated = shelveChangesManager.createChangelistCopy(list, newPatchDir);
+      shelveChangesManager.saveListAsScheme(migrated);
+      shelveChangesManager.clearShelvedLists(Collections.singletonList(list), false);
     }
   }
 }

@@ -33,10 +33,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -245,13 +242,15 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         public void run(@NotNull ProgressIndicator indicator) {
           for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
             if (!list.isValid()) continue;
-            ShelvedChangeList migratedList = ShelvedChangeList.copy(list);
-            //find new name;
-            File newTargetDirectory = suggestPatchName(myProject, migratedList.DESCRIPTION, toFile, "");
-            migrateResourcesTo(migratedList, newTargetDirectory, false);
-            newSchemeManager.addScheme(migratedList, false);
-            // migrate resources and scheme path
-            indicator.checkCanceled();
+            try {
+              File newTargetDirectory = suggestPatchName(myProject, list.DESCRIPTION, toFile, "");
+              ShelvedChangeList migratedList = createChangelistCopy(list, newTargetDirectory);
+              newSchemeManager.addScheme(migratedList, false);
+              indicator.checkCanceled();
+            }
+            catch (IOException e) {
+              LOG.error("Can't copy patch file: " + list.PATH);
+            }
           }
           clearShelvedLists(mySchemeManager.getAllSchemes(), false);
         }
@@ -332,26 +331,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   @NotNull
-  static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
-                                                       @NotNull File targetDirectory,
-                                                       boolean deleteOld) {
-    Collection<String> nonMigratedPaths = new ArrayList<>();
-    //try to copy/move .patch file
-    File patchFile = new File(list.PATH);
-    if (patchFile.exists()) {
-      File newPatchFile = getPatchFileInConfigDir(targetDirectory);
-      try {
-        FileUtil.copy(patchFile, newPatchFile);
-        list.PATH = toSystemIndependentName(newPatchFile.getPath());
-        if (deleteOld) {
-          FileUtil.delete(patchFile);
-        }
-      }
-      catch (IOException e) {
-        nonMigratedPaths.add(list.PATH);
-      }
-    }
-
+  private static List<ShelvedBinaryFile> copyBinaryFiles(@NotNull ShelvedChangeList list, @NotNull File targetDirectory) {
+    List<ShelvedBinaryFile> copied = new ArrayList<>();
     for (ShelvedBinaryFile file : list.getBinaryFiles()) {
       if (file.SHELVED_PATH != null) {
         File shelvedFile = new File(file.SHELVED_PATH);
@@ -359,18 +340,15 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
           File newShelvedFile = new File(targetDirectory, PathUtil.getFileName(file.AFTER_PATH));
           try {
             FileUtil.copy(shelvedFile, newShelvedFile);
-            file.SHELVED_PATH = toSystemIndependentName(newShelvedFile.getPath());
-            if (deleteOld) {
-              FileUtil.delete(shelvedFile);
-            }
+            copied.add(new ShelvedBinaryFile(file.BEFORE_PATH, file.AFTER_PATH, toSystemIndependentName(newShelvedFile.getPath())));
           }
           catch (IOException e) {
-            nonMigratedPaths.add(shelvedFile.getPath());
+            LOG.error("Can't copy binary file: " + list.PATH);
           }
         }
       }
     }
-    return nonMigratedPaths;
+    return copied;
   }
 
   @NotNull
@@ -1071,7 +1049,8 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                                           boolean delete) {
 
     try {
-      ShelvedChangeList listCopy = createChangelistCopy(changeList);
+      ShelvedChangeList listCopy = createChangelistCopy(changeList, generateUniqueSchemePatchDir(changeList.DESCRIPTION, true));
+      listCopy.updateDate();
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
 
       removeFromList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
@@ -1099,7 +1078,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     changeList.clearLoadedChanges();
   }
 
-  private void saveListAsScheme(@NotNull ShelvedChangeList list) {
+  void saveListAsScheme(@NotNull ShelvedChangeList list) {
     if (!list.getBinaryFiles().isEmpty() ||
         !list.getChanges(myProject).isEmpty()) {
       // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
@@ -1108,14 +1087,19 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   @NotNull
-  private ShelvedChangeList createChangelistCopy(@NotNull ShelvedChangeList changeList) throws IOException {
-    final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
-    final File newPath = getPatchFileInConfigDir(newPatchDir);
+  ShelvedChangeList createChangelistCopy(@NotNull ShelvedChangeList changeList, @NotNull File targetDir)
+    throws IOException {
+    final File newPath = getPatchFileInConfigDir(targetDir);
     FileUtil.copy(new File(changeList.PATH), newPath);
-    final ShelvedChangeList listCopy = new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION,
-                                                             new ArrayList<>(changeList.getBinaryFiles()));
+    final ShelvedChangeList listCopy =
+      new ShelvedChangeList(newPath.getAbsolutePath(), changeList.DESCRIPTION, copyBinaryFiles(changeList, targetDir),
+                            changeList.DATE.getTime());
     listCopy.markToDelete(changeList.isMarkedToDelete());
-    listCopy.setName(newPatchDir.getName());
+    listCopy.setRecycled(changeList.isRecycled());
+    listCopy.setDeleted(changeList.isDeleted());
+    listCopy.setName(targetDir.getName());
+    //load changes
+    listCopy.getChanges(myProject);
     return listCopy;
   }
 
@@ -1140,7 +1124,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     clearShelvedLists(getRecycledShelvedChangeLists(), true);
   }
 
-  private void clearShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists, boolean updateView) {
+  void clearShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists, boolean updateView) {
     if (shelvedLists.isEmpty()) return;
     for (ShelvedChangeList list : shelvedLists) {
       deleteResources(list);
