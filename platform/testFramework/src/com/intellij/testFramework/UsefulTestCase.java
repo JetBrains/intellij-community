@@ -1023,15 +1023,20 @@ public abstract class UsefulTestCase extends TestCase {
       exceptionCase.tryClosure();
     }
     catch (Throwable e) {
+      Throwable cause = e;
+      while (cause instanceof LoggedErrorProcessor.TestLoggerAssertionError && cause.getCause() != null) {
+        cause = cause.getCause();
+      }
+
       if (shouldOccur) {
         wasThrown = true;
         final String errorMessage = exceptionCase.getAssertionErrorMessage();
-        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), e.getClass());
+        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
         if (expectedErrorMsg != null) {
-          assertEquals("Compare error messages", expectedErrorMsg, e.getMessage());
+          assertEquals("Compare error messages", expectedErrorMsg, cause.getMessage());
         }
       }
-      else if (exceptionCase.getExpectedExceptionClass().equals(e.getClass())) {
+      else if (exceptionCase.getExpectedExceptionClass().equals(cause.getClass())) {
         wasThrown = true;
 
         //noinspection UseOfSystemOutOrSystemErr
@@ -1039,7 +1044,7 @@ public abstract class UsefulTestCase extends TestCase {
         //noinspection UseOfSystemOutOrSystemErr
         e.printStackTrace(System.out);
 
-        fail("Exception isn't expected here. Exception message: " + e.getMessage());
+        fail("Exception isn't expected here. Exception message: " + cause.getMessage());
       }
       else {
         throw e;
