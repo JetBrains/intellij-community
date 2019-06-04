@@ -101,6 +101,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     configureArrowButton()
 
     configureOptionButton()
+    updateTooltip()
   }
 
   protected open fun uninstallButtons() {
