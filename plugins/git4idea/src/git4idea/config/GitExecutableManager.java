@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -115,38 +116,41 @@ public class GitExecutableManager {
   @CalledInAny
   @NotNull
   public GitVersion getVersionOrCancel(@NotNull Project project) throws ProcessCanceledException {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      return ProgressManager
-        .getInstance()
-        .runProcessWithProgressSynchronously(() -> getVersionOrCancel(project),
-                                             GitBundle.getString("git.executable.version.progress.title"), true, project);
-    }
-    String pathToGit = getPathToGit(project);
-    GitVersion version = identifyVersionOrDisplayError(project, pathToGit);
-    if (version == null) {
-      throw new ProcessCanceledException();
-    }
-    return version;
+    return runUnderProgressIfNeeded(project, GitBundle.getString("git.executable.version.progress.title"), () -> {
+      String pathToGit = getPathToGit(project);
+      GitVersion version = identifyVersionOrDisplayError(project, pathToGit);
+      if (version == null) {
+        throw new ProcessCanceledException();
+      }
+      return version;
+    });
   }
 
   @CalledInAny
   @Nullable
   public GitVersion tryGetVersion(@NotNull Project project) {
+    return runUnderProgressIfNeeded(project, GitBundle.getString("git.executable.version.progress.title"), () -> {
+      try {
+        String pathToGit = getPathToGit(project);
+        return identifyVersion(pathToGit);
+      }
+      catch (ProcessCanceledException e) {
+        return null;
+      }
+      catch (GitVersionIdentificationException e) {
+        return null;
+      }
+    });
+  }
+
+  private static <T> T runUnderProgressIfNeeded(@NotNull Project project,
+                                                @NotNull String title,
+                                                @NotNull ThrowableComputable<T, RuntimeException> task) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      return ProgressManager
-        .getInstance()
-        .runProcessWithProgressSynchronously(() -> tryGetVersion(project),
-                                             GitBundle.getString("git.executable.version.progress.title"), true, project);
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(task, title, true, project);
     }
-    try {
-      String pathToGit = getPathToGit(project);
-      return identifyVersion(pathToGit);
-    }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-    catch (GitVersionIdentificationException e) {
-      return null;
+    else {
+      return task.compute();
     }
   }
 
