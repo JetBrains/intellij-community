@@ -38,10 +38,6 @@ public class ShTerminalRunner extends ShRunner {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window == null) return;
 
-    if (window.isAvailable()) {
-      ((ToolWindowImpl)window).ensureContentInitialized();
-    }
-
     ContentManager contentManager = window.getContentManager();
     Pair<Content, Process> pair = getSuitableProcess(contentManager);
     if (pair != null) {
