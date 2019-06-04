@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -828,7 +827,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       first = message;
       pluginId = findPluginId(message.getThrowable());
       plugin = PluginManager.getPlugin(pluginId);
-      submitter = getSubmitter(message.getThrowable(), pluginId, plugin);
+      submitter = getSubmitter(message.getThrowable(), plugin);
       detailsText = detailsText();
     }
 
@@ -978,12 +977,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    return getSubmitter(t, pluginId, plugin);
+  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, @Nullable PluginId pluginId) {
+    return getSubmitter(t, PluginManager.getPlugin(pluginId));
   }
 
-  private static ErrorReportSubmitter getSubmitter(Throwable t, PluginId pluginId, IdeaPluginDescriptor plugin) {
+  private static ErrorReportSubmitter getSubmitter(Throwable t, @Nullable IdeaPluginDescriptor plugin) {
     if (t instanceof MessagePool.TooManyErrorsException || t instanceof AbstractMethodError) {
       return null;
     }
@@ -999,7 +997,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (plugin != null) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
-        if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
+        if (descriptor != null && plugin.getPluginId() == descriptor.getPluginId()) {
           return reporter;
         }
       }
