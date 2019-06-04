@@ -137,6 +137,9 @@ public class PluginManagerConfigurableNewLayout
     myTabHeaderComponent = new TabbedPaneHeaderComponent(createGearActions(), index -> {
       myCardPanel.select(index, true);
       storeSelectionTab(index);
+
+      String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
+      (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
     });
 
     myUpdateAll.setVisible(false);

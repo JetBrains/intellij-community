@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
@@ -54,7 +54,7 @@ public class PluginSearchTextField extends SearchTextField {
     return mySkipDocumentEvents;
   }
 
-  public void setTextIgnoreEvents(@NotNull String text) {
+  public void setTextIgnoreEvents(@Nullable String text) {
     try {
       mySkipDocumentEvents = true;
       setText(text);

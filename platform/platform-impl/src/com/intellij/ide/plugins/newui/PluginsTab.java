@@ -20,6 +20,7 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -225,6 +226,26 @@ public abstract class PluginsTab {
 
   @NotNull
   protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+
+  @Nullable
+  public String getSearchQuery() {
+    if (mySearchPanel == null || mySearchPanel.isEmpty()) {
+      return null;
+    }
+    String query = mySearchPanel.getQuery();
+    return query.isEmpty() ? null : query;
+  }
+
+  public void setSearchQuery(@Nullable String query) {
+    mySearchTextField.setTextIgnoreEvents(query);
+    mySearchTextField.requestFocus();
+    if (query == null) {
+      hideSearchPanel();
+    }
+    else {
+      showSearchPanel(query);
+    }
+  }
 
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {
