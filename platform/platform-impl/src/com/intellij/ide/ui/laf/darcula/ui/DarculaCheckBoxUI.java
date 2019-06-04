@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -132,19 +132,15 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
-    //text
     if (text != null) {
-      View view = (View)c.getClientProperty(BasicHTML.propertyKey);
-      if (view != null) {
-        view.paint(g, textRect);
+      View v = (View)b.getClientProperty(BasicHTML.propertyKey);
+      if (v != null) {
+        v.paint(g, textRect);
       }
       else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        final int mnemonicIndex = SystemInfoRt.isMac && !UIManager.getBoolean("Button.showMnemonics") ? -1 : b.getDisplayedMnemonicIndex();
-        UIUtilities.drawStringUnderlineCharAt(c, g, text,
-                                              mnemonicIndex,
-                                              textRect.x,
-                                              textRect.y + fm.getAscent());
+        int mnemonicIndex = DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
+        UIUtilities.drawStringUnderlineCharAt(b, g, text, mnemonicIndex, textRect.x, textRect.y + fm.getAscent());
       }
     }
   }
