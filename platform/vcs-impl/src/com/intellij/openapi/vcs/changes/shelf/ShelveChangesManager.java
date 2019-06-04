@@ -1226,14 +1226,17 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   }
 
   private void deleteResources(@NotNull final ShelvedChangeList changeList) {
-    FileUtil.delete(new File(getShelfResourcesDirectory(), changeList.getName()));
-    //backward compatibility deletion: if we didn't preform resource migration
     FileUtil.delete(new File(changeList.PATH));
     for (ShelvedBinaryFile binaryFile : changeList.getBinaryFiles()) {
       final String path = binaryFile.SHELVED_PATH;
       if (path != null) {
         FileUtil.delete(new File(path));
       }
+    }
+    //schema dir may be related to another list, so check that it's empty first
+    File schemaDir = new File(getShelfResourcesDirectory(), changeList.getName());
+    if (schemaDir.exists() && ArrayUtil.isEmpty(schemaDir.list())) {
+      FileUtil.delete(schemaDir);
     }
   }
 
