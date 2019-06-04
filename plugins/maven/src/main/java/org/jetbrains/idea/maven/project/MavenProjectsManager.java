@@ -405,12 +405,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsTree.addListener(new MavenProjectsTree.Listener() {
       @Override
       public void pluginsResolved(@NotNull MavenProject project) {
-        mySyncConsole.getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).finish();
+        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).finish();
       }
 
       @Override
       public void artifactsDownloaded(@NotNull MavenProject project) {
-        mySyncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).finish();
+        getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).finish();
       }
     });
   }
@@ -445,7 +445,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         while (it.hasNext()) {
           MavenProject each = it.next();
           if (each.hasReadingProblems()) {
-            mySyncConsole.notifyReadingProblems(each.getFile());
+            getSyncConsole().notifyReadingProblems(each.getFile());
             it.remove();
           }
         }
