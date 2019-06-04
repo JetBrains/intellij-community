@@ -16,7 +16,7 @@ import java.io.*
 class ScriptModelBuilder {
     companion object : KLogging()
 
-    suspend fun build(lifetime: Lifetime, project: Project): ScriptViewModel {
+    fun build(lifetime: Lifetime, project: Project): ScriptViewModel {
 
         val basePath = project.basePath
         if (basePath == null) {

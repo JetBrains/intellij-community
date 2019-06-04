@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.treeStructure.Tree
+import kotlinx.coroutines.*
 import runtime.async.*
 import runtime.reactive.*
 import javax.swing.*
@@ -41,11 +42,16 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         val refreshAction = object : DumbAwareActionButton(IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) {
                 val lt = refreshLifetimes.next()
-                launch(lt, ApplicationUiDispatch.coroutineContext) {
+                GlobalScope.launch {
                     val model = scriptModelBuilder.build(lt, project)
                     viewModel.script.value = model
-                    resetNodes(root, model)
-                    tree.updateUI()
+
+                }.invokeOnCompletion {
+                    launch(lt, ApplicationUiDispatch.coroutineContext) {
+                        val model = viewModel.script.value
+                        resetNodes(root, model)
+                        tree.updateUI()
+                    }
                 }
             }
         }
@@ -54,7 +60,6 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
             .createDecorator(tree)
             .addExtraAction(refreshAction)
             .createPanel()
-
     }
 
     private fun expandTree(tree: JTree) {
