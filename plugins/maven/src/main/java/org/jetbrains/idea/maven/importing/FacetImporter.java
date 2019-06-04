@@ -5,6 +5,7 @@ import com.intellij.facet.*;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
+import com.intellij.openapi.externalSystem.project.ModifiableArtifactsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
@@ -182,5 +185,16 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     if (frameworkType == null) return false;
 
     return excludesConfiguration.isExcludedFromDetection(frameworkType);
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  protected static ModifiableArtifactsProvider getArtifactProvider(@NotNull IdeModifiableModelsProvider modelsProvider) {
+    if (modelsProvider instanceof ModifiableArtifactsProvider) {
+      return (ModifiableArtifactsProvider)modelsProvider;
+    }
+    else {
+      throw new AssertionError("Unable to get artifacts provider");
+    }
   }
 }

@@ -28,8 +28,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,9 +57,6 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserData
 
   Library.ModifiableModel getModifiableLibraryModel(Library library);
 
-  @NotNull
-  ModifiableArtifactModel getModifiableArtifactModel();
-
   Library createLibrary(String name);
 
   Library createLibrary(String name, @Nullable ProjectModelExternalSource externalSource);
@@ -69,10 +64,6 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserData
   void removeLibrary(Library library);
 
   ModalityState getModalityStateForQuestionDialogs();
-
-  ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter();
-
-  PackagingElementResolvingContext getPackagingElementResolvingContext();
 
   void commit();
 
