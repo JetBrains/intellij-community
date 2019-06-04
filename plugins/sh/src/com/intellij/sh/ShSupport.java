@@ -5,6 +5,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.sh.psi.ShVariable;
 import com.intellij.sh.run.ShRunConfiguration;
 import com.intellij.sh.run.ShRunConfigurationProfileState;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +22,11 @@ public interface ShSupport {
   RunProfileState createRunProfileState(@NotNull Executor executor,
                                         @NotNull ExecutionEnvironment environment,
                                         @NotNull ShRunConfiguration configuration);
+
+  @NotNull
+  default PsiReference[] getReferences(ShVariable variable) {
+    return PsiReference.EMPTY_ARRAY;
+  }
 
   class Impl implements ShSupport {
     @Override
