@@ -475,6 +475,9 @@ public final class HttpRequests {
         NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
         deleteFile = false;
       }
+      catch (HttpStatusException e) {
+        throw e;
+      }
       catch (IOException e) {
         throw new IOException(createErrorMessage(e, this, false), e);
       }
