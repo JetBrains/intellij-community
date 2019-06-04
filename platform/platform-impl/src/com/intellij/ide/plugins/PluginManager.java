@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ExceptionUtil;
@@ -84,10 +83,11 @@ public class PluginManager extends PluginManagerCore {
 
   @Nullable
   public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
-    final IdeaPluginDescriptor[] plugins = getPlugins();
-    for (final IdeaPluginDescriptor plugin : plugins) {
-      if (Comparing.equal(id, plugin.getPluginId())) {
-        return plugin;
+    if (id != null) {
+      for (IdeaPluginDescriptor plugin : getPlugins()) {
+        if (id == plugin.getPluginId()) {
+          return plugin;
+        }
       }
     }
     return null;
