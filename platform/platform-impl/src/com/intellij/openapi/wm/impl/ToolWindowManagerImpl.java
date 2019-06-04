@@ -130,6 +130,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     awtFocusListener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
+        if (myProject.isDisposed()) return;
         assert event instanceof FocusEvent;
         FocusEvent focusEvent = (FocusEvent)event;
         if (focusEvent.getID() == FocusEvent.FOCUS_GAINED) {
