@@ -164,8 +164,17 @@ public final class JBUIScale {
    * The user scale factor, see {@link ScaleType#USR_SCALE}.
    */
   private static final MutableNotNullValue<Float> userScaleFactor = new MutableNotNullValue<>(() -> {
+    Float factor = DEBUG_USER_SCALE_FACTOR.get();
+    if (factor != null) {
+      return factor;
+    }
     return computeUserScaleFactor(JreHiDpiUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.get());
   });
+
+  @TestOnly
+  public static void setUserScaleFactorForTest(float value) {
+    setUserScaleFactorProperty(value);
+  }
 
   private static void setUserScaleFactorProperty(float value) {
     Float oldValue = userScaleFactor.get();
@@ -214,11 +223,6 @@ public final class JBUIScale {
   }
 
   private static float computeUserScaleFactor(float scale) {
-    Float factor = DEBUG_USER_SCALE_FACTOR.get();
-    if (factor != null) {
-      return factor;
-    }
-
     if (!SystemProperties.getBooleanProperty("hidpi", true)) {
       return 1f;
     }

@@ -72,7 +72,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   public void test(double usrScale, double sysScale) throws MalformedURLException {
-    JBUIScale.setUserScaleFactor((float)usrScale);
+    JBUIScale.setUserScaleFactorForTest((float)usrScale);
     JBUIScale.setSystemScaleFactor((float)sysScale);
 
     ScaleContext ctx = ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale));
@@ -159,9 +159,10 @@ public class IconScaleTest extends BareTestFixtureTestCase {
   }
 
   static void assertIcon(@NotNull Icon icon, @NotNull UserScaleContext iconContext, int usrSize, int devSize) {
-    ScaleContext context = ScaleContext.create(iconContext);
     assertThat(icon.getIconWidth()).describedAs("unexpected icon user width (ctx: " + iconContext + ")").isEqualTo(usrSize);
     assertThat(icon.getIconHeight()).describedAs("unexpected icon user height (ctx: " + iconContext + ")").isEqualTo(usrSize);
+
+    ScaleContext context = ScaleContext.create(iconContext);
     assertThat(ImageUtil.getRealWidth(IconUtil.toImage(icon, context))).describedAs("unexpected icon real width (ctx: " + iconContext + ")").isEqualTo(devSize);
     assertThat(ImageUtil.getRealHeight(IconUtil.toImage(icon, context))).describedAs("unexpected icon real height (ctx: " + iconContext + ")").isEqualTo(devSize);
   }
