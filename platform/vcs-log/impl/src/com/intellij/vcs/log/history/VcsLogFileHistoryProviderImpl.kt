@@ -69,8 +69,11 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
   private fun canShowHistoryInLog(dataManager: VcsLogData,
                                   correctedPath: FilePath,
                                   root: VirtualFile): Boolean {
-    return (VcsLogUtil.isFolderHistoryShownInLog() && correctedPath.isDirectory &&
-            VcsLogProperties.get(dataManager.getLogProvider(root), VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY))
+    if (!VcsLogUtil.isFolderHistoryShownInLog() || !correctedPath.isDirectory) {
+      return false
+    }
+    val logProvider = dataManager.logProviders[root] ?: return false
+    return (VcsLogProperties.get(logProvider, VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY))
   }
 
   private fun triggerFileHistoryUsage(paths: Collection<FilePath>, hash: Hash?) {
