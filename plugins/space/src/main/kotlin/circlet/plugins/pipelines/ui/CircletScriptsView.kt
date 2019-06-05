@@ -24,18 +24,15 @@ import java.awt.*
 import javax.swing.*
 import javax.swing.tree.*
 
-class CircletScriptsView(private val lifetime: Lifetime, private val project: Project) {
-
-    private val viewModel = ScriptWindowViewModel(lifetime, project)
-
+class CircletScriptsViewFactory() {
     companion object{
         private const val consolePanelName = "console"
         private const val taskNotSelectedPanelName = "taskNotSelected"
     }
 
-    fun createView() : JComponent {
+    fun createView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
         val splitPane = Splitter(false)
-        val modelTreeView = createModelTreeView()
+        val modelTreeView = createModelTreeView(lifetime, project, viewModel)
         splitPane.firstComponent = modelTreeView
         val console = TextConsoleBuilderFactory.getInstance().createBuilder(project).console as ConsoleViewImpl
         Disposer.register(project, console)
@@ -60,7 +57,7 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         return splitPane
     }
 
-    private fun createModelTreeView() : JComponent {
+    private fun createModelTreeView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
         val tree = Tree()
         tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         val root = tree.model.root as DefaultMutableTreeNode
@@ -107,18 +104,22 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         }
 
         fun updateActionsIsEnabledStates() {
-            val modelBuildIsRunningValue = viewModel.modelBuildIsRunning.value
-            val isSelectedNodeRunnrable = viewModel.selectedNode.value?.isRunnable ?: false
-            refreshAction.isEnabled = !modelBuildIsRunningValue
-            runAction.isEnabled = !modelBuildIsRunningValue && isSelectedNodeRunnrable
+            val smthIsRunning = viewModel.modelBuildIsRunning.value || viewModel.taskIsRunning.value
+            val isSelectedNodeRunnable = viewModel.selectedNode.value?.isRunnable ?: false
+            refreshAction.isEnabled = !smthIsRunning
+            runAction.isEnabled = !smthIsRunning && isSelectedNodeRunnable
         }
 
-        viewModel.selectedNode.forEach(lifetime) {
-            updateActionsIsEnabledStates()
-        }
-
-        viewModel.modelBuildIsRunning.forEach(lifetime) {
-            updateActionsIsEnabledStates()
+        viewModel.apply {
+            selectedNode.forEach(lifetime) {
+                updateActionsIsEnabledStates()
+            }
+            modelBuildIsRunning.forEach(lifetime) {
+                updateActionsIsEnabledStates()
+            }
+            taskIsRunning.forEach(lifetime) {
+                updateActionsIsEnabledStates()
+            }
         }
 
         return ToolbarDecorator

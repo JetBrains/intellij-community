@@ -10,6 +10,7 @@ import javax.swing.tree.*
 
 class ScriptWindowViewModel(private val lifetime: Lifetime, private val project: Project) {
     val modelBuildIsRunning = mutableProperty(false)
+    val taskIsRunning = mutableProperty(false)
     val script = mutableProperty<ScriptViewModel?>(null)
     val selectedNode = mutableProperty<CircletModelTreeNode?>(null)
     val logData = mutableProperty<LogData?>(null)

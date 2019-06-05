@@ -30,6 +30,7 @@
         <toolWindow id="Circlet" anchor="bottom" canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
 
+        <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore" />
 
     </extensions>
 
