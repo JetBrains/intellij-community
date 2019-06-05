@@ -71,8 +71,8 @@ fun Path.createSymbolicLink(target: Path): Path {
 }
 
 @JvmOverloads
-fun Path.delete(deleteRecursively: Boolean = true) {
-  if (deleteRecursively) {
+fun Path.delete(recursively: Boolean = true) {
+  if (recursively) {
     FileUtil.delete(this)
   }
   else {
