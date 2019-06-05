@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
@@ -33,8 +34,8 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     })
   }
 
-  internal fun getChangeListFor(change: Change?): LocalChangeList =
-    change?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
+  internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =
+    changes.firstOrNull()?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
 
   override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) {
     if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
@@ -48,6 +49,9 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
       doCommitCustom(executor, session, commitState.changes, commitState.commitMessage)
     }
   }
+
+  override fun doRunBeforeCommitChecks(checks: Runnable) =
+    PartialChangesUtil.runUnderChangeList(project, getAffectedChangeList(commitState.changes), checks)
 
   private fun doCommit() {
     LOG.debug("Do actual commit")

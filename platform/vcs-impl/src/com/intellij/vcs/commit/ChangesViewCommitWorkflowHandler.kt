@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 
@@ -17,8 +16,6 @@ class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>() {
-
-  private val changeListManager = ChangeListManager.getInstance(project)
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
@@ -92,7 +89,7 @@ class ChangesViewCommitWorkflowHandler(
     workflow.commitState = getCommitState()
   }
 
-  override fun addUnversionedFiles(): Boolean = addUnversionedFiles(workflow.getChangeListFor(getIncludedChanges().firstOrNull()))
+  override fun addUnversionedFiles(): Boolean = addUnversionedFiles(workflow.getAffectedChangeList(getIncludedChanges()))
 
   override fun saveCommitOptions(): Boolean {
     ensureCommitOptions()
