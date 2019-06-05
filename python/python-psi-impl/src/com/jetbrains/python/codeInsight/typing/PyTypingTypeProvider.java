@@ -93,6 +93,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String NO_RETURN = "typing.NoReturn";
   public static final String FINAL = "typing.Final";
   public static final String FINAL_EXT = "typing_extensions.Final";
+  private static final String LITERAL = "typing.Literal";
+  private static final String LITERAL_EXT = "typing_extensions.Literal";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -126,10 +128,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
-    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL)
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL)
     // type aliases
     .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, ORDERED_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
-    .add(PROTOCOL_EXT, FINAL_EXT)
+    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT)
     .build();
 
   /**
@@ -161,6 +163,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(CHAIN_MAP)
     .add(NO_RETURN)
     .add(FINAL, FINAL_EXT)
+    .add(LITERAL, LITERAL_EXT)
     .build();
 
   @Nullable
@@ -818,6 +821,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (finalType != null) {
         return finalType;
       }
+      final Ref<PyType> literalType = getLiteralType(resolved, context);
+      if (literalType != null) {
+        return literalType;
+      }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
@@ -956,6 +963,24 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return Ref.create();
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getLiteralType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
+
+      final Collection<String> operandNames = resolveToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext());
+      if (ContainerUtil.exists(operandNames, name -> name.equals(LITERAL) || name.equals(LITERAL_EXT))) {
+        return Optional
+          .ofNullable(subscriptionExpr.getIndexExpression())
+          .map(index -> PyLiteralType.Companion.newInstance(index, context.getTypeContext()))
+          .map(Ref::create)
+          .orElse(null);
+      }
+    }
+
     return null;
   }
 

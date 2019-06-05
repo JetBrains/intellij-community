@@ -3416,6 +3416,111 @@ public class PyTypeTest extends PyTestCase {
            "expr = 5  # type: Final");
   }
 
+  // PY-35235
+  public void testTypingLiteral() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        doTest("Literal[True]",
+               "from typing_extensions import Literal\n" +
+               "expr: Literal[True] = False");
+
+        doTest("bool",
+               "from typing_extensions import Literal\n" +
+               "expr: Literal[] = False");
+
+        doTest("bool",
+               "from typing_extensions import Literal\n" +
+               "expr: Literal = False");
+
+        doTest("bool",
+               "expr = False");
+      }
+    );
+
+    doTest("Literal[10]",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[10]");
+
+    doTest("Literal[-10]",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[-10]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[10.5]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[10j]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal[]");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20  # type: Literal");
+
+    doTest("int",
+           "from typing_extensions import Literal\n" +
+           "expr = 20");
+  }
+
+  // PY-35235
+  public void testTypingLiteralNone() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("None",
+                   "from typing_extensions import Literal\n" +
+                   "expr: Literal[None] = undefined")
+    );
+  }
+
+  // PY-35235
+  public void testTypingLiteralEnum() {
+    // we don't support using `typing.Literal` with enums :(
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("Any",
+                            "from typing_extensions import Literal\n" +
+                            "\n" +
+                            "from enum import Enum\n" +
+                            "\n" +
+                            "class A(Enum):\n" +
+                            "    V1 = 1\n" +
+                            "    V2 = 2\n" +
+                            "\n" +
+                            "expr: Literal[A.V1] = undefined")
+    );
+  }
+
+  // PY-35235
+  public void testUnionOfTypingLiterals() {
+    doTest("Union[Literal[-1], Literal[0], Literal[1]]",
+           "from typing_extensions import Literal\n" +
+           "expr = undefined  # type: Literal[-1, 0, 1]");
+
+    doTest("Union[Literal[42], Literal[\"foo\"], Literal[True]]",
+           "from typing_extensions import Literal\n" +
+           "expr = undefined  # type: Literal[42, \"foo\", True]");
+  }
+
+  // PY-35235
+  public void testTypingLiteralOfTypingLiterals() {
+    doTest("Union[Literal[1], Literal[2], Literal[3], Literal[4], Literal[5]]",
+           "from typing_extensions import Literal\n" +
+           "a = Literal[1]\n" +
+           "b = Literal[2, 3]\n" +
+           "c = Literal[4, 5]\n" +
+           "d = Literal[b, c]\n" +
+           "expr = undefined  # type: Literal[a, d]");
+
+    doTest("Union[Literal[1], Literal[2], Literal[\"foo\"], Literal[5], None]",
+           "from typing_extensions import Literal\n" +
+           "expr = undefined  # type: Literal[Literal[Literal[1, 2], \"foo\"], 5, None]");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
