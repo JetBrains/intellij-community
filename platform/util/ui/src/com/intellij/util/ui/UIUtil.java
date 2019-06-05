@@ -3760,4 +3760,10 @@ public final class UIUtil extends StartupUiUtil {
   public static boolean isJreHiDPIEnabled() {
     return JreHiDpiUtil.isJreHiDPIEnabled();
   }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static boolean isJreHiDPI(@Nullable Graphics2D g) {
+    return JreHiDpiUtil.isJreHiDPI(g);
+  }
 }
