@@ -251,8 +251,7 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
-    <applicationService serviceInterface="com.intellij.ide.CommandLineWaitingManager"
-                        serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
+    <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
