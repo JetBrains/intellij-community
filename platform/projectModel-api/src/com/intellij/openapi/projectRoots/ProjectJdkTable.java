@@ -74,18 +74,6 @@ public abstract class ProjectJdkTable {
     @Override public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) { }
   }
 
-  /**
-   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
-   */
-  @Deprecated
-  public abstract void addListener(@NotNull Listener listener);
-
-  /**
-   * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
-   */
-  @Deprecated
-  public abstract void removeListener(@NotNull Listener listener);
-
   @NotNull
   public abstract SdkTypeId getDefaultSdkType();
 
