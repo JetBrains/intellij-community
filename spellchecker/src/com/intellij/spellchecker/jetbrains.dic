@@ -718,6 +718,7 @@ sftp
 shader
 sharding
 shellcheck
+shfmt
 sigabrt
 sigaio
 sigalrm
