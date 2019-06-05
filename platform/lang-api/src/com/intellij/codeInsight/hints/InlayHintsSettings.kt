@@ -67,7 +67,12 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   }
 
   fun hintsEnabled(key: SettingsKey<*>, language: Language) : Boolean = synchronized(lock) {
-    return key.getFullId(language) !in myState.disabledHintProviderIds
+    var lang: Language? = language
+    while (lang != null) {
+      if (key.getFullId(lang) in myState.disabledHintProviderIds) return false
+      lang = lang.baseLanguage
+    }
+    return true
   }
 
   override fun getState(): State = synchronized(lock) {
