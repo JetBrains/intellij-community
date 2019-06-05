@@ -878,7 +878,8 @@ public class FileUtilRt {
   }
 
   /**
-   * Warning! this method is _not_ symlinks-aware. Consider using com.intellij.openapi.util.io.FileUtil.delete()
+   * <b>IMPORTANT</b>: the method is not symlinks- or junction-aware when invoked on Java 6 or earlier.
+   *
    * @param file file or directory to delete
    * @return true if the file did not exist or was successfully deleted
    */
