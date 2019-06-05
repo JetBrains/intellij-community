@@ -3,7 +3,6 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -36,10 +35,7 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -843,6 +839,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForOutput("Done");
         assertFalse(output().contains("KeyboardInterrupt"));
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
       }
     });
   }
@@ -2014,57 +2016,59 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testExecAndSpawnWithBytesArgs() {
 
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfoRt.isWindows);
+
     class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTask {
 
       private final static String BYTES_ARGS_WARNING = "pydev debugger: bytes arguments were passed to a new process creation function. " +
                                                        "Breakpoints may not work correctly.\n";
       private final static String PYTHON2_TAG = "python2";
 
-      private Map<String, Set<String>> myEnvTags = Maps.newHashMap();
-
-      ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
+      private ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
         super(relativeTestDataPath, scriptName);
-        loadEnvTags();
       }
 
-      private void loadEnvTags() {
-        List<String> roots = PyEnvTestCase.getPythonRoots();
-
-        roots.forEach((root) -> {
-          Set<String> tags = Sets.newHashSet();
-          tags.addAll(PyEnvTestCase.loadEnvTags(root));
-          myEnvTags.put(root, tags);
-        });
+      private boolean hasPython2Tag() throws NullPointerException {
+          String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
+          return envTags.get(env).stream().anyMatch((tag) -> tag.startsWith(PYTHON2_TAG));
       }
 
-      private boolean hasPython2Tag(){
-        String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
-        return myEnvTags.get(env).stream().anyMatch((tag) -> tag.startsWith(PYTHON2_TAG));
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 4);
       }
 
       @Override
       public void testing() throws Exception {
-        if (hasPython2Tag()) {
-          waitForTerminate();
-          assertFalse(output().contains(BYTES_ARGS_WARNING));
+        waitForPause();
+        setProcessCanTerminate(true);
+        resume();
+        try {
+          if (hasPython2Tag()) {
+            assertFalse(output().contains(BYTES_ARGS_WARNING));
+          }
+          else
+            waitForOutput(BYTES_ARGS_WARNING);
         }
-        else
-          waitForOutput(BYTES_ARGS_WARNING);
+        catch (NullPointerException e) {
+          fail("Error while checking if the env has the " + PYTHON2_TAG + " tag.");
+        }
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron", "-jython");
       }
     }
 
-    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_exec_with_bytes_args.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-    });
-
-    runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", "test_call_spawn_with_bytes_args.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-    });
+    Arrays.asList("test_call_exec_with_bytes_args.py", "test_call_spawn_with_bytes_args.py").forEach(
+      (script) -> runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", script))
+    );
   }
 }

@@ -459,7 +459,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return hasChildWithValue(children, Integer.toString(value));
   }
 
-
   @Override
   public void setUp(final String testName) throws Exception {
     if (myFixture == null) {
