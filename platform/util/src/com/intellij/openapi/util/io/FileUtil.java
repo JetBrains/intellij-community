@@ -2,13 +2,13 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -24,10 +24,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -36,10 +37,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
-  static {
-    if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
-  }
-
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
@@ -319,8 +316,9 @@ public class FileUtil extends FileUtilRt {
     return new FixedFuture<>(null);
   }
 
-  private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
-    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
+  @NotNull
+  private static Future<Void> startDeletionThread(@NotNull File... tempFiles) {
+    RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
       final Thread currentThread = Thread.currentThread();
       final int priority = currentThread.getPriority();
       currentThread.setPriority(Thread.MIN_PRIORITY);
@@ -334,17 +332,7 @@ public class FileUtil extends FileUtilRt {
       }
     }, null);
 
-    try {
-      // attempt to execute on pooled thread
-      final Class<?> aClass = Class.forName("com.intellij.openapi.application.ApplicationManager");
-      final Method getApplicationMethod = aClass.getMethod("getApplication");
-      final Object application = getApplicationMethod.invoke(null);
-      final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
-      executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
-    }
-    catch (Exception ignored) {
-      new Thread(deleteFilesTask, "File deletion thread").start();
-    }
+    AppExecutorUtil.getAppExecutorService().execute(deleteFilesTask);
     return deleteFilesTask;
   }
 
@@ -382,26 +370,68 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (NIOReflect.IS_AVAILABLE) {
-      return deleteRecursivelyNIO(file);
+    try {
+      delete(file.toPath());
     }
-    return deleteRecursively(file);
+    catch (IOException e) {
+      return false;
+    }
+    return true;
   }
 
-  private static boolean deleteRecursively(@NotNull File file) {
-    FileAttributes attributes = FileSystemUtil.getAttributes(file);
-    if (attributes == null) return true;
-
-    if (attributes.isDirectory() && !attributes.isSymLink()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          if (!deleteRecursively(child)) return false;
-        }
-      }
+  public static void delete(@NotNull Path file) throws IOException {
+    BasicFileAttributes attributes;
+    try {
+      attributes = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+    }
+    catch (NoSuchFileException e) {
+      return;
     }
 
-    return deleteFile(file);
+    if (!attributes.isDirectory()) {
+      deleteFile(file);
+      return;
+    }
+
+    Files.walkFileTree(file, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        deleteFile(file);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        Files.deleteIfExists(dir);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  private static void deleteFile(@NotNull Path file) throws IOException {
+    try {
+      Files.deleteIfExists(file);
+    }
+    catch (IOException e) {
+      // repeated delete is required for bad OS like Windows
+      doIOOperation(new RepeatableIOOperation<Boolean, IOException>() {
+        @Override
+        public Boolean execute(boolean lastAttempt) throws IOException {
+          try {
+            Files.deleteIfExists(file);
+          }
+          catch (IOException e) {
+            if (lastAttempt) {
+              return Boolean.FALSE;
+            }
+            else {
+              throw e;
+            }
+          }
+          return Boolean.TRUE;
+        }
+      });
+    }
   }
 
   public static boolean createParentDirs(@NotNull File file) {

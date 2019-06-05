@@ -72,23 +72,11 @@ fun Path.createSymbolicLink(target: Path): Path {
 
 @JvmOverloads
 fun Path.delete(deleteRecursively: Boolean = true) {
-  try {
-    if (!deleteRecursively) {
-      // performance optimisation: try to delete regular file without any checks
-      Files.delete(this)
-      return
-    }
-
-    val attributes = basicAttributesIfExists() ?: return
-    if (attributes.isDirectory) {
-      deleteRecursively()
-    }
-    else {
-      Files.delete(this)
-    }
+  if (deleteRecursively) {
+    FileUtil.delete(this)
   }
-  catch (e: Exception) {
-    deleteAsIOFile()
+  else {
+    Files.delete(this)
   }
 }
 
@@ -123,27 +111,10 @@ fun Path.deleteChildrenStartingWith(prefix: String) {
   }
 }
 
-private fun Path.deleteRecursively() = Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
-  override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-    try {
-      Files.delete(file)
-    }
-    catch (e: Exception) {
-      deleteAsIOFile()
-    }
-    return FileVisitResult.CONTINUE
-  }
-
-  override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-    try {
-      Files.delete(dir)
-    }
-    catch (e: Exception) {
-      deleteAsIOFile()
-    }
-    return FileVisitResult.CONTINUE
-  }
-})
+private fun Path.deleteRecursively(): Path {
+  FileUtil.delete(this)
+  return this
+}
 
 private fun Path.deleteAsIOFile() {
   try {
