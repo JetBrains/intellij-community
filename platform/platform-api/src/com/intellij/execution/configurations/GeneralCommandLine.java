@@ -396,7 +396,7 @@ public class GeneralCommandLine implements UserDataHolder {
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {
-          LOG.info(exePath + " => " + exeFile);
+          LOG.debug(exePath + " => " + exeFile);
           exePath = exeFile.getPath();
         }
       }
