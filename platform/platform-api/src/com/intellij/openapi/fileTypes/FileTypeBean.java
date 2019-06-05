@@ -3,8 +3,14 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileTypeBean extends AbstractExtensionPointBean {
+  private final List<FileNameMatcher> myExtraMatchers = new ArrayList<>();
+
   @Attribute("implementationClass")
   public String implementationClass;
 
@@ -15,6 +21,7 @@ public class FileTypeBean extends AbstractExtensionPointBean {
   public String fieldName;
 
   @Attribute("name")
+  @NotNull
   public String name;
 
   @Attribute("extensions")
@@ -22,4 +29,12 @@ public class FileTypeBean extends AbstractExtensionPointBean {
 
   @Attribute("language")
   public String language;
+
+  public void addMatchers(List<FileNameMatcher> matchers) {
+    myExtraMatchers.addAll(matchers);
+  }
+
+  public List<FileNameMatcher> getExtraMatchers() {
+    return myExtraMatchers;
+  }
 }
