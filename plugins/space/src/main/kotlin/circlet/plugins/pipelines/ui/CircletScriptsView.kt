@@ -4,17 +4,23 @@ import circlet.pipelines.config.api.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.runtime.*
+import com.intellij.execution.*
+import com.intellij.execution.filters.*
+import com.intellij.execution.impl.*
+import com.intellij.execution.ui.*
 import com.intellij.icons.*
 import com.intellij.ide.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.*
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.ui.treeStructure.Tree
 import kotlinx.coroutines.*
 import runtime.async.*
 import runtime.reactive.*
+import java.awt.*
 import javax.swing.*
 import javax.swing.tree.*
 
@@ -22,18 +28,34 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
 
     private val viewModel = ScriptWindowViewModel(lifetime, project)
 
+    companion object{
+        private const val consolePanelName = "console"
+        private const val taskNotSelectedPanelName = "taskNotSelected"
+    }
+
     fun createView() : JComponent {
         val splitPane = Splitter(false)
         val modelTreeView = createModelTreeView()
         splitPane.firstComponent = modelTreeView
-        val logPanel = JPanel()
-        logPanel.add(JBLabel("your ad could be here"))
+        val console = TextConsoleBuilderFactory.getInstance().createBuilder(project).console as ConsoleViewImpl
+        Disposer.register(project, console)
+        val layout = CardLayout()
+
+        val logPanel = JPanel(layout).apply {
+            add(JBLabel("select task to run"), taskNotSelectedPanelName)
+            add(console.component, consolePanelName)
+        }
         splitPane.secondComponent = logPanel
+
         viewModel.logData.forEach(lifetime) {
-            logPanel.removeAll()
-            logPanel.add(JBLabel(it?.dummy ?: "select task to run"))
-            logPanel.revalidate()
-            logPanel.repaint()
+            console.clear()
+            if (it != null) {
+                layout.show(logPanel, consolePanelName)
+                console.print(it.dummy, ConsoleViewContentType.NORMAL_OUTPUT)
+            }
+            else {
+                layout.show(logPanel, taskNotSelectedPanelName)
+            }
         }
         return splitPane
     }
@@ -55,6 +77,10 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         val scriptModelBuilder = ScriptModelBuilder()
         val refreshAction = object : DumbAwareActionButton(IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) {
+                if (viewModel.modelBuildIsRunning.value) {
+                    return
+                }
+                viewModel.modelBuildIsRunning.value = true
                 val lt = refreshLifetimes.next()
                 GlobalScope.launch {
                     val model = scriptModelBuilder.build(lt, project)
@@ -65,14 +91,40 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
                         val model = viewModel.script.value
                         resetNodes(root, model)
                         tree.updateUI()
+                        viewModel.modelBuildIsRunning.value = false
                     }
                 }
             }
         }
 
+        val runAction = object : DumbAwareActionButton(ExecutionBundle.message("run.configurable.display.name"), AllIcons.RunConfigurations.TestState.Run) {
+            override fun actionPerformed(e: AnActionEvent) {
+                if (viewModel.modelBuildIsRunning.value) {
+                    return
+                }
+                Messages.showInfoMessage("run build", "circlet")
+            }
+        }
+
+        fun updateActionsIsEnabledStates() {
+            val modelBuildIsRunningValue = viewModel.modelBuildIsRunning.value
+            val isSelectedNodeRunnrable = viewModel.selectedNode.value?.isRunnable ?: false
+            refreshAction.isEnabled = !modelBuildIsRunningValue
+            runAction.isEnabled = !modelBuildIsRunningValue && isSelectedNodeRunnrable
+        }
+
+        viewModel.selectedNode.forEach(lifetime) {
+            updateActionsIsEnabledStates()
+        }
+
+        viewModel.modelBuildIsRunning.forEach(lifetime) {
+            updateActionsIsEnabledStates()
+        }
+
         return ToolbarDecorator
             .createDecorator(tree)
             .addExtraAction(refreshAction)
+            .addExtraAction(runAction)
             .createPanel()
     }
 
