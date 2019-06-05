@@ -95,10 +95,14 @@ export class ActivityChartManager extends XYChartManager {
   }
 
   protected getTooltipText() {
-    return "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
+    let result = "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
+    if (this.descriptor.sourceHasPluginInformation !== false) {
+      result += "\nplugin: {plugin}"
+    }
+    return result
   }
 
-// https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
+  // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
   render(data: DataManager): void {
     const concatenatedData: Array<ClassItem> = []
     let colorIndex = 0

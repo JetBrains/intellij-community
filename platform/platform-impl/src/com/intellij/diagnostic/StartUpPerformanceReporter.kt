@@ -119,7 +119,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", "5")
+        writer.writeStringField("version", "6")
         writeServiceStats(writer)
 
         var startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
@@ -348,6 +348,9 @@ private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, 
   writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(item.start - offset))
   writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(item.end - offset))
   writer.writeStringField("thread", normalizeThreadName(item.thread))
+  if (item.pluginId != null) {
+    writer.writeStringField("plugin", item.pluginId)
+  }
 }
 
 private fun normalizeThreadName(name: String): String {

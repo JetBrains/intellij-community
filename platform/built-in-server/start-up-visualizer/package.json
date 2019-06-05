@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build && unlink dist/js/pdfmake.*.js && unlink dist/js/pdfmake.*.js.map"
   },
   "dependencies": {
     "@amcharts/amcharts4": "4.4.10",

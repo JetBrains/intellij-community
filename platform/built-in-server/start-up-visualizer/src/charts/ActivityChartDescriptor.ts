@@ -9,6 +9,7 @@ export interface ActivityChartDescriptor {
 
   readonly rotatedLabels?: boolean
   readonly groupByThread?: boolean
+  readonly sourceHasPluginInformation?: boolean
 }
 
 // not as part of ItemChartManager.ts to reduce scope of changes on change
@@ -33,6 +34,7 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     label: "Prepare App Init",
     id: "prepareAppInitActivities",
     groupByThread: true,
+    sourceHasPluginInformation: false,
   },
   {
     label: "Options Top Hit Providers",

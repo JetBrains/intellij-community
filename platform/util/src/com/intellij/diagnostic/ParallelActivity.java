@@ -48,8 +48,8 @@ public enum ParallelActivity {
     return new ActivityImpl(name, /* description = */ null, StartUpMeasurer.getCurrentTime(), /* parent = */ null, level, this, pluginId);
   }
 
-  public long record(long start, @Nullable Class<?> clazz) {
-    return record(start, clazz, null, null);
+  public long record(long start, @Nullable Class<?> clazz, @Nullable String pluginId) {
+    return record(start, clazz, /* level = */ null, pluginId);
   }
 
   /**

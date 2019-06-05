@@ -1,3 +1,6 @@
+## 6
+* add `plugin`.
+
 ## 5
 * add `projectPostStartupActivities`.
 * add `thread` (thread name) to activity.

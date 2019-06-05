@@ -22,7 +22,21 @@ function configureCommonChartSettings(chart: am4charts.XYChart) {
 
 export abstract class BaseChartManager<T extends am4charts.Chart> implements ChartManager {
   protected constructor(protected readonly chart: T) {
-    chart.exporting.menu = new am4core.ExportMenu()
+    const exportMenu = new am4core.ExportMenu()
+    const topItems = exportMenu.items[0].menu!!
+    for (let i = topItems.length - 1; i >= 0; i--) {
+      const chartElement = topItems[i]
+      if (chartElement.label == "Data") {
+        topItems.splice(i, 1)
+      }
+      else if (chartElement.label == "Image") {
+        // remove PDF
+        const length = chartElement.menu!!.length
+        if (chartElement.menu!![length - 1].label == "PDF")
+        chartElement.menu!!.length = length - 1
+      }
+    }
+    chart.exporting.menu = exportMenu
   }
 
   abstract render(data: DataManager): void
@@ -38,8 +52,6 @@ export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart>
     super(am4core.create(container, am4charts.XYChart))
 
     configureCommonChartSettings(this.chart)
-
-    // this.addDisposeHandler(childHot)
   }
 
   abstract render(data: DataManager): void
