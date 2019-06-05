@@ -3,7 +3,6 @@ package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.beans.MetricEventUtilKt;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -15,10 +14,14 @@ import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
+import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
+import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 
@@ -35,28 +38,28 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         Set<MetricEvent> metricEvents = ContainerUtil.newHashSet(new MetricEvent("uiInitialized"));
 
-        addBooleanUsage(properties, defaultProperties, metricEvents, "details", CommonUiProperties.SHOW_DETAILS);
-        addBooleanUsage(properties, defaultProperties, metricEvents, "diffPreview", CommonUiProperties.SHOW_DIFF_PREVIEW);
-        addBooleanUsage(properties, defaultProperties, metricEvents, "parentChanges", SHOW_CHANGES_FROM_PARENTS);
-        addBooleanUsage(properties, defaultProperties, metricEvents, "onlyAffectedChanges", SHOW_ONLY_AFFECTED_CHANGES);
-        addBooleanUsage(properties, defaultProperties, metricEvents, "long.edges", SHOW_LONG_EDGES);
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DETAILS), "details");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_DIFF_PREVIEW), "diffPreview");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_CHANGES_FROM_PARENTS), "parentChanges");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ONLY_AFFECTED_CHANGES), "onlyAffectedChanges");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_LONG_EDGES), "long.edges");
 
-        addEnumUsage(properties, defaultProperties, metricEvents, "sort", BEK_SORT_TYPE);
+        addIfDiffers(metricEvents, properties, defaultProperties, getter(BEK_SORT_TYPE), "sort");
 
         if (ui.getColorManager().isMultipleRoots()) {
-          addBooleanUsage(properties, defaultProperties, metricEvents, "roots", CommonUiProperties.SHOW_ROOT_NAMES);
+          addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ROOT_NAMES), "roots");
         }
 
-        addBooleanUsage(properties, defaultProperties, metricEvents, "labels.compact", COMPACT_REFERENCES_VIEW);
-        addBooleanUsage(properties, defaultProperties, metricEvents, "labels.showTagNames", SHOW_TAG_NAMES);
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(COMPACT_REFERENCES_VIEW), "labels.compact");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_TAG_NAMES), "labels.showTagNames");
 
-        addBooleanUsage(properties, defaultProperties, metricEvents, "textFilter.regex", TEXT_FILTER_REGEX);
-        addBooleanUsage(properties, defaultProperties, metricEvents, "textFilter.matchCase", TEXT_FILTER_MATCH_CASE);
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_REGEX), "textFilter.regex");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_MATCH_CASE), "textFilter.matchCase");
 
         for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(project)) {
           if (factory.showMenuItem()) {
-            addBooleanUsage(properties, defaultProperties, metricEvents, "highlighter." + getFactoryIdSafe(factory),
-                            VcsLogHighlighterProperty.get(factory.getId()));
+            addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
+                             "highlighter." + getFactoryIdSafe(factory));
           }
         }
 
@@ -66,11 +69,11 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
           }
         }
 
-        Set<Integer> currentColumns = new HashSet<>(properties.get(CommonUiProperties.COLUMN_ORDER));
-        Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(CommonUiProperties.COLUMN_ORDER));
+        Set<Integer> currentColumns = new HashSet<>(properties.get(COLUMN_ORDER));
+        Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(COLUMN_ORDER));
         for (int column : GraphTableModel.DYNAMIC_COLUMNS) {
-          MetricEventUtilKt.addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column),
-                                             StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]) + "Column");
+          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column),
+                           StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]) + "Column");
         }
 
         List<String> tabs = projectLog.getTabsManager().getTabs();
@@ -90,22 +93,12 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     return "THIRD_PARTY";
   }
 
-  private static void addBooleanUsage(@NotNull VcsLogUiProperties properties,
-                                      @NotNull VcsLogUiProperties defaultProperties,
-                                      @NotNull Set<? super MetricEvent> metricEvents,
-                                      @NotNull String metricsName,
-                                      @NotNull VcsLogUiProperty<Boolean> property) {
-    if (!properties.exists(property)) return;
-    MetricEventUtilKt.addBoolIfDiffers(metricEvents, properties, defaultProperties, p -> p.get(property), metricsName);
-  }
-
-  private static void addEnumUsage(@NotNull VcsLogUiProperties properties,
-                                   @NotNull VcsLogUiProperties defaultProperties,
-                                   @NotNull Set<? super MetricEvent> metricEvents,
-                                   @NotNull String metricsName,
-                                   @NotNull VcsLogUiProperty<? extends Enum> property) {
-    if (!properties.exists(property)) return;
-    MetricEventUtilKt.addIfDiffers(metricEvents, properties, defaultProperties, p -> p.get(property), metricsName);
+  @NotNull
+  private static <T> Function1<VcsLogUiProperties, T> getter(@NotNull VcsLogUiProperty<? extends T> property) {
+    return p -> {
+      if (!p.exists(property)) return null;
+      return p.get(property);
+    };
   }
 
   @NotNull
