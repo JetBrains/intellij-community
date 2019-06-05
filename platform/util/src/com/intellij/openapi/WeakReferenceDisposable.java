@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
@@ -15,10 +15,10 @@ import java.lang.ref.WeakReference;
  *
  * @author eldar
  */
-public class WeaklyReferencedDisposable extends WeakReference<Disposable> implements Disposable {
+public class WeakReferenceDisposable extends WeakReference<Disposable> implements Disposable {
   private static final ReferenceQueue<Disposable> ourRefQueue = new ReferenceQueue<>();
 
-  public WeaklyReferencedDisposable(@NotNull Disposable disposable) {
+  public WeakReferenceDisposable(@NotNull Disposable disposable) {
     super(disposable, ourRefQueue);
     reapCollectedRefs();
   }
@@ -35,7 +35,7 @@ public class WeaklyReferencedDisposable extends WeakReference<Disposable> implem
     while (true) {
       final Reference<? extends Disposable> ref = ourRefQueue.poll();
       if (ref == null) break;
-      if (!(ref instanceof WeaklyReferencedDisposable)) continue;
+      if (!(ref instanceof WeakReferenceDisposable)) continue;
       Disposer.dispose((Disposable)ref);  // child is gone, remove the ref from the Disposer tree
     }
   }
