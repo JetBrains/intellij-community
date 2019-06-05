@@ -9,35 +9,34 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
 /**
- * A Disposable wrapper that is automatically disposed whenever an associated child disposable
- * is garbage-collected. Note that the associated disposable is NOT disposed when it's garbage-collected,
- * only the wrapper itself is removed from the Disposer tree.
+ * A Disposable wrapper that is automatically disposed whenever an associated object is garbage-collected.
  *
  * @author eldar
  */
-public class WeakReferenceDisposable extends WeakReference<Disposable> implements Disposable {
-  private static final ReferenceQueue<Disposable> ourRefQueue = new ReferenceQueue<>();
+public abstract class WeakReferenceDisposable<T> extends WeakReference<T> implements Disposable {
+  private static final ReferenceQueue<Object> ourRefQueue = new ReferenceQueue<>();
 
-  public WeakReferenceDisposable(@NotNull Disposable disposable) {
-    super(disposable, ourRefQueue);
+  public WeakReferenceDisposable(@NotNull T referent) {
+    super(referent, ourRefQueue);
     reapCollectedRefs();
   }
 
   @Override
-  public void dispose() {
-    final Disposable disposable = get();
-    if (disposable == null) return;
+  public final void dispose() {
+    final T referent = get();
+    if (referent == null) return;
     clear();
-    Disposer.dispose(disposable);
+    disposeReferent(referent);
   }
+
+  protected abstract void disposeReferent(@NotNull T referent);
 
   private static void reapCollectedRefs() {
     while (true) {
-      final Reference<? extends Disposable> ref = ourRefQueue.poll();
+      final Reference<?> ref = ourRefQueue.poll();
       if (ref == null) break;
       if (!(ref instanceof WeakReferenceDisposable)) continue;
-      Disposer.dispose((Disposable)ref);  // child is gone, remove the ref from the Disposer tree
+      Disposer.dispose((Disposable)ref);  // the referent is gone, remove from the Disposer tree
     }
   }
-
 }
