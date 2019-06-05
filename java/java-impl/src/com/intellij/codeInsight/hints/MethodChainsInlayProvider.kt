@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
 import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.JBUI
 import com.siyeh.ig.psiutils.ExpressionUtils
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
@@ -66,12 +67,14 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
         override fun insertUpdate(e: DocumentEvent?) = handleChange(listener)
         override fun removeUpdate(e: DocumentEvent?) = handleChange(listener)
       })
-      return panel {
+      val panel = panel {
         row {
           label(uniqueTypeCountName)
-          field(CCFlags.push)
+          field(pushX)
         }
       }
+      panel.border = JBUI.Borders.empty(5)
+      return panel
     }
 
     private fun handleChange(listener: ChangeListener) {
