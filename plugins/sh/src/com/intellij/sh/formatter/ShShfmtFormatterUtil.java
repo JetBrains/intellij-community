@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
@@ -86,9 +86,8 @@ public class ShShfmtFormatterUtil {
           Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
           File file = first != null ? first.first : null;
           if (file != null) {
-            String path = file.getCanonicalPath();
-            FileUtilRt.setExecutableAttribute(path, true);
-            shSettings.SHFMT_PATH = path;
+            FileUtil.setExecutable(file);
+            shSettings.SHFMT_PATH = file.getCanonicalPath();
             ApplicationManager.getApplication().invokeLater(onSuccess);
             ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
           }

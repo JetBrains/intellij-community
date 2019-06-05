@@ -118,7 +118,7 @@ public class ScriptGenerator {
       file = new File(FileUtil.getTempDirectory(), fileName);
     }
     FileUtil.writeToFile(file, content);
-    FileUtil.setExecutableAttribute(file.getPath(), true);
+    FileUtil.setExecutable(file);
     return file;
   }
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
@@ -70,7 +69,7 @@ class ShShellcheckTestUtil {
       if (file != null) {
         String path = decompressShellcheck(file.getCanonicalPath(), directory);
         if (StringUtil.isNotEmpty(path)) {
-          FileUtilRt.setExecutableAttribute(path, true);
+          FileUtil.setExecutable(new File(path));
           ShSettings.setShellcheckPath(path);
         }
       }

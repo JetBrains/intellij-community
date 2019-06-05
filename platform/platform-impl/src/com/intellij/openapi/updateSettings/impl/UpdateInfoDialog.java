@@ -265,7 +265,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       String text = (SystemInfoRt.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") +
                     StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
       FileUtil.writeToFile(file, text);
-      FileUtil.setExecutableAttribute(file.getPath(), true);
+      FileUtil.setExecutable(file);
     }
     catch (Exception e) {
       Logger.getInstance(UpdateInstaller.class).error(e);

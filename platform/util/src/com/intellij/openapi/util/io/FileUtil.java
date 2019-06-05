@@ -18,10 +18,7 @@ import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -29,6 +26,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -1379,10 +1378,27 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.generateRandomTemporaryPath();
   }
 
+  public static void setExecutable(@NotNull File file) throws IOException {
+    PosixFileAttributeView view = Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class);
+    if (view != null) {
+      Set<PosixFilePermission> permissions = view.readAttributes().permissions();
+      if (permissions.add(PosixFilePermission.OWNER_EXECUTE)) {
+        view.setPermissions(permissions);
+      }
+    }
+  }
+
+  /** @deprecated use {@link FileUtil#setExecutable(File)} or {@link File#setExecutable} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     FileUtilRt.setExecutableAttribute(path, executableFlag);
   }
 
+  /** @deprecated not very useful; use {@link Files#setLastModifiedTime} or {@link File#setLastModified} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @SuppressWarnings("RedundantThrows")
   public static void setLastModified(@NotNull File file, long timeStamp) throws IOException {
     if (!file.setLastModified(timeStamp)) {
       LOG.warn(file.getPath());

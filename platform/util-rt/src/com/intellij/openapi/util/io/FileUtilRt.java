@@ -684,13 +684,9 @@ public class FileUtilRt {
     return normalizeFile(file);
   }
 
-  /**
-   * Set executable attribute, it makes sense only on non-windows platforms.
-   *
-   * @param path           the path to use
-   * @param executableFlag new value of executable attribute
-   * @throws IOException if there is a problem with setting the flag
-   */
+  /** @deprecated not needed in 'util-rt'; use {@link com.intellij.openapi.util.io.FileUtil} or {@link File} methods; for removal in IDEA 2020 */
+  @Deprecated
+  @SuppressWarnings("ALL")
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     try {
       File file = new File(path);
