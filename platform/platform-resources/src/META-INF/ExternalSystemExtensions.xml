@@ -60,9 +60,6 @@
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.openapi.externalSystem.service.project.settings.BuildArtifactsTaskImporter"/>
 
-    <configuration.ModuleStructureExtension
-        implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
-
     <!--Tool window services-->
     <externalSystemViewContributor id="default" order="last"
                                    implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>

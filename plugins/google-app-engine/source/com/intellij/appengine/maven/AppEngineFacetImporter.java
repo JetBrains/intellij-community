@@ -21,6 +21,7 @@ import com.intellij.appengine.facet.AppEngineFacetType;
 import com.intellij.appengine.facet.AppEngineWebIntegration;
 import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
 import com.intellij.facet.FacetType;
+import com.intellij.openapi.externalSystem.project.PackagingModifiableModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -108,7 +109,8 @@ public class AppEngineFacetImporter extends FacetImporter<AppEngineFacet, AppEng
       facet.getConfiguration().setSdkHomePath(FileUtil.toSystemIndependentName(mavenProject.getLocalRepository().getPath()) + relativePath);
       AppEngineWebIntegration.getInstance().setupDevServer(facet.getSdk());
       final String artifactName = module.getName() + ":war exploded";
-      final Artifact webArtifact = getArtifactProvider(modelsProvider).getModifiableArtifactModel().findArtifact(artifactName);
+      final Artifact webArtifact = modelsProvider.getModifiableModel(PackagingModifiableModel.class)
+        .getModifiableArtifactModel().findArtifact(artifactName);
       AppEngineWebIntegration.getInstance().setupRunConfiguration(facet.getSdk(), webArtifact, module.getProject());
     }
   }
