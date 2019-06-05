@@ -185,7 +185,7 @@
       <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
       <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
 
-      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ToolWindowsGroup"/>
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewAppearanceGroup"/>
     </group>
 
     <group id="CodeEditorBaseGroup">
