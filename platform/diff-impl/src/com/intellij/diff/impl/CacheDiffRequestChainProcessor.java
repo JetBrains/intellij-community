@@ -12,7 +12,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -23,20 +22,20 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<DiffRequestProducer> {
-  private static final Logger LOG = Logger.getInstance(CacheDiffRequestChainProcessor.class);
-
   @NotNull private final DiffRequestChain myRequestChain;
   private int myIndex;
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
     super(project, requestChain);
     myRequestChain = requestChain;
-    myIndex = myRequestChain.getIndex();
 
     if (myRequestChain instanceof AsyncDiffRequestChain) {
       ((AsyncDiffRequestChain)myRequestChain).onAssigned(true);
+      // listener should be added after `onAssigned` call to avoid notification about synchronously loaded requests
       ((AsyncDiffRequestChain)myRequestChain).addListener(new MyChangeListener(), this);
     }
+
+    myIndex = myRequestChain.getIndex();
   }
 
   @Override
