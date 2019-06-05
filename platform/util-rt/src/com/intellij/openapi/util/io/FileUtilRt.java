@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -18,8 +19,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
- * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
+ * A stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
+ * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class FileUtilRt {
@@ -75,11 +76,11 @@ public class FileUtilRt {
     boolean isSymlink(@NotNull CharSequence path);
   }
 
+  @ReviseWhenPortedToJDK("7")
   static final class NIOReflect {
     // NIO-reflection initialization placed in a separate class for lazy loading
     static final boolean IS_AVAILABLE;
 
-    // todo: replace reflection with normal code after migration to JDK 1.8
     private static Method ourFilesDeleteIfExistsMethod;
     private static Method ourFilesWalkMethod;
     private static Method ourFileToPathMethod;
