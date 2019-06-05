@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -42,10 +43,10 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
           val type = types[index]
           val presentation = javaFactory.typeHint(type)
           val project = file.project
-          val finalPresentation = MenuOnClickPresentation(presentation, project) {
+          val finalPresentation = InsetPresentation(MenuOnClickPresentation(presentation, project) {
             val provider = this@MethodChainsInlayProvider
             listOf(InlayProviderDisablingAction(provider.name, file.language, project, provider.key))
-          }
+          }, left = 1)
           sink.addInlineElement(currentCall.textRange.endOffset, true, finalPresentation)
         }
         return true
