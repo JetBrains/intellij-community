@@ -55,7 +55,7 @@ class WSLDistributionService implements PersistentStateComponent<WSLDistribution
     new WslDistributionDescriptor("WLINUX", "WLinux", "wlinux.exe", "WLinux"),
     new WslDistributionDescriptor("PENGWIN", "Pengwin", "pengwin.exe", "Pengwin"),
     new WslDistributionDescriptor("PENGWIN_ENTERPRISE", "WLE", "wle.exe", "Pengwin Enterprise"),
-    new WslDistributionDescriptor("ARCH", "Arch", "Arch.exe", "Arch")
+    new WslDistributionDescriptor("ARCH", "Arch", "Arch.exe", "Arch Linux")
   );
 
   /**
