@@ -14,6 +14,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.Scale;
 import com.intellij.ui.scale.UserScaleContext;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1025,9 +1026,10 @@ public class JBUI {
    * @deprecated Use {@link com.intellij.ui.scale.ScaleContext}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @SuppressWarnings({"ClassNameSameAsAncestorName", "MethodOverridesStaticMethodOfSuperclass"})
-  public static class ScaleContext extends com.intellij.ui.scale.ScaleContext {
-    protected ScaleContext() {
+  public static final class ScaleContext extends com.intellij.ui.scale.ScaleContext {
+    private ScaleContext() {
     }
 
     @NotNull
@@ -1047,7 +1049,7 @@ public class JBUI {
       return new ScaleContext(scale);
     }
 
-    protected ScaleContext(@NotNull Scale scale) {
+    private ScaleContext(@NotNull Scale scale) {
       setScale(scale);
     }
 
@@ -1059,6 +1061,12 @@ public class JBUI {
         case PIX_SCALE: return pixScale;
       }
       return 1f; // unreachable
+    }
+
+    // backward compatibility
+    @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
+    public boolean update(@Nullable BaseScaleContext context) {
+      return super.update(context);
     }
   }
 
