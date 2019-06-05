@@ -44,12 +44,7 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         val root = tree.model.root as DefaultMutableTreeNode
         tree.selectionModel.addTreeSelectionListener {
             val selectedNode = it.path.lastPathComponent
-            if (selectedNode is CircletModelTreeNode) {
-                viewModel.logData.value = if (selectedNode.isRunnable) LogData(selectedNode.userObject.toString()) else null
-            }
-            else {
-                viewModel.logData.value = null
-            }
+            viewModel.selectedNode.value = if (selectedNode is CircletModelTreeNode) selectedNode else null
 
         }
         resetNodes(root, viewModel.script.value)
@@ -137,11 +132,6 @@ class CircletScriptsView(private val lifetime: Lifetime, private val project: Pr
         }
     }
 }
-
-class CircletModelTreeNode(text: String? = null, val isRunnable: Boolean = false) : DefaultMutableTreeNode(text) {
-
-}
-
 
 fun ProjectJob.traverseJobs() : CircletModelTreeNode {
     when (val job = this) {

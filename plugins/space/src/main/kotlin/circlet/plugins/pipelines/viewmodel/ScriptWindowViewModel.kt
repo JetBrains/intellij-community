@@ -6,10 +6,18 @@ import circlet.runtime.*
 import com.intellij.openapi.project.*
 import runtime.async.*
 import runtime.reactive.*
+import javax.swing.tree.*
 
 class ScriptWindowViewModel(private val lifetime: Lifetime, private val project: Project) {
-    val script = PropertyImpl<ScriptViewModel?>(null)
-    val logData = PropertyImpl<LogData?>(null)
+    val script = mutableProperty<ScriptViewModel?>(null)
+    val selectedNode = mutableProperty<CircletModelTreeNode?>(null)
+    val logData = mutableProperty<LogData?>(null)
+
+    init {
+        selectedNode.forEach(lifetime) {
+            logData.value = if (it != null && it.isRunnable) LogData(it.userObject.toString()) else null
+        }
+    }
 }
 
 
@@ -26,3 +34,7 @@ fun createEmptyScriptViewModel(lifetime: Lifetime) : ScriptViewModel {
 
 }
 
+
+class CircletModelTreeNode(text: String? = null, val isRunnable: Boolean = false) : DefaultMutableTreeNode(text) {
+
+}
