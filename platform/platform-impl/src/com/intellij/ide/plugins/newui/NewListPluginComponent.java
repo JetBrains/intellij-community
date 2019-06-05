@@ -754,11 +754,13 @@ public class NewListPluginComponent extends CellPluginComponent {
         myButtonComponents.add(index, component);
       }
       add(component);
+      updateVisibleOther();
     }
 
     public void removeButtonComponent(@NotNull JComponent component) {
       myButtonComponents.remove(component);
       remove(component);
+      updateVisibleOther();
     }
 
     public void setProgressComponent(@NotNull JComponent progressComponent) {
@@ -782,6 +784,13 @@ public class NewListPluginComponent extends CellPluginComponent {
 
       setVisibleOther(true);
       doLayout();
+    }
+
+    private void updateVisibleOther() {
+      if (myProgressComponent != null) {
+        myButtonEnableStates = null;
+        setVisibleOther(false);
+      }
     }
 
     private void setVisibleOther(boolean value) {
