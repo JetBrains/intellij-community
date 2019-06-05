@@ -65,18 +65,28 @@ public class IdeaGateway {
 
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
-    boolean isInContent = false;
     int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
+
+    // optimisation: FileTypeManager.isFileIgnored(f) will be checked inside ProjectFileIndex.isUnderIgnored()
+    if (numberOfOpenProjects == 0) {
+      return !FileTypeManager.getInstance().isFileIgnored(f);
+    }
+
+    boolean isExcludedFromAll = true;
+    boolean isInContent = false;
+
     for (int i = 0; i < numberOfOpenProjects; ++i) {
       ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
 
-      if (index.isExcluded(f)) return false;
+      if (index.isUnderIgnored(f)) return false;
       isInContent |= index.isInContent(f);
+      isExcludedFromAll &= index.isExcluded(f);
     }
+
+    if (isExcludedFromAll) return false;
     if (shouldBeInContent && !isInContent) return false;
 
-    // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
-    return numberOfOpenProjects != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+    return true;
   }
 
   @NotNull
