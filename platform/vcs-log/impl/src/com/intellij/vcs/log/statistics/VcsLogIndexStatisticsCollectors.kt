@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics
 
+import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.beans.newCounterMetric
+import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
@@ -20,24 +23,23 @@ import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import java.util.concurrent.TimeUnit
 
 class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
-  override fun getUsages(): MutableSet<UsageDescriptor> {
-    val usages = mutableSetOf<UsageDescriptor>()
-
+  override fun getMetrics(): MutableSet<MetricEvent> {
+    val metricEvents = mutableSetOf<MetricEvent>()
     if (!Registry.`is`("vcs.log.index.git")) {
-      usages.add(getBooleanUsage("index.disabled.in.registry", true))
+      metricEvents.add(newMetric("index.disabled.in.registry", true))
     }
 
     if (Registry.`is`("vcs.log.index.force")) {
-      usages.add(getBooleanUsage("index.forced.in.registry", true))
+      metricEvents.add(newMetric("index.forced.in.registry", true))
     }
 
     getBigRepositoriesList()?.let { bigRepositoriesList ->
       if (bigRepositoriesList.repositoriesCount > 0) {
-        usages.add(getCountingUsage("big.repositories", bigRepositoriesList.repositoriesCount))
+        metricEvents.add(newCounterMetric("big.repositories", bigRepositoriesList.repositoriesCount))
       }
     }
 
-    return usages
+    return metricEvents
   }
 
   private fun getBigRepositoriesList() = getServiceIfCreated<VcsLogBigRepositoriesList>(VcsLogBigRepositoriesList::class.java)
@@ -48,19 +50,19 @@ class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
 }
 
 class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
-  override fun getUsages(project: Project): MutableSet<UsageDescriptor> {
-    val usages = mutableSetOf<UsageDescriptor>()
+  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
+    val usages = mutableSetOf<MetricEvent>()
 
     getIndexCollector(project)?.state?.let { indexCollectorState ->
-      usages.add(getCountingUsage("indexing.too.long.notification", indexCollectorState.indexingTooLongNotification))
-      usages.add(getCountingUsage("resume.indexing.click", indexCollectorState.resumeClick))
+      usages.add(newCounterMetric("indexing.too.long.notification", indexCollectorState.indexingTooLongNotification))
+      usages.add(newCounterMetric("resume.indexing.click", indexCollectorState.resumeClick))
       val indexingTime = TimeUnit.MILLISECONDS.toMinutes(indexCollectorState.indexTime).toInt()
-      usages.add(getCountingUsage("indexing.time.minutes", indexingTime))
+      usages.add(newCounterMetric("indexing.time.minutes", indexingTime))
     }
 
     getSharedSettings(project)?.let { sharedSettings ->
       if (!sharedSettings.isIndexSwitchedOn) {
-        usages.add(getBooleanUsage("index.disabled.in.project", true))
+        usages.add(newMetric("index.disabled.in.project", true))
       }
     }
 
