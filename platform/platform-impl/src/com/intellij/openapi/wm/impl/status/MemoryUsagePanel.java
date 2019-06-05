@@ -12,6 +12,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -48,6 +49,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
     setFocusable(false);
 
     addActionListener(e -> {
+      //noinspection CallToSystemGC
       System.gc();
       updateState();
     });
@@ -166,7 +168,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, 
       g2.dispose();
     }
 
-    UIUtil.drawImage(g, myBufferedImage, INDENT, 0, null);
+    StartupUiUtil.drawImage(g, myBufferedImage, INDENT, 0, null);
   }
 
   @Override
