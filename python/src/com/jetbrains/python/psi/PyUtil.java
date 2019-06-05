@@ -639,9 +639,7 @@ public class PyUtil {
     if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
-    if (virtualFile instanceof BackedVirtualFile) {
-      virtualFile = ((BackedVirtualFile)virtualFile).getOriginFile();
-    }
+    virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
 
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();

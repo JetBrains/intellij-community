@@ -1327,6 +1327,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+    file = BackedVirtualFile.getOriginFileIfBacked(file);
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
       return composite.getSelectedWithProvider();
@@ -1357,7 +1358,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-    if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
+    file = BackedVirtualFile.getOriginFileIfBacked(file);
 
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {

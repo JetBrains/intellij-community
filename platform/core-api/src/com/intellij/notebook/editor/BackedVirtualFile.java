@@ -18,4 +18,14 @@ public interface BackedVirtualFile {
    * Returns the {@link VirtualFile} with the original content.
    */
   VirtualFile getOriginFile();
+
+  /**
+   * Returns the {@link VirtualFile} with the original content if the file is Backed or the file in another case.
+   */
+  static VirtualFile getOriginFileIfBacked(VirtualFile file) {
+    if (file instanceof BackedVirtualFile) {
+      return ((BackedVirtualFile)file).getOriginFile();
+    }
+    return file;
+  }
 }

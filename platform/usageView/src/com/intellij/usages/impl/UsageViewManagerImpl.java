@@ -272,9 +272,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     if (file instanceof VirtualFileWindow) {
       file = ((VirtualFileWindow)file).getDelegate();
     }
-    if (file instanceof BackedVirtualFile) {
-      file = ((BackedVirtualFile)file).getOriginFile();
-    }
+    file = BackedVirtualFile.getOriginFileIfBacked(file);
     return searchScope.contains(file);
   }
 
