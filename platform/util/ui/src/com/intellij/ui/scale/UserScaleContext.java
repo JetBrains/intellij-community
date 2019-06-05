@@ -2,10 +2,10 @@
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -220,8 +220,12 @@ public class UserScaleContext {
   }
 
   public void addUpdateListener(@NotNull UpdateListener l) {
-    if (listeners == null) listeners = new ArrayList<>(1);
-    listeners.add(l);
+    if (listeners == null) {
+      listeners = new SmartList<>(l);
+    }
+    else {
+      listeners.add(l);
+    }
   }
 
   @SuppressWarnings("unused")
@@ -230,9 +234,8 @@ public class UserScaleContext {
   }
 
   protected void notifyUpdateListeners() {
-    if (listeners == null) return;
-    for (UpdateListener l : listeners) {
-      l.contextUpdated();
+    if (listeners != null) {
+      listeners.forEach(UpdateListener::contextUpdated);
     }
   }
 
