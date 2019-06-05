@@ -18,7 +18,6 @@ import com.intellij.vcsUtil.VcsUtil
 import org.zmlx.hg4idea.HgVcs
 import org.zmlx.hg4idea.command.HgStatusCommand
 import org.zmlx.hg4idea.repo.HgRepositoryFiles.HGIGNORE
-import org.zmlx.hg4idea.util.HgUtil
 
 private val LOG = logger<HgIgnoredFileContentProvider>()
 
@@ -29,7 +28,7 @@ class HgIgnoredFileContentProvider(private val project: Project) : IgnoredFileCo
   override fun getFileName() = HGIGNORE
 
   override fun buildIgnoreFileContent(ignoreFileRoot: VirtualFile, ignoredFileProviders: Array<IgnoredFileProvider>): String {
-    val hgRepoRoot = HgUtil.getHgRootOrNull(project, ignoreFileRoot)
+    val hgRepoRoot = VcsUtil.getVcsRootFor(project, ignoreFileRoot)
     if (hgRepoRoot == null || hgRepoRoot != ignoreFileRoot) return ""  //generate .hgignore only in hg root
 
     val content = StringBuilder()
