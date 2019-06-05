@@ -54,6 +54,8 @@ interface InlayHintsProvider<T : Any> {
    */
   fun createConfigurable(settings: T): ImmediateConfigurable
 
+  fun isLanguageIgnored(language: Language): Boolean = false
+
   val isVisibleInSettings: Boolean
     get() = true
 }
