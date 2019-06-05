@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -40,6 +41,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -435,6 +437,19 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       @Override
       public boolean isQuickFixAppliedFromView() {
         return myFixedElements.containsKey(getElement());
+      }
+
+      @Override
+      protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+        if (!isExcluded() && isLeaf() && !isProblemResolved(getElement()) && !isSuppressed(getElement())) {
+          HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+          HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+          if (!counter.adjustValue(level, 1)) {
+            counter.put(level, 1);
+          }
+          return;
+        }
+        super.visitProblemSeverities(counter);
       }
     };
   }
