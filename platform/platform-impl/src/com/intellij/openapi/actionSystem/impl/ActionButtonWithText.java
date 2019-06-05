@@ -166,7 +166,7 @@ public class ActionButtonWithText extends ActionButton {
     UIUtilities.drawStringUnderlineCharAt(this, g, text, getMnemonicCharIndex(text),
                                           textRect.x, textRect.y + fm.getAscent());
     if (arrowIcon != null) {
-      int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width + JBUI.scale(TEXT_ARROW_SPACE));
+      int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width) + JBUI.scale(TEXT_ARROW_SPACE);
       int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
       arrowIcon.paintIcon(this, g, x, y);
     }
