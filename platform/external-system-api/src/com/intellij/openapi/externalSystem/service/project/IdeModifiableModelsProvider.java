@@ -52,6 +52,14 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserData
   @NotNull
   ModifiableFacetModel getModifiableFacetModel(Module module);
 
+  @Nullable
+  @ApiStatus.Experimental
+  <T extends ModifiableModel> T findModifiableModel(@NotNull Class<T> instanceOf);
+
+  @NotNull
+  @ApiStatus.Experimental
+  <T extends ModifiableModel> T getModifiableModel(@NotNull Class<T> instanceOf);
+
   @NotNull
   LibraryTable.ModifiableModel getModifiableProjectLibrariesModel();
 
