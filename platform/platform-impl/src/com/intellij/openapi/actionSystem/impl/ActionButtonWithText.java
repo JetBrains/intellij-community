@@ -26,6 +26,8 @@ import java.beans.PropertyChangeListener;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
+  private static final int TEXT_ARROW_SPACE = 1;
+
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
   private int myHorizontalTextAlignment = SwingConstants.CENTER;
 
@@ -109,7 +111,7 @@ public class ActionButtonWithText extends ActionButton {
 
     rv.width += Math.max(basicSize.height - rv.height, 0);
     if (shallPaintDownArrow()) {
-      rv.width += AllIcons.General.LinkDropTriangle.getIconWidth();
+      rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
     }
 
     rv.width = Math.max(rv.width, basicSize.width);
@@ -135,6 +137,8 @@ public class ActionButtonWithText extends ActionButton {
     Icon icon = getIcon();
     Icon arrowIcon = shallPaintDownArrow() ? AllIcons.General.LinkDropTriangle : null;
 
+    UISettings.setupAntialiasing(g);
+
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
@@ -158,12 +162,11 @@ public class ActionButtonWithText extends ActionButton {
     look.paintIconAt(g, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
-    UISettings.setupAntialiasing(g);
     g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
     UIUtilities.drawStringUnderlineCharAt(this, g, text, getMnemonicCharIndex(text),
                                           textRect.x, textRect.y + fm.getAscent());
     if (arrowIcon != null) {
-      int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width);
+      int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width + JBUI.scale(TEXT_ARROW_SPACE));
       int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
       arrowIcon.paintIcon(this, g, x, y);
     }
@@ -202,7 +205,8 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   protected int iconTextSpace() {
-    return (getIcon() instanceof EmptyIcon || getIcon() == null) ? 0 : ICON_TEXT_SPACE;
+    Icon icon = getIcon();
+    return icon instanceof EmptyIcon || icon == null ? 0 : JBUI.scale(ICON_TEXT_SPACE);
   }
 
   private int getMnemonicCharIndex(String text) {
