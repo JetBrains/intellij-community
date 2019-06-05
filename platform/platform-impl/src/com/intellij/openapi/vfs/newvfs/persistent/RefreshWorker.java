@@ -362,13 +362,9 @@ public class RefreshWorker {
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       myHelper.scheduleDeletion(child);
-      if (parent != null) {
-        String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
-        myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
-      }
-      else {
-        LOG.error("Trans-gender orphan: " + child + ' ' + childAttributes);
-      }
+      assert parent != null : "transgender orphan: " + child + ' ' + childAttributes;
+      String symlinkTarget = upToDateIsSymlink ? fs.resolveSymLink(child) : null;
+      myHelper.scheduleCreation(parent, child.getName(), childAttributes, symlinkTarget, () -> checkCancelled(parent));
       return true;
     }
 
