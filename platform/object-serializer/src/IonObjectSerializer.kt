@@ -4,16 +4,23 @@ package com.intellij.serialization
 import com.amazon.ion.IonException
 import com.amazon.ion.IonType
 import com.amazon.ion.IonWriter
+import com.amazon.ion.impl.bin.Block
+import com.amazon.ion.impl.bin.BlockAllocator
+import com.amazon.ion.impl.bin.BlockAllocatorProvider
 import com.amazon.ion.impl.bin._Private_IonManagedBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.amazon.ion.system.IonTextWriterBuilder
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Type
 import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.experimental.or
 
 private const val FORMAT_VERSION = 1
@@ -184,7 +191,7 @@ private data class ReadContextImpl(override val reader: ValueReader,
 
 internal val binaryWriterBuilder by lazy {
   val binaryWriterBuilder = _Private_IonManagedBinaryWriterBuilder
-    .create(_Private_IonManagedBinaryWriterBuilder.AllocatorMode.BASIC)
+    .create(PooledBlockAllocatorProvider())
     .withPaddedLengthPreallocation(0)
     .withStreamCopyOptimization(true)
   binaryWriterBuilder
@@ -199,5 +206,87 @@ private fun createIonWriterBuilder(binary: Boolean, out: OutputStream): IonWrite
   return when {
     binary -> binaryWriterBuilder.newWriter(out)
     else -> textWriterBuilder.build(out)
+  }
+}
+
+internal class PooledBlockAllocatorProvider : BlockAllocatorProvider() {
+  companion object {
+    // 512 KB
+    internal const val POOL_THRESHOLD = 512 * 1024
+  }
+
+  @Suppress("RemoveExplicitTypeArguments")
+  private val allocators = ContainerUtil.createConcurrentIntObjectMap<PooledBlockAllocator>()
+
+  private inner class PooledBlockAllocator(private val blockSize: Int) : BlockAllocator() {
+    private val freeBlocks = ArrayList<Block>()
+
+    private val blockCounter = AtomicInteger()
+
+    val byteSize: Int
+      get() = blockCounter.get() * blockSize
+
+    override fun allocateBlock(): Block {
+      val lastIndex = freeBlocks.lastIndex
+      if (lastIndex != -1) {
+        return freeBlocks.removeAt(lastIndex)
+      }
+
+      blockCounter.incrementAndGet()
+      return object : Block(ByteArray(blockSize)) {
+        override fun close() {
+          reset()
+          freeBlocks.add(this)
+        }
+      }
+    }
+
+    override fun getBlockSize() = blockSize
+
+    override fun close() {
+      if (allocators.putIfAbsent(blockSize, this) != null) {
+        // help GC - nullize
+        freeBlocks.clear()
+        blockCounter.set(0)
+      }
+    }
+  }
+
+  @get:TestOnly
+  val byteSize: Int
+    get() {
+      var totalByteSize = 0
+      for (allocator in allocators.elements()) {
+        totalByteSize += allocator.byteSize
+      }
+      return totalByteSize
+    }
+
+  override fun vendAllocator(blockSize: Int): BlockAllocator {
+    if (blockSize <= 0) {
+      throw IllegalArgumentException("Invalid block size: $blockSize")
+    }
+
+    // PooledBlockAllocator is not thread safe - do not put a new one to pool
+    val result = allocators.remove(blockSize) ?: PooledBlockAllocator(blockSize)
+
+    var totalByteSize = 0
+    val iterator = allocators.values().iterator()
+    var isExcess = false
+    while (iterator.hasNext()) {
+      val allocator = iterator.next()
+      if (isExcess) {
+        iterator.remove()
+        continue
+      }
+
+      totalByteSize += allocator.byteSize
+      if (totalByteSize > POOL_THRESHOLD) {
+        iterator.remove()
+        isExcess = true
+      }
+    }
+
+    return result
   }
 }
