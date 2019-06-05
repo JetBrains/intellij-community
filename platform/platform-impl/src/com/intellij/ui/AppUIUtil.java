@@ -58,6 +58,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -220,6 +222,14 @@ public class AppUIUtil {
   public static void registerBundledFonts() {
     if (!SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
       return;
+    }
+
+    String jvmVersion = System.getProperty("java.runtime.version");
+    if (jvmVersion.startsWith("11.") && "JetBrains s.r.o".equals(System.getProperty("java.vm.vendor"))) {
+      Matcher matcher = Pattern.compile("-b([\\d]+)(?:.([\\d])+)?$").matcher(jvmVersion);
+      if (matcher.find() && Integer.parseInt(matcher.group(1)) >= 296) {
+        return;
+      }
     }
 
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_BUNDLED_FONTS);
