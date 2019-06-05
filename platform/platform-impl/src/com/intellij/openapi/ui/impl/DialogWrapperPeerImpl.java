@@ -817,7 +817,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
             c.invalidate();
           });
 
-          ((JDialog)e.getComponent()).getRootPane().revalidate();
+          JComponent rootPane = ((JDialog)e.getComponent()).getRootPane();
+          if (rootPane != null) {
+            rootPane.revalidate();
+          }
           e.getComponent().repaint();
 
           if (activeWrapper == null) {
