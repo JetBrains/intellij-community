@@ -5,6 +5,17 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 
 import java.util.Objects
 
+/**
+ * Used to write measurements to event log, override one of these methods to use it: <br/>
+ * [com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector.getMetrics]<br/>
+ * [com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector.getMetrics]
+ *
+ * You can either create it manually or with factory methods [com.intellij.internal.statistic.beans.MetricEventFactoryKt]
+ *
+ * @see newMetric
+ * @see newBooleanMetric
+ * @see newCounterMetric
+ */
 class MetricEvent @JvmOverloads constructor(val eventId: String, data: FeatureUsageData? = null) {
   val data: FeatureUsageData = data ?: FeatureUsageData()
 

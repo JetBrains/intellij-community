@@ -81,7 +81,7 @@ public class FUCounterUsageLogger {
   /**
    * Records new <strong>project-wide</strong> event without context.
    * <br/><br/>
-   * For events with context use {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)},
+   * For events with context use {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
    * useful to report structured events.<br/><br/>
    * <i>Example:</i><br/>
    * "eventId": "tooltip.shown"
