@@ -303,7 +303,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <highlightingPassFactory implementation="com.intellij.codeInsight.hints.AnnotationHintsPassFactory"/>
-    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.InlayHintsPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
