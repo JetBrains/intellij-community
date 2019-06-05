@@ -98,7 +98,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         seq(
           psiSingleReference(smallText(attribute.name ?: ""), resolve = { attribute.reference?.resolve() }),
           smallText(" = "),
-          smallText(attribute.value?.text ?: "") // TODO values references, at least annotations and enum names
+          smallText(attribute.value?.text ?: "")
         )
       }
     }
@@ -111,7 +111,13 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
   override val key: SettingsKey<Settings>
     get() = ourKey
   override val previewText: String?
-    get() = "" // TODO
+    get() = """
+      class Demo {
+        private static int pure(int x, int y) {
+          return x * y + 10;
+        }
+      }
+    """.trimIndent()
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
     return object : ImmediateConfigurable {
