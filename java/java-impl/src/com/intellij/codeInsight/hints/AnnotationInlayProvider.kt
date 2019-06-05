@@ -49,7 +49,10 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                   ToggleSettingsAction("Turn off inferred annotations", settings::showInferred)
                 )
               }
-              sink.addInlineElement(offset, true, menuOnClick)
+              when (element) {
+                is PsiMethod -> sink.addBlockElement(offset, true, true, 0, menuOnClick)
+                else -> sink.addInlineElement(offset, true, menuOnClick)
+              }
             }
           }
         }
