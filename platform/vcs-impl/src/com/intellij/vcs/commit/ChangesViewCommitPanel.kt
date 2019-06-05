@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesViewManager
@@ -100,6 +101,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
   init {
+    Disposer.register(this, commitMessage)
+
     buildLayout()
 
     changesView.setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
