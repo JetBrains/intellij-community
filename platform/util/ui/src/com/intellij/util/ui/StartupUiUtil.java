@@ -103,7 +103,7 @@ public class StartupUiUtil {
    * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
    * which is called from Toolkit.getDefaultToolkit().
    */
-  static void blockATKWrapper() {
+  private static void blockATKWrapper() {
     // registry must be not used here, because this method called before application loading
     if (!SystemInfoRt.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
       return;
@@ -116,7 +116,7 @@ public class StartupUiUtil {
     }
   }
 
-  public static StyleSheet getDefaultHtmlKitCss() {
+  static StyleSheet getDefaultHtmlKitCss() {
     return ourDefaultHtmlKitCss;
   }
 
@@ -307,7 +307,7 @@ public class StartupUiUtil {
     return UIManager.getFont("Label.font");
   }
 
-  /** @see #dispatchAllInvocationEvents() */
+  /** @see UIUtil#dispatchAllInvocationEvents() */
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();

@@ -36,7 +36,8 @@ public final class Message {
     return myArgs;
   }
 
+  @Override
   public String toString() {
-    return myTopic.toString() + ":" + myListenerMethod.getName();
+    return myTopic + ":" + myListenerMethod.getName();
   }
 }
