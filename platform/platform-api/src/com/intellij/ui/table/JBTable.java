@@ -835,18 +835,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     @Override
-    protected TableCellRenderer createDefaultRenderer() {
-      TableCellRenderer renderer = super.createDefaultRenderer();
-      if (renderer instanceof JComponent) {
-        JComponent c = (JComponent)renderer;
-        Dimension size = c.getPreferredSize();
-        JBValue.UIInteger height = new JBValue.UIInteger("TableHeader.height", 25);
-        c.setPreferredSize(new Dimension(size.width, height.get()));
-      }
-      return renderer;
-    }
-
-    @Override
     public void paint(@NotNull Graphics g) {
       if (myEnableAntialiasing) {
         GraphicsUtil.setupAntialiasing(g);
@@ -1032,13 +1020,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  private static class EmptyTableCellRenderer implements TableCellRenderer {
+  private static class EmptyTableCellRenderer extends CellRendererPanel implements TableCellRenderer {
     @NotNull
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.setMaximumSize(new Dimension(0, 0));
-      return panel;
+      return this;
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return new Dimension(0, 0);
     }
   }
 
