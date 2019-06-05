@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
  * @author max
  */
 public class BootstrapClassLoaderUtil extends ClassUtilCore {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.BootstrapClassLoaderUtil");
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
@@ -42,7 +43,13 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
 
-    UrlClassLoader.Builder builder = UrlClassLoader.build()
+    final File mpBoot = new File(PathManager.getPluginsPath(), "marketplace/lib/boot/marketplace-bootstrap.jar");
+    final boolean installMarketplace = mpBoot.exists();
+    if (installMarketplace) {
+      classpath.add(new File(PathManager.getPluginsPath(), "marketplace/lib/boot/marketplace-impl.jar").toURI().toURL());
+    }
+
+    UrlClassLoader.Builder<BootstrapClassLoader> builder = UrlClassLoader.build(BootstrapClassLoader.class)
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
@@ -53,7 +60,21 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
     ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
 
-    return builder.get();
+    final BootstrapClassLoader loader = builder.get();
+
+    if (installMarketplace) {
+      try {
+        final UrlClassLoader mpBootloader = UrlClassLoader.build().urls(mpBoot.toURI().toURL()).parent(BootstrapClassLoaderUtil.class.getClassLoader()).get();
+        for (BootstrapClassLoader.Transformer transformer : ServiceLoader.load(BootstrapClassLoader.Transformer.class, mpBootloader)) {
+          loader.addTransformer(transformer);
+        }
+      }
+      catch (Throwable e) {
+        LOG.info("Marketplace boot error: ", e);
+      }
+    }
+
+    return loader;
   }
 
   private static void addParentClasspath(Collection<? super URL> classpath, boolean ext) throws MalformedURLException {

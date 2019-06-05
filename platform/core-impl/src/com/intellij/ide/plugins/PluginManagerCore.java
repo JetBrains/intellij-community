@@ -510,7 +510,15 @@ public class PluginManagerCore {
 
   @NotNull
   private static Method getAddUrlMethod(@NotNull ClassLoader loader) {
-    return ReflectionUtil.getDeclaredMethod(loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass(), "addURL", URL.class);
+    Class<?> loaderClass = loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass();
+    while (loaderClass != null && !Object.class.equals(loaderClass)) {
+      final Method method = ReflectionUtil.getDeclaredMethod(loaderClass, "addURL", URL.class);
+      if (method != null) {
+        return method;
+      }
+      loaderClass = loaderClass.getSuperclass();
+    }
+    return null;
   }
 
   @Nullable
