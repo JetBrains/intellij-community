@@ -467,7 +467,7 @@ public class InferenceSession {
   private void processReturnExpression(Set<ConstraintFormula> additionalConstraints,
                                        Set<ConstraintFormula> ignoredConstraints,
                                        PsiExpression returnExpression,
-                                       PsiType functionalType,
+                                       @NotNull PsiType functionalType,
                                        boolean addConstraint,
                                        PsiSubstitutor initialSubstitutor) {
     if (returnExpression instanceof PsiCallExpression) {
@@ -620,7 +620,7 @@ public class InferenceSession {
     return result.toArray(new InferenceVariable[0]);
   }
 
-  public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType, PsiElement context) {
+  public void registerReturnTypeConstraints(PsiType returnType, @NotNull PsiType targetType, PsiElement context) {
     returnType = substituteWithInferenceVariables(returnType);
     if (myErased) {
       PsiSubstitutor currentSubstitutor = resolveSubset(myInferenceVariables, mySiteSubstitutor);
