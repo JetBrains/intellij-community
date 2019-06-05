@@ -4,19 +4,19 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Ignored
-import com.intellij.openapi.vcs.IgnoredCheckResult
-import com.intellij.openapi.vcs.NotIgnored
-import com.intellij.openapi.vcs.VcsIgnoreChecker
+import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
+import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import java.io.IOException
@@ -28,8 +28,17 @@ private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
 
 class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
 
+  companion object {
+    fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
+  }
+
   init {
     checkProjectNotDefault(project)
+  }
+
+  fun findIgnoreFileType(vcs: AbstractVcs<*>): IgnoreFileType? {
+    val ignoredFileContentProvider = VcsImplUtil.getIgnoredFileContentProvider(project, vcs) ?: return null
+    return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
   }
 
   override fun isRunConfigurationVcsIgnored(configurationName: String): Boolean {

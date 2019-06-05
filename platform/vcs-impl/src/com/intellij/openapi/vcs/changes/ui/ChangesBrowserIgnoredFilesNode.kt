@@ -16,12 +16,22 @@
 
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.ChangeListOwner
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
+import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
+import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.vcsUtil.VcsUtil
+import javax.swing.tree.TreePath
 
-class ChangesBrowserIgnoredFilesNode(project: Project,
+
+class ChangesBrowserIgnoredFilesNode(val project: Project,
                                      files: List<VirtualFile>,
                                      private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilesNode(
   ChangesBrowserNode.IGNORED_FILES_TAG, files, { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
@@ -35,7 +45,23 @@ class ChangesBrowserIgnoredFilesNode(project: Project,
 
   override fun canAcceptDrop(dragBean: ChangeListDragBean) = dragBean.unversionedFiles.isNotEmpty()
 
-  override fun acceptDrop(dragOwner: ChangeListOwner, dragBean: ChangeListDragBean) {}
+  override fun acceptDrop(dragOwner: ChangeListOwner, dragBean: ChangeListDragBean) {
+    val tree = dragBean.sourceComponent as? Tree ?: return
+
+    val vcs = dragBean.unversionedFiles.getVcs() ?: return
+
+    val ignoreFileType = VcsIgnoreManagerImpl.getInstanceImpl(project).findIgnoreFileType(vcs) ?: return
+    val ignoreGroup = IgnoreFileActionGroup(ignoreFileType)
+
+    val popup = JBPopupFactory.getInstance().createActionGroupPopup(
+      null, ignoreGroup, DataManager.getInstance().getDataContext(dragBean.sourceComponent),
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+    tree.getPathBounds(TreePath(dragBean.targetNode.path))?.let { dropBounds ->
+      popup.show(RelativePoint(dragBean.sourceComponent, dropBounds.location))
+    }
+  }
 
   override fun getSortWeight() = ChangesBrowserNode.IGNORED_SORT_WEIGHT
+
+  private fun List<VirtualFile>.getVcs(): AbstractVcs<*>? = mapNotNull { file -> VcsUtil.getVcsFor(project, file) }.firstOrNull()
 }

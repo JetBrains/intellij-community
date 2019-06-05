@@ -12,13 +12,16 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElements
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.isEmpty
+import com.intellij.vcsUtil.VcsUtil
 
 class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData<Project>(CommonDataKeys.PROJECT)
+    val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
     val ignored =
       e.getRequiredData<Array<VirtualFile>>(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+        .filter { VcsUtil.getVcsFor(project, it) == vcs }
         .map { IgnoredBeanFactory.ignoreFile(it, project) }
         .toTypedArray()
 
