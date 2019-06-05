@@ -123,7 +123,8 @@ public abstract class EditorComposite implements Disposable {
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
 
-    myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerListener() {
+    fileEditorManager.getProject().getMessageBus().connect(this).subscribe(
+          FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull final FileEditorManagerEvent event) {
         final VirtualFile oldFile = event.getOldFile();
@@ -145,7 +146,7 @@ public abstract class EditorComposite implements Disposable {
           }
         }
       }
-    }, this);
+    });
   }
 
   @NotNull
@@ -358,7 +359,7 @@ public abstract class EditorComposite implements Disposable {
    */
   @NotNull
   FileEditor getSelectedEditor() {
-    return getSelectedEditorWithProvider().getFirst ();
+    return getSelectedEditorWithProvider().getFirst();
   }
 
   public boolean isDisposed() {
