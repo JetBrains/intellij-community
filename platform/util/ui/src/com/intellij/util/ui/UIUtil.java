@@ -3766,4 +3766,15 @@ public final class UIUtil extends StartupUiUtil {
   public static boolean isJreHiDPI(@Nullable Graphics2D g) {
     return JreHiDpiUtil.isJreHiDPI(g);
   }
+
+  /**
+   * @deprecated use com.intellij.util.ui.UIUtil#getPanelBackground() instead
+   */
+  @SuppressWarnings("SpellCheckingInspection")
+  @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static Color getPanelBackgound() {
+    return getPanelBackground();
+  }
 }
