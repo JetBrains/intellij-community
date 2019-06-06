@@ -15,29 +15,43 @@
  */
 package com.siyeh.ipp.modifiers;
 
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import org.intellij.lang.annotations.Language;
+
+import java.util.Arrays;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MakePrivateIntentionTest extends IPPTestCase {
+public class ChangeModifierIntentionTest extends IPPTestCase {
 
   public void testMyEnum() { assertIntentionNotAvailable(); }
   public void testMyClass() { assertIntentionNotAvailable(); }
   public void testMyInterface() { assertIntentionNotAvailable(); }
   public void testEnumConstructor() { assertIntentionNotAvailable(); }
-  public void testLocalClass() { assertIntentionNotAvailable(IntentionPowerPackBundle.message("make.public.intention.name")); }
-  public void testMethod() { doTest(); }
-  public void testAnnotatedMember() { doTest(); }
+  public void testLocalClass() { assertIntentionNotAvailable(); }
+  public void testMethod() { doTestWithChooser("private"); }
+  public void testMethod2() { doTestWithChooser("\\(package-private\\)"); }
+  public void testAnnotatedMember() { doTestWithChooser("private"); }
+  public void testInDefaultPackage() {
+    doTest("Make package-private");
+  }
+
+  void doTestWithChooser(@Language("RegExp") String wanted) {
+    UiInterceptors.register(new ChooserInterceptor(Arrays.asList("public", "protected", "(package-private)", "private"), wanted));
+    doTest();
+  }
 
   @Override
   protected String getRelativePath() {
-    return "modifiers/make_public";
+    return "modifiers/change_modifier";
   }
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("make.private.intention.name");
+    return IntentionPowerPackBundle.message("change.modifier.intention.name");
   }
 }
