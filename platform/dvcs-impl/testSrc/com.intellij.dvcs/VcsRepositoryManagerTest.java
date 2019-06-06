@@ -7,11 +7,13 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.test.VcsPlatformTest;
 import com.intellij.vcsUtil.VcsUtil;
@@ -57,18 +59,12 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (myProjectLevelVcsManager != null) {
-        myProjectLevelVcsManager.unregisterVcs(myVcs);
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void tearDown() {
+    new RunAll()
+      .append(() -> myProjectLevelVcsManager.unregisterVcs(myVcs))
+      .append(() -> Disposer.dispose(myGlobalRepositoryManager))
+      .append(() -> super.tearDown())
+      .run();
   }
 
   public void testRepositoryInfoReadingWhileModifying() throws Exception {
