@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.impl.VcsProjectLog.VCS_PROJECT_LOG_CHANGED
@@ -85,6 +86,8 @@ class PredictionService(val project: Project,
     }
   }
 
+  private val indexingFinishedListener = VcsLogIndex.IndexingFinishedListener { calculatePrediction() }
+
   init {
     if (userSettings.isPluginEnabled) {
       startService()
@@ -95,6 +98,8 @@ class PredictionService(val project: Project,
   private fun setDataManager(dataManager: VcsLogData?) {
     dataManager ?: return
     dataManager.addDataPackChangeListener(dataPackChangeListener)
+    dataManager.index.addListener(indexingFinishedListener)
+
     val filesHistoryProvider = dataManager.index.dataGetter?.let { FilesHistoryProvider(project, it) } ?: return
     predictionRequirements = PredictionRequirements(dataManager, filesHistoryProvider)
     calculatePrediction()
@@ -105,6 +110,8 @@ class PredictionService(val project: Project,
     val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
     predictionRequirements = null
     filesHistoryProvider.clear()
+
+    dataManager.index.removeListener(indexingFinishedListener)
     dataManager.removeDataPackChangeListener(dataPackChangeListener)
   }
 
