@@ -15,7 +15,7 @@ public class Patches {
   public static final boolean SUN_BUG_ID_6322854 = SystemInfo.isXWindow;
 
   /**
-   * IBM java machine 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection().
+   * IBM JVM 1.4.2 crashes if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection().
    */
   public static final boolean IBM_JDK_DISABLE_COLLECTION_BUG = "false".equalsIgnoreCase(System.getProperty("idea.debugger.keep.temp.objects"));
 
@@ -27,7 +27,7 @@ public class Patches {
   public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfoRt.isUnix;
 
   /**
-   * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
+   * A huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
    * For instance screen saver activates or computer goes hibernate. The problem still exists in 1.6 when two (or more)
    * monitors exists
    *
@@ -55,7 +55,7 @@ public class Patches {
   public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast(8, 0, 45);
 
   /**
-   * Enable workaround for jdk bug with leaking TargetVM.EventController, see IDEA-163334
+   * Enable a workaround for JDK bug with leaking TargetVM.EventController, see IDEA-163334
    */
   public static final boolean JDK_BUG_EVENT_CONTROLLER_LEAK = !SystemInfo.isJetBrainsJvm;
 
@@ -77,13 +77,13 @@ public class Patches {
 
   /**
    * JDK on Mac detects font style for system fonts based only on their name (PostScript name).
-   * This doesn't work for some fonts which don't use recognizable style suffixes in their names.
+   * This doesn't work for some fonts, which don't use recognizable style suffixes in their names.
    * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.
    */
   public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfoRt.isMac;
 
   /**
-   * Older JDK versions could mistakenly use derived italics font, when genuine italics font was available in the system.
+   * Older JDK versions could mistakenly use derived italics font, when genuine italic font was available in the system.
    * The issue was fixed in JDK 1.8.0_60 as part of <a href="https://bugs.openjdk.java.net/browse/JDK-8064833">JDK-8064833</a>.
    */
   public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfoRt.isMac && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
