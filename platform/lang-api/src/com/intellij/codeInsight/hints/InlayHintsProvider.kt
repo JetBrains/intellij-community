@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.psi.PsiFile
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>("com.intellij.codeInsight.inlayProvider")
@@ -34,7 +35,8 @@ interface InlayHintsProvider<T : Any> {
    */
   fun createSettings(): T
 
-  /**
+  @get:Nls(capitalization = Nls.Capitalization.Sentence)
+    /**
    * Name of this kind of hints. It will be used in settings and in context menu.
    */
   val name: String
