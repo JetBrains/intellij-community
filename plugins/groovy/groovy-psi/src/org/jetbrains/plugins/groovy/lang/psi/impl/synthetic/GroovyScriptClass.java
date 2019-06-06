@@ -10,7 +10,7 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import icons.JetgroovyIcons;
@@ -216,7 +216,7 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
 
   @Override
   public Icon getIcon(int flags) {
-    RowIcon baseIcon = (RowIcon)IconManager.getInstance().createLayeredIcon(this, JetgroovyIcons.Groovy.Class, 0);
+    RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, JetgroovyIcons.Groovy.Class, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

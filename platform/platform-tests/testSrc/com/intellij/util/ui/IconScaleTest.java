@@ -7,7 +7,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
-import com.intellij.ui.*;
+import com.intellij.ui.DeferredIconImpl;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextAware;
@@ -96,7 +99,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     //
     // 4. RowIcon
     //
-    test(new RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(ctx));
+    test(new com.intellij.ui.RowIcon(new CachedImageIcon(new File(getIconPath()).toURI().toURL())), UserScaleContext.create(ctx));
   }
 
   private static void test(@NotNull Icon icon, @NotNull UserScaleContext iconContext) {

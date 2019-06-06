@@ -13,18 +13,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-public class ElementPresentationUtil implements PlatformIcons {
+public final class ElementPresentationUtil implements PlatformIcons {
   private ElementPresentationUtil() {
   }
-
 
   public static int getFlags(PsiModifierListOwner element, final boolean isLocked) {
     final boolean isEnum = element instanceof PsiClass && ((PsiClass)element).isEnum();
@@ -47,8 +47,10 @@ public class ElementPresentationUtil implements PlatformIcons {
     return flags;
   }
 
-  public static RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
-    return ElementBase.createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static com.intellij.ui.RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
+    return (com.intellij.ui.RowIcon)IconManager.getInstance().createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
   }
 
   private static final int CLASS_KIND_INTERFACE     = 10;
@@ -212,6 +214,12 @@ public class ElementPresentationUtil implements PlatformIcons {
     iconManager.registerIconLayer(FLAGS_FINAL, AllIcons.Nodes.FinalMark);
     iconManager.registerIconLayer(FLAGS_JUNIT_TEST, AllIcons.Nodes.JunitTestMark);
     iconManager.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static Icon addVisibilityIcon(PsiModifierListOwner element, final int flags, com.intellij.ui.RowIcon baseIcon) {
+    return addVisibilityIcon(element, flags, ((RowIcon)baseIcon));
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {

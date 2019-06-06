@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.icons.AllIcons;
@@ -12,8 +12,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +95,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       }
 
       if (myStateIcon != null) {
-        newIcon = new RowIcon(myStateIcon, newIcon);
+        newIcon = new com.intellij.ui.RowIcon(myStateIcon, newIcon);
       }
 
       setIcon(newIcon);

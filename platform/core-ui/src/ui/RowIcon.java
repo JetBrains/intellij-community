@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.icons.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +16,7 @@ import java.util.List;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconProvider, CompositeIcon {
+public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -51,6 +50,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconP
 
   protected RowIcon(RowIcon icon) {
     super(icon);
+
     myAlignment = icon.myAlignment;
     myWidth = icon.myWidth;
     myHeight = icon.myHeight;
@@ -66,7 +66,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconP
 
   @NotNull
   @Override
-  public RowIcon deepCopy() {
+  public com.intellij.ui.icons.RowIcon deepCopy() {
     RowIcon icon = new RowIcon(this);
     for (int i = 0; i < icon.myIcons.length; i++) {
       icon.myIcons[i] = IconUtil.copy(icon.myIcons[i], null);
@@ -112,6 +112,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements DarkIconP
     return myIcons.length;
   }
 
+  @Override
   public void setIcon(Icon icon, int layer) {
     myIcons[layer] = icon;
     myScaledIcons = null;

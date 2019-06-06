@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.ui.icons.RowIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public interface IconManager {
   <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
   @NotNull
-  Icon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
+  RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 }
@@ -88,7 +89,7 @@ final class DummyIconManager implements IconManager {
 
   @NotNull
   @Override
-  public Icon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
+  public RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     return DummyIcon.INSTANCE;
   }
 
@@ -102,7 +103,7 @@ final class DummyIconManager implements IconManager {
     return new DummyIcon();
   }
 
-  private static final class DummyIcon implements Icon {
+  private static final class DummyIcon implements RowIcon {
     static final DummyIcon INSTANCE = new DummyIcon();
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -126,6 +127,25 @@ final class DummyIconManager implements IconManager {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof DummyIcon;
+    }
+
+    @Override
+    public int getIconCount() {
+      return 0;
+    }
+
+    @Override
+    public Icon getIcon(int index) {
+      return this;
+    }
+
+    @Override
+    public void setIcon(Icon icon, int i) {
+    }
+
+    @Override
+    public Icon getDarkIcon(boolean isDark) {
+      return this;
     }
   }
 }
