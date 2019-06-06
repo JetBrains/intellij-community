@@ -2,7 +2,7 @@
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
@@ -22,15 +22,11 @@ class PredictionService(val project: Project,
                         private val changeListManager: ChangeListManager,
                         private val changesViewManager: ChangesViewI) : Disposable {
 
-  companion object {
-    fun getInstance(project: Project): PredictionService? = ServiceManager.getService(project, PredictionService::class.java)
-  }
-
   private data class PredictionRequirements(val dataManager: VcsLogData, val filesHistoryProvider: FilesHistoryProvider)
 
   private var predictionRequirements: PredictionRequirements? = null
   private lateinit var connection: MessageBusConnection
-  private val userSettings = ServiceManager.getService(UserSettings::class.java)
+  private val userSettings = service<UserSettings>()
   private val LOCK = Object()
 
   private var _prediction: Collection<FilePath> = emptyList()

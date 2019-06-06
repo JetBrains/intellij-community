@@ -3,7 +3,7 @@ package com.jetbrains.changeReminder.changes
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.jetbrains.changeReminder.anyGitRootsForIndexing
 import com.jetbrains.changeReminder.getGitRoots
@@ -13,7 +13,7 @@ class ChangeReminderCheckAction :
   ToggleAction(),
   DumbAware {
 
-  private val userSettings = ServiceManager.getService(UserSettings::class.java)
+  private val userSettings = service<UserSettings>()
 
   override fun update(e: AnActionEvent) {
     super.update(e)
