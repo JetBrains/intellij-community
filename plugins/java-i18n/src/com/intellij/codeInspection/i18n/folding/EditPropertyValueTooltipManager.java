@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +111,9 @@ public class EditPropertyValueTooltipManager implements EditorMouseListener, Car
     if (action == null) return null;
     String text = action.getTemplateText();
     if (text == null) return null;
-    return "<a href='" + href + "'>" + text + "</a> " + KeymapUtil.getFirstKeyboardShortcutText(action);
+    StringBuilder b = new StringBuilder().append("<a href='").append(href).append("'>").append(text).append("</a> <span style='color:#");
+    UIUtil.appendColor(UIUtil.getContextHelpForeground(), b);
+    return b.append("'>").append(KeymapUtil.getFirstKeyboardShortcutText(action)).append("</span>").toString();
   }
 
   public static LightweightHint showTooltip(@NotNull Editor editor, @NotNull JComponent component, boolean tenacious) {
