@@ -3209,6 +3209,16 @@ public final class UIUtil extends StartupUiUtil {
     });
   }
 
+  public static void runWhenWindowClosed(@NotNull Window window, @NotNull Runnable runnable) {
+    window.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosed(WindowEvent e) {
+        e.getWindow().removeWindowListener(this);
+        runnable.run();
+      }
+    });
+  }
+
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
   @NotNull
   public static String getDebugText(Component c) {
