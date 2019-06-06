@@ -81,8 +81,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_string equal" name="shell_string equal" value="$VAR_1$ == $VAR_2$" description="String are equal"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_string equal" name="shell_string equal" value="$VAR_1$ == $VAR_2$" description="String are equal" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$string2&quot;" alwaysStopAt="true"/>
     <context>
@@ -90,9 +89,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_string not equal" name="shell_string not equal" value="$VAR_1$ != $VAR_2$"
-            description="String not equal"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_string not equal" name="shell_string not equal" value="$VAR_1$ != $VAR_2$" description="String not equal" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$string2&quot;" alwaysStopAt="true"/>
     <context>
@@ -100,24 +97,21 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_string is empty" name="shell_string is empty" value="-z $VAR_1$" description="String is empty"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_string is empty" name="shell_string is empty" value="-z $VAR_1$" description="String is empty" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_string not empty" name="shell_string not empty" value="-n $VAR_1$" description="String isn't empty"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_string not empty" name="shell_string not empty" value="-n $VAR_1$" description="String isn't empty" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$string1&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_number equal" name="shell_number equal" value="$VAR_1$ -eq $VAR_2$" description="Numbers are equal"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_number equal" name="shell_number equal" value="$VAR_1$ -eq $VAR_2$" description="Numbers are equal" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
@@ -125,9 +119,8 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_number not equal" name="shell_number not equal" value="$VAR_1$ -nq $VAR_2$"
-            description="Numbers not equal"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_number not equal" name="shell_number not equal" value="$VAR_1$ -nq $VAR_2$" description="Numbers not equal"
+            toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
@@ -135,8 +128,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_number less" name="shell_number less" value="$VAR_1$ -lt $VAR_2$" description="Number less than"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_number less" name="shell_number less" value="$VAR_1$ -lt $VAR_2$" description="Number less than" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
@@ -144,9 +136,8 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_number less or equal" name="shell_number less or equal" value="$VAR_1$ -le $VAR_2$"
-            description="Number less than or equal"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_number less or equal" name="shell_number less or equal" value="$VAR_1$ -le $VAR_2$" description="Number less than or equal"
+            toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
@@ -154,9 +145,8 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_number greater" name="shell_number greater" value="$VAR_1$ -gt $VAR_2$"
-            description="Number greater than"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_number greater" name="shell_number greater" value="$VAR_1$ -gt $VAR_2$" description="Number greater than"
+            toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
@@ -164,9 +154,8 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_number greater or equal" name="shell_number greater or equal" value="$VAR_1$ -ge $VAR_2$"
-            description="Number greater than or equal"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_number greater or equal" name="shell_number greater or equal" value="$VAR_1$ -ge $VAR_2$" description="Number greater than or equal"
+            toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>
     <context>
@@ -174,48 +163,42 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file exists" name="shell_file exists" value="-f $VAR_1$" description="File exists"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file exists" name="shell_file exists" value="-f $VAR_1$" description="File exists" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file not empty" name="shell_file not empty" value="-s $VAR_1$" description="File not empty"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file not empty" name="shell_file not empty" value="-s $VAR_1$" description="File not empty" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file readable" name="shell_file readable" value="-r $VAR_1$" description="File readable"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file readable" name="shell_file readable" value="-r $VAR_1$" description="File readable" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file writable" name="shell_file writable" value="-w $VAR_1$" description="File writable"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file writable" name="shell_file writable" value="-w $VAR_1$" description="File writable" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file executable" name="shell_file executable" value="-x $VAR_1$" description="File executable"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file executable" name="shell_file executable" value="-x $VAR_1$" description="File executable" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file equals" name="shell_file equals" value="$VAR_1$ -ef $VAR_2$" description="File equals"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file equals" name="shell_file equals" value="$VAR_1$ -ef $VAR_2$" description="File equals" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
     <context>
@@ -223,8 +206,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file newer" name="shell_file newer" value="$VAR_1$ -nt $VAR_2$" description="File newer"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file newer" name="shell_file newer" value="$VAR_1$ -nt $VAR_2$" description="File newer" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
     <context>
@@ -232,8 +214,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_file older" name="shell_file older" value="$VAR_1$ -ot $VAR_2$" description="File older"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_file older" name="shell_file older" value="$VAR_1$ -ot $VAR_2$" description="File older" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$file1&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$file2&quot;" alwaysStopAt="true"/>
     <context>
@@ -241,24 +222,21 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_path exists" name="shell_path exists" value="-e $VAR_1$" description="Path exists"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_path exists" name="shell_path exists" value="-e $VAR_1$" description="Path exists" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$path&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_directory exists" name="shell_directory exists" value="-d $VAR_1$" description="Directory exists"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_directory exists" name="shell_directory exists" value="-d $VAR_1$" description="Directory exists" toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$directory&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_command exists" name="shell_command exists" value="`command -v $COMMAND$`" description="Command exists"
-            toReformat="true" toShortenFQNames="false">
+  <template id="shell_command exists" name="shell_command exists" value="`command -v $COMMAND$`" description="Command exists" toShortenFQNames="false">
     <variable name="COMMAND" expression="" defaultValue="&quot;command&quot;" alwaysStopAt="true"/>
     <context>
       <option name="SHELL_SCRIPT" value="true"/>
