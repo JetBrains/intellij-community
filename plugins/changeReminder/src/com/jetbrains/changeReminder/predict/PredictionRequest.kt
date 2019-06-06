@@ -2,6 +2,7 @@
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -18,7 +19,7 @@ internal class PredictionRequest(private val project: Project,
   private val changeListFiles = changes.map { ChangesUtil.getFilePath(it) }
 
   private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): Collection<FilePath> =
-    PredictionProvider(minProb = 0.8)
+    PredictionProvider(minProb = Registry.doubleValue("vcs.changeReminder.prediction.threshold"))
       .predictForgottenFiles(Commit(-1,
                                     System.currentTimeMillis(),
                                     dataManager.currentUser[root]?.name ?: "",
