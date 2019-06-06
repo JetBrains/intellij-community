@@ -56,7 +56,10 @@ interface InlayHintsProvider<T : Any> {
    */
   fun createConfigurable(settings: T): ImmediateConfigurable
 
-  fun shouldSkipLanguage(language: Language): Boolean = false
+  /**
+   * Checks whether the language is accepted by the provider
+   */
+  fun isLanguageSupported(language: Language): Boolean = true
 
   val isVisibleInSettings: Boolean
     get() = true
