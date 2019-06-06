@@ -15,7 +15,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import org.apache.xmlgraphics.java2d.Dimension2DDouble;
 import org.imgscalr.Scalr;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
 import java.io.*;
@@ -54,7 +52,7 @@ public final class ImageLoader implements Serializable {
   }
 
   public static final long CACHED_IMAGE_MAX_SIZE = (long)(SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024);
-  private static final ConcurrentMap<String, Pair<Image, Dimension2D>> ourCache = ContainerUtil.createConcurrentSoftValueMap();
+  private static final ConcurrentMap<String, Pair<Image, Dimension2DDouble>> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   public static void clearCache() {
     ourCache.clear();
@@ -71,6 +69,34 @@ public final class ImageLoader implements Serializable {
     Image load(@Nullable LoadFunction delegate, @NotNull ImageDesc.Type type) throws IOException;
   }
 
+  public static class Dimension2DDouble {
+    private double myWidth;
+    private double myHeight;
+
+    public Dimension2DDouble(double width, double height) {
+      myWidth = width;
+      myHeight = height;
+    }
+
+    public void setSize(Dimension2DDouble size) {
+      myWidth = size.myWidth;
+      myHeight = size.myHeight;
+    }
+
+    public void setSize(double width, double height) {
+      myWidth = width;
+      myHeight = height;
+    }
+
+    public double getWidth() {
+      return myWidth;
+    }
+
+    public double getHeight() {
+      return myHeight;
+    }
+  }
+
   public static final class ImageDesc {
     public enum Type {IMG, SVG}
 
@@ -80,7 +106,7 @@ public final class ImageLoader implements Serializable {
     final boolean original; // path is not altered
     // The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
     // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
-    final @NotNull Dimension2D origUsrSize;
+    final @NotNull Dimension2DDouble origUsrSize;
 
     public ImageDesc(@NotNull String path, double scale, @NotNull Type type) {
       this(path, scale, type, false);
@@ -126,7 +152,7 @@ public final class ImageLoader implements Serializable {
       if (stream == null) {
         if (useCache) {
           cacheKey = path + (type == SVG ? "_@" + scale + "x" : "");
-          Pair<Image, Dimension2D> pair = ourCache.get(cacheKey);
+          Pair<Image, Dimension2DDouble> pair = ourCache.get(cacheKey);
           if (pair != null) {
             origUsrSize.setSize(pair.second);
             return pair.first;

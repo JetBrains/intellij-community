@@ -5,13 +5,13 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
 import java.awt.*;
-import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +67,7 @@ public class SvgIconSizeTest {
      * Test SVGLoader.getDocumentSize for SVG starting with <svg.
      */
     url = new File(getSvgIconPath("20x10")).toURI().toURL();
-    Dimension2D size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
+    ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(url, url.openStream(), 1);
     assertEquals("wrong svg doc width", 20d, size.getWidth());
     assertEquals("wrong svg doc height", 10d, size.getHeight());
 
