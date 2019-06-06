@@ -39,7 +39,7 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -191,7 +191,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     }
 
     if (scheme == null) {
-      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
+      scheme = StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
     }
     setGlobalSchemeInner(scheme);
   }
@@ -305,7 +305,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
-    final boolean dark = UIUtil.isUnderDarcula() && getScheme("Darcula") != null;
+    final boolean dark = StartupUiUtil.isUnderDarcula() && getScheme("Darcula") != null;
     // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
     // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
     // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
@@ -443,8 +443,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public State getState() {
     String currentSchemeName = mySchemeManager.getCurrentSchemeName();
     if (currentSchemeName != null && !isTempScheme(mySchemeManager.getActiveScheme())) {
-      myState.colorScheme = ("Default".equals(currentSchemeName) || (SchemeManager.EDITABLE_COPY_PREFIX + "Default").equals(
-        currentSchemeName)) ? null : currentSchemeName;
+      myState.colorScheme = currentSchemeName;
     }
     return myState;
   }
@@ -480,7 +479,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
     }
     if (scheme == null) {
-      String schemeName = UIUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
+      String schemeName = StartupUiUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
       scheme = myDefaultColorSchemeManager.getScheme(schemeName);
       assert scheme != null :
         "The default scheme '" + schemeName + "' not found, " +
