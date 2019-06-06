@@ -122,7 +122,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
-    IconLoader.setStrictGlobally(strictMode);
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 

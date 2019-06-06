@@ -15,10 +15,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,12 +61,19 @@ public final class IdeaApplication {
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
     EventQueue.invokeLater(() -> {
       String[] args = processProgramArguments(rawArgs);
+
       ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
 
       Activity createAppActivity = StartUpMeasurer.start("create app");
-      ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(),
+      boolean headless = Main.isHeadless();
+      ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless,
                                                 Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION);
       createAppActivity.end();
+
+      if (!headless) {
+        IconLoader.setStrictGlobally(app.isInternal());
+      }
+
       starter.premain(args);
 
       CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
@@ -91,7 +95,7 @@ public final class IdeaApplication {
           return future;
         });
 
-      if (!Main.isHeadless()) {
+      if (!headless) {
         SplashManager.showLicenseeInfoOnSplash(LOG);
       }
 
@@ -111,7 +115,7 @@ public final class IdeaApplication {
         }
 
         app.load(null, SplashManager.getProgressIndicator());
-        if (!Main.isHeadless()) {
+        if (!headless) {
           addActivateAndWindowsCliListeners(app);
         }
         ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));

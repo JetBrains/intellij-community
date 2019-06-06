@@ -58,6 +58,7 @@ public final class IconLoader {
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createWeakMap(200);
 
   private static volatile boolean STRICT_GLOBAL;
+
   private static final ThreadLocal<Boolean> STRICT_LOCAL = new ThreadLocal<Boolean>() {
     @Override
     protected Boolean initialValue() {
