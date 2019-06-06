@@ -23,8 +23,8 @@ import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xmlb.Constants;
-import com.intellij.util.xmlb.annotations.*;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
@@ -110,14 +110,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                                              String epPrefix,
                                              @Nullable String pluginId) {
     String epName = extensionPoint.getName().getStringValue();
-    if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
-    if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
-    if (epName == null) return;
-    if (!epName.startsWith(epPrefix)) return;
+    if (epName != null && StringUtil.isNotEmpty(pluginId)) {
+      epName = pluginId + "." + epName;
+    }
+    else {
+      epName = extensionPoint.getQualifiedName().getStringValue();
+    }
+    if (epName == null || !epName.startsWith(epPrefix)) return;
 
-    final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class);
-    domExtension.setDeclaringElement(extensionPoint);
-    domExtension.addExtender(EXTENSION_EXTENDER);
+    registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class)
+      .setDeclaringElement(extensionPoint)
+      .addExtender(EXTENSION_EXTENDER);
   }
 
   private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass, @NotNull List<With> elements) {
