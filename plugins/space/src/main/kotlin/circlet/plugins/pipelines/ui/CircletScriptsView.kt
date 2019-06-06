@@ -5,56 +5,22 @@ import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.runtime.*
 import com.intellij.execution.*
-import com.intellij.execution.filters.*
-import com.intellij.execution.impl.*
-import com.intellij.execution.ui.*
 import com.intellij.icons.*
 import com.intellij.ide.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
-import com.intellij.openapi.util.*
 import com.intellij.ui.*
-import com.intellij.ui.components.*
-import com.intellij.ui.treeStructure.Tree
+import com.intellij.ui.treeStructure.*
 import kotlinx.coroutines.*
 import runtime.async.*
 import runtime.reactive.*
-import java.awt.*
 import javax.swing.*
 import javax.swing.tree.*
 
 class CircletScriptsViewFactory() {
-    companion object{
-        private const val consolePanelName = "console"
-        private const val taskNotSelectedPanelName = "taskNotSelected"
-    }
-
     fun createView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
-        val splitPane = Splitter(false)
-        val modelTreeView = createModelTreeView(lifetime, project, viewModel)
-        splitPane.firstComponent = modelTreeView
-        val console = TextConsoleBuilderFactory.getInstance().createBuilder(project).console as ConsoleViewImpl
-        Disposer.register(project, console)
-        val layout = CardLayout()
-
-        val logPanel = JPanel(layout).apply {
-            add(JBLabel("select task to run"), taskNotSelectedPanelName)
-            add(console.component, consolePanelName)
-        }
-        splitPane.secondComponent = logPanel
-
-        viewModel.logRunData.forEach(lifetime) {
-            console.clear()
-            if (it != null) {
-                layout.show(logPanel, consolePanelName)
-                console.print(it.dummy, ConsoleViewContentType.NORMAL_OUTPUT)
-            }
-            else {
-                layout.show(logPanel, taskNotSelectedPanelName)
-            }
-        }
-        return splitPane
+        return createModelTreeView(lifetime, project, viewModel)
     }
 
     private fun createModelTreeView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
