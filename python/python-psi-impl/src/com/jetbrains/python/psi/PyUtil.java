@@ -230,7 +230,7 @@ public class PyUtil {
             return new PyClassTypeImpl(((PyClassType)qualifierType).getPyClass(), true); // always as class, never instance
           }
         }
-        else if (PyNames.DICT.equals(attr_name)) {
+        else if (PyNames.DUNDER_DICT.equals(attr_name)) {
           PyType qualifierType = context.getType(qualifier);
           if (qualifierType instanceof PyClassType && ((PyClassType)qualifierType).isDefinition()) {
             return PyBuiltinCache.getInstance(ref).getDictType();
