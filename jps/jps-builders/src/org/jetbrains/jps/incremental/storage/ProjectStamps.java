@@ -25,7 +25,8 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  */
 public class ProjectStamps {
-  private static final boolean USE_TIMESTAMPS = false;
+  public static final boolean USE_HASHES = Boolean.getBoolean("org.jetbrains.jps.use.hashes");
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectStamps");
 
   private final StampsStorage<? extends StampsStorage.Stamp> myStampsStorage;
@@ -33,9 +34,9 @@ public class ProjectStamps {
   public ProjectStamps(File dataStorageRoot,
                        BuildTargetsState targetsState,
                        MaybeRelativizer relativizer) throws IOException {
-    myStampsStorage = USE_TIMESTAMPS
-                      ? new TimestampStorage(dataStorageRoot, targetsState)
-                      : new HashStorage(dataStorageRoot, relativizer, targetsState);
+    myStampsStorage = USE_HASHES
+                      ? new HashStorage(dataStorageRoot, relativizer, targetsState)
+                      : new TimestampStorage(dataStorageRoot, targetsState);
   }
 
   public StampsStorage<? extends StampsStorage.Stamp> getStorage() {
