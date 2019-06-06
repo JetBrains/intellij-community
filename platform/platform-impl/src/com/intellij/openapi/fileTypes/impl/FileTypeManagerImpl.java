@@ -346,6 +346,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     for (FileTypeBean bean : fileTypeBeans) {
       if (bean.implementationClass == null) continue;
 
+      if (myPendingFileTypes.containsKey(bean.name)) {
+        LOG.error(new PluginException("Trying to override already registered file type " + bean.name, bean.getPluginId()));
+        continue;
+      }
+
       myPendingFileTypes.put(bean.name, bean);
 
       List<FileNameMatcher> matchers = parse(bean.extensions);
