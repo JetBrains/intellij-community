@@ -23,7 +23,6 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     result.add(newMetric("cores", cores, null))
 
     for (gc in ManagementFactory.getGarbageCollectorMXBeans()) {
-      println(gc.name)
       result.add(newMetric("garbage.collector", FeatureUsageData().addData("name", gc.name)))
     }
 
