@@ -5,6 +5,7 @@ buildscript {
   }
   dependencies {
     classpath "de.undercouch:gradle-download-task:3.4.2"
+    classpath "gradle.plugin.org.jetbrains.gradle.plugin.idea-ext:gradle-idea-ext:0.5"
   }
 }
 
