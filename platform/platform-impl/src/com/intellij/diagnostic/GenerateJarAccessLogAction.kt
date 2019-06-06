@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
+import com.intellij.ide.BootstrapClassLoaderUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
 import java.io.File
 import kotlin.reflect.full.memberFunctions
@@ -24,10 +27,21 @@ class GenerateJarAccessLogAction : AnAction() {
   }
 }
 
-fun generateJarAccessLog(loader: ClassLoader, path: String) {
-  if (System.getProperty("idea.log.jar.access") == null) {
-    throw Exception("Jar access log not recorded")
+class GenerateJarAccessLogActivity : StartupActivity {
+  override fun runActivity(project: Project) {
+    val orderFile = File(PathManager.getSystemPath(), BootstrapClassLoaderUtil.CLASSPATH_ORDER_FILE)
+    if (!orderFile.exists()) {
+      try {
+        generateJarAccessLog(GenerateJarAccessLogActivity::class.java.classLoader, orderFile.path)
+      }
+      catch (e: Exception) {
+        // ignore
+      }
+    }
   }
+}
+
+fun generateJarAccessLog(loader: ClassLoader, path: String) {
   // Must use reflection because the classloader class is loaded with a different classloader
   val accessor = loader::class.memberFunctions.find { it.name == "getJarAccessLog" }
                  ?: throw Exception("Can't find getJarAccessLog() method")

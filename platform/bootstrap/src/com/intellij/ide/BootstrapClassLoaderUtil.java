@@ -31,6 +31,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
+  public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -40,9 +41,11 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
   @NotNull
   public static ClassLoader initClassLoader() throws MalformedURLException {
+    Collection<String> jarOrder = loadJarOrder();
+
     Collection<URL> classpath = new LinkedHashSet<>();
     addParentClasspath(classpath, false);
-    addIDEALibraries(classpath);
+    addIDEALibraries(classpath, jarOrder);
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
 
@@ -56,6 +59,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
+      .logJarAccess(jarOrder.isEmpty())
       .useCache();
     if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
@@ -79,6 +83,29 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
     return loader;
   }
+
+  /**
+   * A version of PathManager.getSystemPath() with no dependencies on external classes (to avoid classloading)
+   */
+  private static String getSystemPath() {
+    String systemPath = System.getProperty(PathManager.PROPERTY_SYSTEM_PATH);
+    if (systemPath != null) {
+      if (systemPath.length() >= 3 && systemPath.startsWith("\"") && systemPath.endsWith("\"")) {
+        systemPath = systemPath.substring(1, systemPath.length() - 1);
+      }
+      if (systemPath.startsWith("~/") || systemPath.startsWith("~\\")) {
+        systemPath = System.getProperty("user.home") + systemPath.substring(1);
+      }
+    }
+    else{
+      String pathSelector = System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR);
+      if (pathSelector != null) {
+        systemPath = PathManager.getDefaultSystemPathFor(pathSelector);
+      }
+    }
+    return systemPath;
+  }
+
 
   private static void addParentClasspath(Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
     if (!SystemInfo.IS_AT_LEAST_JAVA9) {
@@ -133,7 +160,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  private static void addIDEALibraries(Collection<? super URL> classpath) throws MalformedURLException {
+  private static void addIDEALibraries(Collection<? super URL> classpath, Collection<String> jarOrder) throws MalformedURLException {
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     assert selfRoot != null;
@@ -142,8 +169,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
     File libFolder = new File(PathManager.getLibPath());
 
-    Collection<String> jars = loadJarOrder(libFolder);
-    for (String jarName : jars) {
+    for (String jarName : jarOrder) {
       File jarFile = new File(libFolder, jarName);
       if (jarFile.exists()) {
         classpath.add(jarFile.toURI().toURL());
@@ -155,9 +181,9 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
-  private static Collection<String> loadJarOrder(File libFolder) {
+  private static Collection<String> loadJarOrder() {
     try {
-      Path path = Paths.get(libFolder.getPath(), "order.txt");
+      Path path = Paths.get(getSystemPath(), CLASSPATH_ORDER_FILE);
       if (path.toFile().exists()) {
         return new LinkedHashSet<>(Files.readAllLines(path));
       }

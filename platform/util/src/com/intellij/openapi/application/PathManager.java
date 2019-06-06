@@ -6,6 +6,7 @@ import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
@@ -245,7 +246,7 @@ public class PathManager {
   }
 
   public static void ensureConfigFolderExists() {
-    FileUtil.createDirectory(new File(getConfigPath()));
+    FileUtilRt.createDirectory(new File(getConfigPath()));
   }
 
   @NotNull
@@ -307,7 +308,7 @@ public class PathManager {
       ourSystemPath = getHomePath() + "/" + SYSTEM_FOLDER;
     }
 
-    FileUtil.createDirectory(new File(ourSystemPath));
+    FileUtilRt.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
   }
 
@@ -324,7 +325,7 @@ public class PathManager {
   @NotNull
   public static File getIndexRoot() {
     File indexRoot = new File(System.getProperty("index_root_path", getSystemPath() + "/index"));
-    FileUtil.createDirectory(indexRoot);
+    FileUtilRt.createDirectory(indexRoot);
     return indexRoot;
   }
 
@@ -396,7 +397,7 @@ public class PathManager {
     else if (URLUtil.JAR_PROTOCOL.equals(protocol)) {
       Pair<String, String> paths = URLUtil.splitJarUrl(resourceURL.getFile());
       if (paths != null && paths.first != null) {
-        resultPath = FileUtil.toSystemDependentName(paths.first);
+        resultPath = FileUtilRt.toSystemDependentName(paths.first);
       }
     }
     else if (URLUtil.JRT_PROTOCOL.equals(protocol)) {
@@ -564,7 +565,7 @@ public class PathManager {
   }
 
   @NotNull
-  private static String trimPathQuotes(@NotNull String path) {
+  public static String trimPathQuotes(@NotNull String path) {
     if (path.length() >= 3 && StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')) {
       path = path.substring(1, path.length() - 1);
     }

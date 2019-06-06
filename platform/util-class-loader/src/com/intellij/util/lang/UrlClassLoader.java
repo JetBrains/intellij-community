@@ -100,6 +100,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAllowBootstrapResources;
     private boolean myErrorOnMissingJar = true;
     private boolean myLazyClassloadingCaches;
+    private boolean myLogJarAccess;
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
 
@@ -156,6 +157,12 @@ public class UrlClassLoader extends ClassLoader {
     @NotNull
     public Builder<T> usePersistentClasspathIndexForLocalClassDirectories() {
       myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
+      return this;
+    }
+
+    @NotNull
+    public Builder<T> logJarAccess(boolean logJarAccess) {
+      myLogJarAccess = logJarAccess;
       return this;
     }
 
@@ -246,7 +253,7 @@ public class UrlClassLoader extends ClassLoader {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                          builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
                          builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain,
-                         System.getProperty("idea.log.jar.access") != null);
+                         builder.myLogJarAccess);
   }
 
   public static URL internProtocol(@NotNull URL url) {

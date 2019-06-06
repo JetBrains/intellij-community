@@ -667,6 +667,7 @@
       </components>
     </obsoleteStorage>
 
+    <postStartupActivity implementation="com.intellij.diagnostic.GenerateJarAccessLogActivity" order="last"/>
     <postStartupActivity implementation="com.intellij.diagnostic.StartUpPerformanceReporter" order="last"/>
 
     <httpRequestHandler implementation="com.intellij.ide.FavIconHttpRequestHandler" order="last"/>
