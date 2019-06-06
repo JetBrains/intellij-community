@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.content.Content;
@@ -31,11 +30,23 @@ import static com.intellij.sh.ShStringUtil.quote;
 public class ShTerminalRunner extends ShRunner {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
 
+  protected ShTerminalRunner(@NotNull Project project) {
+    super(project);
+  }
+
   @Override
   public void run(@NotNull ShFile file) {
-    Project project = file.getProject();
-    TerminalView terminalView = TerminalView.getInstance(file.getProject());
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    Pair<String, String> fileCommand = createCommandLine(file);
+    runCommandInTerminal(fileCommand.first, fileCommand.second);
+  }
+
+  public void run(@NotNull String command) {
+    runCommandInTerminal(command, null);
+  }
+
+  private void runCommandInTerminal(@NotNull String command, @Nullable String failoverMessage) {
+    TerminalView terminalView = TerminalView.getInstance(myProject);
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window == null) return;
 
     ContentManager contentManager = window.getContentManager();
@@ -44,18 +55,18 @@ public class ShTerminalRunner extends ShRunner {
       try {
         window.activate(null);
         contentManager.setSelectedContent(pair.first);
-        runCommand(pair.second, file);
+        runCommand(pair.second, command, failoverMessage);
       }
       catch (ExecutionException e) {
         LOG.warn("Error running terminal", e);
       }
     }
     else {
-      terminalView.createNewSession(new LocalTerminalDirectRunner(project) {
+      terminalView.createNewSession(new LocalTerminalDirectRunner(myProject) {
         @Override
         protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
           PtyProcess process = super.createProcess(directory, commandHistoryFilePath);
-          runCommand(process, file);
+          runCommand(process, command, failoverMessage);
           return process;
         }
       });
@@ -96,18 +107,19 @@ public class ShTerminalRunner extends ShRunner {
     return null;
   }
 
-  private static void runCommand(@NotNull Process process, @NotNull ShFile file) throws ExecutionException {
-    Pair<String, String> fileCommand = createCommandLine(file);
-    if (fileCommand.first != null) {
+  private static void runCommand(@NotNull Process process, @Nullable String command, @Nullable String failoverMessage)
+    throws ExecutionException {
+    if (command != null) {
       try {
-        process.getOutputStream().write(fileCommand.first.getBytes(CharsetToolkit.UTF8_CHARSET));
+        process.getOutputStream().write(command.getBytes(CharsetToolkit.UTF8_CHARSET));
       }
       catch (IOException ex) {
-        throw new ExecutionException("Fail to start " + fileCommand.first, ex);
+        throw new ExecutionException("Fail to start " + command, ex);
       }
     }
     else {
-      throw new ExecutionException(fileCommand.second, null);
+      if (failoverMessage == null) return;
+      throw new ExecutionException(failoverMessage, null);
     }
   }
 

@@ -27,7 +27,7 @@ public class ShRunFileAction extends DumbAwareAction {
   private static ShRunner findRunner(@NotNull Project project) {
     ShRunner runner = ServiceManager.getService(project, ShRunner.class);
     return runner == null || !runner.isAvailable(project)
-        ? new ShFailoverRunner()
+        ? new ShFailoverRunner(project)
         : runner;
   }
 
