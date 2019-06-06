@@ -111,19 +111,6 @@ fun Path.deleteChildrenStartingWith(prefix: String) {
   }
 }
 
-private fun Path.deleteRecursively(): Path {
-  FileUtil.delete(this)
-  return this
-}
-
-private fun Path.deleteAsIOFile() {
-  try {
-    FileUtil.delete(toFile())
-  }
-  // according to specification #toFile() method may throw UnsupportedOperationException
-  catch (ignored: UnsupportedOperationException) {}
-}
-
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
 val Path.systemIndependentPath: String

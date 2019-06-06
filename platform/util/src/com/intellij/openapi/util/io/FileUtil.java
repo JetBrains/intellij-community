@@ -24,8 +24,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
@@ -369,68 +369,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    try {
-      delete(file.toPath());
-    }
-    catch (IOException e) {
-      return false;
-    }
-    return true;
+    return FileUtilRt.delete(file);
   }
 
-  public static void delete(@NotNull Path file) throws IOException {
-    BasicFileAttributes attributes;
-    try {
-      attributes = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-    }
-    catch (NoSuchFileException e) {
-      return;
-    }
-
-    if (!attributes.isDirectory()) {
-      deleteFile(file);
-      return;
-    }
-
-    Files.walkFileTree(file, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        deleteFile(file);
-        return FileVisitResult.CONTINUE;
-      }
-
-      @Override
-      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-        Files.deleteIfExists(dir);
-        return FileVisitResult.CONTINUE;
-      }
-    });
-  }
-
-  private static void deleteFile(@NotNull Path file) throws IOException {
-    try {
-      Files.deleteIfExists(file);
-    }
-    catch (IOException e) {
-      // repeated delete is required for bad OS like Windows
-      doIOOperation(new RepeatableIOOperation<Boolean, IOException>() {
-        @Override
-        public Boolean execute(boolean lastAttempt) throws IOException {
-          try {
-            Files.deleteIfExists(file);
-          }
-          catch (IOException e) {
-            if (lastAttempt) {
-              return Boolean.FALSE;
-            }
-            else {
-              throw e;
-            }
-          }
-          return Boolean.TRUE;
-        }
-      });
-    }
+  public static void delete(@NotNull Path path) throws IOException {
+    FileUtilRt.deleteRecursivelyNIO(path);
   }
 
   public static boolean createParentDirs(@NotNull File file) {

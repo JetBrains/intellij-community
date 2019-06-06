@@ -875,45 +875,37 @@ public class FileUtilRt {
    */
   public static boolean delete(@NotNull File file) {
     if (NIOReflect.IS_AVAILABLE) {
-      return deleteRecursivelyNIO(file);
+      try {
+        Object path = NIOReflect.ourFileToPathMethod.invoke(file);
+        deleteRecursivelyNIO(path);
+        return true;
+      }
+      catch (IOException e) {
+        return false;
+      }
+      catch (Exception e) {
+        logger().info(e);
+        return false;
+      }
     }
     else {
       return deleteRecursively(file);
     }
   }
 
-  static boolean deleteRecursivelyNIO(File file) {
+  static void deleteRecursivelyNIO(@NotNull Object path) throws IOException {
     try {
-      /*
-      Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          Files.deleteIfExists(file);
-          return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-          Files.deleteIfExists(dir);
-          return FileVisitResult.CONTINUE;
-        }
-      });
-      */
-      final Object pathObject = NIOReflect.ourFileToPathMethod.invoke(file);
-      NIOReflect.ourFilesWalkMethod.invoke(null, pathObject, NIOReflect.ourDeletionVisitor);
+      NIOReflect.ourFilesWalkMethod.invoke(null, path, NIOReflect.ourDeletionVisitor);
     }
     catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (!NIOReflect.ourNoSuchFileExceptionClass.isInstance(cause)) {
-        logger().info(e);
-        return false;
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException && !NIOReflect.ourNoSuchFileExceptionClass.isInstance(cause)) {
+        throw (IOException)cause;
       }
     }
     catch (Exception e) {
       logger().info(e);
-      return false;
     }
-    return true;
   }
 
   private static boolean deleteRecursively(@NotNull File file) {
