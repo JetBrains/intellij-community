@@ -668,12 +668,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
         append(value);
       }
       setVisible(value != null);
-    }
-
-    @Override
-    @Nullable
-    public String getToolTipText() {
-      return myPresentation.getTooltipText();
+      setToolTipText(myPresentation.getTooltipText());
     }
   }
 
@@ -697,16 +692,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
 
     @Override
-    @Nullable
-    public String getToolTipText() {
-      return myPresentation.getTooltipText();
-    }
-
-    @Override
     public void beforeUpdate() {
       String text = myPresentation.getText();
       setText(text);
       setVisible(!text.isEmpty());
+      setToolTipText(myPresentation.getTooltipText());
     }
   }
 
@@ -731,15 +721,10 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
 
     @Override
-    @Nullable
-    public String getToolTipText() {
-      return myPresentation.getTooltipText();
-    }
-
-    @Override
     public void beforeUpdate() {
       setIcon(myPresentation.getIcon());
       setVisible(hasIcon());
+      setToolTipText(myPresentation.getTooltipText());
     }
   }
 
