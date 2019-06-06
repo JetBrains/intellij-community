@@ -3,15 +3,11 @@ package org.jetbrains.idea.maven.buildtool
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
-import com.intellij.build.SyncViewManager
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.impl.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ExceptionUtil
@@ -21,6 +17,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenSyncConsole(private val myProject: Project) {
+  @Volatile
   private var mySyncView: BuildProgressListener = BuildProgressListener { }
   private var mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
   private var finished = false
@@ -29,14 +26,12 @@ class MavenSyncConsole(private val myProject: Project) {
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
-  fun startImport() {
+  fun startImport(syncView: BuildProgressListener) {
     started = true
     finished = false
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
     val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
-    val result = Ref<BuildProgressListener>()
-    ApplicationManager.getApplication().invokeAndWait { result.set(ServiceManager.getService(myProject, SyncViewManager::class.java)) }
-    mySyncView = result.get()
+    mySyncView = syncView
     mySyncView.onEvent(StartBuildEventImpl(descriptor, "Sync ${myProject.name}"))
     debugLog("maven sync: started importing $myProject")
   }
