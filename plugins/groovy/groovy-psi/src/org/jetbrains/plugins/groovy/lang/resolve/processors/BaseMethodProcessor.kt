@@ -33,7 +33,10 @@ abstract class BaseMethodProcessor(private val name: String) : ProcessorWithHint
     }
     if (element !is PsiMethod) {
       if (state[sorryCannotKnowElementKind] != true) {
-        log.error("Unexpected element. ${elementInfo(element)}")
+        log.error(
+          "Unexpected element. " + elementInfo(element) + "\n" +
+          "See org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor docs."
+        )
       }
       return true
     }

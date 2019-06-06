@@ -30,7 +30,47 @@ import static org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributo
 import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor.processClassMixins;
 
 /**
+ * <p>
+ * Contributor must check if the processor accepts the elements the contributor can offer.
+ * Feeding processor with unnecessary elements which are then filtered away slows down the reference resolution.
+ * <ul>
+ *   <li>Ensure that the element name is right.
+ *     <p>
+ *       Ask processor for the name: {@code val nameHint = processor.getHint(NameHint.KEY)}. <br/>
+ *       If the hint is {@code null} or the the name ({@code nameHint.getName(resolveState)}) is {@code null}
+ *       then processor doesn't care about the name, so the contributor is free to feed the processor with whatever elements.
+ *       This usually happens when completion is in progress. <br/>
+ *       If the name is not {@code null} then the contributor has to feed processor with properly named elements.
+ *     </p>
+ *     <p>
+ *       Usually there will be some cache map (name -> element) in contributor model,
+ *       and the contributor will either feed all elements from the cache
+ *       (if the name is {@code null}) or get element by name and feed this element.
+ *     </p>
+ *   </li>
+ *   <li>Ensure that the element kind is right after checking the name.
+ *     <p>
+ *       Ask processor for the kind: {@code val kindHint = processor.getHint(ElementClassHint.KEY)}. <br/>
+ *       If there is no hint (i.e. {@code null}), then, again,
+ *       the contributor is free to feed processor with whatever elements. <br/>
+ *       If there is a hint, then contributor has to check if it accepts fields:
+ *       {@code kindHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)}. <br/>
+ *       The same applies for methods: kindHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)
+ *     </p>
+ *   </li>
+ * </ul>
+ * <p>
+ * The processor's {@link PsiScopeProcessor#execute execute} method returns boolean value.
+ * Contributors must use use it to check if the processor was stopped:
+ * <pre>
+ * if (!processor.execute(element, state)) {
+ *   return
+ * }
+ * </pre>
+ *
  * @author peter
+ * @see com.intellij.psi.scope.NameHint
+ * @see com.intellij.psi.scope.ElementClassHint
  */
 public abstract class NonCodeMembersContributor {
   public static final ExtensionPointName<NonCodeMembersContributor> EP_NAME = ExtensionPointName.create("org.intellij.groovy.membersContributor");
