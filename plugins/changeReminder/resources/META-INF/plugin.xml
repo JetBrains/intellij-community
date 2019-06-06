@@ -4,14 +4,15 @@
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-        Predict the full set of files in the commit given only a part of it. <br>
-        In other words, ChangeReminder predicts files which developer might have forgotten to modify or to add to VCS (currently only Git is supported).<br><br>
+        ChangeReminder predicts files which developer might have forgotten to modify.
+        The plugin uses VCS history (currently only Git is supported).<br><br>
 
-        It is easier to understand by example. <br>
-        When you are committing a file (<i>ExceptionHandler.java</i>),
+        There is an example. <br>
+        When you have a file (<i>ExceptionHandler</i>) in your active changelist,
             the system knows which files are usually committed with this one
-            and reminds you to add forgotten files (<i>ExceptionHandlerTest.java</i>, <i>ExceptionHandlerFactory.java</i>) to this commit
-            or to modify them.<br><br>
+            and shows you the unmodified related files (<i>ExceptionHandlerTest</i>, <i>ExceptionHandlerFactory</i>)
+            in <i>Related Files</i> node in <i>Local Changes</i>.
+            Maybe you wanted to modify them but forgot about it.
     ]]></description>
 
   <depends>com.intellij.modules.vcs</depends>
