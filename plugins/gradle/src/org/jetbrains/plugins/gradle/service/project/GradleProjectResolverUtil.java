@@ -374,8 +374,15 @@ public class GradleProjectResolverUtil {
         Path binaryFileParent = file.getParent();
         Path grandParentFile = binaryFileParent.getParent();
 
-        final boolean[] sourceFound = {false};
-        final boolean[] docFound = {false};
+        //check if source or doc exists
+        Set<String> sources = libraryData.getPaths(LibraryPathType.SOURCE);
+        Set<String> docs = libraryData.getPaths(LibraryPathType.DOC);
+        final boolean[] sourceFound = {sources != null && sources.size() > 0};
+        final boolean[] docFound = {docs != null && docs.size() > 0};
+        if (sourceFound[0] && docFound[0]) {
+          continue;
+        }
+
         Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -391,11 +398,11 @@ public class GradleProjectResolverUtil {
               return FileVisitResult.SKIP_SIBLINGS;
             }
             if (attrs.isRegularFile()) {
-              if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
+              if (!sourceFound[0] && StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
                 libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.toFile().getAbsolutePath());
                 sourceFound[0] = true;
               }
-              else if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-javadoc.jar")) {
+              else if (!docFound[0] && StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-javadoc.jar")) {
                 libraryData.addPath(LibraryPathType.DOC, sourceCandidate.toFile().getAbsolutePath());
                 docFound[0] = true;
               }
@@ -582,7 +589,6 @@ public class GradleProjectResolverUtil {
                                                                    artifacts));
             }
           }
-
         }
 
         if (projectDependencyInfos.isEmpty()) {
