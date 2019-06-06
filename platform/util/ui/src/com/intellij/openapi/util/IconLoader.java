@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
@@ -99,12 +100,14 @@ public final class IconLoader {
     STRICT_GLOBAL = strict;
   }
 
-  private static void updateTransform(Function<? super IconTransform, IconTransform> updater) {
+  private static void updateTransform(@NotNull Function<? super IconTransform, IconTransform> updater) {
     IconTransform prev, next;
     do {
       prev = ourTransform.get();
-      next = updater.fun(prev);
-    } while (!ourTransform.compareAndSet(prev, next));
+      next = updater.apply(prev);
+    }
+    while (!ourTransform.compareAndSet(prev, next));
+
     if (prev != next) {
       ourIconsCache.clear();
       ourIcon2DisabledIcon.clear();
@@ -199,11 +202,6 @@ public final class IconLoader {
 
   private static boolean isLoaderDisabled() {
     return !ourIsActivated;
-  }
-
-  @Nullable
-  public static Icon findLafIcon(@NotNull String key, @NotNull Class aClass) {
-    return findLafIcon(key, aClass, STRICT_LOCAL.get());
   }
 
   @Nullable
@@ -851,7 +849,7 @@ public final class IconLoader {
       @Nullable
       @SuppressWarnings("DuplicateExpressions")
       private static URL findURL(@NotNull String path, @NotNull Function<? super String, URL> urlProvider) {
-        URL url = urlProvider.fun(path);
+        URL url = urlProvider.apply(path);
         if (url != null) return url;
 
         // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
@@ -867,7 +865,7 @@ public final class IconLoader {
         else {
           LOG.debug("unexpected path: ", path);
         }
-        return urlProvider.fun(path);
+        return urlProvider.apply(path);
       }
     }
   }
