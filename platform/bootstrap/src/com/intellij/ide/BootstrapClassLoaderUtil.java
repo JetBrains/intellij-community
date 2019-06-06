@@ -95,10 +95,15 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
         }
       }
 
+      String libPath = PathManager.getLibPath();
       for (URLClassLoader loader : loaders) {
         URL[] urls = loader.getURLs();
         for (URL url : urls) {
           String path = urlToPath(url);
+          if (path.startsWith(libPath)) {
+            // We need to add these paths in the order specified in order.txt, so don't add them at this stage
+            continue;
+          }
 
           boolean isExt = false;
           for (String extDir : extDirs) {
@@ -145,9 +150,9 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       }
     }
 
-    addLibraries(classpath, libFolder, selfRootUrl, jars);
-    addLibraries(classpath, new File(libFolder, "ext"), selfRootUrl, Collections.emptySet());
-    addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl, Collections.emptySet());
+    addLibraries(classpath, libFolder, selfRootUrl);
+    addLibraries(classpath, new File(libFolder, "ext"), selfRootUrl);
+    addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
   private static Collection<String> loadJarOrder(File libFolder) {
@@ -162,12 +167,12 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     return Collections.emptyList();
   }
 
-  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl, Collection<String> excludeNames) throws MalformedURLException {
+  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
     File[] files = fromDir.listFiles();
     if (files == null) return;
 
     for (File file : files) {
-      if (FileUtilRt.isJarOrZip(file) && !excludeNames.contains(file.getName())) {
+      if (FileUtilRt.isJarOrZip(file)) {
         URL url = file.toURI().toURL();
         if (!selfRootUrl.equals(url)) {
           classPath.add(url);
@@ -183,10 +188,14 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   private static void parseClassPathString(String pathString, Collection<? super URL> classpath) {
     if (pathString != null && !pathString.isEmpty()) {
       try {
+        String libPath = PathManager.getLibPath();
         StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
         while (tokenizer.hasMoreTokens()) {
           String pathItem = tokenizer.nextToken();
-          classpath.add(new File(pathItem).toURI().toURL());
+          if (!pathItem.startsWith(libPath)) {
+            // We need to add paths from lib directory in the order specified in order.txt, so don't add them at this stage
+            classpath.add(new File(pathItem).toURI().toURL());
+          }
         }
       }
       catch (MalformedURLException e) {
