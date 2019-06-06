@@ -69,7 +69,10 @@ public class IdeaGateway {
 
     // optimisation: FileTypeManager.isFileIgnored(f) will be checked inside ProjectFileIndex.isUnderIgnored()
     if (numberOfOpenProjects == 0) {
-      return !FileTypeManager.getInstance().isFileIgnored(f);
+      if (shouldBeInContent) return false; // there is no project, so the file can't be in content
+      if (FileTypeManager.getInstance().isFileIgnored(f)) return false;
+
+      return true;
     }
 
     boolean isExcludedFromAll = true;
