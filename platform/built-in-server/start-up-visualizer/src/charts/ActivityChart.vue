@@ -6,17 +6,17 @@
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
   import {ActivityChartManager} from "./ActivityChartManager"
-  import {ActivityChartType, chartDescriptors} from "@/charts/ActivityChartDescriptor"
+  import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
   import {ComponentChartManager} from "@/charts/ComponentChartManager"
 
   @Component
   export default class ActivityChart extends BaseChartComponent<ActivityChartManager> {
     @Prop(String)
-    type!: ActivityChartType
+    type!: string
 
     @Watch("type")
-    typeChanged(_type: ActivityChartType, _oldType: ActivityChartType): void {
+    typeChanged(_type: string, _oldType: string): void {
       const oldChartManager = this.chartManager
       if (oldChartManager != null) {
         oldChartManager.dispose()

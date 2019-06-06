@@ -23,8 +23,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
@@ -845,7 +847,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         final Element file = fileElements.get(i);
         Element historyElement = file.getChild(HistoryEntry.TAG);
         String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
-        Activity activity = ParallelActivity.REOPENING_EDITORS.start(fileName);
+        Activity activity = ParallelActivity.REOPENING_EDITOR
+          .start(FileUtil.getLocationRelativeToUserHome(VirtualFileManager.extractPath(fileName), false));
         if (i == 0) {
           EditorTabbedContainer tabbedPane = window.getTabbedPane();
           if (tabbedPane != null) {

@@ -1,15 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-export type ActivityChartType = "prepareAppInitActivities" | "components" | "services" | "extensions" | "topHitProviders" | "projectPostStartupActivities" | "GCs"
+import {Item} from "@/state/data"
 
 export interface ActivityChartDescriptor {
   readonly label: string
-  readonly id: ActivityChartType
+  readonly id: string
 
   readonly sourceNames?: Array<string>
 
   readonly rotatedLabels?: boolean
   readonly groupByThread?: boolean
   readonly sourceHasPluginInformation?: boolean
+
+  readonly nameTransformer?: (item: Item) => string
+}
+
+function getShortName(item: Item): string {
+  const lastDotIndex = item.name.lastIndexOf(".")
+  return lastDotIndex < 0 ? item.name : item.name.substring(lastDotIndex + 1)
 }
 
 // not as part of ItemChartManager.ts to reduce scope of changes on change
@@ -19,16 +26,19 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     label: "Components",
     id: "components",
     sourceNames: ["appComponents", "projectComponents", "moduleComponents"],
+    nameTransformer: getShortName,
   },
   {
     label: "Services",
     id: "services",
     sourceNames: ["appServices", "projectServices", "moduleServices"],
+    nameTransformer: getShortName,
   },
   {
     label: "Extensions",
     id: "extensions",
     sourceNames: ["appExtensions", "projectExtensions", "moduleExtensions"],
+    nameTransformer: getShortName,
   },
   {
     label: "Prepare App Init",
@@ -40,10 +50,17 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     label: "Options Top Hit Providers",
     id: "topHitProviders",
     sourceNames: ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"],
+    nameTransformer: getShortName,
   },
   {
     label: "Project Post-Startup",
     id: "projectPostStartupActivities",
+    nameTransformer: getShortName,
+  },
+  {
+    label: "Reopening Editors",
+    id: "reopeningEditors",
+    sourceHasPluginInformation: false,
   },
   {
     label: "GCs",

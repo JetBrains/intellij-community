@@ -224,7 +224,7 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
       computeOwnTime(list, ownDurations)
     }
 
-    val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
+    val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
     writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap, measureThreshold = measureThreshold)
   }
 }

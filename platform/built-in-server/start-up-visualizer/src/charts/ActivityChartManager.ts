@@ -199,9 +199,10 @@ export class ActivityChartManager extends XYChartManager {
   }
 
   protected transformDataItem(item: Item, chartConfig: ClassItemChartConfig, sourceName: string, _items: Array<Item>): ClassItem {
+    const nameTransformer = this.descriptor.nameTransformer
     return {
       ...item,
-      shortName: getShortName(item),
+      shortName: nameTransformer == null ? item.name : nameTransformer(item),
       chartConfig,
       sourceName,
     }
@@ -252,11 +253,6 @@ export class ActivityChartManager extends XYChartManager {
       return rangePoint == null ? x : rangePoint.x
     })
   }
-}
-
-function getShortName(item: Item): string {
-  const lastDotIndex = item.name.lastIndexOf(".")
-  return lastDotIndex < 0 ? item.name : item.name.substring(lastDotIndex + 1)
 }
 
 interface LegendItem {
