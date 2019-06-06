@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.SameThreadExecutorService;
 import com.intellij.diagnostic.Activity;
@@ -9,17 +10,21 @@ import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.CliResult;
+import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
+import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -28,7 +33,9 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
@@ -73,6 +80,7 @@ public class StartupUtil {
   @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
+  private static boolean ourSystemPatched;
 
   private StartupUtil() { }
 
@@ -206,14 +214,11 @@ public class StartupUtil {
       if (newConfigFolder) {
         appStarter.beforeImportConfigs();
         Path newConfigDir = Paths.get(PathManager.getConfigPath());
-        EventQueue.invokeAndWait(() -> {
-          installExceptionHandler();
-          ConfigImportHelper.importConfigsTo(newConfigDir, log);
-        });
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log));
         appStarter.importFinished(newConfigDir);
       }
 
-      AppUIUtil.showUserAgreementAndConsentsIfNeeded(log);
+      showUserAgreementAndConsentsIfNeeded(log);
 
       if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
         // exception handler is already set by ConfigImportHelper
@@ -614,5 +619,83 @@ public class StartupUtil {
 
     PluginManagerCore.invalidatePlugins();
     appStarter.startupWizardFinished();
+  }
+
+  public static void patchSystem(@NotNull Logger log) {
+    if (ourSystemPatched) {
+      return;
+    }
+
+    ourSystemPatched = true;
+
+    Activity patchActivity = StartUpMeasurer.start("patch system");
+    ApplicationImpl.patchSystem();
+    if (!Main.isHeadless()) {
+      patchSystemForUi(log);
+    }
+    patchActivity.end();
+  }
+
+  private static void patchSystemForUi(@NotNull Logger log) {
+      /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
+         because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
+
+         At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
+
+         This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
+
+         True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+         frame buffer content without the usual repainting, even when the EDT is blocked. */
+    if (Patches.REPAINT_MANAGER_LEAK) {
+      RepaintManager.setCurrentManager(new IdeRepaintManager());
+    }
+
+    if (SystemInfo.isXWindow) {
+      String wmName = X11UiUtil.getWmName();
+      log.info("WM detected: " + wmName);
+      if (wmName != null) {
+        X11UiUtil.patchDetectedWm(wmName);
+      }
+    }
+
+    IconManager.activate();
+  }
+
+  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
+    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
+      return;
+    }
+
+    EndUserAgreement.updateCachedContentToLatestBundledVersion();
+    EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
+    if (!agreement.isAccepted()) {
+      // todo: does not seem to request focus when shown
+      runInEdtAndWait(log, () -> AppUIUtil.showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
+      EndUserAgreement.setAccepted(agreement);
+    }
+    AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command));
+  }
+
+  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable) {
+    try {
+      if (!ourSystemPatched) {
+        EventQueue.invokeAndWait(() -> {
+          patchSystem(log);
+          try {
+            UIManager.setLookAndFeel(IntelliJLaf.class.getName());
+            IconManager.activate();
+            // we don't set AppUIUtil.updateForDarcula(false) because light is default
+          }
+          catch (Exception ignore) {
+          }
+        });
+      }
+
+      // this invokeAndWait() call is needed to place on a freshly minted IdeEventQueue instance
+      EventQueue.invokeAndWait(runnable);
+    }
+    catch (InterruptedException | InvocationTargetException e) {
+      log.warn(e);
+    }
   }
 }

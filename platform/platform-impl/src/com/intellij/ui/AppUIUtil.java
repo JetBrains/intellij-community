@@ -9,9 +9,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.ConsentSettingsUi;
-import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
@@ -39,6 +37,7 @@ import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,22 +53,20 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-/**
- * @author yole
- */
-public class AppUIUtil {
+public final class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
-  private static final boolean RUNNING_FROM_SOURCES = PluginManagerCore.isRunningFromSources();
   private static List<Image> ourIcons = null;
   private static boolean ourMacDocIconSet = false;
 
@@ -115,7 +112,7 @@ public class AppUIUtil {
       if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (RUNNING_FROM_SOURCES && !ourMacDocIconSet) {
+      else if (PluginManagerCore.isRunningFromSources() && !ourMacDocIconSet) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
@@ -124,7 +121,7 @@ public class AppUIUtil {
 
   public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfoRt.isMac) {
-      return !RUNNING_FROM_SOURCES;
+      return !PluginManagerCore.isRunningFromSources();
     }
 
     // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
@@ -220,7 +217,7 @@ public class AppUIUtil {
       .replace("intellij-idea", "idea").replace("android-studio", "studio")  // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "");
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
-    if (RUNNING_FROM_SOURCES) wmClass += "-debug";
+    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
     return wmClass;
   }
 
@@ -326,48 +323,41 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
-    if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      EndUserAgreement.updateCachedContentToLatestBundledVersion();
-      EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
-      if (!agreement.isAccepted()) {
-        try {
-          // todo: does not seem to request focus when shown
-          EventQueue.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
-          EndUserAgreement.setAccepted(agreement);
-        }
-        catch (Exception e) {
-          log.warn(e);
-        }
-      }
-      showConsentsAgreementIfNeeded(log);
-    }
-  }
-
-  /** @deprecated use {@link #showUserAgreementAndConsentsIfNeeded(Logger)} instead */
+  /** @deprecated use {@link #showConsentsAgreementIfNeeded(Logger)} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean showConsentsAgreementIfNeed(@NotNull Logger log) {
     return showConsentsAgreementIfNeeded(log);
   }
 
   public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log) {
-    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
-    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    if (consentsToShow.second) {
-      Runnable runnable = () -> result.set(confirmConsentOptions(consentsToShow.first));
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable.run();
+    return showConsentsAgreementIfNeeded(command -> {
+      if (EventQueue.isDispatchThread()) {
+        command.run();
       }
       else {
         try {
-          SwingUtilities.invokeAndWait(runnable);
+          EventQueue.invokeAndWait(command);
         }
-        catch (Exception e) {
+        catch (InterruptedException | InvocationTargetException e) {
           log.warn(e);
         }
       }
+    });
+  }
+
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor) {
+    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+    if (consentsToShow.second) {
+      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.first)));
     }
     return result.get();
+  }
+
+  public static void updateForDarcula(boolean isDarcula) {
+    JBColor.setDark(isDarcula);
+    IconLoader.setUseDarkIcons(isDarcula);
   }
 
   /**
@@ -378,8 +368,6 @@ public class AppUIUtil {
    * @param isPrivacyPolicy  true if this document is a privacy policy
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
-    LafManagerImpl.initIntelliJLafIfNeeded();
-
     DialogWrapper dialog = new DialogWrapper(true) {
       private JEditorPane myViewer;
 
@@ -422,7 +410,6 @@ public class AppUIUtil {
           eapPanel.setBorder(JBUI.Borders.empty(8));
           //noinspection UseJBColor
           eapPanel.setBackground(new Color(0xDCE4E8));
-          IconLoader.activate();
           JLabel label = new JLabel(AllIcons.General.BalloonInformation);
           label.setVerticalAlignment(SwingConstants.TOP);
           eapPanel.add(label, BorderLayout.WEST);

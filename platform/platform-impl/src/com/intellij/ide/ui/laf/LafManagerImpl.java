@@ -26,8 +26,8 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
@@ -40,10 +40,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -334,7 +331,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
-        updateForDarcula(true);
+        AppUIUtil.updateForDarcula(true);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -426,9 +423,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static void updateForDarcula(boolean isDarcula) {
-    JBColor.setDark(isDarcula);
-    IconLoader.setUseDarkIcons(isDarcula);
+    AppUIUtil.updateForDarcula(isDarcula);
   }
 
   @Nullable
@@ -778,14 +776,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     for (Window aChildren : children) {
       repaintUI(aChildren);
     }
-  }
-
-  public static void initIntelliJLafIfNeeded() {
-    if (ApplicationManager.getApplication() != null) return;
-    try {
-      UIManager.setLookAndFeel(IntelliJLaf.class.getName());
-      updateForDarcula(false);
-    } catch (Exception ignore) {}
   }
 
   private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys) {

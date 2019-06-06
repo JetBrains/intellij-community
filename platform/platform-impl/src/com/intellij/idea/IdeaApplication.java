@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.Patches;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -16,7 +15,10 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +28,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
@@ -185,17 +186,10 @@ public final class IdeaApplication {
 
     LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
 
-    boolean headless = Main.isHeadless();
-    Activity patchActivity = StartUpMeasurer.start("patch system");
-    ApplicationImpl.patchSystem();
-    if (!headless) {
-      patchSystemForUi();
-    }
-    patchActivity.end();
-
+    StartupUtil.patchSystem(LOG);
     ApplicationStarter starter = getStarter(args, pluginsLoaded);
 
-    if (headless && !starter.isHeadless()) {
+    if (Main.isHeadless() && !starter.isHeadless()) {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
       System.exit(Main.NO_GRAPHICS);
     }
@@ -228,31 +222,6 @@ public final class IdeaApplication {
       arguments.add(arg);
     }
     return ArrayUtilRt.toStringArray(arguments);
-  }
-
-  private static void patchSystemForUi() {
-    /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
-       because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
-
-       At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
-
-       This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
-
-       True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
-       frame buffer content without the usual repainting, even when the EDT is blocked. */
-    if (Patches.REPAINT_MANAGER_LEAK) {
-      RepaintManager.setCurrentManager(new IdeRepaintManager());
-    }
-
-    if (SystemInfo.isXWindow) {
-      String wmName = X11UiUtil.getWmName();
-      LOG.info("WM detected: " + wmName);
-      if (wmName != null) {
-        X11UiUtil.patchDetectedWm(wmName);
-      }
-    }
-
-    IconLoader.activate();
   }
 
   @NotNull

@@ -8,12 +8,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Iterator;
 import java.util.ServiceLoader;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 public interface IconManager {
   @NotNull
   static IconManager getInstance() {
-    return Holder.INSTANCE;
+    return IconManagerHelper.instance;
+  }
+
+  // Icon Loader is quite heavy, better to not instantiate class unless required
+  static void activate() {
+    IconManagerHelper.activate();
   }
 
   @NotNull
@@ -51,19 +57,20 @@ public interface IconManager {
   void registerIconLayer(int flagMask, @NotNull Icon icon);
 }
 
-class Holder {
-  @NotNull
-  private static IconManager getInstance() {
+final class IconManagerHelper {
+  private static final AtomicBoolean isActivated = new AtomicBoolean();
+  static volatile IconManager instance = new DummyIconManager();
+
+  static void activate() {
+    if (!isActivated.compareAndSet(false, true)) {
+      return;
+    }
+
     Iterator<IconManager> iterator = ServiceLoader.load(IconManager.class).iterator();
     if (iterator.hasNext()) {
-      return iterator.next();
-    }
-    else {
-      return new DummyIconManager();
+      instance = iterator.next();
     }
   }
-
-  static final IconManager INSTANCE = getInstance();
 }
 
 final class DummyIconManager implements IconManager {
