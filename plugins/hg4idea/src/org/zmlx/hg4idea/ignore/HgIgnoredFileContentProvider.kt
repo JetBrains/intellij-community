@@ -118,6 +118,8 @@ class HgIgnoredFileContentProvider(private val project: Project) : IgnoredFileCo
   override fun buildIgnoreEntryContent(ignoreFileRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
     FileUtil.getRelativePath(ignoreFileRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""
 
+  override fun supportIgnoreFileNotInVcsRoot() = false
+
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"
 }
