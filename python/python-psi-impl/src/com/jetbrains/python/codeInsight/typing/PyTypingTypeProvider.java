@@ -975,7 +975,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (ContainerUtil.exists(operandNames, name -> name.equals(LITERAL) || name.equals(LITERAL_EXT))) {
         return Optional
           .ofNullable(subscriptionExpr.getIndexExpression())
-          .map(index -> PyLiteralType.Companion.newInstance(index, context.getTypeContext()))
+          .map(index -> PyLiteralType.Companion.fromLiteralParameter(index, context.getTypeContext()))
           .map(Ref::create)
           .orElse(null);
       }

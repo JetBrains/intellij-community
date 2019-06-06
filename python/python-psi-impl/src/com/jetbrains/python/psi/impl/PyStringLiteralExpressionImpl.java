@@ -8,10 +8,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiReferenceService.Hints;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -155,25 +155,28 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyFile file = PyUtil.as(FileContextUtil.getContextFile(this), PyFile.class);
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(file == null ? this : file);
+    final LanguageLevel languageLevel = file == null ? LanguageLevel.forElement(this) : file.getLanguageLevel();
+
     final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
     if (firstNode != null) {
       if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
-        // f-strings can't have "b" prefix so they are always unicode 
-        return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
+        // f-strings can't have "b" prefix so they are always unicode
+        return builtinCache.getUnicodeType(languageLevel);
       }
 
-      PyFile file = PsiTreeUtil.getParentOfType(this, PyFile.class);
       if (file != null) {
-        IElementType type = PythonHighlightingLexer.convertStringType(firstNode.getElementType(), 
-                                                                      firstNode.getText(),
-                                                                      LanguageLevel.forElement(this),
-                                                                      file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
+        final IElementType type = PythonHighlightingLexer.convertStringType(firstNode.getElementType(),
+                                                                            firstNode.getText(),
+                                                                            languageLevel,
+                                                                            file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
         if (PyTokenTypes.UNICODE_NODES.contains(type)) {
-          return PyBuiltinCache.getInstance(this).getUnicodeType(LanguageLevel.forElement(this));
+          return builtinCache.getUnicodeType(languageLevel);
         }
       }
     }
-    return PyBuiltinCache.getInstance(this).getBytesType(LanguageLevel.forElement(this));
+    return builtinCache.getBytesType(languageLevel);
   }
 
   @Override
