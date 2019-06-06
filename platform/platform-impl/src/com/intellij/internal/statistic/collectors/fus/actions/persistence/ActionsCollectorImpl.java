@@ -18,7 +18,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.impl.BundledKeymapProvider;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
+import com.intellij.openapi.keymap.impl.DefaultKeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,6 +61,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   public ActionsCollectorImpl(@NotNull DefaultKeymap defaultKeymap) {
     for (Keymap keymap : defaultKeymap.getKeymaps()) {
+      if (!(keymap instanceof DefaultKeymapImpl)) continue;
+      Class<BundledKeymapProvider> providerClass = ((DefaultKeymapImpl)keymap).getProviderClass();
+      if (!PluginInfoDetectorKt.getPluginInfo(providerClass).isDevelopedByJetBrains()) continue;
       myXmlActionIds.addAll(keymap.getActionIdList());
     }
   }
