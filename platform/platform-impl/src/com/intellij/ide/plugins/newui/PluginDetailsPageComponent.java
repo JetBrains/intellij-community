@@ -247,12 +247,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
           int baseline = myTagPanel.getBaseline(-1, -1);
           if (baseline != -1) {
             Rectangle versionBounds = myVersion.getBounds();
-            int versionY = myTagPanel.getY() + baseline - myVersion.getBaseline(versionBounds.width, versionBounds.height);
+            Dimension versionSize = myVersion.getPreferredSize();
+            int versionY = myTagPanel.getY() + baseline - myVersion.getBaseline(versionSize.width, versionSize.height);
             myVersion.setBounds(versionBounds.x, versionY, versionBounds.width, versionBounds.height);
 
             if (myDate.isVisible()) {
               Rectangle dateBounds = myDate.getBounds();
-              int dateY = myTagPanel.getY() + baseline - myDate.getBaseline(dateBounds.width, dateBounds.height);
+              Dimension dateSize = myDate.getPreferredSize();
+              int dateY = myTagPanel.getY() + baseline - myDate.getBaseline(dateSize.width, dateSize.height);
               myDate.setBounds(dateBounds.x - JBUIScale.scale(4), dateY, dateBounds.width, dateBounds.height);
             }
           }
@@ -399,7 +401,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myVersion.setText(version);
     myVersionSize.setText(version);
-    myVersion.setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersion.getPreferredSize().height));
+    myVersion
+      .setPreferredSize(new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersion.getPreferredSize().height));
 
     myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
 
