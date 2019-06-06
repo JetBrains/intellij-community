@@ -242,22 +242,28 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public void openFiles() {
-    if (mySplittersElement != null) {
-      Activity restoringEditors = StartUpMeasurer.start(StartUpMeasurer.Phases.RESTORING_EDITORS);
-      final JPanel comp = myUIBuilder.process(mySplittersElement, getTopPanel());
-      restoringEditors.end();
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        if (comp != null) {
-          removeAll();
-          add(comp, BorderLayout.CENTER);
-          mySplittersElement = null;
-        }
-        // clear empty splitters
-        for (EditorWindow window : getWindows()) {
-          if (window.getTabCount() == 0) window.removeFromSplitter();
-        }
-      });
+    if (mySplittersElement == null) {
+      return;
     }
+
+    Activity restoringEditors = StartUpMeasurer.start(StartUpMeasurer.Phases.RESTORING_EDITORS);
+    JPanel component = myUIBuilder.process(mySplittersElement, getTopPanel());
+    restoringEditors.end();
+
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (component != null) {
+        removeAll();
+        add(component, BorderLayout.CENTER);
+        mySplittersElement = null;
+      }
+
+      // clear empty splitters
+      for (EditorWindow window : getWindows()) {
+        if (window.getTabCount() == 0) {
+          window.removeFromSplitter();
+        }
+      }
+    }, ModalityState.any());
   }
 
   public int getEditorsCount() {
