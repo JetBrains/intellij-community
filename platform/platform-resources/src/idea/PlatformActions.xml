@@ -1286,5 +1286,7 @@
     <action class="com.intellij.diagnostic.PluginStartupCostAction" internal="true" text="Show Plugin Startup Cost">
       <add-to-group group-id="Internal"/>
     </action>
+
+    <action class="com.intellij.diagnostic.ShowJarAccessLogAction" internal="true" text="Show Jar Access Log"/>
   </actions>
 </idea-plugin>

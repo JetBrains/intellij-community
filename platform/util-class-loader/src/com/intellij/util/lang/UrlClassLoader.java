@@ -82,6 +82,11 @@ public class UrlClassLoader extends ClassLoader {
     return myClassPath.getBaseUrls();
   }
 
+  @SuppressWarnings("unused")  // called via reflection
+  public Collection<String> getJarAccessLog() {
+    return myClassPath.getJarAccessLog();
+  }
+
   public static final class Builder<T extends UrlClassLoader> {
     private final Class<T> myLoaderClass;
     private List<URL> myURLs = ContainerUtilRt.emptyList();
@@ -239,8 +244,9 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder<? extends UrlClassLoader> builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain);
+                         builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
+                         builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain,
+                         System.getProperty("idea.log.jar.access") != null);
   }
 
   public static URL internProtocol(@NotNull URL url) {
