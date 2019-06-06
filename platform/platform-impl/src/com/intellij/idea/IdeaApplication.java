@@ -71,6 +71,8 @@ public final class IdeaApplication {
       createAppActivity.end();
 
       if (!headless) {
+        // todo investigate why in test mode dummy icon manager is not suitable
+        IconLoader.activate();
         IconLoader.setStrictGlobally(app.isInternal());
       }
 

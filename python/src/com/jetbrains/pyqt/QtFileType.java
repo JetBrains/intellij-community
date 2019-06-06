@@ -20,7 +20,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -31,14 +30,12 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   private final String myName;
   private final String myDescription;
   private final String myDefaultExtension;
-  private final Icon myIcon;
 
-  QtFileType(String name, String description, String defaultExtension, Icon icon) {
+  QtFileType(String name, String description, String defaultExtension) {
     super(XMLLanguage.INSTANCE);
     myName = name;
     myDescription = description;
     myDefaultExtension = defaultExtension;
-    myIcon = icon;
   }
 
   @NotNull
@@ -57,11 +54,6 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   @Override
   public String getDefaultExtension() {
     return myDefaultExtension;
-  }
-
-  @Override
-  public Icon getIcon() {
-    return myIcon;
   }
 
   @Override

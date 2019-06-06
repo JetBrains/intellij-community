@@ -20,10 +20,6 @@ public final class CoreIconManager implements IconManager {
   private static final List<IconLayer> ourIconLayers  = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final int FLAGS_LOCKED = 0x800;
 
-  public CoreIconManager() {
-    IconLoader.activate();
-  }
-
   @NotNull
   @Override
   public Icon getIcon(@NotNull String path, @NotNull Class aClass) {

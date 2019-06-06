@@ -27,6 +27,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -684,6 +685,8 @@ public class StartupUtil {
           try {
             UIManager.setLookAndFeel(IntelliJLaf.class.getName());
             IconManager.activate();
+            // todo investigate why in test mode dummy icon manager is not suitable
+            IconLoader.activate();
             // we don't set AppUIUtil.updateForDarcula(false) because light is default
           }
           catch (Exception ignore) {
