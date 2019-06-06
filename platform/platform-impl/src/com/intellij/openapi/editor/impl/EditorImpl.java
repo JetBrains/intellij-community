@@ -949,6 +949,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.setBlinkCaret(mySettings.isBlinkCaret());
     ourCaretBlinkingCommand.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
     myView.reinitSettings();
+    myFoldingModel.refreshSettings();
     myFoldingModel.rebuild();
     myInlayModel.reinitSettings();
 
@@ -957,7 +958,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myHighlighter.setColorScheme(myScheme);
-    myFoldingModel.refreshSettings();
 
     myGutterComponent.reinitSettings(updateGutterSize);
     myGutterComponent.revalidate();
@@ -1439,6 +1439,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
     return myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
+  }
+
+  public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
+    assertIsDispatchThread();
+    return myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets);
+  }
+
+  public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
+    assertIsDispatchThread();
+    return myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight);
   }
 
   @Override
@@ -2290,15 +2300,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     final FoldRegion region = getFoldingModel().getFoldingPlaceholderAt(e.getPoint());
-    if (e.getX() >= 0 && e.getY() >= 0 && region != null && region == myMouseSelectedRegion) {
+    if (region != null && region == myMouseSelectedRegion) {
       getFoldingModel().runBatchFoldingOperation(() -> {
         myFoldingModel.disableScrollingPositionAdjustment();
         region.setExpanded(true);
       });
-
-      // The call below is performed because gutter's height is not updated sometimes, i.e. it sticks to the value that corresponds
-      // to the situation when fold region is collapsed. That causes bottom of the gutter to not be repainted and that looks really ugly.
-      myGutterComponent.updateSize();
     }
 
     // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection

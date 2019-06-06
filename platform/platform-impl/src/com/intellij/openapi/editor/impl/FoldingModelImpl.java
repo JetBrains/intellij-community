@@ -139,6 +139,15 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     return region != null && region.getStartOffset() < offset;
   }
 
+  void onPlaceholderTextChanged(FoldRegionImpl region) {
+    if (!myIsBatchFoldingProcessing) {
+      LOG.error("Fold regions must be changed inside batchFoldProcessing() only");
+    }
+    myFoldRegionsProcessed = true;
+    myEditor.myView.invalidateFoldRegionLayout(region);
+    notifyListenersOnFoldRegionStateChange(region);
+  }
+
   private static void assertIsDispatchThreadForEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
@@ -403,7 +412,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
 
         if (collapsed != null && positionToUse == null) {
-          positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
+          //positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
         }
 
         if ((markedForUpdate || moveCaretFromCollapsedRegion) && caret.isUpToDate()) {

@@ -68,4 +68,10 @@ public interface FoldRegion extends RangeMarker {
    * @see #setGutterMarkEnabledForSingleLine(boolean)
    */
   default boolean isGutterMarkEnabledForSingleLine() { return false; }
+
+  /**
+   * Updates region's placeholder text. Should be called inside {@link FoldingModel#runBatchFoldingOperation(Runnable)}, like any other
+   * operations with fold regions.
+   */
+  default void setPlaceholderText(@NotNull String text) {}
 }
