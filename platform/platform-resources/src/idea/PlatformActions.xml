@@ -1287,6 +1287,6 @@
       <add-to-group group-id="Internal"/>
     </action>
 
-    <action class="com.intellij.diagnostic.ShowJarAccessLogAction" internal="true" text="Show Jar Access Log"/>
+    <action class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true" text="Generate Jar Access Log"/>
   </actions>
 </idea-plugin>

@@ -11,11 +11,15 @@ import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -27,7 +31,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
-  public static final String MAIN_RUNNER_JAR = "platform-impl.jar";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -134,22 +137,37 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
     File libFolder = new File(PathManager.getLibPath());
 
-    File platformImplJar = new File(libFolder, MAIN_RUNNER_JAR);
-    if (platformImplJar.exists()) {
-      classpath.add(platformImplJar.toURI().toURL());
+    Collection<String> jars = loadJarOrder(libFolder);
+    for (String jarName : jars) {
+      File jarFile = new File(libFolder, jarName);
+      if (jarFile.exists()) {
+        classpath.add(jarFile.toURI().toURL());
+      }
     }
 
-    addLibraries(classpath, libFolder, selfRootUrl);
-    addLibraries(classpath, new File(libFolder, "ext"), selfRootUrl);
-    addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
+    addLibraries(classpath, libFolder, selfRootUrl, jars);
+    addLibraries(classpath, new File(libFolder, "ext"), selfRootUrl, Collections.emptySet());
+    addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl, Collections.emptySet());
   }
 
-  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
+  private static Collection<String> loadJarOrder(File libFolder) {
+    try {
+      Path path = Paths.get(libFolder.getPath(), "order.txt");
+      if (path.toFile().exists()) {
+        return new LinkedHashSet<>(Files.readAllLines(path));
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return Collections.emptyList();
+  }
+
+  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl, Collection<String> excludeNames) throws MalformedURLException {
     File[] files = fromDir.listFiles();
     if (files == null) return;
 
     for (File file : files) {
-      if (FileUtilRt.isJarOrZip(file) && !file.getName().equals(MAIN_RUNNER_JAR)) {
+      if (FileUtilRt.isJarOrZip(file) && !excludeNames.contains(file.getName())) {
         URL url = file.toURI().toURL();
         if (!selfRootUrl.equals(url)) {
           classPath.add(url);

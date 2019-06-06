@@ -20,7 +20,6 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
-// NOTE: If you move this class to a different module, make sure to update BootstrapClassLoaderUtil.MAIN_RUNNER_JAR
 public final class MainRunner {
   public static WindowsCommandLineListener LISTENER;
 
