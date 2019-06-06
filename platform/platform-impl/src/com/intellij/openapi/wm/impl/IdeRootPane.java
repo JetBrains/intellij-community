@@ -124,6 +124,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     UIUtil.decorateWindowHeader(this);
     glassPane.setVisible(false);
     setBorder(UIManager.getBorder("Window.border"));
+    updateMainMenuVisibility();
   }
 
   private void updateScreenState(IdeFrame frame) {
