@@ -1,14 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-buildscript {
-  repositories {
-    maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
-  }
-  dependencies {
-    classpath "de.undercouch:gradle-download-task:3.2.0"
-  }
-}
 
 apply plugin: "de.undercouch.download"
+apply plugin: "org.jetbrains.gradle.plugin.idea-ext"
 
 configurations {
   mavenServer3CommonLibs
@@ -17,6 +10,8 @@ configurations {
   maven3Distribution
   maven3Distribution.transitive = false
 }
+
+
 
 dependencies {
   mavenServer3CommonLibs 'org.apache.maven.archetype:archetype-common:2.2'
@@ -59,5 +54,11 @@ task setupBundledMaven(dependsOn: [deletePreviousMinorVersionIfRequired, unpackM
   onlyIf { unzippedDir.exists() && !new File("$mavenServerLibDir/maven3/bin").exists() }
   doLast() {
     unzippedDir.deleteDir()
+  }
+}
+
+idea.project.settings {
+  taskTriggers {
+    afterSync tasks.getByName("setupBundledMaven")
   }
 }
