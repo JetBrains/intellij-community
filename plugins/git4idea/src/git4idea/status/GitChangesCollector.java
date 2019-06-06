@@ -274,9 +274,14 @@ class GitChangesCollector {
             reportAdded(filepath);
           } else if (yStatus == 'D') {
             // added + deleted => no change (from IDEA point of view).
-          } else if (yStatus == 'U' || yStatus == 'A') { // AU - unmerged, added by us; AA - unmerged, both added
-            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
-          }  else {
+          }
+          else if (yStatus == 'U') { // AU - unmerged, added by us
+            reportConflict(filepath, head, Status.ADDED, Status.MODIFIED);
+          }
+          else if (yStatus == 'A') { // AA - unmerged, both added
+            reportConflict(filepath, head, Status.ADDED, Status.ADDED);
+          }
+          else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
           break;
@@ -294,8 +299,11 @@ class GitChangesCollector {
           break;
 
         case 'U':
-          if (yStatus == 'U' || yStatus == 'A' || yStatus == 'T') { // UU - unmerged, both modified; UA - unmerged, added by them
+          if (yStatus == 'U' || yStatus == 'T') { // UU - unmerged, both modified
             reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+          }
+          else if (yStatus == 'A') { // UA - unmerged, added by them
+            reportConflict(filepath, head, Status.MODIFIED, Status.ADDED);
           }
           else if (yStatus == 'D') { // UD - unmerged, deleted by them
             reportConflict(filepath, head, Status.MODIFIED, Status.DELETED);

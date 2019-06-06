@@ -310,6 +310,7 @@ public class GitMergeProvider implements MergeProvider2 {
         GitConflict.Status lastStatus = c.getStatus(ConflictSide.THEIRS, isReversed);
         GitConflict.Status status = myIsLast ? lastStatus : currentStatus;
         switch (status) {
+          case ADDED:
           case MODIFIED:
             return GitBundle.message("merge.tool.column.status.modified");
           case DELETED:

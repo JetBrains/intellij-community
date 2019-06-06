@@ -269,9 +269,13 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
     val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
     val conflictType = when {
       oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> "both deleted"
+      oursStatus == Status.ADDED && theirsStatus == Status.ADDED -> "both added"
+      oursStatus == Status.MODIFIED && theirsStatus == Status.MODIFIED -> "both modified"
       oursStatus == Status.DELETED -> "deleted by you"
       theirsStatus == Status.DELETED -> "deleted by them"
-      else -> "both modified"
+      oursStatus == Status.ADDED -> "added by you"
+      theirsStatus == Status.ADDED -> "added by them"
+      else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
     }
     renderer.append(spaceAndThinSpace() + conflictType, SimpleTextAttributes.GRAYED_ATTRIBUTES)
 

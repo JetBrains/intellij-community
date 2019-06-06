@@ -466,7 +466,7 @@ public class GitMergeUtil {
       GitConflict.Status status = conflict.getStatus(side);
       FilePath filePath = conflict.getFilePath();
 
-      if (status == GitConflict.Status.MODIFIED) {
+      if (status != GitConflict.Status.DELETED) {
         toCheckout.add(filePath);
       }
     }
@@ -495,7 +495,7 @@ public class GitMergeUtil {
     for (GitConflict conflict : conflicts) {
       FilePath filePath = conflict.getFilePath();
 
-      if (side == null || conflict.getStatus(side) == GitConflict.Status.MODIFIED) {
+      if (side == null || conflict.getStatus(side) != GitConflict.Status.DELETED) {
         toAdd.add(filePath);
       }
       else {
