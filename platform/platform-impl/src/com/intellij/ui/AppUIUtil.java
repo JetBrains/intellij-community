@@ -141,19 +141,24 @@ public class AppUIUtil {
   @NotNull
   public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
     Image image = loadSmallApplicationIconImage(ctx);
-    return new JBImageIcon(ImageUtil.ensureHiDPI(image, ctx));
+    return new JBImageIcon(image);
   }
 
+  /**
+   * Returns a hidpi-aware image.
+   */
   @Contract("_, _, _, !null -> !null")
   @Nullable
   private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
     if (svgPath != null) {
-      try (InputStream stream = AppUIUtil.class.getResourceAsStream(svgPath)) {
-        return SVGLoader.load(null, stream, ctx, size, size);
+      Icon icon = IconLoader.findIcon(svgPath);
+      if (icon != null) {
+        int width = icon.getIconWidth();
+        float scale = size / (float)width;
+        icon = IconUtil.scale(icon, null, scale); // performs vector scaling of a wrapped svg icon source
+        return IconUtil.toImage(icon, ctx);
       }
-      catch (IOException e) {
-        getLogger().info("Cannot load SVG application icon from " + svgPath, e);
-      }
+      getLogger().info("Cannot load SVG application icon from " + svgPath);
     }
 
     if (fallbackPath != null) {
