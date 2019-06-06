@@ -27,7 +27,7 @@
             instance="circlet.settings.CircletConfigurable"
         />
 
-        <toolWindow id="Circlet" anchor="bottom" canCloseContents="true"
+        <toolWindow id="Circlet" anchor="right" canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
 
         <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore" />
