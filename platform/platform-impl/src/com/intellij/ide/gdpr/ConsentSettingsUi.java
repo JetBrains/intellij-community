@@ -107,9 +107,11 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     final JPanel pane;
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
-      Consent usageStatsConsent = ConsentOptions.getInstance().getUsageStatsConsent();
-      if (usageStatsConsent != null && consent.getId().equals(usageStatsConsent.getId()) && ConsentOptions.getInstance().isEAP()) {
-        checkBoxText += " when using EAP versions";
+      if (ConsentOptions.getInstance().isEAP()) {
+        final Consent usageStatsConsent = ConsentOptions.getInstance().getUsageStatsConsent();
+        if (usageStatsConsent != null && consent.getId().equals(usageStatsConsent.getId())) {
+          checkBoxText += " when using EAP versions";
+        }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
