@@ -123,7 +123,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myProject = project;
     myContentManager = contentManager;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myView = new ChangesListView(project, isNonModalCommit());
+    myView = new ChangesListView(project, false);
     myTreeExpander = new MyTreeExpander();
     myView.setTreeExpander(myTreeExpander);
     myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
