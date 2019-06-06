@@ -49,18 +49,6 @@ public class Patches {
   public static final boolean SUN_BUG_ID_8020443 = SystemInfo.isXWindow && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
-   * Marker field to find all usages of the reflective access to JDK 7-specific methods
-   * which need to be changed when migrated to JDK 7
-   */
-  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
-
-  /**
-   * Marker field to find all usages of the reflective access to JDK 7-specific methods
-   * which need to be changed when migrated to JDK 8
-   */
-  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
-
-  /**
    * Support default methods in JDI.
    * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
    */
