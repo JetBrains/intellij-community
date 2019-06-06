@@ -15,7 +15,6 @@ import org.apache.batik.dom.GenericDOMImplementation
 import org.apache.batik.svggen.*
 import org.w3c.dom.Element
 import java.awt.Component
-import java.awt.GraphicsConfiguration
 import java.awt.Image
 import java.io.StringWriter
 import java.nio.file.Path
@@ -27,7 +26,7 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
 // jFreeSvg produces not so compact and readable SVG as batik
-internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration: GraphicsConfiguration) {
+internal class SvgRenderer(val svgFileDir: Path) {
   private val xmlTransformer = TransformerFactory.newInstance().newTransformer()
 
   private val xmlFactory = GenericDOMImplementation.getDOMImplementation().createDocument(SVGDOMImplementation.SVG_NAMESPACE_URI, "svg", null)
@@ -137,24 +136,19 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
   }
 
   fun render(component: Component): String {
-    val svgGenerator = SvgGraphics2dWithDeviceConfiguration(context, deviceConfiguration)
+    val svgGenerator = SvgGraphics2dWithDeviceConfiguration(context)
     component.paint(svgGenerator)
     return svgGraphicsToString(svgGenerator, component)
   }
 }
 
 private class SvgGraphics2dWithDeviceConfiguration : SVGGraphics2D {
-  private val _deviceConfiguration: GraphicsConfiguration
-
-  constructor(context: SVGGeneratorContext, _deviceConfiguration: GraphicsConfiguration) : super(context, false) {
-    this._deviceConfiguration = _deviceConfiguration
+  constructor(context: SVGGeneratorContext) : super(context, false) {
   }
 
-  private constructor(g: SvgGraphics2dWithDeviceConfiguration): super(g) {
-    this._deviceConfiguration = g._deviceConfiguration
-  }
+  private constructor(g: SvgGraphics2dWithDeviceConfiguration): super(g)
 
-  override fun getDeviceConfiguration() = _deviceConfiguration
+  override fun getDeviceConfiguration() = null
 
   override fun create() = SvgGraphics2dWithDeviceConfiguration(this)
 }

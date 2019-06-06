@@ -514,12 +514,11 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XMLBeans", libraryName: "XmlBeans", version: "2.3.0", license: "Apache 2.0",
                        url: "http://xmlbeans.apache.org/",
                        licenseUrl: "http://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE"),
-    new LibraryLicense(name: "xmlgraphics-commons", libraryName: "xmlgraphics-commons", version: "1.5", license: "Apache 2.0",
-                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/commons/"),
     new LibraryLicense(name: "XmlRPC", libraryName: "XmlRPC", version: "2.0", license: "Apache 2.0",
                        url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html"),
     new LibraryLicense(name: "XStream", libraryName: "XStream", version: "1.4.11.1", license: "BSD License",
                        url: "https://x-stream.github.io/", licenseUrl: "https://x-stream.github.io/license.html"),
+
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
 
