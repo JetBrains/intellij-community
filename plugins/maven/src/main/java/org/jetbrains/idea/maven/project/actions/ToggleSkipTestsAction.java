@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunner;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 
@@ -35,7 +34,6 @@ public class ToggleSkipTestsAction extends MavenToggleAction {
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final Project project = MavenActionUtil.getProject(e.getDataContext());
     if(project == null) return;
-    MavenActionsUsagesCollector.trigger(project, this, e);
     MavenRunner.getInstance(project).getState().setSkipTests(state);
   }
 }

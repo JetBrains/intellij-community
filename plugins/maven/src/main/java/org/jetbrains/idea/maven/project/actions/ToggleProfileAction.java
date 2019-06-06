@@ -22,7 +22,6 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -115,7 +114,6 @@ public class ToggleProfileAction extends MavenAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
     if(manager == null) return;
     Map<String, MavenProfileKind> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);

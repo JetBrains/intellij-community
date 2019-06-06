@@ -3,12 +3,9 @@ package com.intellij.lang.ant
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newBooleanMetric
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.lang.ant.config.AntConfiguration
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 
 class AntSettingsCollector : ProjectUsagesCollector() {
@@ -35,16 +32,15 @@ class AntSettingsCollector : ProjectUsagesCollector() {
 }
 
 class AntActionsUsagesCollector {
+  enum class ActionID {
+    RunSelectedBuild
+  }
+
   companion object {
     @JvmStatic
-    fun trigger(project: Project?, action: AnAction, event: AnActionEvent?) {
-      ActionsCollectorImpl.record("build.ant.actions", project, action, event, null)
-    }
-
-    @JvmStatic
-    fun trigger(project: Project?, feature: String) {
+    fun trigger(project: Project?, actionId: ActionID) {
       if (project == null) return
-      FUCounterUsageLogger.getInstance().logEvent(project, "build.ant.actions", feature)
+      FUCounterUsageLogger.getInstance().logEvent(project, "build.ant.actions", actionId.name)
     }
   }
 }
