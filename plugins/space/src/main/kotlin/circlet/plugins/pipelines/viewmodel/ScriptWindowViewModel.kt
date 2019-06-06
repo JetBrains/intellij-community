@@ -29,7 +29,12 @@ class ScriptViewModel(
     val config: ProjectConfig) {
 }
 
-class LogData(val dummy: String)
+class LogData(val dummy: String) {
+    val messages = ObservableList.mutable<String>()
+    fun add(message: String) {
+        messages.add(message)
+    }
+}
 
 
 fun createEmptyScriptViewModel(lifetime: Lifetime) : ScriptViewModel {

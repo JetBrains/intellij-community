@@ -16,7 +16,7 @@ import java.io.*
 class ScriptModelBuilder {
     companion object : KLogging()
 
-    fun build(lifetime: Lifetime, project: Project): ScriptViewModel {
+    fun build(lifetime: Lifetime, project: Project, logBuildData: LogData): ScriptViewModel {
 
         val basePath = project.basePath
         if (basePath == null) {
@@ -33,7 +33,8 @@ class ScriptModelBuilder {
         {
             val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
             val path = normalizePath(automationSettingsComponent.state.kotlincFolderPath)
-            val kotlinCompilerPath = KotlinCompilerFinder().find(if (path.endsWith('/')) path else "$path/")
+            val kotlinCompilerPath = KotlinCompilerFinder { logBuildData.add(this) }
+                .find(if (path.endsWith('/')) path else "$path/")
 
             //todo refac search for jar with script definition
             val url = (ScriptModelBuilder::class.java.classLoader as PluginClassLoader).urls.firstOrNull {

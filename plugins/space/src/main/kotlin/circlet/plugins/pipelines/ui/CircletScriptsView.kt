@@ -46,7 +46,9 @@ class CircletScriptsViewFactory() {
                 viewModel.modelBuildIsRunning.value = true
                 val lt = refreshLifetimes.next()
                 GlobalScope.launch {
-                    val model = scriptModelBuilder.build(lt, project)
+                    val logBuildData = LogData("")
+                    viewModel.logBuildData.value = logBuildData
+                    val model = scriptModelBuilder.build(lt, project, logBuildData)
                     viewModel.script.value = model
 
                 }.invokeOnCompletion {

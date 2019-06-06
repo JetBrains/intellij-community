@@ -9,6 +9,7 @@ import com.intellij.ide.impl.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.content.*
+import runtime.reactive.*
 
 class CircletAutomationListener(val project: Project, val toolWindowManager: ToolWindowManager): LifetimedComponent by SimpleLifetimedComponent() {
 
@@ -28,11 +29,23 @@ class CircletAutomationListener(val project: Project, val toolWindowManager: Too
             view.print(data?.dummy ?: "empty", ConsoleViewContentType.NORMAL_OUTPUT)
         }
 
+        val logBuildLifetims = SequentialLifetimes(lifetime)
         viewModel.logBuildData.forEach(lifetime) {
             val data = it
             val view = viewContext.view.buildLogView
             view.clear()
-            view.print(data?.dummy ?: "empty", ConsoleViewContentType.NORMAL_OUTPUT)
+            val lt = logBuildLifetims.next()
+
+            if (data != null) {
+                data.messages.change.forEach(lt) {
+                    //todo reimplement work with getting new message
+                    val message = data.messages[it.index]
+                    view.print(message + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
+                }
+            }
+            else {
+                view.print( "empty", ConsoleViewContentType.NORMAL_OUTPUT)
+            }
         }
 
     }
