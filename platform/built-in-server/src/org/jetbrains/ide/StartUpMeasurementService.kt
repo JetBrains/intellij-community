@@ -33,7 +33,12 @@ internal class StartUpMeasurementService : RestService() {
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val lastReport = StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter::class.java).lastReport!!
+    val reporter = StartupActivity.POST_STARTUP_ACTIVITY.findExtension(StartUpPerformanceReporter::class.java)
+    if (reporter == null) {
+      return "Cannot find StartUpPerformanceReporter instance"
+    }
+
+    val lastReport = reporter.lastReport ?: return "Report is not ready yet, start-up in progress"
     val response = response("application/json", Unpooled.wrappedBuffer(lastReport))
     sendResponse(request, context, response)
     return null
