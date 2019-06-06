@@ -49,29 +49,9 @@ public abstract class FileAttributesReadingTest {
     }
   }
 
-  public static class FallbackTest extends FileAttributesReadingTest {
-    @BeforeClass
-    public static void setUpClass() {
-      System.setProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY, "true");
-      FileSystemUtil.resetMediator();
-      assertEquals("Fallback", FileSystemUtil.getMediatorName());
-    }
-
-    @Override public void linkToFile() { }
-    @Override public void doubleLink() { }
-    @Override public void linkToDirectory() { }
-    @Override public void missingLink() { }
-    @Override public void selfLink() { }
-    @Override public void innerSymlinkResolve() { }
-    @Override public void junction() { }
-    @Override public void innerJunctionResolve() { }
-    @Override public void permissionsCloning() { }
-  }
-
   @AfterClass
   public static void tearDownClass() {
     System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
-    System.clearProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY);
     FileSystemUtil.resetMediator();
   }
 
