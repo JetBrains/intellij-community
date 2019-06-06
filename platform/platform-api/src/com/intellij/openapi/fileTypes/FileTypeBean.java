@@ -4,8 +4,8 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.RequiredElement;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class FileTypeBean extends AbstractExtensionPointBean {
    * Name of the file type. Needs to match the return value of {@link FileType#getName()}.
    */
   @Attribute("name")
-  @NotNull
+  @RequiredElement
   public String name;
 
   /**
@@ -38,6 +38,7 @@ public class FileTypeBean extends AbstractExtensionPointBean {
    * must not be prefixed with a `.`.
    */
   @Attribute("extensions")
+  @RequiredElement
   public String extensions;
 
   /**

@@ -23,10 +23,8 @@ import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xmlb.Constants;
+import com.intellij.util.xmlb.annotations.*;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
@@ -171,6 +169,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
+        if (findAnnotation(RequiredElement.class, field) != null) {
+          extension.addCustomAnnotation(MyRequired.INSTANCE);
+        }
+
         markAsClass(extension, fieldName, withElement);
         if (clazz.equals(String.class)) {
           markAsLanguage(extension, fieldName);
