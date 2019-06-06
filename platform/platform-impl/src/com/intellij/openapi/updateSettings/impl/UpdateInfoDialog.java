@@ -83,14 +83,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       String list = StringUtil.join(incompatiblePlugins, IdeaPluginDescriptor::getName, "<br/>");
       setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
-
-    IdeUpdateUsageTriggerCollector.trigger( "dialog.shown");
-    if (myPatches == null) {
-      IdeUpdateUsageTriggerCollector.trigger( "dialog.shown.no.patch");
-    }
-    else if (!ApplicationManager.getApplication().isRestartCapable()) {
-      IdeUpdateUsageTriggerCollector.trigger( "dialog.shown.manual.patch");
-    }
+    IdeUpdateUsageTriggerCollector.triggerUpdateDialog(myPatches, ApplicationManager.getApplication().isRestartCapable());
   }
 
   UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
