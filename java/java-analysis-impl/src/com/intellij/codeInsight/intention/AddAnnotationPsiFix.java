@@ -69,7 +69,12 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
   @Nullable
   public static PsiModifierListOwner getContainer(final PsiFile file, int offset) {
-    PsiReference reference = file.findReferenceAt(offset);
+    return getContainer(file, offset, false);
+  }
+
+  @Nullable
+  public static PsiModifierListOwner getContainer(final PsiFile file, int offset, boolean availableOnReference) {
+    PsiReference reference = availableOnReference ? file.findReferenceAt(offset) : null;
     if (reference != null) {
       PsiElement target = reference.resolve();
       if (target instanceof PsiMember) {
