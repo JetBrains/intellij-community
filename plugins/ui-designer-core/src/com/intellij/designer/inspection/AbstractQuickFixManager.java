@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.Alarm;
@@ -314,11 +315,11 @@ public abstract class AbstractQuickFixManager {
       setOpaque(false);
       setBorder(INACTIVE_BORDER);
 
-      myActiveIcon = new com.intellij.ui.RowIcon(2);
+      myActiveIcon = IconManager.getInstance().createRowIcon(2);
       myActiveIcon.setIcon(icon, 0);
       myActiveIcon.setIcon(AllIcons.General.ArrowDown, 1);
 
-      myInactiveIcon = new com.intellij.ui.RowIcon(2);
+      myInactiveIcon = IconManager.getInstance().createRowIcon(2);
       myInactiveIcon.setIcon(icon, 0);
       myInactiveIcon.setIcon(INACTIVE_ARROW_ICON, 1);
 

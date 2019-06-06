@@ -6,6 +6,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,11 +18,13 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
 public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intellij.ui.icons.RowIcon {
-  private final Alignment myAlignment;
+  private final com.intellij.ui.icons.RowIcon.Alignment myAlignment;
 
   private int myWidth;
   private int myHeight;
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public enum Alignment {TOP, CENTER, BOTTOM}
 
   private final Icon[] myIcons;
@@ -33,13 +36,29 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   }
 
   public RowIcon(int iconCount/*, int orientation*/) {
-    this(iconCount, Alignment.TOP);
+    this(iconCount, com.intellij.ui.icons.RowIcon.Alignment.TOP);
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public RowIcon(int iconCount, Alignment alignment) {
+    com.intellij.ui.icons.RowIcon.Alignment a = null;
+    if (alignment == Alignment.TOP) {
+      a = com.intellij.ui.icons.RowIcon.Alignment.TOP;
+    }
+    else if (alignment == Alignment.BOTTOM) {
+      a = com.intellij.ui.icons.RowIcon.Alignment.BOTTOM;
+    }
+    else if (alignment == Alignment.CENTER) {
+      a = com.intellij.ui.icons.RowIcon.Alignment.CENTER;
+    }
+    myAlignment = a;
+    myIcons = new Icon[iconCount];
+  }
+
+  public RowIcon(int iconCount, com.intellij.ui.icons.RowIcon.Alignment alignment) {
     myAlignment = alignment;
     myIcons = new Icon[iconCount];
-    //myOrientation = orientation;
   }
 
   public RowIcon(Icon... icons) {
@@ -93,6 +112,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     return scaledIcons;
   }
 
+  @Override
   @NotNull
   public Icon[] getAllIcons() {
     List<Icon> icons = ContainerUtil.packNullables(myIcons);

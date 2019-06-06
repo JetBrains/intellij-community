@@ -11,6 +11,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.VisibilityUtil;
@@ -57,7 +58,7 @@ class GrMethodOverrideCompletionProvider extends CompletionProvider<CompletionPa
       final PsiMethod method = (PsiMethod)candidateInfo.getElement();
       if (method.isConstructor()) continue;
 
-      RowIcon icon = new com.intellij.ui.RowIcon(2);
+      RowIcon icon = IconManager.getInstance().createRowIcon(2);
       icon.setIcon(method.getIcon(0), 0);
       icon.setIcon(toImplement ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod, 1);
 

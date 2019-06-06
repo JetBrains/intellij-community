@@ -653,7 +653,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
               setForeground(JBColor.RED);
             }
 
-            RowIcon icon = new com.intellij.ui.RowIcon(methodIcon, overrideIcon);
+            RowIcon icon = IconManager.getInstance().createRowIcon(methodIcon, overrideIcon);
             setIcon(icon);
             setDisabledIcon(icon);
             break;

@@ -149,7 +149,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (nodeIcon != null && valueIcon != null) {
-      nodeIcon = new com.intellij.ui.RowIcon(nodeIcon, valueIcon);
+      nodeIcon = IconManager.getInstance().createRowIcon(nodeIcon, valueIcon);
     }
     return nodeIcon;
   }

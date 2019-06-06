@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.RowIcon;
 import com.intellij.ui.scale.ScaleContext;
 
 import javax.swing.*;
@@ -10,14 +11,14 @@ import javax.swing.*;
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 
 /**
- * Tests {@link com.intellij.ui.RowIcon} painting.
+ * Tests {@link RowIcon} painting.
  *
  * @author tav
  */
 public class RowIconPaintTest extends LayeredIconPaintTest {
   @Override
   protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
-    com.intellij.ui.RowIcon icon = new com.intellij.ui.RowIcon(2);
+    RowIcon icon = new RowIcon(2);
     icon.setIcon(cellIcons[0], 0);
     icon.setIcon(cellIcons[1], 1);
     return icon;

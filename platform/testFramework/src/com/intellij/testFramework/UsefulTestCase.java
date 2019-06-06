@@ -32,6 +32,7 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.ui.IconManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
@@ -174,6 +175,14 @@ public abstract class UsefulTestCase extends TestCase {
 
     // turn off Disposer debugging for performance tests
     Disposer.setDebugMode(!isStressTest);
+
+    if (isIconRequired()) {
+      IconManager.activate();
+    }
+  }
+
+  protected boolean isIconRequired() {
+    return false;
   }
 
   @Override
@@ -181,6 +190,11 @@ public abstract class UsefulTestCase extends TestCase {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
+      () -> {
+        if (isIconRequired()) {
+          IconManager.deactivate();
+        }
+      },
       () -> disposeRootDisposable(),
       () -> cleanupSwingDataStructures(),
       () -> cleanupDeleteOnExitHookList(),

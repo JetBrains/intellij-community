@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +96,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       }
 
       if (myStateIcon != null) {
-        newIcon = new com.intellij.ui.RowIcon(myStateIcon, newIcon);
+        newIcon = IconManager.getInstance().createRowIcon(myStateIcon, newIcon);
       }
 
       setIcon(newIcon);

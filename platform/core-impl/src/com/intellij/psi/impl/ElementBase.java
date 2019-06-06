@@ -100,8 +100,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
-      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : (com.intellij.ui.RowIcon)IconManager.getInstance()
-        .createLayeredIcon(element, providersIcon, flags);
+      if (providersIcon instanceof RowIcon) {
+        return providersIcon;
+      }
+      else {
+        return IconManager.getInstance().createLayeredIcon(element, providersIcon, flags);
+      }
     }
     return ((ElementBase)element).getElementIcon(flags);
   }
@@ -138,7 +142,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   protected Icon getAdjustedBaseIcon(Icon icon, @Iconable.IconFlags int flags) {
     if (BitUtil.isSet(flags, ICON_FLAG_VISIBILITY)) {
-      return new com.intellij.ui.RowIcon(icon, VISIBILITY_ICON_PLACEHOLDER.getValue());
+      return IconManager.getInstance().createRowIcon(icon, VISIBILITY_ICON_PLACEHOLDER.getValue());
     }
     return icon;
   }
@@ -159,7 +163,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @NotNull
   public static RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
-    return new com.intellij.ui.RowIcon(baseIcon, visibilityIcon);
+    return IconManager.getInstance().createRowIcon(baseIcon, visibilityIcon);
   }
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
