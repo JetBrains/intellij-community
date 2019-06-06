@@ -44,42 +44,39 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
       }
     }
 
-
-    changeListener = ChangeListener {
-      updateCustomDecorationHitTestSpots()
-    }
-
-    mySelectedEditorFilePath = CustomDecorationPath()
-
     val pane = JPanel(MigLayout("fillx, ins 0, novisualpadding", "[pref!][]"))
     pane.isOpaque = false
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
+    mySelectedEditorFilePath = CustomDecorationPath()
+    relayoutFrameHeader(pane, true)
 
     val mainMenuUpdater = UISettingsListener {
-      if (myIdeMenu.parent == null) {
-        if (UISettings.instance.showMainMenu) {
-          removeAll()
-          add(productIcon)
-          pane.removeAll()
-          pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin $MIN_HEIGHT")
-          pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
-          add(pane, "wmin 0, growx")
-          add(buttonPanes.getView(), "top, wmin pref")
-        }
+      if (myIdeMenu.parent == null && UISettings.instance.showMainMenu) {
+        relayoutFrameHeader(pane, true)
       }
-      else {
-        if (!UISettings.instance.showMainMenu) {
-          removeAll()
-          add(productIcon)
-          pane.removeAll()
-          pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
-          add(pane, "wmin 0, growx")
-          add(buttonPanes.getView(), "top, wmin pref")
-        }
+      else if (!UISettings.instance.showMainMenu) {
+        relayoutFrameHeader(pane, false)
       }
     }
     ApplicationManager.getApplication().messageBus.connect(frameDisposer).subscribe(UISettingsListener.TOPIC, mainMenuUpdater)
     mainMenuUpdater.uiSettingsChanged(UISettings.instance)
+
+
+    changeListener = ChangeListener {
+      updateCustomDecorationHitTestSpots()
+    }
+  }
+
+  private fun relayoutFrameHeader(pane: JPanel, showMainMenu: Boolean) {
+    removeAll()
+    add(productIcon)
+    pane.removeAll()
+    if (showMainMenu) {
+      pane.add(myIdeMenu, "wmin 0, wmax pref, top, hmin $MIN_HEIGHT")
+    }
+    pane.add(mySelectedEditorFilePath.getView(), "center, growx, wmin 0, gapbefore $H_GAP, gapafter $H_GAP, gapbottom 1")
+    add(pane, "wmin 0, growx")
+    add(buttonPanes.getView(), "top, wmin pref")
   }
 
   fun setProject(project: Project) {
