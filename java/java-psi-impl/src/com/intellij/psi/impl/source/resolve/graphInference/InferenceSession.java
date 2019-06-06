@@ -1637,14 +1637,7 @@ public class InferenceSession {
                                                 PsiElement context,
                                                 boolean varargs) {
 
-    List<PsiTypeParameter> params = new ArrayList<>();
-    for (PsiTypeParameter param : PsiUtil.typeParametersIterable(m2)) {
-      params.add(param);
-    }
-
-    siteSubstitutor1 = getSiteSubstitutor(siteSubstitutor1, params);
-
-    final InferenceSession session = new InferenceSession(params.toArray(PsiTypeParameter.EMPTY_ARRAY), siteSubstitutor1, m2.getManager(), context);
+    final InferenceSession session = new InferenceSession(m2.getTypeParameters(), siteSubstitutor1, m2.getManager(), context);
 
     final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
     final PsiParameter[] parameters2 = m2.getParameterList().getParameters();
@@ -1682,14 +1675,6 @@ public class InferenceSession {
     }
 
     return session.repeatInferencePhases();
-  }
-
-  private static PsiSubstitutor getSiteSubstitutor(PsiSubstitutor siteSubstitutor1, List<PsiTypeParameter> params) {
-    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-    for (PsiTypeParameter param : params) {
-      subst = subst.put(param, siteSubstitutor1.substitute(param));
-    }
-    return subst;
   }
 
   /**
