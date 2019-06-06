@@ -323,6 +323,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     myStatusBar.setVisible(UISettings.getInstance().getShowStatusBar() && !UISettings.getInstance().getPresentationMode());
   }
 
+  private void updateMainMenuVisibility() {
+    if (UISettings.getInstance().getPresentationMode()) return;
+    menuBar.setVisible(UISettings.getInstance().getShowMainMenu());
+  }
+
   void installNorthComponents(final Project project) {
     if(myCustomFrameTitlePane != null) {
       myCustomFrameTitlePane.setProject(project);
@@ -358,6 +363,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();
+    updateMainMenuVisibility();
     for (IdeRootPaneNorthExtension component : myNorthComponents) {
       component.uiSettingsChanged(uiSettings);
     }

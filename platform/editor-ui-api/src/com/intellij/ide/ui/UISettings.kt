@@ -162,6 +162,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.showStatusBar = value
     }
 
+  var showMainMenu: Boolean
+    get() = !SystemInfoRt.isWindows || (SystemInfoRt.isWindows && state.showMainMenu)
+    set(value) {
+      state.showMainMenu = value
+    }
+
   var showIconInQuickNavigation: Boolean
     get() = state.showIconInQuickNavigation
     set(value) {

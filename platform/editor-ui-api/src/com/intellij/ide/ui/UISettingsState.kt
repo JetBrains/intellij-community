@@ -76,6 +76,8 @@ class UISettingsState : BaseState() {
   var showMainToolbar by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
   var showStatusBar by property(true)
+  @get:OptionTag("SHOW_MAIN_MENU")
+  var showMainMenu by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR")
   var showNavigationBar by property(true)
   @get:OptionTag("ALWAYS_SHOW_WINDOW_BUTTONS")
