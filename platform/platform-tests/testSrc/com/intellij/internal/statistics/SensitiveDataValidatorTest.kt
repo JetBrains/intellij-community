@@ -3,19 +3,20 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory.parseSimpleExpression
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import junit.framework.TestCase
+import org.junit.Assert
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -199,6 +200,19 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     assertEventDataRuleUndefined(validator, elg, "undefined", "<unknown>")
   }
 
+  @Test
+  fun test_validate_custom_rule_with_local_enum() {
+    val rule = TestLocalEnumCustomWhitelistRule()
+
+    Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("FIRST", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("SECOND", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("THIRD", EventContext.create("FIRST", emptyMap())))
+
+    Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("FORTH", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("UNKNOWN", EventContext.create("FIRST", emptyMap())))
+  }
+
 
   private fun assertEventAccepted(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
     TestCase.assertEquals(ValidationResultType.ACCEPTED, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
@@ -264,4 +278,8 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
       else whiteListRule.validateEventData(key, value, EventContext.create("", Collections.emptyMap())) // there are no configured rules
     }
   }
+
+  internal enum class TestCustomActionId {FIRST, SECOND, THIRD}
+
+  internal inner class TestLocalEnumCustomWhitelistRule : LocalEnumCustomWhitelistRule("custom_action_id", TestCustomActionId::class.java)
 }
