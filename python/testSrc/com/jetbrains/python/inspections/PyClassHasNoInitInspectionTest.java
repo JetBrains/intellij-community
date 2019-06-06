@@ -58,6 +58,11 @@ public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
   }
 
+  // PY-36008
+  public void testTypedDict() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, () -> doTest());
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
