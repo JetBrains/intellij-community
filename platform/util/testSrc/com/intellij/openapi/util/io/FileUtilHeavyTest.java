@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.google.common.jimfs.Jimfs;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
@@ -10,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -235,6 +238,23 @@ public class FileUtilHeavyTest {
     assertThat(directDirLink).doesNotExist();
     assertThat(linkParentDir).doesNotExist();
     assertThat(targetFile).exists();
+  }
+
+  @Test
+  public void nioDeletion() throws IOException {
+    try (FileSystem fs = Jimfs.newFileSystem()) {
+      Path dir = Files.createDirectory(fs.getPath("dir"));
+      Path file1 = Files.createFile(fs.getPath("dir", "file1"));
+      Path file2 = Files.createFile(fs.getPath("dir", "file2"));
+      assertThat(Files.list(dir)).containsExactlyInAnyOrder(file1, file2);
+
+      FileUtil.delete(dir);
+      assertThat(dir).doesNotExist();
+
+      Path nonExisting = fs.getPath("non-existing");
+      assertThat(nonExisting).doesNotExist();
+      FileUtil.delete(nonExisting);
+    }
   }
 
   @Test
