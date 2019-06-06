@@ -16,6 +16,8 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -28,6 +30,11 @@ public class OpenFilesActivity implements StartupActivity, DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Reopening files...");
+    }
+
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     if (fileEditorManager instanceof FileEditorManagerImpl) {
       final FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;

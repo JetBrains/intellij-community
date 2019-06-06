@@ -55,6 +55,8 @@ public final class StartUpMeasurer {
 
     public static final String LOAD_MODULES = "module loading";
     public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";
+
+    public static final String RESTORING_EDITORS = "restoring editors";
   }
 
   @SuppressWarnings("StaticNonFinalField")

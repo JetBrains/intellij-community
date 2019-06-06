@@ -15,7 +15,8 @@ public enum ParallelActivity {
   PROJECT_OPEN_HANDLER("openHandler"),
 
   POST_STARTUP_ACTIVITY("projectPostStartupActivity"),
-  GC("GC")
+  GC("GC"),
+  REOPENING_EDITORS("reopeningEditors")
   ;
 
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);

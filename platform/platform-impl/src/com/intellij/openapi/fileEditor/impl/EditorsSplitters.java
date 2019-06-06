@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -240,7 +243,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void openFiles() {
     if (mySplittersElement != null) {
+      Activity restoringEditors = StartUpMeasurer.start(StartUpMeasurer.Phases.RESTORING_EDITORS);
       final JPanel comp = myUIBuilder.process(mySplittersElement, getTopPanel());
+      restoringEditors.end();
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         if (comp != null) {
           removeAll();
@@ -832,6 +837,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
       for (int i = 0; i < fileElements.size(); i++) {
         final Element file = fileElements.get(i);
+        Element historyElement = file.getChild(HistoryEntry.TAG);
+        String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
+        Activity activity = ParallelActivity.REOPENING_EDITORS.start(fileName);
         if (i == 0) {
           EditorTabbedContainer tabbedPane = window.getTabbedPane();
           if (tabbedPane != null) {
@@ -848,7 +856,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         }
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
-          Element historyElement = file.getChild(HistoryEntry.TAG);
           final HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
           final VirtualFile virtualFile = entry.getFile();
           if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
@@ -872,6 +879,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
             LOG.error(e);
           }
         }
+        activity.end();
       }
       if (focusedFile != null) {
         getManager().addSelectionRecord(focusedFile, window);
