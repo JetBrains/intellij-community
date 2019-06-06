@@ -74,10 +74,25 @@ public class FileUtilRt {
     boolean isSymlink(@NotNull CharSequence path);
   }
 
+  /* NIO-reflection initialization placed in a separate class for lazy loading */
   @ReviseWhenPortedToJDK("7")
-  static final class NIOReflect {
-    // NIO-reflection initialization placed in a separate class for lazy loading
+  private static final class NIOReflect {
     static final boolean IS_AVAILABLE;
+
+    static Object toPath(File file) throws InvocationTargetException, IllegalAccessException {
+      return ourFileToPathMethod.invoke(file);
+    }
+
+    static void deleteRecursively(Object path) throws InvocationTargetException, IllegalAccessException {
+      try {
+        ourFilesWalkMethod.invoke(null, path, ourDeletionVisitor);
+      }
+      catch (InvocationTargetException e) {
+        if (!ourNoSuchFileExceptionClass.isInstance(e.getCause())) {
+          throw e;
+        }
+      }
+    }
 
     private static Method ourFilesDeleteIfExistsMethod;
     private static Method ourFilesWalkMethod;
@@ -876,8 +891,7 @@ public class FileUtilRt {
   public static boolean delete(@NotNull File file) {
     if (NIOReflect.IS_AVAILABLE) {
       try {
-        Object path = NIOReflect.ourFileToPathMethod.invoke(file);
-        deleteRecursivelyNIO(path);
+        deleteRecursivelyNIO(NIOReflect.toPath(file));
         return true;
       }
       catch (IOException e) {
@@ -895,11 +909,11 @@ public class FileUtilRt {
 
   static void deleteRecursivelyNIO(@NotNull Object path) throws IOException {
     try {
-      NIOReflect.ourFilesWalkMethod.invoke(null, path, NIOReflect.ourDeletionVisitor);
+      NIOReflect.deleteRecursively(path);
     }
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
-      if (cause instanceof IOException && !NIOReflect.ourNoSuchFileExceptionClass.isInstance(cause)) {
+      if (cause instanceof IOException) {
         throw (IOException)cause;
       }
     }
