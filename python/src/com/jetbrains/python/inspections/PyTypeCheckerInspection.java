@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
@@ -112,17 +112,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyExpression value = node.findAssignedValue();
       if (value == null) return;
       final PyType expected = myTypeEvalContext.getType(node);
-
-      final PyType actual;
-      if (expected instanceof PyLiteralType) {
-        actual = Optional
-          .ofNullable(PyLiteralType.Companion.fromLiteralValue(value, myTypeEvalContext))
-          .orElseGet(() -> myTypeEvalContext.getType(value));
-      }
-      else {
-        actual = myTypeEvalContext.getType(value);
-      }
-
+      final PyType actual = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         registerProblem(value, String.format("Expected type '%s', got '%s' instead",
                                              PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
@@ -224,7 +214,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         final PyExpression argument = entry.getKey();
         final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
-        final PyType actual = myTypeEvalContext.getType(argument);
+        final PyType actual = PyLiteralType.Companion.promoteToLiteral(argument, expected, myTypeEvalContext);
         final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
@@ -240,26 +230,27 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @NotNull
-    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyCallableParameter container, @NotNull List<PyExpression> arguments,
+    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyCallableParameter container,
+                                                                @NotNull List<PyExpression> arguments,
                                                                 @NotNull Map<PyGenericType, PyType> substitutions) {
       final PyType expected = container.getArgumentType(myTypeEvalContext);
       final PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
-        final PyType actual = PyUnionType.union(arguments.stream().map(e -> myTypeEvalContext.getType(e)).collect(Collectors.toList()));
+        final PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
         final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
-        return arguments.stream()
-          .map(argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched))
-          .collect(Collectors.toList());
+        return ContainerUtil.map(arguments,
+                                 argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
       }
       else {
-        return arguments.stream()
-          .map(argument -> {
+        return ContainerUtil.map(
+          arguments,
+          argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
             final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
-          })
-          .collect(Collectors.toList());
+          }
+        );
       }
     }
 
@@ -285,14 +276,14 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @NotNull
     private static List<PyType> getArgumentTypes(@NotNull List<AnalyzeCalleeResults> calleesResults) {
-      return calleesResults
-        .stream()
-        .map(AnalyzeCalleeResults::getResults)
-        .max(Comparator.comparingInt(List::size))
-        .orElse(Collections.emptyList())
-        .stream()
-        .map(AnalyzeArgumentResult::getActualType)
-        .collect(Collectors.toList());
+      return ContainerUtil.map(
+        calleesResults
+          .stream()
+          .map(AnalyzeCalleeResults::getResults)
+          .max(Comparator.comparingInt(List::size))
+          .orElse(Collections.emptyList()),
+        AnalyzeArgumentResult::getActualType
+      );
     }
   }
 

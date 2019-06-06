@@ -721,7 +721,8 @@ public class PyTypeChecker {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
     for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
       final PyCallableParameter paramWrapper = entry.getValue();
-      PyType actualType = context.getType(entry.getKey());
+      final PyType expectedType = paramWrapper.getArgumentType(context);
+      PyType actualType = PyLiteralType.Companion.promoteToLiteral(entry.getKey(), expectedType, context);
       if (paramWrapper.isSelf()) {
         // TODO find out a better way to pass the corresponding function inside
         final PyParameter param = paramWrapper.getParameter();
@@ -742,7 +743,6 @@ public class PyTypeChecker {
             .orElse(actualType);
         }
       }
-      final PyType expectedType = paramWrapper.getArgumentType(context);
       if (!match(expectedType, actualType, context, substitutions)) {
         return null;
       }

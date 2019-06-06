@@ -3521,6 +3521,44 @@ public class PyTypeTest extends PyTestCase {
            "expr = undefined  # type: Literal[Literal[Literal[1, 2], \"foo\"], 5, None]");
   }
 
+  // PY-35235
+  public void testOverloadsWithTypingLiteral() {
+    final String prefix = "from typing_extensions import Literal\n" +
+                          "from typing import overload\n" +
+                          "\n" +
+                          "@overload\n" +
+                          "def foo(p1: Literal[\"a\"]) -> str: ...\n" +
+                          "\n" +
+                          "@overload\n" +
+                          "def foo(p1: Literal[\"b\"]) -> bytes: ...\n" +
+                          "\n" +
+                          "@overload\n" +
+                          "def foo(p1: str) -> int: ...\n" +
+                          "\n" +
+                          "def foo(p1):\n" +
+                          "    pass\n" +
+                          "\n";
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        doTest("Union[str, int]",
+               prefix +
+               "a: Literal[\"a\"]\n" +
+               "expr = foo(a)");
+
+        doTest("int",
+               prefix +
+               "a = \"a\"\n" +
+               "expr = foo(a)");
+
+        doTest("Union[str, int]",
+               prefix +
+               "expr = foo(\"a\")");
+      }
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

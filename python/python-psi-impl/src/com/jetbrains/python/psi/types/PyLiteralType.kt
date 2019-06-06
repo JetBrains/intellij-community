@@ -46,6 +46,20 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
              PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
     }
 
+    /**
+     * If [expected] type is `typing.Literal[...]`,
+     * then tries to infer `typing.Literal[...]` for [expression],
+     * otherwise returns type inferred by [context].
+     */
+    fun promoteToLiteral(expression: PyExpression, expected: PyType?, context: TypeEvalContext): PyType? {
+      return if (expected is PyLiteralType) {
+        fromLiteralValue(expression, context) ?: context.getType(expression)
+      }
+      else {
+        context.getType(expression)
+      }
+    }
+
     private fun newInstance(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
       return when (expression) {
         is PyTupleExpression -> {
