@@ -31,6 +31,7 @@
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
 
         <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore" />
+        <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletAutomationListener" />
 
     </extensions>
 

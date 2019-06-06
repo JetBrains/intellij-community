@@ -13,11 +13,12 @@ class ScriptWindowViewModel(private val lifetime: Lifetime, private val project:
     val taskIsRunning = mutableProperty(false)
     val script = mutableProperty<ScriptViewModel?>(null)
     val selectedNode = mutableProperty<CircletModelTreeNode?>(null)
-    val logData = mutableProperty<LogData?>(null)
+    val logBuildData = mutableProperty<LogData?>(null)
+    val logRunData = mutableProperty<LogData?>(null)
 
     init {
         selectedNode.forEach(lifetime) {
-            logData.value = if (it != null && it.isRunnable) LogData(it.userObject.toString()) else null
+            logRunData.value = if (it != null && it.isRunnable) LogData("todo: log of task `${it.userObject}` run") else null
         }
     }
 }

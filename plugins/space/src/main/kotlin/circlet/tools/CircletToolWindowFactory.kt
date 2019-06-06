@@ -14,8 +14,8 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedComponen
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = Panel(title = null)
 
-        val projectService = ServiceManager.getService(project, CircletModelStore::class.java)
-        panel.add(CircletScriptsViewFactory().createView(lifetime, project, projectService.viewModel))
+        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
+        panel.add(CircletScriptsViewFactory().createView(lifetime, project, circletModelStore.viewModel))
 
         val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
 

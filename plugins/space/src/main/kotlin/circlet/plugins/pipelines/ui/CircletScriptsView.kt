@@ -44,7 +44,7 @@ class CircletScriptsViewFactory() {
         }
         splitPane.secondComponent = logPanel
 
-        viewModel.logData.forEach(lifetime) {
+        viewModel.logRunData.forEach(lifetime) {
             console.clear()
             if (it != null) {
                 layout.show(logPanel, consolePanelName)
