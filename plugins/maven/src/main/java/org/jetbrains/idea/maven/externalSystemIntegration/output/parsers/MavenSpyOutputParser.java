@@ -71,8 +71,13 @@ public class MavenSpyOutputParser {
     switch (type) {
       case "ProjectStarted": {
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, true);
-        messageConsumer
-          .accept(new StartEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName()));
+        if(execution == null){
+          MavenLog.LOG.debug("Not found for " + parameters);
+        } else {
+          messageConsumer
+            .accept(new StartEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName()));
+        }
+
         return;
       }
       case "MojoStarted": {
@@ -87,10 +92,14 @@ public class MavenSpyOutputParser {
       }
       case "MojoFailed": {
         MavenParsingContext.MojoExecutionEntry mojoExecution = myContext.getMojo(threadId, parameters, false);
-        messageConsumer.accept(
-          new FinishEventImpl(mojoExecution.getId(), mojoExecution.getParentId(), System.currentTimeMillis(), mojoExecution.getName(),
-                              new FailureResultImpl(parameters.get("error"), null)));
-        mojoExecution.complete();
+        if(mojoExecution == null){
+          MavenLog.LOG.debug("Not found id for " + parameters);
+        } else {
+          messageConsumer.accept(
+            new FinishEventImpl(mojoExecution.getId(), mojoExecution.getParentId(), System.currentTimeMillis(), mojoExecution.getName(),
+                                new FailureResultImpl(parameters.get("error"), null)));
+          mojoExecution.complete();
+        }
         return;
       }
       case "MojoSkipped": {

@@ -1,205 +1,140 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.externalSystemIntegration.output;
+package org.jetbrains.idea.maven.externalSystemIntegration.output
 
-import com.intellij.build.events.Failure;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
-import com.intellij.util.containers.Predicate;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.util.containers.ContainerUtil
+import java.util.*
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
 
-public class MavenParsingContext {
+  private val context = ContainerUtil.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
+  private var lastAddedThreadId: Int = 0
 
-  private final IntObjectMap<ArrayList<MavenExecutionEntry>> context = ContainerUtil.createConcurrentIntObjectMap();
-  private int lastAddedThreadId;
-  private final ExternalSystemTaskId myTaskId;
-
-  public MavenParsingContext(ExternalSystemTaskId taskId) {
-    myTaskId = taskId;
-  }
+  val lastId: Any
+    get() {
+      val entries = context.get(lastAddedThreadId)
+      return if (entries == null || entries.isEmpty()) {
+        myTaskId
+      }
+      else entries[entries.size - 1].id
+    }
 
 
-  public ProjectExecutionEntry getProject(int threadId, Map<String, String> parameters, boolean create) {
-    ProjectExecutionEntry currentProject =
-      search(ProjectExecutionEntry.class, context.get(threadId),
-             e -> parameters.get("id") == null || e.getName().equals(parameters.get("id")));
+  fun getProject(threadId: Int, parameters: Map<String, String>, create: Boolean): ProjectExecutionEntry? {
+    var currentProject = search(ProjectExecutionEntry::class.java, context.get(threadId)
+    ) { e -> parameters["id"] == null || e.name == parameters["id"] }
 
     if (currentProject == null && create) {
-      currentProject = new ProjectExecutionEntry(parameters.get("id"), threadId);
-      add(threadId, currentProject);
+      currentProject = ProjectExecutionEntry(parameters["id"] ?: "", threadId)
+      add(threadId, currentProject)
     }
-    return currentProject;
+    return currentProject
   }
 
 
-  public MojoExecutionEntry getMojo(int threadId, Map<String, String> parameters, boolean create) {
-    return getMojo(threadId, parameters, parameters.get("goal"), create);
+  fun getMojo(threadId: Int, parameters: Map<String, String>, create: Boolean): MojoExecutionEntry? {
+    return getMojo(threadId, parameters, parameters["goal"], create)
   }
 
-  public MojoExecutionEntry getMojo(int threadId, Map<String, String> parameters, String name, boolean create) {
+  fun getMojo(threadId: Int, parameters: Map<String, String>, name: String?, create: Boolean): MojoExecutionEntry? {
     if (name == null) {
-      return null;
+      return null
     }
-    MojoExecutionEntry mojo = search(MojoExecutionEntry.class, context.get(threadId), e -> e.getName().equals(name));
+    var mojo = search(MojoExecutionEntry::class.java, context.get(threadId)) { e -> e.name == name }
     if (mojo == null && create) {
-      ProjectExecutionEntry currentProject = getProject(threadId, parameters, false);
-      mojo = new MojoExecutionEntry(name, threadId, currentProject);
-      add(threadId, mojo);
+      val currentProject = getProject(threadId, parameters, false)
+      mojo = MojoExecutionEntry(name, threadId, currentProject)
+      add(threadId, mojo)
     }
-    return mojo;
+    return mojo
   }
 
-  public NodeExecutionEntry getNode(int threadId, String name, boolean create) {
+  fun getNode(threadId: Int, name: String?, create: Boolean): NodeExecutionEntry? {
     if (name == null) {
-      return null;
+      return null
     }
-    NodeExecutionEntry node = search(NodeExecutionEntry.class, context.get(threadId), e -> e.getName().equals(name));
+    var node = search(NodeExecutionEntry::class.java, context.get(threadId)) { e -> e.name == name }
 
     if (node == null && create) {
-      MojoExecutionEntry mojo = search(MojoExecutionEntry.class, context.get(threadId));
-      node = new NodeExecutionEntry(name, threadId, mojo);
-      add(threadId, mojo);
+      val parent = getNodeParent(threadId)
+      node = NodeExecutionEntry(name, threadId, parent)
+      add(threadId, node)
     }
-    return node;
+    return node
   }
 
-  private void add(int id, MavenExecutionEntry entry) {
-    ArrayList<MavenExecutionEntry> entries = context.get(id);
+  private fun getNodeParent(threadId: Int): MavenExecutionEntry? {
+    val mojo = search(MojoExecutionEntry::class.java, context.get(threadId))
+    if (mojo == null) {
+      return search(ProjectExecutionEntry::class.java, context.get(threadId)) { true }
+    }
+    return mojo
+  }
+
+  private fun add(id: Int, entry: MavenExecutionEntry) {
+    var entries: ArrayList<MavenExecutionEntry>? = context.get(id)
     if (entries == null) {
-      entries = new ArrayList<>();
-      context.put(id, entries);
+      entries = ArrayList()
+      context.put(id, entries)
     }
-    lastAddedThreadId = id;
-    entries.add(entry);
-  }
-
-  public Object getLastId() {
-    ArrayList<MavenExecutionEntry> entries = context.get(lastAddedThreadId);
-    if (entries == null || entries.isEmpty()) {
-      return myTaskId;
-    }
-    return entries.get(entries.size() - 1).getId();
+    lastAddedThreadId = id
+    entries.add(entry)
   }
 
 
-  public class ProjectExecutionEntry extends MavenExecutionEntry {
+  inner class ProjectExecutionEntry internal constructor(name: String, threadId: Int) : MavenExecutionEntry(name, threadId) {
 
-    ProjectExecutionEntry(String name, int threadId) {
-      super(name, threadId);
-    }
-
-    @Override
-    public Object getParentId() {
-      return MavenParsingContext.this.myTaskId;
-    }
+    override val parentId: Any
+      get() = this@MavenParsingContext.myTaskId
   }
 
-  public class MojoExecutionEntry extends MavenExecutionEntry {
+  inner class MojoExecutionEntry internal constructor(name: String,
+                                                      threadId: Int,
+                                                      private val myProject: ProjectExecutionEntry?) : MavenExecutionEntry(name, threadId) {
 
-    private final ProjectExecutionEntry myProject;
-
-
-    MojoExecutionEntry(String name,
-                       int threadId,
-                       ProjectExecutionEntry currentProject) {
-      super(name, threadId);
-      myProject = currentProject;
-    }
-
-    @Override
-    public Object getParentId() {
-      return myProject.getId();
-    }
+    override val parentId: Any
+      get() = myProject?.id ?: this@MavenParsingContext.myTaskId
   }
 
-  public class NodeExecutionEntry extends MavenExecutionEntry {
-
-    private final MojoExecutionEntry myMojo;
-
-    NodeExecutionEntry(String name,
-                       int threadId,
-                       MojoExecutionEntry mojo) {
-      super(name, threadId);
-      myMojo = mojo;
-    }
-
-    @Override
-    public Object getParentId() {
-      return myMojo.getId();
-    }
+  inner class NodeExecutionEntry internal constructor(name: String,
+                                                      threadId: Int,
+                                                      private val parent: MavenExecutionEntry?) : MavenExecutionEntry(name, threadId) {
+    override val parentId: Any
+      get() = parent?.id ?: this@MavenParsingContext.myTaskId
   }
 
 
-  private <T extends MavenExecutionEntry> T search(Class<T> klass,
-                                                   ArrayList<MavenExecutionEntry> entries) {
-    return search(klass, entries, e -> true);
+  private fun <T : MavenExecutionEntry> search(klass: Class<T>,
+                                               entries: ArrayList<MavenExecutionEntry>): T? {
+    return search(klass, entries) { true }
   }
 
-  @SuppressWarnings({"unchecked"})
-  private <T extends MavenExecutionEntry> T search(Class<T> klass,
-                                                   List<MavenExecutionEntry> entries,
-                                                   Predicate<T> filter) {
+  private fun <T : MavenExecutionEntry> search(klass: Class<T>,
+                                               entries: List<MavenExecutionEntry>?,
+                                               filter: (T) -> Boolean): T? {
     if (entries == null) {
-      return null;
+      return null
     }
-    for (int j = entries.size() - 1; j >= 0; j--) {
-      MavenExecutionEntry entry = entries.get(j);
-      if (klass.isAssignableFrom(entry.getClass())) {
-        if (filter.apply((T)entry)) {
-          return (T)entry;
+    for (j in entries.indices.reversed()) {
+      val entry = entries[j]
+      if (klass.isAssignableFrom(entry.javaClass)) {
+        @Suppress("UNCHECKED_CAST")
+        if (filter.invoke(entry as T)) {
+          return entry
         }
       }
     }
-    return null;
+    return null
   }
 
-  public abstract class MavenExecutionEntry {
-    private final String myName;
-    private final int myThreadId;
-    private List<Failure> myFailures = null;
-    private final Object myId = new Object();
+  abstract inner class MavenExecutionEntry(val name: String, private val myThreadId: Int) {
+    val id = Any()
 
-    public MavenExecutionEntry(String name, int threadId) {
-      myName = name;
-      myThreadId = threadId;
-    }
+    abstract val parentId: Any
 
-    public String getName() {
-      return myName;
-    }
-
-    public List<Failure> getFailures() {
-      return myFailures;
-    }
-
-    public void addFailure(Failure failure) {
-      if (myFailures == null) {
-        myFailures = new ArrayList<>();
-      }
-      myFailures.add(failure);
-    }
-
-    public void addFailures(List<Failure> failures) {
-      if (myFailures == null) {
-        myFailures = new ArrayList<>();
-      }
-      myFailures.addAll(failures);
-    }
-
-    public Object getId() {
-      return myId;
-    }
-
-    public abstract Object getParentId();
-
-    public void complete() {
-      List<MavenExecutionEntry> entries = MavenParsingContext.this.context.get(myThreadId);
-      if (entries != null) {
-        entries.remove(this);
-      }
+    fun complete() {
+      val entries = this@MavenParsingContext.context.get(myThreadId)
+      entries?.remove(this)
     }
   }
 }
