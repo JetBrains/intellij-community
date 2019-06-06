@@ -249,6 +249,7 @@
               use-shortcut-of="$Delete"/>
     </group>
 
+    <!--suppress PluginXmlCapitalization -->
     <action id="GuiDesigner.GenerateMain" class="com.intellij.uiDesigner.actions.GenerateMainAction">
       <add-to-group anchor="after" group-id="GenerateGroup" relative-to-action="GenerateSuperMethodCall"/>
     </action>
