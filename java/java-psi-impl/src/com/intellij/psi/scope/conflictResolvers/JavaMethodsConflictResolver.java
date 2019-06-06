@@ -261,10 +261,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return map != null ? map.get(existing) : existing.getSubstitutor(false);
   }
 
-  private static boolean areTypeParametersAgree(@NotNull CandidateInfo info) {
-    return ((MethodCandidateInfo)info).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
-  }
-
   /**
    * choose to accept static interface methods during search to get "Static interface methods must be invoked on containing interface class only" error
    * instead of non clear javac message that symbol not found
@@ -508,18 +504,16 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (boxingHappened[0] && !boxingHappened[1]) return Specifics.SECOND;
 
     if (sameBoxing) {
-      final PsiSubstitutor siteSubstitutor1 = getSiteSubstitutor(info1);
-      final PsiSubstitutor siteSubstitutor2 = getSiteSubstitutor(info2);
+      final PsiSubstitutor siteSubstitutor = getSiteSubstitutor(info1).putAll(getSiteSubstitutor(info2));
 
-      final PsiType[] types2AtSite = typesAtSite(types2, siteSubstitutor2);
-      final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor1);
+      final PsiType[] types2AtSite = typesAtSite(types2, siteSubstitutor);
+      final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor);
 
-      final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite,
-                                                                           myLanguageLevel);
-      boolean applicable12 = isApplicableTo(types2AtSite, method1, myLanguageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor2.putAll(siteSubstitutor1));
+      final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor, types1, types2AtSite, myLanguageLevel);
+      boolean applicable12 = isApplicableTo(types2AtSite, method1, myLanguageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor);
 
-      final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, myLanguageLevel);
-      boolean applicable21 = isApplicableTo(types1AtSite, method2, myLanguageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor1.putAll(siteSubstitutor2));
+      final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor, types2, types1AtSite, myLanguageLevel);
+      boolean applicable21 = isApplicableTo(types1AtSite, method2, myLanguageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor);
 
       if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         final boolean typeArgsApplicable12 = GenericsUtil.isTypeArgumentsApplicable(typeParameters1, methodSubstitutor1, myArgumentsList, !applicable21);
@@ -550,8 +544,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
 
         if (abstract1 && MethodSignatureUtil.areOverrideEquivalent(method1, method2)) { // abstract1 && abstract2
-          final PsiType returnType1 = siteSubstitutor1.substitute(method1.getReturnType());
-          final PsiType returnType2 = siteSubstitutor2.substitute(method2.getReturnType());
+          final PsiType returnType1 = siteSubstitutor.substitute(method1.getReturnType());
+          final PsiType returnType2 = siteSubstitutor.substitute(method2.getReturnType());
           if (returnType1 != null && returnType2 != null && returnType1.isAssignableFrom(returnType2)) {
             return Specifics.SECOND;
           }
