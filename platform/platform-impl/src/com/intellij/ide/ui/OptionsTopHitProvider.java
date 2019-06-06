@@ -235,7 +235,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     @Override
     public void runActivity(@NotNull Project project) {
-      cacheAll(null, project); // for given project
+      ApplicationManager.getApplication().executeOnPooledThread(() -> cacheAll(null, project)); // for given project
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
