@@ -395,7 +395,20 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           fileset(dir: "$root/prebuilts/tools/windows-x86_64/lldb")
         }
         context.ant.copy(todir: "$lldbTarget/lib") {
-          fileset(dir: "$root/prebuilts/python/windows-x86/x64/Lib")
+          fileset(dir: "$root/prebuilts/python/windows-x86/x64/Lib") {
+            exclude(name: "test/**")
+            exclude(name: "unittest/**")
+            exclude(name: "config/**")
+            exclude(name: "distutils/**")
+            exclude(name: "idlelib/**")
+            exclude(name: "lib2to3/**")
+            exclude(name: "plat-linux2/**")
+            exclude(name: "bsddb/test/**")
+            exclude(name: "ctypes/test/**")
+            exclude(name: "email/test/**")
+            exclude(name: "lib-tk/test/**")
+            exclude(name: "sqlite3/test/**")
+          }
         }
 
         def simpleperfTarget = "$targetDirectory/plugins/android/resources/simpleperf"
@@ -441,7 +454,20 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         extraExecutables.add("bin/lldb/bin/llvm-symbolizer")
         extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
         context.ant.copy(todir: "$lldbTarget/lib/python2.7") {
-          fileset(dir: "$root/prebuilts/python/linux-x86/lib/python2.7")
+          fileset(dir: "$root/prebuilts/python/linux-x86/lib/python2.7") {
+            exclude(name: "test/**")
+            exclude(name: "unittest/**")
+            exclude(name: "config/**")
+            exclude(name: "distutils/**")
+            exclude(name: "idlelib/**")
+            exclude(name: "lib2to3/**")
+            exclude(name: "plat-linux2/**")
+            exclude(name: "bsddb/test/**")
+            exclude(name: "ctypes/test/**")
+            exclude(name: "email/test/**")
+            exclude(name: "lib-tk/test/**")
+            exclude(name: "sqlite3/test/**")
+          }
         }
 
         def simpleperfTarget = "$targetDirectory/plugins/android/resources/simpleperf"
