@@ -337,50 +337,54 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
       Editor fieldEditor = field.getEditor();
       if (fieldEditor == null) return;
       int valueOffset = fieldEditor.getCaretModel().getOffset();
-      popup.cancel();
       Editor editor = foldRegion.getEditor();
-      runWhenFocused(editor.getContentComponent(),
-                     () -> WriteCommandAction.runWriteCommandAction(project, "Edit property value", null, () -> {
-                       handler.setValue(newValue.replace("\n", "\\n"));
-                       String oldPlaceholder = foldRegion.getPlaceholderText();
-                       String newPlaceholder = handler.getPlaceholder();
-                       editor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setPlaceholderText(newPlaceholder));
-                       VisualPosition regionStartPosition = editor.offsetToVisualPosition(foldRegion.getStartOffset());
-                       int placeholderOffset =
-                         Math.max(1, Math.min(newPlaceholder.length() - 1, handler.valueToPlaceholderOffset(valueOffset)));
-                       int placeholderColumn = ((EditorImpl)editor).offsetToVisualColumnInFoldRegion(foldRegion, placeholderOffset, false);
-                       editor.getCaretModel().moveToVisualPosition(
-                         new VisualPosition(regionStartPosition.line, regionStartPosition.column + placeholderColumn));
-                       UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
-                         @Override
-                         public void undo() {
-                           if (foldRegion.isValid()) {
-                             editor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setPlaceholderText(oldPlaceholder));
-                           }
-                         }
+      JComponent editorComponent = editor.getContentComponent();
+      focusAndRun(editorComponent, () -> {
+        WriteCommandAction.runWriteCommandAction(project, "Edit property value", null, () -> {
+          handler.setValue(newValue.replace("\n", "\\n"));
+          String oldPlaceholder = foldRegion.getPlaceholderText();
+          String newPlaceholder = handler.getPlaceholder();
+          editor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setPlaceholderText(newPlaceholder));
+          VisualPosition regionStartPosition = editor.offsetToVisualPosition(foldRegion.getStartOffset());
+          int placeholderOffset =
+            Math.max(1, Math.min(newPlaceholder.length() - 1, handler.valueToPlaceholderOffset(valueOffset)));
+          int placeholderColumn = ((EditorImpl)editor).offsetToVisualColumnInFoldRegion(foldRegion, placeholderOffset, false);
+          editor.getCaretModel().moveToVisualPosition(
+            new VisualPosition(regionStartPosition.line, regionStartPosition.column + placeholderColumn));
+          UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
+            @Override
+            public void undo() {
+              if (foldRegion.isValid()) {
+                editor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setPlaceholderText(oldPlaceholder));
+              }
+            }
 
-                         @Override
-                         public void redo() {
-                           if (foldRegion.isValid()) {
-                             editor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setPlaceholderText(newPlaceholder));
-                           }
-                         }
+            @Override
+            public void redo() {
+              if (foldRegion.isValid()) {
+                editor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setPlaceholderText(newPlaceholder));
+              }
+            }
 
-                         @Nullable
-                         @Override
-                         public DocumentReference[] getAffectedDocuments() {
-                           return null;
-                         }
+            @Nullable
+            @Override
+            public DocumentReference[] getAffectedDocuments() {
+              return null;
+            }
 
-                         @Override
-                         public boolean isGlobal() {
-                           return false;
-                         }
-                       });
-                     }, targetPsiFile));
+            @Override
+            public boolean isGlobal() {
+              return false;
+            }
+          });
+        }, targetPsiFile);
+        editorComponent.paintImmediately(new Rectangle(editorComponent.getSize()));
+        popup.cancel();
+      });
     }
 
-    private static void runWhenFocused(@NotNull Component component, @NotNull Runnable runnable) {
+    private static void focusAndRun(@NotNull Component component, @NotNull Runnable runnable) {
+      component.requestFocus();
       if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == component) {
         runnable.run();
       }
