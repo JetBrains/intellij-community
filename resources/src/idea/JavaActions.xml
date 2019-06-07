@@ -140,7 +140,7 @@
                 text="Mark File Dirty"/>
         <separator/>
         <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"
-                text="Check VFS sanity"/>
+                text="Check VFS Sanity"/>
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load All Files Content"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"
                 text="Load All VFS Stored Files Content"/>
