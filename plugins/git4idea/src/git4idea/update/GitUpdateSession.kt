@@ -83,7 +83,7 @@ class GitUpdateSession(private val project: Project,
       content = when (filteredCommitsNumber) {
         null -> ""
         0 -> "No commits matching filters"
-        else -> "$filteredCommitsNumber ${pluralize("commits", filteredCommitsNumber)} matching filters"
+        else -> "$filteredCommitsNumber ${pluralize("commit", filteredCommitsNumber)} matching filters"
       }
       type = NotificationType.INFORMATION
     }
