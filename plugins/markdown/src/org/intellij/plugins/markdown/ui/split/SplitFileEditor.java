@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -110,14 +109,9 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     mySplitter.setSplitterProportionKey(MY_PROPORTION_KEY);
     mySplitter.setFirstComponent(myMainEditor.getComponent());
     mySplitter.setSecondComponent(mySecondEditor.getComponent());
+    mySplitter.setDividerWidth(3);
 
     myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
-    if (myMainEditor instanceof TextEditor) {
-      myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)((TextEditor)myMainEditor).getEditor().getGutter()));
-    }
-    if (mySecondEditor instanceof TextEditor) {
-      myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)((TextEditor)mySecondEditor).getEditor().getGutter()));
-    }
     Disposer.register(this, myToolbarWrapper);
 
     final JPanel result = new JPanel(new BorderLayout());
@@ -132,9 +126,11 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
   private static SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
     ActionToolbar leftToolbar = createToolbarFromGroupId("Markdown.Toolbar.Left");
     leftToolbar.setTargetComponent(targetComponentForActions);
+    leftToolbar.setReservePlaceAutoPopupIcon(false);
 
     ActionToolbar rightToolbar = createToolbarFromGroupId("Markdown.Toolbar.Right");
     rightToolbar.setTargetComponent(targetComponentForActions);
+    rightToolbar.setReservePlaceAutoPopupIcon(false);
 
     return new SplitEditorToolbar(leftToolbar, rightToolbar);
   }
