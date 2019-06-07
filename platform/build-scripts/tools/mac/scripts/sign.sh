@@ -34,7 +34,8 @@ for f in \
   fi
 done
 
-log "Signing libraries in jars..."
+log "Signing libraries in jars in $PWD"
+
 # todo: add set -euo pipefail; into the inner sh -c
 # `-e` prevents `grep -q && printf` loginc
 # with `-o pipefail` there's no input for 'while' loop
@@ -45,7 +46,9 @@ find "$APP_DIRECTORY" -name '*.jar' \
 
     rm -rf jarfolder jar.jar
     mkdir jarfolder
-    unzip -q "$file" -d jarfolder
+    filename="${file##*/}"
+    log "Filename: $filename"
+    cp "$file" jarfolder && (cd jarfolder && jar xf $filename && rm $filename)
 
     find jarfolder \
       -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "jattach" \) \
@@ -53,7 +56,7 @@ find "$APP_DIRECTORY" -name '*.jar' \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;
 
-    jar cf jar.jar -C jarfolder/ .
+    (cd jarfolder; zip -q -r -o ../jar.jar .)
     mv jar.jar "$file"
   done
 
