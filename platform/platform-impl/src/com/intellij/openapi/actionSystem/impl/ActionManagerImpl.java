@@ -517,8 +517,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     myAction2Id.put(anAction, stub.getId());
 
-    ((ActionsCollectorImpl)ActionsCollector.getInstance()).onActionLoadedFromXml(action, stub.getId(), stub.getPluginId());
-
     return addToMap(stub.getId(), anAction, stub.getPluginId(), stub instanceof ActionStub ? ((ActionStub) stub).getProjectType() : null);
   }
 
