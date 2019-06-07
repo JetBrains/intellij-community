@@ -43,7 +43,8 @@
     <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar"/>
     <applicationInitializedListener implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleUpdater"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
-    <fileTypeFactory implementation="org.jetbrains.idea.maven.config.MavenConfigFileTypeFactory"/>
+    <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"
+              fileNames="maven.config"/>
     <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <fileTypeUsageSchemaDescriptor schema="Maven" implementationClass="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
