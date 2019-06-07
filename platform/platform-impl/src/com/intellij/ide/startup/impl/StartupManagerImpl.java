@@ -28,7 +28,6 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -54,6 +53,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -158,7 +158,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     // we measure it as a sequential activity to put on a timeline and make clear what's going on the end (avoid last "unknown" phase).
     Activity dumbAwareActivity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE);
 
-    Ref<Activity> edtActivity = new Ref<>();
+    AtomicReference<Activity> edtActivity = new AtomicReference<>();
 
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
     DumbService dumbService = DumbService.getInstance(myProject);
@@ -169,22 +169,28 @@ public class StartupManagerImpl extends StartupManagerEx {
         runActivity(uiFreezeWarned, extension, pluginDescriptor);
       }
       else {
-        if (edtActivity.isNull()) {
+        if (edtActivity.get() == null) {
           edtActivity.set(StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT));
         }
 
         counter.incrementAndGet();
         dumbService.runWhenSmart(() -> {
           runActivity(uiFreezeWarned, extension, pluginDescriptor);
-          if (counter.decrementAndGet() == 0 && !edtActivity.isNull()) {
-            edtActivity.get().end();
+          if (counter.decrementAndGet() == 0) {
+            Activity activity = edtActivity.getAndSet(null);
+            if (activity != null) {
+              activity.end();
+            }
           }
         });
       }
     });
 
-    if (counter.get() == 0 && !edtActivity.isNull()) {
-      edtActivity.get().end();
+    if (counter.get() == 0) {
+      Activity activity = edtActivity.getAndSet(null);
+      if (activity != null) {
+        activity.end();
+      }
     }
     dumbAwareActivity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
