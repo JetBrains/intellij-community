@@ -1,5 +1,12 @@
 # [TOML](https://github.com/toml-lang/toml) language support for IntelliJ IDEA based IDEs
 
+[![download]][plugin]
+[![version]][plugin]
+
+ [download]: https://img.shields.io/jetbrains/plugin/d/8195-toml.svg
+ [version]: https://img.shields.io/jetbrains/plugin/v/8195-toml.svg
+ [plugin]: https://plugins.jetbrains.com/plugin/8195-toml
+
 The plugin provides nothing but syntax highlighting at the moment.
 
 ## Installation
