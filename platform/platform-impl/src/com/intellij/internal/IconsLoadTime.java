@@ -4,8 +4,8 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.icons.ImageType;
-import com.intellij.util.ImageDesc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public final class IconsLoadTime extends DumbAwareAction {
 
   static {
     if (Boolean.getBoolean("idea.measure.icon.load.time")) {
-      ImageDesc.setLoadTimeConsumer(IconsLoadTime::measure);
+      ImageDescriptor.setLoadTimeConsumer(IconsLoadTime::measure);
     }
   }
 
@@ -98,7 +98,7 @@ public final class IconsLoadTime extends DumbAwareAction {
   private static void measure(@NotNull ImageType type, int duration) {
     List<Integer> stats = getStats(type);
     if (stats.size() > STATS_LIMIT) {
-      ImageDesc.setLoadTimeConsumer(null);
+      ImageDescriptor.setLoadTimeConsumer(null);
     }
 
     int size;

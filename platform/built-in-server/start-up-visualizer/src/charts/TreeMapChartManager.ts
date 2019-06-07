@@ -3,6 +3,7 @@ import {ChartManager} from "@/charts/ChartManager"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
+import {IconData} from "@/state/data"
 
 export class TreeMapChartManager implements ChartManager {
   private readonly chart: am4charts.TreeMap
@@ -12,6 +13,7 @@ export class TreeMapChartManager implements ChartManager {
     this.chart = chart
     chart.dataFields.value = "duration"
     chart.dataFields.name = "name"
+    chart.dataFields.children = "children"
 
     const level1 = chart.seriesTemplates.create("0")
     const level1Bullet = level1.bullets.push(new am4charts.LabelBullet())
@@ -30,9 +32,16 @@ export class TreeMapChartManager implements ChartManager {
 
     const items: Array<any> = []
     for (const [key, value] of Object.entries(icons)) {
+      // @ts-ignore
+      const info = value as IconData
       items.push({
         name: key,
-        ...value,
+        duration: info.loading,
+        ...info,
+        children: [
+          {name: "searching", duration: info.loading - info.decoding},
+          {name: "decoding", duration: info.decoding},
+        ],
       })
     }
 

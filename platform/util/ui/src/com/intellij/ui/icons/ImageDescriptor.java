@@ -1,17 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util;
+package com.intellij.ui.icons;
 
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.icons.IconLoadMeasurer;
-import com.intellij.ui.icons.ImageType;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ImageLoader;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,25 +21,20 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-public final class ImageDesc {
+@ApiStatus.Internal
+public final class ImageDescriptor {
   private static final ConcurrentMap<String, Pair<Image, ImageLoader.Dimension2DDouble>> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   final @NotNull String path;
-  final double scale; // initial scale factor
-  final @NotNull ImageType type;
+  public final double scale; // initial scale factor
+  public final @NotNull ImageType type;
   final boolean original; // path is not altered
+
   // The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
   // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
-  final @NotNull ImageLoader.Dimension2DDouble origUsrSize;
-
-  private static final IconLoadMeasurer loadingSvgStats = new IconLoadMeasurer(ImageType.SVG);
-  private static final IconLoadMeasurer loadingPngStats = new IconLoadMeasurer(ImageType.IMG);
+  public final @NotNull ImageLoader.Dimension2DDouble origUsrSize;
 
   public interface LoadTimeConsumer {
     void accept(@NotNull ImageType type, int value);
@@ -48,16 +43,16 @@ public final class ImageDesc {
   @Nullable
   static volatile LoadTimeConsumer loadTimeConsumer;
 
-  ImageDesc(@NotNull String path, double scale, @NotNull ImageType type) {
+  public ImageDescriptor(@NotNull String path, double scale, @NotNull ImageType type) {
     this(path, scale, type, false);
   }
 
-  ImageDesc(double scale) {
+  public ImageDescriptor(double scale) {
     this("", scale, ImageType.IMG, false);
   }
 
   public static void setLoadTimeConsumer(@Nullable LoadTimeConsumer loadTimeConsumer) {
-    ImageDesc.loadTimeConsumer = loadTimeConsumer;
+    ImageDescriptor.loadTimeConsumer = loadTimeConsumer;
   }
 
   @NotNull
@@ -69,7 +64,7 @@ public final class ImageDesc {
     ourCache.clear();
   }
 
-  ImageDesc(@NotNull String path, double scale, @NotNull ImageType type, boolean original) {
+  public ImageDescriptor(@NotNull String path, double scale, @NotNull ImageType type, boolean original) {
     this.path = path;
     this.scale = scale;
     this.type = type;
@@ -84,56 +79,45 @@ public final class ImageDesc {
 
   @Nullable
   public Image load(boolean useCache, @Nullable Class<?> resourceClass) throws IOException {
-    if (StringUtil.isEmpty(path)) {
+    if (StringUtilRt.isEmpty(path)) {
       getLogger().warn("empty image path", new Throwable());
       return null;
     }
 
-    InputStream stream = null;
-
-    boolean isFromFile = path.startsWith("file:");
-    if (!isFromFile && resourceClass != null) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      stream = resourceClass.getResourceAsStream(path);
-      if (stream == null) {
-        return null;
-      }
+    if (resourceClass != null) {
+      InputStream stream = resourceClass.getResourceAsStream(path);
+      return stream == null ? null : loadFromStream(stream, null, null);
     }
 
     String cacheKey = null;
-    URL url = null;
-    if (stream == null) {
-      if (useCache) {
-        cacheKey = path + (type == ImageType.SVG ? "_@" + scale + "x" : "");
-        Pair<Image, ImageLoader.Dimension2DDouble> pair = ourCache.get(cacheKey);
-        if (pair != null) {
-          origUsrSize.setSize(pair.second);
-          return pair.first;
-        }
-      }
-
-      url = new URL(path);
-      if (isFromFile && !SystemInfoRt.isWindows) {
-        byte[] bytes = Files.readAllBytes(Paths.get(url.getPath()));
-        //noinspection IOResourceOpenedButNotSafelyClosed
-        stream = new BufferExposingByteArrayInputStream(bytes);
-      }
-      else {
-        URLConnection connection = url.openConnection();
-        if (connection instanceof HttpURLConnection) {
-          if (!original) return null;
-          connection.addRequestProperty("User-Agent", "IntelliJ");
-        }
-        stream = connection.getInputStream();
+    URL url;
+    if (useCache) {
+      cacheKey = path + (type == ImageType.SVG ? "_@" + scale + "x" : "");
+      Pair<Image, ImageLoader.Dimension2DDouble> pair = ourCache.get(cacheKey);
+      if (pair != null) {
+        origUsrSize.setSize(pair.second);
+        return pair.first;
       }
     }
 
-    return loadFromStream(stream, url, cacheKey);
+    url = new URL(path);
+    URLConnection connection = url.openConnection();
+    if (connection instanceof HttpURLConnection) {
+      if (!original) return null;
+      connection.addRequestProperty("User-Agent", "IntelliJ");
+    }
+    return loadFromStream(connection.getInputStream(), url, cacheKey);
   }
 
   @Nullable
   public Image loadFromStream(@NotNull InputStream stream, @Nullable URL url, @Nullable String cacheKey) throws IOException {
-    Image image = loadImpl(url, stream);
+    Image image;
+    try {
+      image = loadImpl(url, stream);
+    }
+    finally {
+      stream.close();
+    }
     if (image != null && cacheKey != null && 4L * image.getWidth(null) * image.getHeight(null) <= ImageLoader.CACHED_IMAGE_MAX_SIZE) {
       ourCache.put(cacheKey, Pair.create(image, origUsrSize));
     }
@@ -142,19 +126,16 @@ public final class ImageDesc {
 
   @Nullable
   private Image loadImpl(@Nullable URL url, @NotNull InputStream stream) throws IOException {
-    LoadTimeConsumer loadTimeConsumer = ImageDesc.loadTimeConsumer;
+    LoadTimeConsumer loadTimeConsumer = ImageDescriptor.loadTimeConsumer;
     long start = StartUpMeasurer.isEnabled() || loadTimeConsumer != null ? StartUpMeasurer.getCurrentTime() : -1;
-    IconLoadMeasurer stats;
     Image image;
     switch (type) {
       case SVG: {
-        stats = loadingSvgStats;
         image = SVGLoader.load(url, stream, scale, origUsrSize);
       }
       break;
 
       case IMG: {
-        stats = loadingPngStats;
         image = loadImpl(stream);
       }
       break;
@@ -165,7 +146,7 @@ public final class ImageDesc {
 
     if (start != -1) {
       int duration = (int)(StartUpMeasurer.getCurrentTime() - start);
-      stats.add(duration);
+      IconLoadMeasurer.addDecoding(type, duration);
       if (loadTimeConsumer != null) {
         loadTimeConsumer.accept(type, duration);
       }
@@ -201,11 +182,6 @@ public final class ImageDesc {
       getLogger().error(ex);
     }
     return null;
-  }
-
-  @NotNull
-  public static List<IconLoadMeasurer> getStats() {
-    return Arrays.asList(loadingSvgStats, loadingPngStats);
   }
 
   @Override

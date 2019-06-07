@@ -9,6 +9,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.CopyableIcon;
 import com.intellij.ui.icons.DarkIconProvider;
+import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.icons.MenuBarIconProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -113,7 +114,7 @@ public final class IconLoader {
       ourIconsCache.clear();
       ourIcon2DisabledIcon.clear();
       //clears svg cache
-      ImageDesc.clearCache();
+      ImageDescriptor.clearCache();
     }
   }
 
@@ -680,17 +681,23 @@ public final class IconLoader {
 
     @Nullable
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
-      URL url = getURL();
-      if (url == null) {
-        return null;
-      }
-
       int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
       if (myUseCacheOnLoad) {
         flags |= ImageLoader.USE_CACHE;
       }
       if (dark) {
         flags |= ImageLoader.DARK;
+      }
+
+      String path = myResolver.myOverriddenPath;
+      Class aClass = myResolver.myClass;
+      if (aClass != null && path != null) {
+        return ImageLoader.loadFromUrl(path, aClass, flags, getFilters(), ctx);
+      }
+
+      URL url = getURL();
+      if (url == null) {
+        return null;
       }
       return ImageLoader.loadFromUrl(url, null, flags, getFilters(), ctx);
     }

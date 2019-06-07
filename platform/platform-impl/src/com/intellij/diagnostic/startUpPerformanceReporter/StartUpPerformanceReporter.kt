@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.util.ImageDesc
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
@@ -337,16 +336,22 @@ private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
 }
 
 private fun writeIcons(writer: JsonGenerator) {
-  fun writeStats(info: IconLoadMeasurer) {
-    writer.obj(info.type.name.toLowerCase()) {
-      writer.writeNumberField("count", info.counter)
-      writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(info.totalTime.toLong()))
+  fun writeStats(infoList: List<IconLoadMeasurer>) {
+    writer.obj(infoList[0].type.name.toLowerCase()) {
+      writer.writeNumberField("count", infoList[0].counter)
+      writer.writeNumberField("loading", TimeUnit.NANOSECONDS.toMillis(infoList[0].totalTime.toLong()))
+      writer.writeNumberField("decoding", TimeUnit.NANOSECONDS.toMillis(infoList[1].totalTime.toLong()))
     }
   }
 
+  val map = linkedMapOf<String, MutableList<IconLoadMeasurer>>()
+  for (stat in IconLoadMeasurer.getStats()) {
+    map.getOrPut(stat.type.name.toLowerCase()) { mutableListOf() }.add(stat)
+  }
+
   writer.obj("icons") {
-    for (info in ImageDesc.getStats()) {
-      writeStats(info)
+    for (infoList in map.values) {
+      writeStats(infoList)
     }
   }
 }

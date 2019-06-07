@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.ui.icons.IconLoadMeasurer;
+import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.icons.ImageType;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
@@ -78,7 +81,7 @@ public final class ImageLoader implements Serializable {
   }
 
   private static final class ImageDescriptorListBuilder {
-    private final List<ImageDesc> list = new SmartList<>();
+    private final List<ImageDescriptor> list = new SmartList<>();
     final String name;
     final String ext;
     final boolean svg;
@@ -102,30 +105,30 @@ public final class ImageLoader implements Serializable {
       String _ext = ImageType.SVG == type ? "svg" : ext;
       double _scale = ImageType.SVG == type ? scale : retina ? 2 : 1;
 
-      list.add(new ImageDesc(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, type));
+      list.add(new ImageDescriptor(name + (dark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, type));
       if (retina && dark) {
-        list.add(new ImageDesc(name + "@2x_dark" + "." + _ext, _scale, type));
+        list.add(new ImageDescriptor(name + "@2x_dark" + "." + _ext, _scale, type));
       }
       if (retina) {
         // a fallback to 1x icon
-        list.add(new ImageDesc(name + (dark ? "_dark" : "") + "." + _ext, ImageType.SVG == type ? scale : 1, type));
+        list.add(new ImageDescriptor(name + (dark ? "_dark" : "") + "." + _ext, ImageType.SVG == type ? scale : 1, type));
       }
     }
 
     void add(ImageType type) {
-      list.add(new ImageDesc(name + "." + ext, 1.0, type, true));
+      list.add(new ImageDescriptor(name + "." + ext, 1.0, type, true));
     }
 
     @NotNull
-    List<ImageDesc> build() {
+    List<ImageDescriptor> build() {
       return list;
     }
   }
 
   private static final class ImageDescriptorList {
-    private final List<ImageDesc> list;
+    private final List<ImageDescriptor> list;
 
-    private ImageDescriptorList(@NotNull List<ImageDesc> list) {
+    private ImageDescriptorList(@NotNull List<ImageDescriptor> list) {
       this.list = list;
     }
 
@@ -141,7 +144,10 @@ public final class ImageLoader implements Serializable {
 
     @Nullable
     public Image load(@NotNull ImageConverterChain converters, boolean useCache, @Nullable Class<?> resourceClass) {
-      for (ImageDesc descriptor : list) {
+      long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+
+      Image result = null;
+      for (ImageDescriptor descriptor : list) {
         try {
           Image image = descriptor.load(useCache, resourceClass);
           if (image == null) {
@@ -149,12 +155,16 @@ public final class ImageLoader implements Serializable {
           }
 
           getLogger().debug("Loaded image: " + descriptor);
-          return converters.convert(image, descriptor);
+          result = converters.convert(image, descriptor);
+          if (start != -1) {
+            IconLoadMeasurer.addLoading(descriptor.type, (int)(StartUpMeasurer.getCurrentTime() - start));
+          }
+          break;
         }
         catch (IOException ignore) {
         }
       }
-      return null;
+      return result;
     }
 
     @NotNull
@@ -192,7 +202,7 @@ public final class ImageLoader implements Serializable {
   }
 
   private interface ImageConverter {
-    Image convert(@Nullable Image source, ImageDesc desc);
+    Image convert(@Nullable Image source, ImageDescriptor desc);
   }
 
   private static final class ImageConverterChain extends ArrayList<ImageConverter> {
@@ -215,7 +225,7 @@ public final class ImageLoader implements Serializable {
       if (filter == null) return this;
       return with(new ImageConverter() {
         @Override
-        public Image convert(Image source, ImageDesc desc) {
+        public Image convert(Image source, ImageDescriptor desc) {
           return ImageUtil.filter(source, filter);
         }
       });
@@ -225,7 +235,7 @@ public final class ImageLoader implements Serializable {
       if (ctx == null) return this;
       return with(new ImageConverter() {
         @Override
-        public Image convert(Image source, ImageDesc desc) {
+        public Image convert(Image source, ImageDescriptor desc) {
           double usrScale = ctx.getScale(DerivedScaleType.EFF_USR_SCALE);
           return ImageUtil.ensureHiDPI(source, ctx,
                                        desc.origUsrSize.getWidth() * usrScale,
@@ -239,7 +249,7 @@ public final class ImageLoader implements Serializable {
       return this;
     }
 
-    public Image convert(Image image, ImageDesc desc) {
+    public Image convert(Image image, ImageDescriptor desc) {
       for (ImageConverter f : this) {
         image = f.convert(image, desc);
       }
@@ -300,7 +310,7 @@ public final class ImageLoader implements Serializable {
         .withFilter(filters)
         .with(new ImageConverter() {
           @Override
-          public Image convert(Image source, ImageDesc desc) {
+          public Image convert(Image source, ImageDescriptor desc) {
             if (source != null && desc.type != ImageType.SVG) {
               double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), scaleContext.getScale(DerivedScaleType.PIX_SCALE));
               if (desc.scale > 1) scale /= desc.scale; // compensate the image original scale
@@ -401,7 +411,7 @@ public final class ImageLoader implements Serializable {
    */
   public static Image loadFromStream(@NotNull InputStream inputStream, @NotNull ScaleContext ctx, ImageFilter filter) {
     try {
-      ImageDesc desc = new ImageDesc(ctx.getScale(DerivedScaleType.PIX_SCALE));
+      ImageDescriptor desc = new ImageDescriptor(ctx.getScale(DerivedScaleType.PIX_SCALE));
       Image image = desc.loadFromStream(inputStream, null, null);
       return ImageConverterChain.create()
         .withFilter(filter)
@@ -438,7 +448,7 @@ public final class ImageLoader implements Serializable {
   private static @Nullable Image _loadImageFromFile(@NotNull File f) throws IOException {
     final ScaleContext ctx = ScaleContext.create();
     final double scale = ctx.getScale(DerivedScaleType.PIX_SCALE); // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
-    ImageDesc desc = new ImageDesc(f.toURI().toURL().toString(), scale, StringUtilRt.endsWithIgnoreCase(f.getPath(), ".svg") ? ImageType.SVG : ImageType.IMG);
+    ImageDescriptor desc = new ImageDescriptor(f.toURI().toURL().toString(), scale, StringUtilRt.endsWithIgnoreCase(f.getPath(), ".svg") ? ImageType.SVG : ImageType.IMG);
     return ImageUtil.ensureHiDPI(desc.load(true), ctx);
   }
 }

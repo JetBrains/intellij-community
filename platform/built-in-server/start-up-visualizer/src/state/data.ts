@@ -59,5 +59,7 @@ export interface StatItem {
 
 export interface IconData {
   readonly count: number
-  readonly duration: number
+
+  readonly loading: number
+  readonly decoding: number
 }

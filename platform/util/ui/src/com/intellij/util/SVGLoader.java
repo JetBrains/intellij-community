@@ -14,6 +14,7 @@ import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -48,7 +49,8 @@ public final class SVGLoader {
     return load(url, stream, scale, null);
   }
 
-  static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
+  @ApiStatus.Internal
+  public static Image load(@Nullable URL url, @NotNull InputStream stream, double scale, @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
     try {
       MyTranscoder transcoder = MyTranscoder.createImage(scale, createTranscodeInput(url, stream));
       if (docSize != null) {
