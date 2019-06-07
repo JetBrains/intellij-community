@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -11,25 +11,22 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.util.text.LiteralFormatUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiLiteralExpressionImpl
   extends JavaStubPsiElement<PsiLiteralStub>
-       implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
-  @NonNls private static final String QUOT = "&quot;";
+  implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
 
-  public static final TokenSet INTEGER_LITERALS = TokenSet.create(JavaTokenType.INTEGER_LITERAL, JavaTokenType.LONG_LITERAL);
-  public static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
-  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
+  private static final String QUOT = "&quot;";
+  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(ElementType.INTEGER_LITERALS, ElementType.REAL_LITERALS);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
     super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
@@ -63,11 +60,9 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.CHARACTER_LITERAL) {
       return PsiType.CHAR;
     }
-    if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.RAW_STRING_LITERAL) {
+    if (ElementType.STRING_LITERALS.contains(type)) {
       PsiFile file = getContainingFile();
-      PsiManager manager = file.getManager();
-      GlobalSearchScope resolveScope = ResolveScopeManager.getElementResolveScope(file);
-      return PsiType.getJavaLangString(manager, resolveScope);
+      return PsiType.getJavaLangString(file.getManager(), ResolveScopeManager.getElementResolveScope(file));
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
@@ -197,20 +192,17 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isValidHost() {
-    IElementType elementType = getLiteralElementType();
-    return elementType == JavaTokenType.STRING_LITERAL
-           || elementType == JavaTokenType.RAW_STRING_LITERAL
-           || elementType == JavaTokenType.CHARACTER_LITERAL;
+    IElementType type = getLiteralElementType();
+    return type == JavaTokenType.CHARACTER_LITERAL || ElementType.STRING_LITERALS.contains(type);
   }
 
   @Override
   @NotNull
   public PsiReference[] getReferences() {
     IElementType type = getLiteralElementType();
-    if (type != JavaTokenType.STRING_LITERAL && type != JavaTokenType.RAW_STRING_LITERAL && type != JavaTokenType.INTEGER_LITERAL) {
-      return PsiReference.EMPTY_ARRAY; // there are references in int literals in SQL API parameters
-    }
-    return PsiReferenceService.getService().getContributedReferences(this);
+    return ElementType.STRING_LITERALS.contains(type) || type == JavaTokenType.INTEGER_LITERAL  // int literals could refer to SQL parameters
+           ? PsiReferenceService.getService().getContributedReferences(this)
+           : PsiReference.EMPTY_ARRAY;
   }
 
   @Override

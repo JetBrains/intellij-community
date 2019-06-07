@@ -32,6 +32,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -1009,8 +1010,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return null;
     }
 
-    boolean isInt = PsiLiteralExpressionImpl.INTEGER_LITERALS.contains(type);
-    boolean isFP = PsiLiteralExpressionImpl.REAL_LITERALS.contains(type);
+    boolean isInt = ElementType.INTEGER_LITERALS.contains(type);
+    boolean isFP = ElementType.REAL_LITERALS.contains(type);
     String text = isInt || isFP ? StringUtil.toLowerCase(literal.getText()) : literal.getText();
     Object value = expression.getValue();
 
