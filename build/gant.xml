@@ -31,7 +31,7 @@
       <env key="JAVA_HOME" value="${java.path}"/>
       <arg value="${gradle.daemon}"/>
       <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
-      <arg value="${gradle.args}"/>
+      <arg line="${gradle.args}"/>
       <arg value="setupBuildScriptsDeps"/>
     </exec>
   </target>
