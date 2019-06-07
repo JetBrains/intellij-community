@@ -39,7 +39,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
-    set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
+    set_global_debugger, WriterThread, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded, CommunicationRole, run_as_pydevd_daemon_thread
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
