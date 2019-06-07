@@ -13,53 +13,43 @@ class MPSProperties extends ProductProperties {
         productCode = "MPS"
         platformPrefix = "Idea"
         applicationInfoModule = "intellij.idea.community.resources"
-//        brandingResourcePaths = ["$home/branding/MPS"]
         toolsJarRequired = true
 
         productLayout.mainJarName = "platform.jar"
         productLayout.mainModules = ["intellij.idea.community.main"]
-        productLayout.productApiModules = ["intellij.java.execution"]
-        productLayout.productImplementationModules =
-                ["intellij.platform.main",
-                 "intellij.platform.testFramework",
-                 "intellij.tools.testsBootstrap",
-                 "intellij.java.execution.impl",
-                 "intellij.java.compiler.instrumentationUtil",
-                 "intellij.platform.externalSystem.impl"]
+
+        productLayout.productApiModules = BaseIdeaProperties.JAVA_IDE_API_MODULES + [
+                "intellij.java.execution"
+        ]
+        productLayout.productImplementationModules = BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES + [
+                "intellij.platform.main",
+                "intellij.java.execution.impl",
+                "intellij.java.compiler.instrumentationUtil",
+                "intellij.platform.externalSystem.impl"
+        ]
+
+        productLayout.additionalPlatformJars.putAll("resources.jar", [
+                "intellij.idea.community.resources", "intellij.java.ide.resources"])
+        productLayout.additionalPlatformJars.
+                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
+        productLayout.additionalPlatformJars.put("forms_rt.jar", "intellij.java.guiForms.compiler")
+        productLayout.additionalPlatformJars.putAll("util.jar", ["intellij.platform.util", "intellij.platform.util.rt"])
 
         productLayout.bundledPluginModules = [
+                "intellij.java.plugin",
+                "intellij.terminal",
                 "intellij.vcs.git",
                 "intellij.vcs.svn",
                 "intellij.vcs.github",
-                "intellij.terminal",
                 "intellij.java.coverage"
-                /*, "properties", "ant"*/
         ]
-
-        productLayout.additionalPlatformJars.put("forms_rt.jar", "intellij.java.guiForms.compiler")
-        productLayout.additionalPlatformJars.putAll("util.jar", ["intellij.platform.util", "intellij.platform.util.rt"])
-        productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
-        productLayout.additionalPlatformJars.
-                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
-
-        // Copied from BaseIdeaProperties
-        def JAVA_API_JAR = "java-api.jar"
-        def JAVA_IMPL_JAR = "java-impl.jar"
-        productLayout.additionalPlatformJars.putAll(JAVA_API_JAR, [])
-        productLayout.additionalPlatformJars.putAll(JAVA_IMPL_JAR, [])
+        productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
+        productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+                JavaPluginLayout.javaPlugin(false)
+        ]
 
         productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
             layout.customize {
-
-                // Copied from BaseIdeaProperties
-                BaseIdeaProperties.MAIN_JAVA_API_MODULES.each {
-                    withModule(it, "java-api.jar", "java_resources_en.jar")
-                }
-                BaseIdeaProperties.MAIN_JAVA_IMPLEMENTATION_MODULES.each {
-                    withModule(it, "java-impl.jar", "java_resources_en.jar")
-                }
-                // end of copy from BaseIdeaProperties
-
                 withModule("intellij.platform.coverage", productLayout.mainJarName)
 
                 withModule("intellij.java.rt", "idea_rt.jar", null)
@@ -71,7 +61,7 @@ class MPSProperties extends ProductProperties {
                 withProjectLibrary("pty4j") // for terminal plugin
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
-                excludeFromModule("intellij.java.resources", "META-INF/IdeaPlugin.xml")
+                excludeFromModule("intellij.idea.community.resources", "META-INF/IdeaPlugin.xml")
                 excludeFromModule("intellij.java.resources", "componentSets/*")
                 excludeFromModule("intellij.java.resources", "ProductivityFeaturesRegistry.xml")
 //                excludeFromModule("community-resources", "idea")
@@ -85,13 +75,14 @@ class MPSProperties extends ProductProperties {
                 excludeFromModule("intellij.platform.resources", "idea/PlatformActions.xml")
                 excludeFromModule("intellij.platform.resources.en", "messages/FeatureStatisticsBundle.properties")
                 //Removing Idea Tips & Tricks
-                excludeFromModule("intellij.java.resources", "META-INF/IdeTipsAndTricks.xml")
+                excludeFromModule("intellij.java.ide.resources", "META-INF/IdeTipsAndTricks.xml")
                 excludeFromModule("intellij.java.resources.en", "tips/*")
                 excludeFromModule("intellij.platform.resources.en", "tips/*")
                 excludeFromModule("intellij.platform.remoteServers.impl", "tips/*")
             }
         } as Consumer<PlatformLayout>
 
+        additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
         modulesToCompileTests = ["intellij.platform.jps.build", "intellij.platform.jps.model.tests", "intellij.platform.jps.model.serialization.tests"]
 
         buildSourcesArchive = true
