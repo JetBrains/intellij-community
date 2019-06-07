@@ -127,6 +127,12 @@
       <configurable id="diff.external" displayName="External Diff Tools"
                     instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
     </applicationConfigurable>
+    <applicationConfigurable groupId="appearance" groupWeight="-10"
+                             id="preferences.pathVariables"
+                             key="title.path.variables"
+                             bundle="messages.ApplicationBundle"
+                             instance="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
+
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule"/>
