@@ -851,24 +851,26 @@ public class StructuralSearchDialog extends DialogWrapper {
     });
   }
 
+  Balloon myBalloon = null;
   void reportMessage(String message, boolean error, JComponent component) {
     com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
+      if (myBalloon != null) myBalloon.hide();
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
 
       if (message == null) return;
-      final Balloon balloon = JBPopupFactory.getInstance()
+      myBalloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
         .setHideOnFrameResize(false)
         .createBalloon();
       if (component != myScopePanel) {
-        balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
+        myBalloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
       }
       else {
-        balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
+        myBalloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
       }
-      balloon.showInCenterOf(component);
-      Disposer.register(myDisposable, balloon);
+      myBalloon.showInCenterOf(component);
+      Disposer.register(myDisposable, myBalloon);
     });
   }
 
