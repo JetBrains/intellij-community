@@ -53,7 +53,7 @@ private class DoubleAsObjectBinding : Binding {
 }
 
 internal class NumberAsObjectBinding : Binding {
-  override fun createCacheKey(aClass: Class<*>, type: Type) = aClass
+  override fun createCacheKey(aClass: Class<*>?, type: Type) = aClass!!
 
   override fun serialize(obj: Any, context: WriteContext) {
     context.writer.writeInt((obj as Number).toLong())

@@ -17,7 +17,7 @@ internal interface Binding {
     }
   }
 
-  fun createCacheKey(aClass: Class<*>, type: Type = aClass) = type
+  fun createCacheKey(aClass: Class<*>?, type: Type) = type
 
   fun init(originalType: Type, context: BindingInitializationContext) {
   }
