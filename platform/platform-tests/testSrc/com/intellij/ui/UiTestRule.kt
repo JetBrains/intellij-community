@@ -10,6 +10,18 @@ import java.nio.file.Path
 import javax.swing.JPanel
 
 class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
+  override fun before() {
+    super.before()
+
+    IconManager.activate()
+  }
+
+  override fun after() {
+    super.after()
+
+    IconManager.deactivate()
+  }
+
   fun validate(panel: JPanel, testName: TestName, lafName: String) {
     validate(panel, testName.snapshotFileName, lafName)
   }
