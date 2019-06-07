@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import java.io.File
 import kotlin.reflect.full.memberFunctions
 
@@ -29,6 +30,10 @@ class GenerateJarAccessLogAction : AnAction() {
 
 class GenerateJarAccessLogActivity : StartupActivity {
   override fun runActivity(project: Project) {
+    if (!Registry.`is`("ide.reorder.jars.in.classpath")) {
+      return
+    }
+    
     val orderFile = File(PathManager.getSystemPath(), BootstrapClassLoaderUtil.CLASSPATH_ORDER_FILE)
     if (!orderFile.exists()) {
       try {
