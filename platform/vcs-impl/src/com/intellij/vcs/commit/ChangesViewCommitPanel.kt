@@ -126,7 +126,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     }.withBackground(BACKGROUND_COLOR)
     val centerPanel = simplePanel(commitMessage).addToBottom(buttonPanel)
 
-    addToCenter(centerPanel).addToLeft(toolbar.component).withBorder(createBorder(JBColor.border(), SideBorder.TOP))
+    addToCenter(centerPanel).addToLeft(toolbar.component)
     withPreferredHeight(85)
   }
 

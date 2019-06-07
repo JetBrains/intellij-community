@@ -92,6 +92,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private final ChangesListView myView;
   private ChangesViewCommitPanel myCommitPanel;
   private BorderLayoutPanel myContentPanel;
+  private ChangesViewCommitPanelSplitter myCommitPanelSplitter;
   private SimpleToolWindowPanel myToolWindowPanel;
   private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
@@ -202,14 +203,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
         Disposer.register(myContent, myCommitPanel);
 
-        myContentPanel.addToBottom(myCommitPanel);
-        myContentPanel.validate();
+        myCommitPanelSplitter.setSecondComponent(myCommitPanel);
         myCommitPanel.setupShortcuts(myToolWindowPanel);
       }
     }
     else if (myCommitPanel != null) {
-      myContentPanel.remove(myCommitPanel);
-      myContentPanel.validate();
+      myCommitPanelSplitter.setSecondComponent(null);
       Disposer.dispose(myCommitPanel);
 
       myCommitPanel = null;
@@ -223,13 +222,15 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
     BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
 
+    myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
+    myCommitPanelSplitter.setFirstComponent(changesPanel);
     myContentPanel = new BorderLayoutPanel() {
       @Override
       public Dimension getMinimumSize() {
         return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
       }
     };
-    myContentPanel.addToCenter(changesPanel);
+    myContentPanel.addToCenter(myCommitPanelSplitter);
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
     mySplitterComponent = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
