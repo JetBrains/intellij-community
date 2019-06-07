@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.MenuBarIconProvider;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IconUtil;
@@ -22,7 +23,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolWindowIcon implements Icon, MenuBarIconProvider {
+public class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvider {
   private static final Map<Icon, int[]> ourCache = new HashMap<>();
   static {
     LafManager.getInstance().addLafManagerListener(x -> ourCache.clear());
@@ -43,6 +44,11 @@ public class ToolWindowIcon implements Icon, MenuBarIconProvider {
       Color color = rgb != null && rgb.length == 3 ? new Color(rgb[0], rgb[1], rgb[2]) : null;
       myUseOriginal = color == null || color.equals(Gray._108) || color.equals(ColorUtil.fromHex("AFB1B3"));
     }
+  }
+
+  @Override
+  public Icon retrieveIcon() {
+    return myIcon;
   }
 
   @Override
