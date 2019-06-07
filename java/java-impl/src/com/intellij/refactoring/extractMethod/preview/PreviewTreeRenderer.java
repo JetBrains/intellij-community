@@ -8,7 +8,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ class PreviewTreeRenderer extends ColoredTreeCellRenderer {
       append(node.getLineNumberChunk(), node);
     }
     else {
-      SimpleTextAttributes attributes = StartupUiUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes;
+      SimpleTextAttributes attributes = UIUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes;
       append("Invalid ", patchMainTextAttrs(attributes, node));
     }
 

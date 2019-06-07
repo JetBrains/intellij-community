@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockContainer;
@@ -48,7 +47,10 @@ import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.ui.tabs.newImpl.SingleHeightTabs;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -805,7 +807,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public boolean hasUnderlineSelection() {
-      return StartupUiUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
+      return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
     }
 
     @Nullable
@@ -839,13 +841,13 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       Rectangle bounds = new Rectangle(x, y, w, h);
       g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
       drawLine(bounds, selectedBounds, g, 0);
-      if (StartupUiUtil.isUnderDarcula() || true) { //remove shadow for all for awhile
-        return;
-      }
-      g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .5));
-      drawLine(bounds, selectedBounds, g, 1);
-      g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .2));
-      drawLine(bounds, selectedBounds, g, 2);
+      //if (UIUtil.isUnderDarcula() || true) { //remove shadow for all for awhile
+      //  return;
+      //}
+      //g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .5));
+      //drawLine(bounds, selectedBounds, g, 1);
+      //g.setColor(ColorUtil.withAlpha(UIUtil.CONTRAST_BORDER_COLOR, .2));
+      //drawLine(bounds, selectedBounds, g, 2);
     }
 
     private static void drawLine(Rectangle bounds, @Nullable Rectangle selectedBounds, Graphics g, int yShift) {

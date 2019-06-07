@@ -394,7 +394,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
-    if (isEnabled() || !StartupUiUtil.isUnderDarcula()) {
+    if (isEnabled() || !UIUtil.isUnderDarcula()) {
       look.paintBackground(g, this);
     }
     look.paintIcon(g, this, getIcon());

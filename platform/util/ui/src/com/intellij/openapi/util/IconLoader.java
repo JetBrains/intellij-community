@@ -1023,7 +1023,7 @@ public final class IconLoader {
     }
 
     public static IconTransform getDefault() {
-      return new IconTransform(StartupUiUtil.isUnderDarcula(), new IconPathPatcher[0], null);
+      return new IconTransform(UIUtil.isUnderDarcula(), new IconPathPatcher[0], null);
     }
   }
 }

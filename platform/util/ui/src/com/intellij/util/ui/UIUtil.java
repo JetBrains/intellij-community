@@ -1266,6 +1266,11 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isUnderDarcula() {
+    return UIManager.getLookAndFeel().getName().contains("Darcula");
+  }
+
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderIntelliJLaF() {
     return UIManager.getLookAndFeel().getName().contains("IntelliJ");
   }

@@ -27,7 +27,7 @@ public class EngravedLabel extends JLabel {
 
   @Override
   protected void paintComponent(Graphics graphics) {
-    if (!StartupUiUtil.isUnderDarcula()) {
+    if (!StartupUiUtil.isDarculaLookAndFeel()) {
       graphics = new EngravedTextGraphics((Graphics2D)graphics, 0, 1, getShadowColor());
     }
     super.paintComponent(graphics);

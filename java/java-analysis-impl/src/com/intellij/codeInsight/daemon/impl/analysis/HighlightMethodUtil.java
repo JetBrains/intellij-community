@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 
 public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-  private static final String MISMATCH_COLOR = StartupUiUtil.isUnderDarcula() ? "ff6464" : "red";
+  private static final String MISMATCH_COLOR = UIUtil.isUnderDarcula() ? "ff6464" : "red";
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
   private HighlightMethodUtil() { }
@@ -633,7 +633,7 @@ public class HighlightMethodUtil {
 
           return XmlStringUtil.wrapInHtml("<body>" + XmlStringUtil.escapeString(message) +
                                           " <a href=\"#assignment/" + XmlStringUtil.escapeString(createMismatchedArgumentsHtmlTooltip(candidateInfo, list)) + "\"" +
-                                          (StartupUiUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
+                                          (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
                                           ">" + DaemonBundle.message("inspection.extended.description") + "</a></body>");
         }
       }
@@ -1033,12 +1033,12 @@ public class HighlightMethodUtil {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       boolean showShort = showShortType(i, parameters, expressions, substitutor);
-      String mismatchColor = showShort ? null : StartupUiUtil.isUnderDarcula() ? "FF6B68" : "red";
+      String mismatchColor = showShort ? null : UIUtil.isUnderDarcula() ? "FF6B68" : "red";
 
       s.append("<tr");
       if (i % 2 == 0) {
         //noinspection SpellCheckingInspection
-        String bg = StartupUiUtil.isUnderDarcula() ? ColorUtil.toHex(ColorUtil.shift(UIUtil.getToolTipBackground(), 1.1)) : "eeeeee";
+        String bg = UIUtil.isUnderDarcula() ? ColorUtil.toHex(ColorUtil.shift(UIUtil.getToolTipBackground(), 1.1)) : "eeeeee";
         s.append(" style='background-color: #").append(bg).append("'");
       }
       s.append(">");
