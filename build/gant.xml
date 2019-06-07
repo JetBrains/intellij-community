@@ -18,8 +18,8 @@
         <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
       </and>
     </condition>
-    <condition property="gradle.args" value="${intellij.gradle.jdk.build.parameters}" else="--stacktrace">
-      <isset property="intellij.gradle.jdk.build.parameters"/>
+    <condition property="gradle.args" value="${intellij.build.additional.gradle.parameters}" else="--stacktrace">
+      <isset property="intellij.build.additional.gradle.parameters"/>
     </condition>
     <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
