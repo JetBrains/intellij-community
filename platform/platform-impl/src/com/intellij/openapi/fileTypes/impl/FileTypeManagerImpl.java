@@ -262,6 +262,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @VisibleForTesting
   void initStandardFileTypes() {
+    loadFileTypeBeans();
+
     FileTypeConsumer consumer = new FileTypeConsumer() {
       @Override
       public void consume(@NotNull FileType fileType) {
@@ -285,6 +287,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       private void register(@NotNull FileType fileType, @NotNull List<FileNameMatcher> fileNameMatchers) {
+        instantiatePendingFileTypeByName(fileType.getName());
+
         final StandardFileType type = myStandardFileTypes.get(fileType.getName());
         if (type != null) {
           type.matchers.addAll(fileNameMatchers);
@@ -303,8 +307,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         PluginManager.handleComponentError(e, factory.getClass().getName(), null);
       }
     }
-
-    loadFileTypeBeans();
 
     for (StandardFileType pair : myStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
