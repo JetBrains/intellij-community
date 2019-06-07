@@ -148,6 +148,8 @@ class PredictionService(val project: Project,
   }
 
   override fun dispose() {
-    shutdownService()
+    if (userSettings.isPluginEnabled) {
+      shutdownService()
+    }
   }
 }
