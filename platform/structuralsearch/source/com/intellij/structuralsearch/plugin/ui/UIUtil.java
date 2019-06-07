@@ -258,10 +258,10 @@ public class UIUtil {
 
   public static LanguageFileType detectFileType(@NotNull SearchContext searchContext) {
     final PsiFile file = searchContext.getFile();
-    PsiElement context = file;
+    PsiElement context = null;
 
     final Editor editor = searchContext.getEditor();
-    if (editor != null && context != null) {
+    if (editor != null && file != null) {
       final int offset = editor.getCaretModel().getOffset();
       context = InjectedLanguageManager.getInstance(searchContext.getProject()).findInjectedElementAt(file, offset);
       if (context == null) {
@@ -269,6 +269,9 @@ public class UIUtil {
       }
       if (context != null) {
         context = context.getParent();
+      }
+      if (context == null) {
+        context = file;
       }
     }
     if (context != null) {
@@ -283,9 +286,10 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
-                                        @NotNull StructuralSearchProfile profile) {
-    PsiFile codeFragment = profile.createCodeFragment(project, text);
+  public static Document createDocument(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect,
+                                        PatternContext patternContext, @NotNull String text, @NotNull StructuralSearchProfile profile) {
+    final String contextId = (patternContext == null) ? null : patternContext.getId();
+    PsiFile codeFragment = profile.createCodeFragment(project, text, contextId);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }
@@ -302,7 +306,7 @@ public class UIUtil {
   @NotNull
   public static Editor createEditor(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
                                     @NotNull StructuralSearchProfile profile) {
-    PsiFile codeFragment = profile.createCodeFragment(project, text);
+    PsiFile codeFragment = profile.createCodeFragment(project, text, null);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }

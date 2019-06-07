@@ -119,7 +119,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   Configuration myConfiguration;
   @NonNls LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
   Language myDialect = null;
-  String myContext = null;
+  PatternContext myPatternContext = null;
   private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
 
   // ui management
@@ -193,7 +193,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   private EditorTextField createEditor() {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
-    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, "", profile);
+    final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -494,9 +494,17 @@ public class StructuralSearchDialog extends DialogWrapper {
     myRecursive.setVisible(!myReplace);
     myMatchCase = new JCheckBox(FindBundle.message("find.popup.case.sensitive"), true);
     myFileType = UIUtil.detectFileType(mySearchContext);
+    myDialect = myFileType.getLanguage();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    if (profile != null) {
+      final List<PatternContext> contexts = profile.getPatternContexts();
+      if (!contexts.isEmpty()) {
+        myPatternContext = contexts.get(0);
+      }
+    }
     myFileTypesComboBox = new FileTypeSelector();
     myFileTypesComboBox.setMinimumAndPreferredWidth(200);
-    myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myContext);
+    myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myPatternContext);
     myFileTypesComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -505,14 +513,14 @@ public class StructuralSearchDialog extends DialogWrapper {
           if (item == null) return;
           myFileType = item.getFileType();
           myDialect = item.getDialect();
-          myContext = item.getContext();
+          myPatternContext = item.getContext();
           final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
           assert profile != null;
           final Document searchDocument =
-            UIUtil.createDocument(getProject(), myFileType, myDialect, mySearchCriteriaEdit.getText(), profile);
+            UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
           final Document replaceDocument =
-            UIUtil.createDocument(getProject(), myFileType, myDialect, myReplaceCriteriaEdit.getText(), profile);
+            UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
           myFilterPanel.setProfile(profile);
           initiateValidation();
@@ -1020,7 +1028,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
     matchOptions.setFileType(myFileType);
     matchOptions.setDialect(myDialect);
-    matchOptions.setPatternContext(myContext);
+    matchOptions.setPatternContext(myPatternContext);
     matchOptions.setSearchPattern(getPattern(mySearchCriteriaEdit));
     matchOptions.setCaseSensitiveMatch(myMatchCase.isSelected());
 
