@@ -95,7 +95,7 @@ public class StartupUiUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isDarculaLookAndFeel() {
+  public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
   }
 

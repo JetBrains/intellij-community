@@ -282,7 +282,7 @@ public final class ImageLoader implements Serializable {
     if (useCache) {
       flags |= USE_CACHE;
     }
-    if (StartupUiUtil.isDarculaLookAndFeel()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       flags |= DARK;
     }
     return loadFromUrl(url, null, flags, filters, ctx);
@@ -380,7 +380,7 @@ public final class ImageLoader implements Serializable {
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
     ScaleContext scaleContext = ScaleContext.create();
     int flags = FIND_SVG | ALLOW_FLOAT_SCALING;
-    if (StartupUiUtil.isDarculaLookAndFeel()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       flags |= DARK;
     }
     return ImageDescriptorList.create(path, flags, scaleContext)

@@ -754,7 +754,7 @@ public class JBUI {
 
       @NotNull
       public static Color defaultButtonColor() {
-        return StartupUiUtil.isDarculaLookAndFeel() ? JBColor.namedColor("Button.default.focusColor",
+        return StartupUiUtil.isUnderDarcula() ? JBColor.namedColor("Button.default.focusColor",
                                     JBColor.namedColor("Focus.defaultButtonBorderColor", 0x97c3f3)) : focusColor();
       }
 

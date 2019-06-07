@@ -1265,9 +1265,9 @@ public final class UIUtil extends StartupUiUtil {
     return false;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static boolean isUnderDarcula() {
-    return UIManager.getLookAndFeel().getName().contains("Darcula");
+    return StartupUiUtil.isUnderDarcula();
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
