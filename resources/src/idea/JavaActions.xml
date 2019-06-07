@@ -126,11 +126,11 @@
       </group>
 
       <separator/>
-      <group internal="true" text="Cached value profiler" popup="true">
+      <group internal="true" text="Cached Value Profiler" popup="true">
         <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
-                text="Turn on cached value profiler" internal="true"/>
+                text="Turn on Cached Value Profiler" internal="true"/>
         <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
-                text="Dump results" internal="true"/>
+                text="Dump Results" internal="true"/>
       </group>
 
       <separator/>
