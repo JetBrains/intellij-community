@@ -23,7 +23,7 @@ envs {
       mustRunAfter 'build_envs'
 
       environment PYTHONPATH: ".:.."
-      commandLine new File(pythonDirectory, pythonName).absolutePath + '/bin/python', '-m', 'unittest'
+      commandLine new File(pythonDirectory, pythonName).absolutePath + '/bin/python', '__main__.py'
     }
   }
 
