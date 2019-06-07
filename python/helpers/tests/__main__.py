@@ -6,18 +6,31 @@ _tests_dir = os.path.dirname(os.path.abspath(__file__))
 _helpers_dir = os.path.dirname(_tests_dir)
 
 
-def discover_and_run_tests():
+def run_specified_tests():
+    runner = get_test_runner()
+    unittest.main(module=None, testRunner=runner, argv=sys.argv)
+
+
+def discover_and_run_all_tests():
+    runner = get_test_runner()
     suite = unittest.TestLoader().discover(_tests_dir)
-    runner = unittest.TextTestRunner()
+    runner.run(suite)
+
+
+def get_test_runner():
     try:
         import teamcity.unittestpy
         if teamcity.is_running_under_teamcity():
-            runner = teamcity.unittestpy.TeamcityTestRunner()
+            return teamcity.unittestpy.TeamcityTestRunner()
     except ImportError:
         pass
-    runner.run(suite)
+    return unittest.TextTestRunner()
 
 
 if __name__ == '__main__':
     sys.path.append(_helpers_dir)
-    discover_and_run_tests()
+
+    if len(sys.argv) > 1:
+        run_specified_tests()
+    else:
+        discover_and_run_all_tests()
