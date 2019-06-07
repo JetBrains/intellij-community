@@ -107,7 +107,9 @@ public class PsiLiteralExpressionImpl
       String innerText = getInnerText();
       return innerText == null ? null : internedParseStringCharacters(innerText);
     }
-
+    if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      return getTextBlockText();
+    }
     if (type == JavaTokenType.RAW_STRING_LITERAL) {
       return getRawString();
     }
@@ -154,6 +156,36 @@ public class PsiLiteralExpressionImpl
       return text.substring(QUOT.length(), textLength - QUOT.length());
     }
     return null;
+  }
+
+  private String getTextBlockText() {
+    String rawText = getText();
+    if (!(rawText.length() > 6 && rawText.charAt(3) == '\n' && rawText.endsWith("\"\"\""))) {
+      return null;  // malformed or incomplete
+    }
+    String innerText = rawText.substring(4, rawText.length() - 3);
+    String[] lines = StringUtil.splitByLinesDontTrim(innerText);
+
+    int prefix = Integer.MAX_VALUE;
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      int indent = 0;
+      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
+      if (indent == line.length() && i < lines.length - 1) lines[i] = "";
+      else if (indent < prefix) prefix = indent;
+    }
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      if (line.length() > 0) {
+        sb.append(StringUtil.trimTrailing(line.substring(prefix), ' '));
+      }
+      if (i < lines.length - 1) {
+        sb.append('\n');
+      }
+    }
+    return sb.toString();
   }
 
   public String getRawString() {
