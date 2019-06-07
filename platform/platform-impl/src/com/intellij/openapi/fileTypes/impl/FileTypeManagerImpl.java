@@ -345,6 +345,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void loadFileTypeBeans() {
     final List<FileTypeBean> fileTypeBeans = FileTypeManager.EP_NAME.getExtensionList();
+
+    for (FileTypeBean bean : fileTypeBeans) {
+      bean.addMatchers(ContainerUtil.concat(parse(bean.extensions),
+                                            parse(bean.fileNames, (token) -> new ExactFileNameMatcher(token)),
+                                            parse(bean.fileNamesCaseInsensitive, (token) -> new ExactFileNameMatcher(token, true))));
+    }
+
     for (FileTypeBean bean : fileTypeBeans) {
       if (bean.implementationClass == null) continue;
 
@@ -354,9 +361,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       myPendingFileTypes.put(bean.name, bean);
-
-      List<FileNameMatcher> matchers = parse(bean.extensions);
-      for (FileNameMatcher matcher : matchers) {
+      for (FileNameMatcher matcher : bean.getMatchers()) {
         myPendingAssociations.addAssociation(matcher, bean);
       }
     }
@@ -369,9 +374,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         LOG.error(new PluginException("Trying to add extensions to non-registered file type " + bean.name, bean.getPluginId()));
         continue;
       }
-      List<FileNameMatcher> matchers = parse(bean.extensions);
-      oldBean.addMatchers(matchers);
-      for (FileNameMatcher matcher : matchers) {
+      oldBean.addMatchers(bean.getMatchers());
+      for (FileNameMatcher matcher : bean.getMatchers()) {
         myPendingAssociations.addAssociation(matcher, oldBean);
       }
     }
@@ -382,8 +386,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     for (FileTypeBean fileTypeBean : fileTypes) {
       final StandardFileType type = myStandardFileTypes.get(fileTypeBean.name);
       if (type != null) {
-        type.matchers.addAll(parse(fileTypeBean.extensions));
-        type.matchers.addAll(fileTypeBean.getExtraMatchers());
+        type.matchers.addAll(fileTypeBean.getMatchers());
       }
       else {
         instantiateFileTypeBean(fileTypeBean);
@@ -407,8 +410,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       LOG.error(e);
       return null;
     }
-    final StandardFileType standardFileType = new StandardFileType(fileType,
-                                                                   ContainerUtil.concat(parse(fileTypeBean.extensions), fileTypeBean.getExtraMatchers()));
+    final StandardFileType standardFileType = new StandardFileType(fileType, fileTypeBean.getMatchers());
     myStandardFileTypes.put(fileTypeBean.name, standardFileType);
     registerFileTypeWithoutNotification(standardFileType.fileType, standardFileType.matchers, true);
 
@@ -1413,6 +1415,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @NotNull
   private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited) {
+    return parse(semicolonDelimited, token -> new ExtensionFileNameMatcher(token));
+  }
+
+  @NotNull
+  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited, Function<String, FileNameMatcher> matcherFactory) {
     if (semicolonDelimited == null) {
       return Collections.emptyList();
     }
@@ -1420,7 +1427,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
     ArrayList<FileNameMatcher> list = new ArrayList<>(semicolonDelimited.length() / "py;".length());
     while (tokenizer.hasMoreTokens()) {
-      list.add(new ExtensionFileNameMatcher(tokenizer.nextToken().trim()));
+      list.add(matcherFactory.fun(tokenizer.nextToken().trim()));
     }
     return list;
   }

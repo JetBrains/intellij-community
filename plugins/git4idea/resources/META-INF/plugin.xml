@@ -254,7 +254,7 @@
     <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
-    <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
+    <fileType name="PLAIN_TEXT" fileNames=".gitmodules"/>
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
