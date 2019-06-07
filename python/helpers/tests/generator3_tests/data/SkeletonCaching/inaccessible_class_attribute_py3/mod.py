@@ -3,5 +3,5 @@ class MyMeta(type):
         raise RuntimeError
 
 
-class MyClass(meta=MyMeta):
+class MyClass(metaclass=MyMeta):
     attr = 42
