@@ -144,10 +144,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
   fun setupShortcuts(component: JComponent) {
-    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component)
+    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, this)
     DumbAwareAction.create {
       if (commitButton.isEnabled) commitButton.showPopup()
-    }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component)
+    }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage

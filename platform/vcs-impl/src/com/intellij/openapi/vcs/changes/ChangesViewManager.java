@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -77,7 +79,6 @@ import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.util.ui.UIUtil.addBorder;
-import static com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -91,6 +92,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull private final ChangesListView myView;
   private ChangesViewCommitPanel myCommitPanel;
+  private BorderLayoutPanel myContentPanel;
+  private SimpleToolWindowPanel myToolWindowPanel;
   private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
@@ -113,6 +116,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private MyChangeViewContent myContent;
   private boolean myModelUpdateInProgress;
   private final MyTreeExpander myTreeExpander;
+
+  @NotNull private final RegistryValue myIsNonModalCommit = Registry.get("vcs.non.modal.commit");
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
@@ -157,12 +162,19 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), myProject);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-    JComponent panel = createChangeViewComponent();
-    myContent = new MyChangeViewContent(panel, ChangesViewContentManager.LOCAL_CHANGES, false);
+    myToolWindowPanel = createChangeViewComponent();
+    myContent = new MyChangeViewContent(myToolWindowPanel, ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
-    if (myCommitPanel != null) Disposer.register(myContent, myCommitPanel);
+
+    myIsNonModalCommit.addListener(new RegistryValueListener.Adapter() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        updateCommitWorkflow(value.asBoolean());
+      }
+    }, myProject);
+    updateCommitWorkflow(myIsNonModalCommit.asBoolean());
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -192,27 +204,44 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return myCommitWorkflowHandler;
   }
 
-  private JComponent createChangeViewComponent() {
+  private void updateCommitWorkflow(boolean isNonModal) {
+    if (isNonModal) {
+      if (myCommitPanel == null) {
+        myCommitPanel = new ChangesViewCommitPanel(myView);
+        myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
+        Disposer.register(myContent, myCommitPanel);
+
+        myContentPanel.addToBottom(myCommitPanel);
+        myContentPanel.validate();
+        myCommitPanel.setupShortcuts(myToolWindowPanel);
+      }
+    }
+    else if (myCommitPanel != null) {
+      myContentPanel.remove(myCommitPanel);
+      myContentPanel.validate();
+      Disposer.dispose(myCommitPanel);
+
+      myCommitPanel = null;
+      myCommitWorkflowHandler = null;
+    }
+  }
+
+  @NotNull
+  private SimpleToolWindowPanel createChangeViewComponent() {
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
     BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
 
-    BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
+    myContentPanel = new BorderLayoutPanel() {
       @Override
       public Dimension getMinimumSize() {
         return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
       }
     };
-    contentPanel.addToCenter(changesPanel);
-    if (isNonModalCommit()) {
-      myCommitPanel = new ChangesViewCommitPanel(myView);
-      contentPanel.addToBottom(myCommitPanel);
-
-      myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
-    }
+    myContentPanel.addToCenter(changesPanel);
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+    mySplitterComponent = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                            myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
     myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
@@ -243,13 +272,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return panel;
   }
 
-  private void registerShortcuts(@NotNull JComponent component) {
+  private static void registerShortcuts(@NotNull JComponent component) {
     registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
     registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
-
-    if (myCommitPanel != null) myCommitPanel.setupShortcuts(component);
   }
 
   @NotNull

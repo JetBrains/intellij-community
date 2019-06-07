@@ -2,10 +2,11 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
-import com.intellij.vcs.commit.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColorUtil
@@ -17,9 +18,11 @@ import com.intellij.util.ui.UIUtil.rightArrow
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchStateProvider
 import com.intellij.vcs.branch.LinkedBranchData
+import com.intellij.vcs.commit.CommitWorkflowUi
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import java.awt.Color
 import java.awt.Dimension
+import java.beans.PropertyChangeListener
 import javax.swing.JTree.TREE_MODEL_PROPERTY
 import javax.swing.UIManager
 
@@ -38,14 +41,19 @@ class CurrentBranchComponent(
     }
 
   init {
+    isVisible = false
     icon = AllIcons.Vcs.Branch
     foreground = TEXT_COLOR
 
-    tree.addPropertyChangeListener { e ->
+    val treeChangeListener = PropertyChangeListener { e ->
       if (e.propertyName == TREE_MODEL_PROPERTY) {
         refresh()
       }
     }
+    tree.addPropertyChangeListener(treeChangeListener)
+    Disposer.register(commitWorkflowUi, Disposable { tree.removePropertyChangeListener(treeChangeListener) })
+
+    refresh()
   }
 
   override fun getPreferredSize(): Dimension? = if (isVisible) super.getPreferredSize() else emptySize()

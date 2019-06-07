@@ -4,20 +4,19 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.openapi.vcs.impl.VcsInitObject
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
 internal class CommitState(val changes: List<Change>, val commitMessage: String)
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  private val vcsManager = ProjectLevelVcsManager.getInstance(project)
+  private val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
   private val changeListManager = ChangeListManager.getInstance(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
@@ -26,12 +25,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
   internal lateinit var commitState: CommitState
 
   init {
-    val connection = project.messageBus.connect()
-    connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
-      Disposer.dispose(connection)
-
-      runInEdt { updateVcses(vcsManager.allActiveVcss.toSet()) }
-    })
+    vcsManager.addInitializationRequest(VcsInitObject.AFTER_COMMON) { runInEdt { updateVcses(vcsManager.allActiveVcss.toSet()) } }
   }
 
   internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =
