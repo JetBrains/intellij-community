@@ -135,7 +135,8 @@ public abstract class FileAttributesReadingTest {
     File file = new File(SystemInfoRt.isWindows ? "C:\\" : "/");
 
     FileAttributes attributes = getAttributes(file);
-    assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+    assertEquals(file + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.type);
+    assertFalse(file + " " + attributes, attributes.isSymLink());
     if (SystemInfoRt.isWindows) {
       assertDirectoriesEqual(file);
     }
