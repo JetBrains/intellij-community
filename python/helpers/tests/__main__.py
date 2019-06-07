@@ -21,7 +21,7 @@ def get_test_runner():
     try:
         import teamcity.unittestpy
         if teamcity.is_running_under_teamcity():
-            return teamcity.unittestpy.TeamcityTestRunner()
+            return teamcity.unittestpy.TeamcityTestRunner(buffer=True)
     except ImportError:
         pass
     return unittest.TextTestRunner()
