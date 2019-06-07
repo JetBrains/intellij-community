@@ -27,15 +27,10 @@ class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
         StartupManager.getInstance(project).runWhenProjectIsInitialized {
           ApplicationManager.getApplication().executeOnPooledThread {
             generateVcsIgnoreFileInStoreDirIfNeeded(project)
+            generateVcsIgnoreFileInRootIfNeeded(project)
           }
         }
       })
-
-    StartupManager.getInstance(project).runWhenProjectIsInitialized {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        generateVcsIgnoreFileInRootIfNeeded(project)
-      }
-    }
   }
 
   /**

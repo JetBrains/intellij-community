@@ -1066,10 +1066,6 @@ public class GitUtil {
     VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project), ignoreFileRoot);
   }
 
-  public static void proposeUpdateGitignore(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
-    VcsImplUtil.proposeUpdateIgnoreFile(project, GitVcs.getInstance(project), ignoreFileRoot);
-  }
-
   public static <T extends Throwable> void tryRunOrClose(@NotNull AutoCloseable closeable,
                                                          @NotNull ThrowableRunnable<T> runnable) throws T {
     try {
