@@ -429,6 +429,7 @@
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
 
+    <statistics.validation.customWhiteListRule implementation="com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector$FacetTypeUtilValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector$RunConfigurationTypeValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl$ProductivityUtilValidator" />
