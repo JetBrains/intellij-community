@@ -13,6 +13,7 @@ public class FileEditorOpenOptions {
   private Boolean myPin = null;
   private int myIndex = -1;
   private boolean myExactState = false;
+  private boolean myReopeningEditorsOnStartup = false;
 
   public FileEditorOpenOptions withCurrentTab(boolean current) {
     myCurrentTab = current;
@@ -39,6 +40,11 @@ public class FileEditorOpenOptions {
     return this;
   }
 
+  public FileEditorOpenOptions withReopeningEditorsOnStartup() {
+    myReopeningEditorsOnStartup = true;
+    return this;
+  }
+
   public boolean isCurrentTab() {
     return myCurrentTab;
   }
@@ -57,5 +63,9 @@ public class FileEditorOpenOptions {
 
   public boolean isExactState() {
     return myExactState;
+  }
+
+  public boolean isReopeningEditorsOnStartup() {
+    return myReopeningEditorsOnStartup;
   }
 }

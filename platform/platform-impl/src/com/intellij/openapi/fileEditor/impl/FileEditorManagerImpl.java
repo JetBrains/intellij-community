@@ -801,7 +801,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final Ref<EditorWithProviderComposite> compositeRef = new Ref<>();
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> compositeRef.set(window.findFileComposite(file)));
+    if (!options.isReopeningEditorsOnStartup()) {
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> compositeRef.set(window.findFileComposite(file)));
+    }
 
     final FileEditorProvider[] newProviders;
     final AsyncFileEditorProvider.Builder[] builders;
