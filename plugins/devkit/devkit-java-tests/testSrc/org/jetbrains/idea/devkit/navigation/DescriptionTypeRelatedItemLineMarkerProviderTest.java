@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.ui.IconManager;
 import icons.DevkitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
@@ -16,20 +15,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @TestDataPath("$CONTENT_ROOT/testData/navigation/descriptionType")
 public class DescriptionTypeRelatedItemLineMarkerProviderTest extends DescriptionTypeRelatedItemLineMarkerProviderTestBase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    IconManager.activate();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      IconManager.deactivate();
-    }
-    finally {
-      super.tearDown();
-    }
+  protected boolean isIconRequired() {
+    return true;
   }
 
   @Override

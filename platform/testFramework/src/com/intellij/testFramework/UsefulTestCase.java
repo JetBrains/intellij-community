@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +33,6 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
-import com.intellij.ui.IconManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
@@ -177,7 +177,9 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.setDebugMode(!isStressTest);
 
     if (isIconRequired()) {
-      IconManager.activate();
+      // ensure that IconLoader will use dummy empty icon
+      IconLoader.deactivate();
+      //IconManager.activate();
     }
   }
 
@@ -192,7 +194,7 @@ public abstract class UsefulTestCase extends TestCase {
     new RunAll(
       () -> {
         if (isIconRequired()) {
-          IconManager.deactivate();
+          //IconManager.deactivate();
         }
       },
       () -> disposeRootDisposable(),

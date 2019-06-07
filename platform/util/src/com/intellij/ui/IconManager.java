@@ -127,7 +127,7 @@ final class DummyIconManager implements IconManager {
   @NotNull
   @Override
   public <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
-    return new DummyIcon();
+    return f.apply(param);
   }
 
   @NotNull
@@ -150,6 +150,10 @@ final class DummyIconManager implements IconManager {
 
   private static class DummyIcon implements Icon {
     static final DummyIcon INSTANCE = new DummyIcon();
+
+    private DummyIcon() {
+    }
+
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
     }

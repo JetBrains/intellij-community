@@ -29,6 +29,11 @@ import java.util.List;
 
 public class IconUtilTest extends PlatformTestCase {
   @Override
+  protected boolean isIconRequired() {
+    return false;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     while (DumbService.isDumb(getProject())) {
@@ -306,8 +311,8 @@ public class IconUtilTest extends PlatformTestCase {
     if (icon instanceof LayeredIcon) {
       return ContainerUtil.flatten(ContainerUtil.map(((LayeredIcon)icon).getAllLayers(), IconUtilTest::autopsyIconsFrom));
     }
-    if (icon instanceof com.intellij.ui.RowIcon) {
-      return ContainerUtil.flatten(ContainerUtil.map(((com.intellij.ui.RowIcon)icon).getAllIcons(), IconUtilTest::autopsyIconsFrom));
+    if (icon instanceof RowIcon) {
+      return ContainerUtil.flatten(ContainerUtil.map(((RowIcon)icon).getAllIcons(), IconUtilTest::autopsyIconsFrom));
     }
     return Collections.singletonList(icon);
   }

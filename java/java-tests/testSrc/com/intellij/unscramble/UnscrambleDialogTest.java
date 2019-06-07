@@ -6,7 +6,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 import java.io.File;
@@ -20,15 +19,13 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   private RunContentDescriptor myContent;
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    IconManager.activate();
+  protected boolean isIconRequired() {
+    return true;
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      IconManager.deactivate();
       Disposer.dispose(myContent);
     }
     catch (Throwable e) {
