@@ -919,6 +919,8 @@
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Export"/>
 
+      <action id="WelcomeScreen.Configure.CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
+
       <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
       <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
 
