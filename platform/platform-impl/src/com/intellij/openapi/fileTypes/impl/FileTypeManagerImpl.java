@@ -1094,6 +1094,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public String[] getAssociatedExtensions(@NotNull FileType type) {
+    instantiatePendingFileTypeByName(type.getName());
+
     //noinspection deprecation
     return myPatternsTable.getAssociatedExtensions(type);
   }
@@ -1101,6 +1103,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public List<FileNameMatcher> getAssociations(@NotNull FileType type) {
+    instantiatePendingFileTypeByName(type.getName());
+
     return myPatternsTable.getAssociations(type);
   }
 
