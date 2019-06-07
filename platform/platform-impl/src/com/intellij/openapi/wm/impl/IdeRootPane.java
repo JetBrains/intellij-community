@@ -326,7 +326,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
   private void updateMainMenuVisibility() {
     if (UISettings.getInstance().getPresentationMode()) return;
-    menuBar.setVisible(UISettings.getInstance().getShowMainMenu());
+    if (IdeFrameDecorator.isCustomDecorationActive()) return;
+    boolean visible = UISettings.getInstance().getShowMainMenu();
+    if (visible != menuBar.isVisible()) {
+      menuBar.setVisible(visible);
+    }
   }
 
   void installNorthComponents(final Project project) {
