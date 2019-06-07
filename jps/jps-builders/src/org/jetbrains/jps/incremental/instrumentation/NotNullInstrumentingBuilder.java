@@ -17,9 +17,7 @@ import org.jetbrains.jps.incremental.CompiledClass;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassWriter;
-import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -52,8 +50,10 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
   }
 
   @Override
-  protected boolean canInstrument(CompiledClass compiledClass, int classFileVersion) {
-    return (classFileVersion & 0xFFFF) >= Opcodes.V1_5 && !"module-info".equals(compiledClass.getClassName());
+  protected boolean canInstrument(CompiledClass compiledClass, ClassReader reader, int classFileVersion) {
+    return (classFileVersion & 0xFFFF) >= Opcodes.V1_5
+           && !"module-info".equals(compiledClass.getClassName())
+           && !IsKotlinClassCheckingVisitor.isKotlinClass(reader);
   }
 
   // todo: probably instrument other NotNull-like annotations defined in project settings?
@@ -83,4 +83,24 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     return null;
   }
 
+  private static class IsKotlinClassCheckingVisitor extends ClassVisitor {
+    private final static String KOTLIN_METADATA_FQ_NAME = "kotlin.Metadata";
+    private boolean isKotlinClass;
+
+    IsKotlinClassCheckingVisitor() {
+      super(Opcodes.API_VERSION);
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+      isKotlinClass = isKotlinClass || KOTLIN_METADATA_FQ_NAME.equals(Type.getType(descriptor).getClassName());
+      return null;
+    }
+
+    public static boolean isKotlinClass(ClassReader reader) {
+      IsKotlinClassCheckingVisitor visitor = new IsKotlinClassCheckingVisitor();
+      reader.accept(visitor, 0);
+      return visitor.isKotlinClass;
+    }
+  }
 }

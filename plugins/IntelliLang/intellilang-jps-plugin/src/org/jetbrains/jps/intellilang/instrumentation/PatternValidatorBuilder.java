@@ -37,7 +37,7 @@ public class PatternValidatorBuilder extends BaseInstrumentingBuilder {
   }
 
   @Override
-  protected boolean canInstrument(CompiledClass compiledClass, int classFileVersion) {
+  protected boolean canInstrument(CompiledClass compiledClass, ClassReader reader, int classFileVersion) {
     return !"module-info".equals(compiledClass.getClassName());
   }
 
