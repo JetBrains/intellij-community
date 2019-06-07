@@ -123,7 +123,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", "6")
+        writer.writeStringField("version", "7")
         writeServiceStats(writer)
         writeIcons(writer)
 

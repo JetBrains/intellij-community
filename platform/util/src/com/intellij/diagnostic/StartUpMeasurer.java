@@ -51,7 +51,8 @@ public final class StartUpMeasurer {
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
-    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES = "project post-startup activities";
+    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE = "project post-startup dumb-aware activities";
+    public static final String RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT = "project post-startup edt activities";
 
     public static final String LOAD_MODULES = "module loading";
     public static final String PROJECT_OPENED_CALLBACKS = "project opened callbacks";

@@ -1,3 +1,7 @@
+## 7
+* add `icons`.
+* split post-startup activities into dumb-aware and edt.
+
 ## 6
 * add `plugin`.
 
