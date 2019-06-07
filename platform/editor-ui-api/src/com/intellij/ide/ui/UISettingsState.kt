@@ -2,6 +2,7 @@
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
@@ -34,9 +35,11 @@ class UISettingsState : BaseState() {
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale by property(0f)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit by property(50)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_LOCATIONS_LIMIT")
   var recentLocationsLimit by property(25)
 
@@ -47,6 +50,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("CONSOLE_CYCLE_BUFFER_SIZE_KB")
   var consoleCycleBufferSizeKb by property(1024)
 
+  @get:ReportValue
   @get:OptionTag("EDITOR_TAB_LIMIT")
   var editorTabLimit by property(10)
 
