@@ -150,6 +150,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
+  private final Object PENDING_INIT_LOCK = new Object();
+
   public FileTypeManagerImpl() {
     int fileTypeChangedCounter = PropertiesComponent.getInstance().getInt("fileTypeChangedCounter", 0);
     fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
@@ -551,9 +553,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getStdFileType(@NotNull @NonNls String name) {
-    instantiatePendingFileTypeByName(name);
+    StandardFileType stdFileType;
+    synchronized (PENDING_INIT_LOCK) {
+      instantiatePendingFileTypeByName(name);
 
-    StandardFileType stdFileType = myStandardFileTypes.get(name);
+      stdFileType = myStandardFileTypes.get(name);
+    }
     return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
 
@@ -601,12 +606,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
-    final FileTypeBean pendingFileType = myPendingAssociations.findAssociatedFileType(fileName);
-    if (pendingFileType != null) {
-      return ObjectUtils.notNull(instantiateFileTypeBean(pendingFileType), UnknownFileType.INSTANCE);
+    synchronized (PENDING_INIT_LOCK) {
+      final FileTypeBean pendingFileType = myPendingAssociations.findAssociatedFileType(fileName);
+      if (pendingFileType != null) {
+        return ObjectUtils.notNull(instantiateFileTypeBean(pendingFileType), UnknownFileType.INSTANCE);
+      }
+      FileType type = myPatternsTable.findAssociatedFileType(fileName);
+      return ObjectUtils.notNull(type, UnknownFileType.INSTANCE);
     }
-    FileType type = myPatternsTable.findAssociatedFileType(fileName);
-    return ObjectUtils.notNull(type, UnknownFileType.INSTANCE);
   }
 
   public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
@@ -988,9 +995,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public LanguageFileType findFileTypeByLanguage(Language language) {
-    for (FileTypeBean bean : myPendingFileTypes.values()) {
-      if (language.getID().equals(bean.language)) {
-        return (LanguageFileType)instantiateFileTypeBean(bean);
+    synchronized (PENDING_INIT_LOCK) {
+      for (FileTypeBean bean : myPendingFileTypes.values()) {
+        if (language.getID().equals(bean.language)) {
+          return (LanguageFileType)instantiateFileTypeBean(bean);
+        }
       }
     }
     // Do not use getRegisteredFileTypes() to avoid instantiating all pending file types
@@ -1000,12 +1009,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByExtension(@NotNull String extension) {
-    final FileTypeBean pendingFileType = myPendingAssociations.findByExtension(extension);
-    if (pendingFileType != null) {
-      return ObjectUtils.notNull(instantiateFileTypeBean(pendingFileType), UnknownFileType.INSTANCE);
+    synchronized (PENDING_INIT_LOCK) {
+      final FileTypeBean pendingFileType = myPendingAssociations.findByExtension(extension);
+      if (pendingFileType != null) {
+        return ObjectUtils.notNull(instantiateFileTypeBean(pendingFileType), UnknownFileType.INSTANCE);
+      }
+      FileType type = myPatternsTable.findByExtension(extension);
+      return ObjectUtils.notNull(type, UnknownFileType.INSTANCE);
     }
-    FileType type = myPatternsTable.findByExtension(extension);
-    return ObjectUtils.notNull(type, UnknownFileType.INSTANCE);
   }
 
   @Override
@@ -1045,7 +1056,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType[] getRegisteredFileTypes() {
-    instantiatePendingFileTypes();
+    synchronized (PENDING_INIT_LOCK) {
+      instantiatePendingFileTypes();
+    }
     Collection<FileType> fileTypes = mySchemeManager.getAllSchemes();
     return fileTypes.toArray(FileType.EMPTY_ARRAY);
   }
@@ -1094,18 +1107,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public String[] getAssociatedExtensions(@NotNull FileType type) {
-    instantiatePendingFileTypeByName(type.getName());
+    synchronized (PENDING_INIT_LOCK) {
+      instantiatePendingFileTypeByName(type.getName());
 
-    //noinspection deprecation
-    return myPatternsTable.getAssociatedExtensions(type);
+      //noinspection deprecation
+      return myPatternsTable.getAssociatedExtensions(type);
+    }
   }
 
   @Override
   @NotNull
   public List<FileNameMatcher> getAssociations(@NotNull FileType type) {
-    instantiatePendingFileTypeByName(type.getName());
+    synchronized (PENDING_INIT_LOCK) {
+      instantiatePendingFileTypeByName(type.getName());
 
-    return myPatternsTable.getAssociations(type);
+      return myPatternsTable.getAssociations(type);
+    }
   }
 
   @Override
@@ -1388,8 +1405,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Nullable
   private FileType getFileTypeByName(@NotNull String name) {
-    instantiatePendingFileTypeByName(name);
-    return mySchemeManager.findSchemeByName(name);
+    synchronized (PENDING_INIT_LOCK) {
+      instantiatePendingFileTypeByName(name);
+      return mySchemeManager.findSchemeByName(name);
+    }
   }
 
   @NotNull
@@ -1539,7 +1558,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @NotNull
   FileTypeAssocTable<FileType> getExtensionMap() {
-    instantiatePendingFileTypes();
+    synchronized (PENDING_INIT_LOCK) {
+      instantiatePendingFileTypes();
+    }
     return myPatternsTable;
   }
 
