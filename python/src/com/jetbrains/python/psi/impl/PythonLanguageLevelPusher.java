@@ -81,7 +81,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   @Override
-  public void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
+  public void initExtra(@NotNull Project project, @NotNull MessageBus bus) {
     final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
     final Set<Sdk> distinctSdks = StreamEx.ofValues(moduleSdks).nonNull().collect(Collectors.toCollection(LinkedHashSet::new));
 

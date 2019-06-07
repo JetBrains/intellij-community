@@ -53,11 +53,6 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
   }
 
   @Override
-  public void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
-    // nothing
-  }
-
-  @Override
   @NotNull
   public Key<LanguageLevel> getFileDataKey() {
     return LanguageLevel.KEY;
