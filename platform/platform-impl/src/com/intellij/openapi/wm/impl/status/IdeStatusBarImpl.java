@@ -522,6 +522,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof MouseEvent) {
+      if (myRightPanel == null) {
+        return false;
+      }
       Component component = ((MouseEvent)e).getComponent();
       if (component == null) {
         return false;
