@@ -125,7 +125,6 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     Pair<String, Integer> unescaped = unescape(value, valueOffset);
 
     Ref<Boolean> manuallyResized = new Ref<>();
-    //Ref<Balloon> popupRef = new Ref<>();
     Ref<JBPopup> popupRef = new Ref<>();
     EditorTextField textField = new EditorTextField(unescaped.first, editor.getProject(), FileTypes.PLAIN_TEXT) {
       @Override
@@ -137,28 +136,12 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
           @Override
           public void documentChanged(@NotNull DocumentEvent event) {
             if (manuallyResized.isNull()) {
-              //popupRef.get().revalidate();
               popupRef.get().pack(true, true);
             }
           }
         });
         return e;
       }
-
-      //@Override
-      //public Dimension getPreferredSize() {
-      //  Dimension size = super.getPreferredSize();
-      //  int width = size.width;
-      //  int height = size.height;
-      //  if (width > 550) {
-      //    setSize(550, height);
-      //    validate();
-      //    size = super.getPreferredSize();
-      //    width = size.width;
-      //    height = size.height;
-      //  }
-      //  return new Dimension(Math.max(350, Math.min(550, width)), Math.min(550, height));
-      //}
 
       @Override
       protected boolean shouldHaveBorder() {
@@ -203,18 +186,6 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     c.insets = new JBInsets(topBottomGap, betweenGap, topBottomGap, sideGap);
     panel.add(button, c);
 
-    //Balloon popup = JBPopupFactory.getInstance()
-    //  .createBalloonBuilder(textField)
-    //  .setTitle(handler.getPopupHeader())
-    //  //.setAdText("Enter to confirm, Esc to cancel, Shift+Enter to add a new line")
-    //  .setRequestFocus(true)
-    //  //.setResizable(true)
-    //  //.setLocateByContent(true)
-    //  //.setCancelOnWindowDeactivation(false)
-    //  .setShowCallout(false)
-    //  .setHideOnAction(false)
-    //  .createBalloon();
-    //popup.setAnimationEnabled(false);
     JBPopup popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, textField)
       .setRequestFocus(true)
@@ -232,7 +203,6 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
 
     Point location = editor.visualPositionToXY(new VisualPosition(regionPosition.line, regionPosition.column + 1));
     location.translate(-JBUI.scale(sideGap), -JBUI.scale(topBottomGap));
-    //popup.show(new RelativePoint(editor.getContentComponent(), location), Balloon.Position.atRight);
     popup.show(new RelativePoint(editor.getContentComponent(), location));
     LightweightHint hint = showTooltip(editor, handler.getFile(), handler.getKey());
     if (hint != null) {
@@ -345,13 +315,11 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   private static class MyEnterAction extends AnAction {
     private final EditorTextField field;
     private final FoldRegion foldRegion;
-    //private final Balloon popup;
     private final JBPopup popup;
     private final PropertyFoldingEditHandler handler;
 
     private MyEnterAction(EditorTextField field,
                           FoldRegion region,
-                          //Balloon popup,
                           JBPopup popup,
                           PropertyFoldingEditHandler handler) {
       this.field = field;
@@ -369,7 +337,6 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
       Editor fieldEditor = field.getEditor();
       if (fieldEditor == null) return;
       int valueOffset = fieldEditor.getCaretModel().getOffset();
-      //popup.hide();
       popup.cancel();
       Editor editor = foldRegion.getEditor();
       runWhenFocused(editor.getContentComponent(),
