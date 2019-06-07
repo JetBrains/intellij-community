@@ -26,7 +26,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubServerPath;
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
+import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper;
