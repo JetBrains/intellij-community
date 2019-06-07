@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationListener;
@@ -12,44 +11,51 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import static java.lang.Math.max;
 
 /**
  * @author yole
  */
-public class UpdateCheckerComponent implements Disposable, BaseComponent {
-  private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
+@Service
+public final class UpdateCheckerService implements Disposable {
+  public static UpdateCheckerService getInstance() {
+    return ServiceManager.getService(UpdateCheckerService.class);
+  }
+
+  private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
-  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";//must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";
+    //must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
 
-  public UpdateCheckerComponent() {
+  public UpdateCheckerService() {
     Disposer.register(this, myCheckForUpdatesAlarm);
+  }
+
+  void checkForUpdates() {
+    checkIfPreviousUpdateFailed();
 
     updateDefaultChannel();
-    scheduleOnStartCheck();
+    scheduleFirstCheck();
     cleanupPatch();
     snapPackageNotification();
   }
@@ -76,27 +82,22 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
     }
   }
 
-  private void scheduleOnStartCheck() {
+  private void scheduleFirstCheck() {
     UpdateSettings settings = UpdateSettings.getInstance();
     if (!settings.isCheckNeeded()) {
       return;
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<? super Boolean> willOpenProject) {
-        BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-        BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
-        long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
+    BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+    BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
+    long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
 
-        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {
-          myCheckRunnable.run();
-        }
-        else {
-          queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
-        }
-      }
-    });
+    if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {
+      myCheckRunnable.run();
+    }
+    else {
+      queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
+    }
   }
 
   private static void cleanupPatch() {
@@ -105,12 +106,6 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
 
   private void queueNextCheck(long interval) {
     myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
-  }
-
-  @Override
-  public void initComponent() {
-    checkIfPreviousUpdateFailed();
-    PluginsAdvertiser.ensureDeleted();
   }
 
   private static void checkIfPreviousUpdateFailed() {
@@ -184,7 +179,8 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
         }
 
         String message = ((blogPost == null) ? IdeBundle.message("update.snap.message")
-                                             : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost)));
+                                             : IdeBundle
+                            .message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost)));
 
         UpdateChecker.NOTIFICATIONS.createNotification(IdeBundle.message("update.notifications.title"),
                                                        message,
