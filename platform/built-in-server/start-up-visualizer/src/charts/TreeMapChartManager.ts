@@ -1,16 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {ChartManager} from "@/charts/ChartManager"
+import {BaseChartManager} from "@/charts/ChartManager"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
 import {IconData} from "@/state/data"
 
-export class TreeMapChartManager implements ChartManager {
-  private readonly chart: am4charts.TreeMap
-
+export class TreeMapChartManager extends BaseChartManager<am4charts.TreeMap> {
   constructor(container: HTMLElement) {
-    const chart = am4core.create(container, am4charts.TreeMap)
-    this.chart = chart
+    super(am4core.create(container, am4charts.TreeMap))
+
+    const chart = this.chart
     chart.dataFields.value = "duration"
     chart.dataFields.name = "name"
     chart.dataFields.children = "children"
