@@ -971,7 +971,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static String sanitizeFileName(@NotNull String name, boolean strict, String replacement) {
+  public static String sanitizeFileName(@NotNull String name, boolean strict, @NotNull String replacement) {
     StringBuilder result = null;
 
     int last = 0;
