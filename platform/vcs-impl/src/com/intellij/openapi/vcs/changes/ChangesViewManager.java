@@ -23,8 +23,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -51,6 +49,7 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcs.commit.ChangesViewCommitPanel;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
+import com.intellij.vcs.commit.CommitWorkflowManager;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -117,8 +116,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private boolean myModelUpdateInProgress;
   private final MyTreeExpander myTreeExpander;
 
-  @NotNull private final RegistryValue myIsNonModalCommit = Registry.get("vcs.non.modal.commit");
-
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
     return project.getComponent(ChangesViewI.class);
@@ -168,13 +165,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
 
-    myIsNonModalCommit.addListener(new RegistryValueListener.Adapter() {
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        updateCommitWorkflow(value.asBoolean());
-      }
-    }, myProject);
-    updateCommitWorkflow(myIsNonModalCommit.asBoolean());
+    CommitWorkflowManager.install(myProject);
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -204,7 +195,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return myCommitWorkflowHandler;
   }
 
-  private void updateCommitWorkflow(boolean isNonModal) {
+  public void updateCommitWorkflow(boolean isNonModal) {
     if (isNonModal) {
       if (myCommitPanel == null) {
         myCommitPanel = new ChangesViewCommitPanel(myView);

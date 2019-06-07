@@ -8,15 +8,13 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
-import com.intellij.openapi.vcs.impl.VcsInitObject
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
 internal class CommitState(val changes: List<Change>, val commitMessage: String)
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  private val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
+  private val vcsManager = ProjectLevelVcsManager.getInstance(project)
   private val changeListManager = ChangeListManager.getInstance(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
@@ -25,7 +23,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
   internal lateinit var commitState: CommitState
 
   init {
-    vcsManager.addInitializationRequest(VcsInitObject.AFTER_COMMON) { runInEdt { updateVcses(vcsManager.allActiveVcss.toSet()) } }
+    updateVcses(vcsManager.allActiveVcss.toSet())
   }
 
   internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =
