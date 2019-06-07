@@ -102,6 +102,7 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.FALSE_KEYWORD) {
       return Boolean.FALSE;
     }
+
     if (type == JavaTokenType.STRING_LITERAL) {
       String innerText = getInnerText();
       return innerText == null ? null : internedParseStringCharacters(innerText);
@@ -126,6 +127,7 @@ public class PsiLiteralExpressionImpl
     if (type == JavaTokenType.DOUBLE_LITERAL) {
       return PsiLiteralUtil.parseDouble(text);
     }
+
     if (type == JavaTokenType.CHARACTER_LITERAL) {
       if (textLength == 1 || !StringUtil.endsWithChar(text, '\'')) {
         return null;
@@ -145,19 +147,13 @@ public class PsiLiteralExpressionImpl
   public String getInnerText() {
     String text = getCanonicalText();
     int textLength = text.length();
-    if (StringUtil.endsWithChar(text, '\"')) {
-      if (textLength == 1) return null;
-      text = text.substring(1, textLength - 1);
+    if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {
+      return text.substring(1, textLength - 1);
     }
-    else {
-      if (text.startsWith(QUOT) && text.endsWith(QUOT) && textLength > QUOT.length()) {
-        text = text.substring(QUOT.length(), textLength - QUOT.length());
-      }
-      else {
-        return null;
-      }
+    if (textLength > QUOT.length() && text.startsWith(QUOT) && text.endsWith(QUOT)) {
+      return text.substring(QUOT.length(), textLength - QUOT.length());
     }
-    return text;
+    return null;
   }
 
   public String getRawString() {
