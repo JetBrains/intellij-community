@@ -38,6 +38,14 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     }
 
     @Override
+    public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+      if (myLanguageLevel.isPreview() || myLanguageLevel == LanguageLevel.JDK_X) {
+        AcceptedLanguageLevelsSettings.allowLevel(project, myLanguageLevel);
+      }
+      super.setUpProject(project, handler);
+    }
+
+    @Override
     public Sdk getSdk() {
       Sdk jdk = IdeaTestUtil.getMockJdk(myLanguageLevel.toJavaVersion());
       return myWithAnnotations ? PsiTestUtil.addJdkAnnotations(jdk) : jdk;
@@ -62,21 +70,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   public static final LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
   public static final LightProjectDescriptor JAVA_10_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_10, true);
   public static final LightProjectDescriptor JAVA_11 = new ProjectDescriptor(LanguageLevel.JDK_11);
-  public static final LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12_PREVIEW) {
-    @Override
-    public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
-      AcceptedLanguageLevelsSettings.allowLevel(project, myLanguageLevel);
-      super.setUpProject(project, handler);
-    }
-
-  };
-  public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X) {
-    @Override
-    public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
-      AcceptedLanguageLevelsSettings.allowLevel(project, myLanguageLevel);
-      super.setUpProject(project, handler);
-    }
-  };
+  public static final LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12_PREVIEW);
+  public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
 
   public static final LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
     @Override
