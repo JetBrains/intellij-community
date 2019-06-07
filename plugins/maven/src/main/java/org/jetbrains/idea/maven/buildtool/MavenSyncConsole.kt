@@ -18,7 +18,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
-  private var mySyncView: BuildProgressListener = BuildProgressListener { }
+  private var mySyncView: BuildProgressListener = BuildProgressListener { _, _ -> }
   private var mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
   private var finished = false
   private var started = false
@@ -32,7 +32,7 @@ class MavenSyncConsole(private val myProject: Project) {
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
     val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
     mySyncView = syncView
-    mySyncView.onEvent(StartBuildEventImpl(descriptor, "Sync ${myProject.name}"))
+    mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, "Sync ${myProject.name}"))
     debugLog("maven sync: started importing $myProject")
   }
 
@@ -49,7 +49,7 @@ class MavenSyncConsole(private val myProject: Project) {
       return
     }
     val toPrint = if (text.endsWith('\n')) text else "$text\n"
-    mySyncView.onEvent(OutputBuildEventImpl(parentId, toPrint, stdout))
+    mySyncView.onEvent(mySyncId, OutputBuildEventImpl(parentId, toPrint, stdout))
   }
 
   @Synchronized
@@ -82,7 +82,7 @@ class MavenSyncConsole(private val myProject: Project) {
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete with $result")
     tasks.forEach { completeTask(it.first, it.second, result) }
-    mySyncView.onEvent(FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "", result))
+    mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "", result))
     finished = true
     started = false
   }
@@ -102,7 +102,7 @@ class MavenSyncConsole(private val myProject: Project) {
     if (!started || finished) return
     debugLog("Maven sync: start $taskName")
     if (myStartedSet.add(parentId to taskName)) {
-      mySyncView.onEvent(StartEventImpl(taskName, parentId, System.currentTimeMillis(), taskName))
+      mySyncView.onEvent(mySyncId, StartEventImpl(taskName, parentId, System.currentTimeMillis(), taskName))
     }
   }
 
@@ -112,7 +112,7 @@ class MavenSyncConsole(private val myProject: Project) {
     if (!started || finished) return
     debugLog("Maven sync: complete $taskName with $result")
     if (myStartedSet.remove(parentId to taskName)) {
-      mySyncView.onEvent(FinishEventImpl(taskName, parentId, System.currentTimeMillis(), taskName, result))
+      mySyncView.onEvent(mySyncId, FinishEventImpl(taskName, parentId, System.currentTimeMillis(), taskName, result))
     }
   }
 

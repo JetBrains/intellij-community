@@ -52,7 +52,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     myParser = MavenOutputParserProvider.createMavenOutputParser(myTaskId);
 
     myInstantReader = new BuildOutputInstantReaderImpl(
-      myTaskId,
+      myTaskId, myTaskId,
       wrapListener(project, myBuildProgressListener, myWorkingDir),
       Collections.singletonList(myParser));
   }
@@ -64,7 +64,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
   }
 
   public synchronized void finish() {
-    myParser.finish(e -> myBuildProgressListener.onEvent(e));
+    myParser.finish(e -> myBuildProgressListener.onEvent(myDescriptor.getId(), e));
     myInstantReader.close();
     closed = true;
   }
@@ -78,7 +78,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
         .withRestartAction(new MavenResumeAction(processHandler, DefaultJavaProgramRunner.getInstance(), executionEnvironment));
     }
 
-    myBuildProgressListener.onEvent(startEvent);
+    myBuildProgressListener.onEvent(myDescriptor.getId(), startEvent);
   }
 
   public void notifyException(Throwable throwable) {

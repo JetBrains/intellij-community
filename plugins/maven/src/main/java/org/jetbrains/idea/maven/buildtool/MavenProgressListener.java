@@ -23,12 +23,12 @@ public class MavenProgressListener implements BuildProgressListener {
 
 
   @Override
-  public void onEvent(@NotNull BuildEvent event) {
+  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     if (event instanceof MavenBuildEvent) {
       ((MavenBuildEvent)event).process(myOutputActionProcessor);
     }
     else {
-      myListener.onEvent(event);
+      myListener.onEvent(buildId, event);
     }
   }
 }
