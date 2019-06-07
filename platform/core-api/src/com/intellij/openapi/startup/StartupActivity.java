@@ -31,5 +31,12 @@ public interface StartupActivity {
 
   ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
 
+  /**
+   * Executed some time after startup on a background thread with no progress indicator. Such activities may produce notifications
+   * but should not be used for any work that needs to be otherwise visible to users. Such activities are run regardless
+   * of the current indexing mode and should not be used for any work that requires access to indices.
+   */
+  ExtensionPointName<StartupActivity> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
+
   void runActivity(@NotNull Project project);
 }

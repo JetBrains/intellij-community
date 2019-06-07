@@ -40,6 +40,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -411,6 +412,14 @@ public class StartupManagerImpl extends StartupManagerEx {
       ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, runnable.getClass(), null, pluginId);
     }
     activity.end();
+  }
+
+  public void runBackgroundPostStartupActivities() {
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
+        activity.runActivity(myProject);
+      }
+    }, 5, TimeUnit.SECONDS);
   }
 
   public static void runActivity(@NotNull Runnable runnable) {
