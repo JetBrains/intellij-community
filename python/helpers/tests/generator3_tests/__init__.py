@@ -1,9 +1,11 @@
-from contextlib import contextmanager
-from io import open
+import logging
 import os
 import shutil
+import sys
 import tempfile
 import unittest
+from contextlib import contextmanager
+from io import open
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
@@ -12,6 +14,23 @@ _override_test_data = False
 
 class GeneratorTestCase(unittest.TestCase):
     longMessage = True
+
+    @classmethod
+    def setUpClass(cls):
+        super(GeneratorTestCase, cls).setUpClass()
+        # Logger cannot be initialized beforehand (say, on top-level), because,
+        # otherwise, it won't take into account buffered sys.stderr needed by
+        # teamcity-messages
+        cls.log = logging.getLogger(cls.__name__)
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setFormatter(logging.Formatter(fmt='%(levelname)s:%(name)s:%(message)s'))
+        cls.log.addHandler(handler)
+        cls.log.setLevel(logging.DEBUG)
+
+    @classmethod
+    def tearDownClass(cls):
+        delattr(cls, 'log')
+        super(GeneratorTestCase, cls).tearDownClass()
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp(prefix='{}_{}__'.format(self.test_class_name, self.test_name))

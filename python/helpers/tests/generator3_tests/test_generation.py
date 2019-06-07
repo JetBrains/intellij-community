@@ -1,4 +1,3 @@
-import logging
 import os
 import subprocess
 import sys
@@ -7,6 +6,7 @@ import unittest
 
 import generator3
 import six
+from generator3_tests import GeneratorTestCase
 from pycharm_generator_utils.constants import (
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
@@ -14,15 +14,11 @@ from pycharm_generator_utils.constants import (
     CACHE_DIR_NAME,
     ENV_STANDALONE_MODE_FLAG,
 )
-from generator3_tests import GeneratorTestCase
-
-logging.basicConfig(level=logging.DEBUG)
 
 # Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
 
 _run_generator_in_separate_process = True
-_log = logging.getLogger(__name__)
 
 
 class SkeletonCachingTest(GeneratorTestCase):
@@ -73,8 +69,13 @@ class SkeletonCachingTest(GeneratorTestCase):
                 if mod_path:
                     args.append(mod_path)
 
-            _log.info('Launching generator3 as: ' + ' '.join(args))
-            subprocess.call(args, env=env)
+            self.log.info('Launching generator3 as: ' + ' '.join(args))
+            process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process.wait()
+            sys.stdout.write(process.stdout.read().decode('utf-8'))
+            process.stdout.close()
+            sys.stderr.write(process.stderr.read().decode('utf-8'))
+            process.stderr.close()
         else:
             os.environ.update(env)
             sys.path.append(extra_syspath_entry)
@@ -85,7 +86,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 else:
                     generator3.process_one(mod_qname, mod_path, mod_qname in sys.builtin_module_names, output_dir)
             except Exception:
-                _log.error('Raised inside generator', exc_info=True)
+                self.log.error('Raised inside generator', exc_info=True)
             finally:
                 if mod_qname != 'sys':
                     sys.modules.pop(mod_qname, None)
