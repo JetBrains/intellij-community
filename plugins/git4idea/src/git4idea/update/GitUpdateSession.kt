@@ -80,7 +80,11 @@ class GitUpdateSession(private val project: Project,
     }
     else {
       title = mainMessage
-      content = if (filteredCommitsNumber != null) "$filteredCommitsNumber ${pluralize("commits", filteredCommitsNumber)} matching filters" else ""
+      content = when (filteredCommitsNumber) {
+        null -> ""
+        0 -> "No commits matching filters"
+        else -> "$filteredCommitsNumber ${pluralize("commits", filteredCommitsNumber)} matching filters"
+      }
       type = NotificationType.INFORMATION
     }
 
