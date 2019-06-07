@@ -11,7 +11,7 @@ export interface ActivityChartDescriptor {
   readonly groupByThread?: boolean
   readonly sourceHasPluginInformation?: boolean
 
-  readonly nameTransformer?: (item: Item) => string
+  readonly shortNameProducer?: (item: Item) => string
 }
 
 function getShortName(item: Item): string {
@@ -26,19 +26,19 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     label: "Components",
     id: "components",
     sourceNames: ["appComponents", "projectComponents", "moduleComponents"],
-    nameTransformer: getShortName,
+    shortNameProducer: getShortName,
   },
   {
     label: "Services",
     id: "services",
     sourceNames: ["appServices", "projectServices", "moduleServices"],
-    nameTransformer: getShortName,
+    shortNameProducer: getShortName,
   },
   {
     label: "Extensions",
     id: "extensions",
     sourceNames: ["appExtensions", "projectExtensions", "moduleExtensions"],
-    nameTransformer: getShortName,
+    shortNameProducer: getShortName,
   },
   {
     label: "Prepare App Init",
@@ -50,17 +50,21 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     label: "Options Top Hit Providers",
     id: "topHitProviders",
     sourceNames: ["appOptionsTopHitProviders", "projectOptionsTopHitProviders"],
-    nameTransformer: getShortName,
+    shortNameProducer: getShortName,
   },
   {
     label: "Project Post-Startup",
     id: "projectPostStartupActivities",
-    nameTransformer: getShortName,
+    shortNameProducer: getShortName,
   },
   {
     label: "Reopening Editors",
     id: "reopeningEditors",
     sourceHasPluginInformation: false,
+  },
+  {
+    label: "Icons",
+    id: "icons",
   },
   {
     label: "GCs",

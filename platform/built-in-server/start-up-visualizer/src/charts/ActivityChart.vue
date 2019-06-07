@@ -9,9 +9,11 @@
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
   import {ComponentChartManager} from "@/charts/ComponentChartManager"
+  import {TreeMapChartManager} from "@/charts/TreeMapChartManager";
+  import {ChartManager} from "@/charts/ChartManager";
 
   @Component
-  export default class ActivityChart extends BaseChartComponent<ActivityChartManager> {
+  export default class ActivityChart extends BaseChartComponent<ChartManager> {
     @Prop(String)
     type!: string
 
@@ -28,7 +30,7 @@
     }
 
     /** @override */
-    protected createChartManager(): ActivityChartManager {
+    protected createChartManager(): ChartManager {
       const chartContainer = this.$refs.chartContainer as HTMLElement
       const type = this.type
       const descriptor = chartDescriptors.find(it => it.id === type)
@@ -39,6 +41,9 @@
       const sourceNames = descriptor.sourceNames
       if (type === "components") {
         return new ComponentChartManager(chartContainer, sourceNames!!, descriptor)
+      }
+      else if (type === "icons") {
+        return new TreeMapChartManager(chartContainer)
       }
       else {
         return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames, descriptor)

@@ -88,6 +88,10 @@ public final class StartUpMeasurer {
 
   private static boolean isEnabled = true;
 
+  public static boolean isEnabled() {
+    return isEnabled;
+  }
+
   @ApiStatus.Internal
   public static final Map<String, ObjectLongHashMap<String>> pluginCostMap = new HashMap<>();
 

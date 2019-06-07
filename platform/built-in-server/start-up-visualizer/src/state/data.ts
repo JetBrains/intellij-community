@@ -16,6 +16,8 @@ export interface InputData {
 
   readonly stats: Stats
 
+  readonly icons?: Array<{ [key: string]: IconData; }>
+
   readonly items: Array<Item>
 
   readonly prepareAppInitActivities: Array<Item>
@@ -53,4 +55,9 @@ export interface StatItem {
   readonly app: number
   readonly project: number
   readonly module: number
+}
+
+export interface IconData {
+  readonly count: number
+  readonly duration: number
 }

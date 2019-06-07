@@ -1,8 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.diagnostic
+package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.ParallelActivity
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -11,6 +14,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.util.ImageDesc
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
@@ -25,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import kotlin.Comparator
 
-private val LOG = logger<StartUpMeasurer>()
+internal val LOG = logger<StartUpMeasurer>()
 
 class StartUpPerformanceReporter : StartupActivity, DumbAware {
   private val activationCount = AtomicInteger()
@@ -121,6 +126,7 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
       writer.obj {
         writer.writeStringField("version", "6")
         writeServiceStats(writer)
+        writeIcons(writer)
 
         var startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
         for (item in items) {
@@ -229,83 +235,6 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
   }
 }
 
-private fun computeOwnTime(list: MutableList<ActivityImpl>, ownDurations: ObjectLongHashMap<ActivityImpl>) {
-  val respectedItems = mutableListOf<ActivityImpl>()
-  var computedDurationForAll = 0L
-  for ((index, item) in list.withIndex()) {
-    val totalDuration = item.end - item.start
-    var ownDuration = totalDuration
-    respectedItems.clear()
-
-    if (index > 0 && list.get(index - 1).start > item.start) {
-      LOG.warn("prev ${list.get(index - 1).name} start > ${item.name}")
-    }
-
-    for (j in (index + 1) until list.size) {
-      val otherItem = list.get(j)
-      if (otherItem.end > item.end) {
-        break
-      }
-
-      if (isInclusive(otherItem, item) && respectedItems.all { !isInclusive(otherItem, it) }) {
-        ownDuration -= otherItem.end - otherItem.start
-        respectedItems.add(otherItem)
-      }
-    }
-
-    computedDurationForAll += ownDuration
-    if (totalDuration != ownDuration) {
-      ownDurations.put(item, ownDuration)
-    }
-  }
-
-  val actualTotalDurationForAll = list.last().end - list.first().start
-  val diff = actualTotalDurationForAll - computedDurationForAll
-  val diffInMs = TimeUnit.NANOSECONDS.toMillis(diff)
-  if (diff < 0 || diffInMs > 3) {
-    LOG.debug("computed: $computedDurationForAll, actual: ${actualTotalDurationForAll} (diff: $diff, diffInMs: $diffInMs)")
-  }
-}
-
-private fun isInclusive(otherItem: ActivityImpl, item: ActivityImpl): Boolean {
-  return otherItem.start >= item.start && otherItem.end <= item.end
-}
-
-private fun writeServiceStats(writer: JsonGenerator) {
-  class StatItem(val name: String) {
-    var app = 0
-    var project = 0
-    var module = 0
-  }
-
-  // components can be inferred from data, but to verify that items reported correctly (and because for items threshold is applied (not all are reported))
-  val component = StatItem("component")
-  val service = StatItem("service")
-
-  val plugins = PluginManagerCore.getLoadedPlugins()
-  for (plugin in plugins) {
-    service.app += (plugin as IdeaPluginDescriptorImpl).appServices.size
-    service.project += plugin.projectServices.size
-    service.module += plugin.moduleServices.size
-
-    component.app += plugin.appComponents.size
-    component.project += plugin.projectComponents.size
-    component.module += plugin.moduleComponents.size
-  }
-
-  writer.obj("stats") {
-    writer.writeNumberField("plugin", plugins.size)
-
-    for (statItem in listOf(component, service)) {
-      writer.obj(statItem.name) {
-        writer.writeNumberField("app", statItem.app)
-        writer.writeNumberField("project", statItem.project)
-        writer.writeNumberField("module", statItem.module)
-      }
-    }
-  }
-}
-
 private fun activityNameToJsonFieldName(name: String): String {
   return when {
     name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
@@ -403,6 +332,21 @@ private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
         o1.end < o2.end -> 1
         else -> 0
       }
+    }
+  }
+}
+
+private fun writeIcons(writer: JsonGenerator) {
+  fun writeStats(info: IconLoadMeasurer) {
+    writer.obj(info.type.name.toLowerCase()) {
+      writer.writeNumberField("count", info.counter)
+      writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(info.totalTime.toLong()))
+    }
+  }
+
+  writer.obj("icons") {
+    for (info in ImageDesc.getStats()) {
+      writeStats(info)
     }
   }
 }

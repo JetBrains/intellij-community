@@ -199,7 +199,7 @@ export class ActivityChartManager extends XYChartManager {
   }
 
   protected transformDataItem(item: Item, chartConfig: ClassItemChartConfig, sourceName: string, _items: Array<Item>): ClassItem {
-    const nameTransformer = this.descriptor.nameTransformer
+    const nameTransformer = this.descriptor.shortNameProducer
     return {
       ...item,
       shortName: nameTransformer == null ? item.name : nameTransformer(item),

@@ -313,8 +313,6 @@
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
 
-    <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
-
     <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization"/>
 
     <!-- General -->
@@ -674,7 +672,7 @@
     </obsoleteStorage>
 
     <postStartupActivity implementation="com.intellij.diagnostic.GenerateJarAccessLogActivity" order="last"/>
-    <postStartupActivity implementation="com.intellij.diagnostic.StartUpPerformanceReporter" order="last"/>
+    <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="last"/>
 
     <httpRequestHandler implementation="com.intellij.ide.FavIconHttpRequestHandler" order="last"/>
   </extensions>

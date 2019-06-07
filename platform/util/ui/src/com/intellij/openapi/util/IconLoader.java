@@ -112,7 +112,8 @@ public final class IconLoader {
     if (prev != next) {
       ourIconsCache.clear();
       ourIcon2DisabledIcon.clear();
-      ImageLoader.clearCache(); //clears svg cache
+      //clears svg cache
+      ImageDesc.clearCache();
     }
   }
 
