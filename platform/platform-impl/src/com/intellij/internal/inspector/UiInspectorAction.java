@@ -992,8 +992,26 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     @Override
     public JComponent setValue(@NotNull final Icon value) {
       setIcon(value);
-      setText(getToStringValue(value));
+      setText(getPathToIcon(value));
       return this;
+    }
+
+    private static String getPathToIcon(Icon value) {
+      if (value instanceof RetrievableIcon) {
+        Icon icon = ((RetrievableIcon)value).retrieveIcon();
+        if (icon != null && icon != value) {
+          return getPathToIcon(icon);
+        }
+      }
+      String text = getToStringValue(value);
+      if (text.startsWith("jar:") && text.contains("!")) {
+        int index = text.lastIndexOf("!");
+        String jarFile = text.substring(4, index);
+        String path = text.substring(index + 1);
+
+        return path + " in " + jarFile;
+      }
+      return text;
     }
   }
 
