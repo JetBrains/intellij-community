@@ -52,6 +52,7 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -157,15 +158,26 @@ public class StartupManagerImpl extends StartupManagerEx {
     Activity activity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES);
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
     DumbService dumbService = DumbService.getInstance(myProject);
+
+    AtomicInteger counter = new AtomicInteger();
     StartupActivity.POST_STARTUP_ACTIVITY.processWithPluginDescriptor((extension, pluginDescriptor) -> {
       if (DumbService.isDumbAware(extension)) {
         runActivity(uiFreezeWarned, extension, pluginDescriptor);
       }
       else {
-        dumbService.runWhenSmart(() -> runActivity(uiFreezeWarned, extension, pluginDescriptor));
+        counter.incrementAndGet();
+        dumbService.runWhenSmart(() -> {
+          runActivity(uiFreezeWarned, extension, pluginDescriptor);
+          if (counter.decrementAndGet() == 0) {
+            activity.end();
+          }
+        });
       }
     });
-    activity.end();
+
+    if (counter.get() == 0) {
+      activity.end();
+    }
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
   }
 
