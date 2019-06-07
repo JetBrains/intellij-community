@@ -33,6 +33,7 @@ class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
     add(productIcon)
 
     val frameDisposer = Disposer.newDisposable()
+    Disposer.register(ApplicationManager.getApplication(), frameDisposer)
     frame.addWindowListener(object: WindowAdapter() {
       override fun windowClosed(e: WindowEvent?) {
         Disposer.dispose(frameDisposer)
