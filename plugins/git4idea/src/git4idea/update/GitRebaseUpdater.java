@@ -74,9 +74,9 @@ public class GitRebaseUpdater extends GitUpdater {
 
   @NotNull
   private String getRemoteBranchToMerge() {
-    GitBranch dest = myBranchPair.getDest();
+    GitBranch dest = myBranchPair.getTarget();
     LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
-                                               myBranchPair.getBranch().getName(), myRoot));
+                                               myBranchPair.getSource().getName(), myRoot));
     return dest.getName();
   }
 

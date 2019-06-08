@@ -166,7 +166,7 @@ public abstract class GitUpdater {
    * @return true if update is needed, false otherwise.
    */
   public boolean isUpdateNeeded(@NotNull GitBranchPair branchPair) throws VcsException {
-    GitBranch dest = branchPair.getDest();
+    GitBranch dest = branchPair.getTarget();
     assert dest != null;
     String remoteBranch = dest.getName();
     if (!hasRemoteChanges(remoteBranch)) {

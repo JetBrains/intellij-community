@@ -266,8 +266,8 @@ public class GitUpdateProcess {
     return ContainerUtil.mapNotNull(updaters.keySet(), repo -> {
       GitUpdater updater = updaters.get(repo);
       if (updater instanceof GitRebaseUpdater) {
-        String currentRef = ((GitRebaseUpdater)updater).getSourceAndTarget().getBranch().getFullName();
-        String baseRef = assertNotNull(((GitRebaseUpdater)updater).getSourceAndTarget().getDest()).getFullName();
+        String currentRef = ((GitRebaseUpdater)updater).getSourceAndTarget().getSource().getFullName();
+        String baseRef = assertNotNull(((GitRebaseUpdater)updater).getSourceAndTarget().getTarget()).getFullName();
         return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo : null;
       }
       return null;
@@ -328,8 +328,8 @@ public class GitUpdateProcess {
   private Map<GitRepository, Hash> calcPublishedTipPositions(@NotNull Map<GitRepository, GitBranchPair> trackedBranches) {
     Map<GitRepository, Hash> result = new LinkedHashMap<>();
     for (GitRepository repository : trackedBranches.keySet()) {
-      GitLocalBranch localBranch = trackedBranches.get(repository).getBranch();
-      GitRemoteBranch trackedBranch = trackedBranches.get(repository).getDest();
+      GitLocalBranch localBranch = trackedBranches.get(repository).getSource();
+      GitRemoteBranch trackedBranch = trackedBranches.get(repository).getTarget();
       if (trackedBranch != null) {
         Hash mergeBase = getMergeBase(repository.getRoot(), localBranch.getFullName(), trackedBranch.getFullName());
         if (mergeBase != null) {
