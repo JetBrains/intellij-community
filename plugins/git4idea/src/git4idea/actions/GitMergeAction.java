@@ -5,19 +5,29 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.FileGroup;
+import com.intellij.openapi.vcs.update.UpdateInfoTree;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.merge.GitMergeUtil;
+import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
@@ -27,8 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 
 abstract class GitMergeAction extends GitRepositoryAction {
@@ -102,7 +114,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
     if (result.success() || mergeConflictDetector.hasHappened()) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
       List<VcsException> exceptions = new ArrayList<>();
-      GitMergeUtil.showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
+      showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName());
       repository.update();
       GitVcs.getInstance(project).showErrors(exceptions, getActionName());
     }
@@ -117,6 +129,34 @@ abstract class GitMergeAction extends GitRepositoryAction {
     else {
       GitUIUtil.notifyError(project, "Git " + getActionName() + " Failed", result.getErrorOutputAsJoinedString(), true, null);
       repository.update();
+    }
+  }
+
+  private static void showUpdates(@NotNull Project project,
+                                  @NotNull List<VcsException> exceptions,
+                                  @NotNull VirtualFile root,
+                                  @NotNull GitRevisionNumber currentRev,
+                                  @NotNull Label beforeLabel,
+                                  @NotNull String actionName) {
+    UpdatedFiles files = UpdatedFiles.create();
+    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
+    collector.collect(files, exceptions);
+    if (!exceptions.isEmpty()) return;
+
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+      UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, ActionInfo.UPDATE, false);
+      if (tree != null) {
+        tree.setBefore(beforeLabel);
+        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+        ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
+      }
+    }, ModalityState.defaultModalityState());
+
+    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
+    if (!unmergedNames.isEmpty()) {
+      List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
+      GuiUtils.invokeLaterIfNeeded(() -> AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider()), ModalityState.defaultModalityState());
     }
   }
 }
