@@ -50,7 +50,6 @@ import com.intellij.vcs.commit.ChangesViewCommitPanel;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import com.intellij.vcs.commit.CommitWorkflowManager;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -383,7 +382,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         myModelUpdateInProgress = true;
         try {
           myView.updateModel(newModel);
-          synchronizeInclusion(changeLists, unversionedFiles);
+          if (myCommitWorkflowHandler != null) myCommitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
         }
         finally {
           myModelUpdateInProgress = false;
@@ -391,16 +390,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         updatePreview(true);
       }, ModalityState.NON_MODAL);
     }, indicator);
-  }
-
-  private void synchronizeInclusion(@NotNull List<LocalChangeList> changeLists, @NotNull List<VirtualFile> unversionedFiles) {
-    if (myView.isShowCheckboxes() && !myView.isInclusionEmpty()) {
-      THashSet<Object> possibleInclusion = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
-      changeLists.forEach(changeList -> possibleInclusion.addAll(changeList.getChanges()));
-      possibleInclusion.addAll(unversionedFiles);
-
-      myView.retainInclusion(possibleInclusion);
-    }
   }
 
   private void updatePreview(boolean fromModelRefresh) {

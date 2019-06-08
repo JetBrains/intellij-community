@@ -12,7 +12,10 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   //  And just pass such model to CommitWorkflowUi instead of adding include-related methods to CommitWorkflowUi directly
   fun isInclusionEmpty(): Boolean
 
+  fun getInclusion(): Set<Any>
+
   fun clearInclusion()
+  fun retainInclusion(items: Collection<*>)
 
   fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext)
 }

@@ -225,7 +225,9 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
 
   override fun isInclusionEmpty(): Boolean = changesView.isInclusionEmpty
+  override fun getInclusion(): Set<Any> = changesView.includedSet
   override fun clearInclusion() = changesView.clearInclusion()
+  override fun retainInclusion(items: Collection<*>) = changesView.retainInclusion(items)
   override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
 
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
