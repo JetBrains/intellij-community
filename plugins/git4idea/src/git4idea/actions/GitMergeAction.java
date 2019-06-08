@@ -10,15 +10,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
-import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -27,6 +24,9 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
+import git4idea.merge.GitConflictResolver;
+import git4idea.merge.GitMergeCommittingConflictResolver;
+import git4idea.merge.GitMerger;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -37,11 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
+import static java.util.Collections.singletonList;
 
 abstract class GitMergeAction extends GitRepositoryAction {
 
@@ -111,6 +110,12 @@ abstract class GitMergeAction extends GitRepositoryAction {
                              @NotNull GitRevisionNumber currentRev,
                              @NotNull Label beforeLabel) {
     VirtualFile root = repository.getRoot();
+
+    if (mergeConflictDetector.hasHappened()) {
+      new GitMergeCommittingConflictResolver(project, Git.getInstance(), new GitMerger(project), singletonList(root),
+                                             new GitConflictResolver.Params(project), true).merge();
+    }
+
     if (result.success() || mergeConflictDetector.hasHappened()) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
       List<VcsException> exceptions = new ArrayList<>();
@@ -152,11 +157,5 @@ abstract class GitMergeAction extends GitRepositoryAction {
         ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
       }
     }, ModalityState.defaultModalityState());
-
-    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
-    if (!unmergedNames.isEmpty()) {
-      List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
-      GuiUtils.invokeLaterIfNeeded(() -> AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider()), ModalityState.defaultModalityState());
-    }
   }
 }
