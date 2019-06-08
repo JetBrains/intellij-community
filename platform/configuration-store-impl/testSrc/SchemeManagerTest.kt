@@ -141,7 +141,7 @@ internal class SchemeManagerTest {
   }
 
   fun TestScheme.save(file: Path) {
-    file.write(serialize()!!.toByteArray())
+    file.write(serialize(this)!!.toByteArray())
   }
 
   @Test fun `different extensions - old, new`() {
@@ -208,8 +208,9 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("1.xml")).doesNotExist()
   }
 
-  @Test fun setSchemes() {
-    val dir = tempDirManager.newPath()
+  @Test
+  fun setSchemes() {
+    val dir = fsRule.fs.getPath("/test")
     val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
@@ -252,6 +253,16 @@ internal class SchemeManagerTest {
     schemeManager.reload()
 
     assertThat(schemeManager.allSchemes).containsOnly(TestScheme("s1", "newData"))
+  }
+
+  @Test
+  fun `ignore dir named as file`() {
+    val dir = fsRule.fs.getPath("/test").createDirectories()
+    dir.resolve("foo.xml").createDirectories()
+
+    val schemeManager = createSchemeManager(dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.allSchemes).isEmpty()
   }
 
   @Test
@@ -660,7 +671,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
     name = value
   }
 
-  override fun writeScheme() = serialize()!!
+  override fun writeScheme() = serialize(this)!!
 }
 
 open class TestSchemeProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {

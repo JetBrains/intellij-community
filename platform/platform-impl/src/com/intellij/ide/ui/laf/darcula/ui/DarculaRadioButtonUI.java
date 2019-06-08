@@ -26,7 +26,8 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     return new DarculaRadioButtonUI();
   }
 
-  @Override public void installDefaults(AbstractButton b) {
+  @Override
+  public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
     b.setIconTextGap(textIconGap());
     updateTextPosition(b);
@@ -58,7 +59,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     Graphics2D g = (Graphics2D)g2d;
     Dimension size = c.getSize();
 
-    AbstractButton b = (AbstractButton) c;
+    AbstractButton b = (AbstractButton)c;
     Rectangle viewRect = updateViewRect(b, new Rectangle(size));
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
@@ -73,7 +74,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
       viewRect, iconRect, textRect, b.getIconTextGap());
 
-    if(c.isOpaque()) {
+    if (c.isOpaque()) {
       g.setColor(c.getBackground());
       g.fillRect(0, 0, size.width, size.height);
     }
@@ -95,20 +96,21 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   }
 
   protected void drawText(AbstractButton b, Graphics2D g, String text, Rectangle textRect, FontMetrics fm) {
-    if(text != null) {
-      View v = (View) b.getClientProperty(BasicHTML.propertyKey);
+    if (text != null) {
+      View v = (View)b.getClientProperty(BasicHTML.propertyKey);
       if (v != null) {
         v.paint(g, textRect);
-      } else {
+      }
+      else {
         int mnemonicIndex = b.getDisplayedMnemonicIndex();
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
         UIUtilities.drawStringUnderlineCharAt(b, g, text, mnemonicIndex, textRect.x, textRect.y + fm.getAscent());
       }
     }
 
-    if(b.hasFocus() && b.isFocusPainted() &&
-       textRect.width > 0 && textRect.height > 0 ) {
-        paintFocus(g, textRect, b.getSize());
+    if (b.hasFocus() && b.isFocusPainted() &&
+        textRect.width > 0 && textRect.height > 0) {
+      paintFocus(g, textRect, b.getSize());
     }
   }
 

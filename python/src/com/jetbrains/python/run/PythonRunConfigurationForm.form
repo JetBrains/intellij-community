@@ -108,7 +108,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Run with Python console"/>
+                  <text value="Run with Python Console"/>
                 </properties>
               </component>
               <component id="e1d2e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myInputFileTextFieldWithBrowseButton">

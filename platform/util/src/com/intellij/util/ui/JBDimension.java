@@ -15,7 +15,8 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.util.ui.JBUI.Scaler;
+import com.intellij.util.ui.JBUIScale.ScaleType;
+import com.intellij.util.ui.JBUIScale.Scaler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.UIResource;
@@ -131,7 +132,7 @@ public class JBDimension extends Dimension {
   }
 
   /**
-   * Updates the size according to current {@link JBUI.ScaleType#USR_SCALE} if necessary.
+   * Updates the size according to current {@link ScaleType#USR_SCALE} if necessary.
    * @return whether the size has been updated
    */
   public boolean update() {

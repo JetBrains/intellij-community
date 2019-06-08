@@ -15,11 +15,11 @@
             },
             "edge": {
               "version_added": true,
-              "notes": "Removal in Edge is <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/11946645/'>under consideration</a>."
+              "notes": "Removal in Edge is <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/11946645/'>under consideration</a>."
             },
             "edge_mobile": {
               "version_added": true,
-              "notes": "Removal in Edge is <a href='https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/11946645/'>under consideration</a>."
+              "notes": "Removal in Edge is <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/11946645/'>under consideration</a>."
             },
             "firefox": {
               "version_added": true,
@@ -822,7 +822,7 @@
               },
               "opera_android": {
                 "version_added": true,
-                "version_removed": "47"
+                "version_removed": "34"
               },
               "safari": {
                 "version_added": true

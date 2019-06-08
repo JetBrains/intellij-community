@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -92,7 +78,7 @@ public class GitPushOperation {
   @NotNull private final GitPushSupport myPushSupport;
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
   @Nullable private final GitPushTagMode myTagMode;
-  private final boolean myForce;
+  private final ForceMode myForceMode;
   private final boolean mySkipHook;
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
@@ -106,18 +92,33 @@ public class GitPushOperation {
                           @Nullable GitPushTagMode tagMode,
                           boolean force,
                           boolean skipHook) {
+    this(project, pushSupport, pushSpecs, tagMode, getForceMode(force), skipHook);
+  }
+
+  @NotNull
+  private static ForceMode getForceMode(boolean force) {
+    if (force) return Registry.is("git.use.push.force.with.lease") ? ForceMode.FORCE_WITH_LEASE : ForceMode.FORCE;
+    return ForceMode.NONE;
+  }
+
+  public GitPushOperation(@NotNull Project project,
+                          @NotNull GitPushSupport pushSupport,
+                          @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                          @Nullable GitPushTagMode tagMode,
+                          @NotNull ForceMode forceMode,
+                          boolean skipHook) {
     myProject = project;
     myPushSupport = pushSupport;
     myPushSpecs = pushSpecs;
     myTagMode = tagMode;
-    myForce = force;
+    myForceMode = forceMode;
     mySkipHook = skipHook;
     myGit = Git.getInstance();
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
     myRepositoryManager = GitRepositoryManager.getInstance(myProject);
 
-    Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
+    Map<GitRepository, GitRevisionNumber> currentHeads = new HashMap<>();
     for (GitRepository repository : pushSpecs.keySet()) {
       repository.update();
       String head = repository.getCurrentRevision();
@@ -140,8 +141,8 @@ public class GitPushOperation {
     Map<GitRepository, String> preUpdatePositions = updateRootInfoAndRememberPositions();
     Boolean rebaseOverMergeProblemDetected = null;
 
-    final Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
-    Map<GitRepository, GitUpdateResult> updatedRoots = ContainerUtil.newHashMap();
+    final Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
+    Map<GitRepository, GitUpdateResult> updatedRoots = new HashMap<>();
 
     try {
       Collection<GitRepository> remainingRoots = myPushSpecs.keySet();
@@ -161,7 +162,7 @@ public class GitPushOperation {
         // propose to update if rejected
         if (!result.rejected.isEmpty()) {
           boolean shouldUpdate = true;
-          if (myForce || pushingToNotTrackedBranch(result.rejected)) {
+          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected)) {
             shouldUpdate = false;
           }
           else if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
@@ -214,7 +215,7 @@ public class GitPushOperation {
   private GitPushProcessCustomizationFactory.GitPushProcessCustomization findPushCustomization() {
     List<GitPushProcessCustomizationFactory.GitPushProcessCustomization> customizations = StreamEx
       .of(GIT_PUSH_CUSTOMIZATION_FACTORY_EP.getExtensions())
-      .map(factory -> factory.createCustomization(myProject, myPushSpecs, myForce)).toList();
+      .map(factory -> factory.createCustomization(myProject, myPushSpecs, myForceMode.isForce())).toList();
 
     if (customizations.isEmpty()) {
       return null;
@@ -252,6 +253,12 @@ public class GitPushOperation {
     });
   }
 
+  @NotNull
+  public GitPushOperation deriveForceWithoutLease(@NotNull List<GitRepository> newRepositories) {
+    Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> newPushSpec = filter(myPushSpecs, repo -> newRepositories.contains(repo));
+    return new GitPushOperation(myProject, myPushSupport, newPushSpec, myTagMode, ForceMode.FORCE, mySkipHook);
+  }
+
   private static boolean pushingToNotTrackedBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
     return ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
@@ -282,7 +289,7 @@ public class GitPushOperation {
                                               @NotNull Map<GitRepository, String> preUpdatePositions,
                                               @Nullable Label beforeUpdateLabel,
                                               @Nullable Label afterUpdateLabel) {
-    Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
+    Map<GitRepository, GitPushRepoResult> results = new HashMap<>();
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     for (Map.Entry<GitRepository, GitPushRepoResult> entry : allRoots.entrySet()) {
       GitRepository repository = entry.getKey();
@@ -301,7 +308,7 @@ public class GitPushOperation {
 
   @NotNull
   private Map<GitRepository, GitPushRepoResult> push(@NotNull List<GitRepository> repositories) {
-    Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newLinkedHashMap();
+    Map<GitRepository, GitPushRepoResult> results = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
       ResultWithOutput resultWithOutput = doPush(repository, spec);
@@ -392,13 +399,13 @@ public class GitPushOperation {
     GitRemote remote = targetBranch.getRemote();
 
     List<GitPushParams.ForceWithLease> forceWithLease = emptyList();
-    if (myForce && Registry.is("git.use.push.force.with.lease")) {
+    if (myForceMode == ForceMode.FORCE_WITH_LEASE) {
       Hash hash = repository.getBranches().getHash(targetBranch);
       String expectedHash = hash != null ? hash.asString() : "";
       forceWithLease = singletonList(new ForceWithLeaseReference(targetBranch.getNameForRemoteOperations(), expectedHash));
     }
 
-    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, myForce, setUpstream, mySkipHook, tagMode, forceWithLease);
+    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, myForceMode.isForce(), setUpstream, mySkipHook, tagMode, forceWithLease);
 
     GitCommandResult res;
     if (myPushProcessCustomization != null) {
@@ -422,15 +429,15 @@ public class GitPushOperation {
     UpdateMethod updateMethod = settings.getUpdateMethod();
     mySettings.setUpdateAllRootsIfPushRejected(settings.shouldUpdateAllRoots());
     if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
-        && mySettings.getUpdateType() != updateMethod && mySettings.getUpdateType() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
-      mySettings.setUpdateType(updateMethod);
+        && mySettings.getUpdateMethod() != updateMethod && mySettings.getUpdateMethod() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
+      mySettings.setUpdateMethod(updateMethod);
     }
   }
 
   @NotNull
   private PushUpdateSettings readPushUpdateSettings() {
     boolean updateAllRoots = mySettings.shouldUpdateAllRootsIfPushRejected();
-    UpdateMethod updateMethod = mySettings.getUpdateType();
+    UpdateMethod updateMethod = mySettings.getUpdateMethod();
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
       updateMethod = GitUpdater.resolveUpdateMethod(myPushSpecs.keySet().iterator().next());
@@ -500,6 +507,14 @@ public class GitPushOperation {
     @Override
     public String toString() {
       return "Parsed results: " + parsedResults + "\nCommand output:" + resultOutput;
+    }
+  }
+
+  enum ForceMode {
+    NONE, FORCE, FORCE_WITH_LEASE;
+
+    public boolean isForce() {
+      return this != NONE;
     }
   }
 }

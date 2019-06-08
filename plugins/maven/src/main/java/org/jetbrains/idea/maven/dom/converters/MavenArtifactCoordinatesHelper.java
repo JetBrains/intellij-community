@@ -36,8 +36,8 @@ public class MavenArtifactCoordinatesHelper {
     if (coords instanceof MavenDomArtifactCoordinates) {
       version = ((MavenDomArtifactCoordinates)coords).getVersion().getStringValue();
     }
-    return new MavenId(coords.getGroupId().getStringValue(),
-                       coords.getArtifactId().getStringValue(),
-                       version);
+    return new MavenId(MavenDependencyCompletionUtil.removeDummy(coords.getGroupId().getStringValue()),
+                       MavenDependencyCompletionUtil.removeDummy(coords.getArtifactId().getStringValue()),
+                       MavenDependencyCompletionUtil.removeDummy(version));
   }
 }

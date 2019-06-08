@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,19 @@
  */
 package com.intellij.openapi.application;
 
+/**
+ * Defines write action requirement.
+ */
 public interface WriteActionAware {
+
   /**
    * Indicate whether this action should be invoked inside write action.
-   * Should return false if e.g. modal dialog is shown inside the action.
-   * If false is returned the action itself is responsible for starting write action
+   * <p/>
+   * Should return {@code false} if e.g. modal dialog is shown inside the action.
+   * If {@code false} is returned the action itself is responsible for starting write action
    * when needed, by calling {@link Application#runWriteAction(Runnable)}.
    *
-   * @return true if the action requires a write action, false otherwise.
+   * @return {@code true} if the action requires a write action (default), {@code false} otherwise.
    */
   default boolean startInWriteAction() {
     return true;

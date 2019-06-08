@@ -99,7 +99,7 @@ public class VarVersionsGraph {
     return lst;
   }
 
-  private static void addToReversePostOrderListIterative(VarVersionNode root, List<VarVersionNode> lst, Set<VarVersionNode> setVisited) {
+  private static void addToReversePostOrderListIterative(VarVersionNode root, List<? super VarVersionNode> lst, Set<? super VarVersionNode> setVisited) {
     Map<VarVersionNode, List<VarVersionEdge>> mapNodeSuccs = new HashMap<>();
     LinkedList<VarVersionNode> stackNode = new LinkedList<>();
     LinkedList<Integer> stackIndex = new LinkedList<>();

@@ -34,7 +34,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +81,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
       if (vFile != null && idx.isInLibrarySource(vFile)) {
         GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
-        Set<OrderEntry> originalEntries = ContainerUtil.newHashSet(idx.getOrderEntriesForFile(vFile));
+        Set<OrderEntry> originalEntries = new HashSet<>(idx.getOrderEntriesForFile(vFile));
         for (T candidate : candidateFinder.apply(librariesScope)) {
           PsiFile candidateFile = candidate.getContainingFile();
           if (candidateFile != null) {
@@ -192,7 +191,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
         return null;
       }
       String className = virtualFile.getNameWithoutExtension();
-      Set<VirtualFile> visitedRoots = ContainerUtil.newHashSet();
+      Set<VirtualFile> visitedRoots = new HashSet<>();
       for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
         for (VirtualFile rootFile : entry.getFiles(OrderRootType.CLASSES)) {
           if (visitedRoots.add(rootFile)) {
@@ -304,7 +303,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
 
     try {
-      PsiTryStatement tryStmt = (PsiTryStatement)PsiElementFactory.SERVICE.getInstance(myProject)
+      PsiTryStatement tryStmt = (PsiTryStatement)PsiElementFactory.getInstance(myProject)
         .createStatementFromText("try {} catch (" + declarationTemplate.getText(props) + ") {\n}", null);
       PsiParameter parameter = tryStmt.getCatchSections()[0].getParameter();
 
@@ -323,7 +322,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       }
 
       PsiCodeBlock block =
-        PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
+        PsiElementFactory.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
       Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
     }
     catch (ProcessCanceledException ce) {

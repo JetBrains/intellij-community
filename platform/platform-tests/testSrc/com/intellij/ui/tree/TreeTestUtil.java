@@ -43,7 +43,7 @@ public class TreeTestUtil {
   }
 
   @NotNull
-  public static String toString(@NotNull JTree tree, @NotNull Predicate<TreePath> append, boolean showSelection) {
+  public static String toString(@NotNull JTree tree, @NotNull Predicate<? super TreePath> append, boolean showSelection) {
     return toString(tree, VISIT_ALL, append, showSelection, TO_STRING);
   }
 
@@ -55,7 +55,7 @@ public class TreeTestUtil {
   @NotNull
   public static String toString(@NotNull JTree tree,
                                 @NotNull TreeVisitor visitor,
-                                @NotNull Predicate<TreePath> append,
+                                @NotNull Predicate<? super TreePath> append,
                                 boolean showSelection,
                                 @NotNull Function<Object, String> toString) {
     StringBuilder sb = new StringBuilder();

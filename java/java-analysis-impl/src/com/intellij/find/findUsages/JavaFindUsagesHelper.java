@@ -193,7 +193,7 @@ public class JavaFindUsagesHelper {
     if (!isSearchable && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
       Collection<String> stringsToSearch = ReadAction.compute(() -> getElementNames(element));
       // todo add to fastTrack
-      if (!FindUsagesHelper.processUsagesInText(element, stringsToSearch, (GlobalSearchScope)options.searchScope, processor)) return false;
+      if (!FindUsagesHelper.processUsagesInText(element, stringsToSearch, false, (GlobalSearchScope)options.searchScope, processor)) return false;
     }
     return true;
   }

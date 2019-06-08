@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import kotlin.NotImplementedError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -25,9 +25,9 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
   @NotNull
   @Override
   public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
-    return ContainerUtil.list(new MyJsonSchemaFileProvider(project, SCHEMA_JSON_FILE_NAME),
-                              new MyJsonSchemaFileProvider(project, SCHEMA06_JSON_FILE_NAME),
-                              new MyJsonSchemaFileProvider(project, SCHEMA07_JSON_FILE_NAME));
+    return Arrays
+      .asList(new MyJsonSchemaFileProvider(project, SCHEMA_JSON_FILE_NAME), new MyJsonSchemaFileProvider(project, SCHEMA06_JSON_FILE_NAME),
+              new MyJsonSchemaFileProvider(project, SCHEMA07_JSON_FILE_NAME));
   }
 
   public static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {

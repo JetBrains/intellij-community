@@ -111,7 +111,7 @@ public class ThemeColorAnnotator implements Annotator {
       return new AnAction("Choose Color...") {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+          Editor editor = e.getData(CommonDataKeys.EDITOR);
           if (editor == null) return;
 
           Color currentColor = getColor(myColorHex);

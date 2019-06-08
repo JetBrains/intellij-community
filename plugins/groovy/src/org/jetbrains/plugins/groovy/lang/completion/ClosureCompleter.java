@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -15,7 +15,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.StringParameterNameExpression;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -88,7 +88,7 @@ public abstract class ClosureCompleter {
     StringBuilder buffer = new StringBuilder();
     buffer.append("{");
 
-    List<PsiType> paramTypes = ContainerUtil.newArrayList();
+    List<PsiType> paramTypes = new ArrayList<>();
     for (ClosureParameterInfo parameter : parameters) {
       final String type = parameter.getType();
       final String name = parameter.getName();

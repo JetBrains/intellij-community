@@ -3,6 +3,7 @@ package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -32,9 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -51,6 +50,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -164,12 +164,6 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void fixModuleName(@NotNull Module module) {
-    for (RunConfiguration configuration : RunManager.getInstance(module.getProject()).getAllConfigurationsList()) {
-      if (configuration instanceof ModuleBasedConfiguration) {
-        ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
-      }
-    }
-
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     for (WizardInputField field : myAdditionalFields) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
@@ -188,6 +182,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
 
     model.commit();
+
+    RunManager runManager = RunManager.getInstance(module.getProject());
+    for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
+      if (configuration instanceof ModuleBasedConfiguration) {
+        ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
+      }
+    }
   }
 
   private static void applyProjectDefaults(@NotNull Project project) {
@@ -195,7 +196,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     String charset = EncodingProjectManager.getInstance(defaultProject).getDefaultCharsetName();
     EncodingProjectManager.getInstance(project).setDefaultCharsetName(charset);
 
+    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
     RunManagerImpl.getInstanceImpl(defaultProject).copyTemplatesToProjectFromTemplate(project);
+    RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
   }
 
   @Nullable
@@ -284,7 +287,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                 pI.checkCanceled();
               }
               FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-              String text = new String(content, CharsetToolkit.UTF8_CHARSET);
+              String text = new String(content, StandardCharsets.UTF_8);
               consumer.setCurrentFile(file.getName(), text);
               return fileType.isBinary() ? content : processTemplates(projectName, text, file, consumer);
             }
@@ -364,12 +367,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       }
     }
     return StringUtilRt.convertLineSeparators(patchedContent, CodeStyle.getDefaultSettings().getLineSeparator()).
-      getBytes(CharsetToolkit.UTF8_CHARSET);
+      getBytes(StandardCharsets.UTF_8);
   }
 
   @Nullable
   @Override
-  public Project createProject(String name, final String path) {
+  public Project createProject(String name, @NotNull String path) {
     final File location = new File(FileUtil.toSystemDependentName(path));
     LOG.assertTrue(location.exists());
 
@@ -389,7 +392,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         try {
           myProjectMode = true;
           unzip(name, path, false, indicator, false);
-          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
+          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
         }
         catch (IOException e) {
           LOG.error(e);

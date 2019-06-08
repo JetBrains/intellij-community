@@ -206,7 +206,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   }
 
   @Override
-  public void addAdvancedSettings(List<String> inputParams, List<String> outputParams) {
+  public void addAdvancedSettings(List<? super String> inputParams, List<? super String> outputParams) {
     setParams(myInputOptions, inputParams);
 
     if (getOutputType() == SchemaType.XSD) {
@@ -214,7 +214,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
   }
 
-  private static void setParams(Map<String, ?> map, List<String> inputParams) {
+  private static void setParams(Map<String, ?> map, List<? super String> inputParams) {
     final Set<String> set = map.keySet();
     for (String s : set) {
       final Object value = map.get(s);

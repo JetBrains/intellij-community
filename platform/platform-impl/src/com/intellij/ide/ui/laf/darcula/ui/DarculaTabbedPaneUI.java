@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -28,8 +28,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   private TabStyle tabStyle;
   private PropertyChangeListener panePropertyListener;
-  private MouseListener          paneMouseListener;
-  private MouseMotionListener    paneMouseMotionListener;
+  private MouseListener paneMouseListener;
+  private MouseMotionListener paneMouseMotionListener;
 
   private int hoverTab = -1;
 
@@ -72,7 +72,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
                               fullBorder ? JBUI.insets(0, 1, 1, 1) : JBUI.emptyInsets();
         tabPane.revalidate();
         tabPane.repaint();
-      } else if ("enabled".equals(propName)) {
+      }
+      else if ("enabled".equals(propName)) {
         for (int ti = 0; ti < tabPane.getTabCount(); ti++) {
           Component tc = tabPane.getTabComponentAt(ti);
           if (tc != null) {
@@ -142,7 +143,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
       if (tabPlacement == LEFT || tabPlacement == RIGHT) {
         g.fillRect(bounds.x + bounds.width - OFFSET.get(), bounds.y, OFFSET.get(), bounds.y + bounds.height);
-      } else {
+      }
+      else {
         g.fillRect(bounds.x, bounds.y + bounds.height - OFFSET.get(), bounds.x + bounds.width, OFFSET.get());
       }
     }
@@ -155,7 +157,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       case fill:
         if (tabPane.isEnabled()) {
           g.setColor(isSelected ? ENABLED_SELECTED_COLOR : tabIndex == hoverTab ? HOVER_COLOR : tabPane.getBackground());
-        } else {
+        }
+        else {
           g.setColor(isSelected ? DISABLED_SELECTED_COLOR : tabPane.getBackground());
         }
         break;
@@ -166,7 +169,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
         if (tabPane.isEnabled()) {
           if (tabPane.hasFocus() && isSelected) {
             c = FOCUS_COLOR;
-          } else if (tabIndex == hoverTab) {
+          }
+          else if (tabIndex == hoverTab) {
             c = HOVER_COLOR;
           }
         }
@@ -178,7 +182,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
       if (tabPlacement == LEFT || tabPlacement == RIGHT) {
         w -= OFFSET.get();
-      } else {
+      }
+      else {
         h -= OFFSET.get();
       }
     }
@@ -206,11 +211,11 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   @Override
   protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
     if (isSelected && tabStyle == TabStyle.underline) {
-      g.setColor(tabPane.isEnabled() ?  ENABLED_SELECTED_COLOR : DISABLED_SELECTED_COLOR);
+      g.setColor(tabPane.isEnabled() ? ENABLED_SELECTED_COLOR : DISABLED_SELECTED_COLOR);
 
       int offset;
       boolean wrap = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT;
-      switch(tabPlacement) {
+      switch (tabPlacement) {
         case LEFT:
           offset = SELECTION_HEIGHT.get() - (wrap ? OFFSET.get() : 0);
           g.fillRect(x + w - offset, y, SELECTION_HEIGHT.get(), h);
@@ -239,17 +244,17 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       delta -= OFFSET.get();
     }
 
-    switch(tabPlacement) {
+    switch (tabPlacement) {
       case RIGHT:
       case LEFT:
         return 0;
 
       case BOTTOM:
-        return delta/2;
+        return delta / 2;
 
       case TOP:
       default:
-        return -delta/2;
+        return -delta / 2;
     }
   }
 
@@ -260,69 +265,28 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       delta -= OFFSET.get();
     }
 
-    switch(tabPlacement) {
+    switch (tabPlacement) {
       case TOP:
       case BOTTOM:
         return 0;
 
       case LEFT:
-        return -delta/2;
+        return -delta / 2;
 
       case RIGHT:
       default:
-        return delta/2;
+        return delta / 2;
     }
   }
 
-    @Override
+  @Override
   protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-    Insets tabInsets = getTabInsets(tabPlacement, tabIndex);
-    int width = tabInsets.left + tabInsets.right;
-    Component tabComponent = tabPane.getTabComponentAt(tabIndex);
-    if (tabComponent != null) {
-      width += tabComponent.getPreferredSize().width;
-    } else {
-      Icon icon = getIconForTab(tabIndex);
-      if (icon != null) {
-        width += icon.getIconWidth() + textIconGap;
-      }
-      View v = getTextViewForTab(tabIndex);
-      if (v != null) {
-        // html
-        width += (int) v.getPreferredSpan(View.X_AXIS);
-      } else {
-        // plain text
-        String title = tabPane.getTitleAt(tabIndex);
-        width += UIUtilities.stringWidth(tabPane, metrics, title);
-      }
-    }
-    return width;
+    return super.calculateTabWidth(tabPlacement, tabIndex, metrics) - 3; //remove magic constant '3' added by parent
   }
 
   @Override
   protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
-    int height = 0;
-    Component c = tabPane.getTabComponentAt(tabIndex);
-    if (c != null) {
-      height = c.getPreferredSize().height;
-    } else {
-      View v = getTextViewForTab(tabIndex);
-      if (v != null) {
-        // html
-        height += (int) v.getPreferredSpan(View.Y_AXIS);
-      } else {
-        // plain text
-        height += fontHeight;
-      }
-      Icon icon = getIconForTab(tabIndex);
-
-      if (icon != null) {
-        height = Math.max(height, icon.getIconHeight());
-      }
-    }
-    Insets tabInsets = getTabInsets(tabPlacement, tabIndex);
-    height += tabInsets.top + tabInsets.bottom;
-
+    int height = super.calculateTabHeight(tabPlacement, tabIndex, fontHeight) - 2; //remove magic constant '2' added by parent
     int minHeight = TAB_HEIGHT.get() - (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? OFFSET.get() : 0);
     return Math.max(height, minHeight);
   }
@@ -342,4 +306,4 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   @Override
   protected void paintFocusIndicator(Graphics g, int tabPlacement, Rectangle[] rects, int tabIndex, Rectangle iconRect, Rectangle textRect,
                                      boolean isSelected) {}
-  }
+}

@@ -18,7 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.io.IOException;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-public class EclipseClasspathTest extends IdeaTestCase {
+public class EclipseClasspathTest extends JavaProjectTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,19 +43,19 @@ class RepositoryContentHandler extends DefaultHandler {
 
   private final StringBuilder currentValue = new StringBuilder();
   private PluginNode currentPlugin;
-  private List<IdeaPluginDescriptor> plugins;
+  private List<PluginNode> plugins;
   private Stack<String> categories;
   private String categoryName;
 
   @NotNull
-  public List<IdeaPluginDescriptor> getPluginsList() {
+  List<PluginNode> getPluginsList() {
     return plugins != null ? plugins : Collections.emptyList();
   }
 
   @Override
   public void startDocument() {
-    plugins = ContainerUtil.newArrayList();
-    categories = ContainerUtil.newStack();
+    plugins = new ArrayList<>();
+    categories = new Stack<>();
   }
 
   @Override
@@ -137,7 +137,7 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloadUrl(currentValueString);
     }
     else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
-      if (currentPlugin != null && !PluginManagerCore.isBrokenPlugin(currentPlugin)) {
+      if (currentPlugin != null) {
         plugins.add(currentPlugin);
       }
       currentPlugin = null;
@@ -155,12 +155,7 @@ class RepositoryContentHandler extends DefaultHandler {
   @NotNull
   private String buildCategoryName() {
     if (categoryName == null) {
-      StringBuilder builder = new StringBuilder();
-      for (int i = 0; i < categories.size(); i++) {
-        if (i > 0) builder.append('/');
-        builder.append(categories.get(i));
-      }
-      categoryName = builder.toString();
+      categoryName = String.join("/", categories);
     }
     return categoryName;
   }

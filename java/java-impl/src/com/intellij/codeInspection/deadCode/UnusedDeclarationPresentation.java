@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
@@ -18,11 +17,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -30,12 +29,10 @@ import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -69,7 +66,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
   private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
 
-  private WeakUnreferencedFilter myFilter;
+  private final WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
   private final AtomicNotNullLazyValue<InspectionToolWrapper> myDummyWrapper = new AtomicNotNullLazyValue<InspectionToolWrapper>() {
     @NotNull
@@ -102,13 +99,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   public UnusedDeclarationPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     super(toolWrapper, context);
     myQuickFixActions = createQuickFixes(toolWrapper);
+    myFilter = new WeakUnreferencedFilter(getTool(), getContext());
     ((EntryPointsManagerBase)getEntryPointsManager()).setAddNonJavaEntries(getTool().ADD_NONJAVA_TO_ENTRIES);
   }
 
+  @NotNull
   public RefFilter getFilter() {
-    if (myFilter == null) {
-      myFilter = new WeakUnreferencedFilter(getTool(), getContext());
-    }
     return myFilter;
   }
   private static class WeakUnreferencedFilter extends UnreferencedFilter {
@@ -163,7 +159,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull Consumer<Element> resultConsumer,
+  public void exportResults(@NotNull Consumer<? super Element> resultConsumer,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
@@ -191,7 +187,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
       for (UnusedDeclarationHint hint : UnusedDeclarationHint.values()) {
         @NonNls Element hintElement = new Element("hint");
-        hintElement.setAttribute("value", hint.toString().toLowerCase());
+        hintElement.setAttribute("value", StringUtil.toLowerCase(hint.toString()));
         hintsElement.addContent(hintElement);
       }
       element.addContent(hintsElement);

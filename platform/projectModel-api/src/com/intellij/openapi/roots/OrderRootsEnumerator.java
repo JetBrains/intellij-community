@@ -80,5 +80,5 @@ public interface OrderRootsEnumerator {
    * @return this instance
    */
   @NotNull
-  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<OrderEntry, VirtualFile[]> provider);
+  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
 }

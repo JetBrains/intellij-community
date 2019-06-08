@@ -295,7 +295,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      if (PyTokenTypes.STRING_NODES.contains(childType)) {
+      if (PyTokenTypes.STRING_NODES.contains(childType) || childType == PyElementTypes.FSTRING_NODE) {
         childAlignment = getAlignmentForChildren();
       }
     }
@@ -442,6 +442,11 @@ public class PyBlock implements ASTBlock {
       prev = prev.getTreePrev();
     }
 
+    // Don't wrap anything inside f-string fragments
+    if (TreeUtil.findParent(child, PyElementTypes.FSTRING_FRAGMENT) != null) {
+      childWrap = Wrap.createWrap(WrapType.NONE, false);
+    }
+    
     return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
   }
 

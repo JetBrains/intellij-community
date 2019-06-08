@@ -18,10 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -176,6 +173,12 @@ class DirectoryPathMatcher {
           Collections.addAll(roots, entry.getFiles(OrderRootType.CLASSES));
           Collections.addAll(roots, entry.getFiles(OrderRootType.SOURCES));
         }
+      }
+    }
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+      for (SyntheticLibrary descriptor : provider.getAdditionalProjectLibraries(model.getProject())) {
+        roots.addAll(descriptor.getSourceRoots());
+        roots.addAll(descriptor.getBinaryRoots());
       }
     }
     return roots.stream()

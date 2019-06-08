@@ -92,6 +92,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPackageInfo4() { doTest("packageInfo/p4/package-info.java"); }
   public void testJava18Tags() { doTest(); }
   public void testJava19Tags() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
+  public void testJava12Tags() { setLanguageLevel(LanguageLevel.JDK_12); doTest(); }
   public void testModuleInfoTags() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m1/module-info.java"); }
   public void testDeprecatedModule() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("moduleInfo/m2/module-info.java"); }
   public void testUnknownInlineTag() { doTest(); }

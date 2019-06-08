@@ -73,10 +73,14 @@ public abstract class DfaFactType<T> extends Key<T> {
       if (left == right) {
         return left;
       }
-      if (left == DfaNullability.NULL || right == DfaNullability.NULL) {
-        return DfaNullability.UNKNOWN;
+      if (left == DfaNullability.NULL || right == DfaNullability.NULL || 
+          left == DfaNullability.NULLABLE || right == DfaNullability.NULLABLE) {
+        return DfaNullability.NULLABLE;
       }
-      return DfaNullability.FLUSHED;
+      if (left == DfaNullability.FLUSHED || right == DfaNullability.FLUSHED) {
+        return DfaNullability.FLUSHED;
+      }
+      return DfaNullability.UNKNOWN;
     }
 
     @Nullable
@@ -195,7 +199,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     public String getPresentationText(@NotNull LongRangeSet fact, @Nullable PsiType type) {
       LongRangeSet fromType = LongRangeSet.fromType(type);
       if(fact.equals(fromType)) return "";
-      return fact.toString();
+      return fact.getPresentationText(type);
     }
   };
   /**

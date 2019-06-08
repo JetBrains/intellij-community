@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -17,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BooleanSupplier;
 
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
@@ -30,7 +27,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   private final BooleanSupplier myGrouped;
 
   private volatile boolean myShowOnlyIncomplete;
-  private final Map<String, PropertyStructureViewElement> myElements = ContainerUtil.newLinkedHashMap();
+  private final Map<String, PropertyStructureViewElement> myElements = new LinkedHashMap<>();
 
   public ResourceBundleFileStructureViewElement(@NotNull ResourceBundle resourceBundle, @NotNull BooleanSupplier grouped) {
     myResourceBundle = resourceBundle;

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -29,12 +30,13 @@ import org.jetbrains.annotations.Nullable;
 public class ChangeContextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ChangeContextUtil");
 
-  public static final Key<String> ENCODED_KEY = Key.create("ENCODED_KEY");
-  public static final Key<PsiClass> THIS_QUALIFIER_CLASS_KEY = Key.create("THIS_QUALIFIER_CLASS_KEY");
+  private static final Key<ASTNode> HARD_REF_TO_AST = Key.create("HARD_REF_TO_AST");
+  private static final Key<String> ENCODED_KEY = Key.create("ENCODED_KEY");
+  private static final Key<PsiClass> THIS_QUALIFIER_CLASS_KEY = Key.create("THIS_QUALIFIER_CLASS_KEY");
   public static final Key<PsiMember> REF_MEMBER_KEY = Key.create("REF_MEMBER_KEY");
   public static final Key<Boolean> CAN_REMOVE_QUALIFIER_KEY = Key.create("CAN_REMOVE_QUALIFIER_KEY");
   public static final Key<PsiClass> REF_CLASS_KEY = Key.create("REF_CLASS_KEY");
-  public static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");
+  private static final Key<PsiClass> REF_MEMBER_THIS_CLASS_KEY = Key.create("REF_MEMBER_THIS_CLASS_KEY");
 
   private ChangeContextUtil() {}
 
@@ -50,6 +52,11 @@ public class ChangeContextUtil {
                                         PsiElement topLevelScope,
                                         boolean includeRefClasses,
                                         boolean canChangeQualifier) {
+    if (scope instanceof StubBasedPsiElement) {
+      // as long as "scope" is reachable, don't let GC collect AST together with all the copyable user data
+      scope.putUserData(HARD_REF_TO_AST, scope.getNode());
+    }
+
     if (scope instanceof PsiThisExpression){
       scope.putCopyableUserData(ENCODED_KEY, "");
 
@@ -116,6 +123,9 @@ public class ChangeContextUtil {
   public static PsiElement decodeContextInfo(@NotNull PsiElement scope,
                                              @Nullable PsiClass thisClass,
                                              @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
+    if (scope instanceof StubBasedPsiElement) {
+      scope.putUserData(HARD_REF_TO_AST, null);
+    }
     if (scope.getCopyableUserData(ENCODED_KEY) != null) {
       scope.putCopyableUserData(ENCODED_KEY, null);
 
@@ -345,9 +355,15 @@ public class ChangeContextUtil {
   }
 
   public static void clearContextInfo(PsiElement scope) {
+    if (scope instanceof StubBasedPsiElement) {
+      scope.putUserData(HARD_REF_TO_AST, null);
+    }
+    scope.putCopyableUserData(ENCODED_KEY, null);
     scope.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, null);
     scope.putCopyableUserData(REF_MEMBER_KEY, null);
     scope.putCopyableUserData(CAN_REMOVE_QUALIFIER_KEY, null);
+    scope.putCopyableUserData(REF_CLASS_KEY, null);
+    scope.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, null);
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
       clearContextInfo(child);
     }

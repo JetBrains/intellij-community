@@ -78,7 +78,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   @Override
-  public int show(String message) {
+  public int show(@NotNull String message) {
     myConfirmationWasRequested = true;
     return 0;
   }

@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static org.jetbrains.plugins.groovy.lang.sam.SamConversionKt.findSingleAbstractMethod;
 import static org.jetbrains.plugins.groovy.lang.sam.SamConversionKt.isSamConversionAllowed;
 
@@ -83,7 +82,7 @@ public class SubstitutorComputer {
     myExitPoints = VolatileNotNullLazyValue.createValue(() -> {
       if (canBeExitPoint(place)) {
         GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(place);
-        return newHashSet(ControlFlowUtils.collectReturns(flowOwner));
+        return new HashSet<>(ControlFlowUtils.collectReturns(flowOwner));
       }
       else {
         return emptyList();

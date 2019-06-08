@@ -23,6 +23,7 @@ class EdtTestUtil {
 
 /**
  * Consider using Kotlin coroutines and `com.intellij.openapi.application.AppUIExecutor.onUiThread().coroutineDispatchingContext()`
+ * @see com.intellij.openapi.application.AppUIExecutor.onUiThread
  */
 @TestOnly
 fun <V> runInEdtAndGet(compute: () -> V): V {
@@ -33,6 +34,7 @@ fun <V> runInEdtAndGet(compute: () -> V): V {
 
 /**
  * Consider using Kotlin coroutines and `com.intellij.openapi.application.AppUIExecutor.onUiThread().coroutineDispatchingContext()`
+ * @see com.intellij.openapi.application.AppUIExecutor.onUiThread
  */
 @TestOnly
 fun runInEdtAndWait(runnable: () -> Unit) {

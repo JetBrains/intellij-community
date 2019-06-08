@@ -28,6 +28,9 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "intellij.python.pydev")
+
+    buildCrossPlatformDistribution = true
+    mavenArtifacts.additionalModules = ["intellij.java.compiler.antTasks"]
   }
 
   @Override
@@ -123,6 +126,7 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
   }
 
   private int getStubVersion(BuildContext context) {
+    CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
     context.ant.java(classname: "com.jetbrains.python.tools.GetPyStubsVersionKt", fork: true, outputproperty: "stubsVersion") {

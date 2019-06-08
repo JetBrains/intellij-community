@@ -3,8 +3,8 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.UIUtilities;
 import com.intellij.util.ui.MenuItemLayoutHelper;
+import com.intellij.util.ui.UIUtilities;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -18,7 +18,7 @@ import java.awt.event.MouseEvent;
 public class DarculaMenuItemUIBase extends BasicMenuItemUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-      return new DarculaMenuItemUIBase();
+    return new DarculaMenuItemUIBase();
   }
 
   public void processMouseEvent(JMenuItem item, MouseEvent e, MenuElement[] path, MenuSelectionManager manager) {
@@ -29,13 +29,17 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
         manager.clearSelectedPath();
         item.doClick(0);
         item.setArmed(false);
-      } else
+      }
+      else {
         manager.setSelectedPath(path);
-    } else if (item.getModel().isArmed()) {
+      }
+    }
+    else if (item.getModel().isArmed()) {
       MenuElement[] newPath = new MenuElement[path.length - 1];
       int i, c;
-      for (i = 0, c = path.length - 1; i < c; i++)
+      for (i = 0, c = path.length - 1; i < c; i++) {
         newPath[i] = path[i];
+      }
       manager.setSelectedPath(newPath);
     }
   }
@@ -49,17 +53,18 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
     Font holdf = g.getFont();
     Color holdc = g.getColor();
 
-    JMenuItem mi = (JMenuItem) c;
+    JMenuItem mi = (JMenuItem)c;
     g.setFont(mi.getFont());
 
     Rectangle viewRect = new Rectangle(0, 0, mi.getWidth(), mi.getHeight());
     JBInsets.removeFrom(viewRect, mi.getInsets());
 
     MenuItemLayoutHelper lh = new MenuItemLayoutHelper(mi, checkIcon,
-        arrowIcon, viewRect, defaultTextIconGap, "-", //todo[kb] use protected field BasicMenuItemUI.acceleratorDelimiter when we move to java 1.7
-        mi.getComponentOrientation().isLeftToRight(), mi.getFont(),
-        acceleratorFont, MenuItemLayoutHelper.useCheckAndArrow(menuItem),
-        getPropertyPrefix());
+                                                       arrowIcon, viewRect, defaultTextIconGap, "-",
+                                                       //todo[kb] use protected field BasicMenuItemUI.acceleratorDelimiter when we move to java 1.7
+                                                       mi.getComponentOrientation().isLeftToRight(), mi.getFont(),
+                                                       acceleratorFont, MenuItemLayoutHelper.useCheckAndArrow(menuItem),
+                                                       getPropertyPrefix());
     MenuItemLayoutHelper.LayoutResult lr = lh.layoutMenuItem();
 
     paintBackground(g, mi, background);
@@ -77,47 +82,50 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
   }
 
   protected void paintIcon(Graphics g, MenuItemLayoutHelper lh,
-                         MenuItemLayoutHelper.LayoutResult lr, Color holdc) {
-      if (lh.getIcon() != null) {
-          Icon icon;
-          ButtonModel model = lh.getMenuItem().getModel();
-          if (!model.isEnabled()) {
-              icon = lh.getMenuItem().getDisabledIcon();
-          } else if (model.isPressed() && model.isArmed()) {
-              icon = lh.getMenuItem().getPressedIcon();
-              if (icon == null) {
-                  // Use default icon
-                  icon = lh.getMenuItem().getIcon();
-              }
-          } else {
-              icon = lh.getMenuItem().getIcon();
-          }
-
-          if (icon != null) {
-              icon.paintIcon(lh.getMenuItem(), g, lr.getIconRect().x,
-                      lr.getIconRect().y);
-              g.setColor(holdc);
-          }
+                           MenuItemLayoutHelper.LayoutResult lr, Color holdc) {
+    if (lh.getIcon() != null) {
+      Icon icon;
+      ButtonModel model = lh.getMenuItem().getModel();
+      if (!model.isEnabled()) {
+        icon = lh.getMenuItem().getDisabledIcon();
       }
+      else if (model.isPressed() && model.isArmed()) {
+        icon = lh.getMenuItem().getPressedIcon();
+        if (icon == null) {
+          // Use default icon
+          icon = lh.getMenuItem().getIcon();
+        }
+      }
+      else {
+        icon = lh.getMenuItem().getIcon();
+      }
+
+      if (icon != null) {
+        icon.paintIcon(lh.getMenuItem(), g, lr.getIconRect().x,
+                       lr.getIconRect().y);
+        g.setColor(holdc);
+      }
+    }
   }
 
   protected void paintCheckIcon(Graphics g, MenuItemLayoutHelper lh,
-                              MenuItemLayoutHelper.LayoutResult lr,
-                              Color holdc, Color foreground) {
-      if (lh.getCheckIcon() != null) {
-          ButtonModel model = lh.getMenuItem().getModel();
-          if (model.isArmed() || (lh.getMenuItem() instanceof JMenu
-                  && model.isSelected())) {
-              g.setColor(foreground);
-          } else {
-              g.setColor(holdc);
-          }
-          if (lh.useCheckAndArrow()) {
-              lh.getCheckIcon().paintIcon(lh.getMenuItem(), g,
-                      lr.getCheckRect().x, lr.getCheckRect().y);
-          }
-          g.setColor(holdc);
+                                MenuItemLayoutHelper.LayoutResult lr,
+                                Color holdc, Color foreground) {
+    if (lh.getCheckIcon() != null) {
+      ButtonModel model = lh.getMenuItem().getModel();
+      if (model.isArmed() || (lh.getMenuItem() instanceof JMenu
+                              && model.isSelected())) {
+        g.setColor(foreground);
       }
+      else {
+        g.setColor(holdc);
+      }
+      if (lh.useCheckAndArrow()) {
+        lh.getCheckIcon().paintIcon(lh.getMenuItem(), g,
+                                    lr.getCheckRect().x, lr.getCheckRect().y);
+      }
+      g.setColor(holdc);
+    }
   }
 
   protected void paintAccText(Graphics g, MenuItemLayoutHelper lh,
@@ -131,60 +139,64 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
           g.setColor(disabledForeground);
           UIUtilities.drawString(lh.getMenuItem(), g,
                                  lh.getAccText(), lr.getAccRect().x,
-              lr.getAccRect().y + lh.getAccFontMetrics().getAscent());
-        } else {
+                                 lr.getAccRect().y + lh.getAccFontMetrics().getAscent());
+        }
+        else {
           g.setColor(lh.getMenuItem().getBackground().brighter());
           UIUtilities.drawString(lh.getMenuItem(), g,
-              lh.getAccText(), lr.getAccRect().x,
-              lr.getAccRect().y + lh.getAccFontMetrics().getAscent());
+                                 lh.getAccText(), lr.getAccRect().x,
+                                 lr.getAccRect().y + lh.getAccFontMetrics().getAscent());
           g.setColor(lh.getMenuItem().getBackground().darker());
           UIUtilities.drawString(lh.getMenuItem(), g,
-              lh.getAccText(), lr.getAccRect().x - 1,
-              lr.getAccRect().y + lh.getFontMetrics().getAscent() - 1);
+                                 lh.getAccText(), lr.getAccRect().x - 1,
+                                 lr.getAccRect().y + lh.getFontMetrics().getAscent() - 1);
         }
-      } else {
+      }
+      else {
         // *** paint the accText normally
         if (model.isArmed()
             || (lh.getMenuItem() instanceof JMenu
-            && model.isSelected())) {
+                && model.isSelected())) {
           g.setColor(acceleratorSelectionForeground);
-        } else {
+        }
+        else {
           g.setColor(acceleratorForeground);
         }
         UIUtilities.drawString(lh.getMenuItem(), g, lh.getAccText(),
-                                   lr.getAccRect().x, lr.getAccRect().y +
-                                                      lh.getAccFontMetrics().getAscent());
+                               lr.getAccRect().x, lr.getAccRect().y +
+                                                  lh.getAccFontMetrics().getAscent());
       }
     }
   }
 
   protected void paintText(Graphics g, MenuItemLayoutHelper lh,
-                         MenuItemLayoutHelper.LayoutResult lr) {
-      if (!lh.getText().equals("")) {
-          if (lh.getHtmlView() != null) {
-              // Text is HTML
-              lh.getHtmlView().paint(g, lr.getTextRect());
-          } else {
-              // Text isn't HTML
-              UISettings.setupAntialiasing(g);
-              paintText(g, lh.getMenuItem(), lr.getTextRect(), lh.getText());
-          }
+                           MenuItemLayoutHelper.LayoutResult lr) {
+    if (!lh.getText().equals("")) {
+      if (lh.getHtmlView() != null) {
+        // Text is HTML
+        lh.getHtmlView().paint(g, lr.getTextRect());
       }
+      else {
+        // Text isn't HTML
+        UISettings.setupAntialiasing(g);
+        paintText(g, lh.getMenuItem(), lr.getTextRect(), lh.getText());
+      }
+    }
   }
 
   protected void paintArrowIcon(Graphics g, MenuItemLayoutHelper lh,
-                              MenuItemLayoutHelper.LayoutResult lr,
-                              Color foreground) {
-      if (lh.getArrowIcon() != null) {
-          ButtonModel model = lh.getMenuItem().getModel();
-          if (model.isArmed() || (lh.getMenuItem() instanceof JMenu
+                                MenuItemLayoutHelper.LayoutResult lr,
+                                Color foreground) {
+    if (lh.getArrowIcon() != null) {
+      ButtonModel model = lh.getMenuItem().getModel();
+      if (model.isArmed() || (lh.getMenuItem() instanceof JMenu
                               && model.isSelected())) {
-              g.setColor(foreground);
-          }
-          if (lh.useCheckAndArrow()) {
-              lh.getArrowIcon().paintIcon(lh.getMenuItem(), g,
-                      lr.getArrowRect().x, lr.getArrowRect().y);
-          }
+        g.setColor(foreground);
       }
+      if (lh.useCheckAndArrow()) {
+        lh.getArrowIcon().paintIcon(lh.getMenuItem(), g,
+                                    lr.getArrowRect().x, lr.getArrowRect().y);
+      }
+    }
   }
 }

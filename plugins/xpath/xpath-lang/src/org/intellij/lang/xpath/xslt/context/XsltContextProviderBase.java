@@ -156,7 +156,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     }
   }
 
-  private static void processElementDescriptors(XmlElementDescriptor descriptor, XmlTag tag, ElementNames names, Set<XmlElementDescriptor> history, int depth)
+  private static void processElementDescriptors(XmlElementDescriptor descriptor, XmlTag tag, ElementNames names, Set<? super XmlElementDescriptor> history, int depth)
     throws StopProcessingException {
     if (!history.add(descriptor) || ++depth == 200) {
       if (depth == 200) {

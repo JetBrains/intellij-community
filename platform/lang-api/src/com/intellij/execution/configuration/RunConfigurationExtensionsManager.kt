@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration
 
 import com.intellij.execution.ExecutionException
@@ -81,7 +81,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
         return@processApplicableExtensions
       }
 
-      if (!element.content.isEmpty() || element.attributes.size > 1) {
+      if (element.content.isNotEmpty() || element.attributes.size > 1) {
         map.put(extension.serializationId, element)
       }
     }
@@ -170,7 +170,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   }
 
   protected inline fun processApplicableExtensions(configuration: U, handler: (T) -> Unit) {
-    for (extension in extensionPoint.extensionList) {
+    for (extension in extensionPoint.iterable) {
       if (extension.isApplicableFor(configuration)) {
         handler(extension)
       }
@@ -178,7 +178,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   }
 
   protected inline fun processEnabledExtensions(configuration: U, runnerSettings: RunnerSettings?, handler: (T) -> Unit) {
-    for (extension in extensionPoint.extensionList) {
+    for (extension in extensionPoint.iterable) {
       if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
         handler(extension)
       }

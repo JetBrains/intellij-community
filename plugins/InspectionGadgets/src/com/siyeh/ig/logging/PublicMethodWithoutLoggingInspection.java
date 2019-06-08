@@ -23,7 +23,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.LoggingUtils;
+import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
   final List<String> loggerClassNames = new ArrayList<>();
   @SuppressWarnings("PublicField")
-  public String loggerClassName = StringUtil.join(LoggingUtils.DEFAULT_LOGGERS, ",");
+  public String loggerClassName = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
 
   public PublicMethodWithoutLoggingInspection() {
     parseString(loggerClassName, loggerClassNames);

@@ -140,7 +140,25 @@ public class CachedIntentions {
     return changed;
   }
 
-  private boolean wrapActionsTo(@NotNull List<HighlightInfo.IntentionActionDescriptor> newDescriptors,
+  public boolean addActions(@NotNull ShowIntentionsPass.IntentionsInfo info) {
+    boolean changed = addActionsTo(info.errorFixesToShow, myErrorFixes);
+    changed |= addActionsTo(info.inspectionFixesToShow, myInspectionFixes);
+    changed |= addActionsTo(info.intentionsToShow, myIntentions);
+    changed |= addActionsTo(info.guttersToShow, myGutters);
+    changed |= addActionsTo(info.notificationActionsToShow, myNotifications);
+    return changed;
+  }
+
+  private boolean addActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
+                               @NotNull Set<? super IntentionActionWithTextCaching> cachedActions) {
+    boolean changed = false;
+    for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
+      changed |= cachedActions.add(wrapAction(descriptor, myFile, myFile, myEditor));
+    }
+    return changed;
+  }
+
+  private boolean wrapActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
                                 @NotNull Set<IntentionActionWithTextCaching> cachedActions,
                                 boolean callUpdate) {
     boolean changed = false;
@@ -314,7 +332,7 @@ public class CachedIntentions {
   private static int getPriorityWeight(PriorityAction.Priority priority) {
     switch (priority) {
       case TOP:
-        return 666;
+        return 20;
       case HIGH:
         return 3;
       case LOW:

@@ -37,8 +37,8 @@ public abstract class ColorChooserService {
   @Deprecated
   @Nullable
   public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
-                                   List<ColorPickerListener> listeners, boolean opacityInPercent);
+                                   List<? extends ColorPickerListener> listeners, boolean opacityInPercent);
   @Nullable
   public abstract Color showDialog(Project project, Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
-                                   List<ColorPickerListener> listeners, boolean opacityInPercent);
+                                   List<? extends ColorPickerListener> listeners, boolean opacityInPercent);
 }

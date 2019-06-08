@@ -122,12 +122,12 @@ public class ExternalJavacManager extends ProcessAdapter {
                            int heapSize,
                            List<String> vmOptions,
                            List<String> options,
-                           Collection<File> platformCp,
-                           Collection<File> classpath,
-                           Collection<File> upgradeModulePath,
-                           Collection<File> modulePath,
-                           Collection<File> sourcePath,
-                           Collection<File> files,
+                           Collection<? extends File> platformCp,
+                           Collection<? extends File> classpath,
+                           Collection<? extends File> upgradeModulePath,
+                           Collection<? extends File> modulePath,
+                           Collection<? extends File> sourcePath,
+                           Collection<? extends File> files,
                            Map<File, Set<File>> outs,
                            DiagnosticOutputConsumer diagnosticSink,
                            OutputFileConsumer outputSink,
@@ -146,7 +146,7 @@ public class ExternalJavacManager extends ProcessAdapter {
                                           List<String> vmOptions,
                                           List<String> options,
                                           CompilationPaths paths,
-                                          Collection<File> files,
+                                          Collection<? extends File> files,
                                           Map<File, Set<File>> outs,
                                           DiagnosticOutputConsumer diagnosticSink,
                                           OutputFileConsumer outputSink,
@@ -431,7 +431,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     return new ExternalJavacProcessHandler(processId, process, commandLine, keepProcessAlive);
   }
 
-  private static void appendParam(List<String> cmdLine, String parameter) {
+  private static void appendParam(List<? super String> cmdLine, String parameter) {
     if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
@@ -443,7 +443,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     cmdLine.add(parameter);
   }
 
-  private static void copyProperty(List<String> cmdLine, String name) {
+  private static void copyProperty(List<? super String> cmdLine, String name) {
     String value = System.getProperty(name);
     if (value != null) {
       appendParam(cmdLine, "-D" + name + '=' + value);

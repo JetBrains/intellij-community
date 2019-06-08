@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -8,18 +8,23 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
+  private final static int CURR_VERSION = 2;
+
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
+    "Default",
+    "Darcula",
     "Obsidian",
     "Visual Studio",
     "Solarized",
@@ -33,8 +38,17 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "Netbeans",
     "Eclipse",
     "Aptana",
-    "Flash Builder"
+    "Flash Builder",
+    "IdeaLight",
+    "High сontrast",
+    "ReSharper",
+    "Rider"
   };
+
+  @Override
+  public int getVersion() {
+    return CURR_VERSION;
+  }
 
   @NotNull
   @Override
@@ -45,37 +59,34 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
   @NotNull
   public static Set<UsageDescriptor> getDescriptors() {
     EditorColorsScheme currentScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-    String schemeName = SCHEME_NAME_OTHER;
+    Set<UsageDescriptor> usages = new HashSet<>();
     if (currentScheme instanceof AbstractColorsScheme) {
-      String name = currentScheme.getName();
-      if (name.startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+      String schemeName = currentScheme.getName();
+      if (schemeName.startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
         EditorColorsScheme original = ((AbstractColorsScheme)currentScheme).getOriginal();
         if (original != null) {
           schemeName = original.getName();
         }
       }
-      if (schemeName == SCHEME_NAME_OTHER) {
-        String knownName = getKnownSchemeName(name);
-        if (knownName != null) {
-          schemeName = knownName;
-        }
-        boolean isDark = ColorUtil.isDark(currentScheme.getDefaultBackground());
-        schemeName += "[" + (isDark ? "Dark" : "Light") + "]";
-      }
-      usages.add(new UsageDescriptor(schemeName, 1));
+      final String reportableName = getKnownSchemeName(schemeName) + " (" + getLightDarkSuffix(currentScheme) + ")";
+      usages.add(new UsageDescriptor(reportableName, 1));
     }
     return usages;
   }
 
-  @Nullable
+  @NotNull
+  private static String getLightDarkSuffix(@NotNull EditorColorsScheme scheme) {
+    return ColorUtil.isDark(scheme.getDefaultBackground()) ? "Dark" : "Light";
+  }
+
+  @NotNull
   private static String getKnownSchemeName(@NonNls @NotNull String schemeName) {
     for (@NonNls String knownName : KNOWN_NAMES) {
-      if (schemeName.toUpperCase().contains(knownName.toUpperCase())) {
+      if (StringUtil.toUpperCase(schemeName).contains(StringUtil.toUpperCase(knownName))) {
         return knownName;
       }
     }
-    return null;
+    return SCHEME_NAME_OTHER;
   }
 
   @NotNull

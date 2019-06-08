@@ -5,14 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private static final Logger LOG = Logger.getInstance(AbstractCodeStylePropertyMapper.class);
@@ -29,6 +28,13 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
     "FORMATTER_TAGS_ACCEPT_REGEXP"
   );
 
+  private final static Set<String> INDENT_FIELDS = ContainerUtil.newHashSet(
+    "INDENT_SIZE",
+    "USE_TAB_CHARACTER",
+    "TAB_SIZE",
+    "SMART_TABS"
+  );
+
   public GeneralCodeStylePropertyMapper(@NotNull CodeStyleSettings settings) {
     super(settings);
   }
@@ -36,7 +42,10 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
   @NotNull
   @Override
   protected List<CodeStyleObjectDescriptor> getSupportedFields() {
-    return Collections.singletonList(new CodeStyleObjectDescriptor(getRootSettings(), GENERAL_FIELDS));
+    List<CodeStyleObjectDescriptor> supportedFields = new ArrayList<>(2);
+    supportedFields.add(new CodeStyleObjectDescriptor(getRootSettings(), GENERAL_FIELDS));
+    supportedFields.add(new CodeStyleObjectDescriptor(getRootSettings().OTHER_INDENT_OPTIONS, INDENT_FIELDS));
+    return supportedFields;
   }
 
   @Override
@@ -109,5 +118,10 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
   public String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
     return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
+  }
+
+  @Override
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+    accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), null));
   }
 }

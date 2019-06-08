@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.ui.*;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
@@ -50,23 +49,9 @@ public class ChangeListChooserPanel extends JPanel {
                                            boolean selected,
                                            boolean hasFocus) {
         if (value != null) {
-          String name = value.getName();
-          int visibleWidth = getSize().width;
-          if (visibleWidth == 0) {
-            visibleWidth = MyEditorComboBox.PREF_WIDTH;
-          }
-          final FontMetrics fm = list.getFontMetrics(list.getFont());
-          final int width = fm.stringWidth(name);
-          if (width > visibleWidth) {
-            final String truncated = CommittedChangeListRenderer
-              .truncateDescription(name, fm, visibleWidth - fm.stringWidth(" ..") - 7);
-            if (truncated.length() > 5) {
-              name = truncated + " ..";
-            }
-          }
-          append(name, value instanceof LocalChangeList && ((LocalChangeList)value).isDefault()
-                       ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-                       : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          append(value.getName(), value instanceof LocalChangeList && ((LocalChangeList)value).isDefault()
+                                  ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                  : SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });

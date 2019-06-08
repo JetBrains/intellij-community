@@ -22,7 +22,6 @@ import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ExceptionUtil;
@@ -32,7 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -51,7 +53,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
       String execPath = binPath + '/' + names.getProductName() + ".sh";
       if (new File(execPath).canExecute()) return execPath;
 
-      execPath = binPath + '/' + names.getProductName().toLowerCase(Locale.US) + ".sh";
+      execPath = binPath + '/' + StringUtil.toLowerCase(names.getProductName()) + ".sh";
       if (new File(execPath).canExecute()) return execPath;
 
       execPath = binPath + '/' + names.getScriptName() + ".sh";
@@ -103,7 +105,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   public static void createDesktopEntry(boolean globalEntry) throws Exception {
     if (!isAvailable()) return;
 
-    File entry = null;
+    Path entry = null;
     try {
       check();
       entry = prepare();
@@ -111,7 +113,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     }
     finally {
       if (entry != null) {
-        FileUtil.delete(entry);
+        Files.delete(entry);
       }
     }
   }
@@ -129,7 +131,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     if (result != 0) throw new RuntimeException(ApplicationBundle.message("desktop.entry.xdg.missing"));
   }
 
-  private static File prepare() throws IOException {
+  private static Path prepare() throws IOException {
     String binPath = PathManager.getBinPath();
     assert new File(binPath).isDirectory() : "Invalid bin path: '" + binPath + "'";
 
@@ -155,26 +157,26 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
                                           pair("$COMMENT$", comment),
                                           pair("$WM_CLASS$", wmClass));
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
-    File entryFile = new File(FileUtil.getTempDirectory(), wmClass + ".desktop");
-    FileUtil.writeToFile(entryFile, content);
+    Path entryFile = Paths.get(PathManager.getTempPath(), wmClass + ".desktop");
+    Files.write(entryFile, content.getBytes(StandardCharsets.UTF_8));
     return entryFile;
   }
 
-  private static void install(File entryFile, boolean globalEntry) throws IOException, ExecutionException {
+  private static void install(Path entryFile, boolean globalEntry) throws IOException, ExecutionException {
     if (globalEntry) {
       File script = ExecUtil.createTempExecutableScript(
         "create_desktop_entry_", ".sh",
         "#!/bin/sh\n" +
-        "xdg-desktop-menu install --mode system '" + entryFile.getAbsolutePath() + "' && xdg-desktop-menu forceupdate --mode system\n");
+        "xdg-desktop-menu install --mode system '" + entryFile + "' && xdg-desktop-menu forceupdate --mode system\n");
       try {
         exec(new GeneralCommandLine(script.getPath()), ApplicationBundle.message("desktop.entry.sudo.prompt"));
       }
       finally {
-        FileUtil.delete(script);
+        Files.delete(script.toPath());
       }
     }
     else {
-      exec(new GeneralCommandLine("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath()), null);
+      exec(new GeneralCommandLine("xdg-desktop-menu", "install", "--mode", "user", entryFile.toString()), null);
       exec(new GeneralCommandLine("xdg-desktop-menu", "forceupdate", "--mode", "user"), null);
     }
   }

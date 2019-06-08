@@ -21,34 +21,24 @@ import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 
-import java.util.Arrays;
-import java.util.List;
-
 @SuppressWarnings("SpellCheckingInspection")
 public interface Win32RestartManager extends Library {
-  Win32RestartManager INSTANCE = Native.loadLibrary("Rstrtmgr", Win32RestartManager.class);
+  Win32RestartManager INSTANCE = Native.load("Rstrtmgr", Win32RestartManager.class);
 
   int CCH_RM_SESSION_KEY = 32;
   int CCH_RM_MAX_APP_NAME = 255;
   int CCH_RM_MAX_SVC_NAME = 63;
 
+  @SuppressWarnings("unused")
+  @Structure.FieldOrder({"dwProcessId", "ProcessStartTime"})
   class RmUniqueProcess extends Structure {
-    private static final List<String> __FIELDS = Arrays.asList("dwProcessId", "ProcessStartTime");
-
     public int dwProcessId;
     public WinBase.FILETIME ProcessStartTime;
-
-    @Override
-    protected List<String> getFieldOrder() {
-      return __FIELDS;
-    }
   }
 
   @SuppressWarnings("unused")
+  @Structure.FieldOrder({"Process", "strAppName", "strServiceShortName", "ApplicationType", "AppStatus", "TSSessionId", "bRestartable"})
   class RmProcessInfo extends Structure {
-    private static final List<String> __FIELDS = Arrays.asList(
-      "Process", "strAppName", "strServiceShortName", "ApplicationType", "AppStatus", "TSSessionId", "bRestartable");
-
     public RmUniqueProcess Process;
     public char[] strAppName = new char[CCH_RM_MAX_APP_NAME + 1];
     public char[] strServiceShortName = new char[CCH_RM_MAX_SVC_NAME + 1];
@@ -56,11 +46,6 @@ public interface Win32RestartManager extends Library {
     public WinDef.LONG AppStatus;
     public int TSSessionId;
     public boolean bRestartable;
-
-    @Override
-    protected List<String> getFieldOrder() {
-      return __FIELDS;
-    }
   }
 
   int RmGetList(int dwSessionHandle,

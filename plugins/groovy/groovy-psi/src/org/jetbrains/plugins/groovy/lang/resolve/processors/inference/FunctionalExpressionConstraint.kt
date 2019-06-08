@@ -6,7 +6,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil.getNonWildcardParameterization
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
@@ -15,29 +14,24 @@ import org.jetbrains.plugins.groovy.lang.sam.isSamConversionAllowed
 class FunctionalExpressionConstraint(private val expression: GrFunctionalExpression, private val leftType: PsiType) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    if (session.skipClosureBlock || session.closureSkipList.contains(findCall(expression))) {
-      //TODO:add explicit typed closure constraints
+    if (leftType !is PsiClassType) return true
+    val returnType by lazy(LazyThreadSafetyMode.NONE) {
+      expression.returnType
+    }
+    if (TypesUtil.isClassType(leftType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+      val parameters = leftType.parameters
+      if (parameters.size != 1) return true
+      if (returnType == null || returnType == PsiType.VOID) {
+        return true
+      }
+      constraints.add(TypeConstraint(parameters[0], returnType, expression))
     }
     else {
-      if (leftType !is PsiClassType) return true
-      val returnType by lazy(LazyThreadSafetyMode.NONE) {
-        expression.returnType
+      val samReturnType = callSamReturnType() ?: return true
+      if (returnType == null || returnType == PsiType.VOID) {
+        return true
       }
-      if (TypesUtil.isClassType(leftType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
-        val parameters = leftType.parameters
-        if (parameters.size != 1) return true
-        if (returnType == null || returnType == PsiType.VOID) {
-          return true
-        }
-        constraints.add(TypeConstraint(parameters[0], returnType, expression))
-      }
-      else {
-        val samReturnType = callSamReturnType() ?: return true
-        if (returnType == null || returnType == PsiType.VOID) {
-          return true
-        }
-        constraints.add(TypeConstraint(samReturnType, returnType, expression))
-      }
+      constraints.add(TypeConstraint(samReturnType, returnType, expression))
     }
     return true
   }

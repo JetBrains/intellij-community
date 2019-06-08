@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DisjointPackageInspection extends BaseGlobalInspection {
 
@@ -54,18 +55,12 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
       return null;
     }
     final RefPackage refPackage = (RefPackage)refEntity;
-    final List<RefEntity> children = refPackage.getChildren();
-    final Set<RefClass> childClasses = new HashSet<>();
-    for (RefEntity child : children) {
-      if (!(child instanceof RefClass)) {
-        continue;
-      }
-      final PsiClass psiClass = ((RefClass)child).getUastElement().getJavaPsi();
-      if (ClassUtils.isInnerClass(psiClass)) {
-        continue;
-      }
-      childClasses.add((RefClass)child);
-    }
+    final Set<RefClass> childClasses = refPackage
+      .getChildren()
+      .stream()
+      .filter(child -> child instanceof RefClass)
+      .map(child -> (RefClass)child)
+      .collect(Collectors.toSet());
     if (childClasses.isEmpty()) {
       return null;
     }

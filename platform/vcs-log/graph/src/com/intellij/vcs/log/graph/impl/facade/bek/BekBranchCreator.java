@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade.bek;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
 import com.intellij.vcs.log.graph.utils.Dfs;
@@ -25,6 +10,7 @@ import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
@@ -45,7 +31,7 @@ class BekBranchCreator {
 
   @NotNull
   public Pair<List<BekBranch>, BekEdgeRestrictions> getResult() {
-    List<BekBranch> bekBranches = ContainerUtil.newArrayList();
+    List<BekBranch> bekBranches = new ArrayList<>();
 
     for (int headNode : myGraphLayout.getHeadNodeIndex()) {
       List<Integer> nextBranch = createNextBranch(headNode);
@@ -55,7 +41,7 @@ class BekBranchCreator {
   }
 
   public List<Integer> createNextBranch(int headNode) {
-    final List<Integer> nodeIndexes = ContainerUtil.newArrayList();
+    final List<Integer> nodeIndexes = new ArrayList<>();
 
     assert !myDoneNodes.get(headNode);
     myDoneNodes.set(headNode, true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -908,12 +909,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
     }
-    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
+    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT ||
+             myChild2.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
       if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) {
         myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_SWITCH_LBRACE, null);
       }
       else {
-        int lineFeeds = mySettings.CASE_STATEMENT_ON_NEW_LINE ? 1 : 0;
+        int lineFeeds = myChild1.getElementType() != JavaElementType.SWITCH_LABEL_STATEMENT || mySettings.CASE_STATEMENT_ON_NEW_LINE ? 1 : 0;
         myResult = Spacing.createSpacing(1, 1, lineFeeds, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
     }
@@ -1293,7 +1295,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     int length = expressions.length;
     assert length > 1;
 
-    List<TextRange> ranges = ContainerUtil.newArrayList();
+    List<TextRange> ranges = new ArrayList<>();
     for (int i = 0; i < length - 1; i++) {
       int startOffset = expressions[i].getTextRange().getEndOffset();
       int endOffset = expressions[i + 1].getTextRange().getStartOffset();

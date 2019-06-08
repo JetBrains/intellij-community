@@ -127,7 +127,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   protected void processComponentKeyEvent(KeyEvent event) {
     if (event.getModifiers() == 0 && event.getKeyCode() == KeyEvent.VK_SPACE) {
       event.consume();
-      fireHyperlinkEvent();
+      fireHyperlinkEvent(event);
     }
   }
 
@@ -137,12 +137,12 @@ public class HyperlinkLabel extends HighlightableComponent {
       myMouseHover = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-      setCursor(Cursor.getDefaultCursor());
+      setCursor(null);
       myMouseHover = false;
       myMousePressed = false;
       repaint();
     } else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
-      fireHyperlinkEvent();
+      fireHyperlinkEvent(e);
       myMousePressed = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
@@ -158,7 +158,7 @@ public class HyperlinkLabel extends HighlightableComponent {
       boolean onLink = isOnLink(e.getX());
       boolean needRepaint = myMouseHover != onLink;
       myMouseHover = onLink;
-      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+      setCursor(myMouseHover ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
 
       if (needRepaint) {
         repaint();
@@ -216,15 +216,15 @@ public class HyperlinkLabel extends HighlightableComponent {
     return myHighlightedText.getText();
   }
 
-  protected void fireHyperlinkEvent() {
-    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null);
+  protected void fireHyperlinkEvent(@Nullable InputEvent inputEvent) {
+    HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null, null, inputEvent);
     for (HyperlinkListener listener : myListeners) {
       listener.hyperlinkUpdate(e);
     }
   }
 
   public void doClick() {
-    fireHyperlinkEvent();
+    fireHyperlinkEvent(null);
   }
 
   public void setHtmlText(String text) {

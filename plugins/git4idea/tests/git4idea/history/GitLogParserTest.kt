@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.util.io.FileUtil
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.containers.ContainerUtil
 import git4idea.history.GitLogParser.*
 import git4idea.history.GitLogParser.GitLogOption.*
 import git4idea.history.GitLogParser.NameStatus.NONE
@@ -31,12 +30,12 @@ class GitLogParserTest : GitPlatformTest() {
 
   @Throws(VcsException::class)
   fun testParseOneRecordWithoutNameStatus() {
-    doTestOneRecord(GitLogParser(myProject, *GIT_LOG_OPTIONS), NONE)
+    doTestOneRecord(GitLogParser.createDefaultParser(myProject, *GIT_LOG_OPTIONS), NONE)
   }
 
   @Throws(VcsException::class)
   fun testParseOneRecordWithNameStatus() {
-    doTestOneRecord(GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS), STATUS)
+    doTestOneRecord(GitLogParser.createDefaultParser(myProject, STATUS, *GIT_LOG_OPTIONS), STATUS)
   }
 
   fun test_char_0001_in_commit_message() {
@@ -83,7 +82,7 @@ class GitLogParserTest : GitPlatformTest() {
 
   @Throws(VcsException::class)
   fun test_files_with_spaces() {
-    val parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
+    val parser = GitLogParser.createDefaultParser(myProject, STATUS, *GIT_LOG_OPTIONS)
     val expectedRecord = createTestRecord(changes = listOf(modified("file "), modified(" ")))
     val actualRecord = parser.parseOneRecord(expectedRecord.prepareOutputLine(STATUS))!!
     assertRecord(actualRecord, expectedRecord, STATUS)
@@ -93,7 +92,7 @@ class GitLogParserTest : GitPlatformTest() {
   private fun doTestAllRecords(nameStatusOption: NameStatus, newRefsFormat: Boolean = false) {
     val expectedRecords = generateRecords(newRefsFormat)
 
-    val parser = GitLogParser(myProject, nameStatusOption, *GIT_LOG_OPTIONS)
+    val parser = GitLogParser.createDefaultParser(myProject, nameStatusOption, *GIT_LOG_OPTIONS)
 
     val output = expectedRecords.joinToString("\n") { it.prepareOutputLine(nameStatusOption) }
     val actualRecords = parser.parse(output)
@@ -104,7 +103,7 @@ class GitLogParserTest : GitPlatformTest() {
   }
 
   @Throws(VcsException::class)
-  private fun doTestOneRecord(parser: GitLogParser, option: NameStatus) {
+  private fun <R : GitLogRecord> doTestOneRecord(parser: GitLogParser<R>, option: NameStatus) {
     val expectedRecord = generateRecordWithSubject("Subject")
     val s = expectedRecord.prepareOutputLine(option)
     val actualRecord = parser.parseOneRecord(s)!!
@@ -114,7 +113,7 @@ class GitLogParserTest : GitPlatformTest() {
   private fun doTestCustomCommitMessage(subject: String) {
     val record = generateRecordWithSubject(subject)
 
-    val parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
+    val parser = GitLogParser.createDefaultParser(myProject, STATUS, *GIT_LOG_OPTIONS)
     val s = record.prepareOutputLine(NONE)
     val records = parser.parse(s)
     TestCase.assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size)
@@ -141,15 +140,19 @@ class GitLogParserTest : GitPlatformTest() {
     UsefulTestCase.assertSameElements(actual.refs, expected.refs)
 
     if (option == STATUS) {
-      val actualPaths = actual.getFilePaths(projectRoot).map { FileUtil.getRelativePath(File(projectPath), it.ioFile) }
-      val expectedPaths = expected.paths().map { FileUtil.toSystemDependentName(it) }
-      UsefulTestCase.assertOrderedEquals(actualPaths, expectedPaths)
+      if (actual is GitLogFullRecord) {
+        val actualPaths = actual.getFilePaths(projectRoot).map { FileUtil.getRelativePath(File(projectPath), it.ioFile) }
+        val expectedPaths = expected.paths().map { FileUtil.toSystemDependentName(it) }
+        UsefulTestCase.assertOrderedEquals(actualPaths, expectedPaths)
 
-      val actualChanges = actual.parseChanges(myProject, projectRoot)
-      val expectedChanges = expected.changes
-      TestCase.assertEquals(expectedChanges.size, actualChanges.size)
-      for (i in actualChanges.indices) {
-        assertChange(actualChanges[i], expectedChanges[i])
+        val actualChanges = actual.parseChanges(myProject, projectRoot)
+        val expectedChanges = expected.changes
+        TestCase.assertEquals(expectedChanges.size, actualChanges.size)
+        for (i in actualChanges.indices) {
+          assertChange(actualChanges[i], expectedChanges[i])
+        }
+      } else {
+        TestCase.fail("$actual is not a GitLogFullRecord")
       }
     }
   }
@@ -227,7 +230,7 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitLog
         return ""
       }
       if (newRefsFormat) {
-        val newRefs = ContainerUtil.newArrayList<String>()
+        val newRefs = mutableListOf<String>()
         var headRefMet = false
         for (ref in refs) {
           when {

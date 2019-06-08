@@ -21,29 +21,26 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.BrowseFolderRunnable;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.ui.TextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Component;
+import java.awt.*;
 
-public class MacroComboBoxWithBrowseButton extends ComponentWithBrowseButton<ComboBox<String>> implements TextAccessor {
+public class MacroComboBoxWithBrowseButton extends ComboBox<String> implements TextAccessor {
   private Module module;
   private boolean always;
 
   public MacroComboBoxWithBrowseButton(FileChooserDescriptor descriptor, Project project) {
-    super(new ComboBox<>(new MacroComboBoxModel()), null);
-
-    ComboBox<String> combobox = getChildComponent();
-    combobox.setEditable(true);
+    super(new MacroComboBoxModel());
     descriptor.withShowHiddenFiles(true);
-    addActionListener(new BrowseFolderActionListener<ComboBox<String>>(null, null, this, project, descriptor, accessor) {
+
+    Runnable action = new BrowseFolderRunnable<ComboBox<String>>(null, null, project, descriptor, this, accessor) {
       private Module getModule() {
-        Module module = MacroComboBoxWithBrowseButton.this.module;
         if (module == null) module = myFileChooserDescriptor.getUserData(LangDataKeys.MODULE_CONTEXT);
         if (module == null) module = myFileChooserDescriptor.getUserData(LangDataKeys.MODULE);
         return module;
@@ -69,29 +66,24 @@ public class MacroComboBoxWithBrowseButton extends ComponentWithBrowseButton<Com
 
         return super.expandPath(path);
       }
-    });
-    ComboBoxEditor editor = combobox.getEditor();
-    if (editor != null) {
-      Component component = editor.getEditorComponent();
-      if (component instanceof JTextField) {
-        FileChooserFactory.getInstance().installFileCompletion((JTextField)component, descriptor, true, null);
-      }
-    }
-  }
+    };
 
-  private MacroComboBoxModel getModel() {
-    ComboBoxModel<String> model = getChildComponent().getModel();
-    return model instanceof MacroComboBoxModel ? (MacroComboBoxModel)model : null;
+    initBrowsableEditor(action, project);
+
+    Component component = editor.getEditorComponent();
+    if (component instanceof JTextField) {
+      FileChooserFactory.getInstance().installFileCompletion((JTextField)component, descriptor, true, null);
+    }
   }
 
   @Override
   public String getText() {
-    return accessor.getText(getChildComponent());
+    return accessor.getText(this);
   }
 
   @Override
   public void setText(String text) {
-    accessor.setText(getChildComponent(), text != null ? text : "");
+    accessor.setText(this, text != null ? text : "");
   }
 
   public void setModule(Module module) {
@@ -105,7 +97,7 @@ public class MacroComboBoxWithBrowseButton extends ComponentWithBrowseButton<Com
   }
 
   private void configure() {
-    MacroComboBoxModel model = getModel();
+    MacroComboBoxModel model = (MacroComboBoxModel)getModel();
     if (model != null) model.useModuleDir(always || module != null);
   }
 

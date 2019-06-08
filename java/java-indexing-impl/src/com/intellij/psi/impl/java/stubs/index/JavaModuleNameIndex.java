@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -11,16 +11,12 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -35,7 +31,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
 
   @Override
   public int getVersion() {
-    return super.getVersion() + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
+    return super.getVersion() + 2;
   }
 
   @NotNull
@@ -54,7 +50,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
   }
 
   private static Collection<PsiJavaModule> filterVersions(Project project, Collection<PsiJavaModule> modules) {
-    Set<VirtualFile> filter = ContainerUtil.newHashSet();
+    Set<VirtualFile> filter = new HashSet<>();
 
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (PsiJavaModule module : modules) {
@@ -80,7 +76,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
 
   @Override
   public boolean traceKeyHashToVirtualFileMapping() {
-    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+    return true;
   }
 
   public static @Nullable VirtualFile descriptorFile(@NotNull VirtualFile root) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.TableActions;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.JBUI;
@@ -59,7 +60,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       if (SystemInfo.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
         return (BasicLookAndFeel)Class.forName(name).newInstance();
-      } else {
+      }
+      else {
         return new IdeaLaf();
       }
     }
@@ -92,7 +94,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected static void log(Exception e) {
-//    everything is gonna be alright
+    // everything is gonna be alright
     e.printStackTrace();
   }
 
@@ -111,7 +113,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
               }
             }
           }
-        } else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
+        }
+        else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
           for (Object key : defaults.keySet()) {
             if (key instanceof String && ((String)key).endsWith(".font")) {
               final Font font = defaults.getFont(key);
@@ -154,7 +157,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
           defaults.put(entry.getKey(), entry.getValue());
         }
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       log(e);
     }
   }
@@ -212,7 +216,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @SuppressWarnings({"HardCodedStringLiteral"})
   protected void initIdeaDefaults(UIDefaults defaults) {
     loadDefaults(defaults);
-    defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
+    defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[]{
       "ctrl C", "copy",
       "meta C", "copy",
       "ctrl V", "paste",
@@ -225,38 +229,38 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       "control INSERT", "copy",
       "shift INSERT", "paste",
       "shift DELETE", "cut",
-      "RIGHT", "selectNextColumn",
-      "KP_RIGHT", "selectNextColumn",
-      "LEFT", "selectPreviousColumn",
-      "KP_LEFT", "selectPreviousColumn",
-      "DOWN", "selectNextRow",
-      "KP_DOWN", "selectNextRow",
-      "UP", "selectPreviousRow",
-      "KP_UP", "selectPreviousRow",
-      "shift RIGHT", "selectNextColumnExtendSelection",
-      "shift KP_RIGHT", "selectNextColumnExtendSelection",
-      "shift LEFT", "selectPreviousColumnExtendSelection",
-      "shift KP_LEFT", "selectPreviousColumnExtendSelection",
-      "shift DOWN", "selectNextRowExtendSelection",
-      "shift KP_DOWN", "selectNextRowExtendSelection",
-      "shift UP", "selectPreviousRowExtendSelection",
-      "shift KP_UP", "selectPreviousRowExtendSelection",
-      "PAGE_UP", "scrollUpChangeSelection",
-      "PAGE_DOWN", "scrollDownChangeSelection",
+      "RIGHT", TableActions.Right.ID,
+      "KP_RIGHT", TableActions.Right.ID,
+      "LEFT", TableActions.Left.ID,
+      "KP_LEFT", TableActions.Left.ID,
+      "DOWN", TableActions.Down.ID,
+      "KP_DOWN", TableActions.Down.ID,
+      "UP", TableActions.Up.ID,
+      "KP_UP", TableActions.Up.ID,
+      "shift RIGHT", TableActions.ShiftRight.ID,
+      "shift KP_RIGHT", TableActions.ShiftRight.ID,
+      "shift LEFT", TableActions.ShiftLeft.ID,
+      "shift KP_LEFT", TableActions.ShiftLeft.ID,
+      "shift DOWN", TableActions.ShiftDown.ID,
+      "shift KP_DOWN", TableActions.ShiftDown.ID,
+      "shift UP", TableActions.ShiftUp.ID,
+      "shift KP_UP", TableActions.ShiftUp.ID,
+      "PAGE_UP", TableActions.PageUp.ID,
+      "PAGE_DOWN", TableActions.PageDown.ID,
       "HOME", "selectFirstColumn",
       "END", "selectLastColumn",
-      "shift PAGE_UP", "scrollUpExtendSelection",
-      "shift PAGE_DOWN", "scrollDownExtendSelection",
+      "shift PAGE_UP", TableActions.ShiftPageUp.ID,
+      "shift PAGE_DOWN", TableActions.ShiftPageDown.ID,
       "shift HOME", "selectFirstColumnExtendSelection",
       "shift END", "selectLastColumnExtendSelection",
       "ctrl PAGE_UP", "scrollLeftChangeSelection",
       "ctrl PAGE_DOWN", "scrollRightChangeSelection",
-      "ctrl HOME", "selectFirstRow",
-      "ctrl END", "selectLastRow",
+      "ctrl HOME", TableActions.CtrlHome.ID,
+      "ctrl END", TableActions.CtrlEnd.ID,
       "ctrl shift PAGE_UP", "scrollRightExtendSelection",
       "ctrl shift PAGE_DOWN", "scrollLeftExtendSelection",
-      "ctrl shift HOME", "selectFirstRowExtendSelection",
-      "ctrl shift END", "selectLastRowExtendSelection",
+      "ctrl shift HOME", TableActions.CtrlShiftHome.ID,
+      "ctrl shift END", TableActions.CtrlShiftEnd.ID,
       "TAB", "selectNextColumnCell",
       "shift TAB", "selectPreviousColumnCell",
       //"ENTER", "selectNextRowCell",
@@ -290,7 +294,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
           String darculaKey = key.substring(prefix.length());
           if (value == SYSTEM) {
             darculaGlobalSettings.remove(darculaKey);
-          } else {
+          }
+          else {
             darculaGlobalSettings.put(darculaKey, value);
           }
         }
@@ -311,7 +316,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         defaults.put(key, parseValue(key, value));
       }
     }
-    catch (IOException e) {log(e);}
+    catch (IOException e) {
+      log(e);
+    }
   }
 
   protected Object parseValue(String key, @NotNull String value) {
@@ -372,7 +379,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
     try {
       base.initialize();
-    } catch (Exception ignore) {}
+    }
+    catch (Exception ignore) {
+    }
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       Disposer.register(application, myDisposable);
@@ -403,8 +412,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         if (component instanceof JComponent) {
           for (JComponent c : UIUtil.findComponentsOfType((JComponent)component, JComponent.class)) {
             if ((c instanceof JLabel && ((JLabel)c).getDisplayedMnemonicIndex() != -1)
-              || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
-              ) {
+                || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
+            ) {
               c.repaint();
             }
           }
@@ -417,7 +426,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   public void uninitialize() {
     try {
       base.initialize();
-    } catch (Exception ignore) {}
+    }
+    catch (Exception ignore) {
+    }
     Disposer.dispose(myDisposable);
     myDisposable = null;
   }
@@ -425,18 +436,17 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @Override
   protected void loadSystemColors(UIDefaults defaults, String[] systemColors, boolean useNative) {
     try {
-      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("loadSystemColors",
-                                                                   UIDefaults.class,
-                                                                   String[].class,
-                                                                   boolean.class);
+      Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("loadSystemColors",
+                                                                    UIDefaults.class,
+                                                                    String[].class,
+                                                                    boolean.class);
       superMethod.setAccessible(true);
       superMethod.invoke(base, defaults, systemColors, useNative);
     }
-    catch (Exception ignore) {
-      log(ignore);
+    catch (Exception e) {
+      log(e);
     }
   }
-
 
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight.defaultAction;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CodeBlockEndAction;
 import com.intellij.codeInsight.editorActions.CodeBlockStartAction;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -157,16 +158,35 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     checkTyping("a.cs", "<caret> ", '\'', "'<caret>' ");
   }
 
-  public void testReplaceQuote() {
-    checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "\'<caret>a\"");
-    checkTyping("a.cs", "<caret><selection>\"</selection>a\'", '\'', "\'<caret>a\'");
-    checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a\'<caret>");
-    checkTyping("a.cs", "\'a<caret><selection>\"</selection>", '\'', "\'a\'<caret>");
+  public void testReplaceQuoteDontSurroundSelection() {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    boolean oldValue = settings.SURROUND_SELECTION_ON_QUOTE_TYPED;
+    settings.SURROUND_SELECTION_ON_QUOTE_TYPED = false;
+    try {
+      checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "\'<caret>a\"");
+      checkTyping("a.cs", "<caret><selection>\"</selection>a\'", '\'', "\'<caret>a\'");
+      checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a\'<caret>");
+      checkTyping("a.cs", "\'a<caret><selection>\"</selection>", '\'', "\'a\'<caret>");
 
-    checkTyping("a.cs", "<caret><selection>\'</selection>a\"", '\"', "\"<caret>a\"");
-    checkTyping("a.cs", "<caret><selection>\'</selection>a\'", '\"', "\"<caret>a\'");
-    checkTyping("a.cs", "\"a<caret><selection>\'</selection>", '\"', "\"a\"<caret>");
-    checkTyping("a.cs", "\'a<caret><selection>\'</selection>", '\"', "\'a\"<caret>");
+      checkTyping("a.cs", "<caret><selection>\'</selection>a\"", '\"', "\"<caret>a\"");
+      checkTyping("a.cs", "<caret><selection>\'</selection>a\'", '\"', "\"<caret>a\'");
+      checkTyping("a.cs", "\"a<caret><selection>\'</selection>", '\"', "\"a\"<caret>");
+      checkTyping("a.cs", "\'a<caret><selection>\'</selection>", '\"', "\'a\"<caret>");
+    }
+    finally {
+      settings.SURROUND_SELECTION_ON_QUOTE_TYPED = oldValue;
+    }
+  }
+
+  public void testReplaceQuote() {
+    checkTyping("a.cs", "<caret><selection>\"</selection>a\"", '\'', "\'<selection><caret>\"</selection>\'a\"");
+    checkTyping("a.cs", "<caret><selection>\"</selection>a\'", '\'', "\'<selection><caret>\"</selection>\'a\'");
+    checkTyping("a.cs", "\"a<caret><selection>\"</selection>", '\'', "\"a\'<selection><caret>\"</selection>\'");
+    checkTyping("a.cs", "\'a<caret><selection>\"</selection>", '\'', "\'a\'<selection><caret>\"</selection>\'");
+    checkTyping("a.cs", "<caret><selection>\'</selection>a\"", '\"', "\"<selection><caret>\'</selection>\"a\"");
+    checkTyping("a.cs", "<caret><selection>\'</selection>a\'", '\"', "\"<selection><caret>\'</selection>\"a\'");
+    checkTyping("a.cs", "\"a<caret><selection>\'</selection>", '\"', "\"a\"<selection><caret>\'</selection>\"");
+    checkTyping("a.cs", "\'a<caret><selection>\'</selection>", '\"', "\'a\"<selection><caret>\'</selection>\"");
   }
 
   public void testNoPairedBracesInPlainText() {

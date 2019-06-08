@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -125,7 +125,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       return JBUI.Borders.emptyBottom(1);
     }
 
-
     return UISettings.getInstance().getShowMainToolbar() || UISettings.getInstance().getShowNavigationBar() ? super.getBorder() : null;
   }
 
@@ -247,7 +246,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     updateMenuActions();
 
     // Add updater for menus
-    myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
+    myActionManager.addTimerListener(1000, new WeakTimerListener(myTimerListener));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
@@ -271,24 +270,23 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
-    if (e instanceof MouseEvent) {
-      MouseEvent mouseEvent = (MouseEvent)e;
-      Component component = findActualComponent(mouseEvent);
-
-      if (getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
-        boolean mouseInside = myActivated || UIUtil.isDescendingFrom(component, this);
-        if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
-        if (mouseInside && getState() == State.COLLAPSED) {
-          setState(State.EXPANDING);
-          restartAnimator();
-        }
-        else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
-          setState(State.COLLAPSING);
-          restartAnimator();
-        }
-      }
+    if (e instanceof MouseEvent && getState() != State.EXPANDED /*&& !myState.isInProgress()*/) {
+      considerRestartingAnimator((MouseEvent)e);
     }
     return false;
+  }
+
+  private void considerRestartingAnimator(MouseEvent mouseEvent) {
+    boolean mouseInside = myActivated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), this);
+    if (mouseEvent.getID() == MouseEvent.MOUSE_EXITED && mouseEvent.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+    if (mouseInside && getState() == State.COLLAPSED) {
+      setState(State.EXPANDING);
+      restartAnimator();
+    }
+    else if (!mouseInside && getState() != State.COLLAPSING && getState() != State.COLLAPSED) {
+      setState(State.COLLAPSING);
+      restartAnimator();
+    }
   }
 
   @Nullable
@@ -380,7 +378,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
-  private void expandActionGroup(final DataContext context, final List<AnAction> newVisibleActions, ActionManager actionManager) {
+  private void expandActionGroup(final DataContext context, final List<? super AnAction> newVisibleActions, ActionManager actionManager) {
     final ActionGroup mainActionGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);

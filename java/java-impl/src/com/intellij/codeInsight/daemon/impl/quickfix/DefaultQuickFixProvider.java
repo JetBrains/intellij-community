@@ -28,6 +28,10 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     PsiFile containingFile = ref.getContainingFile();
+    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment &&
+        !((PsiJavaCodeReferenceCodeFragment)containingFile).isClassesAccepted()) {
+      return;
+    }
     if (PsiUtil.isModuleFile(containingFile)) {
       OrderEntryFix.registerFixes(registrar, ref);
       registrar.register(new CreateServiceImplementationClassFix(ref));

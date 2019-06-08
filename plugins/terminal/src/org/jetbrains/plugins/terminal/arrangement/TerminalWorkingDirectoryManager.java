@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.arrangement;
 
 import com.intellij.openapi.Disposable;
@@ -16,7 +16,6 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +24,7 @@ import org.jetbrains.plugins.terminal.TerminalView;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -39,7 +39,7 @@ public class TerminalWorkingDirectoryManager {
   private static final int FETCH_WAIT_MILLIS = 2000;
   private static final Key<String> INITIAL_CWD_KEY = Key.create("initial cwd");
 
-  private final Map<Content, Data> myDataByContentMap = ContainerUtil.newHashMap();
+  private final Map<Content, Data> myDataByContentMap = new HashMap<>();
 
   TerminalWorkingDirectoryManager() {
   }

@@ -516,6 +516,31 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         .withValidator(() -> "Two".equals(eComboBox.getSelectedItem()) ? new ValidationInfo("Two is not preferred", eComboBox).asWarning() : null)
         .installOn(eComboBox);
 
+      ComboBox<String> animatedIconComboBox = new ComboBox<>();
+      animatedIconComboBox.setEditable(true);
+      animatedIconComboBox.setEditor(new BasicComboBoxEditor(){
+        @Override
+        protected JTextField createEditorComponent() {
+          ExtendableTextField cbEditor = new ExtendableTextField();
+          cbEditor.addExtension(new ExtendableTextComponent.Extension() {
+            private final Icon icon = new AnimatedIcon.FS();
+
+            @Override
+            public Icon getIcon(boolean hovered) {
+              return !hovered ? icon : AllIcons.Process.FS.Step_passive;
+            }
+
+            @Override
+            public String getTooltip() {
+              return "Refresh";
+            }
+          });
+          cbEditor.setEditable(false);
+          cbEditor.setBorder(null);
+          return cbEditor;
+        }
+      });
+
       // Panels factory
       return UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(tfbb).
@@ -529,6 +554,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
         add(UI.PanelFactory.panel(eComboBox).
           withLabel("ComboBox &extendable:").withComment("ComboBox with ExtendableTextEditor")).
+
+        add(UI.PanelFactory.panel(animatedIconComboBox).
+          withLabel("&Animated combobox:").withComment("ComboBox with animated icon")).
 
         createPanel();
     }

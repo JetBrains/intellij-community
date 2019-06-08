@@ -123,7 +123,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
         canonicalPath = myCompilerOutputPath;
       }
       compilerModuleExtension
-        .setCompilerOutputPath(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
+        .setCompilerOutputPath(VfsUtilCore.pathToUrl(canonicalPath));
     }
     else {
       compilerModuleExtension.inheritCompilerOutputPath(true);

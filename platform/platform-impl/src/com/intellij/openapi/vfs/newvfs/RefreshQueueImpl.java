@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.Collections;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 
 /**
  * @author max
@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshQueueImpl");
 
-  private final ExecutorService myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
@@ -68,7 +68,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void queueSession(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
-    myQueue.submit(() -> {
+    myQueue.execute(() -> {
       myRefreshIndicator.start();
       try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session)) {
         doScan(session);
@@ -81,7 +81,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     myEventCounter.eventHappened(session);
   }
 
-  private void doScan(RefreshSessionImpl session) {
+  private void doScan(@NotNull RefreshSessionImpl session) {
     try {
       updateSessionMap(session, true);
       session.scan();
@@ -91,7 +91,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private void updateSessionMap(RefreshSession session, boolean add) {
+  private void updateSessionMap(@NotNull RefreshSession session, boolean add) {
     long id = session.getId();
     if (id != 0) {
       synchronized (mySessions) {
@@ -135,5 +135,9 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @Override
-  public void dispose() { }
+  public void dispose() {
+    synchronized (mySessions) {
+      mySessions.forEachValue(session -> { ((RefreshSessionImpl)session).cancel(); return true; });
+    }
+  }
 }

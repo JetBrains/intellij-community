@@ -183,7 +183,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
   }
 
-  protected void doRemove(final List<T> toDelete) {
+  protected void doRemove(final List<? extends T> toDelete) {
     Set<PsiFile> files = new HashSet<>();
     for (final T t : toDelete) {
       final XmlElement element = t.getXmlElement();

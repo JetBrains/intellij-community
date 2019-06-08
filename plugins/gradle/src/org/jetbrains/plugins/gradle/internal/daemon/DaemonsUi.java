@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.internal.daemon;
 
 import com.intellij.execution.util.ListTableWithButtons;
@@ -31,6 +31,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -50,7 +51,7 @@ public class DaemonsUi implements Disposable {
   private final JPanel myContent = new JPanel();
   private MyDialogWrapper myDialog;
   private boolean myShowStopped;
-  private List<DaemonState> myDaemonStateList;
+  private List<? extends DaemonState> myDaemonStateList;
 
   public DaemonsUi(Project project) {
     myProject = project;
@@ -106,13 +107,13 @@ public class DaemonsUi implements Disposable {
   @Override
   public void dispose() { }
 
-  public void show(List<DaemonState> daemonStateList) {
+  public void show(List<? extends DaemonState> daemonStateList) {
     updateDaemonsList(daemonStateList);
     myDialog = new MyDialogWrapper();
     myDialog.show();
   }
 
-  private void updateDaemonsList(List<DaemonState> daemonStateList) {
+  private void updateDaemonsList(List<? extends DaemonState> daemonStateList) {
     myDaemonStateList = daemonStateList;
     if (!myShowStopped) {
       daemonStateList = ContainerUtil.filter(daemonStateList, state -> state.getToken() != null);
@@ -195,7 +196,7 @@ public class DaemonsUi implements Disposable {
         }
       };
       ColumnInfo[] columnInfos = new ColumnInfo[]{pidColumn, statusColumn, infoColumn, timeColumn};
-      return new ListTableModel<DaemonState>(columnInfos, ContainerUtil.newArrayList(), 3, SortOrder.DESCENDING);
+      return new ListTableModel<DaemonState>(columnInfos, new ArrayList<>(), 3, SortOrder.DESCENDING);
     }
 
     @Override

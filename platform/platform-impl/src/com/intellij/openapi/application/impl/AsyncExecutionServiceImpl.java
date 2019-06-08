@@ -5,10 +5,8 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.AsyncExecutionService;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
-import com.intellij.openapi.application.async.AppUIExecutorImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.concurrent.Callable;
 
 /**
@@ -24,6 +22,6 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
   @NotNull
   @Override
   public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<T> computation) {
-    return new NonBlockingReadActionImpl<>(null, Collections.emptyList(), () -> false, computation);
+    return new NonBlockingReadActionImpl<>(computation);
   }
 }

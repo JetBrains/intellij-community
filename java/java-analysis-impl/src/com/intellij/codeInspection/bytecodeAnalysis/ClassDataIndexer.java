@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
@@ -64,7 +63,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
   @Nullable
   @Override
-  public Map<HMember, Equations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
+  public Map<HMember, Equations> calcData(Project project, @NotNull VirtualFile file) {
     HashMap<HMember, Equations> map = new HashMap<>();
     if (isFileExcluded(file)) {
       return map;
@@ -569,9 +568,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
   @NotNull
   static List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
-    Project project = ProjectManager.getInstance().getDefaultProject(); // the data is project-independent
     return ContainerUtil.mapNotNull(FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
-                                    file -> ourGist.getFileData(project, file).get(key));
+                                    file -> ourGist.getFileData(null, file).get(key));
   }
 
   private static class ClassDataIndexerStatistics implements Consumer<Map<HMember, Equations>> {

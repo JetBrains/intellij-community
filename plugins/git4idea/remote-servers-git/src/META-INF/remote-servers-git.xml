@@ -1,4 +1,4 @@
-<idea-plugin url="https://www.jetbrains.com/idea">
+<idea-plugin>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.remoteServer.util.deploymentDetector"

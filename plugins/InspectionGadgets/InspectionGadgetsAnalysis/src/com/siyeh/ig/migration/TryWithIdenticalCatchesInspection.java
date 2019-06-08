@@ -357,7 +357,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
   }
 
-  public static void collectCommentTexts(@NotNull PsiElement element, @NotNull Collection<String> result) {
+  public static void collectCommentTexts(@NotNull PsiElement element, @NotNull Collection<? super String> result) {
     if (element instanceof PsiComment) {
       addCommentText(result, (PsiComment)element);
       return;
@@ -373,7 +373,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     });
   }
 
-  private static void addCommentText(@NotNull Collection<String> result, PsiComment child) {
+  private static void addCommentText(@NotNull Collection<? super String> result, PsiComment child) {
     String text = getCommentText(child);
     if (!text.isEmpty()) {
       result.add(text);

@@ -194,20 +194,6 @@ public class LeafBlockWrapper extends AbstractBlockWrapper {
     mySpaceProperty = currentSpaceProperty;
   }
 
-  @Nullable
-  public IndentInfo calcIndentFromParent() {
-    AbstractBlockWrapper firstIndentedParent = findFirstIndentedParent();
-    final WhiteSpace mySpace = getWhiteSpace();
-    if (firstIndentedParent != null) {
-      final WhiteSpace parentSpace = firstIndentedParent.getWhiteSpace();
-      return new IndentInfo(0,
-                            mySpace.getIndentOffset() - parentSpace.getIndentOffset(),
-                            mySpace.getSpaces() - parentSpace.getSpaces());
-    } else {
-      return null;
-    }
-  }
-
   public final boolean isLeaf() {
     return (myFlags & LEAF) != 0;
   }

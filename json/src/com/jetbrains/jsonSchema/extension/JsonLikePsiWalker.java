@@ -14,6 +14,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -37,6 +38,7 @@ public interface JsonLikePsiWalker {
   boolean requiresNameQuotes();
   default boolean requiresValueQuotes() { return true; }
   boolean allowsSingleQuotes();
+  default boolean isValidIdentifier(String string, Project project) { return true; }
 
   boolean hasMissingCommaAfter(@NotNull PsiElement element);
 
@@ -54,7 +56,8 @@ public interface JsonLikePsiWalker {
 
   default boolean acceptsEmptyRoot() { return false; }
 
-  @Nullable PsiElement getRoot(@NotNull PsiFile file);
+  @Nullable
+  Collection<PsiElement> getRoots(@NotNull PsiFile file);
 
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {

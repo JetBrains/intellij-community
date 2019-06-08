@@ -6,7 +6,7 @@ import com.intellij.configurationStore.*
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
@@ -32,6 +32,7 @@ import org.jdom.Document
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
+import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -47,7 +48,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                      val presentableName: String? = null,
                                                      private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
                                                      private val fileChangeSubscriber: FileChangeSubscriber? = null,
-                                                     private val virtualFileResolver: VirtualFileResolver? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor {
+                                                     private val virtualFileResolver: VirtualFileResolver? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUseVfs: Boolean
     get() = fileChangeSubscriber != null || virtualFileResolver != null
 
@@ -350,7 +351,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       val dir = virtualDirectory
       cachedVirtualDirectory = null
       if (dir != null) {
-        runUndoTransparentWriteAction {
+        runWriteAction {
           try {
             dir.delete(this)
           }
@@ -428,7 +429,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           if (oldFile != null) {
             // VFS doesn't allow to rename to existing file, so, check it
             if (dir.findChild(fileName) == null) {
-              runUndoTransparentWriteAction { oldFile.rename(this, fileName) }
+              runWriteAction {
+                oldFile.rename(this, fileName)
+              }
               file = oldFile
             }
             else {
@@ -441,7 +444,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           file = dir.getOrCreateChild(fileName, this)
         }
 
-        runUndoTransparentWriteAction {
+        runWriteAction {
           file.getOutputStream(this).use { byteOut.writeTo(it) }
         }
       }
@@ -531,8 +534,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       virtualDirectory?.let { virtualDir ->
         val childrenToDelete = virtualDir.children.filter { filesToDelete.contains(it.name) }
         if (childrenToDelete.isNotEmpty()) {
-          runUndoTransparentWriteAction {
-            childrenToDelete.forEach { file ->
+          runWriteAction {
+            for (file in childrenToDelete) {
               errors.catch { file.delete(this) }
             }
           }

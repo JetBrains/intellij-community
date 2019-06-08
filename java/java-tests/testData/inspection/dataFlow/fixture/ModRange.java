@@ -71,4 +71,16 @@ public class ModRange {
   void testAndOr(long x) {
     if(<warning descr="Condition '((x & 4) | (x & 8)) == 3' is always 'false'">((x & 4) | (x & 8)) == 3</warning>) {}
   }
+  
+  void testXor(int x, int y) {
+    x = (x & ~2) | 1;
+    y |= 3;
+    int z = (x ^ y) % 4;
+    switch (z) {
+      case <warning descr="Switch label '0' is unreachable">0</warning>:
+      case <warning descr="Switch label '1' is unreachable">1</warning>:
+      case 2:
+      case <warning descr="Switch label '3' is unreachable">3</warning>:
+    }
+  }
 }

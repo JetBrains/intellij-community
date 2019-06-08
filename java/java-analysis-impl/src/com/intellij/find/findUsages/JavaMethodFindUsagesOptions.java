@@ -58,7 +58,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull LinkedHashSet<String> strings) {
+  protected void addUsageTypes(@NotNull LinkedHashSet<? super String> strings) {
     super.addUsageTypes(strings);
     if (isIncludeOverloadUsages) {
       strings.add(FindBundle.message("find.usages.panel.title.overloaded.methods.usages"));

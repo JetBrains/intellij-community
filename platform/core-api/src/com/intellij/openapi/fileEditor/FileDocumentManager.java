@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -142,14 +143,22 @@ public abstract class FileDocumentManager implements SavingRequestor {
   public abstract String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
 
   /**
-   * Requests writing access on given document, possibly involving interaction with user.
+   * Requests writing access on the given document, possibly involving interaction with user.
    *
    * @param document document
-   * @param project project 
+   * @param project  project
    * @return true if writing access allowed
-   * @see com.intellij.openapi.vfs.ReadonlyStatusHandler#ensureFilesWritable(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile...)
+   * @see com.intellij.openapi.vfs.ReadonlyStatusHandler#ensureFilesWritable(Project, VirtualFile...)
    */
   public abstract boolean requestWriting(@NotNull Document document, @Nullable Project project);
+
+  /**
+   * Requests writing access info on the given document. Can involve interaction with user.
+   */
+  @NotNull
+  public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
+    return requestWriting(document, project) ? WriteAccessStatus.WRITABLE : WriteAccessStatus.NON_WRITABLE;
+  }
 
   public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, @NotNull Project project) {
     return getInstance().requestWriting(document, project);
@@ -161,4 +170,31 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @param files the files to discard the changes for.
    */
   public abstract void reloadFiles(@NotNull VirtualFile... files);
+
+  /**
+   * Stores the write access status (true if the document has the write access; false otherwise)
+   * and a message about the reason for the read-only status.
+   */
+  public static class WriteAccessStatus {
+    public static final WriteAccessStatus NON_WRITABLE = new WriteAccessStatus(false);
+    public static final WriteAccessStatus WRITABLE = new WriteAccessStatus(true);
+
+    private final boolean myWithWriteAccess;
+    @NotNull private final String myReadOnlyMessage;
+
+    private WriteAccessStatus(boolean withWriteAccess) {
+      myWithWriteAccess = withWriteAccess;
+      myReadOnlyMessage = withWriteAccess ? "" : EditorBundle.message("editing.read.only.file.hint");
+    }
+
+    public WriteAccessStatus(@NotNull String readOnlyMessage) {
+      myWithWriteAccess = false;
+      myReadOnlyMessage = readOnlyMessage;
+    }
+
+    public boolean hasWriteAccess() {return myWithWriteAccess;}
+
+    @NotNull
+    public String getReadOnlyMessage() {return myReadOnlyMessage;}
+  }
 }

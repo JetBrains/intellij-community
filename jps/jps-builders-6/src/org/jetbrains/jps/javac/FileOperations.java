@@ -18,7 +18,7 @@ import java.util.Set;
 public interface FileOperations {
   interface Archive {
     @NotNull
-    Iterable<JavaFileObject> list(String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException;
+    Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) throws IOException;
 
     void close() throws IOException;
   }

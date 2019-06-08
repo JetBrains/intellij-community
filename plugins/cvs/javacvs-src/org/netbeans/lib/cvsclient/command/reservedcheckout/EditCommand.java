@@ -29,6 +29,7 @@ import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author  Thomas Singer
@@ -80,7 +81,7 @@ public final class EditCommand extends AbstractCommand {
 
 			if (parser.isFilesEdited()) {
                           final String message = JavaCvsSrcBundle.message("cannot.edit.files.they.are.edited.error.message");
-                          eventSender.notifyMessageListeners(message.getBytes(),true, false);
+                          eventSender.notifyMessageListeners(message.getBytes(StandardCharsets.UTF_8), true, false);
 				return false;
 			}
 

@@ -48,6 +48,7 @@ import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Timeout
 import org.junit.Assert.assertNotNull
 import java.awt.Point
 import java.awt.Rectangle
@@ -68,7 +69,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
   private fun getPaneById(id: String): PaneFixture {
     activate()
-    val projectView = ProjectView.getInstance(myProject)
+    val projectView = computeOnEdt { ProjectView.getInstance(myProject) } ?: throw Exception("Unable to compute ProjectView on EDT")
     assertProjectViewIsInitialized(projectView)
     runOnEdt { projectView.changeView(id) }
     return PaneFixture(projectView.getProjectViewPaneById(id))
@@ -86,12 +87,12 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
    * separated by slash sign: ["project_name/src/Test.java"]
    * @return NodeFixture object for a pathTo; may be used for expanding, scrolling and clicking node
    */
-  fun path(vararg pathTo: String): NodeFixture {
+  fun path(vararg pathTo: String, timeout: Timeout = Timeouts.seconds30): NodeFixture {
     val projectPane = selectProjectPane()
     val canonicalPath = pathTo.toList().expandSlashedPath()
     return tryWithPause(exceptionClass = ComponentLookupException::class.java,
                         condition = "node with path ${Arrays.toString(pathTo)} will appear",
-                        timeout = Timeouts.seconds30) {
+                        timeout = timeout) {
       activate()
       projectPane.getNode(canonicalPath)
     }
@@ -214,11 +215,9 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         val tree = myPane.tree
         val boundsRef = Ref<Rectangle>()
         waitUntil("bounds of tree node with a tree path $myTreePath will be not null", Timeouts.defaultTimeout) {
-          return@waitUntil computeOnEdt {
-            val bounds = tree.getPathBounds(myTreePath)
-            if (bounds != null) boundsRef.set(bounds)
-            bounds != null
-          }!!
+          val bounds = computeOnEdt { tree.getPathBounds(myTreePath) }
+          if (bounds != null) boundsRef.set(bounds)
+          return@waitUntil bounds != null
         }
 
         val bounds = boundsRef.get()

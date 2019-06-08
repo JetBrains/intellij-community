@@ -29,7 +29,7 @@ public class FilterDescendantVirtualFiles extends AbstractFilterChildren<Virtual
   }
 
   @Override
-  protected void sortAscending(final List<VirtualFile> virtualFiles) {
+  protected void sortAscending(final List<? extends VirtualFile> virtualFiles) {
     Collections.sort(virtualFiles, FilePathComparator.getInstance());
   }
 
@@ -38,7 +38,7 @@ public class FilterDescendantVirtualFiles extends AbstractFilterChildren<Virtual
     return VfsUtil.isAncestor(parent, child, false);
   }
 
-  public static void filter(final List<VirtualFile> in) {
+  public static void filter(final List<? extends VirtualFile> in) {
     ourInstance.doFilter(in);
   }
 }

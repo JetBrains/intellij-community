@@ -92,14 +92,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @Override
-  public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider) {
-    if (!(provider instanceof InjectedFileViewProvider)) return null;
-    return ((InjectedFileViewProvider)provider).getShreds().getHostPointer().getElement();
+  public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
+    if (!(injectedProvider instanceof InjectedFileViewProvider)) return null;
+    return ((InjectedFileViewProvider)injectedProvider).getShreds().getHostPointer().getElement();
   }
 
   @Override
-  public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
-    final PsiFile file = element.getContainingFile();
+  public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement injectedElement) {
+    final PsiFile file = injectedElement.getContainingFile();
     final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
       PsiElement host = FileContextUtil.getFileContext(file); // use utility method in case the file's overridden getContext()
@@ -156,9 +156,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       return cached;
     }
 
-    Map<Class, MultiHostInjector[]> injectors = ContainerUtil.newHashMap();
+    Map<Class, MultiHostInjector[]> injectors = new HashMap<>();
 
-    List<MultiHostInjector> allInjectors = ContainerUtil.newArrayList();
+    List<MultiHostInjector> allInjectors = new ArrayList<>();
     allInjectors.addAll(myManualInjectors);
     Collections.addAll(allInjectors, MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getExtensions(myProject));
     if (LanguageInjector.EXTENSION_POINT_NAME.hasAnyExtensions()) {
@@ -277,8 +277,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @Override
-  public boolean isInjectedFragment(@NotNull final PsiFile file) {
-    return file.getViewProvider() instanceof InjectedFileViewProvider;
+  public boolean isInjectedFragment(@NotNull final PsiFile injectedFile) {
+    return injectedFile.getViewProvider() instanceof InjectedFileViewProvider;
   }
 
   @Override
@@ -318,7 +318,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @NotNull
   @Override
   public List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window) {
-    List<TextRange> result = ContainerUtil.newArrayList();
+    List<TextRange> result = new ArrayList<>();
     int offset = 0;
     for (PsiLanguageInjectionHost.Shred shred : ((DocumentWindowImpl)window).getShreds()) {
       Segment hostRange = shred.getHostRangeMarker();

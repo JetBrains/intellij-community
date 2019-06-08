@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.reporting
 
 import com.google.common.net.HttpHeaders
@@ -6,8 +6,8 @@ import com.google.gson.Gson
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.HttpRequests
-import org.apache.commons.codec.binary.Base64OutputStream
 import java.io.ByteArrayOutputStream
+import java.util.*
 import java.util.zip.GZIPOutputStream
 
 private class StatsServerInfo(@JvmField var status: String,
@@ -48,7 +48,7 @@ object StatsSender {
 
   private fun executeRequest(info: StatsServerInfo, text: String, compress: Boolean) {
     if (compress) {
-      val data = Base64GzipCompressor.compress(text)
+      val data = compressBase64Gzip(text)
       HttpRequests
         .post(info.urlForZipBase64Content, null)
         .tuner { it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip") }
@@ -60,14 +60,14 @@ object StatsSender {
   }
 }
 
-private object Base64GzipCompressor {
-  fun compress(text: String): ByteArray {
-    val outputStream = ByteArrayOutputStream()
-    val base64Stream = GZIPOutputStream(Base64OutputStream(outputStream))
-    base64Stream.write(text.toByteArray())
-    base64Stream.close()
-    return outputStream.toByteArray()
+private fun compressBase64Gzip(text: String) = compressBase64Gzip(text.toByteArray())
+
+fun compressBase64Gzip(data: ByteArray): ByteArray {
+  val outputStream = ByteArrayOutputStream()
+  GZIPOutputStream(outputStream).use {
+    it.write(data)
   }
+  return Base64.getEncoder().encode(outputStream.toByteArray())
 }
 
 fun <T> createReportLine(recorderId: String, sessionId: String, data: T): String {

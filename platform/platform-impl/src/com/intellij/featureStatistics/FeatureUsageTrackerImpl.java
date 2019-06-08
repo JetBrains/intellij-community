@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -12,6 +15,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -188,4 +192,27 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     }
   }
 
+  public static class ProductivityUtilValidator extends CustomUtilsWhiteListRule {
+
+    @Override
+    public boolean acceptRuleId(@Nullable String ruleId) {
+      return "productivity".equals(ruleId);
+    }
+
+    @NotNull
+    @Override
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+      if ("third.party".equals(data)) return ValidationResultType.ACCEPTED;
+
+      final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+      final FeatureDescriptor descriptor = registry.getFeatureDescriptor(data);
+      if (descriptor == null) {
+        return ValidationResultType.REJECTED;
+      }
+
+      final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
+      return provider == null || getPluginType(provider).isDevelopedByJetBrains() ?
+             ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+    }
+  }
 }

@@ -30,7 +30,7 @@ import org.jetbrains.uast.values.UNothingValue.JumpKind.CONTINUE
 import org.jetbrains.uast.visitor.UastTypedVisitor
 
 class TreeBasedEvaluator(
-  override val context: UastContext,
+  override val context: UastLanguagePlugin,
   val extensions: List<UEvaluatorExtension>
 ) : UEvaluator {
 
@@ -179,7 +179,7 @@ class TreeBasedEvaluator(
       if (this is UResolvable) {
         val resolvedElement = resolve()
         if (resolvedElement is PsiVariable) {
-          val variable = context.getVariable(resolvedElement)
+          val variable = context.convertWithParent<UVariable>(resolvedElement)!!
           val currentValue = valueInfo.state[variable]
           val result = when (operator) {
             UastBinaryOperator.ASSIGN -> valueInfo.value

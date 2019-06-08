@@ -233,7 +233,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
     // do not cancel editing if we click or scroll in editor popup
     final List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(myInplaceEditorComponent);
     for (JBPopup popup : popups) {
-      if (SwingUtilities.isDescendingFrom(sourceComponent, UIUtil.getWindow(popup.getContent()))) {
+      if (!popup.isDisposed() && SwingUtilities.isDescendingFrom(sourceComponent, UIUtil.getWindow(popup.getContent()))) {
         return;
       }
     }

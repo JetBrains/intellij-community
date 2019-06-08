@@ -27,7 +27,7 @@ id createPopover(const char * uid, int itemWidth, const char * text, const char 
 
 // NOTE: called from EDT (when update UI)
 void updatePopover(id popoverObj, int itemWidth, const char * text, const char * raster4ByteRGBA, int w, int h, id tbObjExpand, id tbObjTapAndHold) {
-    NSPopoverTouchBarItem * popoverItem = popoverObj; // TODO: check types
+    NSPopoverTouchBarItem * popoverItem = popoverObj;
     nstrace(@"async update popover [%@] (thread: %@)", popoverItem.identifier, [NSThread currentThread]);
     NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
     NSImage * img = createImgFrom4ByteRGBA((const unsigned char *)raster4ByteRGBA, w, h);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.google.common.collect.Iterators;
@@ -24,6 +10,7 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,7 +18,7 @@ public class TopCommitsCache {
   private static final Logger LOG = Logger.getInstance(TopCommitsCache.class);
   @NotNull private final VcsLogStorage myStorage;
   @NotNull private final IntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
-  @NotNull private List<VcsCommitMetadata> mySortedDetails = ContainerUtil.newArrayList();
+  @NotNull private List<VcsCommitMetadata> mySortedDetails = new ArrayList<>();
 
   public TopCommitsCache(@NotNull VcsLogStorage storage) {
     myStorage = storage;
@@ -46,7 +33,7 @@ public class TopCommitsCache {
     if (newDetails.isEmpty()) return;
     Iterator<VcsCommitMetadata> it = new MergingIterator(mySortedDetails, newDetails);
 
-    List<VcsCommitMetadata> result = ContainerUtil.newArrayList();
+    List<VcsCommitMetadata> result = new ArrayList<>();
     boolean isBroken = false;
     while (it.hasNext()) {
       VcsCommitMetadata detail = it.next();

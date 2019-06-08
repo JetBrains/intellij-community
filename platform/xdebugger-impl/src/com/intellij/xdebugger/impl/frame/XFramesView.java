@@ -73,8 +73,9 @@ public class XFramesView extends XDebugView {
       }
     });
     myFramesList.addMouseListener(new MouseAdapter() {
+      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
       @Override
-      public void mousePressed(final MouseEvent e) {
+      public void mouseReleased(final MouseEvent e) {
         if (myListenersEnabled) {
           int i = myFramesList.locationToIndex(e.getPoint());
           if (i != -1 && myFramesList.isSelectedIndex(i)) {
@@ -96,7 +97,15 @@ public class XFramesView extends XDebugView {
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
 
     myThreadComboBox = new ComboBox<>();
-    myThreadComboBox.setRenderer(new ThreadComboBoxRenderer(myThreadComboBox));
+    myThreadComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      if (value != null) {
+        label.setText(value.getDisplayName());
+        label.setIcon(value.getIcon());
+      }
+      else if (index >= 0) {
+        label.setText("Loading...");
+      }
+    }));
     myThreadComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
@@ -237,7 +246,7 @@ public class XFramesView extends XDebugView {
     return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, session));
   }
 
-  private void withCurrentBuilder(Consumer<StackFramesListBuilder> consumer) {
+  private void withCurrentBuilder(Consumer<? super StackFramesListBuilder> consumer) {
     StackFramesListBuilder builder = myBuilders.get(mySelectedStack);
     if (builder != null) {
       consumer.consume(builder);

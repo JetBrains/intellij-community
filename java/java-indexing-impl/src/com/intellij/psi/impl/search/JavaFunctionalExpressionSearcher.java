@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -136,7 +136,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static void processIndexValues(List<? extends SamDescriptor> descriptors,
                                          VirtualFile inFile,
-                                         FileBasedIndex.ValueProcessor<Map<Integer, FunExprOccurrence>> processor) {
+                                         FileBasedIndex.ValueProcessor<? super Map<Integer, FunExprOccurrence>> processor) {
     for (SamDescriptor descriptor : descriptors) {
       GlobalSearchScope scope = new JavaSourceFilterScope(descriptor.effectiveUseScope);
       for (FunctionalExpressionKey key : descriptor.keys) {
@@ -323,7 +323,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
     @NotNull
     private Set<VirtualFile> getMostLikelyFiles(GlobalSearchScope searchScope) {
-      Set<VirtualFile> files = ContainerUtil.newLinkedHashSet();
+      Set<VirtualFile> files = new LinkedHashSet<>();
       dumbService.runReadActionInSmartMode(() -> {
         if (!samClass.isValid()) return;
 

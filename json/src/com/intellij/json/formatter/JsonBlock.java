@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
@@ -12,10 +13,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.json.JsonElementTypes.*;
@@ -65,7 +66,7 @@ public class JsonBlock implements ASTBlock {
 
   public JsonBlock(@Nullable JsonBlock parent,
                    @NotNull ASTNode node,
-                   @NotNull JsonCodeStyleSettings customSettings, 
+                   @NotNull JsonCodeStyleSettings customSettings,
                    @Nullable Alignment alignment,
                    @NotNull Indent indent,
                    @Nullable Wrap wrap,
@@ -109,7 +110,7 @@ public class JsonBlock implements ASTBlock {
     if (mySubBlocks == null) {
       int propertyAlignment = myCustomSettings.PROPERTY_ALIGNMENT;
       ASTNode[] children = myNode.getChildren(null);
-      mySubBlocks = ContainerUtil.newArrayListWithCapacity(children.length);
+      mySubBlocks = new ArrayList<>(children.length);
       for (ASTNode child: children) {
         if (isWhitespaceOrEmpty(child)) continue;
         mySubBlocks.add(makeSubBlock(child, propertyAlignment));

@@ -460,12 +460,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull final List<CaretState> caretStates) {
+  public void setCaretsAndSelections(@NotNull final List<? extends CaretState> caretStates) {
     setCaretsAndSelections(caretStates, true);
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull final List<CaretState> caretStates, final boolean updateSystemSelection) {
+  public void setCaretsAndSelections(@NotNull final List<? extends CaretState> caretStates, final boolean updateSystemSelection) {
     EditorImpl.assertIsDispatchThread();
     if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");

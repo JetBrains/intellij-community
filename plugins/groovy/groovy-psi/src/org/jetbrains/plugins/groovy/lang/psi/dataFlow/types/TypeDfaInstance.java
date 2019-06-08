@@ -133,10 +133,4 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       entry.setValue(entry.getValue().negate(negation));
     }
   }
-
-  @Override
-  @NotNull
-  public TypeDfaState initial() {
-    return new TypeDfaState();
-  }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -223,7 +210,7 @@ public class CanonicalTypes {
         return factory.createTypeFromText(myClassQName, context);
       }
 
-      Map<PsiTypeParameter, PsiType> substitutionMap = ContainerUtil.newHashMap();
+      Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
         Type substitute = mySubstitutor.get(typeParameter.getName());
         substitutionMap.put(typeParameter, substitute != null ? substitute.getType(context, manager) : null);
@@ -248,10 +235,10 @@ public class CanonicalTypes {
   }
 
   private static class LogicalOperationType extends Type {
-    private final List<Type> myTypes;
+    private final List<? extends Type> myTypes;
     private final boolean myDisjunction;
 
-    private LogicalOperationType(List<Type> types, boolean disjunction) {
+    private LogicalOperationType(List<? extends Type> types, boolean disjunction) {
       myTypes = types;
       myDisjunction = disjunction;
     }
@@ -320,7 +307,7 @@ public class CanonicalTypes {
         return new UnresolvedType(type);
       }
       else {
-        Map<String, Type> substitutionMap = ContainerUtil.newHashMap();
+        Map<String, Type> substitutionMap = new HashMap<>();
         PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
           PsiType substitute = substitutor.substitute(typeParameter);

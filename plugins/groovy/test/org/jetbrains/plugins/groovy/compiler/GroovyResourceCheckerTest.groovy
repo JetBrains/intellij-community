@@ -34,10 +34,10 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
-    addGroovyLibrary(myModule)
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir('src'))
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir('res'), (JpsModuleSourceRootType<JavaResourceRootProperties>)JavaResourceRootType.RESOURCE)
+    PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
+    addGroovyLibrary(module)
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir('src'))
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir('res'), (JpsModuleSourceRootType<JavaResourceRootProperties>)JavaResourceRootType.RESOURCE)
   }
 
   private List<CompilerMessage> checkResources() {
@@ -57,7 +57,7 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
 
   void "test depend on source and other resources"() {
     Module depModule = addModule("dependent", false)
-    ModuleRootModificationUtil.addDependency(myModule, depModule)
+    ModuleRootModificationUtil.addDependency(module, depModule)
     addGroovyLibrary(depModule)
     PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/src'))
     PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/res'), (JpsModuleSourceRootType<JavaResourceRootProperties>)JavaResourceRootType.RESOURCE)
@@ -81,7 +81,7 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
 
   void "test stop after errors in one module"() {
     Module depModule = addModule("dependent", false)
-    ModuleRootModificationUtil.addDependency(depModule, myModule)
+    ModuleRootModificationUtil.addDependency(depModule, module)
     addGroovyLibrary(depModule)
     PsiTestUtil.addSourceRoot(depModule, myFixture.tempDirFixture.findOrCreateDir('dependent/res'), (JpsModuleSourceRootType<JavaResourceRootProperties>)JavaResourceRootType.RESOURCE)
 

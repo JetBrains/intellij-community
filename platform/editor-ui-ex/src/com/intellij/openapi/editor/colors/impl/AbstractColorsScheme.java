@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.colors.impl;
 
@@ -21,7 +21,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -65,7 +64,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
 
-  Map<ColorKey, Color> myColorsMap = ContainerUtilRt.newHashMap();
+  Map<ColorKey, Color> myColorsMap = new HashMap<>();
   Map<String, TextAttributes> myAttributesMap = new THashMap<>();
 
   @NonNls private static final String EDITOR_FONT       = "font";
@@ -795,6 +794,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
+  @NotNull
   public String getConsoleFontName() {
     return myConsoleFontPreferences.getFontFamily();
   }

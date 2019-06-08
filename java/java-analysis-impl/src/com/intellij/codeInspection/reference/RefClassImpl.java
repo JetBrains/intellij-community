@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -194,6 +195,9 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (!utilityClass) {
       utilityClass = ClassUtils.isSingleton(uClass.getJavaPsi());
     }
+    if (utilityClass && !isInterface() && uMethods.length == 0 && ContainerUtil.find(uFields, UField::isStatic) == null) {
+      utilityClass = false;
+    }
 
     if (varargConstructor != null && getDefaultConstructor() == null) {
       setDefaultConstructor((RefMethodImpl)varargConstructor);
@@ -205,14 +209,6 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
       addConstructor(refImplicitConstructor);
     }
 
-    if (isInterface()) {
-      for (int i = 0; i < uFields.length && isUtilityClass(); i++) {
-        JvmField psiField = uFields[i];
-        if (!psiField.hasModifier(JvmModifier.STATIC)) {
-          utilityClass = false;
-        }
-      }
-    }
     setUtilityClass(utilityClass);
 
 

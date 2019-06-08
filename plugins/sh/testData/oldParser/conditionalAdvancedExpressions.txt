@@ -1,0 +1,145 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('-z')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            VARIABLE
+              PsiElement(var)('$a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          ASSIGNMENT_CONDITION
+            LITERAL_CONDITION
+              PsiElement($)('$')
+              SUBSHELL_COMMAND
+                PsiElement(()('(')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('a')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            PsiElement(=)('=')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(OPEN_BACKQUOTE)('`')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
+                      LITERAL
+                        PsiElement(word)('a')
+              PsiElement(CLOSE_BACKQUOTE)('`')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('\$')
+          LITERAL_CONDITION
+            BRACE_EXPANSION
+              PsiElement({)('{')
+              PsiElement(word)('a')
+              PsiElement(})('}')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('a')
+          PsiWhiteSpace('  ')
+          PsiElement(])(']')
+  PsiWhiteSpace(' ')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement(word)('a')
+          PsiWhiteSpace('  ')
+          PsiElement(])(']')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          LITERAL_CONDITION
+            PsiElement($)('$')
+            SUBSHELL_COMMAND
+              PsiElement(()('(')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('a')
+              PsiElement())(')')
+          PsiWhiteSpace('  ')
+          PsiElement(]])(']]')

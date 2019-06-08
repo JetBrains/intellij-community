@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -30,7 +30,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
@@ -46,6 +49,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.ui.IdeBorderFactory.*;
@@ -75,9 +79,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private JBTable myTable;
   private MyModel<T> myModel;
 
-  private final List<Runnable> myResetRunnables = ContainerUtil.newArrayList();
-  private final Map<String, T> myDefaultVals = ContainerUtil.newHashMap();
-  private final List<Trinity<String, Producer<T>, Consumer<T>>> myDefaultProps = ContainerUtil.newArrayList();
+  private final List<Runnable> myResetRunnables = new ArrayList<>();
+  private final Map<String, T> myDefaultVals = new HashMap<>();
+  private final List<Trinity<String, Supplier<T>, Consumer<T>>> myDefaultProps = new ArrayList<>();
   private VirtualFile myFileToSelect;
 
   protected interface Value<T> extends Setter<T>, Getter<T> {
@@ -99,7 +103,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected abstract <S> Object getParameter(@NotNull Key<S> key);
 
   @NotNull
-  protected List<Trinity<String, Producer<T>, Consumer<T>>> getDefaultMappings() {
+  protected List<Trinity<String, Supplier<T>, Consumer<T>>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
 
@@ -199,8 +203,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     cons2.insets = cons1.insets;
     panel.add(Box.createGlue(), new GridBagConstraints(2, 0, 1, 1, 1., 1., GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
 
-    for (Trinity<String, Producer<T>, Consumer<T>> prop : myDefaultProps) {
-      myDefaultVals.put(prop.first, prop.second.produce());
+    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+      myDefaultVals.put(prop.first, prop.second.get());
       JPanel p = createActionPanel(null, new Value<T>() {
         @Override
         public void commit() {
@@ -236,7 +240,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   private void doAddFiles(@NotNull List<? extends VirtualFile> files) {
-    Set<VirtualFile> chosen = ContainerUtil.newHashSet(files);
+    Set<VirtualFile> chosen = new HashSet<>(files);
     if (chosen.isEmpty()) return;
     Set<Object> set = myModel.data.stream().map(o -> o.first).collect(Collectors.toSet());
     for (VirtualFile file : chosen) {
@@ -279,7 +283,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
     ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
-    for (Trinity<String, Producer<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
+    for (Trinity<String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
       if (prop.first.startsWith("Project ") && file != null && index.isInContent(file) || prop.first.startsWith("Global ")) {
         T t = myDefaultVals.get(prop.first);
         if (t != null) return t;
@@ -298,8 +302,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   @Override
   public boolean isModified() {
-    for (Trinity<String, Producer<T>, Consumer<T>> prop : myDefaultProps) {
-      if (!Comparing.equal(prop.second.produce(), myDefaultVals.get(prop.first))) {
+    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+      if (!Comparing.equal(prop.second.get(), myDefaultVals.get(prop.first))) {
         return true;
       }
     }
@@ -312,7 +316,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @Override
   public void apply() throws ConfigurationException {
     myMappings.setMappings(getNewMappings());
-    for (Trinity<String, Producer<T>, Consumer<T>> prop : myDefaultProps) {
+    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
       prop.third.consume(myDefaultVals.get(prop.first));
     }
   }
@@ -324,8 +328,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       if (myMappings instanceof LanguagePerFileMappings && e.getKey() == null) continue;
       myModel.data.add(Pair.create(e.getKey(), e.getValue()));
     }
-    for (Trinity<String, Producer<T>, Consumer<T>> prop : myDefaultProps) {
-      myDefaultVals.put(prop.first, prop.second.produce());
+    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+      myDefaultVals.put(prop.first, prop.second.get());
     }
 
     for (Runnable runnable : myResetRunnables) {
@@ -348,14 +352,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected Map<VirtualFile, T> getNewMappings() {
-    HashMap<VirtualFile, T> map = ContainerUtil.newHashMap();
+    HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {
       if (p.second != null) {
         map.put((VirtualFile)p.first, p.second);
       }
     }
     if (myMappings instanceof LanguagePerFileMappings) {
-      for (Trinity<String, Producer<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
+      for (Trinity<String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
         if (prop.first.startsWith("Project ")) {
           T t = myDefaultVals.get(prop.first);
           if (t != null) map.put(null, t);
@@ -764,7 +768,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private static class MyModel<T> extends AbstractTableModel {
 
     final String[] columnNames;
-    final List<Pair<Object, T>> data = ContainerUtil.newArrayList();
+    final List<Pair<Object, T>> data = new ArrayList<>();
 
     MyModel(String... names) {
       columnNames = names;

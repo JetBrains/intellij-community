@@ -72,7 +72,8 @@ public class VcsDirtyScopeTest extends FileBasedTest {
     myVcsManager.setDirectoryMappings(mappings);
 
     myVcsManager.iterateVcsRoot(myProject.getBaseDir(), path -> {
-      Assert.assertFalse(VfsUtilCore.isAncestor(data.dir1, path.getVirtualFile(), false));
+      Assert.assertFalse(String.format("data dir: %s - file: %s", data.dir1.getPath(), path.getVirtualFile().getPath()),
+                         VfsUtilCore.isAncestor(data.dir1, path.getVirtualFile(), false));
       Assert.assertEquals(myVcsManager.getVcsFor(path), myVcs);
       return true;
     });

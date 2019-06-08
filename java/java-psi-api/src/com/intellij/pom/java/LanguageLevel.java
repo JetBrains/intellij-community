@@ -70,7 +70,7 @@ public enum LanguageLevel {
     return myVersion;
   }
 
-  /** @deprecated use {@link org.jetbrains.jps.model.java.JpsJavaSdkType#complianceOption()} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link org.jetbrains.jps.model.java.JpsJavaSdkType#complianceOption(JavaVersion)} (to be removed in IDEA 2019) */
   @Deprecated
   public String getCompilerComplianceDefaultOption() {
     return myVersion.feature <= 8 ? "1." + myVersion.feature : String.valueOf(myVersion.feature);

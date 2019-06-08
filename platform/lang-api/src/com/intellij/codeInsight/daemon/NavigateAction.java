@@ -30,12 +30,14 @@ import java.awt.event.MouseEvent;
  */
 public class NavigateAction<T extends PsiElement> extends AnAction {
   private final LineMarkerInfo<T> myInfo;
+  @Nullable private final String myOriginalActionId;
 
   public NavigateAction(@NotNull String text,
                         @NotNull LineMarkerInfo<T> info,
                         @Nullable String originalActionId) {
     super(text);
     myInfo = info;
+    myOriginalActionId = originalActionId;
     if (originalActionId != null) {
       ShortcutSet set = ActionManager.getInstance().getAction(originalActionId).getShortcutSet();
       setShortcutSet(set);
@@ -44,6 +46,7 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
 
   public NavigateAction(@NotNull LineMarkerInfo<T> info) {
     myInfo = info;
+    myOriginalActionId = null;
   }
 
   @Override
@@ -62,5 +65,10 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
     NavigateAction<T> action = new NavigateAction<>(text, info, originalActionId);
     info.setNavigateAction(action);
     return info;
+  }
+
+  @Nullable
+  public String getOriginalActionId() {
+    return myOriginalActionId;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,265 +10,269 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class DefaultExternalProject implements ExternalProject, ExternalProjectPreview {
-
-  private static final long serialVersionUID = 1L;
-
+public final class DefaultExternalProject implements ExternalProject, ExternalProjectPreview {
   @NotNull
-  private String myId;
+  private String id;
   @NotNull
-  private String myName;
+  private String name;
   @NotNull
-  private String myQName;
+  private String qName;
   @Nullable
-  private String myDescription;
+  private String description;
   @NotNull
-  private String myGroup;
+  private String group;
   @NotNull
-  private String myVersion;
+  private String version;
   @NotNull
-  private Map<String, ExternalProject> myChildProjects;
+  private Map<String, DefaultExternalProject> childProjects;
   @NotNull
-  private File myProjectDir;
+  private File projectDir;
   @NotNull
-  private File myBuildDir;
+  private File buildDir;
   @Nullable
-  private File myBuildFile;
+  private File buildFile;
   @NotNull
-  private Map<String, ExternalTask> myTasks;
+  private Map<String, DefaultExternalTask> tasks;
   @NotNull
-  private Map<String, ?> myProperties;
+  private Map<String, ?> properties = new HashMap<String, Object>();
   @NotNull
-  private Map<String, ExternalSourceSet> mySourceSets;
+  private Map<String, DefaultExternalSourceSet> sourceSets;
   @NotNull
-  private String myExternalSystemId;
+  private String externalSystemId;
   @NotNull
-  private Map<String, ExternalPlugin> myPlugins;
+  private Map<String, ExternalPlugin> plugins;
   @NotNull
-  private List<File> myArtifacts;
+  private List<File> artifacts;
   @NotNull
-  private Map<String, Set<File>> myArtifactsByConfiguration;
+  private Map<String, Set<File>> artifactsByConfiguration;
 
   public DefaultExternalProject() {
-    myChildProjects = new HashMap<String, ExternalProject>();
-    myTasks = new HashMap<String, ExternalTask>();
-    myProperties = new HashMap<String, Object>();
-    mySourceSets = new HashMap<String, ExternalSourceSet>();
-    myPlugins = new HashMap<String, ExternalPlugin>();
-    myArtifacts = new ArrayList<File>();
-    myArtifactsByConfiguration = new HashMap<String, Set<File>>();
+    childProjects = new HashMap<String, DefaultExternalProject>();
+    tasks = new HashMap<String, DefaultExternalTask>();
+    sourceSets = new HashMap<String, DefaultExternalSourceSet>();
+    plugins = new HashMap<String, ExternalPlugin>();
+    artifacts = new ArrayList<File>();
+    artifactsByConfiguration = new HashMap<String, Set<File>>();
   }
 
   public DefaultExternalProject(@NotNull ExternalProject externalProject) {
-    this();
-    myId = externalProject.getId();
-    myName = externalProject.getName();
-    myQName = externalProject.getQName();
-    myVersion = externalProject.getVersion();
-    myGroup = externalProject.getGroup();
-    myDescription = externalProject.getDescription();
-    myProjectDir = externalProject.getProjectDir();
-    myBuildDir = externalProject.getBuildDir();
-    myBuildFile = externalProject.getBuildFile();
-    myExternalSystemId = externalProject.getExternalSystemId();
+    id = externalProject.getId();
+    name = externalProject.getName();
+    qName = externalProject.getQName();
+    version = externalProject.getVersion();
+    group = externalProject.getGroup();
+    description = externalProject.getDescription();
+    projectDir = externalProject.getProjectDir();
+    buildDir = externalProject.getBuildDir();
+    buildFile = externalProject.getBuildFile();
+    externalSystemId = externalProject.getExternalSystemId();
 
-    for (Map.Entry<String, ExternalProject> entry : externalProject.getChildProjects().entrySet()) {
-      myChildProjects.put(entry.getKey(), new DefaultExternalProject(entry.getValue()));
-    }
-
-    for (Map.Entry<String, ExternalTask> entry : externalProject.getTasks().entrySet()) {
-      myTasks.put(entry.getKey(), new DefaultExternalTask(entry.getValue()));
-    }
-    for (Map.Entry<String, ExternalSourceSet> entry : externalProject.getSourceSets().entrySet()) {
-      mySourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
-    }
-    for (Map.Entry<String, ExternalPlugin> entry : externalProject.getPlugins().entrySet()) {
-      myPlugins.put(entry.getKey(), new DefaultExternalPlugin(entry.getValue()));
+    Map<String, ? extends ExternalProject> externalProjectChildProjects = externalProject.getChildProjects();
+    childProjects = new HashMap<String, DefaultExternalProject>(externalProjectChildProjects.size());
+    for (Map.Entry<String, ? extends ExternalProject> entry : externalProjectChildProjects.entrySet()) {
+      childProjects.put(entry.getKey(), new DefaultExternalProject(entry.getValue()));
     }
 
-    myArtifacts.addAll(externalProject.getArtifacts());
-    myArtifactsByConfiguration.putAll(externalProject.getArtifactsByConfiguration());
+    Map<String, ? extends ExternalTask> externalProjectTasks = externalProject.getTasks();
+    tasks = new HashMap<String, DefaultExternalTask>(externalProjectTasks.size());
+    for (Map.Entry<String, ? extends ExternalTask> entry : externalProjectTasks.entrySet()) {
+      this.tasks.put(entry.getKey(), new DefaultExternalTask(entry.getValue()));
+    }
+
+    Map<String, ? extends ExternalSourceSet> externalProjectSourceSets = externalProject.getSourceSets();
+    sourceSets = new HashMap<String, DefaultExternalSourceSet>(externalProjectSourceSets.size());
+    for (Map.Entry<String, ? extends ExternalSourceSet> entry : externalProjectSourceSets.entrySet()) {
+      sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
+    }
+
+    Map<String, ExternalPlugin> externalProjectPlugins = externalProject.getPlugins();
+    plugins = new HashMap<String, ExternalPlugin>(externalProjectPlugins.size());
+    for (Map.Entry<String, ExternalPlugin> entry : externalProjectPlugins.entrySet()) {
+      this.plugins.put(entry.getKey(), new DefaultExternalPlugin(entry.getValue()));
+    }
+
+    artifacts = new ArrayList<File>(externalProject.getArtifacts());
+    artifactsByConfiguration = new HashMap<String, Set<File>>(externalProject.getArtifactsByConfiguration());
   }
-
 
   @NotNull
   @Override
   public String getExternalSystemId() {
-    return myExternalSystemId;
+    return externalSystemId;
   }
 
   @NotNull
   @Override
   public String getId() {
-    return myId;
+    return id;
   }
 
   public void setId(@NotNull String id) {
-    myId = id;
+    this.id = id;
   }
 
   public void setExternalSystemId(@NotNull String externalSystemId) {
-    myExternalSystemId = externalSystemId;
+    this.externalSystemId = externalSystemId;
   }
 
   @NotNull
   @Override
   public String getName() {
-    return myName;
+    return name;
   }
 
   public void setName(@NotNull String name) {
-    myName = name;
+    this.name = name;
   }
 
   @NotNull
   @Override
   public String getQName() {
-    return myQName;
+    return qName;
   }
 
   public void setQName(@NotNull String QName) {
-    myQName = QName;
+    qName = QName;
   }
 
   @Nullable
   @Override
   public String getDescription() {
-    return myDescription;
+    return description;
   }
 
   public void setDescription(@Nullable String description) {
-    myDescription = description;
+    this.description = description;
   }
 
   @NotNull
   @Override
   public String getGroup() {
-    return myGroup;
+    return group;
   }
 
   public void setGroup(@NotNull String group) {
-    myGroup = group;
+    this.group = group;
   }
 
   @NotNull
   @Override
   public String getVersion() {
-    return myVersion;
+    return version;
   }
 
   public void setVersion(@NotNull String version) {
-    myVersion = version;
+    this.version = version;
   }
 
   @NotNull
   @Override
-  public Map<String, ExternalProject> getChildProjects() {
-    return myChildProjects;
+  public Map<String, DefaultExternalProject> getChildProjects() {
+    return childProjects;
   }
 
-  public void setChildProjects(@NotNull Map<String, ExternalProject> childProjects) {
-    myChildProjects = childProjects;
+  public void setChildProjects(@NotNull Map<String, DefaultExternalProject> childProjects) {
+    this.childProjects = childProjects;
   }
 
   @NotNull
   @Override
   public File getProjectDir() {
-    return myProjectDir;
+    return projectDir;
   }
 
   public void setProjectDir(@NotNull File projectDir) {
-    myProjectDir = projectDir;
+    this.projectDir = projectDir;
   }
 
   @NotNull
   @Override
   public File getBuildDir() {
-    return myBuildDir;
+    return buildDir;
   }
 
   public void setBuildDir(@NotNull File buildDir) {
-    myBuildDir = buildDir;
+    this.buildDir = buildDir;
   }
 
   @Nullable
   @Override
   public File getBuildFile() {
-    return myBuildFile;
+    return buildFile;
   }
 
   public void setBuildFile(@Nullable File buildFile) {
-    myBuildFile = buildFile;
+    this.buildFile = buildFile;
   }
 
   @NotNull
   @Override
-  public Map<String, ExternalTask> getTasks() {
-    return myTasks;
+  public Map<String, ? extends ExternalTask> getTasks() {
+    return tasks;
   }
 
-  public void setTasks(@NotNull Map<String, ExternalTask> tasks) {
-    myTasks = tasks;
+  public void setTasks(@NotNull Map<String, DefaultExternalTask> tasks) {
+    this.tasks = tasks;
   }
 
   @NotNull
   @Override
   public Map<String, ExternalPlugin> getPlugins() {
-    return myPlugins;
+    return plugins;
   }
 
   public void setPlugins(@NotNull Map<String, ExternalPlugin> plugins) {
-    myPlugins = plugins;
+    this.plugins = plugins;
   }
 
   @NotNull
   @Override
   public Map<String, ?> getProperties() {
-    return myProperties;
+    return properties;
   }
 
   public void setProperties(@NotNull Map<String, ?> properties) {
-    myProperties = properties;
+    this.properties = properties;
   }
 
   @Nullable
   @Override
   public Object getProperty(String name) {
-    return myProperties.get(name);
+    return properties.get(name);
   }
 
   @NotNull
   @Override
-  public Map<String, ExternalSourceSet> getSourceSets() {
-    return mySourceSets;
+  public Map<String, DefaultExternalSourceSet> getSourceSets() {
+    return sourceSets;
   }
 
-  public void setSourceSets(@NotNull Map<String, ExternalSourceSet> sourceSets) {
-    mySourceSets = sourceSets;
+  public void setSourceSets(@NotNull Map<String, DefaultExternalSourceSet> sourceSets) {
+    this.sourceSets = sourceSets;
   }
 
   @NotNull
   @Override
   public List<File> getArtifacts() {
-    return myArtifacts;
+    return artifacts;
   }
 
   public void setArtifacts(@NotNull List<File> artifacts) {
-    this.myArtifacts = artifacts;
+    this.artifacts = artifacts;
   }
 
   public void setArtifactsByConfiguration(@NotNull Map<String, Set<File>> artifactsByConfiguration) {
-    myArtifactsByConfiguration = artifactsByConfiguration;
+    this.artifactsByConfiguration = artifactsByConfiguration;
   }
 
   @NotNull
   @Override
   public Map<String, Set<File>> getArtifactsByConfiguration() {
-    return myArtifactsByConfiguration;
+    return artifactsByConfiguration;
   }
 
   @Override
   public String toString() {
-    return "project '" + myId + "'";
+    return "project '" + id + "'";
   }
 }

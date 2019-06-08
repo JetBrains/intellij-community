@@ -794,7 +794,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     assertEquals("Variables initialized to null even when not present in search results", 1,
                  findMatchesCount(source3, "[script(\"args == null\")]new String('_args*)"));
-
+    String source4 = "class X {{\n" +
+                     "  // comment\n" +
+                     "  new /*!*/ Object() {};\n" +
+                     "}}";
+    assertEquals("expected variable of type anonymous class", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]new 'XX()"));
+    assertEquals("expected variable of type anonymous class 2", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
+    assertEquals("expected variable of type anonymous class 3", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiExpressionStatement\")]new Object() {};"));
+    assertEquals("expected variable of type anonymous class 4", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
   }
 
   public void testCheckScriptValidation() {
@@ -2282,6 +2293,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     String pattern3 = "3 * 8 + 2 + 2";
     assertEquals(1, findMatchesCount(source2, pattern3));
+
+    String source3 = "class C {" +
+                     "  static int foo() {\n" +
+                     "    return (Integer.parseInt(\"3\"));\n" +
+                     "  }" +
+                     "}";
+    String pattern4 = "Integer.parseInt('_x)";
+    assertEquals(1, findMatchesCount(source3, pattern4));
   }
 
   public void testFindSelfAssignment() {
@@ -2964,6 +2983,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(3, findMatchesCount(source6, "'x:[exprtype( List )]"));
     assertEquals(1, findMatchesCount(source6, "'x:[exprtype( List<List<String>> )]"));
     assertEquals(2, findMatchesCount(source6, "'x:[exprtype( List<Garbage> )]"));
+
+    String source7 = "class X {{" +
+                     "  System.out.println(1.0 * 2 + 3 * 4);\n" +
+                     "}}";
+    assertEquals(1, findMatchesCount(source7, "[exprtype( int )]'_a * '_b"));
   }
 
   public void testSearchReferences() {
@@ -3197,17 +3221,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testForStatement() {
     String in = "class X {{" +
                 "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
                 "  " +
                 "  for (;;) {}" +
                 "  for (int i = 0; ;) {}" +
                 "  for (int i = 0; true; ) {}" +
                 "}}";
-    assertEquals("find all for loops", 4, findMatchesCount(in, "for(;;) '_st;"));
+    assertEquals("find all for loops", 7, findMatchesCount(in, "for(;;) '_st;"));
     assertEquals("find loops without initializers", 1, findMatchesCount(in, "for('_init{0,0};;) '_st;"));
     assertEquals("find loops without condition", 2, findMatchesCount(in, "for(;'_cond{0,0};) '_st;"));
     assertEquals("find loops without update", 3, findMatchesCount(in, "for(;;'_update{0,0}) '_st;"));
-    assertEquals("find all for loops 2", 4, findMatchesCount(in, "for('_init?;;) '_st;"));
-    assertEquals("find all for loops 3", 4, findMatchesCount(in, "for(;;'_update?) '_st;"));
-    assertEquals("find all for loops 4", 4, findMatchesCount(in, "for(;'_cond?;) '_st;"));
+    assertEquals("find all for loops 2", 7, findMatchesCount(in, "for('_init?;;) '_st;"));
+    assertEquals("find all for loops 3", 7, findMatchesCount(in, "for(;;'_update?) '_st;"));
+    assertEquals("find all for loops 4", 7, findMatchesCount(in, "for(;'_cond?;) '_st;"));
+    assertEquals("find loops with initializer, condition and update", 4, findMatchesCount(in, "for ('_init; '_cond; '_update) '_st;"));
+
+    String in2 = "class X {{" +
+                 "  int i = 0, j = 0;" +
+                 "  for (i=1, j=1;; i++, j++) {}" +
+                 "  for (;; i++, j++) {}" +
+                 "  for (i=1;;i++){}" +
+                 "}}";
+    assertEquals("find for loops with 2 initializer expressions", 1, findMatchesCount(in2, "for ('_init{2,2};;) '_st;"));
+    assertEquals("find for loops with 2 initializer expressions 2", 1, findMatchesCount(in2, "for ('_init1, '_init2;;) '_st;"));
+    assertEquals("find for loops with 2 update expressions", 2, findMatchesCount(in2, "for (;;'_update{2,2}) '_st;"));
+    assertEquals("find for loops with 2 update expressions 2", 2, findMatchesCount(in2, "for (;;'_update1, '_update2) '_st;"));
   }
 }

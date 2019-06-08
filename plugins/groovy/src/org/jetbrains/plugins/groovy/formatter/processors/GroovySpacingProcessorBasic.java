@@ -82,7 +82,7 @@ public abstract class GroovySpacingProcessorBasic {
       return NO_SPACING_WITH_NEWLINE;
     }
 
-/********** punctuation marks ************/
+// ********** punctuation marks ************
     if (GroovyTokenTypes.mCOMMA == leftType) {
       return settings.SPACE_AFTER_COMMA ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
     }
@@ -117,7 +117,7 @@ public abstract class GroovySpacingProcessorBasic {
       return NO_SPACING;
     }
 
-/********** exclusions ************/
+// ********** exclusions ************
     // For << and >> ...
     if ((GroovyTokenTypes.mLT.equals(leftType) && GroovyTokenTypes.mLT.equals(rightType)) ||
         (GroovyTokenTypes.mGT.equals(leftType) && GroovyTokenTypes.mGT.equals(rightType))) {

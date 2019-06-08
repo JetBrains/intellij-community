@@ -12,6 +12,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -25,6 +26,7 @@ import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +48,7 @@ public class SearchUtil {
     processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
-  private static void processConfigurables(@NotNull List<Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         //ignore invisible root nodes
@@ -205,7 +207,7 @@ public class SearchUtil {
   }
 
   @NotNull
-  private static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
+  public static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
     ListCellRenderer renderer = comboBox.getRenderer();
     if (renderer == null) renderer = new DefaultListCellRenderer();
 
@@ -340,14 +342,14 @@ public class SearchUtil {
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
     final Set<String> options = configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
-    if (options == null || options.isEmpty()) {
-      return text.toLowerCase(Locale.US).contains(option.toLowerCase(Locale.US));
+    if (options.isEmpty()) {
+      return StringUtil.toLowerCase(text).contains(StringUtil.toLowerCase(option));
     }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
     if (!force) {
       options.retainAll(tokens);
       final boolean highlight = !options.isEmpty();
-      return highlight || text.toLowerCase(Locale.US).contains(option.toLowerCase(Locale.US));
+      return highlight || StringUtil.toLowerCase(text).contains(StringUtil.toLowerCase(option));
     }
     else {
       options.removeAll(tokens);
@@ -398,7 +400,7 @@ public class SearchUtil {
 
   private static String quoteStrictOccurrences(final String textToMarkup, final String filter) {
     StringBuilder cur = new StringBuilder();
-    final String s = textToMarkup.toLowerCase(Locale.US);
+    final String s = StringUtil.toLowerCase(textToMarkup);
     for (String part : filter.split(" ")) {
       if (s.contains(part)) {
         cur.append("\"").append(part).append("\" ");
@@ -509,7 +511,7 @@ public class SearchUtil {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
       final String[] words = text.substring(pos, end).split("[\\W&&[^-]]+");
       for (String word : words) {
-        if (filters.contains(PorterStemmerUtil.stem(word.toLowerCase(Locale.US)))) {
+        if (filters.contains(PorterStemmerUtil.stem(StringUtil.toLowerCase(word)))) {
           selectedWords.add(word);
         }
       }
@@ -517,7 +519,7 @@ public class SearchUtil {
   }
 
   public static List<Set<String>> findKeys(String filter, Set<? super String> quoted) {
-    filter = processFilter(filter.toLowerCase(Locale.US), quoted);
+    filter = processFilter(StringUtil.toLowerCase(filter), quoted);
     final List<Set<String>> keySetList = new ArrayList<>();
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> words = optionsRegistrar.getProcessedWords(filter);
@@ -553,31 +555,46 @@ public class SearchUtil {
     return withoutQuoted + " " + filter.substring(beg);
   }
 
-  public static List<Configurable> expand(ConfigurableGroup[] groups) {
-    final ArrayList<Configurable> result = new ArrayList<>();
-    for (ConfigurableGroup eachGroup : groups) {
-      result.addAll(expandGroup(eachGroup));
+  @NotNull
+  public static List<Configurable> expand(@NotNull ConfigurableGroup[] groups) {
+    List<Configurable> result = new ArrayList<>();
+    CollectConsumer<Configurable> consumer = new CollectConsumer<>(result);
+    for (ConfigurableGroup group : groups) {
+      processExpandedGroups(group, consumer);
     }
     return result;
   }
 
-  public static List<Configurable> expandGroup(final ConfigurableGroup group) {
-    final Configurable[] configurables = group.getConfigurables();
+  @NotNull
+  public static List<Configurable> expandGroup(@NotNull ConfigurableGroup group) {
+    List<Configurable> result = new ArrayList<>();
+    processExpandedGroups(group, new CollectConsumer<>(result));
+    return result;
+  }
+
+  public static void processExpandedGroups(@NotNull ConfigurableGroup group, @NotNull Consumer<? super Configurable> consumer) {
+    Configurable[] configurables = group.getConfigurables();
     List<Configurable> result = new ArrayList<>();
     ContainerUtil.addAll(result, configurables);
     for (Configurable each : configurables) {
       addChildren(each, result);
     }
 
-    //noinspection deprecation
-    return ContainerUtil.filter(result, configurable -> !(configurable instanceof SearchableConfigurable.Parent) ||
-                                                        ((SearchableConfigurable.Parent)configurable).isVisible());
+    for (Configurable configurable : result) {
+      if (isAcceptable(configurable)) {
+        consumer.accept(configurable);
+      }
+    }
   }
 
-  private static void addChildren(Configurable configurable, List<? super Configurable> list) {
+  public static boolean isAcceptable(@NotNull Configurable configurable) {
+    //noinspection deprecation
+    return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
+  }
+
+  private static void addChildren(@NotNull Configurable configurable, @NotNull List<? super Configurable> list) {
     if (configurable instanceof Configurable.Composite) {
-      final Configurable[] kids = ((Configurable.Composite)configurable).getConfigurables();
-      for (Configurable eachKid : kids) {
+      for (Configurable eachKid : ((Configurable.Composite)configurable).getConfigurables()) {
         list.add(eachKid);
         addChildren(eachKid, list);
       }
@@ -585,7 +602,6 @@ public class SearchUtil {
   }
 
   private static final class SearchableConfigurableAdapter implements SearchableConfigurable {
-
     private final SearchableConfigurable myOriginal;
     private final UnnamedConfigurable myDelegate;
 

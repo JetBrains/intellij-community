@@ -65,7 +65,34 @@
     },
     {
       "key": "DebuggerTabs.selectedBackground",
-      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.selectedForeground."
+      "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground."
+    },
+    {
+    "key": "DefaultTabs.background"
+    },
+    {
+      "key": "DefaultTabs.borderColor"
+    },
+    {
+      "key": "DefaultTabs.hoverColor"
+    },
+    {
+      "key": "DefaultTabs.hoverBackground"
+    },
+    {
+      "key": "DefaultTabs.inactiveMaskColor"
+    },
+    {
+      "key": "DefaultTabs.inactiveUnderlineColor"
+    },
+    {
+      "key": "DefaultTabs.underlineColor"
+    },
+    {
+      "key": "DefaultTabs.underlineHeight"
+    },
+    {
+      "key": "DefaultTabs.underlinedTabBackground"
     },
     {
       "key": "Editor.background",
@@ -78,24 +105,43 @@
       "key": "Editor.shortcutForeground"
     },
     {
+      "key": "EditorTabs.background"
+    },
+    {
       "key": "EditorTabs.borderColor",
       "description": "The JBEditorTabs component"
     },
     {
-      "key": "EditorTabs.inactiveMaskColor",
+      "key": "EditorTabs.hoverColor"
+    },
+    {
+      "key": "EditorTabs.hoverBackground"
+    },
+    {
+      "key": "EditorTabs.inactiveColoredFileBackground",
       "description": "Masks inactive tabs to make them darker"
     },
     {
+      "key": "EditorTabs.inactiveUnderlineColor"
+    },
+
+    {
       "key": "EditorTabs.selectedBackground",
-      "description": "Background for all tabs. Inactive tabs also use inactiveMaskColor."
+      "description": "Background for all tabs. Inactive tabs also use inactiveColoredFileBackground."
     },
     {
-      "key": "EditorTabs.selectedForeground",
+      "key": "EditorTabs.underlinedTabForeground",
       "description": "Foreground of the selected tab when a file status color is not used. Inactive tabs use Label.foreground."
     },
     {
       "key": "EditorTabs.underlineColor",
       "description": "The line under the selected tab. Dark themes only"
+    },
+    {
+      "key": "EditorTabs.underlineHeight"
+    },
+    {
+      "key": "EditorTabs.underlinedTabBackground"
     },
     {
       "key": "FileColor.Blue",
@@ -231,6 +277,12 @@
     {
       "key": "Link.secondaryForeground",
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
+    },
+    {
+      "key": "MemoryIndicator.usedBackground"
+    },
+    {
+      "key": "MemoryIndicator.allocatedBackground"
     },
     {
       "key": "NavBar.borderColor",
@@ -480,6 +532,9 @@
       "key": "SearchEverywhere.Tab.selectedForeground"
     },
     {
+      "key": "SearchField.errorBackground"
+    },
+    {
       "key": "SearchMatch.endBackground",
       "description": "The yellow rectangle under the search match text"
     },
@@ -526,6 +581,12 @@
     },
     {
       "key": "TitlePane.background"
+    },
+    {
+      "key": "TitlePane.infoForeground"
+    },
+    {
+      "key": "TitlePane.inactiveInfoForeground"
     },
     {
       "key": "ToggleButton.borderColor"
@@ -589,6 +650,9 @@
     },
     {
       "key": "ToolWindow.HeaderTab.hoverInactiveBackground"
+    },
+    {
+      "key": "ToolWindow.HeaderTab.underlineHeight"
     },
     {
       "key": "UiDesigner.Panel.background",

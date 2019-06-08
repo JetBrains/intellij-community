@@ -35,7 +35,14 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class TestPackage extends TestObject {
-  protected static final Function<PsiClass, String> CLASS_NAME_FUNCTION = psiClass -> psiClass != null ? ClassUtil.getJVMClassName(psiClass) : null;
+  protected static final Function<PsiMember, String> CLASS_NAME_FUNCTION = member -> {
+    if (member instanceof PsiMethod) {
+      PsiClass containingClass = member.getContainingClass();
+      if (containingClass == null) return null;
+      return ClassUtil.getJVMClassName(containingClass) + "," + member.getName();
+    }
+    return member instanceof PsiClass ? ClassUtil.getJVMClassName((PsiClass)member) : null;
+  };
 
   public TestPackage(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
@@ -53,7 +60,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Module module = getConfiguration().getConfigurationModule().getModule();
     return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
-      private final Set<PsiClass> myClasses = new LinkedHashSet<>();
+      private final Set<PsiMember> myClasses = new LinkedHashSet<>();
 
       @Override
       protected void search() {
@@ -91,17 +98,17 @@ public class TestPackage extends TestObject {
     };
   }
 
-  protected boolean filterOutputByDirectoryForJunit5(final Set<PsiClass> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(final Set<PsiMember> classNames) {
     return getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
   }
 
-  protected String getFilters(Set<PsiClass> foundClasses, String packageName) {
+  protected String getFilters(Set<PsiMember> foundClasses, String packageName) {
     return foundClasses.isEmpty() ? packageName.isEmpty() ? ".*" : packageName + "\\..*" : "";
   }
 
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException { }
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiMember> classes) throws CantRunException { }
 
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiClass> classes) throws CantRunException {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiMember> classes) throws CantRunException {
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
       Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
       collectClassesRecursively(classFilter, acceptClassCondition, classes);

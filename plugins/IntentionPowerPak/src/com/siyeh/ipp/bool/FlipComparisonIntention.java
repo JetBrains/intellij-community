@@ -55,7 +55,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
   @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
-    return new ComparisonPredicate();
+    return new FlipComparisonPredicate();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.actions;
 
@@ -150,7 +150,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       }
 
       @Override
-      public boolean hasSubstep(List<TaskListItem> selectedValues) {
+      public boolean hasSubstep(List<? extends TaskListItem> selectedValues) {
         return selectedValues.size() > 1 || selectedValues.get(0).getTask() != null;
       }
 
@@ -288,7 +288,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     return group;
   }
 
-  public static void removeTask(final @NotNull Project project, LocalTask task, TaskManager manager) {
+  public static void removeTask(final @NotNull Project project, @NotNull LocalTask task, @NotNull TaskManager manager) {
     if (task.isDefault()) {
       Messages.showInfoMessage(project, "Default task cannot be removed", "Cannot Remove");
     }

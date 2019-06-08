@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
@@ -10,7 +10,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -29,28 +28,29 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.NonNavigatable;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 /**
- * Created by IntelliJ IDEA.
- *
- * @author: Roman Chernyatchik
- * @date: Oct 4, 2007
+ * @author Roman Chernyatchik
  */
 public class ExecutionHelper {
   private static final Logger LOG = Logger.getInstance(ExecutionHelper.class.getName());
@@ -147,8 +147,7 @@ public class ExecutionHelper {
         openMessagesView(errorTreeView, myProject, tabDisplayName);
       }
       catch (NullPointerException e) {
-        Messages.showErrorDialog(stdOutTitle + "\n" + (stdout != null ? stdout : "<empty>") + "\n" + stderrTitle + "\n"
-                                 + (stderr != null ? stderr : "<empty>"), "Process Output");
+        Messages.showErrorDialog(stdOutTitle + "\n" + stdout + "\n" + stderrTitle + "\n" + stderr, "Process Output");
         return;
       }
 
@@ -260,20 +259,13 @@ public class ExecutionHelper {
     else if (consoles.size() > 1) {
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(ContainerUtil.newArrayList(consoles))
-        .setRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
-          @Override
-          public void customize(final JList list,
-                                final RunContentDescriptor value,
-                                final int index,
-                                final boolean selected,
-                                final boolean hasFocus) {
-            setText(value.getDisplayName());
-            setIcon(icon);
-          }
-        })
+        .createPopupChooserBuilder(new ArrayList<>(consoles))
+        .setRenderer(SimpleListCellRenderer.<RunContentDescriptor>create((label, value, index) -> {
+          label.setText(value.getDisplayName());
+          label.setIcon(icon);
+        }))
         .setTitle(selectDialogTitle)
-        .setItemChosenCallback((descriptor) -> {
+        .setItemChosenCallback(descriptor -> {
           descriptorConsumer.consume(descriptor);
           descriptorToFront(project, descriptor);
         })
@@ -293,8 +285,8 @@ public class ExecutionHelper {
     }, project.getDisposed());
   }
 
-  public static class ErrorViewPanel extends NewErrorTreeViewPanel {
-    public ErrorViewPanel(final Project project) {
+  static class ErrorViewPanel extends NewErrorTreeViewPanel {
+    ErrorViewPanel(final Project project) {
       super(project, "reference.toolWindows.messages");
     }
 
@@ -329,7 +321,7 @@ public class ExecutionHelper {
         process = createTimeLimitedExecutionProcess(processHandler, mode, presentableCmdline);
       }
     }
-    if (mode.withModalProgress()) {
+    if (mode.withModalProgress() || !mode.inBackGround() && ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, mode.cancelable(), myProject,
                                                                         mode.getProgressParentComponent());
     }
@@ -353,7 +345,7 @@ public class ExecutionHelper {
   }
 
   private static Runnable createCancelableExecutionProcess(final ProcessHandler processHandler,
-                                                           final Function<Object, Boolean> cancelableFun) {
+                                                           final BooleanSupplier cancelableFun) {
     return new Runnable() {
       private ProgressIndicator myProgressIndicator;
       private final Semaphore mySemaphore = new Semaphore();
@@ -371,9 +363,8 @@ public class ExecutionHelper {
         @Override
         public void run() {
           while (true) {
-            if ((myProgressIndicator != null && (myProgressIndicator.isCanceled()
-                                                 || !myProgressIndicator.isRunning()))
-                || (cancelableFun != null && cancelableFun.fun(null).booleanValue())
+            if (myProgressIndicator != null && (myProgressIndicator.isCanceled() || !myProgressIndicator.isRunning())
+                || cancelableFun != null && cancelableFun.getAsBoolean()
                 || processHandler.isProcessTerminated()) {
 
               if (!processHandler.isProcessTerminated()) {
@@ -410,7 +401,7 @@ public class ExecutionHelper {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myWaitThread);
         ApplicationManager.getApplication().executeOnPooledThread(myCancelListener);
-
+        OSProcessHandler.checkEdtAndReadAction(processHandler);
         mySemaphore.waitFor();
       }
     };
@@ -434,7 +425,6 @@ public class ExecutionHelper {
         }
       }
     });
-
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
 
@@ -455,7 +445,7 @@ public class ExecutionHelper {
       public void run() {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myProcessRunnable);
-
+        OSProcessHandler.checkEdtAndReadAction(processHandler);
         mySemaphore.waitFor();
       }
     };

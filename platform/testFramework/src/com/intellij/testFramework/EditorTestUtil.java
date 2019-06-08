@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
@@ -230,8 +230,8 @@ public class EditorTestUtil {
   }
 
   public static void setEditorVisibleSize(Editor editor, int widthInChars, int heightInChars) {
-    setEditorVisibleSizeInPixels(editor, 
-                                 widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor), 
+    setEditorVisibleSizeInPixels(editor,
+                                 widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor),
                                  heightInChars * editor.getLineHeight());
   }
 
@@ -263,7 +263,7 @@ public class EditorTestUtil {
 
   @NotNull
   public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
-    List<CaretInfo> carets = ContainerUtil.newArrayList();
+    List<CaretInfo> carets = new ArrayList<>();
     String fileText = document.getText();
 
     RangeMarker blockSelectionStartMarker = null;

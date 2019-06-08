@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Url;
@@ -13,6 +12,7 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
@@ -26,7 +26,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
   public NestedCopiesBuilder(@NotNull SvnVcs vcs, @NotNull SvnFileUrlMapping mapping) {
     myVcs = vcs;
     myMapping = mapping;
-    myCopies = ContainerUtil.newHashSet();
+    myCopies = new HashSet<>();
   }
 
   @Override

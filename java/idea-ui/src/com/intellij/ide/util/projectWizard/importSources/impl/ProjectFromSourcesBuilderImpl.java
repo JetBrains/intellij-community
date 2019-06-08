@@ -284,7 +284,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
   }
 
   @Override
-  public void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<DetectedProjectRoot> roots) {
+  public void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<? extends DetectedProjectRoot> roots) {
     if (projectDescriptor.getModules().isEmpty()) {
       List<ModuleDescriptor> modules = new ArrayList<>();
       for (DetectedProjectRoot root : roots) {

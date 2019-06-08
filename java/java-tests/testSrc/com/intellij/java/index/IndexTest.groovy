@@ -5,14 +5,14 @@ import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.diagnostic.DefaultLogger
-import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.module.StdModuleTypes
@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -152,31 +151,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor, boolean readOnly) {
     final File storageFile = FileUtil.createTempFile("index_test", "storage")
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
-    PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile)
     final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024, readOnly)
-    return new StringIndex(testName, indexStorage, index, !readOnly)
-  }
-
-  private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
-    return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
-      @Override
-      void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
-        DataInputOutputUtil.writeINT(out, value.size())
-        for (String key : value) {
-          out.writeUTF(key)
-        }
-      }
-
-      @Override
-      Collection<String> read(@NotNull DataInput _in) throws IOException {
-        final int size = DataInputOutputUtil.readINT(_in)
-        final List<String> list = new ArrayList<String>()
-        for (int idx = 0; idx < size; idx++) {
-          list.add(_in.readUTF())
-        }
-        return list
-      }
-    })
+    return new StringIndex(testName, indexStorage, metaIndexFile, !readOnly)
   }
 
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
@@ -470,7 +446,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     //noinspection GroovyUnusedAssignment
     psiFile = null
-    GCUtil.tryGcSoftlyReachableObjects()
+    GCWatcher.tracking(((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)).tryGc()
     assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
@@ -863,7 +839,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def facade = JavaPsiFacade.getInstance(project)
 
     def srcFile = myFixture.addFileToProject('foo/bar/A.java', 'class A {}')
-    assert facade.findClass('A', GlobalSearchScope.moduleScope(myModule)) != null
+    assert facade.findClass('A', GlobalSearchScope.moduleScope(module)) != null
 
     def anotherDir = myFixture.tempDirFixture.findOrCreateDir('another')
     def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', anotherDir)
@@ -947,7 +923,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addFileToProject('foo/bar/' + filename, 'class A {}')
 
     PlatformTestUtil.startPerformanceTest("Vfs Event Processing By Index", 1000, {
-      def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
+      def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
       assert files?.length == 1
 
       VirtualFile file = files[0].virtualFile
@@ -961,14 +937,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename, filename2, true))
         eventList.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_NAME, filename2, filename, true))
         eventList.add(new VFileDeleteEvent(null, file, true))
-        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, false))
+        eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, null))
       }
 
       IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector
       indexedFilesListener.before(eventList)
       indexedFilesListener.after(eventList)
 
-      files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
+      files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
       assert files?.length == 1
     }).assertTiming()
   }

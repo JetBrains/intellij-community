@@ -42,7 +42,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
   private XDebuggerComboBoxEditor myEditor;
   private XExpression myExpression;
-  private Function<Document, Document> myDocumentProcessor = Function.identity();
+  private Function<? super Document, ? extends Document> myDocumentProcessor = Function.identity();
 
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
@@ -130,7 +130,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     return myDocumentProcessor.apply(super.createDocument(text));
   }
 
-  public void setDocumentProcessor(Function<Document, Document> documentProcessor) {
+  public void setDocumentProcessor(Function<? super Document, ? extends Document> documentProcessor) {
     myDocumentProcessor = documentProcessor;
   }
 

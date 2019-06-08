@@ -1,19 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.gradle.service.resolve.GradleGroovyProperty
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
-import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt
-import org.jetbrains.plugins.groovy.util.ResolveTest
+import org.jetbrains.plugins.groovy.util.ExpressionTest
 import org.junit.Test
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+
 @CompileStatic
-class GradleExtensionsTest extends GradleHighlightingBaseTest implements ResolveTest {
+class GradleExtensionsTest extends GradleHighlightingBaseTest implements ExpressionTest {
 
   protected List<String> getParentCalls() {
     // todo resolve extensions also for non-root places
@@ -22,10 +24,22 @@ class GradleExtensionsTest extends GradleHighlightingBaseTest implements Resolve
 
   @Test
   void extensionsTest() {
-    importProject("")
-    "project level extension property"()
-    "project level extension call type"()
-    "project level extension closure delegate type"()
+    importProject('''\
+ext {
+    prop = 1
+}
+''')
+    new RunAll().append {
+      "project level extension property"()
+    } append {
+      "project level extension call type"()
+    } append {
+      "project level extension closure delegate type"()
+    } append {
+      'property reference'()
+    } append {
+      'property reference via project'()
+    } run()
   }
 
   void "project level extension property"() {
@@ -46,15 +60,19 @@ class GradleExtensionsTest extends GradleHighlightingBaseTest implements Resolve
 
   void "project level extension closure delegate type"() {
     doTest("ext {<caret>}") {
-      def closure = elementUnderCaret(GrClosableBlock)
-      def info = GrDelegatesToUtilKt.getDelegatesToInfo(closure)
-      assert info != null
-      assert info.typeToDelegate.equalsToText(getExtraPropertiesExtensionFqn())
+      closureDelegateTest(getExtraPropertiesExtensionFqn(), 1)
     }
   }
 
-  private String getExtraPropertiesExtensionFqn() {
-    isGradleOlderThen_5_2() ? "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension"
-                            : "org.gradle.internal.extensibility.DefaultExtraPropertiesExtension"
+  void 'property reference'() {
+    doTest("<caret>prop") {
+      referenceExpressionTest(GradleGroovyProperty, JAVA_LANG_INTEGER)
+    }
+  }
+
+  void 'property reference via project'() {
+    doTest("project.<caret>prop") {
+      referenceExpressionTest(GradleGroovyProperty, JAVA_LANG_INTEGER)
+    }
   }
 }

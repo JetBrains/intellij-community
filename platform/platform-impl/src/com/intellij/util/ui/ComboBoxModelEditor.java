@@ -5,11 +5,10 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.MutableCollectionComboBoxModel;
+import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
@@ -20,7 +19,7 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
 
     comboBox = new ComboBox<>(model);
     comboBox.setEditor(new NameEditor());
-    comboBox.setRenderer(new MyListCellRenderer());
+    comboBox.setRenderer(SimpleListCellRenderer.create("", value -> itemEditor.getName(value)));
   }
 
   @NotNull
@@ -71,15 +70,6 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
     @Override
     public Object getItem() {
       return item;
-    }
-  }
-
-  private class MyListCellRenderer extends ListCellRendererWrapper<T> {
-    @Override
-    public void customize(JList list, T item, int index, boolean selected, boolean hasFocus) {
-      if (item != null) {
-        setText(itemEditor.getName(item));
-      }
     }
   }
 }

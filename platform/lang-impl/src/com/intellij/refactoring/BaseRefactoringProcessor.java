@@ -68,8 +68,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
   private static boolean PREVIEW_IN_TESTS = true;
 
-  @NotNull
   protected final Project myProject;
+  protected final SearchScope myRefactoringScope;
 
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
@@ -80,8 +80,15 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected BaseRefactoringProcessor(@NotNull Project project, @Nullable Runnable prepareSuccessfulCallback) {
+    this(project, GlobalSearchScope.projectScope(project), prepareSuccessfulCallback);
+  }
+
+  protected BaseRefactoringProcessor(@NotNull Project project,
+                                     @NotNull SearchScope refactoringScope,
+                                     @Nullable Runnable prepareSuccessfulCallback) {
     myProject = project;
     myPrepareSuccessfulSwingThreadCallback = prepareSuccessfulCallback;
+    myRefactoringScope = refactoringScope;
   }
 
   @NotNull
@@ -391,14 +398,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return conflictsDialog.showAndGet();
   }
 
-  private void showUsageView(@NotNull final UsageViewDescriptor viewDescriptor, final Factory<UsageSearcher> factory, @NotNull final UsageInfo[] usageInfos) {
+  private void showUsageView(@NotNull UsageViewDescriptor viewDescriptor,
+                             @NotNull Factory<UsageSearcher> factory,
+                             @NotNull UsageInfo[] usageInfos) {
     UsageViewManager viewManager = UsageViewManager.getInstance(myProject);
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
     final Ref<Usage[]> convertUsagesRef = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ApplicationManager.getApplication().runReadAction(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))), "Preprocess usages", true, myProject)) return;
+      () -> ApplicationManager.getApplication().runReadAction(
+        () -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))), "Preprocess Usages", true, myProject)) return;
 
     if (convertUsagesRef.isNull()) return;
 

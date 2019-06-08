@@ -102,8 +102,8 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
 
   @Nullable
   private <T> MultiMap<Repo, T> groupCommits(@NotNull Project project,
-                                             @NotNull Collection<T> commits,
-                                             @NotNull Function<T, VirtualFile> rootGetter) {
+                                             @NotNull Collection<? extends T> commits,
+                                             @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
     MultiMap<Repo, T> map = MultiMap.create();
     for (T commit : commits) {
       Repo root = getRepositoryForRoot(project, rootGetter.fun(commit));

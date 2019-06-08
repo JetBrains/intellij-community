@@ -75,7 +75,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
   private static void doStaticImport(Project project,
                                      Editor editor,
                                      PsiFile file,
-                                     List<Pair<PsiElement, StaticImporter>> staticImportTargets) {
+                                     List<? extends Pair<PsiElement, StaticImporter>> staticImportTargets) {
     Collections.reverse(staticImportTargets);
     for (Pair<PsiElement, StaticImporter> pair : staticImportTargets) {
       if (pair.first.isValid()) {

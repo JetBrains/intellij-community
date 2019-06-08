@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.cachedValueProfiler;
 
 import com.google.gson.stream.JsonReader;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,14 +20,14 @@ public class CVPReader {
 
   @NotNull
   public static List<CVPInfo> deserialize(@NotNull InputStream stream) throws IOException {
-    try (JsonReader reader = new JsonReader(new InputStreamReader(stream))) {
+    try (JsonReader reader = new JsonReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       return new CVPReader(reader).read();
     }
   }
 
   @NotNull
   private List<CVPInfo> read() throws IOException {
-    ArrayList<CVPInfo> list = ContainerUtil.newArrayList();
+    ArrayList<CVPInfo> list = new ArrayList<>();
     myReader.beginArray();
     while (myReader.hasNext()) {
       list.add(readInfo());

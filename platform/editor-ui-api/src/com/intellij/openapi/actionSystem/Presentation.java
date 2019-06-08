@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.SmartFMap;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,14 +88,12 @@ public final class Presentation implements Cloneable {
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private PropertyChangeSupport myChangeSupport;
-  private String myText;
   private String myDescription;
   private Icon myIcon;
   private Icon myDisabledIcon;
   private Icon myHoveredIcon;
   private Icon mySelectedIcon;
-  private int myMnemonic;
-  private int myDisplayedMnemonicIndex = -1;
+  private TextWithMnemonic myTextWithMnemonic;
   private boolean myVisible = true;
   private boolean myEnabled = true;
   private double myWeight = DEFAULT_WEIGHT;
@@ -104,7 +102,7 @@ public final class Presentation implements Cloneable {
   }
 
   public Presentation(String text) {
-    myText = text;
+    myTextWithMnemonic = TextWithMnemonic.fromPlainText(text);
   }
 
   public void addPropertyChangeListener(PropertyChangeListener l) {
@@ -123,116 +121,90 @@ public final class Presentation implements Cloneable {
   }
 
   public String getText() {
-    return myText;
+    return myTextWithMnemonic == null ? null : myTextWithMnemonic.getText();
+  }
+
+  /**
+   * Sets the presentation text.
+   *
+   * @param text presentation text.
+   * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
+   *                           it's a plain text and no mnemonic will be used.
+   */
+  public void setText(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text, boolean mayContainMnemonic) {
+    TextWithMnemonic textWithMnemonic = null;
+    if (text != null) {
+      if (mayContainMnemonic) {
+        textWithMnemonic = TextWithMnemonic.parse(text);
+
+        UISettings uiSettings = UISettings.getInstanceOrNull();
+        if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
+          textWithMnemonic = textWithMnemonic.dropMnemonic();
+        }
+      }
+      else {
+        textWithMnemonic = TextWithMnemonic.fromPlainText(text);
+      }
+    }
+    setTextWithMnemonic(textWithMnemonic);
   }
 
   /**
    * Sets the presentation text
-   * @param text presentation text. If mayContainMnemonic is true, it may contain a mnemonic prefixed with '_' or '&'.
-   *             To escape '_' or '&' before the actual mnemonic the character must be duplicated.
-   *             The characters after the actual mnemonic should not be escaped. 
-   *             E.g. "A__b_c__d" will be displayed as "A_bc__d" with mnemonic 'c'.
-   * @param mayContainMnemonic if true, a mnemonic will be extracted from the presentation text
+   * @param textWithMnemonic text with mnemonic to set
    */
-  public void setText(@Nullable String text, boolean mayContainMnemonic) {
-    int oldMnemonic = myMnemonic;
-    int oldDisplayedMnemonicIndex = myDisplayedMnemonicIndex;
-    String oldText = myText;
-    myMnemonic = 0;
-    myDisplayedMnemonicIndex = -1;
+  public void setTextWithMnemonic(@Nullable TextWithMnemonic textWithMnemonic) {
+    String oldText = getText();
+    int oldMnemonic = getMnemonic();
+    int oldIndex = getDisplayedMnemonicIndex();
+    myTextWithMnemonic = textWithMnemonic;
 
-    if (text != null) {
-      if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
-        text = text.replace(UIUtil.MNEMONIC, '&');
-      }
-
-      if (mayContainMnemonic) {
-        StringBuilder plainText = new StringBuilder();
-        int backShift = 0;
-        for (int i = 0; i < text.length(); i++) {
-          char ch = text.charAt(i);
-          if (myMnemonic == 0 && (ch == '_' || ch == '&')) {
-            //noinspection AssignmentToForLoopParameter
-            i++;
-            if (i >= text.length()) break;
-            ch = text.charAt(i);
-            if (ch != '_' && ch != '&') {
-              myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-              myDisplayedMnemonicIndex = i - 1 - backShift;
-            }
-            else {
-              backShift++;
-            }
-          }
-          plainText.append(ch);
-        }
-        myText = plainText.length() == 0 ? "" : plainText.toString();
-      }
-      else {
-        myText = text.isEmpty() ? "" : text;
-      }
-    }
-    else {
-      myText = null;
-    }
-
-    final UISettings uiSettings = UISettings.getInstanceOrNull();
-    if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
-      myMnemonic = 0;
-      myDisplayedMnemonicIndex = -1;
-    }
-
-    fireObjectPropertyChange(PROP_TEXT, oldText, myText);
-    fireObjectPropertyChange(PROP_MNEMONIC_KEY, oldMnemonic, myMnemonic);
-    fireObjectPropertyChange(PROP_MNEMONIC_INDEX, oldDisplayedMnemonicIndex, myDisplayedMnemonicIndex);
+    fireObjectPropertyChange(PROP_TEXT, oldText, getText());
+    fireObjectPropertyChange(PROP_MNEMONIC_KEY, oldMnemonic, getMnemonic());
+    fireObjectPropertyChange(PROP_MNEMONIC_INDEX, oldIndex, getDisplayedMnemonicIndex());
   }
 
   /**
    * Sets the text with mnemonic.
-   * @param text
-   * @see #setText(String, boolean) 
+   * @see #setText(String, boolean)
    */
-  public void setText(String text) {
+  public void setText(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
     setText(text, true);
   }
 
   /**
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
+  @Nullable
   public String getTextWithMnemonic() {
-    return wrapTextWithMnemonic(myText, myDisplayedMnemonicIndex);
+    return myTextWithMnemonic == null ? null : myTextWithMnemonic.toString();
+  }
+
+  @Nullable
+  public TextWithMnemonic getTextWithPossibleMnemonic() {
+    return myTextWithMnemonic;
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
-    setText(presentation.getTextWithMnemonic());
+    setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
   }
 
   public static String restoreTextWithMnemonic(@Nullable String text, final int mnemonic) {
     if (text == null) return null;
+    TextWithMnemonic textWithMnemonic = TextWithMnemonic.fromPlainText(text);
     for (int i = 0; i < text.length(); i++) {
       if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-        return wrapTextWithMnemonic(text, i);
+        return textWithMnemonic.setMnemonicAt(i).toString();
       }
     }
-    return wrapTextWithMnemonic(text, -1);
-  }
-
-  @Nullable
-  private static String wrapTextWithMnemonic(@Nullable String text, int mnemonicIndex) {
-    if (text == null) return null;
-    if (mnemonicIndex > -1) {
-      String prefix = StringUtil.escapeMnemonics(text.substring(0, mnemonicIndex));
-      String suffix = text.substring(mnemonicIndex);
-      return prefix + "_" + suffix;
-    }
-    return StringUtil.escapeMnemonics(text);
+    return textWithMnemonic.toString();
   }
 
   public String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
     String oldDescription = myDescription;
     myDescription = description;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription, myDescription);
@@ -279,11 +251,11 @@ public final class Presentation implements Cloneable {
   }
 
   public int getMnemonic() {
-    return myMnemonic;
+    return myTextWithMnemonic == null ? 0 : myTextWithMnemonic.getMnemonic();
   }
 
   public int getDisplayedMnemonicIndex() {
-    return myDisplayedMnemonicIndex;
+    return myTextWithMnemonic == null ? -1 : myTextWithMnemonic.getMnemonicIndex();
   }
 
   public boolean isVisible() {
@@ -352,11 +324,7 @@ public final class Presentation implements Cloneable {
   public void copyFrom(Presentation presentation) {
     if (presentation == this) return;
 
-    if (!Objects.equals(myText, presentation.myText) ||
-        myDisplayedMnemonicIndex != presentation.myDisplayedMnemonicIndex ||
-        myMnemonic != presentation.myMnemonic) {
-      setText(presentation.getTextWithMnemonic());
-    }
+    setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
     setSelectedIcon(presentation.getSelectedIcon());
@@ -413,7 +381,7 @@ public final class Presentation implements Cloneable {
 
   @Override
   public String toString() {
-    return myText + " (" + myDescription + ")";
+    return getText() + " (" + myDescription + ")";
   }
 
   public boolean isEnabledAndVisible() {

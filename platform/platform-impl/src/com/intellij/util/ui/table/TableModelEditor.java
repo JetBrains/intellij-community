@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.table;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -19,7 +18,6 @@ import com.intellij.util.ui.CollectionItemEditor;
 import com.intellij.util.ui.CollectionModelEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +58,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     new TableSpeedSearch(table);
     ColumnInfo firstColumn = columns[0];
     if ((firstColumn.getColumnClass() == boolean.class || firstColumn.getColumnClass() == Boolean.class) && firstColumn.getName().isEmpty()) {
-      TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0));
+      TableUtil.setupCheckboxColumn(table.getColumnModel().getColumn(0), 0);
     }
 
    boolean needTableHeader = false;
@@ -84,10 +82,8 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public TableModelEditor<T> preferredScrollableViewportHeightInRows(int rows) {
+  public void preferredScrollableViewportHeightInRows(int rows) {
     table.setPreferredScrollableViewportSize(new Dimension(200, table.getRowHeight() * rows));
-    return this;
   }
 
   private void addDialogActions() {
@@ -166,13 +162,11 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public static <T> T cloneUsingXmlSerialization(@NotNull T oldItem, @NotNull T newItem) {
-    Element serialized = XmlSerializer.serialize(oldItem, new SkipDefaultValuesSerializationFilters());
-    if (!JDOMUtil.isEmpty(serialized)) {
+  public static <T> void cloneUsingXmlSerialization(@NotNull T oldItem, @NotNull T newItem) {
+    Element serialized = com.intellij.configurationStore.XmlSerializer.serialize(oldItem);
+    if (serialized != null) {
       XmlSerializer.deserializeInto(newItem, serialized);
     }
-    return newItem;
   }
 
   private final class MyListTableModel extends ListTableModel<T> {
@@ -308,7 +302,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   }
 
   @Override
-  public void reset(@NotNull List<T> items) {
+  public void reset(@NotNull List<? extends T> items) {
     super.reset(items);
     model.setItems(new ArrayList<>(items));
   }

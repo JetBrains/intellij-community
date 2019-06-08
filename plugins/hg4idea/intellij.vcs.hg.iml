@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="XStream" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
   </component>

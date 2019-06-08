@@ -29,9 +29,7 @@ import com.intellij.testFramework.fixtures.*;
 
 public class ExternalAnnotationsTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
-  private Module myModule;
-  private Project myProject;
- 
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -44,15 +42,15 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
 
     myFixture.setUp();
-    myModule = builder.getFixture().getModule();
+    Module myModule = builder.getFixture().getModule();
     ModuleRootModificationUtil.updateModel(myModule, model -> {
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl + "/src", false);
       final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
       extension.setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno")});
     });
-  
-    myProject = myFixture.getProject();
+
+    Project myProject = myFixture.getProject();
 
     JavaCodeStyleSettings.getInstance(myProject).USE_EXTERNAL_ANNOTATIONS = true;
   }
@@ -67,8 +65,6 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     }
     finally {
       myFixture = null;
-      myModule = null;
-      myProject = null;
       super.tearDown();
     }
   }

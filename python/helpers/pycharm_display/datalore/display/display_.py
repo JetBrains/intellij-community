@@ -2,12 +2,14 @@ import json
 import os
 import socket
 import struct
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from .supported_data_type import _standardize_value
 
 __all__ = ['display']
 
-HOST = 'localhost'
+HOST = "http://127.0.0.1"
 PORT = os.getenv("PYCHARM_DISPLAY_PORT")
 PORT = int(PORT) if PORT is not None else None
 PORT = PORT if PORT != -1 else None
@@ -35,10 +37,8 @@ def _send_display_message(message_spec):
     serialized = json.dumps(message_spec)
     buffer = serialized.encode()
     try:
-        sock = socket.socket()
-        sock.connect((HOST, PORT))
-        sock.send(struct.pack('>i', len(buffer)))
-        sock.send(buffer)
+        url = HOST + ":" + str(PORT) + "/api/python.scientific"
+        urlopen(url, buffer)
     except OSError as _:
         # nothing bad. It just means, that our tool window doesn't run yet
         pass

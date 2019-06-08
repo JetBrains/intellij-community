@@ -136,7 +136,7 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     if (nextArg == null) {
       return; // Nothing to show
     }
-    /**
+    /*
      *
      * We should display argument right after trimmed (spaces removed) document end or cursor position what ever comes first.
      *
@@ -145,7 +145,7 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
 
     final EditorImpl consoleEditor = PyUtil.as(myConsole.getConsoleEditor(), EditorImpl.class);
     if (consoleEditor == null) {
-      /**
+      /*
        * We can't calculate anything if editor is not {@link EditorImpl})
        */
       Logger.getInstance(ArgumentHintLayer.class).warn("Bad editor: " + myConsole.getConsoleEditor());
@@ -190,7 +190,7 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
 
 
     // Remove whitespaces on the end of document
-    /**
+    /*
      * TODO: This is actually copy/paste with {@link com.intellij.openapi.editor.actions.EditorActionUtil#moveCaretToLineEnd}.
      * Need to merge somehow.
      */

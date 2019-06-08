@@ -159,8 +159,8 @@ public abstract class PropertyTable extends JBTable {
     InputMap focusedInputMap = getInputMap(JComponent.WHEN_FOCUSED);
     InputMap ancestorInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    actionMap.put("selectPreviousRow", new MySelectNextPreviousRowAction(false));
-    actionMap.put("selectNextRow", new MySelectNextPreviousRowAction(true));
+    actionMap.put(TableActions.Up.ID, new MySelectNextPreviousRowAction(false));
+    actionMap.put(TableActions.Down.ID, new MySelectNextPreviousRowAction(true));
 
     actionMap.put("startEditing", new MyStartEditingAction());
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "startEditing");
@@ -461,7 +461,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void fillProperties(PropertiesContainer<?> component, List<Property> properties) {
+  private void fillProperties(PropertiesContainer<?> component, List<? super Property> properties) {
     for (Property each : getProperties(component)) {
       if (addIfNeeded(component, each, properties)) {
         addExpandedChildren(component, each, properties);
@@ -469,7 +469,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void addExpandedChildren(PropertiesContainer<?> component, Property property, List<Property> properties) {
+  private void addExpandedChildren(PropertiesContainer<?> component, Property property, List<? super Property> properties) {
     if (isExpanded(property)) {
       for (Property child : getChildren(property)) {
         if (addIfNeeded(component, child, properties)) {
@@ -479,7 +479,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private boolean addIfNeeded(PropertiesContainer<?> component, Property property, List<Property> properties) {
+  private boolean addIfNeeded(PropertiesContainer<?> component, Property property, List<? super Property> properties) {
     if (property.isExpert() && !myShowExpertProperties) {
       try {
         if (property.isDefaultRecursively(component)) {

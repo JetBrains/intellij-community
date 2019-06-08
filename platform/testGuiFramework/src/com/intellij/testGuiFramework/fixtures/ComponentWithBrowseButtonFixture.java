@@ -45,11 +45,11 @@ public class ComponentWithBrowseButtonFixture extends JComponentFixture<Componen
     clickExtensionButton(extension -> true);
   }
 
-  public void clickExtensionButton(@NotNull final Predicate<ExtendableTextComponent.Extension> extensionFilter) {
+  public void clickExtensionButton(@NotNull final Predicate<? super ExtendableTextComponent.Extension> extensionFilter) {
     robot().click(target(), getExtensionIconLocation(extensionFilter));
   }
 
-  private Point getExtensionIconLocation(@NotNull final Predicate<ExtendableTextComponent.Extension> extensionFilter) {
+  private Point getExtensionIconLocation(@NotNull final Predicate<? super ExtendableTextComponent.Extension> extensionFilter) {
     final JComponent component = target().getChildComponent();
     if (!(component instanceof ExtendableTextField)) {
       throw new ComponentLookupException("Child component is not an instance of ExtendableTextField");

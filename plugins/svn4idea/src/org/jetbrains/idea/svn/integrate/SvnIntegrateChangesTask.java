@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.*;
@@ -87,7 +88,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
 
-    ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
+    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
     myProjectLevelVcsManager.startBackgroundVcsOperation();
 
     try {
@@ -158,8 +159,9 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     TransactionGuard.submitTransaction(myProject, () -> {
       try {
         afterExecution(wasCancelled);
-      } finally {
-        ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
+      }
+      finally {
+        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
       }
     });
   }
@@ -323,7 +325,9 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         else if (!changesBuilder.getChanges().isEmpty()) {
           AlienCommitWorkflow workflow =
             new AlienCommitWorkflow(myVcs, myMerger.getComment(), changesBuilder.getChanges(), myMerger.getComment());
-          workflow.showDialog();
+          AlienCommitChangeListDialog dialog = new AlienCommitChangeListDialog(workflow);
+
+          new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
         }
       }
     }.queue();

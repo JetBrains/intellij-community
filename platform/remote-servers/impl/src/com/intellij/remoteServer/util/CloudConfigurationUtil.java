@@ -24,7 +24,7 @@ public class CloudConfigurationUtil {
   public static void doSetSafeValue(@Nullable CredentialAttributes credentialAttributes,
                                     @Nullable String credentialUser,
                                     @Nullable String secretValue,
-                                    @NotNull Consumer<String> unsafeSetter) {
+                                    @NotNull Consumer<? super String> unsafeSetter) {
 
     if (credentialAttributes != null) {
       PasswordSafe.getInstance().set(credentialAttributes, new Credentials(credentialUser, secretValue), false);

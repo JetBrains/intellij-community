@@ -1,0 +1,16 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('TOMCAT_HOST_LIST')
+          ARRAY_EXPRESSION
+            PsiElement([)('[')
+            LITERAL_EXPRESSION
+              VARIABLE
+                PsiElement(var)('$index')
+            PsiElement(])(']')
+          PsiElement(=)('=')
+          VARIABLE
+            PsiElement(var)('$LINE')

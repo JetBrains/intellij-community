@@ -14,7 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 
 public class LiveTemplateAutoPopupTest extends CompletionAutoPopupTestCase {
   @Override
-  protected void setUp() {
+  protected void setUp() throws Exception {
     super.setUp();
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
   }
@@ -38,6 +38,12 @@ public class LiveTemplateAutoPopupTest extends CompletionAutoPopupTestCase {
     createTemplate("aaa-bbb");
     type("aaa");
     assertOrderedEquals(myFixture.getLookupElementStrings(), "aaaA", "aaa-bbb");
+    type("-");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb");
+
+    myFixture.configureByText("a.java", "class C { { <caret> }}");
+    type("aaa");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb");
     type("-");
     assertOrderedEquals(myFixture.getLookupElementStrings(), "aaa-bbb");
   }

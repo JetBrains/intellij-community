@@ -2,8 +2,10 @@
 package com.intellij.openapi.components;
 
 /**
- * No need to use this interface unless you need to listen {@link #projectOpened} or {@link #projectClosed}.
- * But in this case consider to use {@link com.intellij.openapi.project.ProjectManager#TOPIC}.
+ * No need to use this interface unless you need to listen to {@link #projectOpened} or {@link #projectClosed}.
+ * Consider using {@link com.intellij.openapi.project.ProjectManager#TOPIC} or
+ * if you need to run some activity on project open, use {@link com.intellij.openapi.startup.StartupActivity} (marked with
+ * {@link com.intellij.openapi.project.DumbAware} if possible to improve performance).
  *
  * <p>
  * <strong>Note that if you register a class as a project component it will be loaded, its instance will be created and

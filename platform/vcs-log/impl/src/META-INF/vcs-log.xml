@@ -17,12 +17,10 @@
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogProjectTabsProperties"
-                    serviceImplementation="com.intellij.vcs.log.impl.VcsLogProjectTabsProperties"/>
+    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogProjectTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.history.FileHistoryUiProperties"
-                    serviceImplementation="com.intellij.vcs.log.history.FileHistoryUiProperties"/>
+    <projectService serviceImplementation="com.intellij.vcs.log.history.FileHistoryUiProperties"/>
 
     <projectService serviceImplementation="com.intellij.vcs.log.statistics.VcsLogIndexCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
@@ -92,11 +90,13 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowDiffPreviewAction" id="Vcs.Log.ShowDiffPreview"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges"/>
+    <action class="com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction" id="Vcs.Log.ShowDiffPreviewInEditor"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
     </action>
+    <action class="com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup" id="Vcs.Log.ToggleColumns"/>
     <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
@@ -134,6 +134,8 @@
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
       <reference id="Vcs.Log.HighlightersActionGroup"/>
+      <separator/>
+      <reference id="Vcs.Log.ToggleColumns"/>
     </group>
     <group id="Vcs.Log.TextFilterSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.General.GearPlain" text="Text Filter Settings" description="Text Filter Settings" popup="true">
@@ -153,6 +155,10 @@
       <separator/>
       <reference id="Vcs.Log.CompareRevisions"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
+      <separator/>
+      <reference id="Vcs.Log.GoToChild"/>
+      <reference id="Vcs.Log.GoToParent"/>
+      <separator/>
     </group>
     <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Debugger.RestoreLayout" text="Configure Layout" description="Configure Layout" popup="true">
@@ -162,6 +168,7 @@
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <reference id="Vcs.Log.ShowOnlyAffectedChanges"/>
+      <reference id="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference id="ChangesView.GroupBy"/>
       <separator/>
@@ -187,8 +194,10 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
+      <reference id="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
+      <reference id="Vcs.Log.ToggleColumns"/>
       <separator/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
       <separator/>
@@ -213,6 +222,7 @@
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <reference ref="Vcs.Log.ShowDiffPreview"/>
+      <reference ref="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>

@@ -31,16 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyAccessToStaticFieldLockedOnInstanceInspection
     extends BaseInspection {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Access to static field locked on instance data";
-  }
 
   @Override
   @NotNull

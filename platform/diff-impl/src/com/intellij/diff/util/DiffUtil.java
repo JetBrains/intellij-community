@@ -117,11 +117,8 @@ public class DiffUtil {
 
   @NotNull
   private static List<Image> loadDiffFrameImages() {
-    return ContainerUtil.list(
-      ImageLoader.loadFromResource("/diff_frame32.png"),
-      ImageLoader.loadFromResource("/diff_frame64.png"),
-      ImageLoader.loadFromResource("/diff_frame128.png")
-    );
+    return Arrays.asList(ImageLoader.loadFromResource("/diff_frame32.png"), ImageLoader.loadFromResource("/diff_frame64.png"),
+                         ImageLoader.loadFromResource("/diff_frame128.png"));
   }
 
   //
@@ -1648,9 +1645,9 @@ public class DiffUtil {
 
 
   private static class SyncHeightComponent extends JPanel {
-    @NotNull private final List<JComponent> myComponents;
+    @NotNull private final List<? extends JComponent> myComponents;
 
-    SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+    SyncHeightComponent(@NotNull List<? extends JComponent> components, int index) {
       super(new BorderLayout());
       myComponents = components;
       JComponent delegate = components.get(index);

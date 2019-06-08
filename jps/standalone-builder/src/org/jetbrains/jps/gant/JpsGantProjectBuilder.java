@@ -141,7 +141,7 @@ public class JpsGantProjectBuilder {
     }
   }
 
-  public void buildModules(List<JpsModule> modules) {
+  public void buildModules(List<? extends JpsModule> modules) {
     Set<String> names = new LinkedHashSet<>();
     info("Collecting dependencies for " + modules.size() + " modules");
     for (JpsModule module : modules) {

@@ -43,12 +43,6 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "While loop spins on field";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "<code>#ref</code> loop spins on field #loc";
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +27,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class FileTypeChooser extends DialogWrapper {
@@ -69,7 +56,7 @@ public class FileTypeChooser extends DialogWrapper {
     }
     myList.setModel(model);
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
-    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getName());
+    new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getDescription());
 
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
@@ -77,7 +64,10 @@ public class FileTypeChooser extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    myTitleLabel.setText(FileTypesBundle.message("filetype.chooser.prompt", myFileName));
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(myFileName);
+    myTitleLabel.setText(fileType == FileTypes.UNKNOWN ?
+                         FileTypesBundle.message("filetype.chooser.prompt", myFileName) :
+                         FileTypesBundle.message("filetype.chooser.change.prompt", myFileName, fileType.getName()));
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new FileTypeRenderer());
@@ -173,7 +163,7 @@ public class FileTypeChooser extends DialogWrapper {
 
   @NotNull
   static List<String> suggestPatterns(@NotNull String fileName) {
-    List<String> patterns = ContainerUtil.newLinkedList(fileName);
+    List<String> patterns = new LinkedList<>();
 
     int i = -1;
     while ((i = fileName.indexOf('.', i + 1)) > 0) {
@@ -181,6 +171,12 @@ public class FileTypeChooser extends DialogWrapper {
       if (!StringUtil.isEmpty(extension)) {
         patterns.add(0, "*" + extension);
       }
+    }
+    if (FileTypeManager.getInstance().getFileTypeByFileName(fileName) == FileTypes.UNKNOWN) {
+      patterns.add(fileName);
+    }
+    else {
+      patterns.add(0, fileName);
     }
 
     return patterns;

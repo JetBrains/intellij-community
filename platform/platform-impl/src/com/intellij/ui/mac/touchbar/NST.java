@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +20,8 @@ import sun.awt.image.WritableRasterNative;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.*;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
@@ -32,16 +31,24 @@ public class NST {
   private static final String MIN_OS_VERSION = "10.12.2";
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
-  private static final boolean ourHeadless = GraphicsEnvironment.isHeadless();
-
   static {
     try {
-      final boolean isRegistryKeyEnabled = Registry.is(ourRegistryKeyTouchbar, false) && !ourHeadless;
-      if (
-        isSupportedOS()
-        && isRegistryKeyEnabled
-        && Utils.isTouchBarServerRunning()
-      ) {
+      if (!isSupportedOS()) {
+        LOG.info("OS doesn't support touchbar, skip nst loading");
+      }
+      else if (GraphicsEnvironment.isHeadless()) {
+        LOG.info("The graphics environment is headless, skip nst loading");
+      }
+      else if (!Registry.is(ourRegistryKeyTouchbar, false)) {
+        LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
+      }
+      else if (!JnaLoader.isLoaded()) {
+        LOG.info("JNA library is unavailable, skip nst loading");
+      }
+      else if (!Utils.isTouchBarServerRunning()) {
+        LOG.info("touchbar-server isn't running, skip nst loading");
+      }
+      else {
         try {
           loadLibrary();
         } catch (Throwable e) {
@@ -66,15 +73,7 @@ public class NST {
         } else {
           LOG.error("nst library wasn't loaded");
         }
-      } else if (!isSupportedOS())
-        LOG.info("OS doesn't support touchbar, skip nst loading");
-      else if (ourHeadless)
-        LOG.info("The graphics environment is headless, skip nst loading");
-      else if (!isRegistryKeyEnabled)
-        LOG.info("registry key '" + ourRegistryKeyTouchbar + "' is disabled, skip nst loading");
-      else
-        LOG.info("touchbar-server isn't running, skip nst loading");
-
+      }
 
       if (ourNSTLibrary != null) {
         final String appId = Utils.getAppId();
@@ -93,13 +92,7 @@ public class NST {
   static NSTLibrary loadLibrary() {
     NativeLibraryLoader.loadPlatformLibrary("nst");
 
-    // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-    // the way we tell CF to interpret our char*
-    // May be removed if we use toStringViaUTF16
-    System.setProperty("jna.encoding", "UTF8");
-
-    final Map<String, Object> nstOptions = new HashMap<>();
-    return ourNSTLibrary = Native.loadLibrary("nst", NSTLibrary.class, nstOptions);
+    return ourNSTLibrary = Native.load("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
   public static boolean isAvailable() { return ourNSTLibrary != null; }
@@ -150,7 +143,7 @@ public class NST {
     return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<TBItemScrubber.ItemData> items, int itemsCount) {
+  public static ID createScrubber(String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater, List<? extends TBItemScrubber.ItemData> items, int itemsCount) {
     final Memory mem = _packItems(items, 0, itemsCount);
     final ID scrubberNativePeer = ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
     return scrubberNativePeer;
@@ -194,7 +187,7 @@ public class NST {
     ourNSTLibrary.updatePopover(popoverObj, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // creates autorelease-pool internally
   }
 
-  public static void updateScrubber(ID scrubObj, int itemWidth, List<TBItemScrubber.ItemData> items) {
+  public static void updateScrubber(ID scrubObj, int itemWidth, List<? extends TBItemScrubber.ItemData> items) {
     LOG.error("updateScrubber musn't be called");
   }
 
@@ -211,7 +204,7 @@ public class NST {
     return mem;
   }
 
-  static void appendScrubberItems(ID scrubObj, List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+  static void appendScrubberItems(ID scrubObj, List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
     final Memory mem = _packItems(items, fromIndex, itemsCount);
     ourNSTLibrary.appendScrubberItems(scrubObj, mem, mem == null ? 0 : (int)mem.size()); // called from AppKit, uses per-event autorelease-pool
   }
@@ -228,7 +221,7 @@ public class NST {
     ourNSTLibrary.showScrubberItems(scrubObj, mem, indices.size(), show);
   }
 
-  private static @Nullable Memory _packItems(List<TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
+  private static @Nullable Memory _packItems(List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount) {
     if (items == null || itemsCount <= 0)
       return null;
     if (fromIndex < 0) {

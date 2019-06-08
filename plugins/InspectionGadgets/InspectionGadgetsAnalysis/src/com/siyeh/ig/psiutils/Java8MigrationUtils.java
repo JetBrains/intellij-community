@@ -21,10 +21,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class Java8MigrationUtils {
   @Nullable
@@ -159,10 +162,13 @@ public class Java8MigrationUtils {
   }
 
 
+  public interface MapCondition {
+  }
+
   /**
    * Class represents check when working with map: there is 2 ways - when there is a value that matches the key, and when value doesn't exists
    */
-  public static class MapCheckCondition {
+  public static class MapCheckCondition implements MapCondition {
     private final @Nullable PsiReferenceExpression myValueReference;
     private final PsiExpression myMapExpression;
     private final PsiExpression myKeyExpression;
@@ -279,6 +285,129 @@ public class Java8MigrationUtils {
         return tryExtract(ternary.getCondition(), parent instanceof PsiStatement ? (PsiStatement)parent : null, treatGetNullAsContainsKey);
       }
       return null;
+    }
+  }
+
+  /**
+   * This class is used to store enhanced for loop info when iterating {@link Map} keys or entries.
+   * It supports two iteration patterns:
+   * 1. for (String value : map.keySet())
+   * 2. for (Entry entry : map.entrySet())
+   */
+  public static class MapLoopCondition implements MapCondition {
+    private final PsiParameter myIterParam;
+    private final boolean myIsEntrySet;
+    private final PsiReferenceExpression myMapExpression;
+    private final PsiVariable myMap;
+
+    private MapLoopCondition(@NotNull PsiParameter iterParam, boolean isEntrySet,
+                             @NotNull PsiReferenceExpression mapExpression, @NotNull PsiVariable map) {
+      myIterParam = iterParam;
+      myIsEntrySet = isEntrySet;
+      myMapExpression = mapExpression;
+      myMap = map;
+    }
+
+    /**
+     * Try to extract {@link Map#put(Object, Object)} call from for each statement body.
+     * This call is expected to be applied to the same map instance as for each iteration, otherwise null will be returned.
+     *
+     * @see ControlFlowUtils#stripBraces(PsiStatement)
+     */
+    @Nullable
+    public PsiMethodCallExpression extractPut(@NotNull PsiForeachStatement statement) {
+      PsiExpressionStatement putStatement =
+        ObjectUtils.tryCast(ControlFlowUtils.stripBraces(statement.getBody()), PsiExpressionStatement.class);
+      if (putStatement == null) return null;
+      PsiMethodCallExpression putCall = extractMapMethodCall(putStatement.getExpression(), "put");
+      if (putCall == null || !isMapRef(putCall.getMethodExpression().getQualifierExpression())) return null;
+      return putCall;
+    }
+
+    /**
+     * Check if given expression either entry.getKey() call (for entry set based loop) or
+     * loop parameter reference (for key based loop).
+     */
+    public boolean isKeyAccess(@NotNull PsiExpression expression) {
+      if (!myIsEntrySet) {
+        PsiReferenceExpression keyRef = ObjectUtils.tryCast(expression, PsiReferenceExpression.class);
+        return keyRef != null && keyRef.resolve() == myIterParam;
+      }
+      return isParamCall(expression, "getKey");
+    }
+
+    /**
+     * Check if given expression is entry.getValue() call (for entry set based loop) or map.get(key) (for key based loop).
+     */
+    public boolean isValueAccess(@NotNull PsiExpression expression) {
+      if (myIsEntrySet) return isParamCall(expression, "getValue");
+      return isGetCall(expression);
+    }
+
+    private boolean isGetCall(@NotNull PsiExpression expression) {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
+      if (call == null) return false;
+      String name = call.getMethodExpression().getReferenceName();
+      if (!"get".equals(name) || !isMapRef(call.getMethodExpression().getQualifierExpression())) return false;
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      return args.length == 1 && ExpressionUtils.isReferenceTo(args[0], myIterParam);
+    }
+
+    /**
+     * Check if given call is invoked on loop iteration parameter.
+     */
+    public boolean isParamCall(@NotNull PsiMethodCallExpression call) {
+      PsiReferenceExpression qualifier =
+        ObjectUtils.tryCast(call.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+      return qualifier != null && qualifier.resolve() == myIterParam;
+    }
+
+    public PsiParameter getIterParam() {
+      return myIterParam;
+    }
+
+    public PsiVariable getMap() {
+      return myMap;
+    }
+
+    public boolean isEntrySet() {
+      return myIsEntrySet;
+    }
+
+    private boolean isParamCall(@NotNull PsiExpression expression, @NotNull String expectedName) {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
+      if (call == null) return false;
+      String name = call.getMethodExpression().getReferenceName();
+      return expectedName.equals(name) && isParamCall(call);
+    }
+
+    private boolean isMapRef(@Nullable PsiElement element) {
+      return element != null && PsiEquivalenceUtil.areElementsEquivalent(myMapExpression, element);
+    }
+
+    /**
+     * Create {@link MapLoopCondition} from enhanced for statement.
+     * Loop condition instance created only if iteration is done using {@link Map#keySet()} or {@link Map#entrySet()} methods.
+     */
+    @Nullable
+    public static MapLoopCondition create(@NotNull PsiForeachStatement statement) {
+      PsiExpression iteratedValue = statement.getIteratedValue();
+      PsiParameter iterParam = statement.getIterationParameter();
+      PsiMethodCallExpression iterCall = extractMapMethodCall(iteratedValue, "keySet");
+      if (iterCall != null) return create(iterParam, false, iterCall.getMethodExpression().getQualifierExpression());
+
+      iterCall = extractMapMethodCall(iteratedValue, "entrySet");
+      if (iterCall != null) return create(iterParam, true, iterCall.getMethodExpression().getQualifierExpression());
+
+      return null;
+    }
+
+    private static MapLoopCondition create(@NotNull PsiParameter iterParam, boolean isEntrySet, @Nullable PsiExpression qualifier) {
+      PsiReferenceExpression ref = ObjectUtils.tryCast(qualifier, PsiReferenceExpression.class);
+      if (ref == null) return null;
+      PsiVariable map = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+      if (map == null) return null;
+      return new MapLoopCondition(iterParam, isEntrySet, ref, map);
     }
   }
 }

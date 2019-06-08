@@ -60,6 +60,4 @@ public class IdeUICustomization {
   public String getSelectAutopopupByCharsText() {
     return "Insert selected suggestion by pressing space, dot, or other context-dependent keys";
   }
-
-  public void customizeSchemePanel(@NotNull JPanel abstractSchemePanel, @NotNull JPanel verticalContainer) {  }
 }

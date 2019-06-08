@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setFocusable(boolean focusable);
 
   @NotNull
-  ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition);
+  ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<? super Project> condition);
 
   /**
    * @see com.intellij.openapi.util.DimensionService
@@ -137,7 +138,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setCommandButton(@NotNull ActiveComponent commandButton);
 
   @NotNull
-  ComponentPopupBuilder setCouldPin(@Nullable Processor<JBPopup> callback);
+  ComponentPopupBuilder setCouldPin(@Nullable Processor<? super JBPopup> callback);
 
   @NotNull
   ComponentPopupBuilder setKeyboardActions(@NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions);
@@ -152,15 +153,28 @@ public interface ComponentPopupBuilder {
 
   /**
    * Allows to define custom strategy for processing {@link JBPopup#dispatchKeyEvent(KeyEvent)}.
+   * @param handler
    */
   @NotNull
-  ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler);
+  ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<? super KeyEvent> handler);
 
   @NotNull
   ComponentPopupBuilder setShowBorder(boolean show);
 
   @NotNull
+  ComponentPopupBuilder setNormalWindowLevel(boolean b);
+
+  @NotNull
   default ComponentPopupBuilder setBorderColor(Color color) {
     return this;
   }
+
+  /**
+   * Set a handler to be called when popup is closed via {@link JBPopup#closeOk(InputEvent)}.
+   * 
+   * @param okHandler handler to call
+   * @return this builder
+   */
+  @NotNull
+  ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler);
 }

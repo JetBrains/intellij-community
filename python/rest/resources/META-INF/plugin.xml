@@ -6,6 +6,7 @@
   <depends>com.intellij.modules.lang</depends>
 
   <xi:include href="/META-INF/rest.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
     <ul>
     <li>Added inspection for title & underline length math (PY-10998)</li>

@@ -40,7 +40,7 @@ public class TextFilter extends FilterAction {
   }
 
   @Override
-  public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     final StructuralSearchProfile profile = myTable.getProfile();
     showHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
     return profile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, target);

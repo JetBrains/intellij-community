@@ -3,12 +3,11 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +105,20 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     }
   }
 
+  @State(name = "OsSpecificEditorSettings", storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS))
+  public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
+    public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
+
+    @Override
+    public OsSpecificState getState() { return this; }
+
+    @Override
+    public void loadState(@NotNull OsSpecificState state) { XmlSerializerUtil.copyBean(state, this); }
+  }
+
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
+
+  @NotNull private final OsSpecificState myOsSpecificState;
 
   private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
   private OptionSet myOptions = new OptionSet();
@@ -126,6 +138,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
   public @interface StripTrailingSpaces {}
+
+  public EditorSettingsExternalizable() { this(new OsSpecificState()); }
+
+  public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
+    myOsSpecificState = state;
+  }
 
   public static EditorSettingsExternalizable getInstance() {
     if (ApplicationManager.getApplication().isDisposed()) {
@@ -648,5 +666,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setSoftWrapFileMasks(@NotNull String value) {
     myOptions.SOFT_WRAP_FILE_MASKS = value;
+  }
+
+  @NotNull
+  public CaretStopOptions getCaretStopOptions() {
+    return myOsSpecificState.CARET_STOP_OPTIONS;
+  }
+
+  public void setCaretStopOptions(@NotNull CaretStopOptions options) {
+    myOsSpecificState.CARET_STOP_OPTIONS = options;
   }
 }

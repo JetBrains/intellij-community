@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,20 +22,22 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
-import com.intellij.vcs.log.impl.VcsIndexableDetails;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -48,6 +53,8 @@ public class VcsLogUtil {
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
   public static final String HEAD = "HEAD";
 
+  private static final Logger LOG = Logger.getInstance(VcsLogUtil.class);
+
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
     return groupByRoot(refs, VcsRef::getRoot);
@@ -59,7 +66,7 @@ public class VcsLogUtil {
     Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
-      map.computeIfAbsent(root, k -> ContainerUtil.newHashSet()).add(item);
+      map.computeIfAbsent(root, k -> new HashSet<>()).add(item);
     }
     return map;
   }
@@ -168,7 +175,7 @@ public class VcsLogUtil {
     if (filter == null) return null;
 
     String branchName = null;
-    Set<VirtualFile> checkedRoots = ContainerUtil.newHashSet();
+    Set<VirtualFile> checkedRoots = new HashSet<>();
     for (VcsRef branch : refs.getBranches()) {
       if (!filter.matches(branch.getName())) continue;
 
@@ -205,7 +212,7 @@ public class VcsLogUtil {
   public static List<? extends VcsFullCommitDetails> getDetails(@NotNull VcsLogProvider logProvider,
                                                                 @NotNull VirtualFile root,
                                                                 @NotNull List<String> hashes) throws VcsException {
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = new ArrayList<>();
     logProvider.readFullDetails(root, hashes, result::add);
     return result;
   }
@@ -258,7 +265,7 @@ public class VcsLogUtil {
   @NotNull
   public static List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
                                             @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
-    List<Change> changes = ContainerUtil.newArrayList();
+    List<Change> changes = new ArrayList<>();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
     for (VcsFullCommitDetails details : detailsListReversed) {
       changes.addAll(getChanges.fun(details));
@@ -289,7 +296,7 @@ public class VcsLogUtil {
   @Nullable
   public static Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
     if (!isFolderHistoryShownInLog()) return null;
-    
+
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
       if (properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
@@ -311,21 +318,65 @@ public class VcsLogUtil {
     return Registry.is("vcs.folder.history.in.log");
   }
 
+  /**
+   * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
+   * waits for it in a background task, and executes the action after the log is ready.
+   */
+  @CalledInAwt
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
+    VcsProjectLog log = VcsProjectLog.getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager != null) {
+      action.accept(log, manager);
+    }
+    else { // schedule showing the log, wait its initialization, and then open the tab
+      CountDownLatch latch = new CountDownLatch(1);
+      MessageBusConnection connection = project.getMessageBus().connect(log);
+      connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
+        @Override
+        public void logCreated(@NotNull VcsLogManager logManager) {
+          latch.countDown();
+          action.accept(log, logManager);
+          connection.disconnect();
+        }
+      });
+
+      new Task.Backgroundable(project, "Loading Commits") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          log.createLog(true);
+
+          try {
+            while (!latch.await(50, TimeUnit.MILLISECONDS)) {
+              indicator.checkCanceled();
+            }
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
+        }
+      }.queue();
+    }
+  }
+
   public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     int maxSize = 0;
     for (VcsFullCommitDetails details : detailsList) {
-      int size = 0;
-      if (details instanceof VcsIndexableDetails) {
-        size = ((VcsIndexableDetails)details).size();
-      }
-      else {
-        for (int i = 0; i < details.getParents().size(); i++) {
-          size += details.getChanges(i).size();
-        }
-      }
-      maxSize = Math.max(size, maxSize);
+      maxSize = Math.max(getSize(details), maxSize);
     }
     return maxSize;
+  }
+
+  public static int getSize(@NotNull VcsFullCommitDetails details) {
+    if (details instanceof VcsChangesLazilyParsedDetails) {
+      return ((VcsChangesLazilyParsedDetails)details).size();
+    }
+    
+    int size = 0;
+    for (int i = 0; i < details.getParents().size(); i++) {
+      size += details.getChanges(i).size();
+    }
+    return size;
   }
 
   public static int getShownChangesLimit() {

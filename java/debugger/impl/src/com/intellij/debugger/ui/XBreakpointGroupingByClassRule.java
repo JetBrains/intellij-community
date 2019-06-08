@@ -39,7 +39,7 @@ class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBrea
   }
 
   @Override
-  public XBreakpointClassGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointClassGroup> groups) {
+  public XBreakpointClassGroup getGroup(@NotNull B b, @NotNull Collection<? extends XBreakpointClassGroup> groups) {
     if (b instanceof XBreakpoint) {
       Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint((XBreakpoint)b);
       if (javaBreakpoint == null) {

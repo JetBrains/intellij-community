@@ -79,17 +79,17 @@
 
     <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
 
-    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
+    <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"/>
-    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"
+    <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"/>
 
-    <extensionPoint qualifiedName="com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider"
+    <extensionPoint name="openapi.vcs.actions.AnnotateToggleAction.Provider"
                     interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider"/>
 
-    <extensionPoint qualifiedName="com.intellij.ignoredFileProvider"
+    <extensionPoint name="ignoredFileProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
-    <extensionPoint qualifiedName="com.intellij.ignoredFileContentProvider"
+    <extensionPoint name="ignoredFileContentProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
@@ -101,7 +101,7 @@
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
     <extensionPoint name="vcsRepositoryInitializer" interface="com.intellij.vcs.VcsRepositoryInitializer"/>
-    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.vcsPreservingExecutor"
+    <extensionPoint name="openapi.vcs.changes.vcsPreservingExecutor"
                     interface="com.intellij.openapi.vcs.changes.VcsPreservingExecutor"/>
 
   </extensionPoints>

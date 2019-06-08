@@ -9,6 +9,7 @@ import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
+import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogDateFilterImpl
@@ -51,6 +52,16 @@ object VcsLogFilterObject {
   }
 
   @JvmStatic
+  fun fromRange(exclusiveRef: String, inclusiveRef: String) : VcsLogRangeFilter {
+    return fromRange(listOf(RefRange(exclusiveRef, inclusiveRef)))
+  }
+
+  @JvmStatic
+  fun fromRange(ranges: List<RefRange>): VcsLogRangeFilter {
+    return VcsLogRangeFilterImpl(ranges)
+  }
+
+  @JvmStatic
   fun fromBranchPatterns(strings: Collection<String>, existingBranches: Set<String>): VcsLogBranchFilter {
     val branchNames = ArrayList<String>()
     val excludedBranches = ArrayList<String>()
@@ -60,7 +71,8 @@ object VcsLogFilterObject {
     for (s in strings) {
       val isExcluded = s.startsWith("-")
       val string = if (isExcluded) s.substring(1) else s
-      val isRegexp = !existingBranches.contains(string)
+      val isRegexp = (existingBranches.isNotEmpty() && !existingBranches.contains(string)) ||
+                     (existingBranches.isEmpty() && VcsLogUtil.maybeRegexp(string))
 
       if (isRegexp) {
         try {

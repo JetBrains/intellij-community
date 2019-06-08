@@ -29,7 +29,7 @@ public interface ChangeListStorage {
   @Nullable
   ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard);
 
-  void purge(long period, int intervalBetweenActivities, Consumer<ChangeSet> processor);
+  void purge(long period, int intervalBetweenActivities, Consumer<? super ChangeSet> processor);
 
   void writeNextSet(ChangeSet changeSet);
 }

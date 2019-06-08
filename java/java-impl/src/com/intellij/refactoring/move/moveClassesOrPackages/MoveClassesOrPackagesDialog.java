@@ -286,7 +286,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
            : "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes";
   }
 
-  private static void collectSourceRoots(PsiElement[] psiElements, ProjectFileIndex fileIndex, Set<VirtualFile> initialRoots) {
+  private static void collectSourceRoots(PsiElement[] psiElements, ProjectFileIndex fileIndex, Set<? super VirtualFile> initialRoots) {
     for (PsiElement element : psiElements) {
       final VirtualFile file = PsiUtilCore.getVirtualFile(element);
       if (file != null) {

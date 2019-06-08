@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,8 +49,8 @@ public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
   protected static Class myInAction;
-  private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
-  private static final Map<Class, List<String>> ourHistory = ContainerUtil.newHashMap();
+  private static final Map<Class, Pair<String, Integer>> ourLastStrings = new HashMap<>();
+  private static final Map<Class, List<String>> ourHistory = new HashMap<>();
   private int myHistoryIndex;
 
   @Override
@@ -259,7 +261,7 @@ public abstract class GotoActionBase extends AnAction {
       private void updateHistory(@Nullable String text) {
         if (!StringUtil.isEmptyOrSpaces(text)) {
           List<String> history = ourHistory.get(myInAction);
-          if (history == null) history = ContainerUtil.newArrayList();
+          if (history == null) history = new ArrayList<>();
           if (!text.equals(ContainerUtil.getFirstItem(history))) {
             history.add(0, text);
           }
@@ -323,25 +325,30 @@ public abstract class GotoActionBase extends AnAction {
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
 
-  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection) {
-    showInSearchEverywherePopup(searchProviderID, evnt, useEditorSelection, false);
+  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent event, boolean useEditorSelection) {
+    showInSearchEverywherePopup(searchProviderID, event, useEditorSelection, false);
   }
 
-  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection, boolean sendStatistics) {
-    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
+  protected void showInSearchEverywherePopup(@NotNull String searchProviderID,
+                                             @NotNull AnActionEvent event,
+                                             boolean useEditorSelection,
+                                             boolean sendStatistics) {
+    Project project = event.getProject();
+    if (project == null) return;
+    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
 
     if (seManager.isShown()) {
-      if (searchProviderID.equals(seManager.getShownContributorID())) {
-        seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
+      if (searchProviderID.equals(seManager.getSelectedContributorID())) {
+        seManager.toggleEverywhereFilter();
       }
       else {
-        seManager.setShownContributor(searchProviderID);
+        seManager.setSelectedContributor(searchProviderID);
         if (sendStatistics) {
           FeatureUsageData data = SearchEverywhereUsageTriggerCollector
             .createData(searchProviderID)
-            .addInputEvent(evnt);
-          SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
+            .addInputEvent(event);
+          SearchEverywhereUsageTriggerCollector.trigger(project, SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
         }
       }
       return;
@@ -349,11 +356,11 @@ public abstract class GotoActionBase extends AnAction {
 
     if (sendStatistics) {
       FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID);
-      SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
+      SearchEverywhereUsageTriggerCollector.trigger(project, SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
     }
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-    String searchText = StringUtil.nullize(getInitialText(useEditorSelection, evnt).first);
-    seManager.show(searchProviderID, searchText, evnt);
+    String searchText = StringUtil.nullize(getInitialText(useEditorSelection, event).first);
+    seManager.show(searchProviderID, searchText, event);
   }
 
   private static boolean historyEnabled() {

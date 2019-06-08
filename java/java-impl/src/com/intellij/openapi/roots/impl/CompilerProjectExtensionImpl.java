@@ -77,10 +77,10 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   }
 
   @NotNull
-  private Set<String> getRootsToWatch() {
+  private static Set<String> getRootsToWatch(Project project) {
     Set<String> rootsToWatch = new HashSet<>();
 
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
       CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
       if (extension == null) continue;
 
@@ -95,8 +95,12 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
       }
     }
 
-    if (myCompilerOutput != null) {
-      rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(myCompilerOutput.getUrl()));
+    CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+    if (extension != null) {
+      String compilerOutputUrl = extension.getCompilerOutputUrl();
+      if (compilerOutputUrl != null) {
+        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl));
+      }
     }
 
     return rootsToWatch;
@@ -134,7 +138,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     @Override
     @NotNull
     public Set<String> getRootsToWatch() {
-      return getImpl(myProject).getRootsToWatch();
+      return CompilerProjectExtensionImpl.getRootsToWatch(myProject);
     }
   }
 }

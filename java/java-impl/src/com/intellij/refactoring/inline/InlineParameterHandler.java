@@ -286,4 +286,10 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     }
     return null;
   }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement element) {
+    return REFACTORING_NAME + "...";
+  }
 }

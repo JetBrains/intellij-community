@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Dmitry Avdeev
@@ -16,15 +17,14 @@ public class ProjectTypeService implements PersistentStateComponent<ProjectType>
 
   @Nullable
   public static ProjectType getProjectType(@Nullable Project project) {
-    ProjectType projectType;
     if (project != null) {
-      projectType = getInstance(project).myProjectType;
+      ProjectType projectType = getInstance(project).myProjectType;
       if (projectType != null) return projectType;
     }
     return DefaultProjectTypeEP.getDefaultProjectType();
   }
 
-  public static void setProjectType(@NotNull Project project, @Nullable ProjectType projectType) {
+  public static void setProjectType(@NotNull Project project, @NotNull ProjectType projectType) {
     getInstance(project).loadState(projectType);
   }
 
@@ -39,7 +39,12 @@ public class ProjectTypeService implements PersistentStateComponent<ProjectType>
   }
 
   @Override
-  public void loadState(@Nullable ProjectType state) {
+  public void loadState(@NotNull ProjectType state) {
     myProjectType = state;
+  }
+
+  @TestOnly
+  public static void clearFieldsForLightProjectInTests(@NotNull Project project) {
+    getInstance(project).myProjectType = null;
   }
 }

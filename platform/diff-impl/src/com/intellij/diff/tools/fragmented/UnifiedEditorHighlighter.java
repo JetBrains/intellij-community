@@ -143,6 +143,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   }
 
   private static class ProxyIterator implements HighlighterIterator {
+    @NotNull
     private final Document myDocument;
     private int myIdx;
     private final List<Element> myPieces;
@@ -192,6 +193,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
       return myIdx < 0 || myIdx >= myPieces.size();
     }
 
+    @NotNull
     @Override
     public Document getDocument() {
       return myDocument;

@@ -146,8 +146,8 @@ public class NullabilityProblemKind<T extends PsiElement> {
   }
 
   @Nullable
-  static NullabilityProblem<?> fromContext(@NotNull PsiExpression expression,
-                                           Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> customNullabilityProblems) {
+  public static NullabilityProblem<?> fromContext(@NotNull PsiExpression expression,
+                                                  Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> customNullabilityProblems) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) ||
         expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiClass) {
       return null;

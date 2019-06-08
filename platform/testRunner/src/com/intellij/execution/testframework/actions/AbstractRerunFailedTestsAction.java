@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +50,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
-  private Getter<TestFrameworkRunningModel> myModelProvider;
+  private Getter<? extends TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
@@ -67,7 +66,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     myModel = model;
   }
 
-  public void setModelProvider(Getter<TestFrameworkRunningModel> modelProvider) {
+  public void setModelProvider(Getter<? extends TestFrameworkRunningModel> modelProvider) {
     myModelProvider = modelProvider;
   }
 
@@ -170,7 +169,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       performAction(environmentBuilder.runner(availableRunners.get(environment.getExecutor())));
     }
     else {
-      ArrayList<Executor> model = ContainerUtil.newArrayList(availableRunners.keySet());
+      ArrayList<Executor> model = new ArrayList<>(availableRunners.keySet());
       JBPopupFactory.getInstance().createPopupChooserBuilder(model)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(environment.getExecutor(), true)
@@ -234,8 +233,8 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     return null;
   }
 
-  protected static abstract class MyRunProfile extends RunConfigurationBase implements ModuleRunProfile,
-                                                                                       WrappingRunConfiguration<RunConfigurationBase> {
+  protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
+                                                                                                WrappingRunConfiguration<RunConfigurationBase> {
     @Deprecated
     public RunConfigurationBase getConfiguration() {
       return getPeer();

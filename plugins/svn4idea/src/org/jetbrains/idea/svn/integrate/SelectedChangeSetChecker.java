@@ -7,13 +7,13 @@ import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.addAll;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 public class SelectedChangeSetChecker extends SelectedChangeListsChecker {
-  @NotNull private final Set<Change> mySelectedChanges = newHashSet();
+  @NotNull private final Set<Change> mySelectedChanges = new HashSet<>();
 
   private void fillChanges(final AnActionEvent event) {
     mySelectedChanges.clear();

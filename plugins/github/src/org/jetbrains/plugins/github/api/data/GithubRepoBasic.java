@@ -1,32 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.io.mandatory.Mandatory;
-import org.jetbrains.io.mandatory.RestModel;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 
 import java.util.Objects;
 
-//example/GithubRepoBasic.json
-@RestModel
 @SuppressWarnings("UnusedDeclaration")
 public class GithubRepoBasic {
-  @Mandatory private Long id;
+  private Long id;
   //private String nodeId;
-  @Mandatory private String name;
+  private String name;
   private String fullName;
-  @Mandatory private GithubUser owner;
-  @SerializedName("private")
-  @Mandatory private Boolean isPrivate;
-  @Mandatory private String htmlUrl;
+  private GithubUser owner;
+  @JsonProperty("private")
+  private Boolean isPrivate;
+  private String htmlUrl;
   private String description;
-  @SerializedName("fork")
-  @Mandatory private Boolean isFork;
+  @JsonProperty("fork")
+  private Boolean isFork;
 
-  @Mandatory private String url;
+  private String url;
   //urls
 
   @NotNull

@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.stepping;
 
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.List;
 
@@ -38,6 +27,25 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
   public abstract List<Variant> computeSmartStepVariants(@NotNull XSourcePosition position);
 
   /**
+   * @param position current position
+   * @return list of function/method calls containing in the current line
+   */
+  @NotNull
+  public Promise<List<Variant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
+    return Promises.resolvedPromise(computeSmartStepVariants(position));
+  }
+
+  /**
+   * List of variants for the regular step into, if supported
+   * @param position current position
+   * @return list of function/method calls containing in the current line
+   */
+  @NotNull
+  public Promise<List<Variant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
+    return Promises.rejectedPromise();
+  }
+
+  /**
    * Resume execution and call {@link com.intellij.xdebugger.XDebugSession#positionReached(XSuspendContext)}
    * when {@code variant} function/method is reached
    * @param variant selected variant
@@ -48,6 +56,13 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
 
   public void startStepInto(@NotNull Variant variant, @Nullable XSuspendContext context) {
     startStepInto(variant);
+  }
+
+  /**
+   * Action if no variants detected, defaults to step into
+   */
+  public void stepIntoEmpty(XDebugSession session) {
+    session.stepInto();
   }
 
   /**

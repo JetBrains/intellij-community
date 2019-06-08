@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/** $Id$ */
-
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.CopyPasteDelegator;
@@ -71,8 +68,6 @@ import java.util.List;
 import java.util.*;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
-    private final VirtualFileListener vfsListener = new VFSListener();
-    private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
     private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
 
@@ -110,7 +105,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             cellRenderer = new ThumbnailListCellRenderer();
             ImageComponent imageComponent = cellRenderer.getImageComponent();
 
-            VirtualFileManager.getInstance().addVirtualFileListener(vfsListener);
+            VirtualFileManager.getInstance().addVirtualFileListener(new VFSListener(), this);
 
             Options options = OptionsManager.getInstance().getOptions();
             EditorOptions editorOptions = options.getEditorOptions();
@@ -123,7 +118,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             imageComponent.setFileNameVisible(editorOptions.isFileNameVisible());
             imageComponent.setFileSizeVisible(editorOptions.isFileSizeVisible());
 
-            options.addPropertyChangeListener(optionsListener);
+            options.addPropertyChangeListener(new OptionsChangeListener(), this);
 
             list = new JBList();
             list.setModel(new DefaultListModel());
@@ -623,11 +618,6 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     @Override
     public void dispose() {
         removeAll();
-
-        Options options = OptionsManager.getInstance().getOptions();
-        options.removePropertyChangeListener(optionsListener);
-
-        VirtualFileManager.getInstance().removeVirtualFileListener(vfsListener);
 
         list = null;
         cellRenderer = null;

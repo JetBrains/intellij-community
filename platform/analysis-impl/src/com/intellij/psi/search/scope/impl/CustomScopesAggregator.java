@@ -16,7 +16,7 @@ public class CustomScopesAggregator {
   @NotNull
   public static List<NamedScope> getAllCustomScopes(@NotNull Project project) {
     Set<NamedScope> allScopes = new LinkedHashSet<>();
-    for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensionList(project)) {
+    for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(project)) {
       List<NamedScope> customScopes = scopesProvider.getFilteredScopes();
       if (customScopes.contains(null)) {
         throw PluginException.createByClass("CustomScopesProvider::getFilteredScopes() must not return null scopes, got: " + customScopes + "; provider: " + scopesProvider + " (" + scopesProvider.getClass() + ")", null, scopesProvider.getClass());

@@ -39,8 +39,7 @@
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex"/>
     <stubIndex implementation="com.intellij.util.xml.stubs.index.DomElementClassIndex"/>
 
-    <applicationService serviceInterface="com.intellij.util.xml.impl.DomApplicationComponent"
-                        serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>
+    <applicationService serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.DomService"
                         serviceImplementation="com.intellij.util.xml.impl.DomServiceImpl"/>
@@ -54,8 +53,7 @@
     <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
                         serviceImplementation="com.intellij.util.xml.impl.ConverterManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.util.xml.ui.CommittableUtil"
-                    serviceImplementation="com.intellij.util.xml.ui.CommittableUtil"/>
+    <projectService serviceImplementation="com.intellij.util.xml.ui.CommittableUtil"/>
 
     <projectService serviceInterface="com.intellij.util.xml.highlighting.DomElementAnnotationsManager"
                     serviceImplementation="com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl"/>

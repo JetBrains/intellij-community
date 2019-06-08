@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.ZipException;
 
@@ -79,7 +80,7 @@ public class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(File f) throws IOException {
-    this(f, CharsetToolkit.UTF8_CHARSET);
+    this(f, StandardCharsets.UTF_8);
   }
 
   /**
@@ -90,7 +91,7 @@ public class JBZipFile implements Closeable {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(String name) throws IOException {
-    this(new File(name), CharsetToolkit.UTF8_CHARSET);
+    this(new File(name), StandardCharsets.UTF_8);
   }
 
   /**

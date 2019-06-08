@@ -14,8 +14,6 @@ inline fun <reified T> T.logInfo(message: String) {
   guilog.info(LogIndent.indent + message)
 }
 
-val currentTimeInHumanString get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis())!!
-
 fun GuiTestCase.logStartTest(testName: String) {
   logInfo("----------------->>> Test `$testName` started")
 }

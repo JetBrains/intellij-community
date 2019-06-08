@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
@@ -83,7 +69,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
-  public void testToStringOnUnqualified() {
+  public void testToStringOnUnqualifiedPerformance() {
     @Language("JAVA")
     String fileText = "public class Fix {\n" +
                   "    {\n" +
@@ -111,7 +97,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
      }).usesAllCPUCores().assertTiming();
   }
 
-  public void testToStringOnQualified() {
+  public void testToStringOnQualifiedPerformance() {
     @Language("JAVA")
     String fileText = "public class Fix {\n" +
                   "    {\n" +
@@ -328,7 +314,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   }
 
   public void testPrivateClassInheritorsInJdkDecompiled() {
-    ModuleRootModificationUtil.setModuleSdk(myModule, IdeaTestUtil.getMockJdk18());
+    ModuleRootModificationUtil.setModuleSdk(getModule(), IdeaTestUtil.getMockJdk18());
 
     PsiClass aClass = myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference");
     PsiFile file = aClass.getContainingFile();
@@ -352,7 +338,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
   public void testAnonymousAndLocalClassesInLibrary() {
     ModuleRootModificationUtil.addModuleLibrary(
-      myModule, 
+      getModule(),
       "jar://" + JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/MyInterfaceLibrary.jar!/"
     );
     @Language("JAVA")
@@ -371,7 +357,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertNotNull(implementation);
     PsiClass[] supers = implementation.getSupers();
     assertTrue(supers.length == 2 && "com.company.MyInterface".equalsIgnoreCase(supers[1].getQualifiedName()));
-    
+
     PsiElement[] targets = getTargets(psiFile);
     assertSize(5, targets);
 

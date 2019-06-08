@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.Set;
 
 /**
@@ -34,7 +36,7 @@ import java.util.Set;
 )
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String GROUP = "actions";
-  private static final String DEFAULT_ID = "third.party";
+  public static final String DEFAULT_ID = "third.party";
 
   private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
     "tooltip.actions.execute", "tooltip.actions.show.all", "tooltip.actions.show.description.gear",
@@ -43,6 +45,10 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     "Reload Classes", "Progress Paused", "Progress Resumed", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
 
+  public static boolean isCustomAllowedAction(@NotNull String actionId) {
+    return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
+  }
+
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     final String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
@@ -50,11 +56,14 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
     }
+    else if (event instanceof MouseEvent) {
+      data.addInputEvent((MouseEvent)event);
+    }
     FUCounterUsageLogger.getInstance().logEvent(GROUP, recorded, data);
   }
 
   @Override
-  public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event) {
+  public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
     if (action == null) return;
 
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
@@ -66,6 +75,9 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
         addData("context_menu", event.isFromContextMenu());
     }
 
+    if (lang != null) {
+      data.addCurrentFile(lang);
+    }
     FUCounterUsageLogger.getInstance().logEvent(GROUP, toReportedId(info, action, data), data);
   }
 

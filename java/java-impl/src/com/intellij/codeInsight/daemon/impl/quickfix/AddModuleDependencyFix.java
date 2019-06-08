@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,10 +24,7 @@ import com.intellij.util.modules.CircularModuleDependenciesDetector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author anna
@@ -104,7 +100,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     }
     else {
       JBPopup popup = JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(ContainerUtil.newArrayList(myModules))
+        .createPopupChooserBuilder(new ArrayList<>(myModules))
         .setRenderer(new ModuleListCellRenderer())
         .setTitle(QuickFixBundle.message("orderEntry.fix.choose.module.to.add.dependency.on"))
         .setMovable(false)

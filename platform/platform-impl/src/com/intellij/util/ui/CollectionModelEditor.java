@@ -54,7 +54,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
   @NotNull
   protected abstract List<T> getItems();
 
-  public void reset(@NotNull List<T> originalItems) {
+  public void reset(@NotNull List<? extends T> originalItems) {
     helper.reset(originalItems);
   }
 
@@ -74,7 +74,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     return false;
   }
 
-  public void processModifiedItems(@NotNull final PairProcessor<T, T> processor) {
+  public void processModifiedItems(@NotNull final PairProcessor<? super T, ? super T> processor) {
     // don't want to expose TObjectObjectProcedure - avoid implementation details
     helper.process(new TObjectObjectProcedure<T, T>() {
       @Override
@@ -99,7 +99,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     private final THashMap<T, T> modifiedToOriginal = ContainerUtil.newIdentityTroveMap();
     private final THashMap<T, T> originalToModified = ContainerUtil.newIdentityTroveMap();
 
-    public void reset(@Nullable List<T> newOriginalItems) {
+    public void reset(@Nullable List<? extends T> newOriginalItems) {
       if (newOriginalItems != null) {
         originalItems.clear();
         originalItems.addAll(newOriginalItems);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -14,7 +14,6 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.io.*
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.EmptyHttpHeaders
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -36,7 +35,8 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
                        isCustomHost: Boolean): Boolean {
     val channel = context.channel()
 
-    val extraHeaders = EmptyHttpHeaders.INSTANCE
+    val isSignedRequest = request.isSignedRequest()
+    val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
 
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
@@ -77,6 +77,15 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
 
+    val userAgent = request.userAgent
+    if (!isSignedRequest && userAgent != null && request.isRegularBrowser() && request.origin == null && request.referrer == null) {
+      val matcher = chromeVersionFromUserAgent.matcher(userAgent)
+      if (matcher.find() && StringUtil.compareVersionNumbers(matcher.group(1), "51") < 0 && !canBeAccessedDirectly(pathInfo.name)) {
+        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
+        return true
+      }
+    }
+
     if (!indexUsed && !endsWithName(path, pathInfo.name)) {
       if (endsWithSlash(decodedRawPath)) {
         indexUsed = true
@@ -96,7 +105,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     }
 
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
-    for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
+    for (fileHandler in WebServerFileHandler.EP_NAME.extensionList) {
       LOG.runAndLogException {
         if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHeaders)) {
           return true
@@ -132,7 +141,7 @@ private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpReque
 }
 
 private fun canBeAccessedDirectly(path: String): Boolean {
-  for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
+  for (fileHandler in WebServerFileHandler.EP_NAME.extensionList) {
     for (ext in fileHandler.pageFileExtensions) {
       if (FileUtilRt.extensionEquals(path, ext)) {
         return true

@@ -142,7 +142,7 @@ public abstract class FindUsagesHandler {
                                      @NotNull GlobalSearchScope searchScope) {
     Collection<String> stringToSearch = ReadAction.compute(() -> getStringsToSearch(element));
     if (stringToSearch == null) return true;
-    return FindUsagesHelper.processUsagesInText(element, stringToSearch, searchScope, processor);
+    return FindUsagesHelper.processUsagesInText(element, stringToSearch, false, searchScope, processor);
   }
 
   @Nullable
@@ -155,13 +155,12 @@ public abstract class FindUsagesHandler {
   }
 
   protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
-    //noinspection deprecation
     return isSearchForTextOccurencesAvailable(psiElement, isSingleFile);
   }
 
   /** @deprecated use/override {@link #isSearchForTextOccurrencesAvailable(PsiElement, boolean)} instead (to be removed in IDEA 18) */
   @Deprecated
-  @SuppressWarnings({"SpellCheckingInspection"})
+  @SuppressWarnings("SpellCheckingInspection")
   protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return false;
   }

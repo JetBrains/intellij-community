@@ -134,6 +134,8 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
       @JvmStatic fun getSettings(): TextDiffSettings = getSettings(null)
       @JvmStatic fun getSettings(place: String?): TextDiffSettings = service<TextDiffSettingsHolder>().getSettings(place)
+      internal fun getDefaultSettings(place: String): TextDiffSettings =
+        TextDiffSettings(SharedSettings(), service<TextDiffSettingsHolder>().defaultPlaceSettings(place))
     }
 
     interface Listener : EventListener {

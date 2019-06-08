@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.util.TestTimeOut;
 import com.intellij.util.ui.UIUtil;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,9 +52,9 @@ public class CtrlMouseHandlerTest extends AbstractEditorTest {
 
   private static void waitForHighlighting() {
     CtrlMouseHandler handler = ourProject.getComponent(CtrlMouseHandler.class);
-    long deadLine = System.currentTimeMillis() + 60_000; // 1 minute waiting limit
+    TestTimeOut t = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     while (handler.isCalculationInProgress()) {
-      if (System.currentTimeMillis() > deadLine) throw new RuntimeException("Timed out waiting for CtrlMouseHandler");
+      if (t.timedOut()) throw new RuntimeException("Timed out waiting for CtrlMouseHandler");
       LockSupport.parkNanos(10_000_000);
       UIUtil.dispatchAllInvocationEvents();
     }

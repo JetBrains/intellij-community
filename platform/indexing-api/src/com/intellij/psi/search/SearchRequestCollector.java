@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -10,13 +10,9 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
 * @author peter
@@ -76,8 +72,9 @@ public class SearchRequestCollector {
                                           UsageSearchContext.IN_PLAIN_TEXT
                                         : (short)(searchContext ^ UsageSearchContext.IN_CODE);
         SearchScope searchCodeUsageEffectiveScope = searchScope.intersectWith(restrictedCodeUsageSearchScope);
-        requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
-                                      new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+        requests = Arrays.asList(
+          new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
+          new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
       }
     }
     if (requests == null) {
@@ -154,7 +151,7 @@ public class SearchRequestCollector {
   }
 
   @NotNull
-  private <T> List<T> takeRequests(@NotNull List<T> list) {
+  private <T> List<T> takeRequests(@NotNull List<? extends T> list) {
     synchronized (lock) {
       final List<T> requests = new ArrayList<>(list);
       list.clear();

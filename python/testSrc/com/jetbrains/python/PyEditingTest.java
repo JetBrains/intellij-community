@@ -91,17 +91,37 @@ public class PyEditingTest extends PyTestCase {
   }
 
   // PY-18972
-  public void testFStringQuotes() {
+  public void testFStringAutomaticallyInsertedClosingQuotes() {
     assertEquals("f''", doTestTyping("f", 1, '\''));
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
-    assertEquals("fr''''''", doTestTyping("fr''", 4, '\''));
+    assertEquals("fr''''''", doTestTyping("fr''", 4, "'"));
     assertEquals("fr''''''", doTestTyping("fr''", 3, "''"));
   }
 
   // PY-32872
   public void testClosingQuotesCompletionForTripleQuotedFString() {
     assertEquals("f''''''\n", doTestTyping("f''\n", 3, "'"));
+  }
+
+  // PY-33901
+  public void testFStringManuallyInsertedClosingQuotes() {
+    assertEquals("f'foo'", doTestTyping("f'foo", 5, "'"));
+    assertEquals("f'''foo'''", doTestTyping("f'''foo''", 9, "'"));
+  }
+
+  // PY-35434
+  public void testFStringQuoteInTextPartNotDuplicated() {
+    assertEquals("f'\"]'", doTestTyping("f']'", 2, '"'));
+    assertEquals("f'\" '", doTestTyping("f' '", 2, '"'));
+    assertEquals("f'''foo\" '''", doTestTyping("f'''foo '''", 7, '"'));
+    assertEquals("f'''foo\"\n'''", doTestTyping("f'''foo\n'''", 7, '"'));
+  }
+
+  // PY-35461
+  public void testFStringAutomaticClosingQuotesRemoval() {
+    doTestBackspace("f'<caret>'", "f");
+    doTestBackspace("f'''<caret>'''", "f");
   }
 
   public void testNoClosingQuotesAfterTripleQuotesInsideTripleQuotedFString() {
@@ -126,13 +146,13 @@ public class PyEditingTest extends PyTestCase {
 
   public void testEnterInFStringTextPart() {
     doTestEnter("f'foo<caret>bar'", "f'foo' \\\n" +
-                                    "    f'bar'");
+                                    "f'bar'");
   }
 
   // PY-31984
   public void testEnterInFStringRightBeforeFragment() {
     doTestEnter("f'foo<caret>{42}bar'", "f'foo' \\\n" +
-                                        "    f'{42}bar'");
+                                        "f'{42}bar'");
   }
 
   // PY-32918
@@ -176,6 +196,12 @@ public class PyEditingTest extends PyTestCase {
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(pos);
     pressButton(IdeActions.ACTION_EDITOR_BACKSPACE);
     myFixture.checkResultByFile("/editing/" + fileName + ".after.py", true);
+  }
+
+  private void doTestBackspace(final String before, final String after) {
+    myFixture.configureByText(PythonFileType.INSTANCE, before);
+    pressButton(IdeActions.ACTION_EDITOR_BACKSPACE);
+    myFixture.checkResult(after);
   }
 
   public void testUncommentWithSpace() {   // PY-980

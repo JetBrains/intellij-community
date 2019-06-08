@@ -90,7 +90,7 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
   private volatile boolean myBusy;
 
   @Override
-  public void processWords(CharSequence fileText, Processor<WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, @NotNull Processor<WordOccurrence> processor) {
     if (myBusy) {
       throw PluginException.createByClass("Different word scanner instances should be used for different threads, " +
                                           "make sure that " + this + " with " + myLexer + " is instantiated on every request and not shared",

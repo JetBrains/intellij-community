@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.rules;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
@@ -23,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -59,7 +59,7 @@ public class LongAdderConversionRule extends TypeConversionRule {
       if (INCREMENT_DECREMENT_METHODS.contains(name)) {
         if (isMethodCallWithIgnoredReturnValue(context)) return null;
         assert name != null;
-        String replacementMethodName = name.toLowerCase(Locale.ROOT).contains("increment") ? "increment" : "decrement";
+        String replacementMethodName = StringUtil.toLowerCase(name).contains("increment") ? "increment" : "decrement";
         return new TypeConversionDescriptor("$v$.$method$()", "$v$." + replacementMethodName + "()");
       }
       else if ("getAndAdd".equals(name) || "addAndGet".equals(name)) {

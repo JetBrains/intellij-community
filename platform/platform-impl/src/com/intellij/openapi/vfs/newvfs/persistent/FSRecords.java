@@ -918,6 +918,7 @@ public class FSRecords {
     }
   }
 
+  // returns NameId[] sorted by NameId.id
   @NotNull
   public static NameId[] listAll(int parentId) {
     return readAndHandleErrors(() -> {
@@ -1001,6 +1002,7 @@ public class FSRecords {
           }
           else {
             int delta = childId - prevId;
+            assert prevId == id || delta > 0 : delta;
             DataInputOutputUtil.writeINT(record, delta);
             prevId = childId;
           }
@@ -1009,7 +1011,8 @@ public class FSRecords {
     });
   }
 
-  static @Nullable String readSymlinkTarget(int id) {
+  @Nullable
+  static String readSymlinkTarget(int id) {
     return readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
         if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
@@ -1139,7 +1142,7 @@ public class FSRecords {
     });
   }
 
-  static int getNameId(int id) {
+  public static int getNameId(int id) {
     return readAndHandleErrors(() -> doGetNameId(id));
   }
 
@@ -1147,7 +1150,7 @@ public class FSRecords {
     return getRecordInt(id, NAME_OFFSET);
   }
 
-  public static int getNameId(String name) {
+  public static int getNameId(@NotNull String name) {
     return readAndHandleErrors(() -> getNames().enumerate(name));
   }
 
@@ -1418,7 +1421,7 @@ public class FSRecords {
     }
 
     if (toWrite) {
-      try (Storage.AppenderStream appender = storage.appendStream(recordId)) {
+      try (AbstractStorage.AppenderStream appender = storage.appendStream(recordId)) {
         if (bulkAttrReadSupport) {
           if (directoryRecord) {
             DataInputOutputUtil.writeINT(appender, DbConnection.RESERVED_ATTR_ID);

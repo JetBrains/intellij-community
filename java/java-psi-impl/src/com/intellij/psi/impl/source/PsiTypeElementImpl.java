@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -172,7 +173,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           if (!(e instanceof PsiArrayInitializerExpression) &&
               !isSelfReferenced((PsiExpression)e, parent)) {
             PsiExpression expression = (PsiExpression)e;
-            PsiType type = JavaVarTypeUtil.ourVarGuard.doPreventingRecursion(expression, true, () -> expression.getType());
+            PsiType type = RecursionManager.doPreventingRecursion(expression, true, () -> expression.getType());
             return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
           }
           return null;

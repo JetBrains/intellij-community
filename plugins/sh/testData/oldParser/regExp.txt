@@ -1,0 +1,77 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          EQUALITY_CONDITION
+            LITERAL_CONDITION
+              PsiElement(word)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(=~)('=~')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('abc')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          EQUALITY_CONDITION
+            LITERAL_CONDITION
+              PsiElement($)('$')
+              SUBSHELL_COMMAND
+                PsiElement(()('(')
+                COMPOUND_LIST
+                  PIPELINE_COMMAND
+                    PIPELINE
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('break_request')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            PsiElement(=~)('=~')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('Denied')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          EQUALITY_CONDITION
+            LITERAL_CONDITION
+              PsiElement(word)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(=~)('=~')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('..e*x')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        CONDITIONAL_COMMAND
+          PsiElement([[)('[[')
+          PsiWhiteSpace(' ')
+          EQUALITY_CONDITION
+            LITERAL_CONDITION
+              PsiElement(word)('a')
+            PsiWhiteSpace(' ')
+            PsiElement(=~)('=~')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('^$')
+          PsiWhiteSpace(' ')
+          PsiElement(]])(']]')

@@ -153,7 +153,6 @@ public class ArtifactRepositoryManager {
       com.google.common.base.Predicate.class, //guava
       org.apache.http.HttpConnection.class, //httpcore
       org.apache.http.client.HttpClient.class, //httpclient
-      org.apache.commons.codec.binary.Base64.class, // commons-codec
       org.apache.commons.logging.LogFactory.class, // commons-logging
       org.slf4j.Marker.class // slf4j
     );
@@ -409,11 +408,17 @@ public class ArtifactRepositoryManager {
     public boolean visitEnter(DependencyNode node) {
       final Dependency dep = node.getDependency();
       if (dep != null) {
-        myRequests.add(new ArtifactRequest(
-          new ArtifactWithChangedClassifier(node.getDependency().getArtifact(), myKind.getClassifier()),
-          node.getRepositories(),
-          node.getRequestContext()
-        ));
+        Artifact artifact = dep.getArtifact();
+        String classifier = myKind.getClassifier();
+        if (classifier.isEmpty()) {
+          myRequests.add(new ArtifactRequest(node));
+        }
+        else {
+          myRequests.add(new ArtifactRequest(new ArtifactWithChangedClassifier(artifact, classifier),
+            node.getRepositories(),
+            node.getRequestContext()
+          ));
+        }
       }
       return true;
     }

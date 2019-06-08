@@ -1,0 +1,18 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('unset')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('todo_list')
+          SIMPLE_COMMAND_ELEMENT
+            CONDITIONAL_COMMAND
+              PsiElement([)('[')
+              LITERAL_CONDITION
+                VARIABLE
+                  PsiElement(var)('$todo_id')
+              PsiElement(])(']')

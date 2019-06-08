@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -12,7 +11,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
@@ -38,7 +36,6 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
@@ -46,7 +43,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -398,15 +394,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                   @NotNull final AtomicBoolean stopped) throws ApplicationUtil.CannotRunReadActionException {
     final PsiFile file = ApplicationUtil.tryRunReadAction(() -> vfile.isValid() ? myManager.findFile(vfile) : null);
     if (file != null && !(file instanceof PsiBinaryFile)) {
-      // load contents outside read action
-      if (FileDocumentManager.getInstance().getCachedDocument(vfile) == null) {
-        // cache bytes in vfs
-        try {
-          vfile.contentsToByteArray();
-        }
-        catch (IOException ignored) {
-        }
-      }
       ApplicationUtil.tryRunReadAction(() -> {
         final Project project = myManager.getProject();
         if (project.isDisposed()) throw new ProcessCanceledException();
@@ -596,7 +583,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @Override
   public boolean processRequests(@NotNull SearchRequestCollector collector, @NotNull Processor<? super PsiReference> processor) {
-    final Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = ContainerUtil.newHashMap();
+    final Map<SearchRequestCollector, Processor<? super PsiReference>> collectors = new HashMap<>();
     collectors.put(collector, processor);
 
     ProgressIndicator progress = getOrCreateIndicator();
@@ -604,9 +591,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return false;
     }
     do {
-      MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<>();
-      final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
-      final Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
+      final Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> globals = new HashMap<>();
+      final List<Computable<Boolean>> customs = new ArrayList<>();
+      final Set<RequestWithProcessor> locals = new LinkedHashSet<>();
       Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors = new THashMap<>();
       distributePrimitives(collectors, locals, globals, customs, localProcessors, progress);
       if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
@@ -669,7 +656,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return changed ? QueryRequestsRunResult.CHANGED : QueryRequestsRunResult.UNCHANGED;
   }
 
-  private boolean processGlobalRequestsOptimized(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
+  private boolean processGlobalRequestsOptimized(@NotNull Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> singles,
                                                  @NotNull ProgressIndicator progress,
                                                  @NotNull final Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors) {
     if (singles.isEmpty()) {
@@ -677,7 +664,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     if (singles.size() == 1) {
-      final Collection<? extends RequestWithProcessor> requests = singles.values();
+      final Collection<? extends RequestWithProcessor> requests = singles.values().iterator().next();
       if (requests.size() == 1) {
         final RequestWithProcessor theOnly = requests.iterator().next();
         return processSingleRequest(theOnly.request, theOnly.refProcessor);
@@ -690,9 +677,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     try {
       // intersectionCandidateFiles holds files containing words from all requests in `singles` and words in corresponding container names
-      final MultiMap<VirtualFile, RequestWithProcessor> intersectionCandidateFiles = createMultiMap();
+      final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionCandidateFiles = new HashMap<>();
       // restCandidateFiles holds files containing words from all requests in `singles` but EXCLUDING words in corresponding container names
-      final MultiMap<VirtualFile, RequestWithProcessor> restCandidateFiles = createMultiMap();
+      final Map<VirtualFile, Collection<RequestWithProcessor>> restCandidateFiles = new HashMap<>();
       collectFiles(singles, intersectionCandidateFiles, restCandidateFiles);
 
       if (intersectionCandidateFiles.isEmpty() && restCandidateFiles.isEmpty()) {
@@ -724,16 +711,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return result;
   }
 
-  private boolean processCandidates(@NotNull final Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
-                                    @NotNull final MultiMap<VirtualFile, RequestWithProcessor> candidateFiles,
-                                    @NotNull ProgressIndicator progress,
-                                    int totalSize,
-                                    int alreadyProcessedFiles) {
+  private <X> boolean processCandidates(@NotNull final Map<X, Processor<? super PsiElement>> localProcessors,
+                                        @NotNull final Map<VirtualFile, Collection<X>> candidateFiles,
+                                        @NotNull ProgressIndicator progress,
+                                        int totalSize,
+                                        int alreadyProcessedFiles) {
     List<VirtualFile> files = new ArrayList<>(candidateFiles.keySet());
 
     return processPsiFileRoots(files, totalSize, alreadyProcessedFiles, progress, psiRoot -> {
       final VirtualFile vfile = psiRoot.getVirtualFile();
-      for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
+      for (final X singleRequest : candidateFiles.get(vfile)) {
         ProgressManager.checkCanceled();
         Processor<? super PsiElement> localProcessor = localProcessors.get(singleRequest);
         if (!localProcessor.process(psiRoot)) {
@@ -800,9 +787,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private void collectFiles(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
-                            @NotNull final MultiMap<VirtualFile, RequestWithProcessor> intersectionResult,
-                            @NotNull final MultiMap<VirtualFile, RequestWithProcessor> restResult) {
+  private void collectFiles(@NotNull final Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> singles,
+                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> intersectionResult,
+                            @NotNull final Map<VirtualFile, Collection<RequestWithProcessor>> restResult) {
     for (Map.Entry<Set<IdIndexEntry>, Collection<RequestWithProcessor>> entry : singles.entrySet()) {
       ProgressManager.checkCanceled();
       final Set<IdIndexEntry> keys = entry.getKey();
@@ -828,9 +815,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                 ProgressManager.checkCanceled();
                 final PsiSearchRequest request = single.request;
                 if ((mask & request.searchContext) != 0 && request.searchScope.contains(file1)) {
-                  MultiMap<VirtualFile, RequestWithProcessor> result1 =
+                  Map<VirtualFile, Collection<RequestWithProcessor>> result1 =
                     intersectionWithContainerNameFiles == null || !intersectionWithContainerNameFiles.contains(file1) ? restResult : intersectionResult;
-                  result1.putValue(file1, single);
+                  result1.computeIfAbsent(file1, __ -> new SmartList<>()).add(single);
                 }
               }
               return true;
@@ -881,12 +868,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, RequestWithProcessor> createMultiMap() {
-    // usually there is just one request
-    return MultiMap.createSmart();
-  }
-
-  @NotNull
   private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
     Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, r -> (GlobalSearchScope)r.request.searchScope);
     return GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY));
@@ -894,7 +875,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors,
                                            @NotNull Set<RequestWithProcessor> locals,
-                                           @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals,
+                                           @NotNull Map<Set<IdIndexEntry>, Collection<RequestWithProcessor>> globals,
                                            @NotNull List<? super Computable<Boolean>> customs,
                                            @NotNull Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
                                            @NotNull ProgressIndicator progress) {
@@ -910,7 +891,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
         else {
           Set<IdIndexEntry> key = new HashSet<>(getWordEntries(primitive.word, primitive.caseSensitive));
-          registerRequest(globals.getModifiable(key), primitive, processor);
+          registerRequest(globals.computeIfAbsent(key, __ -> new SmartList<>()), primitive, processor);
         }
       }
       for (final Processor<Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {

@@ -194,12 +194,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     Collections.sort(pluginIds, (o1, o2) -> getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2)));
 
     ComboBox<String> pluginChooser = new ComboBox<>(ArrayUtilRt.toStringArray(pluginIds), 250);
-    pluginChooser.setRenderer(new ListCellRendererWrapper<String>() {
-      @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        setText(getPluginNameById(value));
-      }
-    });
+    pluginChooser.setRenderer(SimpleListCellRenderer.create("", this::getPluginNameById));
     new ComboboxSpeedSearch(pluginChooser) {
       @Override
       protected String getElementText(Object element) {

@@ -122,7 +122,6 @@ public class BlockSupportImpl extends BlockSupport {
                                                      @NotNull FileASTNode oldFileNode,
                                                      @NotNull TextRange changedPsiRange,
                                                      @NotNull CharSequence newFileText) {
-    Project project = file.getProject();
     final FileElement fileElement = (FileElement)oldFileNode;
     final CharTable charTable = fileElement.getCharTable();
     int lengthShift = newFileText.length() - fileElement.getTextLength();
@@ -142,7 +141,8 @@ public class BlockSupportImpl extends BlockSupport {
       if (elementType instanceof IReparseableElementType || elementType instanceof IReparseableLeafElementType) {
         final TextRange textRange = node.getTextRange();
 
-        if (baseLanguage.isKindOf(elementType.getLanguage()) && textRange.getLength() + lengthShift > 0) {
+        if (textRange.getLength() + lengthShift > 0 &&
+            (baseLanguage.isKindOf(elementType.getLanguage()) || !TreeUtil.containsOuterLanguageElements(node))) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
           if (end > newFileText.length()) {

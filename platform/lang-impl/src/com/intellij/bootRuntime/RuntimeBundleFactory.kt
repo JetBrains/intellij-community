@@ -6,6 +6,7 @@ import com.intellij.bootRuntime.bundles.Remote
 import com.intellij.bootRuntime.bundles.Runtime
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.layout.*
 import java.io.File
 import java.net.URL
 import java.util.regex.Pattern
@@ -20,13 +21,25 @@ enum class OperationSystem {
   Windows32, Windows64, Linux, MacOSX
 }
 
+fun javaHomeFromFile(file:File): File {
+  return file.parentFile.parentFile
+}
+
+fun javaHomeToInstallationLocation(file:File): File {
+  if (SystemInfo.isMac) {
+    return file.parentFile.parentFile
+  } else {
+    return file
+  }
+}
+
 class RuntimeLocationsFactory {
 
   fun runtimesFrom (locations: List<File>) : List<File> {
     return locations.flatMap{ l -> l.walk().filter {
       file -> file.name == "tools.jar" ||
               file.name == "jrt-fs.jar"
-    }.map{ file -> file.parentFile.parentFile }.toList()}.toList()
+    }.map{ file -> javaHomeToInstallationLocation(javaHomeFromFile(file)) }.toList()}.toList()
   }
 
   fun runtimeLocations(operationSystem: OperationSystem): List<File> {
@@ -56,10 +69,20 @@ class RuntimeLocationsFactory {
 
   fun bintrayBundles(project: Project): List<Runtime> {
 
-    val subject = "jetbrains"
-    val repoName = "intellij-jdk"
-    val link = String.format("https://dl.bintray.com/%s/%s", subject, repoName)
+    val subject = BinTrayConfig.subject
+    val repoName = BinTrayConfig.repoName
+    val jbrRepoName = BinTrayConfig.jbrRepoName
+    val linkTemplate = "https://dl.bintray.com/%s/%s";
 
+    val runtimes = collectRuntimes(String.format(linkTemplate, subject, repoName), project, ".*\"(jbsdk.*%s.*?)\"")
+    runtimes.addAll((collectRuntimes(String.format(linkTemplate, subject, jbrRepoName), project, ".*\".*?(jbrsdk.*%s.*?)\"")))
+
+    return runtimes
+  }
+
+  private fun collectRuntimes(link: String,
+                              project: Project,
+                              bundleNamePattern: String): MutableList<Runtime> {
     val response = URL(link).readText()
 
     var osFilter = ""
@@ -73,8 +96,7 @@ class RuntimeLocationsFactory {
       osFilter = "win"
     }
 
-    val pattern = ".*\"(jbsdk.*$osFilter.*?)\""
-    val r = Pattern.compile(pattern)
+    val r = Pattern.compile(String.format(bundleNamePattern, osFilter))
     val m = r.matcher(response)
 
     val list = mutableListOf<Runtime>()

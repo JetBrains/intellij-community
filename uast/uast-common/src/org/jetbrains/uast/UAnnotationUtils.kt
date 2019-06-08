@@ -1,6 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("UAnnotationUtils")
-@file:ApiStatus.Experimental
 
 package org.jetbrains.uast
 
@@ -8,11 +7,9 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.ApiStatus
 
 /*
  * This file contains utility methods to workaround problems with nested annotation in Uast (IDEA-185890).
- * This is an experimental API and it could be dramatically changed or even removed when the bug is fixed.
  */
 
 /**
@@ -76,8 +73,10 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
 fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
 
   fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<UAnnotation, String?>? {
+    if (uElement !is UExpression) return null
     val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
-    return uAnnotation to (name ?: uAnnotation.attributeValues.find { it.expression.sourcePsi === uElement.sourcePsi }?.name)
+    val argumentSourcePsi = wrapULiteral(uElement).sourcePsi
+    return uAnnotation to (name ?: uAnnotation.attributeValues.find { wrapULiteral(it.expression).sourcePsi === argumentSourcePsi }?.name)
   }
 
   tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<UAnnotation, String?>? {

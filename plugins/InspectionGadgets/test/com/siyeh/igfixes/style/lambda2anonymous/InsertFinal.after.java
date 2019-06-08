@@ -1,9 +1,11 @@
+import org.jetbrains.annotations.NotNull;
+
 class Test1 {
     void foo(){}
     {
         Comparable<String> a = new Comparable<String>() {
             @Override
-            public int compareTo(String o) {
+            public int compareTo(@NotNull String o) {
                 new Runnable() {
                     @Override
                     public void run() {

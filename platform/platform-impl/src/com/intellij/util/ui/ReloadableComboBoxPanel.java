@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.ComboBox;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
-  protected JComboBox myComboBox;
+  protected JComboBox<T> myComboBox;
   protected JPanel myActionPanel;
   private JPanel myMainPanel;
 
@@ -18,8 +18,8 @@ public abstract class ReloadableComboBoxPanel<T> extends ReloadablePanel<T> {
   }
 
   @NotNull
-  protected JComboBox createValuesComboBox() {
-    return new ComboBox();
+  protected JComboBox<T> createValuesComboBox() {
+    return new ComboBox<>();
   }
 
   @NotNull

@@ -19,44 +19,52 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
+
+import java.util.Objects;
 
 /**
  * @author yole
  */
 public class VcsDirectoryMapping {
+  public static final String DEFAULT_MAPPING_DIR = "";
+
   public static final String PROJECT_CONSTANT = "<Project>";
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
 
   @NotNull private final String myDirectory;
-  private String myVcs;
+  private final String myVcs;
   private VcsRootSettings myRootSettings;
 
-  public VcsDirectoryMapping(@NotNull final String directory, final String vcs) {
+  /**
+   * Empty string as 'directory' denotes "default mapping" aka "&lt;Project&gt;".
+   * Such mapping will use {@link com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy} to
+   * find actual vcs roots that cover project files.
+   */
+  public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs) {
     this(directory, vcs, null);
   }
 
   public VcsDirectoryMapping(@NotNull String directory, @Nullable String vcs, @Nullable VcsRootSettings rootSettings) {
-    myDirectory = directory;
+    myDirectory = FileUtil.normalize(directory);
     myVcs = vcs;
     myRootSettings = rootSettings;
   }
 
   @NotNull
+  public static VcsDirectoryMapping createDefault(@NotNull String vcs) {
+    return new VcsDirectoryMapping(DEFAULT_MAPPING_DIR, vcs);
+  }
+
+  @NotNull
+  @SystemIndependent
   public String getDirectory() {
     return myDirectory;
   }
 
-  @NotNull
-  public String systemIndependentPath() {
-    return FileUtil.toSystemIndependentName(myDirectory);
-  }
-
+  @Nullable
   public String getVcs() {
     return myVcs;
-  }
-
-  public void setVcs(final String vcs) {
-    myVcs = vcs;
   }
 
   /**
@@ -73,8 +81,10 @@ public class VcsDirectoryMapping {
   /**
    * Sets the VCS-specific settings for the given mapping.
    *
-   * @param rootSettings the VCS-specific settings.
+   * @param rootSettings the VCS-specific settings
+   * @deprecated Use constructor parameter
    */
+  @Deprecated
   public void setRootSettings(final VcsRootSettings rootSettings) {
     myRootSettings = rootSettings;
   }
@@ -90,8 +100,8 @@ public class VcsDirectoryMapping {
     final VcsDirectoryMapping mapping = (VcsDirectoryMapping)o;
 
     if (!myDirectory.equals(mapping.myDirectory)) return false;
-    if (myVcs != null ? !myVcs.equals(mapping.myVcs) : mapping.myVcs != null) return false;
-    if (myRootSettings != null ? !myRootSettings.equals(mapping.myRootSettings) : mapping.myRootSettings != null) return false;
+    if (!Objects.equals(myVcs, mapping.myVcs)) return false;
+    if (!Objects.equals(myRootSettings, mapping.myRootSettings)) return false;
 
     return true;
   }

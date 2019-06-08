@@ -16,17 +16,26 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
+import java.io.IOException;
 import java.util.Set;
 
 import static com.intellij.psi.search.GlobalSearchScopesCore.directoryScope;
@@ -36,7 +45,6 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
   private PsiDirectory myWorkingDirectory;
 
   private MockCodeStyleManager myMockCodeStyleManager;
-  private MockPlainTextFormattingModelBuilder myMockPlainTextFormattingModelBuilder;
 
   private CodeStyleManager myRealCodeStyleManger;
 
@@ -49,17 +57,14 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     myMockCodeStyleManager = new MockCodeStyleManager();
     registerCodeStyleManager(myMockCodeStyleManager);
 
-    myMockPlainTextFormattingModelBuilder = new MockPlainTextFormattingModelBuilder();
-    LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+    LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new MockPlainTextFormattingModelBuilder(),
+                                                     getTestRootDisposable());
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
       if (myRealCodeStyleManger != null) registerCodeStyleManager(myRealCodeStyleManger);
-      if (myMockPlainTextFormattingModelBuilder != null) {
-        LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
-      }
       if (myWorkingDirectory != null) TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     }
     catch (Throwable e) {
@@ -68,7 +73,6 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     finally {
       myRealCodeStyleManger = null;
       myMockCodeStyleManager = null;
-      myMockPlainTextFormattingModelBuilder = null;
       super.tearDown();
     }
   }
@@ -235,6 +239,42 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     reformatAndOptimize(myWorkingDirectory, testScope);
     assertWasFormatted(testJava1, testPhp1, testJs1);
     assertWasNotFormatted(java2, php2, js2);
+  }
+
+  public void testRunOptimizeOnDirectoryMustDrillDownAllSourceDirsInsideButIgnoreExcluded() throws IOException {
+    Disposable earlyDisposable = Disposer.newDisposable();
+    try {
+      VirtualFile root = WriteAction.computeAndWait(()-> ModuleRootManager.getInstance(getModule()).getContentRoots()[0].getParent().createChildDirectory(null, "root"));
+
+      PsiTestUtil.addContentRoot(getModule(), root);
+      Disposer.register(earlyDisposable, ()->PsiTestUtil.removeContentEntry(getModule(), root));
+      assertFalse(ProjectRootManager.getInstance(getProject()).getFileIndex().isInSourceContent(root));
+      assertTrue(ProjectRootManager.getInstance(getProject()).getFileIndex().isInContent(root));
+
+      PsiManager psiManager = PsiManager.getInstance(getProject());
+      PsiDirectory workDir = psiManager.findDirectory(root);
+
+      VirtualFile src = WriteAction.computeAndWait(() -> root.createChildDirectory(null, "src"));
+      PsiTestUtil.addSourceRoot(getModule(), src);
+      Disposer.register(earlyDisposable, ()->PsiTestUtil.removeSourceRoot(getModule(), src));
+
+      VirtualFile A = WriteAction.computeAndWait(() -> src.createChildData(null, "A.java"));
+
+      VirtualFile excluded = WriteAction.computeAndWait(() -> src.createChildDirectory(null, "excluded"));
+      PsiTestUtil.addExcludedRoot(getModule(), excluded);
+      Disposer.register(earlyDisposable, () -> PsiTestUtil.removeExcludedRoot(getModule(), excluded));
+
+      VirtualFile B = WriteAction.computeAndWait(() -> excluded.createChildData(null, "B.java"));
+
+      GlobalSearchScope testScope = directoryScope(workDir, true);
+
+      reformatAndOptimize(workDir, testScope);
+      assertWasFormatted(psiManager.findFile(A));
+      assertWasNotFormatted(psiManager.findFile(B));
+    }
+    finally {
+      Disposer.dispose(earlyDisposable);
+    }
   }
 
   public void assertWasFormatted(PsiFile... files) {

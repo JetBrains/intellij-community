@@ -138,7 +138,7 @@ public class GitUnstashDialog extends DialogWrapper {
                                                      GitBundle.message("git.unstash.drop.confirmation.message", stash.getStash(), stash.getMessage()),
                                                      GitBundle.message("git.unstash.drop.confirmation.title", stash.getStash()), Messages.getQuestionIcon())) {
           final ModalityState current = ModalityState.current();
-          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), true) {
+          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash() + "...", true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               final GitLineHandler h = dropHandler(stash.getStash());
@@ -164,26 +164,30 @@ public class GitUnstashDialog extends DialogWrapper {
     myViewButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final VirtualFile root = getGitRoot();
-        String resolvedStash;
+        VirtualFile root = getGitRoot();
         String selectedStash = getSelectedStash().getStash();
         try {
-          GitLineHandler h = new GitLineHandler(project, root, GitCommand.REV_LIST);
-          h.setSilent(true);
-          h.addParameters("--timestamp", "--max-count=1", selectedStash);
-          h.endOptions();
-          final String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-          resolvedStash = GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
+          String hash = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            () -> resolveHashOfStash(root, selectedStash), "Loading Stash Details...", true, project);
+          GitUtil.showSubmittedFiles(myProject, hash, root, true, false);
         }
         catch (VcsException ex) {
           GitUIUtil.showOperationError(myProject, ex, "resolving revision");
-          return;
         }
-        GitUtil.showSubmittedFiles(myProject, resolvedStash, root, true, false);
       }
     });
     init();
     updateDialogState();
+  }
+
+  @NotNull
+  private String resolveHashOfStash(@NotNull VirtualFile root, @NotNull String stash) throws VcsException {
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REV_LIST);
+    h.setSilent(true);
+    h.addParameters("--timestamp", "--max-count=1", stash);
+    h.endOptions();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
+    return  GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
   }
 
   /**
@@ -250,16 +254,27 @@ public class GitUnstashDialog extends DialogWrapper {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
     VirtualFile root = getGitRoot();
-    GitStashUtils.loadStashStack(myProject, root, stashInfo -> listModel.addElement(stashInfo));
-    myBranches.clear();
-    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
-    if (repository != null) {
-      myBranches.addAll(GitBranchUtil.convertBranchesToNames(repository.getBranches().getLocalBranches()));
+    try {
+      List<StashInfo> listOfStashes = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> GitStashUtils.loadStashStack(myProject, root), "Loading List of Stashes...", true, myProject);
+
+      for (StashInfo info: listOfStashes) {
+        listModel.addElement(info);
+      }
+      myBranches.clear();
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+      if (repository != null) {
+        myBranches.addAll(GitBranchUtil.convertBranchesToNames(repository.getBranches().getLocalBranches()));
+      }
+      else {
+        LOG.error("Repository is null for root " + root);
+      }
+      myStashList.setSelectedIndex(0);
     }
-    else {
-      LOG.error("Repository is null for root " + root);
+    catch (VcsException e) {
+      LOG.warn(e);
+      Messages.showErrorDialog(myProject, "Couldn't show the list of stashes", e.getMessage());
     }
-    myStashList.setSelectedIndex(0);
   }
 
   private VirtualFile getGitRoot() {
@@ -330,8 +345,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private final StashInfo myStashInfo;
 
     UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
-      super(project, Git.getInstance(),
-            Collections.singleton(root), makeParams(project, stashInfo));
+      super(project, Collections.singleton(root), makeParams(project, stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;
     }

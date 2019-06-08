@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
@@ -12,6 +13,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.xml.util.XmlUtil;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -42,7 +44,8 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
   public void testXsdNamespaceBuilder() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("web-app_2_5.xsd");
-    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
+    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream(),
+                                                                                                   StandardCharsets.UTF_8));
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
     assertEquals(Collections.singletonList("web-app"), builder.getTags());
@@ -50,7 +53,8 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
   public void testRootTags() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("XMLSchema.xsd");
-    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
+    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream(),
+                                                                                                   StandardCharsets.UTF_8));
     assertEquals(XmlUtil.XML_SCHEMA_URI, builder.getNamespace());
     assertEquals("1.0", builder.getVersion());
     assertEquals(Collections.singletonList("schema"), builder.getRootTags());
@@ -84,25 +88,25 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>> files =
       XmlNamespaceIndex.getResourcesByNamespace(NS,
                                                 getProject(),
-                                                myModule);
+                                                getModule());
     assertEquals(2, files.size());
 
     IndexedRelevantResource<String, XsdNamespaceBuilder>
-      resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "3.0", null, myModule, getProject());
+      resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "3.0", null, getModule(), getProject());
     assertNotNull(resource);
     XsdNamespaceBuilder builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());
     assertEquals("3.0", builder.getVersion());
     assertEquals(Collections.singletonList("web-app"), builder.getTags());
 
-    resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", null, myModule, getProject());
+    resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", null, getModule(), getProject());
     assertNotNull(resource);
     builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
     assertEquals(Collections.singletonList("web-app"), builder.getTags());
 
-    resource = XmlNamespaceIndex.guessSchema(NS, "foo-bar", "2.5", null, myModule, getProject());
+    resource = XmlNamespaceIndex.guessSchema(NS, "foo-bar", "2.5", null, getModule(), getProject());
     assertNull(resource);
   }
 
@@ -111,7 +115,7 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>> files =
       XmlNamespaceIndex.getResourcesByNamespace("foo.dtd",
                                                 getProject(),
-                                                myModule);
+                                                getModule());
     assertEquals(2, files.size());
 
     PsiFile file = myFixture.configureByFile("foo.xml");
@@ -123,13 +127,13 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     myFixture.copyDirectoryToProject("", "");
     String namespace = "http://www.liquibase.org/xml/ns/dbchangelog";
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> resources =
-      XmlNamespaceIndex.getResourcesByNamespace(namespace, getProject(), myModule);
+      XmlNamespaceIndex.getResourcesByNamespace(namespace, getProject(), getModule());
     assertEquals(2, resources.size());
     assertEquals("dbchangelog-3.3.xsd", XmlNamespaceIndex
-      .guessSchema(namespace, null, null, "http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.3.xsd", myModule, getProject())
+      .guessSchema(namespace, null, null, "http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.3.xsd", getModule(), getProject())
       .getFile().getName());
     assertEquals("dbchangelog-3.1.xsd", XmlNamespaceIndex
-      .guessSchema(namespace, null, null, "http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd", myModule, getProject())
+      .guessSchema(namespace, null, null, "http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd", getModule(), getProject())
       .getFile().getName());
   }
 

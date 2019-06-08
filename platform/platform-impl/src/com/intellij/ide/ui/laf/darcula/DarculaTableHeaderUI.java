@@ -36,10 +36,10 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
 
     final int h = c.getHeight();
     final int w = model.getTotalColumnWidth();
-    g.fillRect(0,0, w, h);
+    g.fillRect(0, 0, w, h);
     g.setPaint(ColorUtil.shift(bg, 0.75));
     UIUtil.drawLine(g, 0, h - 1, w, h - 1);
-    UIUtil.drawLine(g, w-1, 0, w-1, h-1);
+    UIUtil.drawLine(g, w - 1, 0, w - 1, h - 1);
 
     final Enumeration<TableColumn> columns = model.getColumns();
 
@@ -51,9 +51,9 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
       if (columns.hasMoreElements() && column.getWidth() > 0) {
         offset += column.getWidth();
         g.setColor(lineColor);
-        UIUtil.drawLine(g, offset-1, 1, offset-1, h-3);
+        UIUtil.drawLine(g, offset - 1, 1, offset - 1, h - 3);
         g.setColor(shadow);
-        UIUtil.drawLine(g, offset, 1, offset, h-3);
+        UIUtil.drawLine(g, offset, 1, offset, h - 3);
       }
     }
 

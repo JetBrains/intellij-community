@@ -130,7 +130,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
             });
           }
 
-          return AddImportAction.getExcludesStep(PsiUtil.getMemberQualifiedName(selectedValue), project);
+          return AddImportAction.getExcludesStep(project, PsiUtil.getMemberQualifiedName(selectedValue));
         }
 
         @Override
@@ -150,7 +150,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         }
       };
 
-    final ListPopupImpl popup = new ListPopupImpl(step) {
+    final ListPopupImpl popup = new ListPopupImpl(project, step) {
       final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
       @Override
       protected ListCellRenderer getListElementRenderer() {

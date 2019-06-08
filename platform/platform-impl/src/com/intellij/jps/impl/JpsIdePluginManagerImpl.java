@@ -84,7 +84,7 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
     return extensions;
   }
 
-  private static <T> void loadImplementations(URL url, ClassLoader loader, Set<Class<T>> result) throws IOException {
+  private static <T> void loadImplementations(URL url, ClassLoader loader, Set<? super Class<T>> result) throws IOException {
     for (String name : loadClassNames(url)) {
       try {
         //noinspection unchecked

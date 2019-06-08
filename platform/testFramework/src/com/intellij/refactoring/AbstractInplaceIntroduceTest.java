@@ -3,20 +3,21 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsightTestCase {
-
   protected abstract String getBasePath();
 
   protected void doTestEscape() {
     doTestEscape(null);
   }
 
-  protected void doTestEscape(Pass<AbstractInplaceIntroducer> pass) {
+  protected void doTestEscape(@Nullable Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -24,9 +25,9 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
       TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
-      final AbstractInplaceIntroducer introducer = invokeRefactoring();
+      AbstractInplaceIntroducer introducer = invokeRefactoring();
       if (pass != null) {
-        pass.pass(introducer);
+        pass.accept(introducer);
       }
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
@@ -40,16 +41,18 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
 
   protected abstract String getExtension();
 
-  protected void doTest(final Pass<AbstractInplaceIntroducer> pass)  {
+  protected void doTest(@Nullable Consumer<? super AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
-    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+    boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
     try {
       TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
-      final AbstractInplaceIntroducer introducer = invokeRefactoring();
-      pass.pass(introducer);
+      AbstractInplaceIntroducer introducer = invokeRefactoring();
+      if (pass != null) {
+        pass.accept(introducer);
+      }
       TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(getEditor()));
       assert state != null;
       state.gotoEnd(false);

@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.*;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.JBUI.ScaleContextAware;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContextAware;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +29,10 @@ import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
 
 /**
@@ -186,7 +187,7 @@ public class IconUtil {
       return icon;
     }
     FileType fileType = vFile.getFileType();
-    if (vFile.isDirectory() && vFile.isInLocalFileSystem() && !(fileType instanceof DirectoryFileType)) {
+    if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return PlatformIcons.FOLDER_ICON;
     }
     return fileType.getIcon();
@@ -204,20 +205,11 @@ public class IconUtil {
   @NotNull
   public static Icon getEmptyIcon(boolean showVisibility) {
     RowIcon baseIcon = new RowIcon(2);
-    baseIcon.setIcon(createEmptyIconLike(PlatformIcons.CLASS_ICON_PATH), 0);
+    baseIcon.setIcon(EmptyIcon.create(PlatformIcons.CLASS_ICON), 0);
     if (showVisibility) {
-      baseIcon.setIcon(createEmptyIconLike(PlatformIcons.PUBLIC_ICON_PATH), 1);
+      baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);
     }
     return baseIcon;
-  }
-
-  @NotNull
-  private static Icon createEmptyIconLike(@NotNull String baseIconPath) {
-    Icon baseIcon = IconLoader.findIcon(baseIconPath);
-    if (baseIcon == null) {
-      return EmptyIcon.ICON_16;
-    }
-    return EmptyIcon.create(baseIcon);
   }
 
   private static class FileIconProviderHolder {
@@ -457,7 +449,17 @@ public class IconUtil {
    */
   @Contract("null, _->null; !null, _->!null")
   public static Icon copy(@Nullable Icon icon, @Nullable Component ancestor) {
-    return IconLoader.copy(icon, ancestor);
+    return IconLoader.copy(icon, ancestor, false);
+  }
+
+  /**
+   * Returns a deep copy of the provided {@code icon}.
+   *
+   * @see CopyableIcon
+   */
+  @Contract("null, _->null; !null, _->!null")
+  public static Icon deepCopy(@Nullable Icon icon, @Nullable Component ancestor) {
+    return IconLoader.copy(icon, ancestor, true);
   }
 
   /**
@@ -523,10 +525,10 @@ public class IconUtil {
   /**
    * Overrides the provided scale in the icon's scale context and in the composited icon's scale contexts (when applicable).
    *
-   * @see JBUI.BaseScaleContext#overrideScale(JBUI.Scale)
+   * @see JBUIScale.UserScaleContext#overrideScale(JBUIScale.Scale)
    */
   @NotNull
-  public static Icon overrideScale(@NotNull Icon icon, JBUI.Scale scale) {
+  public static Icon overrideScale(@NotNull Icon icon, JBUIScale.Scale scale) {
     if (icon instanceof CompositeIcon) {
       CompositeIcon compositeIcon = (CompositeIcon)icon;
       for (int i = 0; i < compositeIcon.getIconCount(); i++) {
@@ -552,7 +554,8 @@ public class IconUtil {
 
   @NotNull
   public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    return filterIcon(null, source, new ColorFilter(color, keepGray));
+    Icon icon = filterIcon(source, () -> new ColorFilter(color, keepGray), null);
+    return icon != null ? icon : getEmptyIcon(true);
   }
 
   @NotNull
@@ -576,33 +579,27 @@ public class IconUtil {
   }
 
   @NotNull
-  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull Filter filter) {
-    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
+  private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
+    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = src.createGraphics();
     source.paintIcon(null, g2d, 0, 0);
     g2d.dispose();
-    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), Transparency.TRANSLUCENT);
-    int[] rgba = new int[4];
+    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    int rgba;
     for (int y = 0; y < src.getRaster().getHeight(); y++) {
       for (int x = 0; x < src.getRaster().getWidth(); x++) {
-        src.getRaster().getPixel(x, y, rgba);
-        if (rgba[3] != 0) {
-          img.getRaster().setPixel(x, y, filter.convert(rgba));
+        rgba = src.getRGB(x, y);
+        if ((rgba & 0xff000000) != 0) {
+          img.setRGB(x, y, filter.filterRGB(x, y, rgba));
         }
       }
     }
     return createImageIcon((Image)img);
   }
 
-  @FunctionalInterface
-  private interface Filter {
-    @NotNull
-    int[] convert(@NotNull int[] rgba);
-  }
-
-  private static class ColorFilter implements Filter {
+  private static class ColorFilter extends RGBImageFilter {
     private final float[] myBase;
     private final boolean myKeepGray;
 
@@ -611,26 +608,28 @@ public class IconUtil {
       myBase = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
     }
 
-    @NotNull
     @Override
-    public int[] convert(@NotNull int[] rgba) {
+    public int filterRGB(int x, int y, int rgba) {
+      int r = rgba >> 16 & 0xff;
+      int g = rgba >> 8 & 0xff;
+      int b = rgba & 0xff;
       float[] hsb = new float[3];
-      Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], hsb);
+      Color.RGBtoHSB(r, g, b, hsb);
       int rgb = Color.HSBtoRGB(myBase[0], myBase[1] * (myKeepGray ? hsb[1] : 1f), myBase[2] * hsb[2]);
-      return new int[]{rgb >> 16 & 0xff, rgb >> 8 & 0xff, rgb & 0xff, rgba[3]};
+      return (rgba & 0xff000000) | (rgb & 0xffffff);
     }
   }
 
   private static class DesaturationFilter extends RGBImageFilter {
-    @SuppressWarnings("UseJBColor")
     @Override
-    public int filterRGB(int x, int y, int rgb) {
-      Color originalColor = new Color(rgb, true);
-      float[] rgba = originalColor.getRGBComponents(null);
-      float min = Math.min(Math.min(originalColor.getRed(), originalColor.getGreen()), rgba[2]);
-      float max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
-      float grey = (max + min) / 2;
-      return new Color(grey, grey, grey, rgba[3]).getRGB();
+    public int filterRGB(int x, int y, int rgba) {
+      int r = rgba >> 16 & 0xff;
+      int g = rgba >> 8 & 0xff;
+      int b = rgba & 0xff;
+      int min = Math.min(Math.min(r, g), b);
+      int max = Math.max(Math.max(r, g), b);
+      int grey = (max + min) / 2;
+      return (rgba & 0xff000000) | (grey << 16) | (grey << 8) | grey;
     }
   }
 
@@ -692,7 +691,7 @@ public class IconUtil {
 
   @NotNull
   public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
-    class MyIcon extends JBUI.ScalableJBIcon {
+    class MyIcon extends JBScalableIcon {
       private @NotNull final String myText;
       private Font myFont;
       private FontMetrics myMetrics;
@@ -765,7 +764,39 @@ public class IconUtil {
    * Creates new icon with the filter applied.
    */
   @Nullable
-  public static Icon filterIcon(@NotNull Icon icon, Producer<RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
+  public static Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     return IconLoader.filterIcon(icon, filterSupplier, ancestor);
+  }
+
+  /**
+   * This method works with compound icons like RowIcon or LayeredIcon
+   * and replaces its inner 'simple' icon with another one recursively
+   * @return original icon with modified inner state
+   */
+  public static Icon replaceInnerIcon(@Nullable Icon icon, @NotNull Icon toCheck, @NotNull Icon toReplace) {
+    if (icon  instanceof LayeredIcon) {
+      Icon[] layers = ((LayeredIcon)icon).getAllLayers();
+      for (int i = 0; i < layers.length; i++) {
+        Icon layer = layers[i];
+        if (layer == toCheck) {
+          layers[i] = toReplace;
+        } else {
+          replaceInnerIcon(layer, toCheck, toReplace);
+        }
+      }
+    }
+    else if (icon instanceof RowIcon) {
+      Icon[] allIcons = ((RowIcon)icon).getAllIcons();
+      for (int i = 0; i < allIcons.length; i++) {
+        Icon anIcon = allIcons[i];
+        if (anIcon == toCheck) {
+          ((RowIcon)icon).setIcon(toReplace, i);
+        }
+        else {
+          replaceInnerIcon(anIcon, toCheck, toReplace);
+        }
+      }
+    }
+    return icon;
   }
 }

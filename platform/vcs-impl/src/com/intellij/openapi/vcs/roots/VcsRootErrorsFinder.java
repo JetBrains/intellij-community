@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -77,7 +76,7 @@ public class VcsRootErrorsFinder {
         }
       }
       else {
-        String mappedPath = mapping.systemIndependentPath();
+        String mappedPath = mapping.getDirectory();
         if (!isRoot(mapping)) {
           errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
         }
@@ -105,7 +104,7 @@ public class VcsRootErrorsFinder {
         continue;
       }
       if (!mapping.isDefaultMapping()) {
-        paths.add(mapping.systemIndependentPath());
+        paths.add(mapping.getDirectory());
       }
       else {
         String basePath = myProject.getBasePath();
@@ -122,8 +121,11 @@ public class VcsRootErrorsFinder {
   }
 
   private boolean isRoot(@NotNull final VcsDirectoryMapping mapping) {
-    List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
-    final String pathToCheck = mapping.isDefaultMapping() ? myProject.getBasePath() : mapping.getDirectory();
-    return ContainerUtil.find(checkers, checker -> checker.getSupportedVcs().getName().equalsIgnoreCase(mapping.getVcs()) && checker.isRoot(pathToCheck)) != null;
+    if (mapping.isDefaultMapping()) return true;
+    AbstractVcs vcs = myVcsManager.findVcsByName(mapping.getVcs());
+    if (vcs == null) return false;
+
+    VcsRootChecker rootChecker = myVcsManager.getRootChecker(vcs);
+    return rootChecker.isRoot(mapping.getDirectory());
   }
 }

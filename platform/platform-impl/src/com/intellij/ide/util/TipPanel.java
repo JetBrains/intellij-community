@@ -30,7 +30,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
 
   private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
-  private List<TipAndTrickBean> myTips = Collections.emptyList();
+  private List<? extends TipAndTrickBean> myTips = Collections.emptyList();
 
   public TipPanel() {
     setLayout(new BorderLayout());
@@ -50,7 +50,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     add(myPoweredByLabel, BorderLayout.SOUTH);
   }
 
-  public void setTips(@NotNull List<TipAndTrickBean> list) {
+  public void setTips(@NotNull List<? extends TipAndTrickBean> list) {
     myTips = list;
   }
 

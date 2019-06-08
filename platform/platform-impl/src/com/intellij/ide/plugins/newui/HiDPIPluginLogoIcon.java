@@ -5,13 +5,16 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUIScale;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
+
+import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
 
 /**
  * @author Alexander Lobas
@@ -85,7 +88,7 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
     Computable<Icon> superCall = () -> super.getScaled2xIcon(icon);
 
     return new Icon() {
-      final JBUI.ScaleContext myContext = JBUI.ScaleContext.create();
+      final ScaleContext myContext = ScaleContext.create();
       Icon myIcon;
 
       @NotNull
@@ -115,17 +118,17 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
 
   @NotNull
   private static Icon createHiDPIDisabledIcon(@NotNull Icon icon) {
-    return getHiDPI(JBUI.ScaleContext.create(), createDisabledIcon(icon));
+    return getHiDPI(ScaleContext.create(), createDisabledIcon(icon));
   }
 
   @NotNull
   static Icon loadSVG(@NotNull InputStream stream, int width, int height) throws IOException {
-    JBUI.ScaleContext context = JBUI.ScaleContext.create();
+    ScaleContext context = ScaleContext.create();
     return getHiDPI(context, SVGLoader.loadHiDPI(null, stream, context, width, height));
   }
 
   @NotNull
-  private static Icon getHiDPI(@NotNull JBUI.ScaleContext context, @NotNull Object source) {
+  private static Icon getHiDPI(@NotNull ScaleContext context, @NotNull Object source) {
     if (source instanceof ImageIcon) {
       Image image = ((ImageIcon)source).getImage();
       if (image instanceof JBHiDPIScaledImage) {
@@ -143,13 +146,13 @@ public class HiDPIPluginLogoIcon extends PluginLogoIcon {
   }
 
   @NotNull
-  private static Icon wrapHiDPI(@NotNull JBUI.ScaleContext context, @NotNull JBHiDPIScaledImage image) {
+  private static Icon wrapHiDPI(@NotNull ScaleContext context, @NotNull JBHiDPIScaledImage image) {
     return new JBImageIcon(image) {
-      final double myBase = context.getScale(JBUI.ScaleType.USR_SCALE);
+      final double myBase = context.getScale(USR_SCALE);
 
       private void update() {
         if (context.update()) {
-          setImage(image.scale(context.getScale(JBUI.ScaleType.USR_SCALE) / myBase));
+          setImage(image.scale(context.getScale(USR_SCALE) / myBase));
         }
       }
 

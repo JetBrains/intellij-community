@@ -16,60 +16,81 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class VcsDescriptor implements Comparable<VcsDescriptor> {
 
-  private static final Logger LOG = Logger.getInstance(VcsDescriptor.class);
-
   private final String myName;
   private final boolean myCrawlUpToCheckUnderVcs;
+  private final boolean myAreChildrenValidMappings;
   private final String myDisplayName;
-  private final String myAdministrativePattern;
+  private final List<String> myAdministrativePatterns;
   private boolean myIsNone;
 
-  public VcsDescriptor(String administrativePattern, String displayName, String name, boolean crawlUpToCheckUnderVcs) {
-    myAdministrativePattern = administrativePattern;
+  public VcsDescriptor(String administrativePattern,
+                       String displayName,
+                       String name,
+                       boolean crawlUpToCheckUnderVcs,
+                       boolean areChildrenValidMappings) {
+    myAdministrativePatterns = parseAdministrativePatterns(administrativePattern);
     myDisplayName = displayName;
     myName = name;
     myCrawlUpToCheckUnderVcs = crawlUpToCheckUnderVcs;
+    myAreChildrenValidMappings = areChildrenValidMappings;
+  }
+
+  @NotNull
+  private static List<String> parseAdministrativePatterns(@Nullable String administrativePattern) {
+    if (administrativePattern == null) return Collections.emptyList();
+    return ContainerUtil.map(administrativePattern.split(","), it -> it.trim());
+  }
+
+  public boolean areChildrenValidMappings() {
+    return myAreChildrenValidMappings;
   }
 
   public boolean probablyUnderVcs(final VirtualFile file) {
-    if (file == null || (! file.isDirectory()) || (! file.isValid())) return false;
-    if (myAdministrativePattern == null) return false;
-    return ReadAction.compute(() -> {
-      if (checkFileForBeingAdministrative(file)) return true;
-      if (myCrawlUpToCheckUnderVcs) {
-        VirtualFile current = file.getParent();
-        while (current != null) {
-          if (checkFileForBeingAdministrative(current)) return true;
-          current = current.getParent();
-        }
-      }
-      return false;
-    });
+    return probablyUnderVcs(file, myCrawlUpToCheckUnderVcs);
   }
 
-  private boolean checkFileForBeingAdministrative(final VirtualFile file) {
-    return ReadAction.compute(() -> {
-      final String[] patterns = myAdministrativePattern.split(",");
-      for (String pattern : patterns) {
-        final VirtualFile child = file.findChild(pattern.trim());
-        if (child != null) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(myName + " vcs detected: " + pattern + " folder found in " + file + ". Trace: " +
-                      ExceptionUtil.getThrowableText(new Throwable()));
-          }
-          return true;
+  public boolean probablyUnderVcs(final VirtualFile file, boolean crawlUp) {
+    if (file == null || !file.isDirectory() || !file.isValid()) return false;
+    if (myAdministrativePatterns.isEmpty()) return false;
+
+    if (crawlUp) {
+      return ReadAction.compute(() -> {
+        VirtualFile current = file;
+        while (current != null) {
+          if (matchesVcsDirPattern(current)) return true;
+          current = current.getParent();
         }
-      }
-      return false;
-    });
+        return false;
+      });
+    }
+    else {
+      return ReadAction.compute(() -> matchesVcsDirPattern(file));
+    }
+  }
+
+  private boolean matchesVcsDirPattern(@NotNull VirtualFile file) {
+    for (String pattern : myAdministrativePatterns) {
+      VirtualFile child = file.findChild(pattern);
+      if (child != null) return true;
+    }
+    return false;
+  }
+
+  public boolean matchesVcsDirPattern(@NotNull String dirName) {
+    return myAdministrativePatterns.contains(dirName);
   }
 
   public String getDisplayName() {
@@ -91,10 +112,7 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
     if (o == null || getClass() != o.getClass()) return false;
 
     VcsDescriptor that = (VcsDescriptor)o;
-
-    if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
-
-    return true;
+    return Objects.equals(myName, that.myName);
   }
 
   public boolean isNone() {
@@ -102,7 +120,7 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
   }
 
   public static VcsDescriptor createFictive() {
-    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null, false);
+    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null, false, false);
     vcsDescriptor.myIsNone = true;
     return vcsDescriptor;
   }

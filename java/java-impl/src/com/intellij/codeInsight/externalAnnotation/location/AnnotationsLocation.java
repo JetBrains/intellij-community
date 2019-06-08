@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.externalAnnotation.location;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,5 +77,10 @@ public class AnnotationsLocation {
     result = 31 * result + myVersion.hashCode();
     result = 31 * result + myRepositoryUrls.hashCode();
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "[AnnotationLocation '" + myGroupId + ":" + myArtifactId + ":" + myVersion + "'@'" + StringUtil.join(myRepositoryUrls, "; ") + "']";
   }
 }

@@ -449,7 +449,7 @@
               ],
               "opera_android": [
                 {
-                  "version_added": "15",
+                  "version_added": "14",
                   "notes": "Defaults to <code>metadata</code> in Opera 51."
                 },
                 {

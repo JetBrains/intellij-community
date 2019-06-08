@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
-@State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NOT_ROAMABLE_FILE))], reportStatistic = true)
+@State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))], reportStatistic = true)
 class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
   private var state = NotRoamableUiOptions()
 
@@ -51,9 +51,9 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
 }
 
 class NotRoamableUiOptions : BaseState() {
-  var ideAAType by property(AntialiasingType.SUBPIXEL)
+  var ideAAType by enum(AntialiasingType.SUBPIXEL)
 
-  var editorAAType by property(AntialiasingType.SUBPIXEL)
+  var editorAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:Property(filter = FontFilter::class)
   var fontFace by string()

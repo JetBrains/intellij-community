@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.ProtectionDomain;
 
 abstract class Resource {
   public enum Attribute {
@@ -17,6 +20,11 @@ abstract class Resource {
   public abstract byte[] getBytes() throws IOException;
 
   public String getValue(Attribute key) {
+    return null;
+  }
+
+  @Nullable
+  public ProtectionDomain getProtectionDomain() {
     return null;
   }
 

@@ -27,7 +27,7 @@ class UnstableElementsTest {
   fun test() {
     var s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS
     <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.staticNonAnnotatedMethodInAnnotatedClass()
-    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> = AnnotatedClass()
+    val annotatedClassInstanceViaNonAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>()
     s = annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedFieldInAnnotatedClass 
     annotatedClassInstanceViaNonAnnotatedConstructor.nonAnnotatedMethodInAnnotatedClass() 
     s = NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS 
@@ -35,7 +35,7 @@ class UnstableElementsTest {
 
     s = <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning>
     <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning>.<warning descr="'staticAnnotatedMethodInAnnotatedClass()' is marked unstable">staticAnnotatedMethodInAnnotatedClass</warning>()
-    val annotatedClassInstanceViaAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> = <warning descr="'AnnotatedClass(java.lang.String)' is marked unstable">AnnotatedClass</warning>("")
+    val annotatedClassInstanceViaAnnotatedConstructor : <warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning> = <warning descr="'AnnotatedClass(java.lang.String)' is marked unstable"><warning descr="'pkg.AnnotatedClass' is marked unstable">AnnotatedClass</warning></warning>("")
     s = annotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedFieldInAnnotatedClass' is marked unstable">annotatedFieldInAnnotatedClass</warning> 
     annotatedClassInstanceViaAnnotatedConstructor.<warning descr="'annotatedMethodInAnnotatedClass()' is marked unstable">annotatedMethodInAnnotatedClass</warning>()
     s = <warning descr="'ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS' is marked unstable">ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS</warning> 

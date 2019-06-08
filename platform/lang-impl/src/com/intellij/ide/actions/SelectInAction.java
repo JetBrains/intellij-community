@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,12 +44,10 @@ public class SelectInAction extends AnAction implements DumbAware {
     Presentation presentation = event.getPresentation();
 
     if (SelectInContextImpl.createContext(event) == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
     }
     else {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
+      presentation.setEnabledAndVisible(true);
     }
   }
 
@@ -76,7 +73,7 @@ public class SelectInAction extends AnAction implements DumbAware {
 
     SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
-      myVisibleTargets = ContainerUtil.newArrayList(targetVector);
+      myVisibleTargets = new ArrayList<>(targetVector);
       List<Icon> icons = fillInIcons(targetVector, selectInContext);
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, icons);
     }

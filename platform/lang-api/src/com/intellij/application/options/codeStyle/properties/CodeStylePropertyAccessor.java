@@ -2,10 +2,12 @@
 package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class CodeStylePropertyAccessor<V> {
   public abstract boolean set(@NotNull V extVal);
 
+  @Nullable
   public abstract V get();
 
   public final boolean setFromString(@NotNull String valueString) {
@@ -16,8 +18,19 @@ public abstract class CodeStylePropertyAccessor<V> {
     return false;
   }
 
+  @Nullable
   protected abstract V parseString(@NotNull String string);
 
+  @Nullable
+  public final String getAsString() {
+    V value = get();
+    return value != null ? valueToString(value) : null;
+  }
+
+  @Nullable
+  protected abstract String valueToString(@NotNull V value);
+
+  @Deprecated
   public boolean isGenericProperty() {
     return false;
   }

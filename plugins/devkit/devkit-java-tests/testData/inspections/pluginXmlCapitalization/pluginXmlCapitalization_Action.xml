@@ -1,0 +1,17 @@
+<idea-plugin>
+
+  <actions>
+    <group text="Group Title"
+           description="Group description"/>
+
+    <action text="Action Title"
+            description="Action description"/>
+
+    <group text="<warning descr="String 'lower case' is not properly capitalized. It should have title capitalization">lower case</warning>"
+           description="<warning descr="String 'lower case' is not properly capitalized. It should have sentence capitalization">lower case</warning>"/>
+
+    <action text="<warning descr="String 'lower case' is not properly capitalized. It should have title capitalization">lower case</warning>"
+            description="<warning descr="String 'lower case' is not properly capitalized. It should have sentence capitalization">lower case</warning>"/>
+
+  </actions>
+</idea-plugin>

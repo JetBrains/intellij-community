@@ -97,7 +97,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       // If not debug at all
       return false;
     }
-    /**
+    /*
      * Any python configuration is debuggable unless it explicitly declares itself as DebugAwareConfiguration and denies it
      * with canRunUnderDebug == false
      */
@@ -388,7 +388,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportQtDebugging()) {
-      String pyQtBackend = PyDebuggerOptionsProvider.getInstance(project).getPyQtBackend().toLowerCase();
+      String pyQtBackend = StringUtil.toLowerCase(PyDebuggerOptionsProvider.getInstance(project).getPyQtBackend());
       debugParams.addParameter(String.format("--qt-support=%s", pyQtBackend));
     }
   }

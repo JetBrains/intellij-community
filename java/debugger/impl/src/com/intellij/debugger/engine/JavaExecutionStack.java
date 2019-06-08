@@ -160,14 +160,14 @@ public class JavaExecutionStack extends XExecutionStack {
     private final XStackFrameContainer myContainer;
     private int myAdded;
     private final int mySkip;
-    private final List<StackFrameItem> myAsyncStack;
+    private final List<? extends StackFrameItem> myAsyncStack;
 
     AppendFrameCommand(SuspendContextImpl suspendContext,
-                              Iterator<StackFrameProxyImpl> stackFramesIterator,
-                              XStackFrameContainer container,
-                              int added,
-                              int skip,
-                              List<StackFrameItem> asyncStack) {
+                       Iterator<StackFrameProxyImpl> stackFramesIterator,
+                       XStackFrameContainer container,
+                       int added,
+                       int skip,
+                       List<? extends StackFrameItem> asyncStack) {
       super(suspendContext);
       myStackFramesIterator = stackFramesIterator;
       myContainer = container;
@@ -239,7 +239,7 @@ public class JavaExecutionStack extends XExecutionStack {
       }
     }
 
-    void appendRelatedStack(@NotNull List<StackFrameItem> asyncStack) {
+    void appendRelatedStack(@NotNull List<? extends StackFrameItem> asyncStack) {
       int i = 0;
       boolean separator = true;
       for (StackFrameItem stackFrame : asyncStack) {

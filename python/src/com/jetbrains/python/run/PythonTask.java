@@ -17,11 +17,13 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
@@ -36,6 +38,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -145,6 +148,7 @@ public class PythonTask {
 
   /**
    * Runs command using env vars from facet
+   *
    * @param consoleView console view to be used for command or null to create new
    * @throws ExecutionException failed to execute command
    */
@@ -281,23 +285,41 @@ public class PythonTask {
 
   /**
    * Runs task with out console
+   *
    * @return stdout
    * @throws ExecutionException in case of error. Consider using {@link com.intellij.execution.util.ExecutionErrorDialog}
    */
   @NotNull
   public final String runNoConsole() throws ExecutionException {
-
-    final ProcessHandler process = createProcess(new HashMap<>());
-    final OutputListener listener = new OutputListener();
-    process.addProcessListener(listener);
-    process.startNotify();
-    process.waitFor(TIMEOUT_TO_WAIT_FOR_TASK);
-    final Output output = listener.getOutput();
+    final ProgressManager manager = ProgressManager.getInstance();
+    final Output output;
+    if (SwingUtilities.isEventDispatchThread()) {
+      output = manager.runProcessWithProgressSynchronously(new ThrowableComputable<Output, ExecutionException>() {
+        @Override
+        public Output compute() throws ExecutionException {
+          return getOutputInternal();
+        }
+      }, myRunTabTitle, false, myModule.getProject());
+    }
+    else {
+      output = getOutputInternal();
+    }
     final int exitCode = output.getExitCode();
     if (exitCode == 0) {
       return output.getStdout();
     }
     throw new ExecutionException(String.format("Error on python side. " +
                                                "Exit code: %s, err: %s out: %s", exitCode, output.getStderr(), output.getStdout()));
+  }
+
+  @NotNull
+  private Output getOutputInternal() throws ExecutionException {
+    assert !SwingUtilities.isEventDispatchThread();
+    final ProcessHandler process = createProcess(new HashMap<>());
+    final OutputListener listener = new OutputListener();
+    process.addProcessListener(listener);
+    process.startNotify();
+    process.waitFor(TIMEOUT_TO_WAIT_FOR_TASK);
+    return listener.getOutput();
   }
 }

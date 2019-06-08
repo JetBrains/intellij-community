@@ -67,6 +67,10 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
   public void testForkPerModuleWithDependency() throws ExecutionException {
     doTestForkPerModule(createRunPackageConfiguration("junit4"));
   }
+  
+  public void testForkPerModuleWithDependencyAndSameClasses() throws ExecutionException {
+    doTestForkPerModule(createRunPackageConfiguration("sameClass"));
+  }
 
   public void testForkPatternPerModuleWithDependency() throws ExecutionException {
     JUnitConfiguration configuration = new JUnitConfiguration("pattern", getProject());

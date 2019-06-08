@@ -23,7 +23,8 @@ import com.intellij.openapi.util.text.StringUtil
 class PyCreateSetupPyFromTemplateHandler : DefaultCreateFromTemplateHandler() {
 
   override fun handlesTemplate(template: FileTemplate): Boolean =
-    template == FileTemplateManager.getDefaultInstance().getInternalTemplate(CreateSetupPyAction.SETUP_SCRIPT_TEMPLATE_NAME)
+    template.name == CreateSetupPyAction.SETUP_SCRIPT_TEMPLATE_NAME
+    && template == FileTemplateManager.getDefaultInstance().getInternalTemplate(CreateSetupPyAction.SETUP_SCRIPT_TEMPLATE_NAME)
 
   override fun prepareProperties(props: MutableMap<String, Any>) {
     val description = props["Description"]

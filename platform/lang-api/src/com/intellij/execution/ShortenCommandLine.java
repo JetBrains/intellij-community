@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Command line has length limit depending on used OS. In order to allow java command lines of any length for any OS, a number of approaches are possible.
  *
- * Since 2017.3, it's possible to setup shortening command line method per run configuration, e.g. {@link com.intellij.execution.CommonJavaRunConfigurationParameters#getShortenClasspath}
+ * Since 2017.3, it's possible to setup shortening command line method per run configuration, e.g. {@link com.intellij.execution.application.JvmMainMethodRunConfigurationOptions#getShortenClasspath()}
  */
 public enum ShortenCommandLine {
   NONE("none", "java [options] classname [args]"),

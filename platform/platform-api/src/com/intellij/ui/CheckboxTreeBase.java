@@ -106,7 +106,7 @@ public class CheckboxTreeBase extends Tree {
    * @param <T>      the type of the node
    * @return an array of collected nodes
    */
-  public <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final NodeFilter<T> filter) {
+  public <T> T[] getCheckedNodes(final Class<? extends T> nodeType, @Nullable final NodeFilter<? super T> filter) {
     return CheckboxTreeHelper.getCheckedNodes(nodeType, filter, getModel());
   }
 

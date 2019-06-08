@@ -13,7 +13,5 @@ public class Copy extends RuntimeCommand {
   }
 
   @Override
-  public void actionPerformed(ActionEvent e) {
-
-  }
+  public void actionPerformed(ActionEvent e) {}
 }

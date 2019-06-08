@@ -255,12 +255,12 @@ public class TerminalView {
 
       @Override
       public void moveTabRight() {
-        moveTabRightAction.move(toolWindow.getContentManager().getSelectedContent());
+        moveTabRightAction.move(toolWindow.getContentManager().getSelectedContent(), myProject);
       }
 
       @Override
       public void moveTabLeft() {
-        moveTabLeftAction.move(toolWindow.getContentManager().getSelectedContent());
+        moveTabLeftAction.move(toolWindow.getContentManager().getSelectedContent(), myProject);
       }
 
       @Override

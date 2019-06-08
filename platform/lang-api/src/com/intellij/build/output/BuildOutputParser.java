@@ -2,7 +2,6 @@
 package com.intellij.build.output;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.MessageEvent;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.Consumer;

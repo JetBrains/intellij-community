@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,10 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -25,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
@@ -299,7 +303,7 @@ public class FileManagerTest extends PsiTestCase {
     String jarPath = myPrjDir1.getPath().replace('/', File.separatorChar) + File.separatorChar + "test.jar";
     try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jarPath))) {
       out.putNextEntry(new ZipEntry("Test.java"));
-      out.write("class Text{}".getBytes(CharsetToolkit.UTF8_CHARSET));
+      out.write("class Text{}".getBytes(StandardCharsets.UTF_8));
     }
     LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
 
@@ -322,7 +326,7 @@ public class FileManagerTest extends PsiTestCase {
 
     try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jarPath))) {
       out.putNextEntry(new ZipEntry("Test1.java"));
-      out.write("class Test1{}".getBytes(CharsetToolkit.UTF8_CHARSET));
+      out.write("class Test1{}".getBytes(StandardCharsets.UTF_8));
     }
     final long newTimestamp = new File(jarPath).lastModified();
 
@@ -359,7 +363,7 @@ public class FileManagerTest extends PsiTestCase {
   public void testReloadFromDisk() {
     VirtualFile file = createChildData(mySrcDir1, "file.java");
     final String DISK_CONTENT = "class A{}";
-    setBinaryContent(file, DISK_CONTENT.getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(file, DISK_CONTENT.getBytes(StandardCharsets.UTF_8));
 
     final PsiFile psiFile = myPsiManager.findFile(file);
 

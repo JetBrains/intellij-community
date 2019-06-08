@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.psi.PsiArrayType;
@@ -32,13 +32,10 @@ class GrFunctionalExpressionSignature implements GrSignature {
   @Override
   public GrClosureParameter[] getParameters() {
     GrParameter[] parameters = myExpression.getAllParameters();
-
-    return ContainerUtil.map(parameters, parameter -> createClosureParameter(parameter), new GrClosureParameter[parameters.length]);
-  }
-
-  @NotNull
-  protected GrClosureParameter createClosureParameter(@NotNull GrParameter parameter) {
-    return new GrClosureParameterImpl(parameter);
+    return ContainerUtil.map(
+      parameters,
+      parameter -> new GrClosureParameterImpl(parameter, myExpression)
+    ).toArray(GrClosureParameter.EMPTY_ARRAY);
   }
 
   @Override

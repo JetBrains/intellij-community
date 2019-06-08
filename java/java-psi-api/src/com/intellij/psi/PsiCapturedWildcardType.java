@@ -55,7 +55,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     myUpperBound = PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
   }
 
-  private static final RecursionGuard guard = RecursionManager.createGuard("captureGuard");
+  private static final RecursionGuard<Object> guard = RecursionManager.createGuard("captureGuard");
 
   public static boolean isCapture() {
     return guard.currentStack().isEmpty();
@@ -89,7 +89,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     return glb;
   }
 
-  private static PsiType getGreatestLowerBound(PsiType glb, PsiType bound, Object guardObject) {
+  private static PsiType getGreatestLowerBound(PsiType glb, PsiType bound, PsiWildcardType guardObject) {
     return guard.doPreventingRecursion(guardObject, true, () -> GenericsUtil.getGreatestLowerBound(glb, bound));
   }
 

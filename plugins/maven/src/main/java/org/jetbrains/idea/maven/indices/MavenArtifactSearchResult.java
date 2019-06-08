@@ -1,26 +1,44 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+
 public class MavenArtifactSearchResult {
-  public List<MavenArtifactInfo> versions = new ArrayList<>();
+  @Deprecated
+  /* @deprecated use getSearchResults instead */
+  public List<MavenArtifactInfo> versions;
+
+  private List<MavenDependencyCompletionItem> myResults;
+
+
+  @Deprecated
+  public MavenArtifactSearchResult() {
+    this(new ArrayList<>());
+  }
+  public MavenArtifactSearchResult(@NotNull List<MavenDependencyCompletionItem> results) {
+    setVersions(results);
+    this.myResults = results;
+  }
+
+  public void setResults(List<MavenDependencyCompletionItem> results) {
+    setVersions(results);
+    myResults = results;
+  }
+
+  private void setVersions(@NotNull List<MavenDependencyCompletionItem> results) {
+    versions = ContainerUtil.map(results, d -> new MavenArtifactInfo(d, d.getPackaging(), d.getClassifier()));
+  }
+
+  public List<MavenDependencyCompletionItem> getSearchResults(){
+    return myResults;
+  }
 }

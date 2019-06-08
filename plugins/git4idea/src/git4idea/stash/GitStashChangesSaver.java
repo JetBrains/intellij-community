@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
 import com.intellij.notification.Notification;
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 public class GitStashChangesSaver extends GitChangesSaver {
@@ -36,7 +36,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final Set<VirtualFile> myStashedRoots = ContainerUtil.newHashSet(); // save stashed roots to unstash only them
+  @NotNull private final Set<VirtualFile> myStashedRoots = new HashSet<>(); // save stashed roots to unstash only them
+
 
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
@@ -127,7 +128,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
                                    @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, git, stashedRoots, makeParamsOrUse(params, project));
+      super(project, stashedRoots, makeParamsOrUse(params, project));
       myStashedRoots = stashedRoots;
     }
 

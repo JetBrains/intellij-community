@@ -24,6 +24,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
@@ -104,7 +105,9 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.default"), EditorColors.BREADCRUMBS_DEFAULT),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.hovered"), EditorColors.BREADCRUMBS_HOVERED),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.current"), EditorColors.BREADCRUMBS_CURRENT),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.inactive"), EditorColors.BREADCRUMBS_INACTIVE)
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.inactive"), EditorColors.BREADCRUMBS_INACTIVE),
+
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.lens"), EditorColors.CODE_LENS_BORDER_COLOR)
   };
 
   private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
@@ -260,7 +263,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
        for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
          final String tag = getHighlightDescTagName(highlightInfoType);
          buff.append("  <").append(tag).append(">");
-         buff.append(tag.toLowerCase());
+         buff.append(StringUtil.toLowerCase(tag));
          buff.append("</").append(tag).append(">").append("\n");
        }
      }

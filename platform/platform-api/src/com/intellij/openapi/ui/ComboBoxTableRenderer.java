@@ -54,6 +54,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     Dimension size = addIconSize(super.getPreferredSize());
 
     if (myValues != null) {
+      String oldText = getText();
+      Icon oldIcon = getIcon();
       for(T v : myValues) {
         setText(getTextFor(v));
         setIcon(getIconFor(v));
@@ -63,6 +65,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
         size.width = Math.max(size.width, vSize.width);
         size.height = Math.max(size.height, vSize.height);
       }
+      setText(oldText);
+      setIcon(oldIcon);
     }
 
     return size;

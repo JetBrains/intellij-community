@@ -46,3 +46,8 @@ class B implements A<Void> {
         };
     }
 }
+class Test {
+    void foo() {
+        Function<String, @Nullable String> f = s  -> null;
+    }
+}

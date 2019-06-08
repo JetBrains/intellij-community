@@ -218,7 +218,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     }
   }
 
-  private void findUsagesInExtendsList(@NotNull List<FixableUsageInfo> usages, PsiReferenceList extendsList) {
+  private void findUsagesInExtendsList(@NotNull List<? super FixableUsageInfo> usages, PsiReferenceList extendsList) {
     final PsiJavaCodeReferenceElement[] referenceExtendsElements = extendsList != null ? extendsList.getReferenceElements() : null;
     if (referenceExtendsElements != null) {
       for (PsiJavaCodeReferenceElement element : referenceExtendsElements) {
@@ -256,14 +256,12 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     if (myCurrentInheritor != null) {
       ReferencesSearch.search(myCurrentInheritor).forEach(reference -> {
         final PsiElement element = reference.getElement();
-        if (element != null) {
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiNewExpression) {
-            final PsiClass aClass = PsiUtil.resolveClassInType(getPlaceExpectedType(parent));
-            if (aClass == mySuperClass) {
-              conflicts.putValue(parent, "Instance of target type is passed to a place where super class is expected.");
-              return false;
-            }
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiNewExpression) {
+          final PsiClass aClass = PsiUtil.resolveClassInType(getPlaceExpectedType(parent));
+          if (aClass == mySuperClass) {
+            conflicts.putValue(parent, "Instance of target type is passed to a place where super class is expected.");
+            return false;
           }
         }
         return true;

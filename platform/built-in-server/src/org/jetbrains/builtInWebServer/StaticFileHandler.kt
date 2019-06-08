@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
@@ -35,25 +35,24 @@ private class StaticFileHandler : WebServerFileHandler() {
       }
 
       FileResponses.sendFile(request, channel, ioFile, extraHeaders)
-    }
-    else {
-      val file = pathInfo.file!!
-      val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.name, extraHeaders) ?: return true
-
-      val isKeepAlive = response.addKeepAliveIfNeed(request)
-      if (request.method() != HttpMethod.HEAD) {
-        HttpUtil.setContentLength(response, file.length)
-      }
-
-      channel.write(response)
-
-      if (request.method() != HttpMethod.HEAD) {
-        channel.write(ChunkedStream(file.inputStream))
-      }
-
-      flushChunkedResponse(channel, isKeepAlive)
+      return true
     }
 
+    val file = pathInfo.file!!
+    val response = FileResponses.prepareSend(request, channel, file.timeStamp, file.name, extraHeaders) ?: return true
+
+    val isKeepAlive = response.addKeepAliveIfNeed(request)
+    if (request.method() != HttpMethod.HEAD) {
+      HttpUtil.setContentLength(response, file.length)
+    }
+
+    channel.write(response)
+
+    if (request.method() != HttpMethod.HEAD) {
+      channel.write(ChunkedStream(file.inputStream))
+    }
+
+    flushChunkedResponse(channel, isKeepAlive)
     return true
   }
 

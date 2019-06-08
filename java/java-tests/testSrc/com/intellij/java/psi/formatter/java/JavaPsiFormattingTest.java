@@ -17,14 +17,13 @@ package com.intellij.java.psi.formatter.java;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ref.GCUtil;
 
 public class JavaPsiFormattingTest extends AbstractJavaFormatterTest {
   
@@ -55,5 +54,15 @@ public class JavaPsiFormattingTest extends AbstractJavaFormatterTest {
                  "    PsiIdentifier:y('y')\n",
                  DebugUtil.psiToString(expr, false));
   }
-  
+
+  public void testPostponedFormattingNotAffectedByGc() {
+    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class A {}\nclass B{}");
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      file.getClasses()[0].delete();
+      GCUtil.tryGcSoftlyReachableObjects();
+    });
+    
+    assertEquals("class B{}", file.getText());
+  }
 }

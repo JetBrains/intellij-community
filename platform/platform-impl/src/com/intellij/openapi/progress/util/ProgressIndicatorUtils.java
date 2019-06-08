@@ -2,13 +2,17 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -33,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class ProgressIndicatorUtils {
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           if (progress.isRunning()) {
@@ -99,6 +103,7 @@ public class ProgressIndicatorUtils {
       return false;
     }
 
+    Disposable listenerDisposable = Disposer.newDisposable();
     ApplicationListener listener = new ApplicationListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
@@ -109,7 +114,7 @@ public class ProgressIndicatorUtils {
     Ref<Boolean> wasCancelled = new Ref<>();
     ProgressManager.getInstance().runProcess(() -> {
       // add listener inside runProcess to avoid cancelling indicator before even starting the progress
-      application.addApplicationListener(listener);
+      application.addApplicationListener(listener, listenerDisposable);
       try {
         if (isWriting(application)) {
           // the listener might not be notified if write action was requested concurrently with listener addition
@@ -124,7 +129,7 @@ public class ProgressIndicatorUtils {
         wasCancelled.set(Boolean.TRUE);
       }
       finally {
-        application.removeApplicationListener(listener);
+        Disposer.dispose(listenerDisposable);
       }
     }, progressIndicator);
     return wasCancelled.get() != Boolean.TRUE;
@@ -154,6 +159,7 @@ public class ProgressIndicatorUtils {
         future.complete(null);
         return;
       }
+      Disposable listenerDisposable = Disposer.newDisposable();
       final ApplicationListener listener = new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
@@ -163,8 +169,8 @@ public class ProgressIndicatorUtils {
           }
         }
       };
-      application.addApplicationListener(listener);
-      future.whenComplete((__, ___) -> application.removeApplicationListener(listener));
+      application.addApplicationListener(listener, listenerDisposable);
+      future.whenComplete((__, ___) -> Disposer.dispose(listenerDisposable));
       try {
         executor.execute(new Runnable() {
           @Override
@@ -186,7 +192,7 @@ public class ProgressIndicatorUtils {
                 public void run() {
                   if (future.isCancelled()) return;
 
-                  application.removeApplicationListener(listener); // remove listener early to prevent firing it during continuation execution
+                  Disposer.dispose(listenerDisposable); // remove listener early to prevent firing it during continuation execution
                   try {
                     if (!progressIndicator.isCanceled()) {
                       continuation.getAction().run();

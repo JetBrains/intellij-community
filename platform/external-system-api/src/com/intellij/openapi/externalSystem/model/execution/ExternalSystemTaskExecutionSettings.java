@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -6,17 +6,13 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.Tag;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Keeps external system task execution parameters. Basically, this is a model class which holds data represented when
@@ -29,9 +25,9 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
   @NotNull
-  private List<String> myTaskNames = ContainerUtilRt.newArrayList();
+  private List<String> myTaskNames = new ArrayList<>();
   @NotNull
-  private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
+  private List<String> myTaskDescriptions = new ArrayList<>();
 
   @Nullable private String myExecutionName;
   private String myExternalSystemIdString;
@@ -39,7 +35,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   private String myVmOptions;
   private String myScriptParameters;
   @NotNull
-  private Map<String, String> myEnv =  ContainerUtilRt.newHashMap();
+  private Map<String, String> myEnv = new HashMap<>();
   private boolean myPassParentEnvs = true;
 
   public ExternalSystemTaskExecutionSettings() {

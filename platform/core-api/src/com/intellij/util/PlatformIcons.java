@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
@@ -10,7 +9,6 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public interface PlatformIcons {
-  @NonNls String PUBLIC_ICON_PATH = "/nodes/c_public.png";
   Icon PUBLIC_ICON = AllIcons.Nodes.C_public;
   Icon LOCKED_ICON = AllIcons.Nodes.Locked;
   Icon SYMLINK_ICON = AllIcons.Nodes.Symlink;
@@ -19,7 +17,6 @@ public interface PlatformIcons {
   Icon PACKAGE_LOCAL_ICON = AllIcons.Nodes.C_plocal;
   Icon PACKAGE_ICON = AllIcons.Nodes.Package;
 
-  @NonNls String CLASS_ICON_PATH = "/nodes/class.png";
   Icon CLASS_ICON = AllIcons.Nodes.Class;
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
   Icon NEW_EXCEPTION = AllIcons.Hierarchy.Supertypes;

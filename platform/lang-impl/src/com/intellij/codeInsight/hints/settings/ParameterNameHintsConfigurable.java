@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,14 +21,14 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,9 +167,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myOptions = ContainerUtil.newHashMap();
-    myEditors = ContainerUtil.newHashMap();
-    myIsValidPatterns = ContainerUtil.newHashMap();
+    myOptions = new HashMap<>();
+    myEditors = new HashMap<>();
+    myIsValidPatterns = new HashMap<>();
 
     List<Language> allLanguages = getBaseLanguagesWithProviders();
     Language lastEditedLanguage = lastEditedLanguage();
@@ -332,16 +332,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   private void initLanguageCombo(Language selected, List<Language> languages) {
-    ListComboBoxModel<Language> model = new ListComboBoxModel<>(languages);
-
-    myCurrentLanguageCombo = new ComboBox<>(model);
+    myCurrentLanguageCombo = new ComboBox<>(new CollectionComboBoxModel<>(languages));
     myCurrentLanguageCombo.setSelectedItem(selected);
-    myCurrentLanguageCombo.setRenderer(new ListCellRendererWrapper<Language>() {
-      @Override
-      public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getDisplayName());
-      }
-    });
+    myCurrentLanguageCombo.setRenderer(SimpleListCellRenderer.create("", Language::getDisplayName));
 
     myCurrentLanguageCombo.addItemListener(new ItemListener() {
       @Override

@@ -11,7 +11,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -473,7 +472,7 @@ public class CompileDriver {
 
       if (_status != ExitStatus.UP_TO_DATE && _status != ExitStatus.CANCELLED) {
         // have to refresh in case of errors too, because run configuration may be set to ignore errors
-        Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPathsEx.getOutputPaths(affectedModules));
+        Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules));
         if (!affectedRoots.isEmpty()) {
           ProgressIndicator indicator = compileContext.getProgressIndicator();
           indicator.setText("Synchronizing output directories...");
@@ -538,7 +537,7 @@ public class CompileDriver {
       else {
         message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
-      message = message + " in " + StringUtil.formatDuration(duration);
+      message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
     return message;
   }
@@ -583,9 +582,16 @@ public class CompileDriver {
         progressIndicator.setText(
           CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
-          if (!task.execute(context)) {
-            return false;
+          try {
+            if (!task.execute(context)) {
+              return false;
+            }
           }
+          catch (Throwable t) {
+            LOG.error("Error executing task", t);
+            context.addMessage(CompilerMessageCategory.INFORMATION, "Task "  + task.toString()  + " failed, please see idea.log for details", null, -1, -1);
+          }
+
         }
       }
     }
@@ -692,12 +698,12 @@ public class CompileDriver {
       return true;
     }
     catch (Throwable e) {
-      LOG.info(e);
+      LOG.error(e);
       return false;
     }
   }
 
-  private void showCyclicModulesHaveDifferentLanguageLevel(Set<Module> modulesInChunk) {
+  private void showCyclicModulesHaveDifferentLanguageLevel(Set<? extends Module> modulesInChunk) {
     Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
@@ -707,7 +713,7 @@ public class CompileDriver {
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private void showCyclicModulesHaveDifferentJdksError(Set<Module> modulesInChunk) {
+  private void showCyclicModulesHaveDifferentJdksError(Set<? extends Module> modulesInChunk) {
     Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
@@ -717,7 +723,7 @@ public class CompileDriver {
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private static String getModulesString(Collection<Module> modulesInChunk) {
+  private static String getModulesString(Collection<? extends Module> modulesInChunk) {
     return StringUtil.join(modulesInChunk, module->"\""+module.getName()+"\"", "\n");
   }
 

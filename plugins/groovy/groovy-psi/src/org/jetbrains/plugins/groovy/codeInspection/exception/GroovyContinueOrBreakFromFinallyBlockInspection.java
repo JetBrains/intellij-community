@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.exception;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -26,13 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 
 public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "'continue' or 'break' inside 'finally' block";
-  }
 
   @Override
   @Nullable

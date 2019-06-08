@@ -32,7 +32,7 @@ public class HtmlParsing {
   private final Stack<String> myTagNamesStack = new Stack<>();
   private final Stack<String> myOriginalTagNamesStack = new Stack<>();
   private final Stack<PsiBuilder.Marker> myTagMarkersStack = new Stack<>();
-  @NonNls private static final String COMPLETION_NAME = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.toLowerCase();
+  @NonNls private static final String COMPLETION_NAME = StringUtil.toLowerCase(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED);
 
   public HtmlParsing(final PsiBuilder builder) {
     myBuilder = builder;

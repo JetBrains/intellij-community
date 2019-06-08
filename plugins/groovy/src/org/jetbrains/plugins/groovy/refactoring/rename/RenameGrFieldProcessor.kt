@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.refactoring.rename
 
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PropertyUtilBase
@@ -36,22 +36,23 @@ open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean = element is GrField
 
-  override fun findReferences(element: PsiElement): Collection<PsiReference> {
+  override fun findReferences(element: PsiElement,
+                              searchScope: SearchScope,
+                              searchInCommentsAndStrings: Boolean): MutableCollection<PsiReference> {
     assert(element is GrField)
 
     val refs = ArrayList<PsiReference>()
 
     val field = element as GrField
-    val projectScope = GlobalSearchScope.projectScope(element.getProject())
     val setter = field.setter
     if (setter != null) {
-      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(setter, projectScope, true).findAll(), setter))
+      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(setter, searchScope, true).findAll(), setter))
     }
     val getters = field.getters
     for (getter in getters) {
-      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(getter, projectScope, true).findAll(), getter))
+      refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(MethodReferencesSearch.search(getter, searchScope, true).findAll(), getter))
     }
-    refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(ReferencesSearch.search(field, projectScope, false).findAll(), field))
+    refs.addAll(RenameAliasedUsagesUtil.filterAliasedRefs(ReferencesSearch.search(field, searchScope, false).findAll(), field))
     return refs
   }
 

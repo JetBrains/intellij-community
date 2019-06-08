@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -16,7 +17,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -32,6 +32,7 @@ import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -50,10 +51,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
+  private static final Key<Boolean> ANNOTATIONS_BEING_ATTACHED = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
 
   private static final CallMapper<AllowedValues> SPECIAL_CASES = new CallMapper<AllowedValues>()
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
@@ -104,7 +103,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     return new JavaElementVisitor() {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
-        checkAnnotationsJarAttached(file, holder);
+        if (!(file.getViewProvider() instanceof InjectedFileViewProvider)) {
+          Runnable fix = getAttachAnnotationsJarFix(file.getProject());
+          if (fix != null) {
+            fix.run(); // try to attach automatically
+          }
+        }
       }
 
       @Override
@@ -179,55 +183,35 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   @Override
   public void cleanup(@NotNull Project project) {
     super.cleanup(project);
-    project.putUserData(NO_ANNOTATIONS_FOUND, null);
+    project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
   }
 
-  private static void checkAnnotationsJarAttached(@NotNull PsiFile file, @NotNull ProblemsHolder holder) {
-    if (file.getViewProvider() instanceof InjectedFileViewProvider) return;
+  // returns fix to apply if our own JB "jdkAnnotations" are not attached to the current jdk
+  public static Runnable getAttachAnnotationsJarFix(Project project) {
+    final Boolean found = project.getUserData(ANNOTATIONS_BEING_ATTACHED);
+    if (found != null) return null;
 
-    final Project project = file.getProject();
-    if (!holder.isOnTheFly()) {
-      final Boolean found = project.getUserData(NO_ANNOTATIONS_FOUND);
-      if (found != null) return;
-    }
-
-    PsiClass event = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
-    if (event == null) return; // no jdk to attach
-    PsiMethod[] methods = event.findMethodsByName("getModifiers", false);
-    if (methods.length != 1) return; // no jdk to attach
+    PsiClass awtInputEvent = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
+    if (awtInputEvent == null) return null;
+    PsiMethod[] methods = awtInputEvent.findMethodsByName("getModifiers", false);
+    if (methods.length != 1) return null;
     PsiMethod getModifiers = methods[0];
-    PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
-    if (annotation != null) return;
     Sdk jdk = JdkUtils.getJdkForElement(getModifiers);
-    if (jdk == null) return; // no jdk to attach
+    if (jdk == null) return null;
+    PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
+    return annotation == null ? () -> attachAnnotationsLaterTo(project, jdk) : null;
+  }
 
-    if (!holder.isOnTheFly()) {
-      project.putUserData(NO_ANNOTATIONS_FOUND, Boolean.TRUE);
-    }
-
-    final Sdk finalJdk = jdk;
-
-    String path = finalJdk.getHomePath();
-    String text = "No IDEA annotations attached to the JDK " + finalJdk.getName() + (path == null ? "" : " (" + FileUtil.toSystemDependentName(path) + ")")
-                  +", some issues will not be found";
-    holder.registerProblem(file, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new LocalQuickFix() {
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return "Attach annotations";
-      }
-
-      @Nullable
-      @Override
-      public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-        return null;
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        SdkModificator modificator = finalJdk.getSdkModificator();
-        JavaSdkImpl.attachJdkAnnotations(modificator);
-        modificator.commitChanges();
+  private static void attachAnnotationsLaterTo(@NotNull Project project, @NotNull Sdk sdk) {
+    project.putUserData(ANNOTATIONS_BEING_ATTACHED, Boolean.TRUE);
+    TransactionGuard.submitTransaction(project, () -> {
+      SdkModificator modificator = sdk.getSdkModificator();
+      boolean success = JavaSdkImpl.attachIDEAAnnotationsToJdk(modificator);
+      // daemon will restart automatically
+      modificator.commitChanges();
+      // avoid endless loop on JDK misconfigration
+      if (success) {
+        project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
       }
     });
   }
@@ -417,7 +401,6 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @Nullable
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<? super PsiClass> visited) {
-    
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
@@ -440,14 +423,10 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static AllowedValues getCalendarGetValues(PsiMethodCallExpression call) {
-    Integer argument = tryCast(ExpressionUtils.computeConstantExpression(call.getArgumentList().getExpressions()[0]), Integer.class);
+    Integer argument = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(call.getArgumentList().getExpressions()[0]), Integer.class);
     PsiMethod method = call.resolveMethod();
     if (method == null || argument == null) return null;
     return CachedValuesManager.getCachedValue(method, () -> {
-      final String[] days = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
-      final String[] months = {"JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
-        "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"};
-      final String[] amPm = {"AM", "PM"};
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
       Function<String[], AllowedValues> converter = strings -> {
         String expression = StreamEx.of(strings)
@@ -456,8 +435,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
         return new AllowedValues(initializer.getInitializers(), false);
       };
       Map<Integer, AllowedValues> map = new HashMap<>();
+      final String[] days = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
       map.put(Calendar.DAY_OF_WEEK, converter.apply(days));
+      final String[] months = {"JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
+        "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"};
       map.put(Calendar.MONTH, converter.apply(months));
+      final String[] amPm = {"AM", "PM"};
       map.put(Calendar.AM_PM, converter.apply(amPm));
       return CachedValueProvider.Result.create(map, method);
     }).get(argument);
@@ -465,12 +448,9 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    PsiModifierListOwner realElement;
-    if (element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner) {
-      realElement = (PsiModifierListOwner)element.getNavigationElement();
-    } else {
-      realElement = element;
-    }
+    PsiModifierListOwner realElement = element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner
+                  ? (PsiModifierListOwner)element.getNavigationElement()
+                  : element;
     return CachedValuesManager.getCachedValue(realElement, () ->
       CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
@@ -822,7 +802,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       List<PsiAnnotationMemberValue> values = ContainerUtil.map(myMemberValuePointers, SmartPsiElementPointer::getElement);
       String text = StringUtil.join(Collections.nCopies(values.size(), "0"), " | ");
-      PsiExpression concatExp = PsiElementFactory.SERVICE.getInstance(project).createExpressionFromText(text, startElement);
+      PsiExpression concatExp = PsiElementFactory.getInstance(project).createExpressionFromText(text, startElement);
 
       List<PsiLiteralExpression> expressionsToReplace = new ArrayList<>(values.size());
       concatExp.accept(new JavaRecursiveElementWalkingVisitor() {

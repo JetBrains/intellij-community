@@ -47,6 +47,16 @@ public class BegTableUI extends BasicTableUI {
   }
 
   @Override
+  public void installDefaults() {
+    super.installDefaults();
+
+    int rowHeight = UIManager.getInt("Table.rowHeight");
+    if (rowHeight > 0) {
+      LookAndFeel.installProperty(table, "rowHeight", rowHeight);
+    }
+  }
+
+  @Override
   protected KeyListener createKeyListener() {
     return myAdapter;
   }

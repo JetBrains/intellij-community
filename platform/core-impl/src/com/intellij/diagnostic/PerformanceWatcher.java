@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
@@ -33,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -223,7 +224,7 @@ public class PerformanceWatcher implements Disposable {
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
       if (dir.exists()) {
         //noinspection ResultOfMethodCallIgnored
-        dir.renameTo(new File(myLogDir, dir.getName() + "-" + unresponsiveDuration + "sec" + getFreezePlaceSuffix()));
+        dir.renameTo(new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec"));
       }
       myPublisher.uiFreezeFinished(unresponsiveDuration);
       myFreezeStart = 0;
@@ -271,7 +272,7 @@ public class PerformanceWatcher implements Disposable {
           myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
         }
         else {
-          updateStacktraceCommonPart(edtStack);
+          myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
         }
       }
 
@@ -301,15 +302,26 @@ public class PerformanceWatcher implements Disposable {
     System.err.println(ThreadDumper.dumpThreadsToString());
   }
 
-  private void updateStacktraceCommonPart(final StackTraceElement[] stackTraceElements) {
-    for(int i=0; i < myStacktraceCommonPart.size() && i < stackTraceElements.length; i++) {
-      StackTraceElement el1 = myStacktraceCommonPart.get(myStacktraceCommonPart.size()-i-1);
-      StackTraceElement el2 = stackTraceElements [stackTraceElements.length-i-1];
-      if (!el1.equals(el2)) {
-        myStacktraceCommonPart = myStacktraceCommonPart.subList(myStacktraceCommonPart.size() - i, myStacktraceCommonPart.size());
-        break;
+  static List<StackTraceElement> getStacktraceCommonPart(final List<StackTraceElement> commonPart,
+                                                         final StackTraceElement[] stackTraceElements) {
+    for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
+      StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
+      StackTraceElement el2 = stackTraceElements[stackTraceElements.length - i - 1];
+      if (!compareStackTraceElements(el1, el2)) {
+        return commonPart.subList(commonPart.size() - i, commonPart.size());
       }
     }
+    return commonPart;
+  }
+
+  // same as java.lang.StackTraceElement.equals, but do not care about the line number
+  static boolean compareStackTraceElements(StackTraceElement el1, StackTraceElement el2) {
+    if (el1 == el2) {
+      return true;
+    }
+    return el1.getClassName().equals(el2.getClassName()) &&
+           Objects.equals(el1.getMethodName(), el2.getMethodName()) &&
+           Objects.equals(el1.getFileName(), el2.getFileName());
   }
 
   private class SwingThreadRunnable implements Runnable {

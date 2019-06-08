@@ -244,7 +244,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     }
   }
 
-  public void setItems(final List<T> items, @Nullable Function<T, String> converter) {
+  public void setItems(final List<? extends T> items, @Nullable Function<? super T, String> converter) {
     clear();
     for (T item : items) {
       String text = converter != null ? converter.fun(item) : item.toString();

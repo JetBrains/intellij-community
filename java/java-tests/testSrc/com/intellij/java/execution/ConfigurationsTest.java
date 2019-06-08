@@ -216,12 +216,30 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     lines.remove(0);
     Assertion.compareUnordered(
       //category, filters, classNames...
-      new Object[]{"", "", psiClass.getQualifiedName(),
+      new Object[]{"", "", "", psiClass.getQualifiedName(),
         "test1.DerivedTest", RT_INNER_TEST_NAME,
         "test1.nested.TestA",
         "test1.nested.TestWithJunit4",
         "test1.ThirdPartyTest",
         "TestA"},
+      lines);
+  }
+  
+  public void testPattern() throws IOException, ExecutionException {
+    Module module1 = getModule1();
+
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
+    configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    configuration.getPersistentData().setPatterns(ContainerUtil.newLinkedHashSet("pattern.TestA,test1"));
+    configuration.setModule(module1);
+    JavaParameters parameters = checkCanRun(configuration);
+    String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
+                                         value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
+    List<String> lines = FileUtilRt.loadLines(new File(filePath));
+    lines.remove(0);
+    Assertion.compareUnordered(
+      //category, filters, classNames...
+      new Object[]{"", "", "pattern.TestA,test1"},
       lines);
   }
 

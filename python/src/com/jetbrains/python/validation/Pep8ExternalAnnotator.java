@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
@@ -72,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -229,7 +216,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
                                                       ImmutableMap.of("PYTHONBUFFERED", "1"),
                                                       10000,
-                                                      collectedInfo.fileText.getBytes(), false);
+                                                      collectedInfo.fileText.getBytes(StandardCharsets.UTF_8), false);
 
     Results results = new Results(collectedInfo.level);
     if (output.isTimeout()) {
@@ -286,7 +273,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
             problemElement.getParent() instanceof PyAnnotation) {
           continue;
         }
-        
+
         TextRange problemRange = problemElement.getTextRange();
         // Multi-line warnings are shown only in the gutter and it's not the desired behavior from the usability point of view.
         // So we register it only on that line where pycodestyle.py found the problem originally.
@@ -362,7 +349,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     final CommonCodeStyleSettings commonSettings = CodeStyle.getLanguageSettings(file, PythonLanguage.getInstance());
     final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
-    
+
     if (element instanceof PsiWhiteSpace) {
       // E303 too many blank lines (num)
       if (problem.myCode.equals("E303")) {
@@ -391,14 +378,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       }
 
       // E251 unexpected spaces around keyword / parameter equals
-      // Note that E222 (multiple spaces after operator) is not suppressed, though. 
+      // Note that E222 (multiple spaces after operator) is not suppressed, though.
       if (problem.myCode.equals("E251") &&
           (element.getParent() instanceof PyParameter && pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER ||
            element.getParent() instanceof PyKeywordArgument && pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)) {
         return true;
       }
     }
-    // W191 (indentation contains tabs) is reported also for indents inside multiline string literals, 
+    // W191 (indentation contains tabs) is reported also for indents inside multiline string literals,
     // thus underlying PSI element is not necessarily a whitespace
     if (problem.myCode.equals("W191") && CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER) {
       return true;

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.context;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -30,13 +17,7 @@ import static com.intellij.configurationStore.XmlSerializer.serialize;
 /**
  * @author Dmitry Avdeev
  */
-public class XDebuggerWatchesProvider extends WorkingContextProvider {
-  private final XDebuggerWatchesManager myWatchesManager;
-
-  public XDebuggerWatchesProvider(XDebuggerManager xDebuggerManager) {
-    myWatchesManager = ((XDebuggerManagerImpl)xDebuggerManager).getWatchesManager();
-  }
-
+final class XDebuggerWatchesProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getId() {
@@ -50,24 +31,28 @@ public class XDebuggerWatchesProvider extends WorkingContextProvider {
   }
 
   @Override
-  public void saveContext(Element toElement) throws WriteExternalException {
+  public void saveContext(@NotNull Project project, @NotNull Element toElement) throws WriteExternalException {
     WatchesManagerState state = new WatchesManagerState();
-    myWatchesManager.saveState(state);
+    getWatchManager(project).saveState(state);
     Element serialize = serialize(state);
     if (serialize != null) {
       toElement.addContent(serialize.removeContent());
     }
   }
 
-  @Override
-  public void loadContext(Element fromElement) throws InvalidDataException {
-    WatchesManagerState state = deserialize(fromElement, WatchesManagerState.class);
-    myWatchesManager.loadState(state);
-
+  @NotNull
+  private static XDebuggerWatchesManager getWatchManager(@NotNull Project project) {
+    return ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getWatchesManager();
   }
 
   @Override
-  public void clearContext() {
-    myWatchesManager.clearContext();
+  public void loadContext(@NotNull Project project, @NotNull Element fromElement) throws InvalidDataException {
+    WatchesManagerState state = deserialize(fromElement, WatchesManagerState.class);
+    getWatchManager(project).loadState(state);
+  }
+
+  @Override
+  public void clearContext(@NotNull Project project) {
+    getWatchManager(project).clearContext();
   }
 }

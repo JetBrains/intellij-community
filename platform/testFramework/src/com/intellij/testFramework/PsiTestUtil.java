@@ -161,7 +161,10 @@ public class PsiTestUtil {
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
-        Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
+        if (entry instanceof ContentEntryImpl) {
+          Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
+        }
+
         return entry;
       }
     }
@@ -177,7 +180,12 @@ public class PsiTestUtil {
 
   @NotNull
   private static ContentEntry findContentEntryWithAssertion(@NotNull ModifiableRootModel model, @NotNull VirtualFile dir) {
-    ContentEntry entry = findContentEntry(model, dir);
+    return assertEntryFound(model, dir, findContentEntry(model, dir));
+  }
+
+  @NotNull
+  private static ContentEntry assertEntryFound(@NotNull ModifiableRootModel model,
+                                               @NotNull VirtualFile dir, ContentEntry entry) {
     if (entry == null) {
       throw new RuntimeException(dir + " is not under content roots: " + Arrays.toString(model.getContentRoots()));
     }
@@ -185,7 +193,10 @@ public class PsiTestUtil {
   }
 
   public static void removeContentEntry(@NotNull Module module, @NotNull VirtualFile contentRoot) {
-    ModuleRootModificationUtil.updateModel(module, model -> model.removeContentEntry(findContentEntryWithAssertion(model, contentRoot)));
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      ContentEntry entry = ContainerUtil.find(model.getContentEntries(), object -> contentRoot.equals(object.getFile()));
+      model.removeContentEntry(assertEntryFound(model, contentRoot, entry));
+    });
   }
 
   public static void removeSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
@@ -488,6 +499,16 @@ public class PsiTestUtil {
   public static Sdk addRootsToJdk(@NotNull Sdk sdk,
                                   @NotNull OrderRootType rootType,
                                   @NotNull VirtualFile... roots) {
+    return modifyJdkRoots(sdk, sdkModificator -> {
+      for (VirtualFile root : roots) {
+        sdkModificator.addRoot(root, rootType);
+      }
+    });
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static Sdk modifyJdkRoots(@NotNull Sdk sdk, Consumer<? super SdkModificator> modifier) {
     Sdk clone;
     try {
       clone = (Sdk)sdk.clone();
@@ -496,9 +517,7 @@ public class PsiTestUtil {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
-    for (VirtualFile root : roots) {
-      sdkModificator.addRoot(root, rootType);
-    }
+    modifier.accept(sdkModificator);
     sdkModificator.commitChanges();
     return clone;
   }

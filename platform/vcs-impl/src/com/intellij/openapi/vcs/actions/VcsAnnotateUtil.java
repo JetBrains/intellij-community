@@ -37,6 +37,6 @@ public class VcsAnnotateUtil {
 
   @NotNull
   public static BackgroundableActionLock getBackgroundableLock(@NotNull Project project, @NotNull VirtualFile file) {
-    return BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, file.getPath());
+    return BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, file);
   }
 }

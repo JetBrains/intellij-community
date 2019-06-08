@@ -154,8 +154,11 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
-    return "get".equals(methodExpression.getReferenceName()) &&
-           areElementsEquivalent(ExpressionUtils.getQualifierOrThis(methodExpression), optionalRef);
+    if ("get".equals(methodExpression.getReferenceName())) {
+      PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
+      return qualifier != null && areElementsEquivalent(qualifier, optionalRef);
+    }
+    return false;
   }
 
   @NotNull
@@ -280,13 +283,17 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiElement cond = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiConditionalExpression.class);
       PsiElement thenElement;
       PsiElement elseElement;
-      if(cond instanceof PsiIfStatement) {
+      if (cond instanceof PsiIfStatement) {
         thenElement = extractThenStatement((PsiIfStatement)cond, invert);
         elseElement = extractElseStatement((PsiIfStatement)cond, invert);
-      } else if(cond instanceof PsiConditionalExpression) {
+      }
+      else if (cond instanceof PsiConditionalExpression) {
         thenElement = invert ? ((PsiConditionalExpression)cond).getElseExpression() : ((PsiConditionalExpression)cond).getThenExpression();
         elseElement = invert ? ((PsiConditionalExpression)cond).getThenExpression() : ((PsiConditionalExpression)cond).getElseExpression();
-      } else return;
+      }
+      else {
+        return;
+      }
       if (myScenario.getProblemType(optionalRef, thenElement, elseElement) == ProblemType.NONE) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();

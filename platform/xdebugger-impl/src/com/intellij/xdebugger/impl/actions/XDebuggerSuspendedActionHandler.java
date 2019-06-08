@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class XDebuggerSuspendedActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
+    return isEnabled(session);
+  }
+
+  public static boolean isEnabled(XDebugSession session) {
     return !((XDebugSessionImpl)session).isReadOnly() && session.isSuspended();
   }
 }

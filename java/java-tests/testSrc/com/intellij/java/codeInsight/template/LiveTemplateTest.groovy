@@ -25,16 +25,17 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.DocumentUtil
-import com.intellij.util.JdomKt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author spleaner
  */
@@ -369,7 +370,7 @@ class Foo {
   }
 
   void testDontSaveDefaultContexts() {
-    def defElement = JdomKt.loadElement('''\
+    def defElement = JDOMUtil.load('''\
 <context>
   <option name="JAVA_STATEMENT" value="false"/>
   <option name="JAVA_CODE" value="true"/>
@@ -406,7 +407,7 @@ class Foo {
   }
 
   void "test adding new context to Other"() {
-    def defElement = JdomKt.loadElement('''\
+    def defElement = JDOMUtil.load('''\
 <context>
   <option name="OTHER" value="true"/>
 </context>''')
@@ -601,7 +602,7 @@ class A {{
     final TemplateManager manager = TemplateManager.getInstance(getProject())
     final Template template = manager.createTemplate("result", "user", '$A$ $B$ c')
     template.addVariable('A', new EmptyNode(), true)
-    
+
     def macroCallNode = new MacroCallNode(new ConcatMacro())
     macroCallNode.addParameter(new VariableNode('A', null))
     macroCallNode.addParameter(new TextExpression("ID"))
@@ -614,7 +615,7 @@ class A {{
     assert !state
     myFixture.checkResult('tableName tableNameID c')
   }
-  
+
   void "test substringBefore macro"() {
     final TemplateManager manager = TemplateManager.getInstance(getProject())
     final Template template = manager.createTemplate("result", "user", '$A$ $B$ $C$')
@@ -958,7 +959,7 @@ class Foo {
     TemplateManagerImpl templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
     myFixture.configureByText('a.html', '<selection><p></p></selection>')
     def template = TemplateSettings.instance.getTemplate("T", "HTML/XML")
-    myFixture.testAction(new InvokeTemplateAction(template, myFixture.editor, myFixture.project, ContainerUtil.newHashSet()))
+    myFixture.testAction(new InvokeTemplateAction(template, myFixture.editor, myFixture.project, new HashSet()))
     myFixture.complete(CompletionType.BASIC)
     myFixture.type("nofra")
     myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
@@ -1117,9 +1118,9 @@ class Foo {
     template.addVariable("V3", 'blockCommentEnd()', '', false)
     template.addVariable("V4", 'commentStart()', '', false)
     template.addVariable("V5", 'commentEnd()', '', false)
-    
+
     manager.startTemplate(myFixture.editor, template)
-    
+
     myFixture.checkResult '// line comment\n/* block comment */\n// any comment '
   }
 
@@ -1130,7 +1131,7 @@ class Foo {
     Template template = manager.createTemplate("empty", "user", '$V$')
     template.addVariable("V", 'groovyScript("[1, 2, true]")', '', true)
     manager.startTemplate(myFixture.editor, template)
-    
+
     assert myFixture.lookupElementStrings == ['1', '2', 'true']
     myFixture.checkResult('1')
   }
@@ -1164,5 +1165,36 @@ class Foo {
     // now we're really typing outside template, so it should be canceled
     myFixture.type('a')
     assert !state
+  }
+
+  void "test start template that break injection inside injection"() {
+    myFixture.caresAboutInjection = false
+    def file = myFixture.configureByText 'a.java', """public class Main {
+    public static void main(String[] args) {
+        //language=Java prefix="public class A {" suffix=}
+        String s = "int a = <caret>;";
+    }
+}
+"""
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("ttt", "user", '" + $VAR$ + $END$"')
+    template.addVariable("VAR", '', '', true)
+
+    def injectionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myFixture.editor, file)
+    manager.startTemplate(injectionEditor, template)
+    UIUtil.dispatchAllInvocationEvents()
+
+    assert state
+    myFixture.type '123\t'
+
+    assert !state
+    myFixture.checkResult """public class Main {
+    public static void main(String[] args) {
+        //language=Java prefix="public class A {" suffix=}
+        String s = "int a = " + 123 + <caret>";";
+    }
+}
+"""
   }
 }

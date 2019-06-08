@@ -807,6 +807,15 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    "  - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: number.\">2.10</warning>");
   }
 
+  public void testTravisMultiDocument() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
+    doTest(schema, "after_script: true\n" +
+                   "sbt_args: <warning>1</warning>\n" +
+                   "---\n" +
+                   "after_script: true\n" +
+                   "sbt_args: <warning>1</warning>\n");
+  }
+
   public void testExpNumberNotation() throws Exception {
     doTest("{\n" +
            "  \"properties\": {\n" +

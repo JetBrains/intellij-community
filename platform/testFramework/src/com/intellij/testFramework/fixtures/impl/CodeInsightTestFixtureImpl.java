@@ -183,13 +183,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     renderers.add(renderer);
   }
 
-  private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
+  private static void removeDuplicatedRangesForInjected(@NotNull List<? extends HighlightInfo> infos) {
     Collections.sort(infos, (o1, o2) -> {
       final int i = o2.startOffset - o1.startOffset;
       return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
     });
     HighlightInfo prevInfo = null;
-    for (Iterator<HighlightInfo> it = infos.iterator(); it.hasNext();) {
+    for (Iterator<? extends HighlightInfo> it = infos.iterator(); it.hasNext();) {
       final HighlightInfo info = it.next();
       if (prevInfo != null &&
           info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY &&
@@ -273,7 +273,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (current != null) {
       current.waitForHighlighting(file.getProject(), editor);
     }
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, false);
 
     List<IntentionAction> result = new ArrayList<>();
     IntentionListStep intentionListStep = new IntentionListStep(null, editor, file, file.getProject(),
@@ -470,7 +470,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private long collectAndCheckHighlighting(boolean checkWarnings,
                                            boolean checkInfos,
                                            boolean checkWeakWarnings,
-                                           Stream<VirtualFile> files) {
+                                           Stream<? extends VirtualFile> files) {
     List<Trinity<PsiFile, Editor, ExpectedHighlightingData>> data = files.map(file -> {
       PsiFile psiFile = myPsiManager.findFile(file);
       assertNotNull(psiFile);
@@ -857,7 +857,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
-  public String getUsageViewTreeTextRepresentation(@NotNull final Collection<UsageInfo> usages) {
+  public String getUsageViewTreeTextRepresentation(@NotNull final Collection<? extends UsageInfo> usages) {
     UsageViewImpl usageView = (UsageViewImpl)UsageViewManager
       .getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY,
                                                  StreamEx.of(usages)
@@ -1460,8 +1460,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Document document = getDocument(getFile());
       data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
     }
-    //noinspection ResultOfMethodCallIgnored
-    hardRefToFileElement.hashCode(); // use it so gc won't collect it
+    ObjectUtils.reachabilityFence(hardRefToFileElement);
     return elapsed;
   }
 

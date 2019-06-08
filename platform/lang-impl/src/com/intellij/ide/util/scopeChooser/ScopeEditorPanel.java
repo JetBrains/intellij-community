@@ -482,7 +482,6 @@ public class ScopeEditorPanel {
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    tree.setLineStyleAngled();
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package com.jetbrains.python.testing
@@ -738,13 +738,13 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
   }
 
-  override fun createConfigurationFromContext(context: ConfigurationContext?): ConfigurationFromContext? {
+  override fun createConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
     // Since we need module, no need to even try to create config with out of it
-    context?.module ?: return null
+    context.module ?: return null
     return super.createConfigurationFromContext(context)
   }
 
-  override fun findOrCreateConfigurationFromContext(context: ConfigurationContext?): ConfigurationFromContext? {
+  override fun findOrCreateConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
     if (!isNewTestsModeEnabled()) {
       return null
     }
@@ -758,20 +758,17 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
   override fun isPreferredConfiguration(self: ConfigurationFromContext?,
                                         other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
 
-  override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration?,
-                                             context: ConfigurationContext?,
-                                             sourceElement: Ref<PsiElement>?): Boolean {
-    if (sourceElement == null || configuration == null) {
-      return false
-    }
+  override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration,
+                                             context: ConfigurationContext,
+                                             sourceElement: Ref<PsiElement>): Boolean {
     val element = sourceElement.get() ?: return false
 
     if (element.containingFile !is PyFile && element !is PsiDirectory) {
       return false
     }
 
-    val location = context?.location
-    configuration.module = context?.module
+    val location = context.location
+    configuration.module = context.module
     configuration.isUseModuleSdk = true
     if (location is PyTargetBasedPsiLocation) {
       location.target.copyTo(configuration.target)
@@ -790,18 +787,18 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     return true
   }
 
-  override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration, context: ConfigurationContext?): Boolean {
-    if (context != null && PyTestConfigurationSelector.EP.extensionList.find { it.isFromContext(configuration, context) } != null) {
+  override fun isConfigurationFromContext(configuration: PyAbstractTestConfiguration, context: ConfigurationContext): Boolean {
+    if (PyTestConfigurationSelector.EP.extensionList.find { it.isFromContext(configuration, context) } != null) {
       return true
     }
 
-    val location = context?.location
+    val location = context.location
     if (location is PyTargetBasedPsiLocation) {
       // With derived classes several configurations for same element may exist
       return configuration.isSameAsLocation(location.target, location.metainfo)
     }
 
-    val psiElement = context?.psiLocation ?: return false
+    val psiElement = context.psiLocation ?: return false
     val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration, psiElement) ?: return false
     if (configuration.target != targetForConfig.first) {
       return false

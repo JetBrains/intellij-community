@@ -3,7 +3,7 @@ class Test {
     if (params == null) {
       params = <flown1112>new int[]{<flown11121>-1};
     }
-    params[3] = <flown1113>44;
+    params[0] = <flown1113>44;
     for (int <flown11>param : <flown111>params) y(<flown1>param);
   }
 

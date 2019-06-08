@@ -5,11 +5,11 @@ import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.FirstStart
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
-import com.intellij.testGuiFramework.impl.ScreenshotOnFailure
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.remote.IdeControl
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import com.intellij.ui.components.labels.ActionLink
 import org.fest.swing.core.Robot
 import org.junit.Test
@@ -68,7 +68,7 @@ class CommunityUpdateFirstStart : FirstStart(CommunityIde()) {
       }
     }
     catch (e: Exception) {
-      ScreenshotOnFailure.takeScreenshot("FirstStart-TestStep", e)
+      ScreenshotTaker.takeScreenshotAndHierarchy("TestStep")
       e.printStackTrace(System.err)
     }
   }

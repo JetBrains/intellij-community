@@ -39,7 +39,7 @@
             icon="AllIcons.General.ProjectStructure">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
       <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="NavBarToolBar" relative-to-action="RunAnything" anchor="before"/>
+      <add-to-group group-id="NavBarToolBar" relative-to-action="NavBarToolBarOthers" anchor="after"/>
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
@@ -183,11 +183,6 @@
 
       <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
-
-    <reference ref="Compile">
-      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
-    </reference>
-
 
     <group id="EditorTabCompileGroup">
       <reference ref="Compile"/>
@@ -354,13 +349,6 @@
     <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </action>
-    <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
-
-    <action id="TestStubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.TestStubHierarchyAction" text="Test Stub Hierarchy" internal="true">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
-    </action>
 
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
@@ -409,7 +397,6 @@
       <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
       <action id="WrapReturnValue" class="com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction"/>
       <separator/>
-      <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
       <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
@@ -421,6 +408,10 @@
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
+
+    <!-- The action remains for compabitility but is not added to menus because it does the same thing as Move, which is now
+         correctly labeled -->
+    <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
 
     <!-- Not available in Android Studio yet, don't clutter menu
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
@@ -551,7 +542,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
-      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
+      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 
@@ -661,7 +652,7 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction">
+    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
     </action>
 

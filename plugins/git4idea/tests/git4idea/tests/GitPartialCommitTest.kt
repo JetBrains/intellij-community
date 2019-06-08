@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.ui.UIUtil
 import git4idea.test.*
@@ -203,7 +202,7 @@ class GitPartialCommitTest : GitSingleRepoTest() {
     val actualContent = repo.gitAsBytes("cat-file" +
                                         (if (useFilters) " --filters" else " -p") +
                                         " :$fileName")
-    assertEquals(expectedContent, String(actualContent, CharsetToolkit.UTF8_CHARSET))
+    assertEquals(expectedContent, String(actualContent, Charsets.UTF_8))
   }
 
   private fun withTrackedDocument(fileName: String, newContent: String, task: (Document, PartialLocalLineStatusTracker) -> Unit) {

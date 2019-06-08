@@ -55,7 +55,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -111,7 +110,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private TodoTreeBuilder setupTreeStructure() {
     TodoTreeBuilder todoTreeBuilder = createTreeBuilder(myTree, myProject);
     TodoTreeStructure structure = todoTreeBuilder.getTodoTreeStructure();
-    StructureTreeModel structureTreeModel = new StructureTreeModel(structure, TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR);
+    StructureTreeModel structureTreeModel = new StructureTreeModel<>(structure, TodoTreeBuilder.NODE_DESCRIPTOR_COMPARATOR, myProject);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(structureTreeModel, myProject);
     myTree.setModel(asyncTreeModel);
     asyncTreeModel.addTreeModelListener(new MyExpandListener(todoTreeBuilder));
@@ -126,15 +125,16 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     public static class GroupByActionGroup extends DefaultActionGroup {
     {
       getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
-      getTemplatePresentation().setText("View Options");
+      getTemplatePresentation().setText(IdeBundle.message("group.group.by"));
       setPopup(true);
     }
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-                    .showUnderneathOf(e.getInputEvent().getComponent());
-    }
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
+          .showUnderneathOf(e.getInputEvent().getComponent());
+      }
   }
 
   private class MyExpandListener extends TreeModelAdapter {
@@ -166,7 +166,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   protected abstract TodoTreeBuilder createTreeBuilder(JTree tree, Project project);
 
   private void initUI() {
-    UIUtil.setLineStyleAngled(myTree);
     myTree.setShowsRootHandles(true);
     myTree.setRootVisible(false);
     myTree.setRowHeight(0); // enable variable-height rows
@@ -225,8 +224,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
     // Create tool bars and register custom shortcuts
 
-    JPanel toolBarPanel = new JPanel(new GridLayout());
-
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
     toolbarGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
@@ -239,9 +236,8 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     toolbarGroup.add(new MyPreviewAction());
-    toolBarPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
 
-    setToolbar(toolBarPanel);
+    setToolbar(ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
   }
 
   @NotNull
@@ -303,7 +299,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     myTodoTreeBuilder.rebuildCache();
   }
 
-  void rebuildCache(@NotNull Set<VirtualFile> files) {
+  void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
     myTodoTreeBuilder.rebuildCache(files);
   }
 
@@ -708,12 +704,13 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   public static final class MyFlattenPackagesAction extends ToggleAction {
     public MyFlattenPackagesAction() {
-      super(IdeBundle.message("action.flatten.packages"), null, PlatformIcons.FLATTEN_PACKAGES_ICON);
+      super(IdeBundle.message("action.flatten.view"), null, PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
+      e.getPresentation().setText("   " + getTemplateText());
       TodoPanel todoPanel = e.getData(TODO_PANEL_DATA_KEY);
       e.getPresentation().setEnabled(todoPanel != null && todoPanel.mySettings.arePackagesShown);
     }

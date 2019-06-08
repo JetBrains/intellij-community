@@ -14,6 +14,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -1335,7 +1336,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       Point point = new Point(hintInfo.getOriginalPoint());
       hintInfo.setTextBg(myEditor.getBackgroundColor());
-      hintInfo.setBorderColor(myEditor.getColorsScheme().getDefaultForeground());
+
+      Color borderColor = myEditor.getColorsScheme().getAttributes(EditorColors.CODE_LENS_BORDER_COLOR).getEffectColor();
+      hintInfo.setBorderColor(borderColor != null ? borderColor : myEditor.getColorsScheme().getDefaultForeground());
       point = SwingUtilities.convertPoint(((EditorImpl)editor).getVerticalScrollBar(), point, myEditor.getComponent().getRootPane());
       myPointHolder.set(point);
       myHintHolder.set(hintInfo);

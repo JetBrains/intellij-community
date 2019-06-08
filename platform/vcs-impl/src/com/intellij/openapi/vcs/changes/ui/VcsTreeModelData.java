@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.ListSelection;
@@ -86,13 +84,12 @@ public abstract class VcsTreeModelData {
 
 
   @NotNull
-  public abstract Stream<ChangesBrowserNode> rawNodesStream();
+  public abstract Stream<ChangesBrowserNode<?>> rawNodesStream();
 
   @NotNull
-  public Stream<ChangesBrowserNode> nodesStream() {
+  public Stream<ChangesBrowserNode<?>> nodesStream() {
     return rawNodesStream().filter(ChangesBrowserNode::isMeaningfulNode);
   }
-
 
   @NotNull
   public Stream<Object> rawUserObjectsStream() {
@@ -135,7 +132,7 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode> rawNodesStream() {
+    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
       return Stream.empty();
     }
   }
@@ -149,7 +146,7 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode> rawNodesStream() {
+    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
       return myNode.getNodesUnderStream();
     }
   }
@@ -163,13 +160,13 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode> rawNodesStream() {
+    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
       TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return Stream.empty();
 
       return Stream.of(paths)
-        .map(path -> (ChangesBrowserNode)path.getLastPathComponent())
-        .<ChangesBrowserNode>flatMap(ChangesBrowserNode::getNodesUnderStream)
+        .map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent())
+        .flatMap(ChangesBrowserNode::getNodesUnderStream)
         .distinct(); // filter out nodes that already were processed (because their parent selected too)
     }
   }
@@ -183,11 +180,11 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode> rawNodesStream() {
+    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
       TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return Stream.empty();
 
-      return Stream.of(paths).map(path -> (ChangesBrowserNode)path.getLastPathComponent());
+      return Stream.of(paths).map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent());
     }
   }
 
@@ -202,7 +199,7 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode> rawNodesStream() {
+    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
       ChangesBrowserNode<?> tagNode = findTagNode(myTree, myTag);
       if (tagNode == null) return Stream.empty();
 
@@ -212,8 +209,8 @@ public abstract class VcsTreeModelData {
       return Stream.of(paths)
         .filter(path -> path.getPathCount() <= 1 ||
                         path.getPathComponent(1) == tagNode)
-        .map(path -> (ChangesBrowserNode)path.getLastPathComponent())
-        .<ChangesBrowserNode>flatMap(ChangesBrowserNode::getNodesUnderStream)
+        .map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent())
+        .flatMap(ChangesBrowserNode::getNodesUnderStream)
         .distinct(); // filter out nodes that already were processed (because their parent selected too)
     }
   }
@@ -229,12 +226,11 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode> rawNodesStream() {
+    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
       Set<Object> included = myTree.getIncludedSet();
       return myNode.getNodesUnderStream().filter(node -> included.contains(node.getUserObject()));
     }
   }
-
 
   @NotNull
   public static ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {

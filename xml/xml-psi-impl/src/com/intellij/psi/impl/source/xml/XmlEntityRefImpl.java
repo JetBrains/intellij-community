@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -60,11 +59,6 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   }
 
   public static XmlEntityDecl resolveEntity(final XmlElement element, final String text, PsiFile targetFile) {
-    if (targetFile instanceof XmlFile) {
-      XmlDocument document = ((XmlFile)targetFile).getDocument();
-      if (document != null && document.getUserData(DISABLE_ENTITY_EXPAND) != null) return null;
-    }
-    
     final String entityName = text.substring(1, text.length() - 1);
 
     final PsiElement targetElement = targetFile != null ? targetFile : element;
@@ -81,7 +75,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           return doResolveEntity(targetElement, entityName, containingFile).getValue();
         }
         value = CachedValuesManager.getManager(manager.getProject()).createCachedValue(
-          () -> doResolveEntity(targetElement, entityName, containingFile));
+          () -> doResolveEntity(targetElement, entityName, containingFile), true);
 
 
         map.put(entityName, value);
@@ -89,8 +83,6 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     }
     return value.getValue();
   }
-
-  private static final Key<Boolean> DISABLE_ENTITY_EXPAND = Key.create("disable.entity.expand");
 
   private static CachedValueProvider.Result<XmlEntityDecl> doResolveEntity(final PsiElement targetElement,
                                                                            final String entityName,
@@ -158,7 +150,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           if (HtmlUtil.isHtml5Document(document)) {
             descriptorFile = XmlUtil.findXmlFile((XmlFile)targetElement, Html5SchemaProvider.getCharsDtdLocation());
           }
-          else if (rootTag != null && document.getUserData(DISABLE_ENTITY_EXPAND) == null) {
+          else if (rootTag != null) {
             final XmlElementDescriptor descriptor = rootTag.getDescriptor();
 
             if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
@@ -222,10 +214,5 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     else {
       visitor.visitElement(this);
     }
-  }
-
-  public static void setNoEntityExpandOutOfDocument(XmlDocument doc, boolean b) {
-    if (b) doc.putUserData(DISABLE_ENTITY_EXPAND, Boolean.TRUE);
-    else doc.putUserData(DISABLE_ENTITY_EXPAND, null);
   }
 }

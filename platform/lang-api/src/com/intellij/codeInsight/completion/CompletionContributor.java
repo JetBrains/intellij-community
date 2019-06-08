@@ -31,7 +31,7 @@ import java.util.List;
  * Completion FAQ:<p>
  *
  * Q: How do I implement code completion?<br>
- * A: Define a completion.contributor extension of type {@link CompletionContributor}.
+ * A: Define a {@code com.intellij.completion.contributor} extension of type {@link CompletionContributor}.
  * Or, if the place you want to complete in contains a {@link PsiReference}, just return the variants
  * you want to suggest from its {@link PsiReference#getVariants()} method as {@link String}s,
  * {@link PsiElement}s, or better {@link LookupElement}s.<p>
@@ -41,14 +41,6 @@ import java.util.List;
  * {@link #extend(CompletionType, ElementPattern, CompletionProvider)}.<br>
  * A more generic way is to override default {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} implementation
  * and provide your own. It's easier to debug, but harder to write.<p>
- *
- * Q: What does the {@link CompletionParameters#getPosition()} return?<br>
- * A: When completion is invoked, the file being edited is first copied (the original file can be accessed from {@link com.intellij.psi.PsiFile#getOriginalFile()}
- * and {@link CompletionParameters#getOriginalFile()}. Then a special 'dummy identifier' string is inserted to the copied file at caret offset (removing the selection).
- * Most often this string is an identifier (see {@link CompletionInitializationContext#DUMMY_IDENTIFIER}).
- * This is usually done to guarantee that there'll always be some non-empty element there, which will be easy to describe via {@link ElementPattern}s.
- * Also a reference can suddenly appear in that position, which will certainly help invoking its {@link PsiReference#getVariants()}.
- * Dummy identifier string can be easily changed in {@link #beforeCompletion(CompletionInitializationContext)} method.<p>
  *
  * Q: How do I get automatic lookup element filtering by prefix?<br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
@@ -61,7 +53,7 @@ import java.util.List;
  * It's one of the item's lookup strings ({@link LookupElement#getAllLookupStrings()} that is matched against prefix matcher.<p>
  *
  * Q: How do I plug into those funny texts below the items in shown lookup?<br>
- * A: Use {@link CompletionResultSet#addLookupAdvertisement(String)} <p>
+ * A: Use {@link CompletionResultSet#addLookupAdvertisement(String)}.<p>
  *
  * Q: How do I change the text that gets shown when there are no suitable variants at all? <br>
  * A: Use {@link CompletionContributor#handleEmptyLookup(CompletionParameters, Editor)}.
@@ -94,18 +86,16 @@ import java.util.List;
  * Also there's a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
  * items. To control lookup elements order you may implement {@link CompletionWeigher} or use {@link PrioritizedLookupElement}.<br>
  * To debug the order of the completion items use '<code>Dump lookup element weights to log</code>' action when the completion lookup is
- * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the the Clipboard.
- * <p>
+ * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.<p>
  *
  * Q: Elements in the lookup are sorted in an unexpected way, the weights I provide are not honored, why?<br>
  * A: To be more responsive, when first lookup elements are produced, completion infrastructure waits for some small time
  * and then displays the lookup with whatever items are ready. After that, few the most relevant of the displayed items
  * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
  * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
- * Therefore you should try to create most relevant items as early as possible. If you can't reliably produce
+ * Therefore you should try to create the most relevant items as early as possible. If you can't reliably produce
  * most relevant items first, you could also return all your items in batch via {@link CompletionResultSet#addAllElements} to ensure
- * that this batch is all sorted and displayed together.
- * <p>
+ * that this batch is all sorted and displayed together.<p>
  *
  * Q: My completion is not working! How do I debug it?<br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
@@ -116,16 +106,15 @@ import java.util.List;
  * is the 'final' consumer, it will pass your lookup elements directly to the lookup.<br>
  * If your contributor isn't even invoked, probably there was another contributor that said 'stop' to the system, and yours happened to be ordered after
  * that contributor. To test this hypothesis, put a breakpoint to
- * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, Consumer)},
- * to the 'return false' line.<p>
+ * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, PrefixMatcher, Consumer)},
+ * to the 'return' line.<p>
  *
- * Q: My completion contributor has to get its results from far away (e.g. blocking I/O or internet). How do I do that?<br>
+ * Q: My completion contributor has to get its results from far away (e.g., blocking I/O or internet). How do I do that?<br>
  * A: To avoid UI freezes, your completion thread should be cancellable at all times.
- * So it's a bad idea to do blocking requests from it directly, since it runs in a read action,
+ * So it's a bad idea to do blocking requests from it directly since it runs in a read action,
  * and if it can't do {@link ProgressManager#checkCanceled()} and therefore any attempt to type in a document will freeze the UI.
  * A common solution is to start another thread, without read action, for such blocking requests,
- * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.
- * <p></p>
+ * and wait for their results in completion thread. You can use {@link com.intellij.openapi.application.ex.ApplicationUtil#runWithCheckCanceled} for that.<p>
  *
  * @author peter
  */
@@ -150,7 +139,7 @@ public abstract class CompletionContributor {
    * If you want to implement this functionality directly by overriding this method, the following is for you.
    * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
    * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
-   * ensure you call {@link com.intellij.openapi.progress.ProgressManager#checkCanceled()} often enough so that the completion process
+   * ensure you call {@link ProgressManager#checkCanceled()} often enough so that the completion process
    * can be cancelled smoothly when the user begins to type in the editor.
    */
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -201,7 +190,7 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to autoinsert some item (typically - the only one).
+   * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to auto-insert some item (typically - the only one).
    */
   @Nullable
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {

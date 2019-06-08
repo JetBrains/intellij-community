@@ -15,7 +15,7 @@ import gnu.trove.TIntStack
  * @author Yuli Fiterman
  */
 
-private val MasterModels = ConcurrentFactoryMap.createMap<String, MasterModel>(
+private val MasterModels = ConcurrentFactoryMap.create<String, MasterModel>(
   {
     MasterModel()
   }, {

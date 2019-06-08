@@ -35,12 +35,6 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Unconditional 'wait' call";
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return "Unconditional call to <code>#ref()</code> #loc";
   }

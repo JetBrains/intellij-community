@@ -14,20 +14,20 @@ internal object IconRobotsDataReader {
   private var iconRobotsData = emptyMap<File, IconRobotsData>()
   private val root = ImageCollector(Paths.get(PathManager.getHomePath()), ignoreSkipTag = false).IconRobotsData()
   private fun readIconRobotsData(file: File, block: ImageSyncFlags.() -> Boolean): Boolean {
-    val dir = when {
-      file.isDirectory -> file
-      file.parentFile != null -> file.parentFile
-      else -> return false
-    }
-    if (!File(dir, ROBOTS_FILE_NAME).exists()) return false
-    val path = dir.toPath()
-    if (!iconRobotsData.containsKey(dir)) synchronized(this) {
-      if (!iconRobotsData.containsKey(dir)) {
-        iconRobotsData += dir to root.fork(path, path)
+    val robotFile = findRobotsFileName(file) ?: return false
+    if (!iconRobotsData.containsKey(robotFile)) synchronized(this) {
+      if (!iconRobotsData.containsKey(robotFile)) {
+        iconRobotsData += robotFile to root.fork(robotFile.toPath(), robotFile.toPath())
       }
     }
-    return iconRobotsData[dir]!!.getImageSyncFlags(file.toPath()).block()
+    return iconRobotsData.getValue(robotFile).getImageSyncFlags(file.toPath()).block()
   }
+
+  private fun findRobotsFileName(file: File): File? =
+    if (file.isDirectory && File(file, ROBOTS_FILE_NAME).exists()) {
+      file
+    }
+    else file.parentFile?.let(::findRobotsFileName)
 
   fun isSyncSkipped(file: File) = readIconRobotsData(file) {
     skipSync

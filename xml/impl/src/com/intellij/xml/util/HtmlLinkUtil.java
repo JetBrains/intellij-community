@@ -1,6 +1,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.html.HtmlTag;
@@ -54,7 +55,7 @@ public class HtmlLinkUtil {
               if (element1 instanceof XmlTag) {
                 final XmlTag tag = (XmlTag)element1;
                 String tagName = tag.getLocalName();
-                if (element1 instanceof HtmlTag || tag.getNamespacePrefix().length() > 0) tagName = tagName.toLowerCase();
+                if (element1 instanceof HtmlTag || tag.getNamespacePrefix().length() > 0) tagName = StringUtil.toLowerCase(tagName);
                 if (LINK.equalsIgnoreCase(tagName)) {
                   tagProcessor.process((XmlTag)element1);
                 }

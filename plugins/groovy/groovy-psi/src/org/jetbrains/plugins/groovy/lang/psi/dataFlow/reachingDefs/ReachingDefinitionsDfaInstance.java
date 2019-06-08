@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 
 import java.util.Arrays;
@@ -34,11 +34,5 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
         m.registerDef(varInsn, num);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public DefinitionMap initial() {
-    return new DefinitionMap();
   }
 }

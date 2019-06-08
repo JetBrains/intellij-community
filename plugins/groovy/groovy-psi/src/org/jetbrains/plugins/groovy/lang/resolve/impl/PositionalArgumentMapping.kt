@@ -3,10 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
-import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 
 class PositionalArgumentMapping(
   method: PsiMethod,
@@ -46,6 +43,11 @@ class PositionalArgumentMapping(
       }
       return positionalParametersDistance(map, context)
     }
+
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
+    val map = argumentToParameter ?: return emptyMap()
+    return highlightApplicabilities(map, substitutor, context)
+  }
 }
 
 // foo(a?, b, c?, d?, e)

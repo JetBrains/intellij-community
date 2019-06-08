@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -23,7 +23,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +71,7 @@ public class PluginInstaller {
     List<String> hosts = ContainerUtil.newSmartList();
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
-    Map<PluginId, IdeaPluginDescriptor> allPlugins = ContainerUtil.newHashMap();
+    Map<PluginId, IdeaPluginDescriptor> allPlugins = new HashMap<>();
     for (String host : hosts) {
       try {
         List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, indicator);
@@ -203,10 +202,9 @@ public class PluginInstaller {
     }
 
     Ref<IdeaPluginDescriptor> toDisable = Ref.create(null);
-    Optional<PluginReplacement> replacement = StreamEx.of(PluginReplacement.EP_NAME.getExtensions())
-      .findFirst(r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
-    if (replacement.isPresent()) {
-      PluginReplacement pluginReplacement = replacement.get();
+    PluginReplacement pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.getExtensions(),
+      r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
+    if (pluginReplacement != null) {
       IdeaPluginDescriptor oldPlugin = PluginManager.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
       if (oldPlugin == null) {
         LOG.warn("Plugin with id '" + pluginReplacement.getOldPluginDescriptor().getPluginId() + "' not found");
@@ -228,7 +226,7 @@ public class PluginInstaller {
       synchronized (ourLock) {
         downloader.install();
       }
-      pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
+      pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
       if (!toDisable.isNull()) {
         pluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
       }

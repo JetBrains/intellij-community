@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
@@ -54,7 +54,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -67,7 +67,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import one.util.streamex.StreamEx;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +86,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -130,7 +130,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private static final AtomicInteger ourOpenFilesSetModificationCount = new AtomicInteger();
 
   static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = ourOpenFilesSetModificationCount::get;
-
+  private final List<EditorComposite> myOpenedEditors = new CopyOnWriteArrayList<>();
 
   public FileEditorManagerImpl(@NotNull Project project, DockManager dockManager) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
@@ -883,6 +883,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
 
         compositeRef.set(composite);
+        myOpenedEditors.add(composite);
       }
 
       final EditorWithProviderComposite composite = compositeRef.get();
@@ -926,8 +927,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         if (focusEditor) {
           //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
           window.setAsCurrentWindow(true);
-          ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+          Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
+          if (windowAncestor != null &&
+              windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
+          }
         }
       }
 
@@ -1046,6 +1051,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite == null) {
       final List<EditorWithProviderComposite> composites = getEditorComposites(file);
@@ -1249,17 +1255,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public boolean isFileOpen(@NotNull final VirtualFile file) {
-    return !getEditorComposites(file).isEmpty();
+    return ContainerUtil.exists(myOpenedEditors, composite -> composite.getFile().equals(file));
   }
 
   @Override
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    Set<VirtualFile> openFiles = new THashSet<>();
-    for (EditorsSplitters each : getAllSplitters()) {
-      ContainerUtil.addAll(openFiles, each.getOpenFiles());
-    }
-    return VfsUtilCore.toVirtualFileArray(openFiles);
+    Set<VirtualFile> files = new HashSet<>();
+    myOpenedEditors.forEach(composite -> files.add(composite.getFile()));
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   @Override
@@ -1317,6 +1321,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @Nullable
   public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
@@ -1330,8 +1335,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull final VirtualFile file) {
-    assertReadAccess();
-
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite != null) {
       return Pair.create(composite.getEditors(), composite.getProviders());
@@ -1347,7 +1351,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public FileEditor[] getEditors(@NotNull VirtualFile file) {
-    assertReadAccess();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     if (file instanceof BackedVirtualFile) file = ((BackedVirtualFile)file).getOriginFile();
 
@@ -1366,13 +1370,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @NotNull
   @Override
   public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
-    List<EditorWithProviderComposite> editorComposites = getEditorComposites(file);
-    if (editorComposites.isEmpty()) return EMPTY_EDITOR_ARRAY;
-    List<FileEditor> editors = new ArrayList<>();
-    for (EditorWithProviderComposite composite : editorComposites) {
-      ContainerUtil.addAll(editors, composite.getEditors());
-    }
-    return editors.toArray(new FileEditor[0]);
+    List<FileEditor> result = new ArrayList<>();
+    myOpenedEditors.forEach(composite -> {
+      if (composite.getFile().equals(file)) ContainerUtil.addAll(result, composite.myEditors);
+    });
+    return result.toArray(new FileEditor[0]);
   }
 
   @Nullable
@@ -1397,28 +1399,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public FileEditor[] getAllEditors() {
-    assertReadAccess();
     List<FileEditor> result = new ArrayList<>();
-    final Set<EditorsSplitters> allSplitters = getAllSplitters();
-    for (EditorsSplitters splitter : allSplitters) {
-      final EditorWithProviderComposite[] editorsComposites = splitter.getEditorsComposites();
-      for (EditorWithProviderComposite editorsComposite : editorsComposites) {
-        final FileEditor[] editors = editorsComposite.getEditors();
-        ContainerUtil.addAll(result, editors);
-      }
-    }
+    myOpenedEditors.forEach(composite -> ContainerUtil.addAll(result, composite.myEditors));
     return result.toArray(new FileEditor[0]);
   }
 
 
   @NotNull
   public List<JComponent> getTopComponents(@NotNull FileEditor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     return composite != null ? composite.getTopComponents(editor) : Collections.emptyList();
   }
 
   @Override
   public void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.addTopComponent(editor, component);
@@ -1427,6 +1423,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.removeTopComponent(editor, component);
@@ -1435,6 +1432,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.addBottomComponent(editor, component);
@@ -1443,6 +1441,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite composite = getEditorComposite(editor);
     if (composite != null) {
       composite.removeBottomComponent(editor, component);
@@ -1623,6 +1622,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   void disposeComposite(@NotNull EditorWithProviderComposite editor) {
+    myOpenedEditors.remove(editor);
+
     if (getAllEditors().length == 0) {
       setCurrentWindow(null);
     }
@@ -1863,7 +1864,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     private void replaceEditors(Map<EditorWithProviderComposite, Pair<VirtualFile, Integer>> replacements) {
       if (replacements.isEmpty()) return;
-
+      
       for (EditorWindow eachWindow : getWindows()) {
         EditorWithProviderComposite selected = eachWindow.getSelectedEditor();
         EditorWithProviderComposite[] editors = eachWindow.getEditors();

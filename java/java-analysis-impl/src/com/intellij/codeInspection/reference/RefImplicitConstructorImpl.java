@@ -55,7 +55,8 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
 
   @Override
   public boolean isValid() {
-    return ReadAction.compute(getOwnerClass()::isValid).booleanValue();
+    RefClass ownerClass = getOwnerClass();
+    return ownerClass != null && ReadAction.compute(ownerClass::isValid).booleanValue();
   }
 
   @NotNull

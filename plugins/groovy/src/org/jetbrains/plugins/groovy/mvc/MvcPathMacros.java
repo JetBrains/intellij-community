@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -19,7 +18,7 @@ public class MvcPathMacros {
   public MvcPathMacros() {
     Set<String> macroNames = PathMacros.getInstance().getUserMacroNames();
     for (String framework : ContainerUtil.ar("grails", "griffon")) {
-      String name = "USER_HOME_" + framework.toUpperCase(Locale.ENGLISH);
+      String name = "USER_HOME_" + StringUtil.toUpperCase(framework);
       // OK, it may appear/disappear during the application lifetime, but we ignore that for now. Restart will help anyway
       if (!macroNames.contains(name)) {
         PathMacros.getInstance().addLegacyMacro(name, StringUtil.trimEnd(getSdkWorkDirParent(framework), "/"));

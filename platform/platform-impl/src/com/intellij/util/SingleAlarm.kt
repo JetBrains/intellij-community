@@ -34,13 +34,20 @@ class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
     }
   }
 
+  /**
+   * Cancel doesn't interrupt already running task.
+   */
   fun cancel() {
     cancelAllRequests()
   }
 
-  fun cancelAndRequest() {
+  /**
+   * Cancel doesn't interrupt already running task.
+   */
+  @JvmOverloads
+  fun cancelAndRequest(forceRun: Boolean = false) {
     if (!isDisposed) {
-      cancelAllAndAddRequest(task, delay, modalityState)
+      cancelAllAndAddRequest(task, if (forceRun) 0 else delay, modalityState)
     }
   }
 

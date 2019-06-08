@@ -8,7 +8,9 @@ import groovy.io.FileType
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.ZipFileSet
 import org.apache.tools.ant.types.resources.FileProvider
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledWhiteListProvider
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -129,6 +131,8 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util")
       withModule("intellij.platform.util.rt", "util.jar")
       withModule("intellij.platform.util.classLoader", "util.jar")
+      withModule("intellij.platform.util.concurrency")
+
       withModule("intellij.platform.extensions")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
@@ -311,7 +315,7 @@ class DistributionJARsBuilder {
   }
 
   private void buildThirdPartyLibrariesList() {
-    buildContext.messages.block("Generate table of licenses for used third-party libraries") {
+    buildContext.executeStep("Generate table of licenses for used third-party libraries", BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP) {
       def generator = LibraryLicensesListGenerator.create(buildContext.messages,
                                                           buildContext.project,
                                                           buildContext.productProperties.allLibraryLicenses,
@@ -345,8 +349,14 @@ class DistributionJARsBuilder {
       def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
+    if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
+      def whiteList = StatisticsRecorderBundledWhiteListProvider.downloadWhiteList(buildContext)
+      layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', whiteList.absolutePath)
+    }
 
+    buildContext.messages.block("Build platform JARs in lib directory") {
     buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, [], platform.moduleJars, platform.testModuleJars) // Android Studio
+    }
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -370,20 +380,38 @@ class DistributionJARsBuilder {
   }
 
   private void buildBundledPlugins() {
-    def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
-    buildPlugins(layoutBuilder, getPluginsByModules(buildContext, productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
+    def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
+    buildContext.messages.block("Build bundled plugins") {
+      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll/plugins")
+    }
     usedModules.addAll(layoutBuilder.usedModules)
+  }
+
+  private boolean satisfiesBundlingRequirements(PluginLayout plugin, @Nullable OsFamily osFamily) {
+    def bundlingRestrictions = plugin.bundlingRestrictions
+    if (!buildContext.applicationInfo.isEAP && bundlingRestrictions.includeInEapOnly) {
+      return false
+    }
+    osFamily == null ? bundlingRestrictions.supportedOs == OsFamily.ALL
+                     : bundlingRestrictions.supportedOs != OsFamily.ALL && bundlingRestrictions.supportedOs.contains(osFamily)
   }
 
   private void buildOsSpecificBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
-    for (osFamily in OsFamily.values()) {
-      def osSpecificPluginModules = productLayout.bundledOsPluginModules[osFamily]
-      if (osSpecificPluginModules) {
+    for (OsFamily osFamily in OsFamily.values()) {
+      List<PluginLayout> osSpecificPlugins =
+        getPluginsByModules(buildContext, productLayout.bundledOsPluginModules[osFamily] ?: []) +
+        getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
+          satisfiesBundlingRequirements(it, osFamily)
+        }
+
+      if (!osSpecificPlugins.isEmpty() && buildContext.shouldBuildDistributionForOS(osFamily.osId)) {
         def layoutBuilder = createLayoutBuilder()
-        buildPlugins(layoutBuilder, getPluginsByModules(buildContext, osSpecificPluginModules),
-                     "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        buildContext.messages.block("Build bundled plugins for $osFamily.osName") {
+          buildPlugins(layoutBuilder, osSpecificPlugins,
+                       "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        }
         usedModules.addAll(layoutBuilder.usedModules)
       }
     }
@@ -852,11 +880,11 @@ class DistributionJARsBuilder {
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
     def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", 
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>",
                                                         "<mouse-shortcut keystroke=\"to be alt shift button1\"/>")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt button1\"/>")
-    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", 
+    defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>",
                                                         "<mouse-shortcut keystroke=\"alt shift button1\"/>")
     def patchedKeyMapDir = new File(buildContext.paths.temp, "patched-keymap")
     def targetFile = new File(patchedKeyMapDir, "keymaps/\$default.xml")

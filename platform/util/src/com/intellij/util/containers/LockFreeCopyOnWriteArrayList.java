@@ -238,11 +238,11 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    */
   @NotNull
   @Override
-  @SuppressWarnings("unchecked")
   public <T> T[] toArray(@NotNull T[] a) {
     Object[] elements = array;
     int len = elements.length;
     if (a.length < len) {
+      //noinspection unchecked
       return (T[])Arrays.copyOf(elements, len, a.getClass());
     }
     System.arraycopy(elements, 0, a, 0, len);
@@ -254,8 +254,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
 
   // Positional Access Operations
 
-  @SuppressWarnings("unchecked")
   private E get(@NotNull Object[] a, int index) {
+    //noinspection unchecked
     return (E)a[index];
   }
 
@@ -911,21 +911,21 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public E next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
       lastRet = cursor;
+      //noinspection unchecked
       return (E)snapshot[cursor++];
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public E previous() {
       if (!hasPrevious()) {
         throw new NoSuchElementException();
       }
+      //noinspection unchecked
       return (E)snapshot[lastRet = --cursor];
     }
 
@@ -944,7 +944,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       if (lastRet < 0) {
         throw new NoSuchElementException();
       }
-      @SuppressWarnings("unchecked")
+
+      //noinspection unchecked
       E e = (E)snapshot[lastRet];
       lastRet = -1;
       LockFreeCopyOnWriteArrayList.this.remove(e);

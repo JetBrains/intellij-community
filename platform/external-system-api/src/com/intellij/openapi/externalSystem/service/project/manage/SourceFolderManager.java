@@ -19,7 +19,8 @@ public interface SourceFolderManager {
   void addSourceFolder(@NotNull Module module,
                        @NotNull String url,
                        @NotNull JpsModuleSourceRootType<?> type,
-                       @NotNull String packagePrefix);
+                       @NotNull String packagePrefix,
+                       boolean generated);
 
   void removeSourceFolders(@NotNull Module module);
 }

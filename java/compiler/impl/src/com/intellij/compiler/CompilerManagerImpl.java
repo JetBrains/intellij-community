@@ -28,6 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,7 +47,6 @@ import org.jetbrains.jps.javac.ast.api.JavacFileData;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.Semaphore;
@@ -83,7 +84,9 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensionList(project)) {
-      addCompiler(new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project), PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
+      addCompiler(
+        new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project),
+                                       PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
     }
     addCompilableFileType(StdFileTypes.JAVA);
 
@@ -155,18 +158,14 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   @NotNull
   public <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass) {
-    return getCompilers(compilerClass, CompilerFilter.ALL);
-  }
-
-  @NotNull
-  private <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
     for (final Compiler item : myCompilers) {
-      if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
-        compilers.add((T)item);
+      T concreteCompiler = ObjectUtils.tryCast(item, compilerClass);
+      if (concreteCompiler != null) {
+        compilers.add(concreteCompiler);
       }
     }
-    final T[] array = (T[])Array.newInstance(compilerClass, compilers.size());
+    final T[] array = ArrayUtil.newArray(compilerClass, compilers.size());
     return compilers.toArray(array);
   }
 
@@ -202,7 +201,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @NotNull
-  private List<CompileTask> getCompileTasks(@NotNull List<CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
+  private List<CompileTask> getCompileTasks(@NotNull List<? extends CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
     List<CompileTask> beforeTasks = new ArrayList<>(taskList);
     for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
       if (extension.myExecutionPhase == phase) {
@@ -362,12 +361,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public Collection<ClassObject> compileJavaCode(List<String> options,
-                                                 Collection<File> platformCp,
-                                                 Collection<File> classpath,
-                                                 Collection<File> upgradeModulePath,
-                                                 Collection<File> modulePath,
-                                                 Collection<File> sourcePath,
-                                                 Collection<File> files,
+                                                 Collection<? extends File> platformCp,
+                                                 Collection<? extends File> classpath,
+                                                 Collection<? extends File> upgradeModulePath,
+                                                 Collection<? extends File> modulePath,
+                                                 Collection<? extends File> sourcePath,
+                                                 Collection<? extends File> files,
                                                  File outputDir) throws IOException, CompilationException {
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
@@ -442,11 +441,10 @@ public class CompilerManagerImpl extends CompilerManager {
   private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
     switch (kind) {
       case ERROR: return CompilerMessageCategory.ERROR;
-      case MANDATORY_WARNING: return CompilerMessageCategory.WARNING;
+      case MANDATORY_WARNING:
       case WARNING: return CompilerMessageCategory.WARNING;
-      case NOTE: return CompilerMessageCategory.INFORMATION;
-      default:
-        return CompilerMessageCategory.INFORMATION;
+      case NOTE:
+      default: return CompilerMessageCategory.INFORMATION;
     }
   }
 

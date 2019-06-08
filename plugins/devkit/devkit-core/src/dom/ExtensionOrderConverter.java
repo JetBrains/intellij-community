@@ -95,7 +95,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
         }
         assert wordIndices.size() == 2 : wordIndices.toString();
         TextRange idSubPartRange = wordIndices.get(1).shiftRight(range.getStartOffset());
-        return ContainerUtil.list(new OrderReferencedIdPsiReference(getElement(), idSubPartRange, idSubPart, extension));
+        return Collections.singletonList(new OrderReferencedIdPsiReference(getElement(), idSubPartRange, idSubPart, extension));
       }
     }.getPsiReferences();
   }

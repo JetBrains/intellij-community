@@ -3,8 +3,8 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ContainerUtil.newArrayList
+import gnu.trove.THashSet
 import org.junit.Assert
 import org.junit.Test
 
@@ -31,7 +31,7 @@ class UsageDescriptorUnitTest {
   }
 
   private fun doTestUniqueFilter(expectedSize: Int, all: List<UsageDescriptor>) {
-    val unique = ContainerUtil.newHashSet<UsageDescriptor>(all)
+    val unique = THashSet<UsageDescriptor>(all)
     Assert.assertTrue(unique.size == expectedSize)
     for (descriptor in all) {
       Assert.assertTrue(unique.contains(descriptor))
@@ -62,7 +62,7 @@ class UsageDescriptorUnitTest {
   @Test
   fun `test filter unique usage descriptors with data`() {
     doTestUniqueFilter(2, newArrayList<UsageDescriptor>(
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 123)),
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 123)),
       UsageDescriptor("abcd", 1)
     ))
   }
@@ -70,32 +70,32 @@ class UsageDescriptorUnitTest {
   @Test
   fun `test filter unique usage descriptors with different data`() {
     doTestUniqueFilter(2, newArrayList<UsageDescriptor>(
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 123)),
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 122))
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 123)),
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 122))
     ))
   }
 
   @Test
   fun `test filter unique usage descriptors with the same data`() {
     doTestUniqueFilter(1, newArrayList<UsageDescriptor>(
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 123)),
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 123))
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 123)),
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 123))
     ))
   }
 
   @Test
   fun `test filter unique usage descriptors with the same value and different data`() {
     doTestUniqueFilter(2, newArrayList<UsageDescriptor>(
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 123)),
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 12))
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 123)),
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 12))
     ))
   }
 
   @Test
   fun `test filter unique usage descriptors with different value and same data`() {
     doTestUniqueFilter(2, newArrayList<UsageDescriptor>(
-      UsageDescriptor("abcd", 1, FeatureUsageData().addData("place", 123)),
-      UsageDescriptor("abcd", 2, FeatureUsageData().addData("place", 123))
+      UsageDescriptor("abcd", 1, FeatureUsageData().addData("foo", 123)),
+      UsageDescriptor("abcd", 2, FeatureUsageData().addData("foo", 123))
     ))
   }
 }

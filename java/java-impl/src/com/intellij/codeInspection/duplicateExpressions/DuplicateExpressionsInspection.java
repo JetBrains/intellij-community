@@ -64,8 +64,9 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       public void visitExpressionImpl(PsiExpression expression) {
-        if (ComplexityCalculator.isDefinitelySimple(expression, complexityThreshold) ||
-            SideEffectCalculator.isDefinitelyWithSideEffect(expression)) {
+        if (ComplexityCalculator.isDefinitelySimple(expression) ||
+            SideEffectCalculator.isDefinitelyWithSideEffect(expression) ||
+            expression instanceof PsiLambdaExpression) {
           return;
         }
         DuplicateExpressionsContext context = DuplicateExpressionsContext.getOrCreateContext(expression, session);
@@ -121,7 +122,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
         });
       }
 
-      public void registerProblems(@NotNull List<PsiExpression> occurrences, @NotNull PsiCodeBlock body) {
+      public void registerProblems(@NotNull List<? extends PsiExpression> occurrences, @NotNull PsiCodeBlock body) {
         if (occurrences.size() > 1 && areSafeToExtract(occurrences, body)) {
           Map<PsiExpression, List<PsiVariable>> reusableVariables = collectReusableVariables(occurrences);
           for (PsiExpression occurrence : occurrences) {
@@ -147,7 +148,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     };
   }
 
-  private static boolean areSafeToExtract(@NotNull List<PsiExpression> occurrences, @NotNull PsiCodeBlock body) {
+  private static boolean areSafeToExtract(@NotNull List<? extends PsiExpression> occurrences, @NotNull PsiCodeBlock body) {
     if (occurrences.isEmpty()) return false;
     Project project = occurrences.get(0).getProject();
     Set<PsiVariable> variables = collectVariablesSafeToExtract(occurrences);
@@ -177,7 +178,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
   }
 
   @Nullable
-  private static Set<PsiVariable> collectVariablesSafeToExtract(@NotNull List<PsiExpression> occurrences) {
+  private static Set<PsiVariable> collectVariablesSafeToExtract(@NotNull List<? extends PsiExpression> occurrences) {
     Set<PsiVariable> variables = new THashSet<>();
     Ref<Boolean> refFailed = new Ref<>(Boolean.FALSE);
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
@@ -207,7 +208,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
   }
 
   @NotNull
-  private static Map<PsiExpression, List<PsiVariable>> collectReusableVariables(@NotNull List<PsiExpression> occurrences) {
+  private static Map<PsiExpression, List<PsiVariable>> collectReusableVariables(@NotNull List<? extends PsiExpression> occurrences) {
     if (occurrences.size() <= 1) {
       return Collections.emptyMap();
     }
@@ -234,7 +235,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
   }
 
   private static boolean canReplaceOtherOccurrences(@NotNull PsiExpression originalOccurrence,
-                                                    @NotNull List<PsiExpression> occurrences,
+                                                    @NotNull List<? extends PsiExpression> occurrences,
                                                     @NotNull PsiVariable variable) {
     return occurrences.stream().anyMatch(occurrence -> occurrence != originalOccurrence && canReplaceWith(occurrence, variable));
   }

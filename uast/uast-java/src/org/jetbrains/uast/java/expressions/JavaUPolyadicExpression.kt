@@ -24,11 +24,11 @@ import org.jetbrains.uast.java.internal.PsiArrayToUElementListMappingView
 
 
 class JavaUPolyadicExpression(
-  override val psi: PsiPolyadicExpression,
+  override val sourcePsi: PsiPolyadicExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPolyadicExpression {
 
-  override val operands: List<UExpression> = PsiArrayToUElementListMappingView(psi.operands) { JavaConverter.convertOrEmpty(it, this) }
+  override val operands: List<UExpression> = PsiArrayToUElementListMappingView(sourcePsi.operands) { JavaConverter.convertOrEmpty(it, this) }
 
-  override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }
+  override val operator: UastBinaryOperator by lz { sourcePsi.operationTokenType.getOperatorType() }
 }

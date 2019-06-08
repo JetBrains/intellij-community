@@ -19,6 +19,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
@@ -49,7 +50,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public TemplateManagerImpl(@NotNull Project project, @NotNull MessageBus messageBus) {
     myProject = project;
     myEventPublisher = messageBus.syncPublisher(TEMPLATE_STARTED_TOPIC);
-    final EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
+    EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
@@ -92,9 +93,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   @Nullable
   public static TemplateState getTemplateState(@NotNull Editor editor) {
-    TemplateState templateState = editor.getUserData(TEMPLATE_STATE_KEY);
+    UserDataHolder stateHolder = InjectedLanguageUtil.getTopLevelEditor(editor);
+    TemplateState templateState = stateHolder.getUserData(TEMPLATE_STATE_KEY);
     if (templateState != null && templateState.isDisposed()) {
-      editor.putUserData(TEMPLATE_STATE_KEY, null);
+      stateHolder.putUserData(TEMPLATE_STATE_KEY, null);
       return null;
     }
     return templateState;
@@ -103,17 +105,21 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   static void clearTemplateState(@NotNull Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
+      Editor stateEditor = prevState.getEditor();
+      if (stateEditor != null) {
+        stateEditor.putUserData(TEMPLATE_STATE_KEY, null);
+      }
       Disposer.dispose(prevState);
-      editor.putUserData(TEMPLATE_STATE_KEY, null);
     }
   }
 
   @NotNull
   private TemplateState initTemplateState(@NotNull Editor editor) {
-    clearTemplateState(editor);
-    TemplateState state = new TemplateState(myProject, editor);
+    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+    clearTemplateState(topLevelEditor);
+    TemplateState state = new TemplateState(myProject, topLevelEditor);
     Disposer.register(this, state);
-    editor.putUserData(TEMPLATE_STATE_KEY, state);
+    topLevelEditor.putUserData(TEMPLATE_STATE_KEY, state);
     return state;
   }
 
@@ -141,7 +147,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public void startTemplate(@NotNull Editor editor,
                             @NotNull Template template,
                             TemplateEditingListener listener,
-                            final PairProcessor<String, String> processor) {
+                            final PairProcessor<? super String, ? super String> processor) {
     startTemplate(editor, null, template, true, listener, processor, null);
   }
 
@@ -150,7 +156,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
                              final Template template,
                              boolean inSeparateCommand,
                              TemplateEditingListener listener,
-                             final PairProcessor<String, String> processor,
+                             final PairProcessor<? super String, ? super String> processor,
                              final Map<String, String> predefinedVarValues) {
     final TemplateState templateState = initTemplateState(editor);
 
@@ -236,7 +242,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   @Nullable
-  public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<String, String> processor) {
+  public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<? super String, ? super String> processor) {
     if (editor.getSelectionModel().hasSelection()) {
       return null;
     }
@@ -245,24 +251,20 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (file == null || file instanceof PsiCompiledElement) return null;
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
-
     List<CustomLiveTemplate> customCandidates = ContainerUtil.findAll(CustomLiveTemplate.EP_NAME.getExtensions(), customLiveTemplate ->
       shortcutChar == customLiveTemplate.getShortcut() &&
-      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)));
+      (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)) &&
+      isApplicable(customLiveTemplate, editor, file));
     if (!customCandidates.isEmpty()) {
       int caretOffset = editor.getCaretModel().getOffset();
-      PsiFile fileCopy = insertDummyIdentifierWithCache(file, caretOffset, caretOffset, "").getFile();
-      Document document = editor.getDocument();
-
-      for (final CustomLiveTemplate customLiveTemplate : customCandidates) {
-        if (isApplicable(customLiveTemplate, editor, fileCopy)) {
-          final String key = customLiveTemplate.computeTemplateKey(new CustomTemplateCallback(editor, fileCopy));
-          if (key != null) {
-            int offsetBeforeKey = caretOffset - key.length();
-            CharSequence text = document.getImmutableCharSequence();
-            if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-              return () -> customLiveTemplate.expand(key, new CustomTemplateCallback(editor, file));
-            }
+      CustomTemplateCallback templateCallback = new CustomTemplateCallback(editor, file);
+      for (CustomLiveTemplate customLiveTemplate : customCandidates) {
+        String key = customLiveTemplate.computeTemplateKey(templateCallback);
+        if (key != null) {
+          int offsetBeforeKey = caretOffset - key.length();
+          CharSequence text = editor.getDocument().getImmutableCharSequence();
+          if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
+            return () -> customLiveTemplate.expand(key, templateCallback);
           }
         }
       }
@@ -347,7 +349,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   @Nullable
   public Runnable startNonCustomTemplates(final Map<TemplateImpl, String> template2argument,
                                           final Editor editor,
-                                          @Nullable final PairProcessor<String, String> processor) {
+                                          @Nullable final PairProcessor<? super String, ? super String> processor) {
     final int caretOffset = editor.getCaretModel().getOffset();
     final Document document = editor.getDocument();
     final CharSequence text = document.getCharsSequence();
@@ -395,7 +397,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   public void startTemplateWithPrefix(final Editor editor,
                                       final TemplateImpl template,
-                                      @Nullable final PairProcessor<String, String> processor,
+                                      @Nullable final PairProcessor<? super String, ? super String> processor,
                                       @Nullable String argument) {
     final int caretOffset = editor.getCaretModel().getOffset();
     String key = template.getKey();
@@ -413,7 +415,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public void startTemplateWithPrefix(final Editor editor,
                                       final TemplateImpl template,
                                       final int templateStart,
-                                      @Nullable final PairProcessor<String, String> processor,
+                                      @Nullable final PairProcessor<? super String, ? super String> processor,
                                       @Nullable final String argument) {
     final int caretOffset = editor.getCaretModel().getOffset();
     final TemplateState templateState = initTemplateState(editor);
@@ -530,7 +532,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
     Set<TemplateContextType> contextTypes = getApplicableContextTypes(file, offset);
 
-    final ArrayList<TemplateImpl> result = ContainerUtil.newArrayList();
+    final ArrayList<TemplateImpl> result = new ArrayList<>();
     for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
       if (!template.isDeactivated() && (!selectionOnly || template.isSelectionTemplate()) && isApplicable(template, contextTypes)) {
         result.add(template);
@@ -615,14 +617,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     Document document = offsetMap.getFile().getViewProvider().getDocument();
     assert document != null;
-    if (replacement.isEmpty() && startOffset == endOffset) {
-      PsiDocumentManager pdm = PsiDocumentManager.getInstance(offsetMap.getFile().getProject());
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        pdm.commitDocument(document);
-      }
-      if (pdm.isCommitted(document)) {
-        return offsetMap;
-      }
+    if (replacement.isEmpty() &&
+        startOffset == endOffset &&
+        PsiDocumentManager.getInstance(offsetMap.getFile().getProject()).isCommitted(document)) {
+      return offsetMap;
     }
 
     OffsetsInFile hostOffsets = offsetMap.toTopLevelFile();

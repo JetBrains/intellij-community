@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.execution.process.ColoredOutputTypeRegistry
  * @see com.intellij.execution.ui.ConsoleViewContentType#registerNewConsoleViewType
  */
-@SuppressWarnings({"JavadocReference"})
 public class ProcessOutputType extends Key {
   private final ProcessOutputType myStreamType;
 

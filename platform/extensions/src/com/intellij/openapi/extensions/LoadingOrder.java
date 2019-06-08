@@ -3,7 +3,6 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -115,8 +114,8 @@ public class LoadingOrder {
     if (orderable.size() < 2) return;
 
     // our graph is pretty sparse so do benefit from the fact
-    final Map<String, Orderable> map = ContainerUtil.newLinkedHashMap();
-    final Map<Orderable, LoadingOrder> cachedMap = ContainerUtil.newLinkedHashMap();
+    final Map<String, Orderable> map = new LinkedHashMap<>();
+    final Map<Orderable, LoadingOrder> cachedMap = new LinkedHashMap<>();
     final Set<Orderable> first = new LinkedHashSet<>(1);
     final Set<Orderable> hasBefore = new LinkedHashSet<>(orderable.size());
     for (Orderable o : orderable) {
@@ -136,7 +135,7 @@ public class LoadingOrder {
       @NotNull
       @Override
       public Collection<Orderable> getNodes() {
-        List<Orderable> list = ContainerUtil.newArrayList(orderable);
+        List<Orderable> list = new ArrayList<>(orderable);
         Collections.reverse(list);
         return list;
       }

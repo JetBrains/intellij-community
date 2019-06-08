@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RecordStateStatisticsEventLogAction extends AnAction {
   private static final FUStateUsagesLogger myStatesLogger = new FUStateUsagesLogger();
-  private static final EventLogExternalSettingsService myEventLogSettingsService = EventLogExternalSettingsService.getInstance();
+  private static final EventLogExternalSettingsService myEventLogSettingsService = EventLogExternalSettingsService.getFeatureUsageSettings();
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

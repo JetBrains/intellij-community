@@ -54,4 +54,8 @@ public abstract class UniqueVFilePathBuilder {
 
   @NotNull
   public abstract String getUniqueVirtualFilePathWithinOpenedFileEditors(@NotNull Project project, @NotNull VirtualFile vFile);
+
+  public boolean hasFilesWithSameName(@NotNull Project project, @NotNull VirtualFile vFile) {
+    return false; // compatibility;
+  }
 }

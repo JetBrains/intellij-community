@@ -50,31 +50,20 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
   }
 
   protected boolean isEnabled(@NotNull VcsContext context) {
-    boolean result = false;
     Project project = context.getProject();
+    if (project == null) return false;
 
-    if (project != null) {
-      Pair<FilePath, VirtualFile> pair = getPathAndParentFile(context);
+    Pair<FilePath, VirtualFile> pair = getPathAndParentFile(context);
+    if (pair.first == null || pair.second == null) return false;
+    if (!AbstractVcs.fileInVcsByFileStatus(project, pair.second)) return false;
 
-      if (pair.first != null && pair.second != null) {
-        result = isEnabled(project, pair.first, pair.second);
-      }
-    }
-
-    return result;
+    return canShowNewFileHistory(project, pair.first) || canShowOldFileHistory(project, pair.first, pair.second);
   }
 
-  private static boolean isEnabled(@NotNull Project project, @NotNull FilePath path, @NotNull VirtualFile fileOrParent) {
-    boolean fileInVcs = AbstractVcs.fileInVcsByFileStatus(project, fileOrParent);
-    if (!fileInVcs) return false;
-
+  private static boolean canShowOldFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull VirtualFile fileOrParent) {
     AbstractVcs vcs = ChangesUtil.getVcsForFile(fileOrParent, project);
     if (vcs == null) return false;
-
-    return canShowNewFileHistory(project, path) || canShowOldFileHistory(vcs, path, fileOrParent);
-  }
-
-  private static boolean canShowOldFileHistory(@NotNull AbstractVcs vcs, @NotNull FilePath path, @NotNull VirtualFile fileOrParent) {
+    
     VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     return provider != null &&
            (provider.supportsHistoryForDirectories() || !path.isDirectory()) &&
@@ -83,7 +72,7 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
 
   private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
-    return historyProvider != null && historyProvider.canShowFileHistory(project, path);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, path, null);
   }
 
   @NotNull

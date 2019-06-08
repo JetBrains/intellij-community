@@ -200,4 +200,10 @@ public class CandidateInfo implements JavaResolveResult {
     result = 31 * result + (myPackagePrefixPackageReference ? 1 : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{element=" + myCandidate + ", substitutor=" + mySubstitutor + "}";
+  }
+
 }

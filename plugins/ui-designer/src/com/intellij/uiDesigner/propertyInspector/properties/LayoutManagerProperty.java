@@ -2,7 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -31,21 +31,16 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
 
   private static class LayoutManagerEditor extends ComboBoxPropertyEditor<String> {
     LayoutManagerEditor() {
-      myCbx.setRenderer(new ListCellRendererWrapper<String>() {
-        @Override
-        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-          setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
-        }
-      });
+      myCbx.setRenderer(SimpleListCellRenderer.create("", LayoutManagerRegistry::getLayoutManagerDisplayName));
     }
 
     @Override
     public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
       if (UIFormXmlConstants.LAYOUT_XY.equals(value)) {
-        myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getLayoutManagerNames()));
+        myCbx.setModel(new DefaultComboBoxModel<>(LayoutManagerRegistry.getLayoutManagerNames()));
       }
       else {
-        myCbx.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
+        myCbx.setModel(new DefaultComboBoxModel<>(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
       }
       myCbx.setSelectedItem(value);
       return myCbx;

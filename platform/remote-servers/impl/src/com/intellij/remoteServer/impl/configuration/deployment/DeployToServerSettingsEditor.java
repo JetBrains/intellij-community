@@ -34,8 +34,8 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConnectionTester;
 import com.intellij.remoteServer.util.CloudBundle;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.ui.FormBuilder;
@@ -177,14 +177,11 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
 
       mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
       mySourceComboBox = new ComboBox<>(mySourceListModel);
-      mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
-        @Override
-        public void customize(JList list, DeploymentSource value, int index, boolean selected, boolean hasFocus) {
-          if (value == null) return;
-          setIcon(value.getIcon());
-          setText(value.getPresentableName());
-        }
-      });
+      mySourceComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+        if (value == null) return;
+        label.setIcon(value.getIcon());
+        label.setText(value.getPresentableName());
+      }));
       mySourceComboBox.addActionListener(e -> updateDeploymentSettingsEditor());
     }
 

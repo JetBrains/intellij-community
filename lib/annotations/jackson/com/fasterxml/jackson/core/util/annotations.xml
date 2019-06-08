@@ -5,4 +5,7 @@
   <item name='com.fasterxml.jackson.core.util.DefaultPrettyPrinter void writeObjectFieldValueSeparator(com.fasterxml.jackson.core.JsonGenerator) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='com.fasterxml.jackson.core.util.DefaultPrettyPrinter void writeStartObject(com.fasterxml.jackson.core.JsonGenerator) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>

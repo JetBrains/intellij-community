@@ -1,0 +1,5 @@
+cat <<END <<END2
+ABC
+END
+ABC
+END2

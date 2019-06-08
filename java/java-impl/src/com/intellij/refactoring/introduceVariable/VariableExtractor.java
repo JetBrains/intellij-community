@@ -2,6 +2,8 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -85,7 +87,7 @@ class VariableExtractor {
       commentTracker.markUnchanged(initializer);
       initializer = (PsiExpression)initializer.copy();
 
-      PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, myProject);
+      PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, newExpr);
       PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
 
       replaceOccurrences(newExpr);
@@ -235,11 +237,18 @@ class VariableExtractor {
   }
 
   @NotNull
-  private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final Project project) {
+  private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final PsiExpression expression) {
     PsiType type = selectedType.getType();
     if (type == null) {
       throw new IncorrectOperationException("Unexpected empty type pointer");
     }
+
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+    Project project = expression.getProject();
+    NullabilityAnnotationInfo nullabilityAnnotationInfo = containingClass != null 
+        ? NullableNotNullManager.getInstance(project).findExplicitNullability(containingClass) 
+        : null;
+
     final PsiAnnotation[] annotations = type.getAnnotations();
     return type.annotate(new TypeAnnotationProvider() {
       @NotNull
@@ -247,8 +256,17 @@ class VariableExtractor {
       public PsiAnnotation[] getAnnotations() {
         final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
         final Set<String> nullables = new HashSet<>();
-        nullables.addAll(manager.getNotNulls());
-        nullables.addAll(manager.getNullables());
+        Nullability nullability = nullabilityAnnotationInfo != null ? nullabilityAnnotationInfo.getNullability() : Nullability.UNKNOWN;
+        if (nullability == Nullability.UNKNOWN) {
+          nullables.addAll(manager.getNotNulls());
+          nullables.addAll(manager.getNullables());
+        }
+        else if (nullability == Nullability.NOT_NULL) {
+          nullables.addAll(manager.getNotNulls());
+        }
+        else if (nullability == Nullability.NULLABLE){
+          nullables.addAll(manager.getNullables());
+        }
         return Arrays.stream(annotations)
           .filter(annotation -> !nullables.contains(annotation.getQualifiedName()))
           .toArray(PsiAnnotation[]::new);
@@ -260,6 +278,14 @@ class VariableExtractor {
   private static PsiElement correctAnchor(PsiExpression expr,
                                           @NotNull PsiElement anchor,
                                           PsiExpression[] occurrences) {
+    if (anchor instanceof PsiSwitchLabelStatementBase) {
+      PsiSwitchBlock block = ((PsiSwitchLabelStatementBase)anchor).getEnclosingSwitchBlock();
+      if (block == null) return anchor;
+      anchor = block;
+      if (anchor instanceof PsiExpression) {
+        expr = (PsiExpression)anchor;
+      }
+    }
     PsiExpression firstOccurrence = StreamEx.of(occurrences).append(expr)
       .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
     if (anchor instanceof PsiWhileStatement) {
@@ -294,12 +320,6 @@ class VariableExtractor {
     }
     if (anchor.getParent() instanceof PsiSwitchLabeledRuleStatement) {
       return ExpressionUtils.getTopLevelExpression(expr);
-    }
-    if (anchor instanceof PsiSwitchLabelStatement) {
-      PsiSwitchBlock block = ((PsiSwitchLabelStatement)anchor).getEnclosingSwitchBlock();
-      if (block instanceof PsiSwitchStatement) {
-        return block;
-      }
     }
     if (RefactoringUtil.isLoopOrIf(anchor.getParent())) return anchor;
     PsiElement child = locateAnchor(anchor);

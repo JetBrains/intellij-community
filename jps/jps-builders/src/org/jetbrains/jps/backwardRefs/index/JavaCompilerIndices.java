@@ -69,7 +69,7 @@ public class JavaCompilerIndices {
 
       @Override
       public int getVersion() {
-        return 0;
+        return VERSION;
       }
     };
   }

@@ -176,7 +176,7 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   @Nullable
-  public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
+  public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<? super Library> addedLibraries,
                               final @Nullable LibrariesContainer librariesContainer) {
     Library newLibrary = createLibrary(rootModel, librariesContainer);
 

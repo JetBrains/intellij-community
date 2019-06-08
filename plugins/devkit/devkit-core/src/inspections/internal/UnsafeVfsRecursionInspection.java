@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
+
   private static final String VIRTUAL_FILE_CLASS_NAME = VirtualFile.class.getName();
   private static final String GET_CHILDREN_METHOD_NAME = "getChildren";
 
@@ -41,20 +42,23 @@ public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        Project project = expression.getProject();
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-
         PsiReferenceExpression methodRef = expression.getMethodExpression();
         if (!GET_CHILDREN_METHOD_NAME.equals(methodRef.getReferenceName())) return;
+
         PsiElement methodElement = methodRef.resolve();
         if (!(methodElement instanceof PsiMethod)) return;
         PsiMethod method = (PsiMethod)methodElement;
+
+        Project project = holder.getProject();
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+
         PsiClass aClass = method.getContainingClass();
         PsiClass virtualFileClass = facade.findClass(VIRTUAL_FILE_CLASS_NAME, GlobalSearchScope.allScope(project));
         if (!InheritanceUtil.isInheritorOrSelf(aClass, virtualFileClass, true)) return;
 
         PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
         if (containingMethod == null) return;
+
         String containingMethodName = containingMethod.getName();
         Ref<Boolean> result = Ref.create();
         containingMethod.accept(new JavaRecursiveElementVisitor() {

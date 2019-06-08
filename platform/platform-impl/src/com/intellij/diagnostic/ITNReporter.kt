@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
-import com.intellij.CommonBundle
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.hasOnlyUserName
 import com.intellij.credentialStore.isFulfilled
@@ -112,7 +111,7 @@ private fun onError(e: Exception, errorBean: ErrorBean, callback: Consumer<Submi
   ApplicationManager.getApplication().invokeLater {
     if (e is UpdateAvailableException) {
       val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
-      val title = CommonBundle.getWarningTitle()
+      val title = "Report Exception"
       val icon = Messages.getWarningIcon()
       // Android Studio: b/127990038
       if (parentComponent?.isShowing == true) Messages.showMessageDialog(parentComponent, message, title, icon)

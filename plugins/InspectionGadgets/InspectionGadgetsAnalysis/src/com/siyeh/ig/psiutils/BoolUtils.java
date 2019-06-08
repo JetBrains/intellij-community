@@ -101,10 +101,6 @@ public class BoolUtils {
       CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isEmpty").parameterCount(0)
     );
 
-  private static Predicate<PsiMethodCallExpression> withMinimalLanguageLevel(CallMatcher matcher, LanguageLevel level) {
-    return matcher.and(expression -> PsiUtil.getLanguageLevel(expression).isAtLeast(level));
-  }
-
   private static class PredicatedReplacement {
     Predicate<PsiMethodCallExpression> predicate;
     String name;
@@ -118,7 +114,7 @@ public class BoolUtils {
   private static final List<PredicatedReplacement> ourReplacements = new ArrayList<>();
   static {
     ourReplacements.add(new PredicatedReplacement(OPTIONAL_IS_EMPTY, "isPresent"));
-    ourReplacements.add(new PredicatedReplacement(withMinimalLanguageLevel(OPTIONAL_IS_PRESENT, LanguageLevel.JDK_11), "isEmpty"));
+    ourReplacements.add(new PredicatedReplacement(OPTIONAL_IS_PRESENT.withLanguageLevelAtLeast(LanguageLevel.JDK_11), "isEmpty"));
     ourReplacements.add(new PredicatedReplacement(STREAM_ANY_MATCH, "noneMatch"));
     ourReplacements.add(new PredicatedReplacement(STREAM_NONE_MATCH, "anyMatch"));
   }

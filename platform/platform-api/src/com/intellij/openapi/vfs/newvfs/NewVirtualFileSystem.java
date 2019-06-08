@@ -107,7 +107,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   /**
    * Returns {@code true} if {@code path} represents a directory with at least one child.
-   * Override if your file system can answer this question more efficiently (without enumerating children).
+   * Override if your file system can answer this question more efficiently (e.g. without enumerating all children).
    */
   public boolean hasChildren(@NotNull VirtualFile file) {
     return list(file).length != 0;

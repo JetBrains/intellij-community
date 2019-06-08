@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.ASTNode;
@@ -29,14 +15,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MockCodeStyleManager extends CodeStyleManager {
   private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();
@@ -53,27 +35,33 @@ public class MockCodeStyleManager extends CodeStyleManager {
   }
 
   public void clearFormattedFiles() {
-    myFormattedLinesForFile = ContainerUtil.newHashMap();
+    myFormattedLinesForFile = new HashMap<>();
   }
 
   @Override
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    assert(document != null);
-
     ChangedLines[] formattedLines = new ChangedLines[ranges.size()];
     int i = 0;
     for (TextRange range : ranges) {
-      int lineStart = document.getLineNumber(range.getStartOffset());
-      int lineEnd = document.getLineNumber(range.getEndOffset());
-      formattedLines[i++] = new ChangedLines(lineStart, lineEnd);
+      ChangedLines lines;
+      if (range.isEmpty()) {
+        lines = new ChangedLines(0,0);
+      }
+      else {
+        Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        assert document != null : file;
+        int lineStart = document.getLineNumber(range.getStartOffset());
+        int lineEnd = document.getLineNumber(range.getEndOffset());
+        lines = new ChangedLines(lineStart, lineEnd);
+      }
+      formattedLines[i++] = lines;
     }
 
     myFormattedLinesForFile.put(file, formattedLines);
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, 
+  public void reformatTextWithContext(@NotNull PsiFile file,
                                       @NotNull ChangedRangesInfo ranges) throws IncorrectOperationException {
     //in real world ranges are optimized before passing to formatter
     reformatText(file, ranges.allChangedRanges);
@@ -88,29 +76,32 @@ public class MockCodeStyleManager extends CodeStyleManager {
   @NotNull
   @Override
   public PsiElement reformat(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.reformat(...)");
+    reformatText(element.getContainingFile(), Collections.singletonList(element.getTextRange()));
+    return element;
   }
 
   @NotNull
   @Override
   public PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.reformat(...)");
+    return reformat(element);
   }
 
   @Override
   public PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.reformatRange(...)");
+    reformatText(element.getContainingFile(), startOffset, endOffset);
+    return element;
   }
 
   @Override
   public PsiElement reformatRange(@NotNull PsiElement element, int startOffset, int endOffset, boolean canChangeWhiteSpacesOnly)
     throws IncorrectOperationException {
-    throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.reformatRange(...)");
+    reformatText(element.getContainingFile(), startOffset, endOffset);
+    return element;
   }
 
   @Override
   public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.reformatText(...)");
+    reformatText(file, Collections.singletonList(new TextRange(startOffset, endOffset)));
   }
 
   @Override

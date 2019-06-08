@@ -36,10 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class XsltSupport {
 
@@ -67,15 +64,15 @@ public class XsltSupport {
 
     XPATH_AVT_MAP.put("element", new THashSet<>(Arrays.asList("name", "namespace")));
     XPATH_AVT_MAP.put("attribute", new THashSet<>(Arrays.asList("name", "namespace")));
-    XPATH_AVT_MAP.put("namespace", new THashSet<>(Arrays.asList("name")));
-    XPATH_AVT_MAP.put("processing-instruction", new THashSet<>(Arrays.asList("name")));
+    XPATH_AVT_MAP.put("namespace", new THashSet<>(Collections.singletonList("name")));
+    XPATH_AVT_MAP.put("processing-instruction", new THashSet<>(Collections.singletonList("name")));
 
     XPATH_AVT_MAP.put("number", new THashSet<>(
       Arrays.asList("format", "lang", "letter-value", "grouping-separator", "grouping-size", "ordinal")));
     XPATH_AVT_MAP.put("sort", new THashSet<>(Arrays.asList("lang", "data-type", "order", "case-order", "collation")));
 
-    XPATH_AVT_MAP.put("message", new THashSet<>(Arrays.asList("terminate")));
-    XPATH_AVT_MAP.put("value-of", new THashSet<>(Arrays.asList("separator")));
+    XPATH_AVT_MAP.put("message", new THashSet<>(Collections.singletonList("terminate")));
+    XPATH_AVT_MAP.put("value-of", new THashSet<>(Collections.singletonList("separator")));
 
     XPATH_AVT_MAP.put("result-document", new THashSet<>(Arrays.asList("format", "href", "method", "byte-order-mark",
                                                                       "cdata-section-elements", "doctype-public", "doctype-system",

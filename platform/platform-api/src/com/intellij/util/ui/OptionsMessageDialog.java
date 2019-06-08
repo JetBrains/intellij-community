@@ -63,6 +63,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
   }
 
   @Override
+  @NotNull
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout(15, 0));
     if (myIcon != null) {

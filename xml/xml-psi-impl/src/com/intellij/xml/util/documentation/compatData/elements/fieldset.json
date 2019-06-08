@@ -6,16 +6,20 @@
           "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Element/fieldset",
           "support": {
             "chrome": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://crbug.com/262679'>bug 262679</a>."
             },
             "chrome_android": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://crbug.com/262679'>bug 262679</a>."
             },
             "edge": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/4511145/'>bug 4511145</a>."
             },
             "edge_mobile": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://developer.microsoft.com/microsoft-edge/platform/issues/4511145/'>bug 4511145</a>."
             },
             "firefox": {
               "version_added": true
@@ -27,10 +31,12 @@
               "version_added": true
             },
             "opera": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://crbug.com/262679'>bug 262679</a>."
             },
             "opera_android": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://crbug.com/262679'>bug 262679</a>."
             },
             "safari": {
               "version_added": true
@@ -39,10 +45,12 @@
               "version_added": true
             },
             "samsunginternet_android": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://crbug.com/262679'>bug 262679</a>."
             },
             "webview_android": {
-              "version_added": true
+              "version_added": true,
+              "notes": "Does not support <code>flexbox</code> and <code>grid</code> layouts within this element. See <a href='https://crbug.com/262679'>bug 262679</a>."
             }
           },
           "status": {
@@ -72,7 +80,7 @@
                 "version_added": true
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": true
               },
               "ie": {
                 "version_added": true,

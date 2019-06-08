@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.ui.tree.TreeTestUtil.node;
 import static com.intellij.util.ui.tree.TreeUtil.promiseExpandAll;
+import static com.intellij.util.ui.tree.TreeUtilTest.waitForTestOnEDT;
 import static java.awt.EventQueue.isDispatchThread;
 
 public class TreeSmartSelectProviderTest {
@@ -714,45 +715,47 @@ public class TreeSmartSelectProviderTest {
                           node("zar.txt"),
                           node("zoo.txt")))))));
     expandAll(tree);
-    tree.setSelectionRow(10);
-    Assert.assertEquals(15, tree.getRowCount());
-    assertTree(tree, "-/\n" +
-                     " -ktor\n" +
-                     "  ktor-core\n" +
-                     "  -ktor-features\n" +
-                     "   jetty-http-client\n" +
-                     "   -ktor-locations\n" +
-                     "    -src\n" +
-                     "     -asdsd.asdas.asdas\n" +
-                     "      a\n" +
-                     "      b\n" +
-                     "      [c]\n" +
-                     "    -tests\n" +
-                     "     fooo\n" +
-                     "    zar.txt\n" +
-                     "    zoo.txt\n");
+    waitForTestOnEDT(() -> {
+      tree.setSelectionRow(10);
+      Assert.assertEquals(15, tree.getRowCount());
+      assertTree(tree, "-/\n" +
+                       " -ktor\n" +
+                       "  ktor-core\n" +
+                       "  -ktor-features\n" +
+                       "   jetty-http-client\n" +
+                       "   -ktor-locations\n" +
+                       "    -src\n" +
+                       "     -asdsd.asdas.asdas\n" +
+                       "      a\n" +
+                       "      b\n" +
+                       "      [c]\n" +
+                       "    -tests\n" +
+                       "     fooo\n" +
+                       "    zar.txt\n" +
+                       "    zoo.txt\n");
 
-    TreeSmartSelectProvider provider = new TreeSmartSelectProvider();
-    provider.increaseSelection(tree);
-    provider.increaseSelection(tree);
-    provider.increaseSelection(tree);
-    provider.increaseSelection(tree);
-    provider.increaseSelection(tree);
-    assertTree(tree, "-/\n" +
-                     " -ktor\n" +
-                     "  ktor-core\n" +
-                     "  -ktor-features\n" +
-                     "   jetty-http-client\n" +
-                     "   -[ktor-locations]\n" +
-                     "    -[src]\n" +
-                     "     -[asdsd.asdas.asdas]\n" +
-                     "      [a]\n" +
-                     "      [b]\n" +
-                     "      [c]\n" +
-                     "    -[tests]\n" +
-                     "     [fooo]\n" +
-                     "    [zar.txt]\n" +
-                     "    [zoo.txt]\n");
+      TreeSmartSelectProvider provider = new TreeSmartSelectProvider();
+      provider.increaseSelection(tree);
+      provider.increaseSelection(tree);
+      provider.increaseSelection(tree);
+      provider.increaseSelection(tree);
+      provider.increaseSelection(tree);
+      assertTree(tree, "-/\n" +
+                       " -ktor\n" +
+                       "  ktor-core\n" +
+                       "  -ktor-features\n" +
+                       "   jetty-http-client\n" +
+                       "   -[ktor-locations]\n" +
+                       "    -[src]\n" +
+                       "     -[asdsd.asdas.asdas]\n" +
+                       "      [a]\n" +
+                       "      [b]\n" +
+                       "      [c]\n" +
+                       "    -[tests]\n" +
+                       "     [fooo]\n" +
+                       "    [zar.txt]\n" +
+                       "    [zoo.txt]\n");
+    });
   }
 
   private static TreeNode root() {
@@ -793,43 +796,45 @@ public class TreeSmartSelectProviderTest {
     Assert.assertEquals(expected, !tree.isRootVisible() ? "-Root\n" + actual : actual);
   }
 
-  private static void test(Consumer<JTree> consumer) {
+  private static void test(Consumer<? super JTree> consumer) {
     test(true, consumer);
     test(false, consumer);
   }
 
-  private static void test(int selectionMode, Consumer<JTree> consumer) {
+  private static void test(int selectionMode, Consumer<? super JTree> consumer) {
     test(selectionMode, true, consumer);
     test(selectionMode, false, consumer);
   }
 
-  private static void test(boolean rootVisible, Consumer<JTree> consumer) {
+  private static void test(boolean rootVisible, Consumer<? super JTree> consumer) {
     test(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION, rootVisible, consumer);
     test(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, rootVisible, consumer);
   }
 
-  private static void test(int selectionMode, boolean rootVisible, Consumer<JTree> consumer) {
+  private static void test(int selectionMode, boolean rootVisible, Consumer<? super JTree> consumer) {
     @SuppressWarnings("UndesirableClassUsage")
     JTree tree = new JTree(new DefaultTreeModel(root()));
     tree.getSelectionModel().setSelectionMode(selectionMode);
     tree.setRootVisible(rootVisible);
     expandAll(tree);
-    tree.collapseRow(normalize(tree, 5));
-    tree.clearSelection();
-    assertTree(tree, "-Root\n" +
-                     " -Color\n" +
-                     "  Red\n" +
-                     "  Green\n" +
-                     "  Blue\n" +
-                     " +Digit\n" +
-                     " -Letter\n" +
-                     "  -Greek\n" +
-                     "   Alpha\n" +
-                     "   Beta\n" +
-                     "   Gamma\n" +
-                     "   Delta\n" +
-                     "   Epsilon\n");
-    consumer.accept(tree);
+    waitForTestOnEDT(() -> {
+      tree.collapseRow(normalize(tree, 5));
+      tree.clearSelection();
+      assertTree(tree, "-Root\n" +
+                       " -Color\n" +
+                       "  Red\n" +
+                       "  Green\n" +
+                       "  Blue\n" +
+                       " +Digit\n" +
+                       " -Letter\n" +
+                       "  -Greek\n" +
+                       "   Alpha\n" +
+                       "   Beta\n" +
+                       "   Gamma\n" +
+                       "   Delta\n" +
+                       "   Epsilon\n");
+      consumer.accept(tree);
+    });
   }
 
   private static void expandAll(JTree tree) {

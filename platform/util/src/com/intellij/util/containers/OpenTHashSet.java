@@ -71,8 +71,8 @@ public class OpenTHashSet<T> extends THashSet<T> {
   }
 
   public T get(final int index) {
-    @SuppressWarnings("unchecked") T t = (T)_set[index];
-    return t;
+    //noinspection unchecked
+    return (T)_set[index];
   }
 
   /**

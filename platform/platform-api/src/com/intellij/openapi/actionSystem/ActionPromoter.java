@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ import java.util.List;
 
 /**
  * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current
- * context basis during processing (e.g. we can have two actions assigned to the same shortcut but one of them is
+ * context basis during processing (e.g., we can have two actions assigned to the same shortcut, but one of them is
  * configured to be inapplicable in modal dialog context).
  * <p/>
  * However, there is a possible case that there is still more than one action applicable for particular keyboard shortcut
  * after filtering. The first one is executed then. Hence, actions processing order becomes very important.
  * <p/>
- * Current extension point allows to promote custom actions to use if any depending on data context
+ * Current key allows specifying custom actions sorter to use if any. I.e., every component can define its custom
+ * sorting rule to define priorities for target actions (classes of actions).
  *
  * @author Konstantin Bulenkov
  */

@@ -6,21 +6,19 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.network.service.RequestService
 import java.util.concurrent.TimeUnit
 
 
-class WebServiceStatusProvider(
-        private val requestSender: RequestService,
-        private val experimentDecision: ExperimentDecision
-): WebServiceStatus {
+class WebServiceStatusProvider(private val requestSender: RequestService) : WebServiceStatus {
 
     companion object {
         const val STATUS_URL: String = "https://www.jetbrains.com/config/features-service-status.json"
 
         private val GSON = Gson()
+        private val LOG = logger<WebServiceStatusProvider>()
 
         private const val SALT = "completion.stats.experiment.salt"
         private const val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
@@ -44,7 +42,8 @@ class WebServiceStatusProvider(
     override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
 
     override fun isExperimentOnCurrentIDE(): Boolean {
-        return experimentVersion() == 6 && !Registry.`is`("java.completion.ml.exit.experiment")
+        val version = experimentVersion()
+        return (version == EmulatedExperiment.GROUP_A_EXPERIMENT_VERSION || version == EmulatedExperiment.GROUP_B_EXPERIMENT_VERSION)
     }
 
     override fun updateStatus() {
@@ -54,7 +53,7 @@ class WebServiceStatusProvider(
         assertNotEDT()
         val response = requestSender.get(STATUS_URL)
         if (response != null && response.isOK()) {
-            val map = parseServerResponse(response.text)
+            val map = parseServerResponse(response.text) ?: return
 
             val salt = map["salt"]?.toString()
             val experimentVersion = map["experimentVersion"]?.toString()
@@ -64,9 +63,9 @@ class WebServiceStatusProvider(
                 //should be Int always
                 val intVersion = experimentVersion.toFloat().toInt()
                 val perform = performExperiment.toBoolean()
-                val emulatedValues = EMULATED_EXPERIMENT.emulate(intVersion, perform, salt)
-                info = if (emulatedValues != null) {
-                    ExperimentInfo(emulatedValues.first, salt, emulatedValues.second)
+                val emulatedVersion = EMULATED_EXPERIMENT.emulate(intVersion, perform, salt)
+                info = if (emulatedVersion != null) {
+                    ExperimentInfo(emulatedVersion, salt, true)
                 }
                 else {
                     ExperimentInfo(intVersion, salt, perform)
@@ -79,12 +78,13 @@ class WebServiceStatusProvider(
         }
     }
 
-    private fun parseServerResponse(responseText: String): LinkedTreeMap<*, *> {
+    private fun parseServerResponse(responseText: String): LinkedTreeMap<*, *>? {
         try {
             return GSON.fromJson(responseText, LinkedTreeMap::class.java)
         }
         catch (e: JsonSyntaxException) {
-            throw JsonSyntaxException("Expected valid JSON object, but received: $responseText", e)
+            LOG.warn("Could not parse server response")
+            return null
         }
     }
 

@@ -72,8 +72,7 @@ public class InstrumentationClassFinder {
 
       @Override
       public InputStream getResourceAsStream(String name) {
-        InputStream is = null;
-        is = super.getResourceAsStream(name);
+        InputStream is = super.getResourceAsStream(name);
         if (is == null) {
           try {
             is = InstrumentationClassFinder.this.getResourceAsStream(name);
@@ -177,7 +176,7 @@ public class InstrumentationClassFinder {
     if (resource != null) {
       is = resource.getInputStream();
     }
-    // second look into memory and classspath
+    // second look into memory and classpath
     if (is == null) {
       is = lookupClassBeforeClasspath(internalName);
     }
@@ -584,7 +583,7 @@ public class InstrumentationClassFinder {
     private static class FileLoader extends Loader {
       private final File myRootDir;
 
-      FileLoader(URL url, int index) throws IOException {
+      FileLoader(URL url, int index) {
         super(url, index);
         if (!FILE_PROTOCOL.equals(url.getProtocol())) {
           throw new IllegalArgumentException("url");
@@ -683,7 +682,7 @@ public class InstrumentationClassFinder {
             if (entry != null) {
               return new Resource() {
                 @Override
-                public InputStream getInputStream() throws IOException {
+                public InputStream getInputStream() {
                   try {
                     final ZipFile file = acquireZipFile();
                     if (file != null) {
@@ -802,7 +801,7 @@ public class InstrumentationClassFinder {
       Class<? extends ClassFinderClasspath.Loader> aClass = null;
       Constructor<? extends ClassFinderClasspath.Loader> constructor = null;
       try {
-        aClass = (Class<? extends ClassFinderClasspath.Loader>)Class.forName("com.intellij.compiler.instrumentation.JrtLoader");
+        aClass = Class.forName("com.intellij.compiler.instrumentation.JrtLoader").asSubclass(ClassFinderClasspath.Loader.class);
         constructor = aClass.getDeclaredConstructor(URL.class, int.class);
         constructor.setAccessible(true);
       }

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Revision;
@@ -29,8 +28,8 @@ public class ForNestedRootChecker {
 
   @NotNull
   public List<Node> getAllNestedWorkingCopies(@NotNull VirtualFile root) {
-    LinkedList<Node> result = ContainerUtil.newLinkedList();
-    LinkedList<VirtualFile> workItems = ContainerUtil.newLinkedList();
+    LinkedList<Node> result = new LinkedList<>();
+    LinkedList<VirtualFile> workItems = new LinkedList<>();
 
     workItems.add(root);
     while (!workItems.isEmpty()) {

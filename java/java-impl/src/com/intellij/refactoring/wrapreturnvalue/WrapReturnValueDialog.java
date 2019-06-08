@@ -20,8 +20,8 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -189,15 +189,12 @@ class WrapReturnValueDialog extends RefactoringDialog {
 
     final DefaultComboBoxModel<PsiField> model = new DefaultComboBoxModel<>();
     myFieldsCombo.setModel(model);
-    myFieldsCombo.setRenderer(new ListCellRendererWrapper<PsiField>() {
-      @Override
-      public void customize(JList list, PsiField field, int index, boolean selected, boolean hasFocus) {
-        if (field != null) {
-          setText(field.getName());
-          setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
-        }
+    myFieldsCombo.setRenderer(SimpleListCellRenderer.create((label, field, index) -> {
+      if (field != null) {
+        label.setText(field.getName());
+        label.setIcon(field.getIcon(Iconable.ICON_FLAG_VISIBILITY));
       }
-    });
+    }));
     existingClassField.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentListener() {
       @Override
       public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent e) {

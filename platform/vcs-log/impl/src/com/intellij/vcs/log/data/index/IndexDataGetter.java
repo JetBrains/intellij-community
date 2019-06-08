@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -18,7 +17,7 @@ import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.history.FileNamesData;
+import com.intellij.vcs.log.history.FileHistoryData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -26,16 +25,12 @@ import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
@@ -108,7 +103,7 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
       if (parentsIndexes == null) return null;
-      List<Hash> result = ContainerUtil.newArrayList();
+      List<Hash> result = new ArrayList<>();
       for (int parentIndex : parentsIndexes) {
         CommitId id = myLogStorage.getCommitId(parentIndex);
         if (id == null) return null;
@@ -118,16 +113,12 @@ public class IndexDataGetter {
     });
   }
 
+  @Deprecated
   @NotNull
   public Set<FilePath> getChangedPaths(int commit) {
     List<Hash> parents = getParents(commit);
     if (parents == null || parents.size() > 1) return Collections.emptySet();
-    return getChangedPaths(commit, 0);
-  }
-
-  @NotNull
-  public Set<FilePath> getChangedPaths(int commit, int parentIndex) {
-    return executeAndCatch(() -> myIndexStorage.paths.getPathsChangedInCommit(commit, parentIndex), Collections.emptySet());
+    return executeAndCatch(() -> myIndexStorage.paths.getPathsChangedInCommit(commit), Collections.emptySet());
   }
 
   //
@@ -152,18 +143,18 @@ public class IndexDataGetter {
 
   @NotNull
   public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+    return filter(detailsFilters, null);
+  }
+
+  @NotNull
+  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters, @Nullable TIntHashSet candidates) {
     VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
     VcsLogUserFilter userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilter.class);
     VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
 
-    TIntHashSet filteredByMessage = null;
-    if (textFilter != null) {
-      filteredByMessage = filterMessages(textFilter);
-    }
-
     TIntHashSet filteredByUser = null;
     if (userFilter != null) {
-      Set<VcsUser> users = ContainerUtil.newHashSet();
+      Set<VcsUser> users = new HashSet<>();
       for (VirtualFile root : myRoots) {
         users.addAll(userFilter.getUsers(root));
       }
@@ -176,7 +167,11 @@ public class IndexDataGetter {
       filteredByPath = filterPaths(pathFilter.getFiles());
     }
 
-    return TroveUtil.intersect(filteredByMessage, filteredByPath, filteredByUser);
+    TIntHashSet filteredByUserAndPath = TroveUtil.intersect(filteredByUser, filteredByPath, candidates);
+    if (textFilter == null) {
+      return TroveUtil.createJavaSet(filteredByUserAndPath);
+    }
+    return TroveUtil.createJavaSet(filterMessages(textFilter, filteredByUserAndPath));
   }
 
   @NotNull
@@ -189,9 +184,9 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
-        Set<Integer> commits = createFileNamesData(path).getCommits();
+        Set<Integer> commits = createFileHistoryData(path).getCommits();
         if (commits.isEmpty() && !path.isDirectory()) {
-          commits = createFileNamesData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
+          commits = createFileHistoryData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
         }
         TroveUtil.addAll(result, commits);
       }
@@ -200,7 +195,7 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  private TIntHashSet filterMessages(@NotNull VcsLogTextFilter filter) {
+  private TIntHashSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable TIntHashSet candidates) {
     if (!filter.isRegex() || filter instanceof VcsLogMultiplePatternsTextFilter) {
       TIntHashSet resultByTrigrams = executeAndCatch(() -> {
 
@@ -211,7 +206,7 @@ public class IndexDataGetter {
         for (String string : trigramSources) {
           TIntHashSet commits = myIndexStorage.trigrams.getCommitsForSubstring(string);
           if (commits == null) return null;
-          TroveUtil.addAll(commitsForSearch, commits);
+          TroveUtil.addAll(commitsForSearch, TroveUtil.intersect(candidates, commits));
         }
         TIntHashSet result = new TIntHashSet();
         commitsForSearch.forEach(commit -> {
@@ -233,30 +228,38 @@ public class IndexDataGetter {
       if (resultByTrigrams != null) return resultByTrigrams;
     }
 
-    return filter(myIndexStorage.messages, filter::matches);
+    return filter(myIndexStorage.messages, candidates, filter::matches);
   }
 
   @NotNull
-  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<? super T> condition) {
+  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @Nullable TIntHashSet candidates,
+                                 @NotNull Condition<? super T> condition) {
     TIntHashSet result = new TIntHashSet();
-    return executeAndCatch(() -> {
-      processKeys(map, commit -> {
-        try {
-          T value = map.get(commit);
-          if (value != null) {
-            if (condition.value(value)) {
-              result.add(commit);
-            }
-          }
+    if (candidates == null) {
+      return executeAndCatch(() -> {
+        processKeys(map, commit -> filterCommit(map, commit, condition, result));
+        return result;
+      }, result);
+    }
+    candidates.forEach(value -> filterCommit(map, value, condition, result));
+    return result;
+  }
+
+  private <T> boolean filterCommit(@NotNull PersistentMap<Integer, T> map, int commit,
+                                   @NotNull Condition<? super T> condition, @NotNull TIntHashSet result) {
+    try {
+      T value = map.get(commit);
+      if (value != null) {
+        if (condition.value(value)) {
+          result.add(commit);
         }
-        catch (IOException e) {
-          myFatalErrorsConsumer.consume(this, e);
-          return false;
-        }
-        return true;
-      });
-      return result;
-    }, result);
+      }
+    }
+    catch (IOException e) {
+      myFatalErrorsConsumer.consume(this, e);
+      return false;
+    }
+    return true;
   }
 
   //
@@ -266,7 +269,7 @@ public class IndexDataGetter {
   @SuppressWarnings("unused")
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
-    return executeAndCatch(() -> createFileNamesData(path).getFiles(), Collections.emptySet());
+    return executeAndCatch(() -> createFileHistoryData(path).getFiles(), Collections.emptySet());
   }
 
   @NotNull
@@ -304,19 +307,14 @@ public class IndexDataGetter {
     return affectedCommits;
   }
 
-  @Nullable
-  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept) {
-    return executeAndCatch(() -> myIndexStorage.paths.iterateRenames(parent, child, accept));
+  @NotNull
+  public FileHistoryData createFileHistoryData(@NotNull FilePath path) {
+    return createFileHistoryData(Collections.singletonList(path));
   }
 
   @NotNull
-  public FileNamesData createFileNamesData(@NotNull FilePath path) {
-    return createFileNamesData(Collections.singletonList(path));
-  }
-
-  @NotNull
-  public FileNamesData createFileNamesData(@NotNull Collection<FilePath> paths) {
-    return new FileNamesData(paths) {
+  public FileHistoryData createFileHistoryData(@NotNull Collection<FilePath> paths) {
+    return new FileHistoryData(paths) {
       @NotNull
       @Override
       public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
@@ -325,8 +323,8 @@ public class IndexDataGetter {
 
       @Nullable
       @Override
-      public Couple<FilePath> findRename(int parent, int child, @NotNull Function1<? super Couple<FilePath>, Boolean> accept) {
-        return IndexDataGetter.this.findRename(parent, child, couple -> accept.invoke(couple));
+      public Couple<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+        return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
       }
     };
   }

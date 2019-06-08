@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.treeView;
 
@@ -39,14 +39,14 @@ public class AbstractTreeBuilder implements Disposable {
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
-                             @Nullable Comparator<NodeDescriptor> comparator) {
+                             @Nullable Comparator<? super NodeDescriptor> comparator) {
     this(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
   }
 
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
-                             @Nullable Comparator<NodeDescriptor> comparator,
+                             @Nullable Comparator<? super NodeDescriptor> comparator,
                              boolean updateIfInactive) {
     init(tree, treeModel, treeStructure, comparator, updateIfInactive);
   }
@@ -58,7 +58,7 @@ public class AbstractTreeBuilder implements Disposable {
   protected void init(@NotNull JTree tree,
                       @NotNull DefaultTreeModel treeModel,
                       AbstractTreeStructure treeStructure,
-                      @Nullable final Comparator<NodeDescriptor> comparator,
+                      @Nullable final Comparator<? super NodeDescriptor> comparator,
                       final boolean updateIfInactive) {
 
     tree.putClientProperty(TREE_BUILDER, new WeakReference<>(this));
@@ -247,15 +247,19 @@ public class AbstractTreeBuilder implements Disposable {
   @NotNull
   public ActionCallback queueUpdateFrom(final Object element, final boolean forceResort, final boolean updateStructure) {
     AbstractTreeUi ui = getUi();
-    if (ui == null) return ActionCallback.REJECTED;
+    if (ui == null) {
+      return ActionCallback.REJECTED;
+    }
 
     final ActionCallback result = new ActionCallback();
-
     ui.invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeBuilder.queueUpdateFrom") {
       @Override
       public void perform() {
         AbstractTreeUi ui = getUi();
-        if (ui == null) return;
+        if (ui == null) {
+          result.reject("ui is null");
+          return;
+        }
 
         if (updateStructure && forceResort) {
           ui.incComparatorStamp();
@@ -263,8 +267,6 @@ public class AbstractTreeBuilder implements Disposable {
         ui.queueUpdate(element, updateStructure).notify(result);
       }
     });
-
-
     return result;
   }
 

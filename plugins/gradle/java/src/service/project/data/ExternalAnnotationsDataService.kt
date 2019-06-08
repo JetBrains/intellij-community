@@ -35,11 +35,10 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
                                modelsProvider: IdeModelsProvider) {
 
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
-    val searcher = AnnotationsLocationSearcher.getInstance(project)
     val providedAnnotations = imported.mapNotNull {
       val libData = it.data
       val lib = modelsProvider.getLibraryByName(libData.internalName) ?: return@mapNotNull null
-      lookForLocations(searcher, lib, libData)
+      lookForLocations(lib, libData)
     }.toMap()
 
     resolveProvidedAnnotations(providedAnnotations, resolver, project)
@@ -98,7 +97,6 @@ class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<Modu
                                project: Project,
                                modelsProvider: IdeModelsProvider) {
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
-    val searcher = AnnotationsLocationSearcher.getInstance(project)
 
     val providedAnnotations = imported
       .flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) + it }
@@ -108,7 +106,7 @@ class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<Modu
         .mapNotNull {
           val libData = it.data.target
           val lib = (modelsProvider.findIdeModuleOrderEntry(it.data) as? LibraryOrderEntry)?.library ?: return@mapNotNull null
-          lookForLocations(searcher, lib, libData)
+          lookForLocations(lib, libData)
         }
     }.toMap()
 
@@ -117,10 +115,8 @@ class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<Modu
 }
 
 
-fun lookForLocations(searcher: AnnotationsLocationSearcher,
-                     lib: Library,
-                     libData: LibraryData): Pair<Library, Collection<AnnotationsLocation>>? {
-  val locations = searcher.findAnnotationsLocation(lib, libData.artifactId, libData.groupId, libData.version)
+fun lookForLocations(lib: Library, libData: LibraryData): Pair<Library, Collection<AnnotationsLocation>>? {
+  val locations = AnnotationsLocationSearcher.findAnnotationsLocation(lib, libData.artifactId, libData.groupId, libData.version)
   return if (locations.isEmpty()) {
     null
   }

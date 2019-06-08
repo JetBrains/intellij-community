@@ -25,6 +25,7 @@ import java.util.Collection;
 /**
  * @author Sergey Evdokimov
  */
+@Deprecated
 public class MavenExecuteGoalDialog extends MavenEditGoalDialog {
 
   public MavenExecuteGoalDialog(@NotNull Project project, @Nullable Collection<String> history) {

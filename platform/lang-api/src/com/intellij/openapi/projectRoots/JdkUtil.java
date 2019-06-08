@@ -12,12 +12,14 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -352,6 +354,14 @@ public class JdkUtil {
         classpath.add(PathUtil.getJarPathForClass(UrlClassLoader.class));
         classpath.add(PathUtil.getJarPathForClass(StringUtilRt.class));
         classpath.add(PathUtil.getJarPathForClass(THashMap.class));
+        //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
+        //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
+        Sdk jdk = javaParameters.getJdk();
+        if (jdk != null) {
+          for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+            classpath.add(PathUtil.getLocalPath(file));
+          }
+        }
       }
       commandLine.addParameter("-classpath");
       commandLine.addParameter(StringUtil.join(classpath, File.pathSeparator));

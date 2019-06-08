@@ -15,10 +15,10 @@ import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
 
 public class XTestValueNode extends XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl {
-  public Icon myIcon;
-  public String myName;
-  public String myType;
-  public String myValue;
+  public @Nullable Icon myIcon;
+  public @NotNull String myName;
+  public @Nullable String myType;
+  public @NotNull String myValue;
   public boolean myHasChildren;
 
   public XFullValueEvaluator myFullValueEvaluator;
@@ -45,7 +45,7 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
   public void waitFor(long timeoutInMillis) {
     waitFor(timeoutInMillis, XDebuggerTestUtil::waitFor);
   }
-  public void waitFor(long timeoutInMillis, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+  public void waitFor(long timeoutInMillis, BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
     if (!waitFunction.apply(myFinished, timeoutInMillis)) {
       throw new AssertionError("Waiting timed out");
     }

@@ -28,14 +28,14 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 
 import java.util.Arrays;
 
 /**
  * @author dsl
  */
-public class ProjectLibrariesTest extends IdeaTestCase {
+public class ProjectLibrariesTest extends JavaProjectTestCase {
   private VirtualFile myRoot;
   private Library myLib;
 

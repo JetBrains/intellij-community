@@ -28,7 +28,7 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
   }
 
   @Override
-  public void configureProject(final Project project, @NotNull final VirtualFile baseDir, Ref<Module> moduleRef) {
+  public void configureProject(@NotNull final Project project, @NotNull final VirtualFile baseDir, @NotNull Ref<Module> moduleRef) {
     ToolWindowManagerEx manager = (ToolWindowManagerEx)ToolWindowManager.getInstance(project);
     ToolWindow toolWindow = manager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (toolWindow == null) {

@@ -7,27 +7,22 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 interface SESearcher {
   ProgressIndicator search(@NotNull Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
-                           @NotNull String pattern,
-                           boolean useNonProjectItems,
-                           @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
+                           @NotNull String pattern);
 
   ProgressIndicator findMoreItems(@NotNull Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,
                                   @NotNull String pattern,
-                                  boolean useNonProjectItems,
-                                  @NotNull SearchEverywhereContributor<?> contributorToExpand,
-                                  int newLimit,
-                                  @NotNull Function<? super SearchEverywhereContributor<?>, ? extends SearchEverywhereContributorFilter<?>> filterSupplier);
+                                  @NotNull SearchEverywhereContributor<?> contributor,
+                                  int newLimit);
 
   /**
    * Search process listener interface
    */
   interface Listener {
-    void elementsAdded(@NotNull List<SearchEverywhereFoundElementInfo> list);
-    void elementsRemoved(@NotNull List<SearchEverywhereFoundElementInfo> list);
+    void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list);
+    void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list);
     void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
   }
 }

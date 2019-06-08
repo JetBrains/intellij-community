@@ -74,7 +74,8 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
 
     if (isTableCellEditor(c)) {
       paintCellEditorBorder((Graphics2D)g, c, r, hasFocus);
-    } else {
+    }
+    else {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -99,7 +100,8 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
         Object op = editorTextField.getClientProperty("JComponent.outline");
         if (editorTextField.isEnabled() && op != null) {
           paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, Outline.valueOf(op.toString()));
-        } else if (editorTextField.isEnabled() && editorTextField.isVisible()) {
+        }
+        else if (editorTextField.isEnabled() && editorTextField.isVisible()) {
           if (hasFocus) {
             paintOutlineBorder(g2, r.width, r.height, 0, true, true, Outline.focus);
           }
@@ -111,7 +113,8 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
           g2.setColor(getOutlineColor(editorTextField.isEnabled(), hasFocus));
           g2.fill(border);
         }
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }

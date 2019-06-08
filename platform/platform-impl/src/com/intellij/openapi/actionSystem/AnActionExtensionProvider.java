@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see ExtendableAction
  */
-@ApiStatus.Experimental
 public interface AnActionExtensionProvider {
   /**
    * @return whether current provider should be used in given context

@@ -195,6 +195,14 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     assertThat(problems).isEmpty();
   }
 
+  public void testImplicitConstructorAccessibility() {
+    myFixture.addClass("package a; public class Base {" +
+                       "private Base() {}\n" +
+                       "protected Base(int... i) {}\n" +
+                       "}");
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();

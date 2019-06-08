@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,7 +50,7 @@ public abstract class AbstractExternalFilter {
   private static final String DT = "<DT>";
 
   protected static abstract class RefConvertor {
-    private final @NotNull Pattern mySelector;
+    final Pattern mySelector;
 
     public RefConvertor(@NotNull Pattern selector) {
       mySelector = selector;
@@ -59,10 +59,9 @@ public abstract class AbstractExternalFilter {
     protected abstract String convertReference(String root, String href);
 
     public CharSequence refFilter(String root, @NotNull CharSequence read) {
-      CharSequence toMatch = StringUtilRt.toUpperCase(read);
       StringBuilder ready = new StringBuilder();
       int prev = 0;
-      Matcher matcher = mySelector.matcher(toMatch);
+      Matcher matcher = mySelector.matcher(read);
 
       while (matcher.find()) {
         CharSequence before = read.subSequence(prev, matcher.start(1) - 1);     // Before reference
@@ -357,7 +356,7 @@ public abstract class AbstractExternalFilter {
               ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
 
               if (contentEncoding == null) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
                   for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
                     contentEncoding = parseContentEncoding(htmlLine);
                     if (contentEncoding != null) {

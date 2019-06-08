@@ -2,19 +2,19 @@
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +37,7 @@ public class VariableInitializationChecker {
                                                               @NotNull Instruction[] controlFlow) {
     Map<GroovyPsiElement, Boolean> map = KEY.getCachedValue(var);
     if (map == null) {
-      map = ContainerUtil.newHashMap();
+      map = new HashMap<>();
       KEY.putCachedValue(var, map);
     }
 
@@ -63,16 +63,17 @@ public class VariableInitializationChecker {
       }
     }
 
+    private final VariableDescriptor myVar;
+  }
+
+  private static class MySemilattice implements Semilattice<Data> {
+
     @NotNull
     @Override
     public Data initial() {
       return new Data(false);
     }
 
-    private final VariableDescriptor myVar;
-  }
-
-  private static class MySemilattice implements Semilattice<Data> {
     @NotNull
     @Override
     public Data join(@NotNull List<? extends Data> ins) {

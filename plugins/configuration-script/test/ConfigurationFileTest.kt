@@ -1,6 +1,7 @@
 package com.intellij.configurationScript
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.core.JsonFactory
+import com.intellij.configurationScript.schemaGenerators.rcTypeIdToPropertyName
 import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.testFramework.ProjectRule
@@ -20,11 +21,21 @@ class ConfigurationFileTest {
   }
 
   @Test
+  fun `file name`() {
+    assertThat(isConfigurationFile("foo")).isFalse()
+    assertThat(isConfigurationFile("foo.yaml")).isFalse()
+    assertThat(isConfigurationFile("foo.yml")).isFalse()
+    assertThat(isConfigurationFile("intellij.yml")).isTrue()
+    assertThat(isConfigurationFile("intellij.yaml")).isTrue()
+    assertThat(isConfigurationFile("intellij.json")).isTrue()
+  }
+
+  @Test
   fun schema() {
     // check that parseable
-    val schema = generateConfigurationSchema()
-    val jsonReader = Gson().fromJson(CharSequenceReader(schema), Any::class.java)
-    assertThat(jsonReader).isNotNull
+    val schema = doGenerateConfigurationSchema(emptyList())
+    val jsonFactory = JsonFactory()
+    jsonFactory.createParser(CharSequenceReader(schema)).nextValue()
   }
 
   @Test
@@ -57,7 +68,7 @@ class ConfigurationFileTest {
   fun `empty rc type group`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
     """)
     assertThat(result).isEmpty()
   }
@@ -66,17 +77,17 @@ class ConfigurationFileTest {
   fun `empty rc`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         -
     """)
     assertThat(result).isEmpty()
   }
 
   @Test
-  fun `one jvmMainMethod`() {
+  fun `one java`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         isAlternativeJrePathEnabled: true
     """)
     val options = JvmMainMethodRunConfigurationOptions()
@@ -85,10 +96,10 @@ class ConfigurationFileTest {
   }
 
   @Test
-  fun `one jvmMainMethod as list`() {
+  fun `one java as list`() {
     val result = readRunConfigurations("""
     runConfigurations:
-      jvmMainMethod:
+      java:
         - isAlternativeJrePathEnabled: true
     """)
     val options = JvmMainMethodRunConfigurationOptions()
@@ -97,11 +108,11 @@ class ConfigurationFileTest {
   }
 
   @Test
-  fun `one jvmMainMethod as list - template`() {
+  fun `one v as list - template`() {
     val result = readRunConfigurations("""
     runConfigurations:
       templates:
-        jvmMainMethod:
+        java:
           - isAlternativeJrePathEnabled: true
     """, isTemplatesOnly = true)
     val options = JvmMainMethodRunConfigurationOptions()

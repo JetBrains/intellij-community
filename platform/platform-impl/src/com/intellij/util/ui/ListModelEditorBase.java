@@ -45,7 +45,7 @@ public abstract class ListModelEditorBase<T> extends CollectionModelEditor<T, Li
   }
 
   @Override
-  public void reset(@NotNull List<T> items) {
+  public void reset(@NotNull List<? extends T> items) {
     super.reset(items);
     model.replaceAll(items);
   }

@@ -110,7 +110,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     DockManager.getInstance(project).register(this);
 
     TreeUtil.installActions(myTree);
-    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setLargeModel(true);

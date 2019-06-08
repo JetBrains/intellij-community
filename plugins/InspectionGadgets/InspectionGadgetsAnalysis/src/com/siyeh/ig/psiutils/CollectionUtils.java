@@ -205,7 +205,7 @@ public class CollectionUtils {
    * class C extends C {}
    */
   private static boolean isCollectionClassOrInterface(
-    PsiClass aClass, Set<PsiClass> visitedClasses) {
+    PsiClass aClass, Set<? super PsiClass> visitedClasses) {
     if (!visitedClasses.add(aClass)) {
       return false;
     }
@@ -276,15 +276,15 @@ public class CollectionUtils {
     if (sizeQualifier == null) return false;
     sizeQualifier = getBaseCollection(sizeQualifier);
     collection = getBaseCollection(collection);
-    return PsiEquivalenceUtil.areElementsEquivalent(sizeQualifier, collection);
+    return sizeQualifier != null && collection != null && PsiEquivalenceUtil.areElementsEquivalent(sizeQualifier, collection);
   }
 
-  private static @NotNull PsiExpression getBaseCollection(@NotNull PsiExpression derivedCollection) {
+  private static @Nullable PsiExpression getBaseCollection(@NotNull PsiExpression derivedCollection) {
     while(true) {
       PsiMethodCallExpression derivedCall =
         ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(derivedCollection), PsiMethodCallExpression.class);
       if (DERIVED_COLLECTION.test(derivedCall)) {
-        derivedCollection = ExpressionUtils.getQualifierOrThis(derivedCall.getMethodExpression());
+        derivedCollection = ExpressionUtils.getEffectiveQualifier(derivedCall.getMethodExpression());
       }
       else {
         return derivedCollection;

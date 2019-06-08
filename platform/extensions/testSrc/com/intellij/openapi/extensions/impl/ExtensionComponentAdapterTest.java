@@ -36,6 +36,6 @@ public class ExtensionComponentAdapterTest {
 
   @NotNull
   private static ExtensionComponentAdapter createAdapter(@NotNull LoadingOrder order) {
-    return new ExtensionComponentAdapter(Object.class.getName(), null, null, order);
+    return new XmlExtensionAdapter(Object.class.getName(), null, null, order, null);
   }
 }

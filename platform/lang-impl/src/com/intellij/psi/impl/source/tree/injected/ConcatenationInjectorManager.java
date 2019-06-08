@@ -21,7 +21,6 @@ import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,7 @@ import java.util.List;
 public final class ConcatenationInjectorManager extends SimpleModificationTracker {
   public static final ProjectExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = new ProjectExtensionPointName<>("com.intellij.concatenationAwareInjector");
 
-  public ConcatenationInjectorManager(Project project, PsiManagerEx psiManagerEx) {
+  public ConcatenationInjectorManager(@NotNull Project project, @NotNull PsiManagerEx psiManagerEx) {
     CONCATENATION_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
       @Override
       public void extensionAdded(@NotNull ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
@@ -77,8 +76,8 @@ public final class ConcatenationInjectorManager extends SimpleModificationTracke
   public abstract static class BaseConcatenation2InjectorAdapter implements MultiHostInjector {
     private final ConcatenationInjectorManager myManager;
 
-    public BaseConcatenation2InjectorAdapter(ConcatenationInjectorManager manager) {
-      myManager = manager;
+    public BaseConcatenation2InjectorAdapter(@NotNull Project project) {
+      myManager = getInstance(project);
     }
 
     @Override
@@ -110,15 +109,14 @@ public final class ConcatenationInjectorManager extends SimpleModificationTracke
         ((InjectionRegistrarImpl)registrar).addToResults(result);
 
         if (data == null) {
-          CachedValueProvider.Result<InjectionResult> cachedResult =
-            CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, myManager);
+          CachedValueProvider.Result<InjectionResult> cachedResult = CachedValueProvider.Result.create(result, myManager);
           data = CachedValuesManager.getManager(project).createParameterizedCachedValue(
             context1 -> {
               PsiFile containingFile1 = context1.getContainingFile();
               Project project1 = containingFile1.getProject();
               Pair<PsiElement, PsiElement[]> pair1 = computeAnchorAndOperands(context1);
               InjectionResult result1 = pair1.second.length == 0 ? null : doCompute(containingFile1, project1, pair1.first, pair1.second);
-              return result1 == null ? null : CachedValueProvider.Result.create(result1, PsiModificationTracker.MODIFICATION_COUNT, myManager);
+              return result1 == null ? null : CachedValueProvider.Result.create(result1, myManager);
             }, false);
           ((PsiParameterizedCachedValue<InjectionResult, PsiElement>)data).setValue(cachedResult);
 

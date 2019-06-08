@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.LoggingUtils;
+import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +39,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
    * @noinspection PublicField
    */
   @NonNls
-  public String loggerNamesString = StringUtil.join(LoggingUtils.DEFAULT_LOGGERS, ",");
+  public String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
 
   public ClassWithMultipleLoggersInspection() {
     parseString(loggerNamesString, loggerNames);

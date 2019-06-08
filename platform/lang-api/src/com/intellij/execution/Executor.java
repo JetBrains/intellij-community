@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +70,9 @@ public abstract class Executor {
   @NonNls
   public abstract String getId();
 
+  /**
+   * @return text of the action in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format
+   */
   @NotNull
   public abstract String getStartActionText();
 
@@ -97,15 +100,14 @@ public abstract class Executor {
     AnAction wrap(@NotNull AnAction original);
   }
 
+  /**
+   * @return text of the action specialized for given configuration name 
+   * in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format.
+   */
   @NotNull
   public String getStartActionText(@NotNull String configurationName) {
-    String text = getStartActionText();
-    boolean hasMnemonic = text.indexOf(UIUtil.MNEMONIC) >= 0 || !StringUtil.escapeMnemonics(text).equals(text);
     String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'";
-    if (!hasMnemonic) {
-      configName = StringUtil.escapeMnemonics(configName);
-    }
-    return text + configName;
+    return TextWithMnemonic.parse(getStartActionText()).append(configName).toString();
   }
 
   /**

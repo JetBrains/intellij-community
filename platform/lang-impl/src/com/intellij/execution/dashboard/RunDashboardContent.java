@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
+import com.intellij.execution.services.ServiceViewTreeLinkMouseListener;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
@@ -60,7 +61,7 @@ import java.util.*;
 
 import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
-import static com.intellij.execution.services.ServiceViewManager.SERVICE_VIEW_MASTER_COMPONENT;
+import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
  * @author konstantin.aleev
@@ -86,7 +87,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private final RunDashboardTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
-  private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<? extends RunDashboardGrouper> myGroupers;
@@ -112,12 +112,12 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
-    myTree.setLineStyleAngled();
 
     myTree.setCellRenderer(new RunDashboardTreeCellRenderer());
-    RunDashboardTreeMouseListener mouseListener = new RunDashboardTreeMouseListener(myTree);
+    ServiceViewTreeLinkMouseListener mouseListener = new ServiceViewTreeLinkMouseListener(myTree);
     mouseListener.installOn(myTree);
     RowsDnDSupport.install(myTree, myTreeModel);
+    UIUtil.putClientProperty(myTree, ANIMATION_IN_RENDERER_ALLOWED, true);
 
     final RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
 
@@ -215,15 +215,15 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       }
       return null;
     });
-    UIUtil.putClientProperty(myTree, SERVICE_VIEW_MASTER_COMPONENT, Boolean.TRUE);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
         if (myLastSelection instanceof RunDashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
           RunDashboardRunConfigurationNode node = (RunDashboardRunConfigurationNode)myLastSelection;
-          RunDashboardContributor contributor = node.getContributor();
-          if (contributor != null) {
-            return contributor.handleDoubleClick(node.getConfigurationSettings().getConfiguration());
+          for (RunDashboardCustomizer customizer : node.getCustomizers()) {
+            if (customizer.handleDoubleClick(event, node)) {
+              return true;
+            }
           }
         }
         return false;
@@ -381,7 +381,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     };
     myBuilder.initRootNode();
     Disposer.register(this, myBuilder);
-    myAnimator = new RunDashboardAnimatorImpl(myBuilder);
   }
 
   private JComponent createToolbar() {
@@ -478,11 +477,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   @NotNull
   public AbstractTreeBuilder getBuilder() {
     return myBuilder;
-  }
-
-  @NotNull
-  public RunDashboardAnimator getAnimator() {
-    return myAnimator;
   }
 
   public float getContentProportion() {

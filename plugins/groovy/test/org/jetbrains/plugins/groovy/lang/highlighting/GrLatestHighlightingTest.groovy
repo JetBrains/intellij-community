@@ -5,17 +5,19 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
+import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
+
 class GrLatestHighlightingTest extends GrHighlightingTestBase {
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_LATEST_REAL_JDK
+    return GROOVY_LATEST_REAL_JDK
   }
 
   @Override

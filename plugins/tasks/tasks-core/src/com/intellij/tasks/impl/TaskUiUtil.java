@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,9 +82,9 @@ public class TaskUiUtil {
    * indeed a rather common task.
    */
   public static abstract class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
-    protected final JComboBox myComboBox;
+    protected final JComboBox<T> myComboBox;
 
-    public ComboBoxUpdater(@Nullable Project project, @NotNull String title, @NotNull JComboBox comboBox) {
+    public ComboBoxUpdater(@Nullable Project project, @NotNull String title, @NotNull JComboBox<T> comboBox) {
       super(project, title, ModalityState.any());
       myComboBox = comboBox;
     }
@@ -116,10 +118,10 @@ public class TaskUiUtil {
       return false;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void updateUI() {
       if (myResult != null) {
+        //noinspection unchecked
         myComboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(myResult)));
         final T extra = getExtraItem();
         if (extra != null) {
@@ -168,7 +170,11 @@ public class TaskUiUtil {
    * Very simple wrapper around {@link ListCellRendererWrapper} useful for
    * combo boxes where each item has plain text representation with special message for
    * {@code null} value.
+   *
+   * @deprecated Use {@link com.intellij.ui.SimpleListCellRenderer#create(String, Function)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static class SimpleComboBoxRenderer<T> extends ListCellRendererWrapper<T> {
     private final String myNullDescription;
     public SimpleComboBoxRenderer(@NotNull String nullDescription) {

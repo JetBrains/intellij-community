@@ -311,6 +311,26 @@ public class RegExpLexerTest extends LexerTestCase {
     doTest("(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\105", null, lexer);
   }
 
+  public void testPcreBackReference() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
+    doTest("(a)\\g105", null, lexer);
+  }
+
+  public void testPcreRelativeBackReference() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
+    doTest("(a)\\g{105}", null, lexer);
+  }
+
+  public void testPcreRelativeNegativeBackReference() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
+    doTest("(a)\\g{-105}", null, lexer);
+  }
+
+  public void testPcreRelativeNegativeInvalidBackReference() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
+    doTest("(a)\\g-105", null, lexer);
+  }
+
   public void testNoNestedCharacterClasses1() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
     doTest("[[\\]]", "CLASS_BEGIN ('[')\n" +

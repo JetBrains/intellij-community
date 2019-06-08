@@ -217,14 +217,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myAWTMouseListener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
-        if (event.getID() == MouseEvent.MOUSE_MOVED) {
-          
-            // user is moving inside the scrollpane of the scrollbar and fade-out hasn't started yet 
+        if (event.getID() == MouseEvent.MOUSE_MOVED && !myMacScrollbarHidden && myMacScrollbarFadeLevel == 0) {
+            // user is moving inside the scrollpane of the scrollbar and fade-out hasn't started yet
           Container scrollpane = SwingUtilities.getAncestorOfClass(JScrollPane.class, scrollbar);
           if (scrollpane != null) {
             Point loc = ((MouseEvent)event).getLocationOnScreen();
             SwingUtilities.convertPointFromScreen(loc, scrollpane);
-            if (!myMacScrollbarHidden && myMacScrollbarFadeLevel == 0 && scrollpane.contains(loc)) {
+            if (scrollpane.contains(loc)) {
               startMacScrollbarFadeout();
             }
           }

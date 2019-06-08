@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -139,7 +140,7 @@ public class UpdateRequestsQueue {
         myWaitingUpdateCompletionSemaphores.add(semaphore);
       }
       if (!semaphore.waitFor(100 * 1000)) {
-        LOG.error("Too long VCS update");
+        LOG.error("Too long VCS update\n" + ThreadDumper.dumpThreadsToString());
         return;
       }
     }

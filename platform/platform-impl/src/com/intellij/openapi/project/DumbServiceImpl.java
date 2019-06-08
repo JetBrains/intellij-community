@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -51,6 +51,7 @@ import java.util.concurrent.locks.LockSupport;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
+  private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
@@ -204,6 +205,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public boolean isDumb() {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed() &&
+        Registry.is("ide.check.is.dumb.contract") &&
+        REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
+      LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.");
+    }
     return myState.get() != State.SMART;
   }
 
@@ -392,8 +398,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     UIUtil.invokeLaterIfNeeded(() -> {
       final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
       if (ideFrame != null) {
-        StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-        statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+        ((StatusBarEx)ideFrame.getStatusBar()).notifyProgressByBalloon(MessageType.WARNING, message);
       }
     });
   }
@@ -405,7 +410,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
 
-    while (isDumb() && !myProject.isDisposed()) {
+    while (myState.get() != State.SMART && !myProject.isDisposed()) {
       LockSupport.parkNanos(50_000_000);
       ProgressManager.checkCanceled();
     }

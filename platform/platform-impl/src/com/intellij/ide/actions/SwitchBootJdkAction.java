@@ -23,9 +23,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
@@ -43,7 +44,9 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -80,7 +83,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
         String selector = PathManager.getPathsSelector();
         File configDir = new File(selector != null ? PathManager.getDefaultConfigPathFor(selector) : PathManager.getConfigPath());
         String exeName = System.getProperty("idea.executable");
-        if (exeName == null) exeName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+        if (exeName == null) exeName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
         myConfigFile = new File(configDir, exeName + CONFIG_FILE_EXT);
       }
 
@@ -326,9 +329,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       return PlatformDataKeys.COPY_PROVIDER.is(dataId) ? this : null;
     }
 
-    private static class JdkBundleItemRenderer extends ListCellRendererWrapper<JdkBundleItem> {
+    private static class JdkBundleItemRenderer extends SimpleListCellRenderer<JdkBundleItem> {
       @Override
-      public void customize(JList list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
+      public void customize(JList<? extends JdkBundleItem> list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
         if (value == RESET) {
           setText("<reset to default>");
         }

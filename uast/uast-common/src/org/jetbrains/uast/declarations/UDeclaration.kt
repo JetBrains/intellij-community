@@ -29,7 +29,7 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
    */
   override val psi: PsiModifierListOwner
 
-  override fun getOriginalElement(): PsiElement? = psi.originalElement
+  override fun getOriginalElement(): PsiElement? = sourcePsi?.originalElement
 
   /**
    * Returns the declaration name identifier. If declaration is anonymous other implementation dependant psi element will be returned.
@@ -69,6 +69,7 @@ fun UElement?.getContainingDeclaration(): UDeclaration? = this?.withContainingEl
 fun <T : UElement> UElement?.getContainingDeclaration(cls: Class<out T>): T? {
   val element = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
   return if (element != null && cls.isInstance(element)) {
+    @Suppress("UNCHECKED_CAST")
     element as T
   } else {
     null
@@ -81,8 +82,6 @@ fun UDeclaration?.getAnchorPsi():PsiElement? {
 
 /**
  * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]
- *
- * Note: [UDeclaration] and [UAnnotation] will extend this interface after all implementations will do
  */
 interface UAnchorOwner : UElement {
 

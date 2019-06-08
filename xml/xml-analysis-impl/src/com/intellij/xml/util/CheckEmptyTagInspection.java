@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
@@ -65,7 +66,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
 
   public static boolean isTagWithEmptyEndNotAllowed(final XmlTag tag) {
     String tagName = tag.getName();
-    if (tag instanceof HtmlTag) tagName = tagName.toLowerCase();
+    if (tag instanceof HtmlTag) tagName = StringUtil.toLowerCase(tagName);
 
     Language language = tag.getLanguage();
     return ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&

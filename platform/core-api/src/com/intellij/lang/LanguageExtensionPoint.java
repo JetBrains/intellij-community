@@ -9,17 +9,26 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Base class for {@link Language}-bound extension points.
+ *
  * @author yole
  */
 public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean implements KeyedLazyInstance<T> {
   // these must be public for scrambling compatibility
+
+  /**
+   * Language ID.
+   *
+   * @see Language#getID()
+   */
   @Attribute("language")
   public String language;
 
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final NotNullLazyValue<T> myHandler = NotNullLazyValue.createValue(() -> instantiateExtension(implementationClass, ApplicationManager.getApplication().getPicoContainer()));
+  private final NotNullLazyValue<T> myHandler =
+    NotNullLazyValue.createValue(() -> instantiateExtension(implementationClass, ApplicationManager.getApplication().getPicoContainer()));
 
   @NotNull
   @Override

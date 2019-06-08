@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
@@ -77,7 +76,7 @@ public class PluginHeaderPanel {
 
     //data
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
-    myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : plugin.getCategory().toUpperCase(Locale.US));
+    myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : StringUtil.toUpperCase(plugin.getCategory()));
     final boolean hasNewerVersion = ourState.hasNewerVersion(plugin.getPluginId());
     String versionText;
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
@@ -88,10 +87,10 @@ public class PluginHeaderPanel {
       versionText = showVersion ? "v" + node.getVersion() : null;
       myUpdated.setText("Updated " + DateFormatUtil.formatDate(node.getDate()));
       switch (node.getStatus()) {
-        case PluginNode.STATUS_INSTALLED:
+        case INSTALLED:
           myActionId = hasNewerVersion ? ACTION_ID.UPDATE : ACTION_ID.UNINSTALL;
           break;
-        case PluginNode.STATUS_DOWNLOADED:
+        case DOWNLOADED:
           myActionId = ACTION_ID.RESTART;
           break;
         default:

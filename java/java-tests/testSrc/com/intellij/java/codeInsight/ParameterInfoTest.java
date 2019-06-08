@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -23,6 +24,7 @@ import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoCon
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurrentParameterColor;
@@ -378,9 +380,21 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   }
 
   public void testInferredWithVarargs() {
-    myFixture.configureByText(JavaFileType.INSTANCE, 
-                              "import java.util.*; class C { void m(Object objects[], List<Object> list) { Collections.addAll(<caret>list, objects);} }");
-    assertEquals("<html>Collection&lt;? super Object&gt; collection, @NotNull Object... ts</html>", parameterPresentation(-1));
+    @Language("JAVA")
+    String text =
+      "import java.util.*;" +
+      "class C { " +
+      "  static <T> boolean addAll(Collection<? super T> c, T... elements) {" +
+      "    return false;" +
+      "  }" +
+      "  static void m(Object objects[], List<Object> list) { " +
+      "    addAll(/*caret*/list, objects);" +
+      "  } " +
+      "}";
+
+    myFixture.configureByText(JavaFileType.INSTANCE, text.replace("/*caret*/", "<caret>"));
+    assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+    assertEquals("<html>Collection&lt;? super Object&gt; c, Object... elements</html>", parameterPresentation(-1));
   }
 
   private void checkHighlighted(int lineIndex) {
@@ -450,7 +464,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "-\n" +
                       "<html><b>double v</b></html>\n" +
                       "-\n" +
-                      "<html><b>char[] chars</b></html>\n" +
+                      "<html><b>@NotNull char[] chars</b></html>\n" +
                       "-\n" +
                       "<html><b>@Nullable String s</b></html>\n" +
                       "-\n" +

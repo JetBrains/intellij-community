@@ -95,7 +95,7 @@ public abstract class DataValidator<T> {
         }
         T invalid = myElementValidator.findInvalid(dataId, element, dataSource);
         if (invalid != null) {
-          Class<T> type = (Class<T>)array.getClass().getComponentType();
+          Class<T> type = ArrayUtil.getComponentType(array);
           return ArrayUtil.toObjectArray(type, invalid);
         }
       }

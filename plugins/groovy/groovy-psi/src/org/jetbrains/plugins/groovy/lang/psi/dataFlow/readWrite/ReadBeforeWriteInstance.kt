@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite
 
 import gnu.trove.TObjectIntHashMap
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance
 
 class ReadBeforeWriteInstance(
@@ -29,8 +29,6 @@ class ReadBeforeWriteInstance(
       }
     }
   }
-
-  override fun initial(): ReadBeforeWriteState = ReadBeforeWriteState.bottom
 
   override fun isReachable(): Boolean = true
 }

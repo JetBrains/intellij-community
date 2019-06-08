@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.openapi.util.Pair;
@@ -65,7 +65,7 @@ public class GroovyExpectedTypesProvider {
         }
         final TypeConstraint[] result = calculator.getResult();
 
-        List<TypeConstraint> custom = ContainerUtil.newArrayList();
+      List<TypeConstraint> custom = new ArrayList<>();
         for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
           custom.addAll(contributor.calculateTypeConstraints(expression));
         }
@@ -331,7 +331,7 @@ public class GroovyExpectedTypesProvider {
     }
 
     private void collectExpectedTypeFromPossibleParams(List<Pair<PsiParameter, PsiType>> expectedParams) {
-      List<TypeConstraint> constraints = ContainerUtil.newArrayList();
+      List<TypeConstraint> constraints = new ArrayList<>();
       for (Pair<PsiParameter, PsiType> pair : expectedParams) {
         final PsiType type = pair.second;
         if (type != null) {

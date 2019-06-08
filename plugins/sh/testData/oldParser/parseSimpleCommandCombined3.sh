@@ -1,0 +1,1 @@
+echo a >> out c

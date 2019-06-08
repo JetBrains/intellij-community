@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.DataManager;
@@ -13,7 +13,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -26,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class NavigateFromSourceTest extends BaseProjectViewTestCase {
@@ -118,7 +118,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     PsiClass psiClass = psiFile.getClasses()[0];
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final JTree tree = pane.getTree();
-    setBinaryContent(virtualFile, newClassString.getBytes(CharsetToolkit.UTF8_CHARSET));
+    setBinaryContent(virtualFile, newClassString.getBytes(StandardCharsets.UTF_8));
 
     PlatformTestUtil.waitForAlarm(600);
 

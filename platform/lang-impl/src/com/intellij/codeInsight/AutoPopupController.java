@@ -88,15 +88,15 @@ public class AutoPopupController implements Disposable {
     IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, this);
   }
 
-  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<? super PsiFile> condition){
     autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
-  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition){
+  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<? super PsiFile> condition){
     scheduleAutoPopup(editor, completionType, condition);
   }
 
-  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable final Condition<PsiFile> condition) {
+  public void scheduleAutoPopup(@NotNull Editor editor, @NotNull CompletionType completionType, @Nullable final Condition<? super PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       return;
     }
@@ -179,6 +179,10 @@ public class AutoPopupController implements Disposable {
   public void dispose() {
   }
 
+  /**
+   * @deprecated can be emulated with {@link AppUIExecutor}
+   */
+  @Deprecated
   public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
     AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).inTransaction(project).execute(runnable);
   }

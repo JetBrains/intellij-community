@@ -2,10 +2,10 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
@@ -33,6 +33,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
+import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -47,10 +48,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -113,17 +112,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     myChangesLoadingPane.add(myChangesBrowser);
 
-    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, this);
+    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, false, this);
 
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
     myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
-
-    Runnable changesListener = () -> ApplicationManager.getApplication().invokeLater(
-      () -> myPreviewDiff.updatePreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)));
-    myChangesBrowser.getViewer().addSelectionListener(changesListener);
-    myChangesBrowser.setModelUpdateListener(changesListener);
 
     mySelectionListenerForDiff = new MyCommitSelectionListenerForDiff();
     myGraphTable.getSelectionModel().addListSelectionListener(mySelectionListenerForDiff);
@@ -259,6 +253,24 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (roots.size() != 1) return null;
       return myUi.getLogData().getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
     }
+    else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
+      return new ShowPreviewEditorAction.DiffPreviewProvider() {
+        @NotNull
+        @Override
+        public DiffRequestProcessor createDiffRequestProcessor() {
+          VcsLogChangeProcessor preview = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, true,
+                                                                    myChangesBrowser);
+          preview.updatePreview(true);
+          return preview;
+        }
+
+        @NotNull
+        @Override
+        public Object getOwner() {
+          return myUi;
+        }
+      };
+    }
     return null;
   }
 
@@ -328,8 +340,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.setSelectedDetails(Collections.emptyList());
-      myChangesBrowser.getViewer().setEmptyText("Error loading commits");
+      myChangesBrowser.showError("Error loading commits");
     }
   }
 

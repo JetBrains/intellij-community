@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -12,8 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -73,9 +70,15 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
-    for (FileCodeStyleProvider provider : FileCodeStyleProvider.EP_NAME.getExtensionList()) {
+    for (FileCodeStyleProvider provider : FileCodeStyleProvider.EP_NAME.getIterable()) {
       CodeStyleSettings fileSettings = provider.getSettings(file);
-      if (fileSettings != null) return fileSettings;
+      if (fileSettings != null) {
+        return fileSettings;
+      }
+    }
+
+    if (!file.isPhysical()) {
+      return getSettings(file.getProject());
     }
     return CodeStyleCachingUtil.getCachedCodeStyle(file);
   }

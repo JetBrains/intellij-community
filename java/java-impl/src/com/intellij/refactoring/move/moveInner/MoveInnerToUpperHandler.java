@@ -16,6 +16,8 @@
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.Language;
+import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -30,11 +32,12 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
   @Override
-  public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+  public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
     if (elements.length != 1) return false;
     PsiElement element = elements [0];
     return isNonStaticInnerClass(element);
@@ -66,5 +69,16 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public String getActionName(@NotNull PsiElement[] elements) {
+    return "Move Inner Class to Upper Level...";
+  }
+
+  @Override
+  public boolean supportsLanguage(@NotNull Language language) {
+    return language instanceof JvmLanguage;
   }
 }

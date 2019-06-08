@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -10,8 +10,10 @@ import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogStructureFilter
 import com.intellij.vcs.log.data.CompressedRefs
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
@@ -45,7 +47,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
     val filePath = getFilePath(filters)
-    if (filePath == null || (filePath.isDirectory && logProviders.keys.contains(filePath.virtualFile))) {
+    if (filePath == null || filePath.isDirectory) {
       return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
     }
     val root = VcsLogUtil.getActualRoot(project, filePath)!!
@@ -66,16 +68,12 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val start = System.currentTimeMillis()
 
-      if (index.isIndexed(root) && (dataPack.isFull || filePath.isDirectory)) {
+      if (index.isIndexed(root) && dataPack.isFull) {
         val visiblePack = filterWithIndex(dataPack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         if (checkNotEmpty(dataPack, visiblePack, true)) {
           return Pair(visiblePack, commitCount)
         }
-      }
-
-      if (filePath.isDirectory) {
-        return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
       }
 
       ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
@@ -122,7 +120,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
       if (dataPack.isFull) {
-        val pathsMap = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
+        val pathsMap = HashMap<Int, MaybeDeletedFilePath>()
         for (revision in revisions) {
           val revisionEx = revision as VcsFileRevisionEx
           pathsMap[getIndex(revision)] = MaybeDeletedFilePath(revisionEx.path, revisionEx.isDeleted)
@@ -131,9 +129,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
       }
 
-      val commits = ContainerUtil.newArrayListWithCapacity<GraphCommit<Int>>(revisions.size)
+      val commits = ArrayList<GraphCommit<Int>>(revisions.size)
 
-      val pathsMap = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
+      val pathsMap = HashMap<Int, MaybeDeletedFilePath>()
       for (revision in revisions) {
         val index = getIndex(revision)
         val revisionEx = revision as VcsFileRevisionEx
@@ -151,7 +149,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
     private fun getFilteredRefs(dataPack: DataPack): Map<VirtualFile, CompressedRefs> {
       val compressedRefs = dataPack.refsModel.allRefsByRoot[root] ?: CompressedRefs(emptySet(), storage)
-      return mapOf(kotlin.Pair(root, compressedRefs))
+      return mapOf(Pair(root, compressedRefs))
     }
 
     private fun getIndex(revision: VcsFileRevision): Int {
@@ -162,7 +160,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                 sortType: PermanentGraph.SortType,
                                 filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
-      val data = indexDataGetter.createFileNamesData(filePath)
+      val data = indexDataGetter.createFileHistoryData(filePath)
 
       val permanentGraph = dataPack.permanentGraph
       if (permanentGraph !is PermanentGraphImpl) {
@@ -178,7 +176,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val historyBuilder = FileHistoryBuilder(commit, filePath, data)
       val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.getCommits(), historyBuilder)
 
-      if (!filePath.isDirectory) reindexFirstCommitsIfNeeded(visibleGraph)
+      reindexFirstCommitsIfNeeded(visibleGraph)
       return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.pathsMap)
     }
 

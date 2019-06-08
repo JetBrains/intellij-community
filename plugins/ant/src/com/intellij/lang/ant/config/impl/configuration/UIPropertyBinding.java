@@ -1,12 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.configuration;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SortedListModel;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.util.config.AbstractProperty;
@@ -17,7 +15,10 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
@@ -29,7 +30,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class UIPropertyBinding {
   public abstract void loadValues(AbstractProperty.AbstractPropertyContainer container);
@@ -43,15 +47,14 @@ public abstract class UIPropertyBinding {
 
   public abstract void beEnabled();
 
-  public abstract void addAllPropertiesTo(Collection<AbstractProperty> properties);
+  public abstract void addAllPropertiesTo(Collection<? super AbstractProperty> properties);
 
   public static class Composite extends UIPropertyBinding {
     private final ArrayList<UIPropertyBinding> myBindings = new ArrayList<>();
 
-    public ToggleButtonBinding bindBoolean(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
+    public void bindBoolean(JToggleButton toggleButton, AbstractProperty<Boolean> property) {
       ToggleButtonBinding binding = new ToggleButtonBinding(toggleButton, property);
       myBindings.add(binding);
-      return binding;
     }
 
     public void bindInt(JTextComponent textComponent, AbstractProperty<Integer> property) {
@@ -114,7 +117,7 @@ public abstract class UIPropertyBinding {
     }
 
     @Override
-    public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+    public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       for (final UIPropertyBinding binding : myBindings) {
         binding.addAllPropertiesTo(properties);
       }
@@ -160,7 +163,7 @@ public abstract class UIPropertyBinding {
     }
 
     @Override
-    public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+    public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       properties.add(myProperty);
     }
 
@@ -191,10 +194,6 @@ public abstract class UIPropertyBinding {
     @Override
     public void apply(AbstractProperty.AbstractPropertyContainer container) {
       getProperty().set(container, getComponent().isSelected());
-    }
-
-    public void addChangeListener(PropertyChangeListener listener) {
-      myChangeSupport.addListener(listener);
     }
 
     @Override
@@ -274,7 +273,7 @@ public abstract class UIPropertyBinding {
     public static <Comp extends JComponent, Listener> ChangeValueSupport create(Comp component,
                                                                                 ListenerInstaller<Comp, Listener> installer,
                                                                                 String propertyName) {
-      return new ChangeValueSupport(component, installer, propertyName);
+      return new ChangeValueSupport<>(component, installer, propertyName);
     }
 
     public void stop() {
@@ -408,11 +407,8 @@ public abstract class UIPropertyBinding {
       myModel.setItems(myProperty.getModifiableList(container));
       if (myModel.isSortable()) {
         final ColumnInfo[] columnInfos = myModel.getColumnInfos();
-        int sortByColumn = -1;
-        for (int idx = 0; idx < columnInfos.length; idx++) {
-          ColumnInfo columnInfo = columnInfos[idx];
+        for (ColumnInfo columnInfo : columnInfos) {
           if (columnInfo.isSortable()) {
-            sortByColumn = idx;
             break;
           }
         }
@@ -451,73 +447,8 @@ public abstract class UIPropertyBinding {
       getComponent().getTableHeader().setResizingAllowed(true);
     }
 
-    public void addAddFacility(JButton addButton, final Factory<T> factory) {
-      myComponents.add(addButton);
-      addButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          JTable table = getComponent();
-          if (table.isEditing() && !table.getCellEditor().stopCellEditing()) {
-            return;
-          }
-          T item = factory.create();
-          if (item == null) {
-            return;
-          }
-          ArrayList<T> items = new ArrayList<>(myModel.getItems());
-          items.add(item);
-          myModel.setItems(items);
-          int newIndex = myModel.indexOf(item);
-          ListSelectionModel selectionModel = table.getSelectionModel();
-          selectionModel.clearSelection();
-          selectionModel.setSelectionInterval(newIndex, newIndex);
-          ColumnInfo[] columns = myModel.getColumnInfos();
-          for (int i = 0; i < columns.length; i++) {
-            ColumnInfo column = columns[i];
-            if (column.isCellEditable(item)) {
-              table.requestFocusInWindow();
-              table.editCellAt(newIndex, i);
-              break;
-            }
-          }
-        }
-      });
-    }
-
     public void setSortable(boolean isSortable) {
       myModel.setSortable(isSortable);
-    }
-
-    public void addRemoveFacility(final JButton button, final Condition<T> removable) {
-      myComponents.add(button);
-      button.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          TableUtil.removeSelectedItems(getComponent());
-        }
-      });
-      getComponent().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          updateRemoveButton(button, removable);
-        }
-      });
-    }
-
-    public void updateRemoveButton(JButton button, Condition<T> removable) {
-      final JTable table = getComponent();
-      final ListSelectionModel selectionModel = table.getSelectionModel();
-      boolean enable = false;
-      if (!selectionModel.isSelectionEmpty()) {
-        enable = true;
-        for (int i : table.getSelectedRows()) {
-          if (!removable.value(myModel.getItems().get(i))) {
-            enable = false;
-            break;
-          }
-        }
-      }
-      button.setEnabled(enable);
     }
   }
 
@@ -561,7 +492,7 @@ public abstract class UIPropertyBinding {
     }
 
     @Override
-    public void addAllPropertiesTo(Collection<AbstractProperty> properties) {
+    public void addAllPropertiesTo(Collection<? super AbstractProperty> properties) {
       properties.add(myProperty);
     }
 
@@ -571,23 +502,6 @@ public abstract class UIPropertyBinding {
 
     protected ListProperty<Item> getProperty() {
       return myProperty;
-    }
-  }
-
-  public static class SortedListBinding<T extends JDOMExternalizable> extends BaseListBinding<T> {
-    public SortedListBinding(JList list, ListProperty<T> property, Comparator<T> comparator) {
-      super(property, list);
-      list.setModel(new SortedListModel<>(comparator));
-    }
-
-    @Override
-    public void loadValues(AbstractProperty.AbstractPropertyContainer container) {
-      getModel().setAll(getProperty().get(container));
-      ScrollingUtil.ensureSelectionExists(getList());
-    }
-
-    private SortedListModel<T> getModel() {
-      return ((SortedListModel<T>)getList().getModel());
     }
   }
 
@@ -613,7 +527,7 @@ public abstract class UIPropertyBinding {
       return ((DefaultListModel)getList().getModel());
     }
 
-    public void addAddManyFacility(JButton button, final Factory<List<T>> factory) {
+    public void addAddManyFacility(JButton button, final Factory<? extends List<T>> factory) {
       button.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {

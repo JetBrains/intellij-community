@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author dsl
  */
-public class ConvertToInstanceMethodAction extends BaseRefactoringAction {
+public class ConvertToInstanceMethodAction extends BaseJavaRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {
     return false;

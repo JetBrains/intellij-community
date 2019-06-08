@@ -25,6 +25,7 @@ public class ExternalSystemException extends RuntimeException {
 
   @NotNull
   private final String[] myQuickFixes;
+  private boolean myCauseInitialized;
 
   public ExternalSystemException() {
     this(null, (Throwable)null);
@@ -42,7 +43,7 @@ public class ExternalSystemException extends RuntimeException {
     this(message, null, quickFixes);
   }
 
-  public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
+public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
     super(extractMessage(message, cause));
     myQuickFixes = mergeArrays(cause instanceof ExternalSystemException
                                ? ((ExternalSystemException)cause).getQuickFixes()
@@ -86,6 +87,16 @@ public class ExternalSystemException extends RuntimeException {
   public void printStackTrace(PrintStream s) {
     super.printStackTrace(s);
     s.println(myOriginalReason);
+  }
+
+  public synchronized boolean isCauseInitialized() {
+    return myCauseInitialized;
+  }
+
+  @Override
+  public synchronized Throwable initCause(Throwable cause) {
+    myCauseInitialized = true;
+    return super.initCause(cause);
   }
 
   @Nullable

@@ -8,6 +8,6 @@ import java.util.Collection;
 class C {
   void m() {
     final Collection<String> strings = new ArrayList<String>();
-    strings.<caret>addAll(new HashSet<String>());
+    (strings).<caret>addAll(new HashSet<String>());
   }
 }

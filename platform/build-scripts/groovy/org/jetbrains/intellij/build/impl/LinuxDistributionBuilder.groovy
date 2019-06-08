@@ -32,11 +32,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux")
-      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
-        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
-          include(name: "libyjpagent-linux*.so")
-        }
-      }
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
 
@@ -58,7 +53,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String osSpecificDistPath) {
     buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledJre) {
-        buildTarGz(null, osSpecificDistPath, "-no-jbr")
+        buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
+          buildTarGz(null, osSpecificDistPath, "-no-jbr")
+        }
       }
       def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
       if (jreDirectoryPath != null) {
@@ -71,6 +68,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
       if (secondJreBuild != null) {
         def secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
+        // Android Studio: default is still JDK 8
         buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}")
       }
     }
@@ -90,7 +88,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
-      filterset(begintoken: "@@", endtoken: "@@") {
+      filterset(begintoken: "__", endtoken: "__") {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
@@ -115,9 +113,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateVMOptions(String unixDistPath) {
     JvmArchitecture.values().each {
-      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName) +
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
                       " -Dawt.useSystemAAFontSettings=lcd" +
                       " -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine" +
                       " -Dsun.tools.attach.tmp.only=true"
@@ -147,8 +144,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     /* Android Studio: our JDK layout in prebuilts doesn't match the expected layout, so we copy it manually below.
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
-      extraBins += "jre64/bin/*"
-      javaExecutablePath = "jre64/bin/java"
+      extraBins += "jbr/bin/*"
+      javaExecutablePath = "jbr/bin/java"
     } */
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(productJsonDir, javaExecutablePath)
@@ -268,11 +265,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           customizer.extraExecutables.each { include(name: it) }
         }
         fileset(dir: jreDirectoryPath) {
-          include(name: "jre64/bin/*")
+          include(name: "jbr/bin/*")
         }
       }
 
-      generateProductJson(unixSnapDistPath, "jre64/bin/java")
+      generateProductJson(unixSnapDistPath, "jbr/bin/java")
       new ProductInfoValidator(buildContext).validateInDirectory(unixSnapDistPath, "", [unixSnapDistPath, jreDirectoryPath], [])
 
       buildContext.ant.mkdir(dir: "${snapDir}/result")

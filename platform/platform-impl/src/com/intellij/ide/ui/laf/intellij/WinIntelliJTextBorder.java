@@ -56,7 +56,8 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
       if (c.isEnabled() && op != null) {
         Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
         bw = isCellRenderer ? 1 : 2;
-      } else {
+      }
+      else {
         if (c.hasFocus()) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
         }

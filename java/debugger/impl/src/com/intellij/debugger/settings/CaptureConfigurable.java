@@ -518,7 +518,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     return DebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
-  static void processCaptureAnnotations(BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+  static void processCaptureAnnotations(BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
@@ -529,14 +529,14 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static void scanPointsInt(Project project,
                                     DebuggerProjectSettings debuggerProjectSettings,
                                     boolean capture,
-                                    BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+                                    BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
     try {
       GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       for (String annotationName : getAsyncAnnotations(debuggerProjectSettings, capture)) {
         PsiClass annotationClass = psiFacade.findClass(annotationName, allScope);
         if (annotationClass != null) {
-          AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
+          AnnotatedElementsSearch.<PsiModifierListOwner>searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
             .forEach(e -> {
               consumer.accept(capture, e);
             });

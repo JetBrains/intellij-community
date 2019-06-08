@@ -118,5 +118,17 @@ class Test {
 }"""
     assert NullableNotNullManager.isNotNull(clazz.methods[0].parameterList.parameters[0])
   }
-  
+
+  void "test type use array"() {
+    def clazz = myFixture.addClass """
+import org.checkerframework.checker.nullness.qual.*;
+
+class Test {
+    @Nullable Object[] array(String param){ }
+    @Nullable Object plain(String param){ }
+}"""
+    assert !NullableNotNullManager.isNullable(clazz.methods[0])
+    assert NullableNotNullManager.isNullable(clazz.methods[1])
+  }
+
 }

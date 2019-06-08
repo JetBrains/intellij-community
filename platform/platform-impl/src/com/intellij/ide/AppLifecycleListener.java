@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Listener for application lifecycle events.
@@ -18,7 +20,7 @@ public interface AppLifecycleListener {
   /**
    * Called before an application frame is shown.
    */
-  default void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) { }
+  default void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull Ref<? super Boolean> willOpenProject) { }
 
   /**
    * Called when the welcome screen is displayed (not called if the application opens a project).

@@ -37,7 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
@@ -71,7 +71,7 @@ import java.util.List;
 public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
   private JComboBox myTestRunnerComboBox;
-  private JComboBox myDocstringFormatComboBox;
+  private JComboBox<DocStringFormat> myDocstringFormatComboBox;
   private PythonTestConfigurationsModel myModel;
   @NotNull private final Module myModule;
   @NotNull private final Project myProject;
@@ -92,15 +92,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myModule = module;
     myProject = myModule.getProject();
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
-    //noinspection unchecked
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<>(Arrays.asList(DocStringFormat.values()),
                                                                      myDocumentationSettings.getFormat()));
-    myDocstringFormatComboBox.setRenderer(new ListCellRendererWrapper<DocStringFormat>() {
-      @Override
-      public void customize(JList list, DocStringFormat value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getName());
-      }
-    });
+    myDocstringFormatComboBox.setRenderer(SimpleListCellRenderer.create("", DocStringFormat::getName));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myWorkDir.addBrowseFolderListener("Please choose working directory:", null, myProject, fileChooserDescriptor);

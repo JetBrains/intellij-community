@@ -1,5 +1,7 @@
 import org.gradle.internal.os.OperatingSystem
 
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
@@ -9,7 +11,9 @@ cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
 def isModular = jdkVersion > 8
-project.ext.jdkArtifactPrefix = isModular ? 'jbr-' : 'jbrsdk-'
+project.ext.build = isModular ? secondJreBuild : jdkBuild
+def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
+project.ext.jdkArtifactPrefix = isModular && !setupJbrSdk ? 'jbr-' : 'jbrsdk-'
 
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
   new File(it).mkdirs()
@@ -46,12 +50,12 @@ task downloadJdk {
   def arch = jdkArch()
   def platform = currentPlatformName()
   def jdkUrl = jdkUrl()
-  def (update, buildNumber) = splitJdkBuild(jdkBuild.toString(), jdkVersion.toString())
+  def (update, buildNumber) = splitJdkBuild(build.toString(), jdkVersion.toString())
   def artifactName = "$jdkArtifactPrefix${update}-${platform}-${arch}-${buildNumber}.tar.gz"
   def outputFile = "$project.buildDir/jbsdk/${artifactName}"
 
   inputs.property('version', jdkVersion)
-  inputs.property('build', jdkBuild)
+  inputs.property('build', build)
   inputs.property('url', jdkUrl)
   outputs.file(outputFile)
   doLast {
@@ -96,9 +100,25 @@ def unpackJdk(jdkArchive, outputDir) {
   else {
     exec { commandLine 'mkdir', '-p', outputDir }
     exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
-    if (currentOs.isMacOsX() && file("${outputDir}/jdk/Contents").exists()) {
-      exec { commandLine 'mv', "${outputDir}/jdk/Contents", outputDir }
-      exec { commandLine 'rm', '-rf', "${outputDir}/jdk" }
+  }
+  def rootDirs = ['jbrsdk', 'jbr', 'jdk']
+  if (file(outputDir).list()?.any { rootDirs.contains(it) }) {
+    // unpack top level jbrsdk/jbr/jdk directory
+    file(outputDir).listFiles().findAll { rootDirs.contains(it.name) }.each { rootDir ->
+      rootDir.listFiles().each { File file ->
+        if (currentOs.isWindows()) {
+          Files.move(Paths.get(file.absolutePath), Paths.get(outputDir).resolve(file.name))
+        }
+        else {
+          exec { commandLine 'mv', file, outputDir }
+        }
+      }
+      if (currentOs.isWindows()) {
+        rootDir.deleteDir()
+      }
+      else {
+        exec { commandLine 'rm', '-rf', rootDir }
+      }
     }
   }
 }
@@ -115,10 +135,10 @@ static def jdkArch() {
 def jdkUrl() {
   def arch = jdkArch()
   def platform = currentPlatformName()
-  def (update, buildNumber) = splitJdkBuild(jdkBuild.toString(), jdkVersion.toString())
+  def (update, buildNumber) = splitJdkBuild(build.toString(), jdkVersion.toString())
   // base url of TeamCity build to download JDK from
   def teamCityBuild = System.getProperty('intellij.jdk.teamcity.build.url')
-  "${teamCityBuild != null ? teamCityBuild : jdkRepo}/${jdkArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
+  "${teamCityBuild ?: jdkRepo}/${jdkArtifactPrefix}${update}-${platform}-${arch}-${buildNumber}.tar.gz"
 }
 
 static def currentPlatformName() {
@@ -137,7 +157,7 @@ static def currentPlatformName() {
 // JDK 1.6
 repositories {
   maven {
-    url 'http://repo.labs.intellij.net/java'
+    url 'https://repo.labs.intellij.net/java'
   }
 }
 

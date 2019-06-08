@@ -352,7 +352,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return null;
   }
 
-  private PsiClass findPsiClassByName(String originalQName, @Nullable Consumer<ClsClassImpl> altClsProcessor) {
+  private PsiClass findPsiClassByName(String originalQName, @Nullable Consumer<? super ClsClassImpl> altClsProcessor) {
     PsiClass psiClass = null;
     // first check alternative jre if any
     Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();

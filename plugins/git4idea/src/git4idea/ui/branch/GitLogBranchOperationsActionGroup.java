@@ -17,13 +17,13 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
+import git4idea.actions.GitSingleCommitActionGroup;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.log.GitRefManager;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class GitLogBranchOperationsActionGroup extends ActionGroup implements DumbAware {
+public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGroup {
   private static final int MAX_BRANCH_GROUPS = 2;
   private static final int MAX_TAG_GROUPS = 1;
 
@@ -44,30 +44,18 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     setPopup(false);
   }
 
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return true;
-  }
-
   @NotNull
   @Override
-  public AnAction[] getChildren(AnActionEvent e) {
-    if (e == null) return AnAction.EMPTY_ARRAY;
-    Project project = e.getProject();
-    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
+  public AnAction[] getChildren(@NotNull AnActionEvent e,
+                                @NotNull Project project,
+                                @NotNull VcsLog log,
+                                @NotNull GitRepository root,
+                                @NotNull CommitId commit) {
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     List<VcsRef> refs = e.getData(VcsLogDataKeys.VCS_LOG_REFS);
-    if (project == null || log == null || logUI == null || refs == null) {
+    if (logUI == null || refs == null) {
       return AnAction.EMPTY_ARRAY;
     }
-
-    List<CommitId> commits = log.getSelectedCommits();
-    if (commits.size() != 1) return AnAction.EMPTY_ARRAY;
-
-    CommitId commit = commits.get(0);
-    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
-    final GitRepository root = repositoryManager.getRepositoryForRoot(commit.getRoot());
-    if (root == null) return AnAction.EMPTY_ARRAY;
 
     List<VcsRef> branchRefs = ContainerUtil.filter(refs, ref -> {
       if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
@@ -93,6 +81,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
       GitVcsSettings settings = GitVcsSettings.getInstance(project);
       boolean showBranchesPopup = branchRefs.size() > MAX_BRANCH_GROUPS;
 
+      GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
       List<GitRepository> allRepositories = repositoryManager.getRepositories();
 
       Set<String> commonBranches = new THashSet<>(GitReference.BRANCH_NAME_HASHING_STRATEGY);

@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -174,13 +175,6 @@ public class FileInEditorProcessor {
     return firstNotificationLine;
   }
 
-  private static boolean isCaretVisible(Editor editor) {
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    Caret currentCaret = editor.getCaretModel().getCurrentCaret();
-    Point caretPoint = editor.visualPositionToXY(currentCaret.getVisualPosition());
-    return visibleArea.contains(caretPoint);
-  }
-
   private static void showHint(@NotNull Editor editor, @NotNull MessageBuilder messageBuilder) {
     showHint(editor, messageBuilder.getMessage(), messageBuilder.createHyperlinkListener());
   }
@@ -190,7 +184,7 @@ public class FileInEditorProcessor {
     LightweightHint hint = new LightweightHint(component);
 
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-    if (isCaretVisible(editor)) {
+    if (EditorUtil.isPrimaryCaretVisible(editor)) {
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER, flags, 0, false);
     }
     else {

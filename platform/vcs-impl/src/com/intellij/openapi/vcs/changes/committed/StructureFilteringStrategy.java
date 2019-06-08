@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.util.treeView.TreeState;
@@ -160,7 +160,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       Object userObject = node.getUserObject();
 
       if (userObject instanceof FilePath) {
-        result = ContainerUtil.list(((FilePath)userObject));
+        result = Collections.singletonList(((FilePath)userObject));
       }
       else if (userObject instanceof Module) {
         result = ContainerUtil.map(ModuleRootManager.getInstance((Module)userObject).getContentRoots(), VcsUtil::getFilePath);
@@ -200,8 +200,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
         }
       }
 
-      myStructureTree
-        .setModel(TreeModelBuilder.buildFromFilePaths(myProject, new DirectoryChangesGroupingPolicy.Factory(myProject), myFilePaths));
+      myStructureTree.setModel(TreeModelBuilder.buildFromFilePaths(myProject, new DirectoryChangesGroupingPolicy.Factory(), myFilePaths));
       localState.applyTo(myStructureTree, myStructureTree.getModel().getRoot());
       myStructureTree.revalidate();
       myStructureTree.repaint();

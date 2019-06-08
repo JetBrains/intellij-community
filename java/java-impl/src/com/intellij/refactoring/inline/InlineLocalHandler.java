@@ -177,14 +177,14 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final Ref<Boolean> inlineAll = new Ref<>(true);
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       int occurrencesCount = refsToInlineList.size();
-      if (refExpr != null && occurrencesCount > 1 || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
+      if (refExpr != null && (occurrencesCount > 1 || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog())) {
         final InlineLocalDialog inlineLocalDialog = new InlineLocalDialog(project, local, refExpr, occurrencesCount);
         if (!inlineLocalDialog.showAndGet()) {
           WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
           return;
         }
 
-        if (refExpr != null && inlineLocalDialog.isInlineThis()) {
+        if (inlineLocalDialog.isInlineThis()) {
           refsToInlineList = Collections.singletonList(refExpr);
           inlineAll.set(false);
         }
@@ -402,5 +402,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
     return local.getInitializer();
+  }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement element) {
+    return REFACTORING_NAME;
   }
 }

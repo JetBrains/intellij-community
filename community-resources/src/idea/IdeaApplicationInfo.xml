@@ -1,7 +1,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2019" minor="1.3" eap="false"/>
+  <version major="2019" minor="2" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="117" progressY="280" progressHeight="3" />
@@ -16,9 +16,10 @@
 
   <editor background-url="/idea_logo_welcome.png"/>
 
-  <plugins url="http://plugins.jetbrains.com/" builtin-url="__BUILTIN_PLUGINS_URL__"/>
-  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
-               patches="http://download.jetbrains.com/idea/"/>
+  <plugins url="https://plugins.jetbrains.com/"
+           builtin-url="__BUILTIN_PLUGINS_URL__"/>
+  <update-urls check="https://www.jetbrains.com/updates/updates.xml"
+               patches="https://download.jetbrains.com/idea/"/>
 
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="https://www.jetbrains.com/help/idea"/>
@@ -33,6 +34,6 @@
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
               service="https://www.jetbrains.com/idea/statistics/index.jsp"
               fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
-              event-log-settings="https://www.jetbrains.com/idea/statistics/fus-lion-v3-assistant.xml"
+              event-log-settings="https://resources.jetbrains.com/storage/fus/config/%s/lion-v3-assistant.xml"
   />
 </component>

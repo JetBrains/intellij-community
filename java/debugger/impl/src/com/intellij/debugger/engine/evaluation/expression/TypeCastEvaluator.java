@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class TypeCastEvaluator
@@ -77,7 +77,7 @@ public class TypeCastEvaluator implements Evaluator {
         throw EvaluateExceptionUtil.createEvaluateException(
           DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myPrimitiveCastType));
       }
-      ReferenceType castType = (ReferenceType)myTypeCastEvaluator.evaluate(context);
+      ReferenceType castType = myTypeCastEvaluator.evaluate(context);
       if (!DebuggerUtilsImpl.instanceOf(type, castType)) {
         throw EvaluateExceptionUtil.createEvaluateException(
           DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), castType.name()));

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,6 +58,7 @@ import java.util.*;
 import static com.intellij.icons.AllIcons.Process.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.InfoAndProgressPanel");
   private final ProcessPopup myPopup;
 
   private final StatusPanel myInfoPanel = new StatusPanel();
@@ -85,7 +87,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     public void run() {
       List<InlineProgressIndicator> indicators;
       synchronized (myDirtyIndicators) {
-        indicators = ContainerUtil.newArrayList(myDirtyIndicators);
+        indicators = new ArrayList<>(myDirtyIndicators);
         myDirtyIndicators.clear();
       }
       for (InlineProgressIndicator indicator : indicators) {
@@ -693,7 +695,12 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     private ProgressButton createSuspendButton() {
       InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> {
-        ProgressSuspender suspender = Objects.requireNonNull(getSuspender());
+        ProgressSuspender suspender = getSuspender();
+        if (suspender == null) {
+          LOG.assertTrue(myOriginal == null, "The process is expected to be finished at this point");
+          return;
+        }
+
         if (suspender.isSuspended()) {
           suspender.resumeProcess();
         } else {

@@ -31,24 +31,22 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
 
   var bundles:MutableList<Runtime> = mutableListOf()
 
-  lateinit var installed:Runtime;
+  lateinit var installed:Runtime
 
   override fun actionPerformed(e: AnActionEvent) {
 
     ProgressManager.getInstance().run(object : Task.Modal(e.project, "Loading Runtime List...", false) {
       override fun run(progressIndicator: ProgressIndicator) {
-        if (BinTrayUtil.getJdkConfigFilePath().exists()) {
           try {
-            val file = File(BinTrayUtil.getJdkConfigFilePath().readLines()[0])
+            val file = File(System.getProperty("java.home"))
             if (file.exists()) {
-              val runtime = Local(project, file)
+              val runtime = Local(project, javaHomeToInstallationLocation(file))
               installed = runtime
               bundles.add(installed)
             }
           } catch (exc : Exception) {
-            // todo ask for file ramovale if it is broken
+            // todo ask for file removal if it is broken
           }
-        }
         bundles.addAll(RuntimeLocationsFactory().localBundles(e.project!!))
         bundles.addAll(RuntimeLocationsFactory().bintrayBundles(e.project!!))
       }
@@ -73,12 +71,22 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
       val chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, e.project, WindowManager.getInstance().suggestParentWindow(e.project))
       chooser.choose(LocalFileSystem.getInstance().findFileByIoFile(File("~"))) {
         file -> file.first()?.let{f ->
-        val local = Local(e.project!!, File(f.path))
-        myRuntimeUrlComboboxModel.add(local)
-        bundles.add(local)
-        runtimeCompletionProvider.setItems(bundles)
-        controller.add(local)
-        combobox.selectedItem = local
+        File(f.path).walk().filter { file -> file.name == "tools.jar" ||
+                                             file.name == "jrt-fs.jar"
+        }.firstOrNull()?.let { file ->
+
+          val local = ProgressManager.getInstance().
+            runProcessWithProgressSynchronously<Local, RuntimeException>(
+              {Local(e.project!!, javaHomeToInstallationLocation(javaHomeFromFile(file)))},
+              "Initializing Runtime Info", false, e.project!!
+            )
+
+          myRuntimeUrlComboboxModel.add(local)
+          bundles.add(local)
+          runtimeCompletionProvider.setItems(bundles)
+          controller.add(local)
+          combobox.selectedItem = local
+        }
       }
       }
     }
@@ -95,7 +103,7 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
     combobox.editor = object : ComboBoxCompositeEditor<JLabel, TextFieldWithAutoCompletion<Runtime>>(myRuntimeUrlField, repositoryUrlFieldSpinner) {
       override fun setItem(anObject: Any?) {
         super.setItem(anObject)
-        if (installed.equals(anObject)) {
+        if (installed == anObject) {
           myRuntimeUrlField.font = combobox.font.deriveFont(Font.BOLD)
         } else {
           myRuntimeUrlField.font = combobox.font.deriveFont(Font.PLAIN)
@@ -110,11 +118,11 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
                                                 isSelected: Boolean,
                                                 cellHasFocus: Boolean): Component {
 
-        var listCellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        val listCellRendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
 
-        if (installed.equals(value)) {
+        if (installed == value) {
           list?.let {
-            listCellRendererComponent.setFont(list.font.deriveFont(Font.BOLD));
+            listCellRendererComponent.font = list.font.deriveFont(Font.BOLD)
           }
         }
 
@@ -128,11 +136,17 @@ class SwitchBootRuntimeAction : AnAction(), DumbAware {
 
     myRuntimeUrlField.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
-        bundles.firstOrNull { it.toString() == myRuntimeUrlField.text }?.let { match -> controller.runtimeSelected(match)}
+        val runtime = bundles.firstOrNull { it.toString() == myRuntimeUrlField.text }
+        if (runtime == null) {
+          myRuntimeUrlField.font = combobox.font.deriveFont(Font.PLAIN)
+          controller.noRuntimeSelected()
+        } else {
+          controller.runtimeSelected(runtime)
+        }
       }
     })
 
-    combobox.selectedItem = installed;
+    combobox.selectedItem = installed
 
     val centralPanel = JPanel(GridBagLayout())
     val constraint = GridBagConstraints()

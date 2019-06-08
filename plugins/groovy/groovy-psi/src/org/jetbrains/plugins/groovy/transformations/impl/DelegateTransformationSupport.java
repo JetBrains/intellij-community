@@ -34,7 +34,7 @@ import java.util.*;
 public class DelegateTransformationSupport implements AstTransformationSupport {
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
-    Map<PsiType, PsiAnnotation> declaredTypes = ContainerUtil.newLinkedHashMap();
+    Map<PsiType, PsiAnnotation> declaredTypes = new LinkedHashMap<>();
     GrTypeDefinition codeClass = context.getCodeClass();
     for (GrField field : context.getFields()) {
       final PsiAnnotation annotation = PsiImplUtil.getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
@@ -65,7 +65,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
 
       if (!processor.myInterfaces) return;
 
-      Set<PsiClass> visited = ContainerUtil.newHashSet();
+      Set<PsiClass> visited = new HashSet<>();
       Queue<Pair<PsiClass, PsiSubstitutor>> queue = ContainerUtil.newLinkedList(Pair.create(delegate, delegateResult.getSubstitutor()));
 
       while (!queue.isEmpty()) {

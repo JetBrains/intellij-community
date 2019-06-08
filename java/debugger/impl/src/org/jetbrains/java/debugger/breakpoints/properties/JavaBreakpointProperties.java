@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.debugger.InstanceFilter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -10,6 +9,8 @@ import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * @author egor
@@ -68,7 +69,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     if ((a == null || a.length == 0) && (b == null || b.length == 0)) {
       return true;
     }
-    return Comparing.equal(a, b);
+    return Arrays.equals(a, b);
   }
 
   @XCollection(propertyElementName = "class-exclusion-filters")

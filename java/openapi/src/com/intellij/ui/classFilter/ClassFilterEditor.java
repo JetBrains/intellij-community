@@ -114,7 +114,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     myTable.setColumnSelectionAllowed(false);
-    myTable.setPreferredScrollableViewportSize(new Dimension(200, myTable.getRowHeight() * JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS));
+    myTable.setPreferredScrollableViewportSize(new Dimension(200, myTable.getRowHeight() * getPreferredRowsCount()));
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn column = columnModel.getColumn(FilterTableModel.CHECK_MARK);
@@ -126,6 +126,9 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     columnModel.getColumn(FilterTableModel.FILTER).setCellRenderer(new FilterCellRenderer());
 
     getEmptyText().setText(UIBundle.message("no.patterns"));
+  }
+  protected int getPreferredRowsCount() {
+    return JBTable.PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS;
   }
 
   @NotNull

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.dom.model.completion;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.NegatingComparable;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -33,13 +32,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesVersionConverter;
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Sergey Evdokimov
@@ -61,6 +66,10 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
 
     XmlTag tag = (XmlTag)tagElement;
 
+    if (!"version".equals(tag.getName())) {
+      return;
+    }
+
     Project project = element.getProject();
 
     DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
@@ -78,6 +87,7 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
 
       if (StringUtil.isEmptyOrSpaces(artifactId)) return;
 
+
       CompletionResultSet newResultSet = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
         new LookupElementWeigher("mavenVersionWeigher") {
           @Nullable
@@ -87,28 +97,34 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
           }
         }));
 
-      MavenProjectIndicesManager indicesManager = MavenProjectIndicesManager.getInstance(project);
+      List<MavenDependencyCompletionItem> completionItems = searchVersions(groupId, artifactId, coordinates, project);
 
-      Set<String> versions;
-
-      if (StringUtil.isEmptyOrSpaces(groupId)) {
-        if (!(coordinates instanceof MavenDomPlugin)) return;
-
-        versions = indicesManager.getVersions(MavenArtifactUtil.DEFAULT_GROUPS[0], artifactId);
-        for (int i = 0; i < MavenArtifactUtil.DEFAULT_GROUPS.length; i++) {
-          versions = Sets.union(versions, indicesManager.getVersions(MavenArtifactUtil.DEFAULT_GROUPS[i], artifactId));
-        }
+      for (MavenDependencyCompletionItem item : completionItems) {
+        newResultSet.addElement(MavenDependencyCompletionUtil.lookupElement(item, item.getVersion()));
       }
-      else {
-        versions = indicesManager.getVersions(groupId, artifactId);
+      if (MavenServerManager.getInstance().isUseMaven2()) {
+        newResultSet.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.ReleaseVersionId).withStrikeoutness(true));
+        newResultSet.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.LatestVersionId).withStrikeoutness(true));
       }
-
-      for (String version : versions) {
-        newResultSet.addElement(LookupElementBuilder.create(version));
-      }
-      newResultSet.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.ReleaseVersionId));
-      newResultSet.addElement(LookupElementBuilder.create(RepositoryLibraryDescription.LatestVersionId));
     }
   }
 
+  private List<MavenDependencyCompletionItem> searchVersions(String groupId,
+                                                             String artifactId,
+                                                             MavenDomArtifactCoordinates coordinates,
+                                                             Project project) {
+
+    DependencySearchService searchService = MavenProjectIndicesManager.getInstance(project).getSearchService();
+    if (StringUtil.isEmptyOrSpaces(groupId)) {
+      if (!(coordinates instanceof MavenDomPlugin)) return Collections.emptyList();
+      List<MavenDependencyCompletionItem> result = new ArrayList<>();
+      for (int i = 0; i < MavenArtifactUtil.DEFAULT_GROUPS.length; i++) {
+        result
+          .addAll(searchService.findAllVersions(new MavenDependencyCompletionItem(MavenArtifactUtil.DEFAULT_GROUPS[i], artifactId, null)));
+      }
+      return result;
+    }
+    return searchService
+      .findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null, null));
+  }
 }

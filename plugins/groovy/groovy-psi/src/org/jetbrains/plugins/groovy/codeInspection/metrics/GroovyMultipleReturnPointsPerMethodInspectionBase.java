@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import com.intellij.psi.PsiType;
@@ -15,12 +13,6 @@ public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMet
 
   public GroovyMultipleReturnPointsPerMethodInspectionBase() {
     super(1);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Method with multiple return points";
   }
 
   @Override

@@ -1333,8 +1333,12 @@
       "key": "Tree.foreground"
     },
     {
+      "key": "Tree.paintLines",
+      "description": "Indicating whether to paint lines to highlight a tree structure"
+    },
+    {
       "key": "Tree.hash",
-      "deprecated": true
+      "description": "Color used to paint lines to highlight a tree structure"
     },
     {
       "key": "Tree.line",
@@ -1346,7 +1350,11 @@
     },
     {
       "key": "Tree.rowHeight",
-      "description": "Line height in pixels"
+      "description": "Line height for a regular tree in pixels (zero or less means that a node calculates its height by itself)"
+    },
+    {
+      "key": "SettingsTree.rowHeight",
+      "description": "Line height for the Settings tree in pixels (zero or less means that a node calculates its height by itself)"
     },
     {
       "key": "Tree.selectionBackground"

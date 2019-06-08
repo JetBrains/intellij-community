@@ -469,11 +469,6 @@ Android Studio: removed by Change I1dba4249 / commit 8f836c4 */
     messages.artifactBuilt(pathToReport)
   }
 
-  @Override
-  boolean isBundledJreModular() {
-    return options.bundledJreVersion >= 9
-  }
-
   private static String toCanonicalPath(String path) {
     FileUtil.toSystemIndependentName(new File(path).canonicalPath)
   }

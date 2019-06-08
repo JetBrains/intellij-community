@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
@@ -9,9 +9,10 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.isEmpty
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
-  fun <S : Any> createGetSession(component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reload: Boolean = false): StateGetter<S> {
+  internal fun <S : Any> createGetSession(component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reload: Boolean = false): StateGetter<S> {
     return StateGetterImpl(component, componentName, getStorageData(reload), stateClass, this)
   }
 
@@ -21,7 +22,7 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   abstract fun archiveState(storageData: T, componentName: String, serializedState: Element?)
 }
 
-fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: StateStorage, component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reloadData: Boolean): StateGetter<S> {
+internal fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: StateStorage, component: PersistentStateComponent<S>, componentName: String, stateClass: Class<S>, reloadData: Boolean): StateGetter<S> {
   if (isUseLoadedStateAsExisting && storage is StorageBaseEx<*>) {
     return storage.createGetSession(component, componentName, stateClass, reloadData)
   }
@@ -31,12 +32,11 @@ fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: St
       return storage.getState(component, componentName, stateClass, mergeInto, reloadData)
     }
 
-    override fun archiveState() : S? {
-      return null
-    }
+    override fun archiveState(): S? = null
   }
 }
 
+@ApiStatus.Internal
 interface StateGetter<S : Any> {
   fun getState(mergeInto: S? = null): S?
 

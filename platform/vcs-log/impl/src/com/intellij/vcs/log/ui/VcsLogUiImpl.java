@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 
@@ -117,7 +117,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       return;
     }
 
-    List<NamedRunnable> runnables = ContainerUtil.newArrayList();
+    List<NamedRunnable> runnables = new ArrayList<>();
     runnables.add(new NamedRunnable("View and Reset Filters") {
       @Override
       public void run() {

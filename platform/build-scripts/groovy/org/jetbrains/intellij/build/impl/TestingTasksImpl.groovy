@@ -291,7 +291,7 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.addAll([
         "-Xmx1024m",
         "-Xms750m",
-        "-Dsun.io.useCanonCaches=false"
+        "-Dsun.io.useCanonPrefixCache=false"
       ])
     }
 
@@ -502,7 +502,7 @@ class TestingTasksImpl extends TestingTasks {
   private def setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupBundledMaven')
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 'setupBundledMaven')
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.errorTreeView.HotfixData;
@@ -21,8 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * Component which provides means to invoke different VCS-related services.
@@ -51,7 +53,7 @@ public abstract class AbstractVcsHelper {
   public abstract List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters);
 
   public void showError(final VcsException e, final String tabDisplayName) {
-    showErrors(Arrays.asList(e), tabDisplayName);
+    showErrors(Collections.singletonList(e), tabDisplayName);
   }
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs);
@@ -129,7 +131,7 @@ public abstract class AbstractVcsHelper {
                                        @Nullable AnnotationProvider annotationProvider,
                                        @NotNull FilePath path,
                                        @NotNull AbstractVcs vcs);
-  
+
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.
    *
@@ -162,8 +164,8 @@ public abstract class AbstractVcsHelper {
                                                                 @NotNull VcsShowConfirmationOption confirmationOption,
                                                                 @Nullable String okActionName,
                                                                 @Nullable String cancelActionName);
-  
-  
+
+
   /**
    * <p>Shows commit dialog, fills it with the given changes and given commit message, initially selects the given changelist.</p>
    * <p>Note that the method is asynchronous: it returns right after user presses "Commit" or "Cancel" and after all pre-commit handlers

@@ -71,6 +71,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
 
   var clientName: String = GithubTokenCreator.DEFAULT_CLIENT_NAME
   private var tokenAcquisitionError: ValidationInfo? = null
+  private var fixedLogin: String? = null
 
   init {
     this.title = title
@@ -90,8 +91,11 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
   }
 
   @JvmOverloads
-  fun withCredentials(login: String? = null, password: String? = null): GithubLoginDialog {
-    if (login != null) passwordUi.setLogin(login)
+  fun withCredentials(login: String? = null, password: String? = null, editableLogin: Boolean = true): GithubLoginDialog {
+    if (login != null) {
+      passwordUi.setLogin(login, editableLogin)
+      fixedLogin = if (editableLogin) null else login
+    }
     if (password != null) passwordUi.setPassword(password)
     applyUi(passwordUi)
     return this
@@ -234,8 +238,9 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
       }
     }
 
-    fun setLogin(login: String) {
+    fun setLogin(login: String, editable: Boolean = true) {
       loginTextField.text = login
+      loginTextField.isEditable = editable
     }
 
     fun setPassword(password: String) {
@@ -248,7 +253,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
       .add(panel(passwordField).withLabel("Password:"))
       .add(panel(contextHelp)).createPanel()
 
-    override fun getPreferredFocus() = loginTextField
+    override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
 
     override fun getValidator() = chain({ notBlank(loginTextField, "Login cannot be empty") },
                                         { notBlank(passwordField, "Password cannot be empty") })
@@ -340,6 +345,9 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
         throw GithubAuthenticationException("Access token should have `repo` and `gist` scopes.")
       }
 
+      fixedLogin?.let {
+        if (it != login) throw GithubAuthenticationException("Token should match username \"$it\"")
+      }
 
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 

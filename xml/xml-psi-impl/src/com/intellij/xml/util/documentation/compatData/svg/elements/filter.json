@@ -21,7 +21,7 @@
               "version_added": "4"
             },
             "firefox_android": {
-              "version_added": null
+              "version_added": "4"
             },
             "ie": {
               "version_added": "10"
@@ -30,7 +30,7 @@
               "version_added": "9"
             },
             "opera_android": {
-              "version_added": "9.5"
+              "version_added": "10.1"
             },
             "safari": {
               "version_added": "3"

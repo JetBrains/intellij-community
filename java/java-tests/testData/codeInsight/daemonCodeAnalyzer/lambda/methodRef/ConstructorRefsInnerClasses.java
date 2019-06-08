@@ -71,7 +71,7 @@ class StaticInner1 {
     static void call3(I2 s) {}
 
     static {
-      call3<error descr="Ambiguous method call: both 'StaticInner1.call3(I1)' and 'StaticInner1.call3(I2)' match">(StaticInner1.Inner :: new)</error>;
+      call3(StaticInner1.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>);
     }
 }
 

@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import org.jdom.Element
 import java.io.Writer
 import java.nio.file.Path
@@ -52,15 +53,13 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
 }
 
 // cannot be `internal`, used in Upsource
-class DefaultProjectStoreImpl(override val project: Project, private val pathMacroManager: PathMacroManager) : ChildlessComponentStore() {
+class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponentStore() {
   // see note about default state in project store
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
-  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
-
-  init {
-    service<DefaultProjectExportableAndSaveTrigger>().project = project
+  private val storage by lazy {
+    DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, PathMacroManager.getInstance(project))
   }
 
   override val storageManager = object : StateStorageManager {
@@ -88,7 +87,7 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
   // don't want to optimize and use already loaded data - it will add unnecessary complexity and implementation-lock (currently we store loaded archived state in memory, but later implementation can be changed)
   fun getStateCopy() = storage.loadLocalData()
 
-  override fun getPathMacroManagerForDefaults() = pathMacroManager
+  override fun getPathMacroManagerForDefaults() = PathMacroManager.getInstance(project)
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
@@ -101,14 +100,11 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
 @State(name = "ProjectManager", storages = [(Storage(FILE_SPEC))])
 internal class DefaultProjectExportableAndSaveTrigger {
-  @Suppress("StatefulEp")
-  @Volatile
-  var project: Project? = null
-
-  suspend fun save(isForceSavingAllSettings: Boolean): SaveResult {
-    val project = project ?: return SaveResult.EMPTY
+  suspend fun save(forceSavingAllSettings: Boolean): SaveResult {
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    val project = if (projectManager.isDefaultProjectInitialized) projectManager.defaultProject else return SaveResult.EMPTY
     val result = SaveResult()
-    (project.stateStore as ComponentStoreImpl).doSave(result, isForceSavingAllSettings)
+    (project.stateStore as ComponentStoreImpl).doSave(result, forceSavingAllSettings)
     return result
   }
 }

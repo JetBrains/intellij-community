@@ -5,11 +5,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionTypeCalculators;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 
 abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implements GrOperatorExpression {
 
@@ -19,7 +19,7 @@ abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implemen
 
   @Nullable
   @Override
-  public abstract GroovyReference getReference();
+  public abstract GroovyCallReference getReference();
 
   @Nullable
   @Override

@@ -32,7 +32,7 @@ import java.util.Collections;
 public class FileUrlLocationTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testExcluded() {
     myFixture.addFileToProject("secondary/my_example_spec.xml", "");
-    ModuleRootModificationUtil.updateExcludedFolders(myModule, ModuleRootManager.getInstance(myModule).getContentRoots()[0], Collections.emptyList(), Collections.singletonList("/src"));
+    ModuleRootModificationUtil.updateExcludedFolders(getModule(), ModuleRootManager.getInstance(getModule()).getContentRoots()[0], Collections.emptyList(), Collections.singletonList("/src"));
      VirtualFile file = myFixture.configureByText(
       "my_example_spec.xml",
       "\n" +

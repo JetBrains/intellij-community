@@ -36,8 +36,6 @@ public class DomApplicationComponent {
     }
   );
 
-  private final Map<Class, StaticGenericInfo> myGenericInfos = ConcurrentFactoryMap.createMap(StaticGenericInfo::new,
-                                                                                              ContainerUtil::createConcurrentSoftValueMap);
   private final Map<Class, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.createMap(InvocationCache::new,
                                                                                                 ContainerUtil::createConcurrentSoftValueMap);
   private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
@@ -151,7 +149,7 @@ public class DomApplicationComponent {
   }
 
   public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return myGenericInfos.get(ReflectionUtil.getRawType(type));
+    return getInvocationCache(ReflectionUtil.getRawType(type)).genericInfo;
   }
 
   final InvocationCache getInvocationCache(final Class type) {

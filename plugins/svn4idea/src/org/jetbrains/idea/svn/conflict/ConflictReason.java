@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.conflict;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlEnumValue;
+import java.util.HashMap;
 import java.util.Map;
 
 public enum ConflictReason {
@@ -22,7 +22,7 @@ public enum ConflictReason {
   @XmlEnumValue("moved-away") MOVED_AWAY("moved-away"),
   @XmlEnumValue("moved-here") MOVED_HERE("moved-here");
 
-  @NotNull private static final Map<String, ConflictReason> ourAllReasons = ContainerUtil.newHashMap();
+  @NotNull private static final Map<String, ConflictReason> ourAllReasons = new HashMap<>();
 
   static {
     for (ConflictReason reason : ConflictReason.values()) {

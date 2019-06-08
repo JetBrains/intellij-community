@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea
 
 import com.google.common.collect.HashMultiset
@@ -24,13 +24,13 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     val usages = hashSetOf<UsageDescriptor>()
 
     usages.add(UsageDescriptor("config.repo.sync." + settings.syncSetting.name, 1))
-    usages.add(UsageDescriptor("config.update.type." + settings.updateType.name, 1))
+    usages.add(UsageDescriptor("config.update.type." + settings.updateMethod.name, 1))
     usages.add(UsageDescriptor("config.save.policy." + settings.updateChangesPolicy().name, 1))
     usages.add(getBooleanUsage("config.ssh", appSettings.isUseIdeaSsh))
 
     usages.add(getBooleanUsage("config.push.autoupdate", settings.autoUpdateIfPushRejected()))
     usages.add(getBooleanUsage("config.push.update.all.roots", settings.shouldUpdateAllRootsIfPushRejected()))
-    usages.add(getBooleanUsage("config.cherry-pick.autocommit", settings.isAutoCommitOnCherryPick))
+    usages.add(getBooleanUsage("config.cherry-pick.autocommit", appSettings.isAutoCommitOnCherryPick))
     usages.add(getBooleanUsage("config.warn.about.crlf", settings.warnAboutCrlf()))
     usages.add(getBooleanUsage("config.warn.about.detached", settings.warnAboutDetachedHead()))
 

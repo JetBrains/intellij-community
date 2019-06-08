@@ -196,11 +196,6 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  boolean isBundledJreModular() {
-    return compilationContext.isBundledJreModular()
-  }
-
-  @Override
   File findFileInModuleSources(String moduleName, String relativePath) {
     getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
       new File(it.first, StringUtil.trimStart(relativePath, it.second))
@@ -245,7 +240,7 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void executeStep(String stepMessage, String stepId, Closure step) {
+  boolean executeStep(String stepMessage, String stepId, Closure step) {
     if (options.buildStepsToSkip.contains(stepId)) {
       messages.info("Skipping '$stepMessage'")
     }

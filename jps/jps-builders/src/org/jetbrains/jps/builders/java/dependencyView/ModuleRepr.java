@@ -67,7 +67,7 @@ public class ModuleRepr extends ClassFileRepr{
   }
 
   @Override
-  protected void updateClassUsages(DependencyContext context, Set<UsageRepr.Usage> s) {
+  protected void updateClassUsages(DependencyContext context, Set<? super UsageRepr.Usage> s) {
     for (ModuleRequiresRepr require : myRequires) {
       if (require.name != name) {
         s.add(UsageRepr.createModuleUsage(context, require.name));

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -40,16 +41,10 @@ import java.util.*;
  * @author Denis Zhdanov
  */
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
-public class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
+public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
   @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
-
-  @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
-
-  public LibraryDataService(@NotNull ExternalLibraryPathTypeMapper mapper) {
-    myLibraryPathTypeMapper = mapper;
-  }
 
   @NotNull
   @Override
@@ -62,7 +57,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    Map<String, LibraryData> processedLibraries = ContainerUtil.newHashMap();
+    Map<String, LibraryData> processedLibraries = new HashMap<>();
     for (DataNode<LibraryData> dataNode: toImport) {
       LibraryData libraryData = dataNode.getData();
       String libraryName = libraryData.getInternalName();
@@ -96,13 +91,13 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
   @NotNull
   public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
-    Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
+    Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
       Set<String> paths = data.getPaths(pathType);
       if (paths.isEmpty()) {
         continue;
       }
-      result.put(myLibraryPathTypeMapper.map(pathType), ContainerUtil.map(paths, PATH_TO_FILE));
+      result.put(ExternalLibraryPathTypeMapper.getInstance().map(pathType), ContainerUtil.map(paths, PATH_TO_FILE));
     }
     return result;
   }
@@ -172,8 +167,8 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
     final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    final Map<String, Library> namesToLibs = ContainerUtil.newHashMap();
-    final Set<Library> potentialOrphans = ContainerUtil.newHashSet();
+    final Map<String, Library> namesToLibs = new HashMap<>();
+    final Set<Library> potentialOrphans = new HashSet<>();
     RootPolicy<Void> excludeUsedLibraries = new RootPolicy<Void>() {
       @Override
       public Void visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Void value) {
@@ -220,16 +215,17 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     }
   }
 
-  private void syncPaths(@NotNull final LibraryData externalLibrary,
-                         @NotNull final Library ideLibrary,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  private static void syncPaths(@NotNull final LibraryData externalLibrary,
+                                @NotNull final Library ideLibrary,
+                                @NotNull final IdeModifiableModelsProvider modelsProvider) {
     if (externalLibrary.isUnresolved()) {
       return;
     }
-    final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
-    final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
+    final Map<OrderRootType, Set<String>> toRemove = new HashMap<>();
+    final Map<OrderRootType, Set<String>> toAdd = new HashMap<>();
+    ExternalLibraryPathTypeMapper externalLibraryPathTypeMapper = ExternalLibraryPathTypeMapper.getInstance();
     for (LibraryPathType pathType: LibraryPathType.values()) {
-      OrderRootType ideType = myLibraryPathTypeMapper.map(pathType);
+      OrderRootType ideType = externalLibraryPathTypeMapper.map(pathType);
       HashSet<String> toAddPerType = ContainerUtilRt.newHashSet(externalLibrary.getPaths(pathType));
       toAdd.put(ideType, toAddPerType);
 
@@ -237,7 +233,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       if(pathType != LibraryPathType.BINARY && toAddPerType.isEmpty()) {
         continue;
       }
-      HashSet<String> toRemovePerType = ContainerUtilRt.newHashSet();
+      HashSet<String> toRemovePerType = new HashSet<>();
       toRemove.put(ideType, toRemovePerType);
 
       for (VirtualFile ideFile: ideLibrary.getFiles(ideType)) {
@@ -259,7 +255,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     }
 
     for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
-      Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
+      Map<OrderRootType, Collection<File>> roots = new HashMap<>();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
       registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
     }

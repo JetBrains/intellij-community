@@ -19,6 +19,7 @@ import com.google.common.io.LittleEndianDataInputStream
 import com.google.common.io.LittleEndianDataOutputStream
 import com.intellij.credentialStore.generateBytes
 import com.intellij.util.ArrayUtilRt
+import com.intellij.util.io.DigestUtil
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.io.CipherInputStream
 import org.bouncycastle.crypto.io.CipherOutputStream
@@ -161,7 +162,7 @@ internal class KdbxHeader() {
    * Populate a KdbxHeader from the input stream supplied
    */
   private fun readKdbxHeader(inputStream: InputStream) {
-    val digest = sha256MessageDigest()
+    val digest = DigestUtil.sha256()
     // we do not close this stream, otherwise we lose our place in the underlying stream
     val digestInputStream = DigestInputStream(inputStream, digest)
     // we do not close this stream, otherwise we lose our place in the underlying stream
@@ -212,7 +213,7 @@ internal class KdbxHeader() {
    * message digest of the written stream.
    */
   fun writeKdbxHeader(outputStream: OutputStream) {
-    val messageDigest = sha256MessageDigest()
+    val messageDigest = DigestUtil.sha256()
     val digestOutputStream = DigestOutputStream(outputStream, messageDigest)
     val output = LittleEndianDataOutputStream(digestOutputStream)
 
@@ -283,7 +284,7 @@ private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSe
     engine.processBlock(transformedKey, 16, transformedKey, 16)
   }
 
-  val md = sha256MessageDigest()
+  val md = DigestUtil.sha256()
   val transformedKeyDigest = md.digest(transformedKey)
   md.update(masterSeed)
   return md.digest(transformedKeyDigest)

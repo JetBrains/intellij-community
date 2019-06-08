@@ -113,12 +113,14 @@ public class PythonSdkUpdater implements StartupActivity {
    */
   public static boolean update(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable final Project project,
                                @Nullable final Component ownerComponent) {
+
+    final Application application = ApplicationManager.getApplication();
+    assert !application.isWriteAccessAllowed() : "Can't update SDK under write action, not allowed in background";
+
     final String key = PythonSdkType.getSdkKey(sdk);
     synchronized (ourLock) {
       ourScheduledToRefresh.add(key);
     }
-
-    final Application application = ApplicationManager.getApplication();
 
     String sdkHome = sdk.getHomePath();
     if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isConda(sdk))) {
@@ -247,7 +249,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Changes the version string of an SDK if it's out of date.
-   *
+   * <p>
    * May be invoked from any thread. May freeze the current thread while evaluating the run-time Python version.
    */
   private static void updateLocalSdkVersion(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
@@ -265,7 +267,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Updates the paths of a local SDK.
-   *
+   * <p>
    * May be invoked from any thread. May freeze the current thread while evaluating sys.path.
    */
   private static boolean updateLocalSdkPaths(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project) {
@@ -288,9 +290,9 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Updates the paths of a remote SDK.
-   *
+   * <p>
    * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
-   *
+   * <p>
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
   private static void updateRemoteSdkPaths(@NotNull Sdk sdk, @Nullable Project project) {
@@ -326,7 +328,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Returns all the paths for a remote SDK.
-   *
+   * <p>
    * Requires the skeletons refresh steps to be run before it in order to get remote paths mappings in the additional SDK data.
    */
   @NotNull
@@ -352,7 +354,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Returns local paths for a remote SDK that have been mapped to remote paths during the skeleton refresh step.
-   *
+   * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
@@ -439,7 +441,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Evaluates sys.path by running the Python interpreter from a local SDK.
-   *
+   * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
   @NotNull
@@ -455,7 +457,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Commits new SDK paths using an SDK modificator if the paths have been changed.
-   *
+   * <p>
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
@@ -477,7 +479,7 @@ public class PythonSdkUpdater implements StartupActivity {
 
   /**
    * Applies a processor to an SDK modificator or an SDK and commits it.
-   *
+   * <p>
    * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
    */
   private static void changeSdkModificator(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator,
@@ -488,7 +490,7 @@ public class PythonSdkUpdater implements StartupActivity {
       final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
       final SdkModificator effectiveModificator = sdkModificator != null ? sdkModificator :
                                                   sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : sdk.getSdkModificator();
-      if (processor .process(effectiveModificator)) {
+      if (processor.process(effectiveModificator)) {
         effectiveModificator.commitChanges();
       }
     });

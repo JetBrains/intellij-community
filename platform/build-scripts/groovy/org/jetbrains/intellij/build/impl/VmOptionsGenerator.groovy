@@ -25,15 +25,13 @@ import org.jetbrains.intellij.build.ProductProperties
 @CompileStatic
 class VmOptionsGenerator {
   private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 " +
-                                          "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                          "-Dsun.io.useCanonPrefixCache=false -Djava.net.preferIPv4Stack=true " +
                                           "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
-                                          "-Djna.nosys=true -Djna.boot.library.path= "
+                                          "-Djna.nosys=true -Djna.boot.library.path= " +  // Android Studio: modified by Change Ie7351d92 / commit 6303bdc
+                                          "-Djdk.attach.allowAttachSelf"
 
-  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties, String yourkitSessionName = null) {
+  static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)
-    if (yourkitSessionName != null) {
-      options += " " + yourkitOptions(yourkitSessionName, arch.fileSuffix)
-    }
     return options
   }
 
@@ -56,10 +54,6 @@ class VmOptionsGenerator {
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms256m -Xmx1280m -XX:ReservedCodeCacheSize=240m"
     }
     throw new AssertionError(arch)
-  }
-
-  static String yourkitOptions(String sessionName, String fileSuffix) {
-    "-agentlib:yjpagent$fileSuffix=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=$sessionName".trim()
   }
 }
 

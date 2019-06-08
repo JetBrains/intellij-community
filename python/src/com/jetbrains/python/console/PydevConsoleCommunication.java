@@ -184,7 +184,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
   protected abstract boolean isCommunicationClosed();
 
-  /**
+  /*
    * Variables that control when we're expecting to give some input to the server or when we're
    * adding some line to be executed
    */

@@ -69,6 +69,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  f(self, x)\n" +
            "  __str__(self)\n" +
            "  x\n" +
+           "  __class__(self)\n" +
            "  __init__(self)\n" +
            "  __new__(cls)\n" +
            "  __setattr__(self, name, value)\n" +
@@ -82,7 +83,6 @@ public class PyStructureViewTest extends PyTestCase {
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
-           "  __class__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
@@ -111,6 +111,7 @@ public class PyStructureViewTest extends PyTestCase {
     doTest("-parentImportedWithAs.py\n" +
            " -CLS(P)\n" +
            "  foo(self)\n" +
+           "  __class__(self)\n" +
            "  __init__(self)\n" +
            "  __new__(cls)\n" +
            "  __setattr__(self, name, value)\n" +
@@ -125,7 +126,6 @@ public class PyStructureViewTest extends PyTestCase {
            "  __sizeof__(self)\n" +
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
-           "  __class__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +

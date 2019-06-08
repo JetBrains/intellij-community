@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,6 +27,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -220,7 +220,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
-    return loadTextAndClose(new InputStreamReader(stream));
+    return loadTextAndClose(new InputStreamReader(stream, StandardCharsets.UTF_8));
   }
 
   @NotNull
@@ -820,10 +820,9 @@ public class FileUtil extends FileUtilRt {
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
   @Deprecated
-  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {
-    return FileUtilRt.getExtension(fileName).toLowerCase();
+    return StringUtil.toLowerCase(FileUtilRt.getExtension(fileName));
   }
 
   @NotNull
@@ -1059,7 +1058,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void appendToFile(@NotNull File file, @NotNull String text) throws IOException {
-    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), true);
+    writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull byte[] text) throws IOException {
@@ -1070,7 +1069,7 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text, false);
   }
   public static void writeToFile(@NotNull File file, @NotNull String text, boolean append) throws IOException {
-    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), append);
+    writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len) throws IOException {
@@ -1481,7 +1480,7 @@ public class FileUtil extends FileUtilRt {
    */
   @NotNull
   public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
-    final Map<String, String> map = ContainerUtil.newLinkedHashMap();
+    final Map<String, String> map = new LinkedHashMap<>();
 
     new Properties() {
       @Override
@@ -1511,8 +1510,8 @@ public class FileUtil extends FileUtilRt {
       throw new FileNotFoundException(path);
     }
 
-    FileAttributes upper = FileSystemUtil.getAttributes(path.toUpperCase(Locale.ENGLISH));
-    FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
+    FileAttributes upper = FileSystemUtil.getAttributes(StringUtil.toUpperCase(path));
+    FileAttributes lower = FileSystemUtil.getAttributes(StringUtil.toLowerCase(path));
     return !(attributes.equals(upper) && attributes.equals(lower));
   }
 

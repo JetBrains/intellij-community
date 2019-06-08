@@ -13,10 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.ui.components.panels.StatelessCardLayout;
@@ -68,7 +65,7 @@ public class InspectionNodeInfo extends JPanel {
     description.setEditable(false);
     description.setOpaque(false);
     description.setBackground(UIUtil.getLabelBackground());
-    description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    description.addHyperlinkListener(SingleInspectionProfilePanel.createSettingsHyperlinkListener(project));
     String descriptionText = toolWrapper.loadDescription();
     if (descriptionText == null) {
       InspectionEP extension = toolWrapper.getExtension();

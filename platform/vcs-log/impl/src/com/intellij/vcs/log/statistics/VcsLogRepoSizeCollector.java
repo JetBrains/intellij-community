@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKey
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,7 +25,6 @@ import java.util.Set;
 
 import static java.util.Arrays.asList;
 
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
 
   @NotNull
@@ -60,7 +60,7 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   @NotNull
   private static String getVcsKeySafe(@NotNull VcsKey vcs) {
     if (PluginInfoDetectorKt.getPluginInfo(vcs.getClass()).isDevelopedByJetBrains()) {
-      return UsageDescriptorKeyValidator.ensureProperKey(vcs.getName().toLowerCase());
+      return UsageDescriptorKeyValidator.ensureProperKey(StringUtil.toLowerCase(vcs.getName()));
     }
     return "third.party";
   }

@@ -204,7 +204,7 @@ public class CyclicDependenciesBuilder{
     return myCyclicDependencies;
   }
 
-  public HashMap<PsiPackage, Set<List<PsiPackage>>> getCycles(Collection<PsiPackage> packages) {
+  public HashMap<PsiPackage, Set<List<PsiPackage>>> getCycles(Collection<? extends PsiPackage> packages) {
     if (myGraph == null){
       myGraph = buildGraph();
     }

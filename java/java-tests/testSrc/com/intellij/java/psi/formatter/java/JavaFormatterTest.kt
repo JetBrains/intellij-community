@@ -124,7 +124,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testAssert() {
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).languageLevel = LanguageLevel.HIGHEST
+    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.HIGHEST
     doTest()
   }
 
@@ -1215,14 +1215,14 @@ class Test {
   }
 
   fun testFormatCodeFragment() {
-    val factory = JavaCodeFragmentFactory.getInstance(LightPlatformTestCase.getProject())
+    val factory = JavaCodeFragmentFactory.getInstance(getProject())
     val fragment = factory.createCodeBlockCodeFragment("a=1;int b=2;", null, true)
     val result = arrayOfNulls<PsiElement>(1)
 
-    CommandProcessor.getInstance().executeCommand(LightPlatformTestCase.getProject(), {
+    CommandProcessor.getInstance().executeCommand(getProject(), {
       WriteCommandAction.runWriteCommandAction(null) {
         try {
-          result[0] = CodeStyleManager.getInstance(LightPlatformTestCase.getProject()).reformat(fragment)
+          result[0] = CodeStyleManager.getInstance(getProject()).reformat(fragment)
         }
         catch (e: IncorrectOperationException) {
           TestCase.fail(e.localizedMessage)
@@ -3757,5 +3757,79 @@ public enum LevelCode {
     )
   }
 
+
+  fun testIdea195707() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = true
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE:
+                      return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE:
+                      return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea195707_1() {
+    getSettings().apply {
+      CASE_STATEMENT_ON_NEW_LINE = false
+      KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true
+    }
+
+    doTextTest(
+      """
+      public enum RotationDirection {
+        CLOCKWISE, COUNTERCLOCKWISE;
+
+        public RotationDirection inverse() {
+            switch(this) {
+                case CLOCKWISE: return COUNTERCLOCKWISE; case COUNTERCLOCKWISE: return CLOCKWISE;
+            }
+            throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+        }
+      }
+      """.trimIndent(),
+
+      """
+      public enum RotationDirection {
+          CLOCKWISE, COUNTERCLOCKWISE;
+
+          public RotationDirection inverse() {
+              switch (this) {
+                  case CLOCKWISE: return COUNTERCLOCKWISE;
+                  case COUNTERCLOCKWISE: return CLOCKWISE;
+              }
+              throw new IllegalArgumentException("Unknown " + getClass().getSimpleName() + ": " + this);
+          }
+      }
+      """.trimIndent()
+    )
+  }
 
 }

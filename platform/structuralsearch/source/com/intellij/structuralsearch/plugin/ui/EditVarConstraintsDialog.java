@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.impl.RegExHelpPopup;
@@ -44,7 +44,6 @@ import com.intellij.ui.TextAccessor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.IntegerField;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,7 +198,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     customScriptCode.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
-        final List<String> variableNames = ContainerUtil.newArrayList(matchOptions.getVariableConstraintNames());
+        final List<String> variableNames = new ArrayList<>(matchOptions.getVariableConstraintNames());
         variableNames.add(ScriptLog.SCRIPT_LOG_VAR_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();

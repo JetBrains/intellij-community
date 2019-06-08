@@ -33,10 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.*;
 
 /**
  * @author nik
@@ -227,7 +224,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   private void exportRoots(
     final Function<? super OrderRootType, String[]> getUrls,
-    final BiFunction<? super String, ? super OrderRootType, Boolean> isValid,
+    final BiPredicate<? super String, ? super OrderRootType> isValid,
     final BiConsumer<? super String, ? super OrderRootType> removeRoot,
     final BiConsumer<? super String, ? super OrderRootType> addRoot,
     final TriConsumer<? super String, ? super Boolean, ? super OrderRootType> addJarDir,
@@ -236,7 +233,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     // first, clean the target container optionally preserving invalid paths
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       for (String url : getUrls.apply(type)) {
-        if (!myKeepInvalidUrls || isValid.apply(url, type)) {
+        if (!myKeepInvalidUrls || isValid.test(url, type)) {
           removeRoot.accept(url, type);
         }
       }

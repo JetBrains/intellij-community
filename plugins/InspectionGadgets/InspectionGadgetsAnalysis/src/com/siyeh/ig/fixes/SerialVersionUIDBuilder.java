@@ -153,7 +153,6 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   /**
    * @see java.io.ObjectStreamClass#computeDefaultSUID(Class)
    */
-  @SuppressWarnings("JavadocReference")
   public static long computeDefaultSUID(@NotNull PsiClass psiClass) {
     final Project project = psiClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);

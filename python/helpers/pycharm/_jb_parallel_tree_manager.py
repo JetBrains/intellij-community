@@ -64,6 +64,9 @@ class ParallelTreeManager(object):
     def get_node_ids(self, test_name):
         """
 
-        :return: (current_node_id, parent_node_id)
+        :return: (current_node_id, parent_node_id) or None, None if message must be ignored
         """
-        return self._branches[tuple(test_name.split("."))]
+        try:
+            return self._branches[tuple(test_name.split("."))]
+        except KeyError:
+            return None, None

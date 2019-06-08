@@ -38,21 +38,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GroovyTrivialIfInspection extends BaseInspection {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Redundant 'if' statement";
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new TrivialIfVisitor();
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @Override

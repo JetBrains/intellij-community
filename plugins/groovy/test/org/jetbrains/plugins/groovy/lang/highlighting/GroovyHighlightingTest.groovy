@@ -151,10 +151,6 @@ class A {
 
   void testMethodDuplicates() { doTest() }
 
-  void testAmbiguousCodeBlock() { doTest() }
-
-  void testAmbiguousCodeBlockInMethodCall() { doTest() }
-
   void testNotAmbiguousClosableBlock() { doTest() }
 
   void testDuplicateParameterInClosableBlock() { doTest() }
@@ -862,6 +858,15 @@ new Base() {
 ''')
   }
 
+  void testAnnotationMethodThrowsList() {
+    testHighlighting '''\
+@interface A {
+  int aaa() <error descr="'throws' clause is not allowed in @interface members">throws IOException</error>;
+  int aab() throws<error descr="<type> expected, got ';'"> </error>;
+}
+'''
+  }
+
   void testAnnotationAttributeTypes() {
     testHighlighting('''\
 @interface Int {
@@ -1180,12 +1185,6 @@ def mm2() {
     })
 }
 
-def mm3() {
-    return new Foo()
-    <error descr="Ambiguous code block">{
-    }</error>
-}
-
 def mm4() {
     return (new Foo()
     {
@@ -1239,11 +1238,6 @@ foo(new Foo()
 {
 
 }.identity { it })
-
-foo new Foo()
-<error descr="Ambiguous code block">{
-
-}</error>
 
 foo 1 + (new Foo()
 {

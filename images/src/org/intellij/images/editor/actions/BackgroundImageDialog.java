@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.editor.actions;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -49,8 +49,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
@@ -82,7 +82,7 @@ public class BackgroundImageDialog extends DialogWrapper {
   private final JBCheckBox myFlipVerCb = new JBCheckBox();
 
   boolean myAdjusting;
-  private final Map<String, String> myResults = ContainerUtil.newHashMap();
+  private final Map<String, String> myResults = new HashMap<>();
 
   private final SimpleEditorPreview myEditorPreview;
   private final JComponent myIdePreview;
@@ -475,7 +475,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     IdeBackgroundUtil.Anchor[] values = IdeBackgroundUtil.Anchor.values();
     String[] names = new String[values.length];
     for (int i = 0; i < names.length; i++) {
-      names[i] = values[i].name().replace('_', '-').toLowerCase(Locale.ENGLISH);
+      names[i] = StringUtil.toLowerCase(values[i].name().replace('_', '-'));
     }
     Color color = getSelectionBackground();
     p.setLayout(new GridLayout(3, 3, 1, 1));
@@ -492,7 +492,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     String[] names = new String[values.length];
     BufferedImage image = sampleImage();
     for (int i = 0; i < names.length; i++) {
-      names[i] = values[i].name().replace('_', '-').toLowerCase(Locale.ENGLISH);
+      names[i] = StringUtil.toLowerCase(values[i].name().replace('_', '-'));
     }
     Color color = getSelectionBackground();
     p.setLayout(new GridLayout(1, values.length, 1, 1));

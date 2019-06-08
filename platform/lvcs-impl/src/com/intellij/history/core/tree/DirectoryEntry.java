@@ -66,7 +66,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public void addChildren(Collection<Entry> children) {
+  public void addChildren(Collection<? extends Entry> children) {
     myChildren.ensureCapacity(myChildren.size() + children.size());
     for (Entry each : children) {
       unsafeAddChild(each);
@@ -100,7 +100,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public boolean hasUnavailableContent(List<Entry> entriesWithUnavailableContent) {
+  public boolean hasUnavailableContent(List<? super Entry> entriesWithUnavailableContent) {
     for (Entry e : myChildren) {
       e.hasUnavailableContent(entriesWithUnavailableContent);
     }
@@ -123,7 +123,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<Difference> result, boolean isRightContentCurrent) {
+  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<? super Difference> result, boolean isRightContentCurrent) {
     DirectoryEntry e = (DirectoryEntry)right;
 
     if (!getPath().equals(e.getPath())) {
@@ -219,7 +219,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected void collectCreatedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent) {
+  protected void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
     result.add(new Difference(false, null, this, isRightContentCurrent));
 
     for (Entry child : myChildren) {
@@ -228,7 +228,7 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected void collectDeletedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent) {
+  protected void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent) {
     result.add(new Difference(false, this, null, isRightContentCurrent));
 
     for (Entry child : myChildren) {

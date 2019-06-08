@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jdom.JDOMException;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
@@ -15,7 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
-import static com.intellij.util.JdomKt.loadElement;
 
 public class CompilerConfigurationTest extends PlatformTestCase {
   public void testUpdateTargetLevelOnModuleRename() {
@@ -37,11 +35,11 @@ public class CompilerConfigurationTest extends PlatformTestCase {
                                                    "  </bytecodeTargetLevel>\n" +
                                                    "</state>");
 
-    configuration.loadState(loadElement("<state>\n" +
-                                        "  <bytecodeTargetLevel>\n" +
-                                        "    <module name=\"foo\" target=\"1.7\" />\n" +
-                                        "  </bytecodeTargetLevel>\n" +
-                                        "</state>"));
+    configuration.loadState(JDOMUtil.load("<state>\n" +
+                                          "  <bytecodeTargetLevel>\n" +
+                                          "    <module name=\"foo\" target=\"1.7\" />\n" +
+                                          "  </bytecodeTargetLevel>\n" +
+                                          "</state>"));
 
     assertThat(configuration.getBytecodeTargetLevel(module)).isEqualTo("1.7");
   }

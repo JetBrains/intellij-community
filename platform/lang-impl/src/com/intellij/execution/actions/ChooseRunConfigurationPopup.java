@@ -70,7 +70,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     myDefaultExecutor = defaultExecutor;
     myAlternativeExecutor = alternativeExecutor;
 
-    myPopup = new RunListPopup(new ConfigurationListPopupStep(this, myProject, this, myDefaultExecutor.getActionName()));
+    myPopup = new RunListPopup(project, null, new ConfigurationListPopupStep(this, myProject, this, myDefaultExecutor.getActionName()), null);
   }
 
   public void show() {
@@ -768,9 +768,15 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
   private class RunListPopup extends ListPopupImpl {
-    RunListPopup(ListPopupStep step) {
-      super(step);
+
+    RunListPopup(Project project, WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
+      super(project, aParent, aStep, parentValue);
       registerActions(this);
+    }
+
+    @Override
+    protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+      return new RunListPopup(getProject(), parent, (ListPopupStep)step, parentValue);
     }
 
     @Override
@@ -787,16 +793,6 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
       return false;
-    }
-
-    protected RunListPopup(WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
-      super(aParent, aStep, parentValue);
-      registerActions(this);
-    }
-
-    @Override
-    protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-      return new RunListPopup(parent, (ListPopupStep)step, parentValue);
     }
 
     @Override
@@ -868,9 +864,9 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   private static class FolderWrapper extends ItemWrapper<String> {
     private final Project myProject;
     private final ExecutorProvider myExecutorProvider;
-    private final List<RunnerAndConfigurationSettings> myConfigurations;
+    private final List<? extends RunnerAndConfigurationSettings> myConfigurations;
 
-    private FolderWrapper(Project project, ExecutorProvider executorProvider, @Nullable String value, List<RunnerAndConfigurationSettings> configurations) {
+    private FolderWrapper(Project project, ExecutorProvider executorProvider, @Nullable String value, List<? extends RunnerAndConfigurationSettings> configurations) {
       super(value);
       myProject = project;
       myExecutorProvider = executorProvider;
@@ -1070,7 +1066,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                 @NotNull ExecutorProvider executorProvider,
                                                 @Nullable RunnerAndConfigurationSettings selectedConfiguration,
                                                 @NotNull String folderName,
-                                                @NotNull List<RunnerAndConfigurationSettings> configurations) {
+                                                @NotNull List<? extends RunnerAndConfigurationSettings> configurations) {
     boolean isSelected = selectedConfiguration != null && configurations.contains(selectedConfiguration);
     String value = folderName;
     if (isSelected) {
@@ -1083,7 +1079,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     return result;
   }
 
-  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<ItemWrapper> result) {
+  private static void addActionsForSelected(@NotNull RunnerAndConfigurationSettings selectedConfiguration, @NotNull Project project, @NotNull List<? super ItemWrapper> result) {
     boolean isFirst = true;
     final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
     for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration.getConfiguration())) {
@@ -1134,7 +1130,6 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           @Override
           protected void init() {
             setOKButtonText(executor.getActionName());
-            setOKButtonIcon(executor.getIcon());
             myExecutor = executor;
             super.init();
           }

@@ -38,7 +38,7 @@ public interface ConfigFileInfoSet extends JDOMExternalizable {
 
   ConfigFileInfo[] getConfigFileInfos();
 
-  void setConfigFileInfos(Collection<ConfigFileInfo> descriptors);
+  void setConfigFileInfos(Collection<? extends ConfigFileInfo> descriptors);
 
   ConfigFileMetaDataProvider getMetaDataProvider();
 

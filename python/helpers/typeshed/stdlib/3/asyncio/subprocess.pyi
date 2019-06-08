@@ -29,9 +29,9 @@ class Process:
     stderr = ...  # type: Optional[streams.StreamReader]
     pid = ...  # type: int
     def __init__(self,
-            transport: transports.BaseTransport,
-            protocol: protocols.BaseProtocol,
-            loop: events.AbstractEventLoop) -> None: ...
+                 transport: transports.BaseTransport,
+                 protocol: protocols.BaseProtocol,
+                 loop: events.AbstractEventLoop) -> None: ...
     @property
     def returncode(self) -> int: ...
     @coroutine

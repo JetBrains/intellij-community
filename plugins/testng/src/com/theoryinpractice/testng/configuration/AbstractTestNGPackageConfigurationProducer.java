@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
@@ -11,12 +11,13 @@ import com.intellij.psi.PsiPackage;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class AbstractTestNGPackageConfigurationProducer extends TestNGConfigurationProducer {
   @Override
-  protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull TestNGConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final PsiElement element = context.getPsiLocation();
     PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(element);
     if (aPackage == null) {

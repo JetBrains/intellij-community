@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.exceptions.GithubParseException;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 
-import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,7 +47,7 @@ public class GithubServerPath {
                           @Nullable Integer port,
                           @NonNls @Nullable String suffix) {
     myUseHttp = useHttp;
-    myHost = host.toLowerCase(Locale.ENGLISH);
+    myHost = StringUtil.toLowerCase(host);
     myPort = port;
     mySuffix = suffix;
   }

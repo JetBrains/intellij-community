@@ -48,10 +48,10 @@ open class JvmClassIntentionActionGroup(
                             file: PsiFile,
                             actions: List<JvmGroupIntentionAction>,
                             invokeAction: (JvmGroupIntentionAction) -> Unit) {
-    createPopup(actions, invokeAction).showInBestPositionFor(editor)
+    createPopup(project, actions, invokeAction).showInBestPositionFor(editor)
   }
 
-  protected fun createPopup(actions: List<JvmGroupIntentionAction>, invokeAction: (JvmGroupIntentionAction) -> Unit): ListPopup {
+  protected fun createPopup(project: Project, actions: List<JvmGroupIntentionAction>, invokeAction: (JvmGroupIntentionAction) -> Unit): ListPopup {
     val targetActions = actions.groupByTo(LinkedHashMap()) { it.target }.mapValues { (_, actions) -> actions.single() }
 
     val step = object : BaseListPopupStep<JvmClass>(message("target.class.chooser.title"), targetActions.keys.toList()) {
@@ -61,7 +61,7 @@ open class JvmClassIntentionActionGroup(
       }
     }
 
-    return object : ListPopupImpl(step) {
+    return object : ListPopupImpl(project, step) {
       // TODO JvmClass renderer
       override fun getListElementRenderer() = PsiClassListCellRenderer()
     }

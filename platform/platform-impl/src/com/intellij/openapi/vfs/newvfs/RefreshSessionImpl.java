@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
@@ -37,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author max
  */
-public class RefreshSessionImpl extends RefreshSession {
+class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
   private static final AtomicLong ID_COUNTER = new AtomicLong(0);
@@ -116,14 +102,15 @@ public class RefreshSessionImpl extends RefreshSession {
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  public void scan() {
+  void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
     boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
+    boolean forceRefresh = !myIsRecursive && !myIsAsync;  // shallow sync refresh (e.g. project config files on open)
 
     if (!workQueue.isEmpty()) {
       LocalFileSystem fs = LocalFileSystem.getInstance();
-      if (fs instanceof LocalFileSystemImpl) {
+      if (!forceRefresh && fs instanceof LocalFileSystemImpl) {
         ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
       }
 
@@ -141,8 +128,8 @@ public class RefreshSessionImpl extends RefreshSession {
           if (myCancelled) break refresh;
 
           NewVirtualFile nvf = (NewVirtualFile)file;
-          if (!myIsRecursive && !myIsAsync) {
-            nvf.markDirty();  // always scan when non-recursive AND synchronous - needed e.g. when refreshing project files on open
+          if (forceRefresh) {
+            nvf.markDirty();
           }
 
           RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
@@ -218,10 +205,11 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  public void waitFor() {
+  void waitFor() {
     mySemaphore.waitFor();
   }
 
+  @NotNull
   private List<VFileEvent> mergeEventsAndReset() {
     Set<VFileEvent> mergedEvents = new LinkedHashSet<>(myEvents);
     List<VFileEvent> events = new ArrayList<>(mergedEvents);

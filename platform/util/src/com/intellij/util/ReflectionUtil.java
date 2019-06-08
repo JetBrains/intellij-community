@@ -13,10 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -125,7 +122,7 @@ public class ReflectionUtil {
 
   @NotNull
   public static List<Field> collectFields(@NotNull Class clazz) {
-    List<Field> result = ContainerUtil.newArrayList();
+    List<Field> result = new ArrayList<>();
     for (Class c : classTraverser(clazz)) {
       ContainerUtil.addAll(result, c.getDeclaredFields());
     }
@@ -283,7 +280,7 @@ public class ReflectionUtil {
 
   @NotNull
   private static List<Method> filterRealMethods(@NotNull Method[] methods) {
-    List<Method> result = ContainerUtil.newArrayList();
+    List<Method> result = new ArrayList<>();
     for (Method method : methods) {
       if (!method.isSynthetic()) {
         result.add(method);
@@ -301,8 +298,8 @@ public class ReflectionUtil {
   public static <T> T getField(@NotNull Class objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
       final Field field = findAssignableField(objectClass, fieldType, fieldName);
-      @SuppressWarnings("unchecked") T t = (T)field.get(object);
-      return t;
+      //noinspection unchecked
+      return (T)field.get(object);
     }
     catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.debug(e);
@@ -316,8 +313,8 @@ public class ReflectionUtil {
       if (!Modifier.isStatic(field.getModifiers())) {
         throw new IllegalArgumentException("Field " + objectClass + "." + fieldName + " is not static");
       }
-      @SuppressWarnings("unchecked") T t = (T)field.get(null);
-      return t;
+      //noinspection unchecked
+      return (T)field.get(null);
     }
     catch (NoSuchFieldException | IllegalAccessException e) {
       LOG.debug(e);
@@ -408,7 +405,7 @@ public class ReflectionUtil {
         }
       }
 
-      ExceptionUtilRt.rethrow(e);
+      ExceptionUtil.rethrow(e);
     }
 
     // error will be thrown

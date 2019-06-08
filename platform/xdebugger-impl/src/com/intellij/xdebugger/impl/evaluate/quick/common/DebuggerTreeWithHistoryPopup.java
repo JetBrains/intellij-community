@@ -87,6 +87,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
       .setMovable(true)
       .setDimensionServiceKey(myProject, DIMENSION_SERVICE_KEY, false)
       .setMayBeParent(true)
+      .setCancelOnOtherWindowOpen(true)
       .setKeyEventHandler(event -> {
         if (AbstractPopup.isCloseRequest(event)) {
           // Do not process a close request if the tree shows a speed search popup
@@ -129,7 +130,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
   }
 
   private void resize(final TreePath path, JTree tree) {
-    if (myPopup == null || !myPopup.isVisible()) return;
+    if (myPopup == null || !myPopup.isVisible() || myPopup.isDisposed()) return;
     final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
     if (popupWindow == null) return;
     final Dimension size = tree.getPreferredSize();

@@ -30,7 +30,7 @@ public interface EditableTreeModel {
   TreePath addNode(TreePath parentOrNeighbour);
 
   void removeNode(TreePath path);
-  void removeNodes(Collection<TreePath> path);
+  void removeNodes(Collection<? extends TreePath> path);
 
   void moveNodeTo(TreePath parentOrNeighbour);
 }

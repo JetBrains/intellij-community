@@ -55,6 +55,7 @@ public class SetupTaskIntrospector {
     return null;
   }
 
+  @NotNull
   public static List<SetupTask> getTaskList(Module module) {
     final PyFile setupPy = PyPackageUtil.findSetupPy(module);
     return getTaskList(module, setupPy != null && PyPsiUtils.containsImport(setupPy, "setuptools"));

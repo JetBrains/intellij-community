@@ -1,0 +1,29 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(OPEN_BACKQUOTE)('`')
+              COMPOUND_LIST
+                PIPELINE_COMMAND
+                  PIPELINE
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('cat')
+              PsiWhiteSpace(' ')
+              PsiElement(CLOSE_BACKQUOTE)('`')
+          LITERAL
+            PsiElement(word)('cat')
+          PsiWhiteSpace(' ')
+          VARIABLE
+            PsiElement(var)('$0')
+          SIMPLE_COMMAND_ELEMENT
+            COMMAND_SUBSTITUTION_COMMAND
+              PsiElement(OPEN_BACKQUOTE)('`')
+              PsiElement(CLOSE_BACKQUOTE)('`')

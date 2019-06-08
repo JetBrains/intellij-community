@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
@@ -74,7 +75,7 @@ public class RecentLocationsAction extends DumbAwareAction {
       return;
     }
 
-    RecentLocationsDataModel model = new RecentLocationsDataModel(project, ContainerUtil.newArrayList());
+    RecentLocationsDataModel model = new RecentLocationsDataModel(project, new ArrayList<>());
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(false)));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -306,7 +307,7 @@ public class RecentLocationsAction extends DumbAwareAction {
                                         @NotNull JBList<RecentLocationItem> list,
                                         @NotNull JBCheckBox checkBox,
                                         @NotNull JBPopup popup,
-                                        @NotNull Ref<Boolean> navigationRef) {
+                                        @NotNull Ref<? super Boolean> navigationRef) {
     listWithFilter.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
@@ -357,7 +358,7 @@ public class RecentLocationsAction extends DumbAwareAction {
   private static void navigateToSelected(@NotNull Project project,
                                          @NotNull JBList<RecentLocationItem> list,
                                          @NotNull JBPopup popup,
-                                         @NotNull Ref<Boolean> navigationRef) {
+                                         @NotNull Ref<? super Boolean> navigationRef) {
     ContainerUtil.reverse(list.getSelectedValuesList())
       .forEach(item -> IdeDocumentHistory.getInstance(project).gotoPlaceInfo(item.getInfo()));
 

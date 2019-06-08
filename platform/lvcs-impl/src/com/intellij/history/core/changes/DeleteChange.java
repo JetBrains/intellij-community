@@ -75,7 +75,7 @@ public class DeleteChange extends StructuralChange {
     return result;
   }
 
-  private void collectContentsRecursively(Entry e, List<Content> result) {
+  private void collectContentsRecursively(Entry e, List<? super Content> result) {
     if (e.isDirectory()) {
       for (Entry child : e.getChildren()) {
         collectContentsRecursively(child, result);

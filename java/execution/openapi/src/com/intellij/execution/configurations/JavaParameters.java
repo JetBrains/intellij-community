@@ -158,7 +158,7 @@ public class JavaParameters extends SimpleJavaParameters {
   }
 
   @NotNull
-  private static Sdk findLatestVersion(@NotNull Sdk mainSdk, @NotNull Set<Sdk> sdks) {
+  private static Sdk findLatestVersion(@NotNull Sdk mainSdk, @NotNull Set<? extends Sdk> sdks) {
     Sdk result = mainSdk;
     for (Sdk sdk : sdks) {
       if (VersionComparatorUtil.compare(result.getVersionString(), sdk.getVersionString()) < 0) {

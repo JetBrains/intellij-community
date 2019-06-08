@@ -1,16 +1,16 @@
 <idea-plugin>
     <extensionPoints>
-        <extensionPoint qualifiedName="com.intellij.myPlugin.lang.myExtPoint" beanClass="com.intellij.lang.LanguageExtensionPoint">
+        <extensionPoint name="myPlugin.lang.myExtPoint" beanClass="com.intellij.lang.LanguageExtensionPoint">
             <with attribute="implementationClass" implements="MyLanguageExtension"/>
         </extensionPoint>
-        <extensionPoint qualifiedName="com.intellij.myPlugin.lang.myOwnExtPoint" beanClass="MyLanguageExtensionPoint">
+        <extensionPoint name="myPlugin.lang.myOwnExtPoint" beanClass="MyLanguageExtensionPoint">
             <with attribute="implementationClass" implements="MyLanguageExtension"/>
         </extensionPoint>
-        <extensionPoint qualifiedName="com.intellij.myPlugin.filetype.myExtPoint"
+        <extensionPoint name="myPlugin.filetype.myExtPoint"
                         beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
             <with attribute="implementationClass" implements="MyFileTypeExtension"/>
         </extensionPoint>
-        <extensionPoint qualifiedName="com.intellij.myPlugin.filetype.myOwnExtPoint" beanClass="MyFileTypeExtensionPoint">
+        <extensionPoint name="myPlugin.filetype.myOwnExtPoint" beanClass="MyFileTypeExtensionPoint">
             <with attribute="implementationClass" implements="MyFileTypeExtension"/>
         </extensionPoint>
     </extensionPoints>

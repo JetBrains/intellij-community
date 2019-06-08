@@ -123,7 +123,7 @@ public class ShowAffectedTestsAction extends AnAction {
     }
   }
 
-  private static void showDiscoveredTestsByFile(@NotNull Project project, @NotNull List<VirtualFile> files, @NotNull AnActionEvent e) {
+  private static void showDiscoveredTestsByFile(@NotNull Project project, @NotNull List<? extends VirtualFile> files, @NotNull AnActionEvent e) {
     VirtualFile projectBasePath = getBasePathAsVirtualFile(project);
     if (projectBasePath == null) return;
     DiscoveredTestsTree tree = showTree(project, e.getDataContext(), createTitle(files));
@@ -143,7 +143,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   @NotNull
-  private static String createTitle(@NotNull List<VirtualFile> files) {
+  private static String createTitle(@NotNull List<? extends VirtualFile> files) {
     if (files.isEmpty()) return "Empty Selection";
     String firstName = files.get(0).getName();
     if (files.size() == 1) return firstName;
@@ -379,7 +379,6 @@ public class ShowAffectedTestsAction extends AnAction {
                                     @NotNull PsiMethod[] methods,
                                     @NotNull List<String> filePaths,
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
-    if (DumbService.isDumb(project)) return;
     List<Couple<String>> classesAndMethods =
       ReadAction.compute(() -> Arrays.stream(methods)
       .map(method -> getMethodKey(method)).filter(Objects::nonNull).collect(Collectors.toList()));
@@ -390,6 +389,7 @@ public class ShowAffectedTestsAction extends AnAction {
                                            @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
                                            @NotNull List<Couple<String>> classesAndMethods,
                                            @NotNull List<String> filePaths) {
+    if (DumbService.isDumb(project)) return;
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
       byte frameworkId =
@@ -484,6 +484,7 @@ public class ShowAffectedTestsAction extends AnAction {
 
   @Nullable
   public static Couple<String> getMethodKey(@NotNull PsiMethod method) {
+    if (DumbService.isDumb(method.getProject())) return null;
     PsiClass c = method.isValid() ? method.getContainingClass() : null;
     String fqn = c != null ? DiscoveredTestsTreeModel.getClassName(c) : null;
     return fqn == null ? null : Couple.of(fqn, methodSignature(method));

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -46,7 +44,7 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
-public class PluginRunConfiguration extends RunConfigurationBase implements ModuleRunConfiguration {
+public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
   private static final String IDEA_LOG = "idea.log";
   private Module myModule;
   private String myModuleName;

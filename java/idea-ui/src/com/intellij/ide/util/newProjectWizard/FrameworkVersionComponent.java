@@ -1,10 +1,11 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkVersion;
+import com.intellij.framework.PresentableVersion;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.FormBuilder;
 
 import javax.swing.*;
@@ -21,7 +22,7 @@ public class FrameworkVersionComponent {
   private final FrameworkSupportModelBase myModel;
   private final List<? extends FrameworkVersion> myAllVersions;
   private final JPanel myVersionsPanel;
-  private final ComboBox myVersionsBox;
+  private final ComboBox<FrameworkVersion> myVersionsBox;
   private final String myFrameworkOrGroupId;
 
   public FrameworkVersionComponent(final FrameworkSupportModelBase model, final String frameworkOrGroupId,
@@ -30,13 +31,8 @@ public class FrameworkVersionComponent {
     myAllVersions = versions_;
     myMainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 3, true, false));
     myFrameworkOrGroupId = frameworkOrGroupId;
-    myVersionsBox = new ComboBox();
-    myVersionsBox.setRenderer(new ListCellRendererWrapper<FrameworkVersion>() {
-      @Override
-      public void customize(JList list, FrameworkVersion value, int index, boolean selected, boolean hasFocus) {
-        setText(value != null ? value.getPresentableName() : "");
-      }
-    });
+    myVersionsBox = new ComboBox<>();
+    myVersionsBox.setRenderer(SimpleListCellRenderer.create("", PresentableVersion::getPresentableName));
     myVersionsBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -88,7 +88,6 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
   fun `test project root no mock roots then error about extra root`() {
     val vcsRootConfiguration = VcsRootConfiguration()
       .mappings(PROJECT)
-      .extraErrors(PROJECT)
     doTest(vcsRootConfiguration)
   }
 
@@ -101,7 +100,7 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
   fun `test project root mock root for a content root below project then error`() {
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("content_root")
       .contentRoots("content_root").mappings(PROJECT)
-      .unregErrors("content_root").extraErrors(PROJECT)
+      .unregErrors("content_root")
     doTest(vcsRootConfiguration)
   }
 
@@ -109,7 +108,7 @@ class VcsRootErrorsFinderTest : VcsRootBaseTest() {
     // this is to be fixed: auto-detection of MockRoot repositories in subfolders for the <Project> mapping
     val vcsRootConfiguration = VcsRootConfiguration().vcsRoots("community")
       .contentRoots(".").mappings(PROJECT)
-      .unregErrors("community").extraErrors(PROJECT)
+      .unregErrors("community")
     doTest(vcsRootConfiguration)
   }
 

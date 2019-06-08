@@ -161,7 +161,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
    * Tries to add external annotations into given root if possible.
    * Notifies about each addition result separately.
    */
-  public void annotateExternally(@NotNull VirtualFile root, @NotNull List<ExternalAnnotation> annotations) {
+  public void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
     Project project = myPsiManager.getProject();
 
     Map<Optional<XmlFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
@@ -347,7 +347,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     PsiElement addedElement;
     if (anchor != null) {
       addedElement = rootTag.addAfter(newItemTag, anchor);
-    } else {
+    }
+    else {
       addedElement = rootTag.addSubTag(newItemTag, true);
     }
 
@@ -429,7 +430,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   }
 
   @Nullable
-  private static XmlFile findXmlFileInRoot(@Nullable List<XmlFile> xmlFiles, @NotNull VirtualFile root) {
+  private static XmlFile findXmlFileInRoot(@Nullable List<? extends XmlFile> xmlFiles, @NotNull VirtualFile root) {
     if (xmlFiles != null) {
       for (XmlFile xmlFile : xmlFiles) {
         VirtualFile vf = xmlFile.getVirtualFile();
@@ -939,6 +940,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = value;
     }
 
+    @NotNull
     @Override
     protected JComponent createNorthPanel() {
       final JPanel northPanel = (JPanel)super.createNorthPanel();

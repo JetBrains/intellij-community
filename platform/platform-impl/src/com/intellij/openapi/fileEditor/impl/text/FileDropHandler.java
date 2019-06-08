@@ -57,7 +57,7 @@ public class FileDropHandler implements EditorDropHandler {
     }
   }
 
-  private void openFiles(final Project project, final List<File> fileList, EditorWindow editorWindow) {
+  private void openFiles(final Project project, final List<? extends File> fileList, EditorWindow editorWindow) {
     if (editorWindow == null && myEditor != null) {
       editorWindow = findEditorWindow(project);
     }

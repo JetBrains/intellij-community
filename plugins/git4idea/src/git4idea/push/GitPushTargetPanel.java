@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
@@ -42,6 +42,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -200,7 +201,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     if (remotes.size() <= 1) {
       return;
     }
-    ListPopup popup = new ListPopupImpl(new BaseListPopupStep<PopupItem>(null, remotes) {
+    ListPopup popup = new ListPopupImpl(myProject, new BaseListPopupStep<PopupItem>(null, remotes) {
       @Override
       public PopupStep onChosen(@NotNull PopupItem selectedValue, boolean finalChoice) {
         return doFinalStep(() -> {
@@ -261,7 +262,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @NotNull
   private List<PopupItem> getPopupItems() {
-    List<PopupItem> items = newArrayList(ContainerUtil.map(myRepository.getRemotes(), PopupItem::forRemote));
+    List<PopupItem> items = new ArrayList<>(ContainerUtil.map(myRepository.getRemotes(), PopupItem::forRemote));
     items.add(PopupItem.DEFINE_REMOTE);
     return items;
   }

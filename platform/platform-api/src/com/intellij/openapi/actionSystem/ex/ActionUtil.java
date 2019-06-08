@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -42,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -283,6 +285,40 @@ public class ActionUtil {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
   }
 
+  public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
+    list.sort(new Comparator<AnAction>() {
+      @Override
+      public int compare(AnAction o1, AnAction o2) {
+        return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
+      }
+    });
+  }
+
+  /**
+   * Tries to find an 'action' and 'target action' by text and put the 'action' just before of after the 'target action'
+   */
+  public static void moveActionTo(@NotNull List<AnAction> list,
+                                  @NotNull String actionText,
+                                  @NotNull String targetActionText,
+                                  boolean before) {
+    if (Comparing.equal(actionText, targetActionText)) {
+      return;
+    }
+
+    int actionIndex = -1;
+    int targetIndex = -1;
+    for (int i = 0; i < list.size(); i++) {
+      AnAction action = list.get(i);
+      if (actionIndex == -1 && Comparing.equal(actionText, action.getTemplateText())) actionIndex = i;
+      if (targetIndex == -1 && Comparing.equal(targetActionText, action.getTemplateText())) targetIndex = i;
+      if (actionIndex != -1 && targetIndex != -1) {
+        if (actionIndex < targetIndex) targetIndex--;
+        AnAction anAction = list.remove(actionIndex);
+        list.add(before ? Math.max(0, targetIndex) : targetIndex + 1, anAction);
+        return;
+      }
+    }
+  }
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {
@@ -330,7 +366,7 @@ public class ActionUtil {
   }
 
   public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
-                                                  @NotNull Predicate<AnAction> condition) {
+                                                  @NotNull Predicate<? super AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
       if (condition.test(child)) return true;
       if (child instanceof ActionGroup) {
@@ -370,7 +406,7 @@ public class ActionUtil {
     p1.setSelectedIcon(ObjectUtils.chooseNotNull(p1.getSelectedIcon(), p2.getSelectedIcon()));
     p1.setHoveredIcon(ObjectUtils.chooseNotNull(p1.getHoveredIcon(), p2.getHoveredIcon()));
     if (StringUtil.isEmpty(p1.getText())) {
-      p1.setText(p2.getTextWithMnemonic(), p2.getDisplayedMnemonicIndex() >= 0);
+      p1.setTextWithMnemonic(p2.getTextWithPossibleMnemonic());
     }
     p1.setDescription(ObjectUtils.chooseNotNull(p1.getDescription(), p2.getDescription()));
     ShortcutSet ss1 = a1.getShortcutSet();
@@ -400,7 +436,7 @@ public class ActionUtil {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       manager.fireBeforeActionPerformed(action, dataContext, event);
-      action.actionPerformed(event);
+      performActionDumbAware(action, event);
       if (onDone != null) {
         onDone.run();
       }

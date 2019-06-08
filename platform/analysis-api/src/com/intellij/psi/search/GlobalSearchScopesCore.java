@@ -93,7 +93,7 @@ public class GlobalSearchScopesCore {
 
     @NotNull
     @Override
-    public Icon getDisplayIcon() {
+    public Icon getIcon() {
       return mySet.getIcon();
     }
 

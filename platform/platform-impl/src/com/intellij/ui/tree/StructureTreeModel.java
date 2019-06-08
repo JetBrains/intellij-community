@@ -7,10 +7,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -44,20 +46,42 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Structure structure;
   private volatile Comparator<? super Node> comparator;
 
-  private StructureTreeModel(@NotNull Structure structure, boolean background) {
+  private StructureTreeModel(@NotNull Structure structure, boolean background, @NotNull Disposable parentDisposable) {
     this.structure = structure;
     description = format(structure.toString());
     invoker = background
               ? new Invoker.BackgroundThread(this)
               : new Invoker.EDT(this);
+    Disposer.register(parentDisposable, this);
   }
 
+  /**
+   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Disposable)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   public StructureTreeModel(@NotNull Structure structure) {
-    this(structure, true);
+    this(structure, Disposer.newDisposable());
   }
 
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
-    this(structure);
+  /**
+   * @deprecated Please use {@link #StructureTreeModel(AbstractTreeStructure, Comparator, Disposable)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  public StructureTreeModel(@NotNull Structure structure,
+                            @NotNull Comparator<? super NodeDescriptor> comparator) {
+    this(structure, comparator, Disposer.newDisposable());
+  }
+
+  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parentDisposable) {
+    this(structure, true, parentDisposable);
+  }
+
+  public StructureTreeModel(@NotNull Structure structure,
+                            @NotNull Comparator<? super NodeDescriptor> comparator,
+                            @NotNull Disposable parentDisposable) {
+    this(structure, parentDisposable);
     this.comparator = wrapToNodeComparator(comparator);
   }
 
@@ -108,7 +132,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Function<Structure, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
     invoker.runOrInvokeLater(() -> {
       if (!disposed) {
@@ -126,7 +150,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<Node, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<? super Node, ? extends Result> function) {
     Object component = path.getLastPathComponent();
     if (component instanceof Node) {
       Node node = (Node)component;
@@ -141,7 +165,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<Node, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<? super Node, ? extends Result> function) {
     return onValidThread(structure -> {
       Node node = root.get();
       if (node == null) return null;
@@ -545,7 +569,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return isLeaf(null);
     }
 
-    private boolean isLeaf(@Nullable Consumer<Node> validator) {
+    private boolean isLeaf(@Nullable Consumer<? super Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;
@@ -576,7 +600,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @return a descriptive name for the instance to help a tree identification
    * @see Invoker#Invoker(String, Disposable)
    */
-  @SuppressWarnings("JavadocReference")
   @Override
   public String toString() {
     return description;

@@ -21,15 +21,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 public abstract class FileAssociationsManager extends SimpleModificationTracker {
     public static class Holder {
         public static final FileType[] XML_FILES = {StdFileTypes.XML, StdFileTypes.XHTML};
-        public static final List<FileType> XML_FILES_LIST = Arrays.asList(XML_FILES);
+        public static final List<FileType> XML_FILES_LIST = ContainerUtil.immutableList(XML_FILES);
     }
 
     public abstract void removeAssociations(PsiFile file);

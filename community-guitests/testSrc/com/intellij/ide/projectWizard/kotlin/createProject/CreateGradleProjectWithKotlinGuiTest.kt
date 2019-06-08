@@ -3,8 +3,6 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
-import com.intellij.testGuiFramework.impl.ScreenshotOnFailure
-import com.intellij.testGuiFramework.util.currentTimeInHumanString
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.After
 import org.junit.Before
@@ -26,12 +24,12 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
 
   @Before
   fun beforeTest(){
-    ScreenshotOnFailure.takeScreenshot("${currentTimeInHumanString}_before_${testMethod.methodName}")
+    screenshot("before")
   }
 
   @After
   fun afterTest(){
-    ScreenshotOnFailure.takeScreenshot("${currentTimeInHumanString}_after_${testMethod.methodName}")
+    screenshot("after")
   }
 
   @Test
@@ -55,22 +53,10 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
     fun data(): Collection<TestParameters> {
       return listOf(
         TestParameters(
-          projectName = "gradle_with_jvm_explicit",
-          project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
-          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
-        ),
-        TestParameters(
           projectName = "gradle_with_jvm_qualified",
           project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
           gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
-        ),
-        TestParameters(
-          projectName = "gradle_with_js_explicit",
-          project = kotlinProjects.getValue(Projects.GradleGProjectJs),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
-          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
         ),
         TestParameters(
           projectName = "gradle_with_js_qualified",

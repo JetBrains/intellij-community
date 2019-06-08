@@ -75,13 +75,13 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   }
 
   private static class ModuleChooser implements ClasspathElementChooser<Module> {
-    private final List<Module> myItems;
+    private final List<? extends Module> myItems;
     private final String myTitle;
     private final String myDescription;
     private final ClasspathPanel myClasspathPanel;
 
     ModuleChooser(final ClasspathPanel classpathPanel,
-                         final List<Module> items,
+                         final List<? extends Module> items,
                          final String title,
                          String description) {
       myItems = items;

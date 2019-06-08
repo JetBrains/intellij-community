@@ -71,8 +71,8 @@ public class DFSTBuilder<Node> {
    *                  if all nodes of the graph is reachable from the entry node and the entry node doesn't have incoming edges then
    *                  passing the entry node could be used for finding "natural" back edges (like a loop back edge)
    */
-  @SuppressWarnings("unchecked")
   public DFSTBuilder(@NotNull OutboundSemiGraph<Node> graph, @Nullable Node entryNode) {
+    //noinspection unchecked
     myAllNodes = (Node[])graph.getNodes().toArray();
     if (entryNode != null) {
       int index = ArrayUtil.indexOf(myAllNodes, entryNode);
@@ -83,7 +83,9 @@ public class DFSTBuilder<Node> {
     myGraph = graph;
     int size = graph.getNodes().size();
     myNodeToNNumber = new TObjectIntHashMap<>(size * 2, 0.5f);
+    //noinspection unchecked
     myInvN = (Node[])new Object[size];
+    //noinspection unchecked
     myInvT = (Node[])new Object[size];
     new Tarjan().build();
   }

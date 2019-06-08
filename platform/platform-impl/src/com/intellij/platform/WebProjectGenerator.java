@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -14,8 +14,7 @@ import javax.swing.*;
  * and to small IDE (PhpStorm, WebStorm etc. available via File -> 'New Project...').
  *
  * @author Sergey Simonchik
- *
- * Deprecated since 2017.3. Please use 'WebProjectTemplate' class instead
+ * @deprecated since 2017.3. Please use {@link com.intellij.ide.util.projectWizard.WebProjectTemplate} instead.
  */
 @Deprecated
 public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBase<T> {
@@ -39,7 +38,7 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
   public abstract String getDescription();
 
   /**
-   * Deprecated since 2017.3. Please use 'ProjectGeneratorPeer' class instead
+   * @deprecated since 2017.3. Please use {@link ProjectGeneratorPeer} instead.
    */
   @Deprecated
   public interface GeneratorPeer<T> extends ProjectGeneratorPeer<T> {
@@ -66,8 +65,8 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
     void addSettingsStateListener(@NotNull SettingsStateListener listener);
   }
 
-  /*
-   * Deprecated since 2017.3. Please use 'ProjectGeneratorPeer.SettingsListener' class instead
+  /**
+   * @deprecated since 2017.3. Please use {@link ProjectGeneratorPeer.SettingsListener} instead.
    */
   @Deprecated
   public interface SettingsStateListener {

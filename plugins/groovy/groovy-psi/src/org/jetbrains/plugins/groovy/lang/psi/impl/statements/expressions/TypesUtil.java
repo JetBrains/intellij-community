@@ -354,8 +354,8 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Nullable
-  public static PsiType getLeastUpperBoundNullable(@NotNull Iterable<PsiType> collection, @NotNull PsiManager manager) {
-    Iterator<PsiType> iterator = collection.iterator();
+  public static PsiType getLeastUpperBoundNullable(@NotNull Iterable<? extends PsiType> collection, @NotNull PsiManager manager) {
+    Iterator<? extends PsiType> iterator = collection.iterator();
     PsiType result = null;
     while (iterator.hasNext()) {
       result = getLeastUpperBoundNullable(result, iterator.next(), manager);

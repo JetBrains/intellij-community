@@ -1144,6 +1144,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       popTrap(TwrFinally.class);
       pushTrap(new InsideFinally(resourceList));
       startElement(resourceList);
+      addInstruction(new FlushFieldsInstruction());
       addThrows(null, closerExceptions.toArray(PsiClassType.EMPTY_ARRAY));
       controlTransfer(new ExitFinallyTransfer(twrFinallyDescriptor), FList.emptyList()); // DfaControlTransferValue is on stack
       finishElement(resourceList);
@@ -1744,8 +1745,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference) {
     addConditionalRuntimeThrow();
     PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
-    List<? extends MethodContract> contracts = method == null ? Collections.emptyList() : JavaMethodContractUtil
-      .getMethodCallContracts(method, expression);
+    List<? extends MethodContract> contracts =
+      method == null ? Collections.emptyList() :
+      DfaUtil.addRangeContracts(method, JavaMethodContractUtil.getMethodCallContracts(method, expression));
     PsiExpression anchor;
     if (expression == null) {
       assert reference instanceof PsiMethodReferenceExpression;
@@ -1853,14 +1855,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addConditionalRuntimeThrow();
       DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
-      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
+      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, DfaUtil.addRangeContracts(constructor, contracts)));
 
       addMethodThrows(constructor, expression);
     }
 
     finishElement(expression);
   }
-  
+
   private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {

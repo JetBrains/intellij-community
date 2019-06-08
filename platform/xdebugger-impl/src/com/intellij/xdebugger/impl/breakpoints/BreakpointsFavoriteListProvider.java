@@ -42,9 +42,8 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(this::updateChildren, 100);
-  private final FavoritesManager myFavoritesManager;
 
-  public BreakpointsFavoriteListProvider(Project project, FavoritesManager favoritesManager) {
+  public BreakpointsFavoriteListProvider(@NotNull Project project) {
     super(project, "Breakpoints");
 
     if (PlatformUtils.isDataGrip()) {
@@ -52,7 +51,6 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     }
 
     myBreakpointPanelProviders = XBreakpointUtil.collectPanelProviders();
-    myFavoritesManager = favoritesManager;
     myTreeController = new BreakpointItemsTreeController(myRulesAvailable);
     myTreeController.setTreeView(new BreakpointsSimpleTree(myProject, myTreeController));
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
@@ -67,7 +65,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     myRebuildAlarm.cancelAndRequest();
   }
 
-  private void getEnabledGroupingRules(Collection<XBreakpointGroupingRule> rules) {
+  private void getEnabledGroupingRules(Collection<? super XBreakpointGroupingRule> rules) {
     rules.clear();
     XBreakpointsDialogState settings = ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager()).getBreakpointsDialogSettings();
 
@@ -97,10 +95,10 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
         replicate((DefaultMutableTreeNode)child, myNode, myChildren);
       }
     }
-    myFavoritesManager.fireListeners(getListName(myProject));
+    FavoritesManager.getInstance(myProject).fireListeners(getListName(myProject));
   }
 
-  private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<AbstractTreeNode<Object>> destinationChildren) {
+  private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<? super AbstractTreeNode<Object>> destinationChildren) {
     final ArrayList<AbstractTreeNode<Object>> copyChildren = new ArrayList<>();
     AbstractTreeNode<Object> copy = new AbstractTreeNode<Object>(myProject, source.getUserObject()) {
       @NotNull

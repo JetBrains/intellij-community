@@ -68,7 +68,7 @@ public abstract class AbstractModelBuilderTest {
     {"2.6"}, /*{"2.7"}, {"2.8"}, {"2.9"}, {"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
     {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
-    {"5.0"}, /*{"5.1"},*/ {"5.2.1"}
+    {"5.0"}, /*{"5.1"}, {"5.3.1"},*/ {"5.4"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -243,11 +243,11 @@ public abstract class AbstractModelBuilderTest {
     private static final String RELEASE_REPOSITORY_ENV = "GRADLE_RELEASE_REPOSITORY";
     private static final String SNAPSHOT_REPOSITORY_ENV = "GRADLE_SNAPSHOT_REPOSITORY";
     private static final String INTELLIJ_LABS_GRADLE_RELEASE_MIRROR =
-      "http://services.gradle.org-mirror.labs.intellij.net/distributions";
+      "https://services.gradle.org-mirror.labs.intellij.net/distributions";
     private static final String INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR =
-      "http://services.gradle.org-mirror.labs.intellij.net/distributions-snapshots";
-    private static final String GRADLE_RELEASE_REPO = "http://services.gradle.org/distributions";
-    private static final String GRADLE_SNAPSHOT_REPO = "http://services.gradle.org/distributions-snapshots";
+      "https://services.gradle.org-mirror.labs.intellij.net/distributions-snapshots";
+    private static final String GRADLE_RELEASE_REPO = "https://services.gradle.org/distributions";
+    private static final String GRADLE_SNAPSHOT_REPO = "https://services.gradle.org/distributions-snapshots";
 
     @NotNull private final String myReleaseRepoUrl;
     @NotNull private final String mySnapshotRepoUrl;

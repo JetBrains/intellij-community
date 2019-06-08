@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -55,10 +56,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,6 +82,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
@@ -135,14 +140,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @return Project to be used in tests for example for project components retrieval.
    */
-  public static Project getProject() {
+  protected static Project getProject() {
     return ourProject;
   }
 
   /**
    * @return Module to be used in tests for example for module components retrieval.
    */
-  public static Module getModule() {
+  protected static Module getModule() {
     return ourModule;
   }
 
@@ -150,7 +155,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * Shortcut to PsiManager.getInstance(getProject())
    */
   @NotNull
-  public static PsiManager getPsiManager() {
+  protected static PsiManager getPsiManager() {
     if (ourPsiManager == null) {
       ourPsiManager = PsiManager.getInstance(ourProject);
     }
@@ -298,9 +303,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
   }
 
-  public static void doSetup(@NotNull LightProjectDescriptor descriptor,
-                             @NotNull LocalInspectionTool[] localInspectionTools,
-                             @NotNull Disposable parentDisposable) throws Exception {
+  @NotNull
+  public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
+                                                      @NotNull LocalInspectionTool[] localInspectionTools,
+                                                      @NotNull Disposable parentDisposable) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -366,6 +372,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     UIUtil.dispatchAllInvocationEvents(); // startup activities
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+    return Pair.createNonNull(getProject(), getModule());
   }
 
   protected void enableInspectionTools(@NotNull InspectionProfileEntry... tools) {
@@ -395,6 +402,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> CodeStyle.dropTemporarySettings(project),
       () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
       () -> doTearDown(project, ourApplication),
+      () -> {
+        // needed for myVirtualFilePointerTracker check below
+        ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+      },
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
@@ -433,6 +444,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
       })).
+      append(() -> EditorHistoryManager.getInstance(project).removeAllFiles()).
       append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
       append(() -> {
         clearEncodingManagerDocumentQueue();
@@ -454,6 +466,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
+      append(() -> UiInterceptors.clear()).
       append(() -> ourTestCase = null).
       append(() -> CompletionProgressIndicator.cleanupForNextTest()).
       append(() -> {
@@ -752,7 +765,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     private boolean areJdksEqual(final Sdk newSdk) {
       if (mySdk == null || newSdk == null) return mySdk == newSdk;
 
-      OrderRootType[] rootTypes = new OrderRootType[]{OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
+      OrderRootType[] rootTypes = {OrderRootType.CLASSES, AnnotationOrderRootType.getInstance()};
       for (OrderRootType rootType : rootTypes) {
         final String[] myUrls = mySdk.getRootProvider().getUrls(rootType);
         final String[] newUrls = newSdk.getRootProvider().getUrls(rootType);

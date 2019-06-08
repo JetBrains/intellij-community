@@ -50,10 +50,10 @@ public class JBSwingUtilities {
   }
 
 
-  private static final List<PairFunction<JComponent, Graphics2D, Graphics2D>> ourGlobalTransform =
+  private static final List<PairFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D>> ourGlobalTransform =
     ContainerUtil.createEmptyCOWList();
 
-  public static Disposable addGlobalCGTransform(final PairFunction<JComponent, Graphics2D, Graphics2D> fun) {
+  public static Disposable addGlobalCGTransform(final PairFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D> fun) {
     ourGlobalTransform.add(fun);
     return new Disposable() {
       @Override
@@ -66,7 +66,7 @@ public class JBSwingUtilities {
   @NotNull
   public static Graphics2D runGlobalCGTransform(@NotNull JComponent c, @NotNull Graphics g) {
     Graphics2D gg = (Graphics2D)g;
-    for (PairFunction<JComponent, Graphics2D, Graphics2D> transform : ourGlobalTransform) {
+    for (PairFunction<? super JComponent, ? super Graphics2D, ? extends Graphics2D> transform : ourGlobalTransform) {
       gg = ObjectUtils.notNull(transform.fun(c, gg));
     }
     return gg;

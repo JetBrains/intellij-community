@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.controlflow;
 
 import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
@@ -24,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,8 +38,8 @@ public class ControlFlowBuilder {
   public int transparentInstructionCount;
 
   public ControlFlowBuilder() {
-    instructions = ContainerUtil.newArrayList();
-    pending = ContainerUtil.newArrayList();
+    instructions = new ArrayList<>();
+    pending = new ArrayList<>();
     instructionCount = 0;
     transparentInstructionCount = 0;
   }
@@ -84,8 +69,8 @@ public class ControlFlowBuilder {
   @NotNull
   public final ControlFlow getCompleteControlFlow() {
     if (transparentInstructionCount == 0) return getControlFlow();
-    
-    ArrayList<Instruction> result = ContainerUtil.newArrayListWithCapacity(instructionCount);
+
+    ArrayList<Instruction> result = new ArrayList<>(instructionCount);
     int processedTransparentInstructions = 0;
     for (Instruction instruction : instructions) {
       if (instruction instanceof TransparentInstruction) {
@@ -111,7 +96,7 @@ public class ControlFlowBuilder {
       LOG.error("Control flow graph is inconsistent. Instructions: (" + result.size() + ", " + instructionCount + ")\n" +
                 "Transparent instructions: (" + processedTransparentInstructions + ", " + transparentInstructionCount + ")");
     }
-    
+
     if (!pending.isEmpty()) {
       LOG.error("Control flow is used incorrectly. All pending node must be connected to fake exit point. Pending: " + pending);
     }
@@ -246,7 +231,7 @@ public class ControlFlowBuilder {
 
   /**
    * Creates transparent instruction for given element, and adds it to the instructions list
-   * Transparent instruction will be replaced in the result control flow by direct connection between predecessors and successors 
+   * Transparent instruction will be replaced in the result control flow by direct connection between predecessors and successors
    *
    * @param element Element to create instruction for
    * @param markerName name for debug information

@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskRepositoryType;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
@@ -205,7 +205,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     }
     else {
       InputStream stream = method.getResponseBodyAsStream();
-      responseBody = stream == null ? "" : StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
+      responseBody = stream == null ? "" : StreamUtil.readText(stream, StandardCharsets.UTF_8);
     }
     if (method.getStatusCode() != HttpStatus.SC_OK) {
       throw new Exception("Request failed with HTTP error: " + method.getStatusText());

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -50,7 +51,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
 
   private final Project myProject;
   private final Alarm myAwaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Map<RunProfile, ExecutionEnvironment> myAwaitingRunProfiles = ContainerUtil.newHashMap();
+  private final Map<RunProfile, ExecutionEnvironment> myAwaitingRunProfiles = new HashMap<>();
   protected final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -137,7 +138,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
 
   private static boolean userApprovesStopForIncompatibleConfigurations(Project project,
                                                                        String configName,
-                                                                       List<RunContentDescriptor> runningIncompatibleDescriptors) {
+                                                                       List<? extends RunContentDescriptor> runningIncompatibleDescriptors) {
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     final RunManagerConfig config = runManager.getConfig();
     if (!config.isStopIncompatibleRequiresConfirmation()) return true;
@@ -290,8 +291,12 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
             (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
           RunnerAndConfigurationSettings settings = runBeforeRun.getSettings();
           if (settings != null) {
-            Executor executor = environment.getExecutor();
-            if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
+            Executor executor = Registry.is("lock.run.executor.for.before.run.tasks", false)
+                                ? DefaultRunExecutor.getRunExecutorInstance()
+                                : environment.getExecutor();
+            //As side-effect here we setup  runners list ( required for com.intellij.execution.impl.RunManagerImpl.canRunConfiguration() )
+            ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
+            if (builder == null || !RunManagerImpl.canRunConfiguration(settings, executor)) {
                 executor = DefaultRunExecutor.getRunExecutorInstance();
                 if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
                   // We should stop here as before run task cannot be executed at all (possibly it's invalid)
@@ -489,7 +494,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   }
 
   @NotNull
-  public List<RunContentDescriptor> getRunningDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
+  public List<RunContentDescriptor> getRunningDescriptors(@NotNull Condition<? super RunnerAndConfigurationSettings> condition) {
     List<RunContentDescriptor> result = new SmartList<>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (trinity.getSecond() != null && condition.value(trinity.getSecond())) {
@@ -503,7 +508,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   }
 
   @NotNull
-  public List<RunContentDescriptor> getDescriptors(@NotNull Condition<RunnerAndConfigurationSettings> condition) {
+  public List<RunContentDescriptor> getDescriptors(@NotNull Condition<? super RunnerAndConfigurationSettings> condition) {
     List<RunContentDescriptor> result = new SmartList<>();
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (trinity.getSecond() != null && condition.value(trinity.getSecond())) {

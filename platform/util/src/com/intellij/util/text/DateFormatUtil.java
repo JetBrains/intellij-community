@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.CommonBundle;
@@ -186,40 +186,6 @@ public class DateFormatUtil {
   }
 
   @NotNull
-  public static String formatDuration(long delta) {
-    StringBuilder buf = new StringBuilder();
-    for (int i = 0; i < DENOMINATORS.length; i++) {
-      long denominator = DENOMINATORS[i];
-      int n = (int)(delta / denominator);
-      if (n != 0) {
-        buf.append(composeDurationMessage(PERIODS[i], n));
-        buf.append(' ');
-        delta = delta % denominator;
-      }
-    }
-
-    if (buf.length() == 0) return CommonBundle.message("date.format.less.than.a.minute");
-    return buf.toString().trim();
-  }
-
-  private static String composeDurationMessage(final Period period, final int n) {
-    switch (period) {
-      case DAY:
-        return CommonBundle.message("date.format.n.days", n);
-      case MINUTE:
-        return CommonBundle.message("date.format.n.minutes", n);
-      case HOUR:
-        return CommonBundle.message("date.format.n.hours", n);
-      case MONTH:
-        return CommonBundle.message("date.format.n.months", n);
-      case WEEK:
-        return CommonBundle.message("date.format.n.weeks", n);
-      default:
-        return CommonBundle.message("date.format.n.years", n);
-    }
-  }
-
-  @NotNull
   public static String formatFrequency(long time) {
     return CommonBundle.message("date.frequency", formatBetweenDates(time, 0));
   }
@@ -349,12 +315,8 @@ public class DateFormatUtil {
     long kCFDateFormatterShortStyle = 1;
     long kCFDateFormatterMediumStyle = 2;
 
+    @Structure.FieldOrder({"location", "length"})
     class CFRange extends Structure implements Structure.ByValue {
-      @Override
-      protected List<String> getFieldOrder() {
-        return Arrays.asList("location", "length");
-      }
-
       public long location;
       public long length;
 
@@ -373,7 +335,7 @@ public class DateFormatUtil {
 
   // platform-specific patterns: http://www.unicode.org/reports/tr35/tr35-31/tr35-dates.html#Date_Format_Patterns
   private static DateFormat[] getMacFormats() {
-    CF cf = Native.loadLibrary("CoreFoundation", CF.class);
+    CF cf = Native.load("CoreFoundation", CF.class);
     return new DateFormat[]{
       getMacFormat(cf, CF.kCFDateFormatterShortStyle, CF.kCFDateFormatterNoStyle),  // short date
       getMacFormat(cf, CF.kCFDateFormatterNoStyle, CF.kCFDateFormatterShortStyle),  // short time
@@ -436,7 +398,7 @@ public class DateFormatUtil {
   }
 
   private static DateFormat[] getWindowsFormats() {
-    Kernel32 kernel32 = Native.loadLibrary("Kernel32", Kernel32.class);
+    Kernel32 kernel32 = Native.load("Kernel32", Kernel32.class);
     int bufferSize = 128, rv;
     char[] buffer = new char[bufferSize];
 

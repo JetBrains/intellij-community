@@ -33,6 +33,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -451,7 +452,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         for (UsageInfo info : list) {
           PsiElement psi = info.getElement();
           JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
-          SafeDeleteProcessor.addNonCodeUsages(psi, result, insideDeletedCondition,
+          SafeDeleteProcessor.addNonCodeUsages(psi, GlobalSearchScope.projectScope(project), result, insideDeletedCondition,
                                                psi instanceof PsiMethod ? refactoringSettings.RENAME_SEARCH_FOR_TEXT_FOR_METHOD : refactoringSettings.RENAME_SEARCH_FOR_TEXT_FOR_FIELD,
                                                psi instanceof PsiMethod ? refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_METHOD : refactoringSettings.RENAME_SEARCH_IN_COMMENTS_FOR_FIELD );
         }

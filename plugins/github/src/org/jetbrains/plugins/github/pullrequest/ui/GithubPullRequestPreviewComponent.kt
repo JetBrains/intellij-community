@@ -13,11 +13,11 @@ internal class GithubPullRequestPreviewComponent(private val changes: GithubPull
 
   private val requestChangesListener = object : GithubPullRequestDataProvider.RequestsChangedListener {
     override fun detailsRequestChanged() {
-      details.loadAndUpdate(currentProvider!!.detailsRequest)
+      details.loadAndShow(currentProvider!!.detailsRequest)
     }
 
     override fun commitsRequestChanged() {
-      changes.loadAndUpdate(currentProvider!!.logCommitsRequest)
+      changes.loadAndShow(currentProvider!!.logCommitsRequest)
     }
   }
 
@@ -27,12 +27,18 @@ internal class GithubPullRequestPreviewComponent(private val changes: GithubPull
   }
 
   fun setPreviewDataProvider(provider: GithubPullRequestDataProvider?) {
+    val previousNumber = currentProvider?.number
     currentProvider?.removeRequestsChangesListener(requestChangesListener)
     currentProvider = provider
     currentProvider?.addRequestsChangesListener(requestChangesListener)
 
-    changes.loadAndShow(provider?.logCommitsRequest)
+    if (previousNumber != provider?.number) {
+      details.reset()
+      changes.reset()
+    }
+
     details.loadAndShow(provider?.detailsRequest)
+    changes.loadAndShow(provider?.logCommitsRequest)
   }
 
   override fun dispose() {}

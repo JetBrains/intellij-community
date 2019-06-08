@@ -72,7 +72,7 @@ public class ContentRevisionCache {
     }
   }
 
-  public void clearScope(final List<VcsDirtyScope> scopes) {
+  public void clearScope(final List<? extends VcsDirtyScope> scopes) {
     // VcsDirtyScope.belongsTo() performs some checks under read action. So deadlock could occur if some thread tries to modify
     // ContentRevisionCache (i.e. call getOrLoadCurrentAsBytes()) under write action while other thread invokes clearScope(). To prevent
     // such deadlocks we also perform locking "myLock" (and other logic) under read action.

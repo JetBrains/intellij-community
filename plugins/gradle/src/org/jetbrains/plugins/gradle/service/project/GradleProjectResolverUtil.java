@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -303,6 +289,20 @@ public class GradleProjectResolverUtil {
   }
 
   @NotNull
+  public static String getGradlePath(@NotNull ModuleData moduleData) {
+    String gradlePath;
+    String moduleId = moduleData.getId();
+    if (moduleId.charAt(0) != ':') {
+      int colonIndex = moduleId.indexOf(':');
+      gradlePath = colonIndex > 0 ? moduleId.substring(colonIndex) : ":";
+    }
+    else {
+      gradlePath = moduleId;
+    }
+    return gradlePath;
+  }
+
+  @NotNull
   public static DependencyScope getDependencyScope(@Nullable String scope) {
     return scope != null ? DependencyScope.valueOf(scope) : DependencyScope.COMPILE;
   }
@@ -443,9 +443,9 @@ public class GradleProjectResolverUtil {
                                        @NotNull DataNode<? extends ExternalEntityData> ownerDataNode,
                                        @NotNull Collection<ExternalDependency> dependencies,
                                        @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
-    Map<ExternalDependencyId, ExternalDependency> dependencyMap = ContainerUtil.newHashMap();
+    Map<ExternalDependencyId, ExternalDependency> dependencyMap = new HashMap<>();
 
-    Queue<ExternalDependency> queue = ContainerUtil.newLinkedList(dependencies);
+    Queue<ExternalDependency> queue = new LinkedList<>(dependencies);
     while (!queue.isEmpty()) {
       final ExternalDependency dependency = queue.remove();
       ExternalDependency seenDependency = dependencyMap.get(dependency.getId());
@@ -507,7 +507,7 @@ public class GradleProjectResolverUtil {
                                           @NotNull Collection<ExternalDependency> dependencies,
                                           @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
 
-    Map<ExternalDependencyId, ExternalDependency> dependencyMap = ContainerUtil.newLinkedHashMap();
+    Map<ExternalDependencyId, ExternalDependency> dependencyMap = new LinkedHashMap<>();
     for (ExternalDependency dependency: dependencies) {
       final ExternalDependency dep = dependencyMap.get(dependency.getId());
       if (dep instanceof AbstractExternalDependency) {
@@ -537,7 +537,7 @@ public class GradleProjectResolverUtil {
 
         final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
 
-        Collection<ProjectDependencyInfo> projectDependencyInfos = ContainerUtil.newArrayList();
+        Collection<ProjectDependencyInfo> projectDependencyInfos = new ArrayList<>();
         String selectionReason = projectDependency.getSelectionReason();
         if ("composite build substitution".equals(selectionReason) && resolverCtx.getSettings() != null) {
           GradleExecutionWorkspace executionWorkspace = resolverCtx.getSettings().getExecutionWorkspace();
@@ -607,7 +607,7 @@ public class GradleProjectResolverUtil {
           for (ProjectDependencyInfo projectDependencyInfo: projectDependencyInfos) {
             ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, projectDependencyInfo.myModuleData);
             moduleDependencyData.setScope(dependencyScope);
-            if (projectDependencyInfo.mySourceSet != null && "test".equals(projectDependencyInfo.mySourceSet.getName())) {
+            if (projectDependencyInfo.mySourceSet != null && isTestSourceSet(projectDependencyInfo.mySourceSet)) {
               moduleDependencyData.setProductionOnTestDependency(true);
             }
             moduleDependencyData.setOrder(mergedDependency.getClasspathOrder());
@@ -708,6 +708,11 @@ public class GradleProjectResolverUtil {
                             ideProject);
       }
     }
+  }
+
+  private static boolean isTestSourceSet(@NotNull ExternalSourceSet sourceSet) {
+    if (sourceSet.getSources().isEmpty()) return false;
+    return sourceSet.getSources().keySet().stream().allMatch(IExternalSystemSourceType::isTest);
   }
 
   private static Collection<File> collectProcessedArtifacts(Collection<ProjectDependencyInfo> infos) {

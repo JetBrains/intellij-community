@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -31,6 +17,8 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
@@ -43,14 +31,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
-import static com.intellij.util.containers.ContainerUtil.list;
 
 public class TextDiffViewerUtil {
   private static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
@@ -110,7 +96,7 @@ public class TextDiffViewerUtil {
   public static void installDocumentListeners(@NotNull DocumentListener listener,
                                               @NotNull List<? extends Document> documents,
                                               @NotNull Disposable disposable) {
-    for (Document document : ContainerUtil.newHashSet(documents)) {
+    for (Document document : new HashSet<>((Collection<? extends Document>)documents)) {
       document.addDocumentListener(listener, disposable);
     }
   }
@@ -153,14 +139,14 @@ public class TextDiffViewerUtil {
   }
 
   private static <T> boolean areEqualDocumentContentProperties(@NotNull List<? extends DiffContent> contents,
-                                                               @NotNull Function<DocumentContent, T> propertyGetter) {
+                                                               @NotNull Function<? super DocumentContent, ? extends T> propertyGetter) {
     List<T> properties = ContainerUtil.mapNotNull(contents, (content) -> {
       if (content instanceof EmptyContent) return null;
       return propertyGetter.fun((DocumentContent)content);
     });
 
     if (properties.size() < 2) return true;
-    return ContainerUtil.newHashSet(properties).size() == 1;
+    return new HashSet<>(properties).size() == 1;
   }
 
   //
@@ -287,12 +273,12 @@ public class TextDiffViewerUtil {
     @Override
     protected List<HighlightPolicy> getValueSubstitutes(@NotNull HighlightPolicy value) {
       if (value == HighlightPolicy.BY_WORD_SPLIT) {
-        return list(HighlightPolicy.BY_WORD);
+        return Collections.singletonList(HighlightPolicy.BY_WORD);
       }
       if (value == HighlightPolicy.DO_NOT_HIGHLIGHT) {
-        return list(HighlightPolicy.BY_LINE);
+        return Collections.singletonList(HighlightPolicy.BY_LINE);
       }
-      return list(HighlightPolicy.BY_WORD);
+      return Collections.singletonList(HighlightPolicy.BY_WORD);
     }
 
     @NotNull
@@ -328,12 +314,12 @@ public class TextDiffViewerUtil {
     @Override
     protected List<IgnorePolicy> getValueSubstitutes(@NotNull IgnorePolicy value) {
       if (value == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) {
-        return list(IgnorePolicy.IGNORE_WHITESPACES);
+        return Collections.singletonList(IgnorePolicy.IGNORE_WHITESPACES);
       }
       if (value == IgnorePolicy.FORMATTING) {
-        return list(IgnorePolicy.TRIM_WHITESPACES);
+        return Collections.singletonList(IgnorePolicy.TRIM_WHITESPACES);
       }
-      return list(IgnorePolicy.DEFAULT);
+      return Collections.singletonList(IgnorePolicy.DEFAULT);
     }
 
     @NotNull
@@ -443,6 +429,20 @@ public class TextDiffViewerUtil {
     protected abstract void doApply(boolean readOnly);
 
     protected abstract boolean canEdit();
+
+    protected void putEditorHint(@NotNull EditorEx editor, boolean readOnly) {
+      if (readOnly) {
+        EditorModificationUtil.setReadOnlyHint(editor, EditorBundle.message("editing.viewer.hint") + ". <a href=\"\">Enable editing</a>",
+                                               (e) -> {
+                                                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                   setSelected(false);
+                                                 }
+                                               });
+      }
+      else {
+        EditorModificationUtil.setReadOnlyHint(editor, null);
+      }
+    }
   }
 
   public static class EditorReadOnlyLockAction extends ReadOnlyLockAction {
@@ -458,6 +458,7 @@ public class TextDiffViewerUtil {
     protected void doApply(boolean readOnly) {
       for (EditorEx editor : myEditableEditors) {
         editor.setViewer(readOnly);
+        putEditorHint(editor, readOnly);
       }
     }
 

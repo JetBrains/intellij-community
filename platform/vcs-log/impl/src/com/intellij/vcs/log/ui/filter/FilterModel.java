@@ -1,19 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.visible.filters.FilterPair;
 import org.apache.commons.lang.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -21,7 +20,7 @@ import java.util.function.Function;
 abstract class FilterModel<Filter> {
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Computable<? extends VcsLogDataPack> myDataPackProvider;
-  @NotNull private final Collection<Runnable> mySetFilterListeners = ContainerUtil.newArrayList();
+  @NotNull private final Collection<Runnable> mySetFilterListeners = new ArrayList<>();
 
   @Nullable protected Filter myFilter;
 
@@ -67,6 +66,17 @@ abstract class FilterModel<Filter> {
 
   protected static void triggerFilterSet(@NotNull String name) {
     VcsLogUsageTriggerCollector.triggerUsage(StringUtil.capitalize(name) + "FilterSet", false);
+  }
+
+  protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,
+                                                           @NotNull Function<FilterObject, F> getter,
+                                                           @Nullable FilterObject currentFilter,
+                                                           @NotNull String name) {
+    F oldFilter = currentFilter == null ? null : getter.apply(currentFilter);
+    F newFilter = filter == null ? null : getter.apply(filter);
+    if (!ObjectUtils.equals(oldFilter, newFilter) && newFilter != null) {
+      triggerFilterSet(name);
+    }
   }
 
   public static abstract class SingleFilterModel<Filter extends VcsLogFilter> extends FilterModel<Filter> {
@@ -137,19 +147,10 @@ abstract class FilterModel<Filter> {
 
     @Override
     void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
-      triggerFilterSet(filter, FilterPair::getFilter1, myFilterKey1.getName());
-      triggerFilterSet(filter, FilterPair::getFilter2, myFilterKey2.getName());
+      triggerFilterSet(filter, FilterPair::getFilter1, myFilter, myFilterKey1.getName());
+      triggerFilterSet(filter, FilterPair::getFilter2, myFilter, myFilterKey2.getName());
 
       super.setFilter(filter);
-    }
-
-    private <F> void triggerFilterSet(@Nullable FilterPair<Filter1, Filter2> filter,
-                                      @NotNull Function<FilterPair<Filter1, Filter2>, F> getter, @NotNull String name) {
-      F oldFilter = myFilter == null ? null : getter.apply(myFilter);
-      F newFilter = filter == null ? null : getter.apply(filter);
-      if (!ObjectUtils.equals(oldFilter, newFilter) && newFilter != null) {
-        triggerFilterSet(name);
-      }
     }
 
     @Override

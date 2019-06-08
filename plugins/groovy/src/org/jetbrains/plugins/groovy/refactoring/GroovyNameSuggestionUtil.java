@@ -103,8 +103,8 @@ public class GroovyNameSuggestionUtil {
       }
       GrReferenceExpression refExpr = (GrReferenceExpression) expr;
       String name = refExpr.getReferenceName();
-      if (name != null && name.toUpperCase().equals(name)) {
-        possibleNames.add(validator.validateName(name.toLowerCase(), true));
+      if (name != null && StringUtil.toUpperCase(name).equals(name)) {
+        possibleNames.add(validator.validateName(StringUtil.toLowerCase(name), true));
       } else {
         generateCamelNames(possibleNames, validator, name);
       }
@@ -168,9 +168,9 @@ public class GroovyNameSuggestionUtil {
     if (typeName.equals("Closure")) {
       possibleNames.add(validator.validateName("cl", true));
     }
-    if (typeName.toUpperCase().equals(typeName)) {
-      possibleNames.add(validator.validateName(GroovyNamesUtil.deleteNonLetterFromString(typeName.toLowerCase()), true));
-    } else if (!typeName.equals(typeName.toLowerCase())) {
+    if (StringUtil.toUpperCase(typeName).equals(typeName)) {
+      possibleNames.add(validator.validateName(GroovyNamesUtil.deleteNonLetterFromString(StringUtil.toLowerCase(typeName)), true));
+    } else if (!typeName.equals(StringUtil.toLowerCase(typeName))) {
       generateCamelNames(possibleNames, validator, typeName);
       possibleNames.remove(typeName);
     }
@@ -226,7 +226,7 @@ public class GroovyNameSuggestionUtil {
 
     ArrayList<String> camelizedName = GroovyNamesUtil.camelizeString(candidateName);
     candidateName = camelizedName.get(camelizedName.size() - 1);
-    candidateName = collectionName.toLowerCase() + "Of" + fromUpperLetter(candidateName);
+    candidateName = StringUtil.toLowerCase(collectionName) + "Of" + fromUpperLetter(candidateName);
     possibleNames.add(validator.validateName(candidateName, true));
   }
 
@@ -261,13 +261,13 @@ public class GroovyNameSuggestionUtil {
   }
 
   private static String generateNameForBuiltInType(String unboxed) {
-    return unboxed.toLowerCase().substring(0, 1);
+    return StringUtil.toLowerCase(unboxed).substring(0, 1);
   }
 
   private static String fromUpperLetter(String str) {
     if (str.isEmpty()) return "";
-    if (str.length() == 1) return str.toUpperCase();
-    return str.substring(0, 1).toUpperCase() + str.substring(1);
+    if (str.length() == 1) return StringUtil.toUpperCase(str);
+    return StringUtil.toUpperCase(str.substring(0, 1)) + str.substring(1);
   }
 
   @Nullable

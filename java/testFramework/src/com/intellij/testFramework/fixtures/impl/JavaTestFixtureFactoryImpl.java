@@ -18,6 +18,7 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -47,6 +48,7 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
       super(testFixtureBuilder);
     }
 
+    @NotNull
     @Override
     protected ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);

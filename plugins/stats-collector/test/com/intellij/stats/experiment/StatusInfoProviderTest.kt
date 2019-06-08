@@ -74,8 +74,7 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
         val requestSender = mock(RequestService::class.java).apply {
             `when`(get(ArgumentMatchers.anyString())).thenReturn(ResponseData(200, response))
         }
-        val decision = mock(ExperimentDecision::class.java)
-        return WebServiceStatusProvider(requestSender, decision)
+        return WebServiceStatusProvider(requestSender)
     }
 
 }

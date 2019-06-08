@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
@@ -10,6 +9,7 @@ import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Collectors;
@@ -71,7 +71,7 @@ public class JsonValidationError {
       Collection<MissingPropertyIssueData> namesToDisplay = myMissingPropertyIssues;
       boolean trimmed = false;
       if (trimIfNeeded && namesToDisplay.size() > 3) {
-        namesToDisplay = ContainerUtil.newArrayList();
+        namesToDisplay = new ArrayList<>();
         Iterator<MissingPropertyIssueData> iterator = myMissingPropertyIssues.iterator();
         for (int i = 0; i < 3; i++) {
           namesToDisplay.add(iterator.next());

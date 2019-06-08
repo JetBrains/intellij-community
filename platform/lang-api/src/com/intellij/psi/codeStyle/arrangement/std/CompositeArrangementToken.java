@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class CompositeArrangementToken extends StdArrangementSettingsToken {
                                                  @NotNull StdArrangementTokenType tokenType,
                                                  @NotNull ArrangementSettingsToken... tokens)
   {
-    return new CompositeArrangementToken(id, id.toLowerCase().replace("_", " "), tokenType, tokens);
+    return new CompositeArrangementToken(id, StringUtil.toLowerCase(id).replace("_", " "), tokenType, tokens);
   }
   
   @NotNull

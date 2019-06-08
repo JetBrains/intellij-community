@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -113,7 +113,7 @@ public class PathsVerifier {
 
   @CalledInAwt
   public List<FilePatch> nonWriteActionPreCheck() {
-    List<FilePatch> failedToApply = ContainerUtil.newArrayList();
+    List<FilePatch> failedToApply = new ArrayList<>();
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
       final CheckPath checker = getChecker(patch);
@@ -134,7 +134,7 @@ public class PathsVerifier {
   }
 
   public List<FilePatch> execute() {
-    List<FilePatch> failedPatches = ContainerUtil.newArrayList();
+    List<FilePatch> failedPatches = new ArrayList<>();
     try {
       final List<CheckPath> checkers = new ArrayList<>(myPatches.size());
       for (FilePatch patch : myPatches) {
@@ -360,10 +360,10 @@ public class PathsVerifier {
       return checkModificationValid(file, name);
     }
 
-    protected boolean checkModificationValid(final VirtualFile file, final String name) {
+    protected boolean checkModificationValid(@NotNull VirtualFile file, final String name) {
       if (ApplicationManager.getApplication().isUnitTestMode() && myIgnoreContentRootsCheck) return true;
       // security check to avoid overwriting system files with a patch
-      if (file == null || !inContent(file) || myVcsManager.getVcsRootFor(file) == null) {
+      if (!inContent(file) && myVcsManager.getVcsRootFor(file) == null) {
         setErrorMessage("File to patch found outside content root: " + name);
         return false;
       }

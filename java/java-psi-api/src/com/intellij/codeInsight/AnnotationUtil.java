@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -20,6 +20,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -104,7 +105,7 @@ public class AnnotationUtil {
     }
     List<PsiAnnotation> result = null;
     for (PsiAnnotation annotation : list.getAnnotations()) {
-      if (annotationNames.contains(annotation.getQualifiedName())) {
+      if (annotationNames.contains(annotation.getQualifiedName()) && isApplicableToDeclaration(annotation, list)) {
         if (result == null) {
           result = new SmartList<>();
         }
@@ -112,6 +113,17 @@ public class AnnotationUtil {
       }
     }
     return result;
+  }
+
+  private static boolean isApplicableToDeclaration(PsiAnnotation annotation, PsiModifierList list) {
+    PsiAnnotation.TargetType[] allTargets = AnnotationTargetUtil.getTargetsForLocation(list);
+    if (allTargets.length == 0) return true;
+                                
+    PsiAnnotation.TargetType[] nonTypeUse = Stream
+      .of(allTargets)
+      .filter(t -> t != PsiAnnotation.TargetType.TYPE_USE)
+      .toArray(PsiAnnotation.TargetType[]::new);
+    return AnnotationTargetUtil.findAnnotationTarget(annotation, nonTypeUse) != null;
   }
 
   @Nullable
@@ -176,7 +188,7 @@ public class AnnotationUtil {
   @NotNull
   public static <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(@NotNull T element) {
     return CachedValuesManager.getCachedValue(element, () -> {
-      Set<PsiModifierListOwner> result = ContainerUtil.newLinkedHashSet();
+      Set<PsiModifierListOwner> result = new LinkedHashSet<>();
       if (element instanceof PsiMethod) {
         collectSuperMethods(result, ((PsiMethod)element).getHierarchicalMethodSignature(), element,
                             JavaPsiFacade.getInstance(element.getProject()).getResolveHelper());
@@ -204,11 +216,17 @@ public class AnnotationUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiModifierListOwner listOwner, @NotNull Set<String> annotationNames) {
-    PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames);
+    return findAnnotationInHierarchy(listOwner, annotationNames, false);
+  }
+
+  @Nullable
+  public static PsiAnnotation findAnnotationInHierarchy(@NotNull final PsiModifierListOwner listOwner,
+                                                        @NotNull Set<String> annotationNames, boolean skipExternal) {
+    PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames, skipExternal);
     if (directAnnotation != null) return directAnnotation;
 
     for (PsiModifierListOwner superOwner : getSuperAnnotationOwners(listOwner)) {
-      PsiAnnotation annotation = findAnnotation(superOwner, annotationNames);
+      PsiAnnotation annotation = findAnnotation(superOwner, annotationNames, skipExternal);
       if (annotation != null) {
         return annotation;
       }

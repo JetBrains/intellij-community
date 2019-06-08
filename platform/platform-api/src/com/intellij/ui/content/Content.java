@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,63 +18,49 @@ import java.beans.PropertyChangeListener;
 /**
  * Represents a tab or pane displayed in a toolwindow or in another content manager.
  *
- * @see ContentFactory#createContent(javax.swing.JComponent, String, boolean)
+ * @see ContentFactory#createContent(JComponent, String, boolean)
  */
 public interface Content extends UserDataHolder, ComponentContainer {
-  @NonNls
   String PROP_DISPLAY_NAME = "displayName";
-  @NonNls
   String PROP_ICON = "icon";
   String PROP_ACTIONS = "actions";
-  @NonNls String PROP_DESCRIPTION = "description";
-  @NonNls 
+  String PROP_DESCRIPTION = "description";
   String PROP_COMPONENT = "component";
   String IS_CLOSABLE = "isClosable";
+  String PROP_ALERT = "alerting";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
   Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
   Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
 
-  String PROP_ALERT = "alerting";
-
   void setComponent(JComponent component);
 
   void setPreferredFocusableComponent(JComponent component);
 
-  void setPreferredFocusedComponent(Computable<JComponent> computable);
+  void setPreferredFocusedComponent(Computable<? extends JComponent> computable);
 
   void setIcon(Icon icon);
-
   Icon getIcon();
 
   void setDisplayName(String displayName);
-
   String getDisplayName();
 
   void setTabName(String tabName);
-
   String getTabName();
 
   void setToolwindowTitle(String toolwindowTitle);
-
   String getToolwindowTitle();
 
   Disposable getDisposer();
-
-  /**
-   * @param disposer a Disposable object which dispose() method will be invoked upon this content release.
-   */
   void setDisposer(@NotNull Disposable disposer);
 
   void setShouldDisposeContent(boolean value);
   boolean shouldDisposeContent();
 
   String getDescription();
-
   void setDescription(String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
-
   void removePropertyChangeListener(PropertyChangeListener l);
 
   ContentManager getManager();
@@ -85,20 +70,22 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void release();
 
   boolean isValid();
-  boolean isPinned();
 
   void setPinned(boolean locked);
-  boolean isPinnable();
+  boolean isPinned();
+
   void setPinnable(boolean pinnable);
+  boolean isPinnable();
 
   boolean isCloseable();
   void setCloseable(boolean closeable);
 
   void setActions(ActionGroup actions, String place, @Nullable JComponent contextComponent);
-  void setSearchComponent(@Nullable JComponent comp);
-
   ActionGroup getActions();
+
+  void setSearchComponent(@Nullable JComponent comp);
   @Nullable JComponent getSearchComponent();
+
   String getPlace();
   JComponent getActionsContextComponent();
 
@@ -107,8 +94,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void fireAlert();
 
-  @Nullable
-  BusyObject getBusyObject();
+  @Nullable BusyObject getBusyObject();
   void setBusyObject(BusyObject object);
 
   String getSeparator();
@@ -123,10 +109,6 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setExecutionId(long executionId);
   long getExecutionId();
 
-  default void setHelpId(@NonNls String helpId) {}
-
-  @Nullable
-  default String getHelpId() {
-    return null;
-  }
+  default void setHelpId(String helpId) { }
+  default @Nullable String getHelpId() { return null; }
 }

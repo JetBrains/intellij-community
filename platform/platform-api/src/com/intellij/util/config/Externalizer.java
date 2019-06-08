@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.config;
 
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -30,7 +31,6 @@ public interface Externalizer<T> {
   Externalizer<Storage> STORAGE = new StorageExternalizer();
 
   abstract class BaseExternalizer<T> implements Externalizer<T> {
-
     @Override
     public void writeValue(Element dataElement, T value) {
       dataElement.setAttribute(VALUE_ATTRIBUTE, value.toString());
@@ -47,10 +47,13 @@ public interface Externalizer<T> {
 
   void writeValue(Element dataElement, T value);
 
+  interface SkippableValue {
+  }
+
   class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
     private final Factory<? extends T> myFactory;
 
-    public FactoryBased(Factory<? extends T> factory) {
+    public FactoryBased(@NotNull Factory<? extends T> factory) {
       myFactory = factory;
     }
 
@@ -66,7 +69,7 @@ public interface Externalizer<T> {
       value.writeExternal(dataElement);
     }
 
-    static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<? extends T> factory) {
+    static <T extends JDOMExternalizable> FactoryBased<T> create(@NotNull Factory<? extends T> factory) {
       return new FactoryBased<>(factory);
     }
   }

@@ -24,10 +24,13 @@ import javax.swing.*;
 public interface ChooseByNameModel {
   String getPromptText();
 
+  @NotNull
   String getNotInMessage();
+  @NotNull
   String getNotFoundMessage();
   /** return null to hide checkbox panel */
-  @Nullable String getCheckBoxName();
+  @Nullable
+  String getCheckBoxName();
 
   /**
    * @deprecated Mark mnemonic char with '&' ('&&' for mac if mnemonic char is 'N') in checkbox name instead
@@ -39,6 +42,7 @@ public interface ChooseByNameModel {
   boolean loadInitialCheckBoxState();
   void saveInitialCheckBoxState(boolean state);
 
+  @NotNull
   ListCellRenderer getListCellRenderer();
 
   /**
@@ -51,15 +55,15 @@ public interface ChooseByNameModel {
   @NotNull
   String[] getNames(boolean checkBoxState);
   @NotNull
-  Object[] getElementsByName(String name, boolean checkBoxState, final String pattern);
+  Object[] getElementsByName(@NotNull String name, boolean checkBoxState, @NotNull String pattern);
   @Nullable
-  String getElementName(Object element);
+  String getElementName(@NotNull Object element);
 
   @NotNull
   String[] getSeparators();
 
   @Nullable
-  String getFullName(Object element);
+  String getFullName(@NotNull Object element);
 
   @Nullable @NonNls
   String getHelpId();

@@ -135,8 +135,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
 
     override fun createFileChangeSubscriber(): FileChangeSubscriber? {
       return { schemeManager ->
-        val startupManager = StartupManagerEx.getInstanceEx(project)
-        if (startupManager.postStartupActivityPassed()) {
+        val startupManager = if (ApplicationManager.getApplication().isUnitTestMode) null else StartupManagerEx.getInstanceEx(project)
+        if (startupManager == null || startupManager.postStartupActivityPassed()) {
           addVfsListener(schemeManager)
         }
         else {

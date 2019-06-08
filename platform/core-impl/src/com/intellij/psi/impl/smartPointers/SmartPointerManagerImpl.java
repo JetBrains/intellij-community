@@ -47,12 +47,15 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public SmartPointerManagerImpl(Project project, PsiDocumentManagerBase psiDocManager) {
     myProject = project;
     myPsiDocManager = psiDocManager;
-    POINTERS_KEY = Key.create("SMART_POINTERS " + anonymize(project));
+    POINTERS_KEY = Key.create("SMART_POINTERS " + (project.isDefault() ? "default" : project.hashCode()));
   }
 
   @NotNull
   private static String anonymize(@NotNull Project project) {
-    return project.isDefault() ? "default" : String.valueOf(project.hashCode());
+    return
+      (project.isDisposed() ? "(Disposed)" : "") +
+      (project.isDefault() ? "(Default)" : "") +
+      project.hashCode();
   }
 
   public void fastenBelts(@NotNull VirtualFile file) {

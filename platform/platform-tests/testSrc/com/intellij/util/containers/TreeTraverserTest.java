@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
@@ -183,7 +169,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testCursorIterableContract() {
-    List<Integer> list = ContainerUtil.newArrayList();
+    List<Integer> list = new ArrayList<>();
     JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
     for (JBIterator<Integer> it : JBIterator.cursor(JBIterator.from(orig.iterator()))) {
       it.current();
@@ -197,7 +183,7 @@ public class TreeTraverserTest extends TestCase {
     JBIterable<Integer> orig = JBIterable.generate(1, INCREMENT).take(5);
     JBIterator<JBIterator<Integer>> it = JBIterator.from(JBIterator.cursor(
       JBIterator.from(orig.iterator())).iterator());
-    List<Integer> list = ContainerUtil.newArrayList();
+    List<Integer> list = new ArrayList<>();
     while (it.advance()) {
       it.hasNext();
       list.add(it.current().current());
@@ -390,7 +376,7 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(2, it.indexOf((o)-> o.intValue() == 3));
     assertEquals(-1, it.indexOf((o)-> o.intValue() == 33));
     assertEquals(Arrays.asList(1, 4, 9, 16, 25), it.map(o -> o * o).toList());
-    assertEquals(Arrays.asList(0, 1, 0, 2, 0, 3, 0, 4, 0, 5), it.flatMap(o -> ContainerUtil.list(0, o)).toList());
+    assertEquals(Arrays.asList(0, 1, 0, 2, 0, 3, 0, 4, 0, 5), it.flatMap(o -> Arrays.asList(0, o)).toList());
   }
 
   public void testJoin() {
@@ -705,7 +691,7 @@ public class TreeTraverserTest extends TestCase {
 
   @NotNull
   public List<Integer> simpleTraverseExpand(TreeTraversal traversal) {
-    List<Integer> result = ContainerUtil.newArrayList();
+    List<Integer> result = new ArrayList<>();
     JBIterable<List<Integer>> iter = traversal.traversal((Function<List<Integer>, Iterable<List<Integer>>>)integers ->
       JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST)).fun(ContainerUtil.newArrayList(1));
     for (List<Integer> integers : iter) {
@@ -719,7 +705,7 @@ public class TreeTraverserTest extends TestCase {
   }
 
   public void testTracingBfsLaziness() {
-    List<Integer> result = ContainerUtil.newArrayList();
+    List<Integer> result = new ArrayList<>();
     TreeTraversal.TracingIt<List<Integer>> it = TreeTraversal.TRACING_BFS.traversal((Function<List<Integer>, Iterable<List<Integer>>>)integers ->
         JBIterable.from(integers).skip(1).transform(WRAP_TO_LIST)).fun(ContainerUtil.newArrayList(1)).typedIterator();
     while (it.advance()) {

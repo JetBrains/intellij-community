@@ -102,7 +102,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     final List<UsageInfo> usages = new ArrayList<>();
     for (PsiClass classToMove : myClassesToMove) {
       final String newName = myTargetClass.getQualifiedName() + "." + classToMove.getName();
-      Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(classToMove, mySearchInComments, mySearchInNonJavaFiles, newName));
+      Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(
+        classToMove, myRefactoringScope, mySearchInComments, mySearchInNonJavaFiles, newName));
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }

@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class ObjectNode<T> {
+final class ObjectNode<T extends Disposable> {
   private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
@@ -55,12 +55,11 @@ final class ObjectNode<T> {
     myOwnModification = modification;
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   private ObjectNode<T>[] getChildrenArray() {
     List<ObjectNode<T>> children = myChildren;
-    if (children == null || children.isEmpty()) return EMPTY_ARRAY;
-    return children.toArray(new ObjectNode[0]);
+    //noinspection unchecked
+    return children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
   }
 
   void addChild(@NotNull ObjectNode<T> child) {

@@ -165,7 +165,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   }
 
   @TestOnly
-  public void setConfigurations(@NotNull final List<Configuration> configurations, @NotNull final Project project) {
+  public void setConfigurations(@NotNull final List<? extends Configuration> configurations, @NotNull final Project project) {
     myConfigurations.clear();
     myConfigurations.addAll(configurations);
   }

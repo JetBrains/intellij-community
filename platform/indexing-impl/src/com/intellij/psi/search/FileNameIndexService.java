@@ -29,7 +29,7 @@ interface FileNameIndexService {
   @NotNull
   Collection<VirtualFile> getVirtualFilesByName(Project project, @NotNull String name, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter);
 
-  void processAllFileNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
+  void processAllFileNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
 
   @NotNull
   Collection<VirtualFile> getFilesWithFileType(@NotNull FileType type, @NotNull GlobalSearchScope scope);

@@ -586,9 +586,14 @@ public class GroovyCompletionData {
     psiElement(GroovyElementTypes.NL)
   );
 
-  private static final PsiElementPattern<?, ?> WHILE_KEYWORD_POSITION = psiElement()
-    .withSuperParent(2, GrDoWhileStatement.class)
-    .afterLeafSkipping(SKIP_CONDITION, psiElement(GroovyElementTypes.T_RBRACE));
+  private static final  ElementPattern<PsiElement>  WHILE_KEYWORD_POSITION = StandardPatterns.or(
+    psiElement()
+      .withSuperParent(2, GrDoWhileStatement.class)
+      .afterLeafSkipping(SKIP_CONDITION, psiElement(GroovyElementTypes.T_RBRACE)),
+    psiElement()
+      .withSuperParent(4, GrDoWhileStatement.class)
+      .withSuperParent(3, GrApplicationStatement.class)
+  );
 
   private static boolean afterAbstractMethod(PsiElement context, boolean acceptAnnotationMethods, boolean skipNLs) {
     PsiElement candidate;

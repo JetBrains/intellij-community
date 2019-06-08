@@ -67,7 +67,10 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
       boolean add = true;
       if (inCompletion) {
         for (String attr : currentAttrs) {
-          if (attr.equals(key + CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) add = false;
+          if (attr.equals(key + CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) {
+            add = false;
+            break;
+          }
         }
       }
       if (add) result.add(new AnyXmlAttributeDescriptor(key));

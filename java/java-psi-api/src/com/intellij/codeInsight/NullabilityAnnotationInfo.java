@@ -54,4 +54,12 @@ public class NullabilityAnnotationInfo {
   public boolean isInferred() {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
   }
+
+  @Override
+  public String toString() {
+    return "NullabilityAnnotationInfo{" +
+           myNullability + "(" + myAnnotation.getQualifiedName() + ")" +
+           (myContainer ? ", container=" : "") +
+           "}";
+  }
 }

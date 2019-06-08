@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -67,9 +67,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
 
   @TestOnly
   public void calmDown() {
-    while (!myUpdater.isEmpty()) {
-      TimeoutUtil.sleep(1);
-    }
+    myUpdater.waitForAllExecuted(10, TimeUnit.SECONDS);
     // wait for FileAnnotation.close()/reload() to be called - see invalidateAnnotations()
     if (getApplication().isDispatchThread()) {
       dispatchAllInvocationEvents();
@@ -151,7 +149,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private void processFile(VcsRevisionNumber number, VirtualFile vf) {
     final Collection<FileAnnotation> annotations;
     synchronized (myLock) {
-      annotations = ContainerUtil.newArrayList(myFileAnnotationMap.get(vf));
+      annotations = new ArrayList<>(myFileAnnotationMap.get(vf));
     }
     if (! annotations.isEmpty()) {
       if (number == null) {

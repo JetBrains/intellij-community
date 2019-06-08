@@ -45,7 +45,7 @@ public class PsiFilter<T extends PsiElement> {
     return e1.isEquivalentTo(e2);
   }
 
-  public Visitor<T> createVisitor(List<T> elements) {
+  public Visitor<T> createVisitor(List<? super T> elements) {
     return new Visitor<>(this, elements);
   }
 

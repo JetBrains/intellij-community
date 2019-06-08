@@ -77,14 +77,12 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
   @Override
   @Nullable
   public String getProjectSdkName(final Project project) {
-    final String projectJdkName = ProjectRootManager.getInstance(project).getProjectSdkName();
     final Sdk projectJdk = getProjectSdk(project);
     if (projectJdk != null) {
       return projectJdk.getName();
     }
-    else {
-      final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-      return projectJdksModel.findSdk(projectJdkName) == null ? projectJdkName : null;
-    }
+    final String projectJdkName = ProjectRootManager.getInstance(project).getProjectSdkName();
+    final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
+    return projectJdkName != null && projectJdksModel.findSdk(projectJdkName) == null ? projectJdkName : null;
   }
 }

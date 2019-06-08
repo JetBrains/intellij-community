@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
@@ -224,8 +225,12 @@ public class SoftWrapApplianceManager implements Dumpable {
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
         doRecalculateSoftWrapsRoughly(event);
       }
-      else {
+      else if (Registry.is("editor.old.soft.wrap.logic")) {
         doRecalculateSoftWraps(event, endOffsetUpperEstimate);
+      }
+      else {
+        new SoftWrapEngine(myEditor, myPainter, myStorage, myDataMapper, event, myVisibleAreaWidth,
+                           myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1).generate();
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");

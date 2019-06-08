@@ -47,7 +47,7 @@ public class JavaMembersGetter extends MembersGetter {
     myParameters = parameters;
   }
 
-  public void addMembers(boolean searchInheritors, final Consumer<LookupElement> results) {
+  public void addMembers(boolean searchInheritors, final Consumer<? super LookupElement> results) {
     if (MagicCompletionContributor.getAllowedValues(myParameters.getPosition()) != null) {
       return;
     }

@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl.httpclient;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * This alternative base implementation of {@link com.intellij.tasks.impl.BaseRepository} should be used
@@ -149,7 +151,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
       final CredentialsProvider provider = (CredentialsProvider)context.getAttribute(HttpClientContext.CREDS_PROVIDER);
       final Credentials credentials = provider.getCredentials(BASIC_AUTH_SCOPE);
       if (credentials != null) {
-        request.addHeader(new BasicScheme(CharsetToolkit.UTF8_CHARSET).authenticate(credentials, request, context));
+        request.addHeader(new BasicScheme(StandardCharsets.UTF_8).authenticate(credentials, request, context));
       }
       final HttpHost proxyHost = ((HttpRoute)context.getAttribute(HttpClientContext.HTTP_ROUTE)).getProxyHost();
       if (proxyHost != null) {

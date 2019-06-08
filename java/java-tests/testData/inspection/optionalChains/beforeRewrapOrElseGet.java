@@ -3,6 +3,6 @@ import java.util.*;
 
 public class Tests {
   void test(List<String> list) {
-    Optional<String> opt = Optional.of<caret>Nullable(list.stream().filter(Objects::nonNull).findFirst().orElseGet(() -> null));
+    Optional<String> opt = Optional.ofNullable(list.stream().filter(Objects::nonNull).findFirst().<caret>orElseGet(() -> null));
   }
 }

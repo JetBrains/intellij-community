@@ -39,12 +39,12 @@ public class JpsLibraryTableSerializer {
   };
   private static final String NAME_ATTRIBUTE = "name";
   private static final String TYPE_ATTRIBUTE = "type";
-  private static final String PROPERTIES_TAG = "properties";
-  private static final String JAR_DIRECTORY_TAG = "jarDirectory";
+  public static final String PROPERTIES_TAG = "properties";
+  public static final String JAR_DIRECTORY_TAG = "jarDirectory";
   private static final String URL_ATTRIBUTE = "url";
-  private static final String ROOT_TAG = "root";
-  private static final String RECURSIVE_ATTRIBUTE = "recursive";
-  private static final String LIBRARY_TAG = "library";
+  public static final String ROOT_TAG = "root";
+  public static final String RECURSIVE_ATTRIBUTE = "recursive";
+  public static final String LIBRARY_TAG = "library";
   private static final JpsLibraryPropertiesSerializer<JpsDummyElement> JAVA_LIBRARY_PROPERTIES_SERIALIZER =
     new JpsLibraryPropertiesSerializer<JpsDummyElement>(JpsJavaLibraryType.INSTANCE, null) {
       @Override
@@ -56,9 +56,9 @@ public class JpsLibraryTableSerializer {
       public void saveProperties(JpsDummyElement properties, Element element) {
       }
     };
-  private static final String MODULE_LEVEL = "module";
-  private static final String PROJECT_LEVEL = "project";
-  private static final String APPLICATION_LEVEL = "application";
+  public static final String MODULE_LEVEL = "module";
+  public static final String PROJECT_LEVEL = "project";
+  public static final String APPLICATION_LEVEL = "application";
 
   public static void loadLibraries(@Nullable Element libraryTableElement, JpsLibraryCollection result) {
     for (Element libraryElement : JDOMUtil.getChildren(libraryTableElement, LIBRARY_TAG)) {

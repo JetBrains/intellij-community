@@ -40,8 +40,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   @NotNull
   @Override
-  protected AsyncEditorLoader.LoadEditorResult loadEditorInBackground() {
-    AsyncEditorLoader.LoadEditorResult baseResult = super.loadEditorInBackground();
+  protected Runnable loadEditorInBackground() {
+    Runnable baseResult = super.loadEditorInBackground();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
     boolean shouldBuildInitialFoldings =
@@ -50,28 +50,27 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                     ? CodeFoldingManager.getInstance(myProject).buildInitialFoldings(document)
                                     : null;
 
-    List<? extends Segment> zones = FocusModePassFactory.calcFocusZones(psiFile);
+    List<? extends Segment> focusZones = FocusModePassFactory.calcFocusZones(psiFile);
 
-    return new AsyncEditorLoader.LoadEditorResult(baseResult.continuationValidator.and(d -> psiFile == null || psiFile.isValid()),
-                                                  () -> {
-                                                    baseResult.continuation.run();
-                                                    Editor editor = getEditor();
+    return () -> {
+      baseResult.run();
+      Editor editor = getEditor();
 
-                                                    if (foldingState != null) {
-                                                      foldingState.setToEditor(editor);
-                                                    }
+      if (foldingState != null) {
+        foldingState.setToEditor(editor);
+      }
 
-                                                    if (zones != null) {
-                                                      FocusModePassFactory.setToEditor(zones, editor);
-                                                      if (editor instanceof EditorImpl) {
-                                                        ((EditorImpl)editor).applyFocusMode();
-                                                      }
-                                                    }
+      if (focusZones != null) {
+        FocusModePassFactory.setToEditor(focusZones, editor);
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).applyFocusMode();
+        }
+      }
 
-                                                    if (psiFile != null && psiFile.isValid()) {
-                                                      DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
-                                                    }
-                                                  });
+      if (psiFile != null && psiFile.isValid()) {
+        DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
+      }
+    };
   }
 
   @NotNull

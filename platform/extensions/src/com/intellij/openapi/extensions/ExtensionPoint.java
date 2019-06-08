@@ -15,12 +15,9 @@ import java.util.stream.Stream;
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-@SuppressWarnings("JavadocReference")
 public interface ExtensionPoint<T> {
   @NotNull
   String getName();
-
-  AreaInstance getArea();
 
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
@@ -77,7 +74,7 @@ public interface ExtensionPoint<T> {
    * @deprecated Use another solutions to unregister not applicable extension, because this method instantiate all extensions.
    */
   @Deprecated
-  void unregisterExtensions(@NotNull Predicate<T> extension);
+  void unregisterExtensions(@NotNull Predicate<? super T> extension);
 
   /**
    * Unregisters an extension of the specified type.
@@ -94,7 +91,7 @@ public interface ExtensionPoint<T> {
    *
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
-  boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
+  boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
   @Deprecated
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);

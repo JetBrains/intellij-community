@@ -1,18 +1,4 @@
-/*
- * Copyright 2005-2019 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -29,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -541,7 +526,7 @@ public class ExpressionUtils {
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
       } else if ("append".equals(name)) {
-        if (expressions.length < 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
+        if (expressions.length != 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
           return true;
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
@@ -931,41 +916,48 @@ public class ExpressionUtils {
   }
 
   /**
-   * Returns a qualifier for reference or creates a corresponding {@link PsiThisExpression} statement if
-   * a qualifier is null
+   * Returns an effective qualifier for a reference. If qualifier is not specified, then tries to construct it
+   * e.g. creating a corresponding {@link PsiThisExpression}.
    *
-   * @param ref a reference expression to get a qualifier from
-   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
+   * @param ref a reference expression to get an effective qualifier for
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}. 
+   *         May return null if reference points to local or member of anonymous class referred from inner class
    */
-  @NotNull
-  public static PsiExpression getQualifierOrThis(@NotNull PsiReferenceExpression ref) {
+  @Nullable
+  public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) return qualifier;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiMember member = tryCast(ref.resolve(), PsiMember.class);
-    if (member != null) {
-      PsiClass memberClass = member.getContainingClass();
-      if (memberClass != null) {
-        PsiClass containingClass = ClassUtils.getContainingClass(ref);
-        if (containingClass == null) {
-          containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
-        }
-        if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+    if (member == null) {
+      // Reference resolves to non-member: probably variable/parameter/etc.
+      return null;
+    }
+    PsiClass memberClass = member.getContainingClass();
+    if (memberClass != null) {
+      PsiClass containingClass = ClassUtils.getContainingClass(ref);
+      if (containingClass == null) {
+        containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
+      }
+      if (containingClass != null && member.hasModifierProperty(PsiModifier.STATIC)) {
+        return factory.createReferenceExpression(containingClass);
+      }
+      if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+        containingClass = ClassUtils.getContainingClass(containingClass);
+        while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
           containingClass = ClassUtils.getContainingClass(containingClass);
-          while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
-            containingClass = ClassUtils.getContainingClass(containingClass);
-          }
-          if (containingClass != null) {
-            String thisQualifier = containingClass.getQualifiedName();
-            if (thisQualifier == null) {
-              if (PsiUtil.isLocalClass(containingClass)) {
-                thisQualifier = containingClass.getName();
-              } else {
-                throw new IncorrectOperationException("Anonymous surrounding class");
-              }
+        }
+        if (containingClass != null) {
+          String thisQualifier = containingClass.getQualifiedName();
+          if (thisQualifier == null) {
+            if (PsiUtil.isLocalClass(containingClass)) {
+              thisQualifier = containingClass.getName();
+            } else {
+              // Cannot qualify anonymous class
+              return null;
             }
-            return factory.createExpressionFromText(thisQualifier + "." + PsiKeyword.THIS, ref);
           }
+          return factory.createExpressionFromText(thisQualifier + "." + PsiKeyword.THIS, ref);
         }
       }
     }
@@ -1043,6 +1035,7 @@ public class ExpressionUtils {
   @Contract(value = "null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
     PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
     if(referenceExpression == null) return null;
     return tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
@@ -1057,11 +1050,14 @@ public class ExpressionUtils {
       // red code
       return false;
     }
-    @NonNls final String text = literal.getText();
-    if (text.charAt(0) != '0' || text.length() < 2) {
+    return isOctalLiteralText(literal.getText());
+  }
+
+  public static boolean isOctalLiteralText(String literalText) {
+    if (literalText.charAt(0) != '0' || literalText.length() < 2) {
       return false;
     }
-    final char c1 = text.charAt(1);
+    final char c1 = literalText.charAt(1);
     return c1 == '_' || (c1 >= '0' && c1 <= '7');
   }
 
@@ -1381,16 +1377,6 @@ public class ExpressionUtils {
       return PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
     }
     return null;
-  }
-
-  /**
-   * Returns true if given new-expression creates an array rather than an object.
-   *
-   * @param expression expression to check
-   * @return true if given new-expression creates an array
-   */
-  public static boolean isArrayCreationExpression(@NotNull PsiNewExpression expression) {
-    return expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0;
   }
 
   /**

@@ -36,7 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.GenerateToStringClassFilter;
@@ -211,16 +211,14 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             comboBox = new ComboBox<>(all);
             final JavaPsiFacade instance = JavaPsiFacade.getInstance(clazz.getProject());
             final GlobalSearchScope resolveScope = clazz.getResolveScope();
-            final ListCellRendererWrapper<TemplateResource> renderer = new ListCellRendererWrapper<TemplateResource>() {
-              @Override
-              public void customize(JList list, TemplateResource value, int index, boolean selected, boolean hasFocus) {
-                setText(value.getName());
-                final String className = value.getClassName();
-                if (className != null && instance.findClass(className, resolveScope) == null) {
-                  setForeground(JBColor.RED);
-                }
+          final ListCellRenderer<TemplateResource> renderer =
+            SimpleListCellRenderer.create((label, value, index) -> {
+              label.setText(value.getName());
+              final String className = value.getClassName();
+              if (className != null && instance.findClass(className, resolveScope) == null) {
+                setForeground(JBColor.RED);
               }
-            };
+            });
             comboBox.setRenderer(renderer);
             settingsButton.addActionListener(new ActionListener() {
                 @Override

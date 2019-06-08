@@ -182,7 +182,7 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
   @Nullable
   @Override
   public final String getTestSpec(@NotNull final Location location, @NotNull final AbstractTestProxy failedTest) {
-    /**
+    /*
      *  PyTest supports subtests (with yielding). Such tests are reported as _test_name[index] and location does not point to actual test.
      *  We need to get rid of braces and calculate name manually, since location is incorrect.
      *  Test path starts from file.

@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -97,7 +96,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     File target = new File(path);
     if (target.exists()) {
       String message = ApplicationBundle.message("launcher.script.overwrite", target);
-      if (Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon()) != Messages.OK) {
+      String ok = ApplicationBundle.message("launcher.script.overwrite.button");
+      if (Messages.showOkCancelDialog(project, message, title, ok, Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }
@@ -177,7 +177,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   public static String defaultScriptPath() {
     String scriptName = ApplicationNamesInfo.getInstance().getDefaultLauncherName();
-    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
     return "/usr/local/bin/" + scriptName;
   }
 }

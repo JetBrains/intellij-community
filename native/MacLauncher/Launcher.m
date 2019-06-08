@@ -92,7 +92,7 @@ void showWarning(NSString* messageText){
 
 
 BOOL appendBundle(NSString *path, NSMutableArray *sink) {
-    if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"]) {
+    if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"] || [path hasSuffix:@"jbr"]) {
         NSBundle *bundle = [NSBundle bundleWithPath:path];
         if (bundle != nil) {
             [sink addObject:bundle];
@@ -135,7 +135,9 @@ NSArray *allVms() {
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
         if (!appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths)) {
-          appendBundle([appDir stringByAppendingPathComponent:@"/jdk"], jvmBundlePaths);
+            if (! appendBundle([appDir stringByAppendingPathComponent:@"/jdk"], jvmBundlePaths)) {
+                appendBundle([appDir stringByAppendingPathComponent:@"/jbr"], jvmBundlePaths);
+            }
         }
         if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
 

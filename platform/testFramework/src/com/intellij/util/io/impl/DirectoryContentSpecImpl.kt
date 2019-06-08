@@ -67,6 +67,12 @@ class ZipSpec : DirectorySpecBase() {
       FileUtil.delete(contentDir)
     }
   }
+
+  override fun generateInTempDir(): File {
+    val target = FileUtil.createTempFile("zip-by-spec", ".zip", true)
+    generate(target)
+    return target
+  }
 }
 
 class FileSpec(val content: ByteArray?) : DirectoryContentSpecImpl() {
@@ -100,11 +106,13 @@ class DirectoryContentBuilderImpl(val result: DirectorySpecBase) : DirectoryCont
 }
 
 fun assertDirectoryContentMatches(file: File, spec: DirectoryContentSpecImpl, relativePath: String) {
+  assertTrue("$file doesn't exist", file.exists())
   when (spec) {
     is DirectorySpec -> {
       assertDirectoryMatches(file, spec, relativePath)
     }
     is ZipSpec -> {
+      assertTrue("$file is not a file", file.isFile)
       val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false)
       ZipUtil.extract(file, dirForExtracted, null)
       assertDirectoryMatches(dirForExtracted, spec, relativePath)

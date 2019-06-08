@@ -19,12 +19,12 @@ import java.util.List;
 
 public class ImportMode extends WizardMode {
   private ProjectImportBuilder myBuilder;
-  private final List<ProjectImportProvider> myProviders;
+  private final List<? extends ProjectImportProvider> myProviders;
 
   public ImportMode() {
     this(ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensionList());
   }
-  public ImportMode(List<ProjectImportProvider> providers) {
+  public ImportMode(List<? extends ProjectImportProvider> providers) {
     myProviders = providers;
   }
 

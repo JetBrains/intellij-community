@@ -189,7 +189,10 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
       if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return;
     }
 
-    if (!isTooltipDefined(comp, me)) return;
+    if (!isTooltipDefined(comp, me)) {
+      hideCurrent(null);
+      return;
+    }
 
     boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
     boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));

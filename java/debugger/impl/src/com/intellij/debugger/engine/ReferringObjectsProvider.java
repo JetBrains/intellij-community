@@ -2,6 +2,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
@@ -13,12 +14,15 @@ import java.util.List;
 
 public interface ReferringObjectsProvider {
   @NotNull
-  List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit) throws EvaluateException;
+  List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference value, long limit)
+    throws EvaluateException;
 
   ReferringObjectsProvider BASIC_JDI = new ReferringObjectsProvider() {
     @NotNull
     @Override
-    public List<ReferringObject> getReferringObjects(@NotNull ObjectReference value, long limit) {
+    public List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                     @NotNull ObjectReference value,
+                                                     long limit) {
       return ContainerUtil.map(value.referringObjects(limit), x -> asReferringObject(x, value));
     }
 

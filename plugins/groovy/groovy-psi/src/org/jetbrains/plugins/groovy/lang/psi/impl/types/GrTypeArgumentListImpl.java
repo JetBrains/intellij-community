@@ -15,6 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.psi.util.PsiTreeUtil.countChildrenOfType;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 28.03.2007
@@ -33,6 +35,11 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
   @Override
   public String toString() {
     return "Type arguments";
+  }
+
+  @Override
+  public int getTypeArgumentCount() {
+    return countChildrenOfType(this, GrTypeElement.class);
   }
 
   @Override

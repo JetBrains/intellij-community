@@ -6,7 +6,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -517,7 +517,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
             if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
               if (!element.getManager().isInProject(element) ||
                   facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-                fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+                fixes.add(new NonNlsAnnotationProvider().createFix(element));
               }
             }
           }

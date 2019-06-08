@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
+import com.intellij.vcs.commit.CommitWorkflowUi
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColorUtil
@@ -22,12 +23,17 @@ import java.awt.Dimension
 import javax.swing.JTree.TREE_MODEL_PROPERTY
 import javax.swing.UIManager
 
-class CurrentBranchComponent(val project: Project, val browser: CommitDialogChangesBrowser) : JBLabel() {
+class CurrentBranchComponent(
+  val project: Project,
+  private val tree: ChangesTree,
+  private val commitWorkflowUi: CommitWorkflowUi
+) : JBLabel() {
+
   private var branches = setOf<BranchData>()
 
   private val isGroupedByRepository: Boolean
     get() {
-      val groupingSupport = browser.viewer.groupingSupport
+      val groupingSupport = tree.groupingSupport
       return groupingSupport.isAvailable(REPOSITORY_GROUPING) && groupingSupport[REPOSITORY_GROUPING]
     }
 
@@ -35,7 +41,7 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
     icon = AllIcons.Vcs.Branch
     foreground = TEXT_COLOR
 
-    browser.viewer.addPropertyChangeListener { e ->
+    tree.addPropertyChangeListener { e ->
       if (e.propertyName == TREE_MODEL_PROPERTY) {
         refresh()
       }
@@ -45,10 +51,10 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
   override fun getPreferredSize(): Dimension? = if (isVisible) super.getPreferredSize() else emptySize()
 
   private fun refresh() {
-    isVisible = !isGroupedByRepository
-    if (isVisible) {
-      setData(browser.displayedChanges, browser.displayedUnversionedFiles)
-    }
+    val needShowBranch = !isGroupedByRepository
+    if (needShowBranch) setData(commitWorkflowUi.getDisplayedChanges(), commitWorkflowUi.getDisplayedUnversionedFiles())
+
+    isVisible = needShowBranch && branches.isNotEmpty()
   }
 
   private fun setData(changes: Iterable<Change>, unversioned: Iterable<VirtualFile>) {

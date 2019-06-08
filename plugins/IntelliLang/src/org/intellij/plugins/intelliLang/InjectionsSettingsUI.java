@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.plugins.intelliLang;
 
@@ -61,28 +61,27 @@ import java.util.*;
 /**
  * @author Gregory.Shrago
  */
-public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
-
+public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
   private final Project myProject;
   private final CfgInfo[] myInfos;
 
   private final JPanel myRoot;
   private final InjectionsTable myInjectionsTable;
-  private final Map<String, LanguageInjectionSupport> mySupports = ContainerUtil.newLinkedHashMap();
-  private final Map<String, AnAction> myEditActions = ContainerUtil.newLinkedHashMap();
-  private final List<AnAction> myAddActions = ContainerUtil.newArrayList();
+  private final Map<String, LanguageInjectionSupport> mySupports = new LinkedHashMap<>();
+  private final Map<String, AnAction> myEditActions = new LinkedHashMap<>();
+  private final List<AnAction> myAddActions = new ArrayList<>();
   private final JLabel myCountLabel;
 
   private final Configuration myConfiguration;
 
-  public InjectionsSettingsUI(final Project project, final Configuration configuration) {
+  public InjectionsSettingsUI(@NotNull Project project) {
     myProject = project;
-    myConfiguration = configuration;
+    myConfiguration = Configuration.getProjectInstance(project);
 
-    final CfgInfo currentInfo = new CfgInfo(configuration, "Project");
-    myInfos = configuration instanceof Configuration.Prj ?
-              new CfgInfo[]{new CfgInfo(((Configuration.Prj)configuration).getParentConfiguration(), "IDE"), currentInfo}
-                                                         : new CfgInfo[]{currentInfo};
+    final CfgInfo currentInfo = new CfgInfo(myConfiguration, "Project");
+    myInfos = myConfiguration instanceof Configuration.Prj ?
+              new CfgInfo[]{new CfgInfo(((Configuration.Prj)myConfiguration).getParentConfiguration(), "IDE"), currentInfo}
+                                                           : new CfgInfo[]{currentInfo};
 
     myRoot = new JPanel(new BorderLayout());
 

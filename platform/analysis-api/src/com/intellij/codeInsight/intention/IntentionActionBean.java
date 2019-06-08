@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,12 +20,18 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean {
 
   @Tag
   public String className;
+
   @Tag
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String category;
+
   @Tag
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String categoryKey;
+
   @Tag
   public String bundleName;
+
   @Tag
   public String descriptionDirectoryName;
 
@@ -34,7 +41,9 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean {
       final String baseName = bundleName != null ? bundleName : ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName();
       if (baseName == null) {
         LOG.error("No resource bundle specified for "+myPluginDescriptor);
+        return null;
       }
+
       final ResourceBundle bundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
 
       final String[] keys = categoryKey.split("/");

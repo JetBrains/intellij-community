@@ -1,10 +1,10 @@
 <idea-plugin>
   <id>com.intellij.java-i18n</id>
-  <name>I18n for Java</name>
+  <name>Java Internationalization</name>
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.platform</depends>
   <description>
-    This plugin provides code inspections and corresponding quick fixes for code internationalization.
+    Provides code inspections and corresponding quick fixes for internationalization in Java source code.
   </description>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.PropertiesBundle</resource-bundle>

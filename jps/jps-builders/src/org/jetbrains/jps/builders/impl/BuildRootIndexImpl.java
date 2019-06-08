@@ -64,7 +64,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
     }
   }
 
-  private <R extends BuildRootDescriptor> void addRoots(BuildDataPaths dataPaths, Iterable<AdditionalRootsProviderService> rootsProviders,
+  private <R extends BuildRootDescriptor> void addRoots(BuildDataPaths dataPaths, Iterable<? extends AdditionalRootsProviderService> rootsProviders,
                                                         BuildTarget<R> target,
                                                         JpsModel model,
                                                         ModuleExcludeIndex index,

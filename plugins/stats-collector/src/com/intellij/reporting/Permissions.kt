@@ -15,14 +15,12 @@
  */
 package com.intellij.reporting
 
+import com.intellij.completion.settings.CompletionStatsCollectorSettings
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 
-class AllowedOnlyInEAP : DataSendPermission {
-  override fun isDataSendAllowed(): Boolean = ApplicationManager.getApplication().isEAP
-}
-
 fun isSendAllowed(): Boolean {
-  return DataSendPermission.EP_NAME.extensions.any { it.isDataSendAllowed }
+  return CompletionStatsCollectorSettings.getInstance().isCompletionLogsSendAllowed && StatisticsUploadAssistant.isSendAllowed()
 }
 
 fun isUnitTestMode(): Boolean {

@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
  * This step would be started as 'callable' on pooled thread as soon as AsyncPopupImpl instance with "Loading..." text is being created
  * When real popup step is obtained from the background task, mock item would be automatically replaced with it.
  */
-public abstract class AsyncPopupStep implements PopupStep, Callable<PopupStep> {
+public abstract class AsyncPopupStep<T> implements PopupStep<T>, Callable<PopupStep> {
   @Nullable
   @Override
   public String getTitle() {
@@ -23,12 +23,12 @@ public abstract class AsyncPopupStep implements PopupStep, Callable<PopupStep> {
 
   @Nullable
   @Override
-  public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
+  public PopupStep<T> onChosen(T selectedValue, boolean finalChoice) {
     return null;
   }
 
   @Override
-  public boolean hasSubstep(Object selectedValue) {
+  public boolean hasSubstep(T selectedValue) {
     return false;
   }
 
@@ -44,7 +44,7 @@ public abstract class AsyncPopupStep implements PopupStep, Callable<PopupStep> {
 
   @Nullable
   @Override
-  public MnemonicNavigationFilter getMnemonicNavigationFilter() {
+  public MnemonicNavigationFilter<T> getMnemonicNavigationFilter() {
     return null;
   }
 
@@ -55,7 +55,7 @@ public abstract class AsyncPopupStep implements PopupStep, Callable<PopupStep> {
 
   @Nullable
   @Override
-  public SpeedSearchFilter getSpeedSearchFilter() {
+  public SpeedSearchFilter<T> getSpeedSearchFilter() {
     return null;
   }
 

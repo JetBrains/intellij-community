@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -18,10 +18,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class JsonSchemaComplianceChecker {
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
@@ -89,8 +86,8 @@ public class JsonSchemaComplianceChecker {
   private void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
     if (checker == null || checker.isCorrect()) return;
     // compute intersecting ranges - we'll solve warning priorities based on this information
-    List<TextRange> ranges = ContainerUtil.newArrayList();
-    List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = ContainerUtil.newArrayList();
+    List<TextRange> ranges = new ArrayList<>();
+    List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = new ArrayList<>();
     for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
       TextRange range = entry.getKey().getTextRange();
       boolean processed = false;

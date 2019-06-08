@@ -84,6 +84,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     for (MyFetchResult fetchResult : fetchResults) {
       if (fetchResult != MyFetchResult.UNKNOWN_HOST) {
         containsAvailableHosts = true;
+        break;
       }
     }
 

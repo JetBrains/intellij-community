@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -53,6 +54,8 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       enableInspectionTool(new UnusedDeclarationInspection());
       enableInspectionTool(new UnusedImportInspection());
     }
+    // pre-load extensions to avoid "PSI/document/model changes are not allowed during highlighting"
+    EntryPointsManagerBase.getInstance(getProject()).getAdditionalAnnotations();
   }
 
   @NotNull

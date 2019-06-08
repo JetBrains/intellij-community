@@ -7,12 +7,6 @@
   <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-community-configure-ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.internal.statistic.updater.StatisticsJobsScheduler</implementation-class>
-    </component>
-  </application-components>
-
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
@@ -26,6 +20,8 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>

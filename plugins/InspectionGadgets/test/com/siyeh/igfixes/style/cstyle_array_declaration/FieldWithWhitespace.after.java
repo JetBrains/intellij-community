@@ -1,4 +1,4 @@
 class FieldWithWhitespace {
 
-    String[] s;
+  String[] s;
 }

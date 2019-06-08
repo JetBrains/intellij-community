@@ -3,7 +3,6 @@ package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.GeneratedSourceFileChangeTracker;
 import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -289,9 +288,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     try {
       String projectName = FileUtilRt.getNameWithoutExtension(fileName);
-      Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path);
-      project.putUserData(CREATION_PLACE, creationPlace);
-      return project;
+      return ProjectManagerEx.getInstanceEx().newProject(projectName, path);
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {
@@ -357,7 +354,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    String place = project.getUserData(CREATION_PLACE);
+    String place = project instanceof ProjectImpl ? ((ProjectImpl)project).getCreationTrace() : null;
     return project + " " +(place == null ? "" : place) + base;
   }
 
@@ -777,7 +774,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   public Object getData(@NotNull String dataId) {
-    return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
+    return myProject == null || myProject.isDisposed() ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
   @NotNull
@@ -976,7 +973,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
-    DaemonCodeAnalyzerImpl.waitForAllEditorsFinallyLoaded(project, timeout, timeUnit);
+    NonBlockingReadActionImpl.cancelAllTasks();
     GeneratedSourceFileChangeTrackerImpl tracker = (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
     if (tracker != null) {
       tracker.cancelAllAndWait(timeout, timeUnit);

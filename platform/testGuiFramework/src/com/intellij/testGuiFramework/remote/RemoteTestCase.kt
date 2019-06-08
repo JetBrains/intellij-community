@@ -106,7 +106,7 @@ class IdeTestFixture(val ide: Ide,
   }
 
   private fun runTestMessage(declaringClass: Class<*>, methodName: String): TransportMessage
-    = TransportMessage(MessageType.RUN_TEST, JUnitTestContainer(declaringClass, methodName))
+    = TransportMessage(MessageType.RUN_TEST, JUnitTestContainer(declaringClass.canonicalName, methodName))
 
   private fun createServerHandlerForTest(testName: String, conditionToFinish: java.util.concurrent.CountDownLatch): ServerHandler {
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
@@ -71,21 +71,8 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
     private RadComponent myComponent;
 
     MyPropertyEditor() {
-      myCbx.setRenderer(new ListCellRendererWrapper<RadButtonGroup>() {
-        @Override
-        public void customize(JList list, RadButtonGroup value, int index, boolean selected, boolean hasFocus) {
-          if (value == null) {
-            setText(UIDesignerBundle.message("button.group.none"));
-          }
-          else if (value == RadButtonGroup.NEW_GROUP) {
-            setText(UIDesignerBundle.message("button.group.new"));
-          }
-          else {
-            setText(value.getName());
-          }
-        }
-      });
-
+      myCbx.setRenderer(SimpleListCellRenderer.create(UIDesignerBundle.message("button.group.none"), value ->
+        value == RadButtonGroup.NEW_GROUP ? UIDesignerBundle.message("button.group.new") : value.getName()));
       myCbx.addItemListener(new ItemListener() {
         @Override
         public void itemStateChanged(ItemEvent e) {
@@ -119,7 +106,7 @@ public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> 
       RadButtonGroup[] allGroups = new RadButtonGroup[groups.length+2];
       System.arraycopy(groups, 0, allGroups, 1, groups.length);
       allGroups [allGroups.length-1] = RadButtonGroup.NEW_GROUP;
-      myCbx.setModel(new DefaultComboBoxModel(allGroups));
+      myCbx.setModel(new DefaultComboBoxModel<>(allGroups));
       myCbx.setSelectedItem(FormEditingUtil.findGroupForComponent(myRootContainer, myComponent));
     }
   }

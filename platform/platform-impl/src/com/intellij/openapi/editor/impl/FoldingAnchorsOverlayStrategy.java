@@ -50,8 +50,8 @@ class FoldingAnchorsOverlayStrategy {
         if (startLogicalLine == endLogicalLine) {
           singleLine = true;
           if (!region.isGutterMarkEnabledForSingleLine() &&
-              (!myEditor.getSettings().isAllowSingleLogicalLineFolding() ||
-                myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset).isEmpty())) {
+              (!myEditor.getSettings().isAllowSingleLogicalLineFolding() || (endOffset - startOffset) <= 1 ||
+                myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset + 1, endOffset - 1).isEmpty())) {
             // unless requested, we don't display markers for single-line fold regions
             continue;
           }

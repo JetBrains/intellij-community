@@ -113,8 +113,18 @@ interface UCallExpression : UExpression, UResolvable {
     val ref = classReference?.asRenderString() ?: methodName ?: methodIdentifier?.asRenderString() ?: "<noref>"
     return ref + "(" + valueArguments.joinToString { it.asRenderString() } + ")"
   }
-}
 
-interface UCallExpressionEx : UCallExpression {
+  /**
+   * Provides the ability to match the called method parameters with passed arguments.
+   * Useful when the order of passed arguments is different to the order of declared parameters (e.g. in Kotlin named arguments).
+   *
+   * @param i index of the parameter in the resolved [PsiMethod] declaration
+   * @return [UExpression] from the [valueArguments] list that corresponds to the [i]-th parameter.
+   * If the given parameter is vararg then the corresponding arguments will be returned wrapped into
+   * [UExpressionList] (with [UExpressionList.kind] = [UastSpecialExpressionKind.VARARGS])
+   */
   fun getArgumentForParameter(i: Int): UExpression?
 }
+
+@Deprecated("useless since IDEA 2019.2, because getArgumentForParameter moved to UCallExpression", ReplaceWith("UCallExpression"))
+interface UCallExpressionEx : UCallExpression

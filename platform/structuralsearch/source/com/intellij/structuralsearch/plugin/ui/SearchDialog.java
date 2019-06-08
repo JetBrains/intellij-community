@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -30,7 +29,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -51,7 +49,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -201,23 +198,13 @@ public class SearchDialog extends DialogWrapper {
     caseSensitiveMatch = new JCheckBox(FindBundle.message("find.options.case.sensitive"), true);
     searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
 
-    final List<FileType> types = new ArrayList<>();
-
-    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
-        types.add(fileType);
-      }
-    }
-    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-
-    fileTypes = new FileTypeSelector(types);
+    fileTypes = new FileTypeSelector();
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes));
     jLabel.setLabelFor(fileTypes);
 
-    detectFileTypeAndDialect();
-
+    ourFtSearchVariant = UIUtil.detectFileType(searchContext);
     fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect, ourContext);
     fileTypes.addItemListener(new ItemListener() {
       @Override
@@ -240,46 +227,6 @@ public class SearchDialog extends DialogWrapper {
       myContentPanel.add(myEditorPanel, BorderLayout.CENTER);
       myContentPanel.revalidate();
       searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-    }
-  }
-
-  private void detectFileTypeAndDialect() {
-    final PsiFile file = searchContext.getFile();
-    if (file != null) {
-      PsiElement context = null;
-
-      if (searchContext.getEditor() != null) {
-        context = file.findElementAt(searchContext.getEditor().getCaretModel().getOffset());
-        if (context != null) {
-          context = context.getParent();
-        }
-      }
-      if (context == null) {
-        context = file;
-      }
-
-      FileType detectedFileType = null;
-
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
-      if (profile != null) {
-        FileType fileType = profile.detectFileType(context);
-        if (fileType != null) {
-          detectedFileType = fileType;
-        }
-      }
-
-      if (detectedFileType == null) {
-        for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-          if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().equals(context.getLanguage())) {
-            detectedFileType = fileType;
-            break;
-          }
-        }
-      }
-
-      ourFtSearchVariant = detectedFileType != null ?
-                           detectedFileType :
-                           StructuralSearchUtil.getDefaultFileType();
     }
   }
 

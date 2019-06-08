@@ -1,31 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.ForwardIndex;
 import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
@@ -39,13 +24,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitDetails> {
+public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   public static final String USERS = "users";
   public static final String USERS_IDS = "users-ids";
@@ -63,14 +49,14 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
 
   @NotNull
   @Override
-  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension)
+  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsShortCommitDetails> extension)
     throws IOException {
     return new KeyCollectionBasedForwardIndex<Integer, Void>(extension) {
       @NotNull
       @Override
       public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
         File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
+        return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
       }
     };
   }
@@ -84,7 +70,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
   }
 
   public TIntHashSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
-    Set<Integer> ids = ContainerUtil.newHashSet();
+    Set<Integer> ids = new HashSet<>();
     for (VcsUser user : users) {
       ids.add(myUserIndexer.getUserId(user));
     }
@@ -125,7 +111,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
     }
   }
 
-  private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
+  private static class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
     @NotNull private final PersistentEnumeratorBase<VcsUser> myUserEnumerator;
     @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
@@ -135,7 +121,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
 
     @NotNull
     @Override
-    public Map<Integer, Void> map(@NotNull VcsFullCommitDetails inputData) {
+    public Map<Integer, Void> map(@NotNull VcsShortCommitDetails inputData) {
       Map<Integer, Void> result = new THashMap<>();
 
       try {

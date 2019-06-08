@@ -56,6 +56,7 @@ task getKotlinArtifactVersion(dependsOn: updateXmlParsing) {
 
 task createPropertiesFile(dependsOn: getKotlinArtifactVersion) {
     def dstFile = new File(System.getenv('kotlin.gui.test.properties.file'))
+    if(dstFile.exists()) dstFile.delete()
     outputs.file dstFile
     dstFile.createNewFile()
     doLast {

@@ -24,15 +24,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author Vladimir Kondratyev
@@ -47,7 +42,6 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @NotNull private final TextEditorComponent myComponent;
   @NotNull protected final VirtualFile myFile;
   private final AsyncEditorLoader myAsyncLoader;
-  private final Future<?> myLoadingFinished;
 
   TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
     myProject = project;
@@ -63,25 +57,23 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
     Disposer.register(this, myComponent);
     myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
-    myLoadingFinished = myAsyncLoader.start();
+    myAsyncLoader.start();
   }
 
   /**
    * @return a continuation to be called in EDT
    */
   @NotNull
-  protected AsyncEditorLoader.LoadEditorResult loadEditorInBackground() {
+  protected Runnable loadEditorInBackground() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject);
     EditorEx editor = (EditorEx)getEditor();
     highlighter.setText(editor.getDocument().getImmutableCharSequence());
-    long stamp = editor.getDocument().getModificationStamp();
     Language language = getDocumentLanguage(editor);
-    return new AsyncEditorLoader.LoadEditorResult(document -> stamp == document.getModificationStamp(),
-                                                  () -> {
-                                                    editor.getSettings().setLanguage(language);
-                                                    editor.setHighlighter(highlighter);
-                                                  });
+    return () -> {
+      editor.getSettings().setLanguage(language);
+      editor.setHighlighter(highlighter);
+    };
   }
 
   @Nullable
@@ -236,16 +228,6 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @Override
   public String toString() {
     return "Editor: "+myComponent.getFile();
-  }
-
-  @TestOnly
-  public void waitForLoaded(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
-    try {
-      myLoadingFinished.get(timeout, unit);
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static class TransientEditorState {

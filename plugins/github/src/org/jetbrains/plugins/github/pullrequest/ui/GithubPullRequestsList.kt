@@ -18,6 +18,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Component
@@ -62,7 +63,11 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
 
   override fun isCopyVisible(dataContext: DataContext) = false
 
-  override fun getData(dataId: String) = if (PlatformDataKeys.COPY_PROVIDER.`is`(dataId)) this else null
+  override fun getData(dataId: String): Any? = when {
+    PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
+    GithubPullRequestKeys.SELECTED_SEARCHED_ISSUE.`is`(dataId) -> selectedValue
+    else -> null
+  }
 
   override fun dispose() {}
 
@@ -71,7 +76,9 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
     private val stateIcon = JLabel()
     private val title = JLabel()
     private val info = JLabel()
-    private val labels = JPanel(FlowLayout(FlowLayout.LEFT, 4, 0))
+    private val labels = JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.X_AXIS)
+    }
     private val assignees = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.X_AXIS)
     }
@@ -83,13 +90,17 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
                            .insets("0", "0", "0", "0")
                            .fillX())
 
+      val gapAfter = "${JBUI.scale(5)}px"
       add(stateIcon, CC()
-        .gapAfter("${JBUI.scale(5)}px"))
+        .gapAfter(gapAfter))
       add(title, CC()
-        .minWidth("0px"))
+        .minWidth("pref/2px")
+        .gapAfter(gapAfter))
       add(labels, CC()
         .growX()
-        .pushX())
+        .pushX()
+        .minWidth("0px")
+        .gapAfter(gapAfter))
       add(assignees, CC()
         .spanY(2)
         .wrap())
@@ -121,7 +132,10 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
       }
       labels.apply {
         removeAll()
-        for (label in value.labels.orEmpty()) add(GithubUIUtil.createIssueLabelLabel(label))
+        for (label in value.labels.orEmpty()) {
+          add(GithubUIUtil.createIssueLabelLabel(label))
+          add(Box.createRigidArea(JBDimension(4, 0)))
+        }
       }
       assignees.apply {
         removeAll()

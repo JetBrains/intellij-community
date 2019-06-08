@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.InstalledPluginsManagerMain;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
@@ -44,7 +44,6 @@ import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -223,7 +222,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
       title += ' ' + ApplicationInfo.getInstance().getFullVersion();
     }
-    title += IdeFrameImpl.getElevationSuffix();
+    String suffix = IdeFrameImpl.getSuperUserSuffix();
+    if (suffix != null) {
+      title += ' ' + suffix;
+    }
     return title;
   }
 
@@ -311,7 +313,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           if (list != null && list.size() > 0) {
             InstalledPluginsManagerMain.PluginDropHandler pluginHandler = new InstalledPluginsManagerMain.PluginDropHandler();
             if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
-              MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+              ProjectUtil.tryOpenFileList(null, list, "WelcomeFrame");
             }
             e.dropComplete(true);
             return;
@@ -470,7 +472,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel;
     }
 
-    private JComponent createActionLink(String text, Icon icon, Ref<ActionLink> ref, AnAction action) {
+    private JComponent createActionLink(String text, Icon icon, Ref<? super ActionLink> ref, AnAction action) {
       ActionLink link = new ActionLink(text, icon, action);
       ref.set(link);
       // Don't allow focus, as the containing panel is going to focusable.
@@ -985,7 +987,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     bottomPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new JBColor(Gray._217, Gray._81)));
     main.add(bottomPanel, BorderLayout.SOUTH);
 
-    final HashMap<Object, JPanel> panelsMap = ContainerUtil.newHashMap();
+    final HashMap<Object, JPanel> panelsMap = new HashMap<>();
     ListSelectionListener selectionListener = e -> {
       if (e.getValueIsAdjusting()) {
         // Update when a change has been finalized.
@@ -1084,7 +1086,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static List<AnAction> flattenActionGroups(@NotNull final ActionGroup action) {
-    final ArrayList<AnAction> groups = ContainerUtil.newArrayList();
+    final ArrayList<AnAction> groups = new ArrayList<>();
     String groupName;
     for (AnAction anAction : action.getChildren(null)) {
       if (anAction instanceof ActionGroup) {

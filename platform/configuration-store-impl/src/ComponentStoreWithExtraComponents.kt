@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -13,8 +12,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
-// A way to remove stalled/unused component data.
-internal val STALLED_STORAGE_EP = ExtensionPointName<StalledStorageBean>("com.intellij.stalledStorage")
+// A way to remove obsolete component data.
+internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   @Suppress("DEPRECATION")
@@ -24,21 +23,21 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   // todo do we really need this?
   private val isSaveSettingsInProgress = AtomicBoolean()
 
-  override suspend fun save(isForceSavingAllSettings: Boolean) {
+  override suspend fun save(forceSavingAllSettings: Boolean) {
     if (!isSaveSettingsInProgress.compareAndSet(false, true)) {
       LOG.warn("save call is ignored because another save in progress", Throwable())
       return
     }
 
     try {
-      super.save(isForceSavingAllSettings)
+      super.save(forceSavingAllSettings)
     }
     finally {
       isSaveSettingsInProgress.set(false)
     }
   }
 
-  override fun initComponent(component: Any, isService: Boolean) {
+  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
     @Suppress("DEPRECATION")
     if (component is com.intellij.configurationStore.SettingsSavingComponent) {
       asyncSettingsSavingComponents.add(component)
@@ -47,13 +46,13 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       settingsSavingComponents.add(component)
     }
 
-    super.initComponent(component, isService)
+    super.initComponent(component, serviceDescriptor)
   }
 
-  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, isForceSavingAllSettings: Boolean): SaveSessionProducerManager {
+  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
     coroutineScope {
       // expects EDT
-      launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      launch(storeEdtCoroutineContext) {
         @Suppress("Duplicates")
         val errors = SmartList<Throwable>()
         for (settingsSavingComponent in settingsSavingComponents) {
@@ -77,20 +76,20 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
     // SchemeManager (old settingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
     // so, call sequentially it, not inside coroutineScope
-    return createSaveSessionManagerAndSaveComponents(result, isForceSavingAllSettings)
+    return createSaveSessionManagerAndSaveComponents(result, forceSavingAllSettings)
   }
 
   override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     // ensure that this task will not interrupt regular saving
     LOG.runAndLogException {
-      commitStalledComponents(session, false)
+      commitObsoleteComponents(session, false)
     }
 
     super.commitComponents(isForce, session, errors)
   }
 
-  internal open fun commitStalledComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    for (bean in STALLED_STORAGE_EP.extensionList) {
+  internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
+    for (bean in OBSOLETE_STORAGE_EP.extensionList) {
       if (bean.isProjectLevel != isProjectLevel) {
         continue
       }

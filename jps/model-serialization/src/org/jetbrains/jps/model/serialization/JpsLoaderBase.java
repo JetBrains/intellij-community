@@ -71,7 +71,7 @@ public abstract class JpsLoaderBase {
   }
 
   @Nullable
-  private static Element tryLoadRootElement(@NotNull Path file) {
+  public static Element tryLoadRootElement(@NotNull Path file) {
     int i = 0;
     while (true) {
       try {

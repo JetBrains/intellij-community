@@ -96,7 +96,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
   }
 
-  private static void getRootTagsVariants(final XmlTag tag, final List<LookupElement> elements) {
+  private static void getRootTagsVariants(final XmlTag tag, final List<? super LookupElement> elements) {
     elements.add(LookupElementBuilder.create("?xml version=\"1.0\" encoding=\"\" ?>").withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>").withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override
@@ -113,7 +113,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
 
     final GlobalSearchScope scope = new EverythingGlobalScope();
     for (final String ns : result) {
-      if (ns.startsWith("file://")) continue;
+      if (ns.isEmpty()) continue;
       fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<XsdNamespaceBuilder>() {
         @Override
         public boolean process(@NotNull final VirtualFile file, XsdNamespaceBuilder value) {

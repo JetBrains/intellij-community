@@ -109,7 +109,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
   public static void searchOptimized(final PsiMethod method, SearchScope scope, final boolean strictSignatureSearch,
                                      SearchRequestCollector collector, final boolean inReadAction,
-                                     PairProcessor<PsiReference, SearchRequestCollector> processor) {
+                                     PairProcessor<? super PsiReference, ? super SearchRequestCollector> processor) {
     final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
     collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(method, scope, strictSignatureSearch, nested)), nested,
                                                  inReadAction, processor));
@@ -135,7 +135,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     return search(method, true);
   }
 
-  private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
+  private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<? extends PsiReference> composite) {
     return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 }

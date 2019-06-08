@@ -21,5 +21,5 @@ public interface QuickFixActionRegistrar {
    * instead of filtering it with this method
    */
   @Deprecated
-  default void unregister(@NotNull Condition<IntentionAction> condition) {}
+  default void unregister(@NotNull Condition<? super IntentionAction> condition) {}
 }

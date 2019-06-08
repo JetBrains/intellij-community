@@ -64,8 +64,7 @@ class CrossPlatformDistributionBuilder {
       ])
 
       String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      String jreSuffix = buildContext.bundledJreManager.jreSuffix()
-      String targetPath = "$buildContext.paths.artifacts/${baseName}${zipNameSuffix}${jreSuffix}.zip"
+      String targetPath = "$buildContext.paths.artifacts/${baseName}${zipNameSuffix}.zip"
 
       List<String> extraExecutables = buildContext.linuxDistributionCustomizer.extraExecutables + buildContext.macDistributionCustomizer.extraExecutables
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {

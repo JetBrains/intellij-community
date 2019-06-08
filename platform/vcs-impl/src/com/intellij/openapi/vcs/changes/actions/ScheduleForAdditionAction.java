@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -86,7 +86,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  protected static Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
+  public static Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
     boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
     if (hasExplicitUnversioned) return e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
@@ -115,11 +115,11 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     return addUnversionedFilesToVcs(project, list, files, null, null);
   }
 
-  protected static boolean addUnversionedFilesToVcs(@NotNull Project project,
-                                                    @NotNull LocalChangeList list,
-                                                    @NotNull List<? extends VirtualFile> files,
-                                                    @Nullable Consumer<? super List<Change>> changesConsumer,
-                                                    @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
+  public static boolean addUnversionedFilesToVcs(@NotNull Project project,
+                                                 @NotNull LocalChangeList list,
+                                                 @NotNull List<? extends VirtualFile> files,
+                                                 @Nullable Consumer<? super List<Change>> changesConsumer,
+                                                 @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
 
     final List<VcsException> exceptions = new ArrayList<>();
@@ -193,7 +193,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
     // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
     // (inside the method) - so common add logic just needs to refresh statuses of parents
-    List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+    List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(new ArrayList<>(descendants));
     if (exs != null) exceptions.addAll(exs);
 
     allProcessedFiles.addAll(descendants);
@@ -204,7 +204,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   private static Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull Project project,
                                                                        @NotNull List<? extends VirtualFile> items) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final Set<VirtualFile> result = ContainerUtil.newHashSet();
+    final Set<VirtualFile> result = new HashSet<>();
     Processor<VirtualFile> addToResultProcessor = file -> {
       if (changeListManager.getStatus(file) == FileStatus.UNKNOWN) {
         result.add(file);
@@ -226,7 +226,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    HashSet<VirtualFile> result = ContainerUtil.newHashSet();
+    HashSet<VirtualFile> result = new HashSet<>();
 
     for (VirtualFile item : items) {
       VirtualFile parent = item.getParent();

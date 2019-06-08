@@ -27,7 +27,10 @@ import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.reference.EditorConfigVirtualFileDescriptor
-import org.editorconfig.language.services.*
+import org.editorconfig.language.services.EditorConfigFileHierarchyService
+import org.editorconfig.language.services.EditorConfigServiceLoaded
+import org.editorconfig.language.services.EditorConfigServiceLoading
+import org.editorconfig.language.services.EditorConfigServiceResult
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.matches
 import java.lang.ref.Reference
@@ -100,7 +103,7 @@ class EditorConfigFileHierarchyServiceImpl(
     val expectedCacheDropsCount = cacheDropsCount
     ReadAction
       .nonBlocking<List<EditorConfigPsiFile>?> { findApplicableFiles(virtualFile) }
-      .expireWhen { project.isDisposed }
+      .expireWith(project)
       .finishOnUiThread(ModalityState.any()) ui@{ affectingFiles ->
       if (affectingFiles == null) return@ui
       synchronized(cacheLocker) {

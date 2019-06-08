@@ -49,7 +49,7 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
   private final Runnable myShowRequest = new Runnable() {
     @Override
     public void run() {
-      synchronized(SmoothProgressAdapter.this){
+      synchronized(getLock()){
         if (!isRunning()) {
           return;
         }
@@ -72,6 +72,9 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
       setModalityProgress(this);
     }
     ProgressManager.assertNotCircular(original);
+    if (original.isRunning() || original.isCanceled()) {
+      throw new IllegalArgumentException("Original indicator must be not started and not cancelled: "+original);
+    }
   }
 
   @NotNull
@@ -92,12 +95,14 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
   }
 
   @Override
-  public synchronized void start() {
-    if (isRunning()) return;
+  public void start() {
+    synchronized (getLock()) {
+      if (isRunning()) return;
 
-    super.start();
-    myOriginalStarted = false;
-    myStartupAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(myShowRequest, SHOW_DELAY, TimeUnit.MILLISECONDS);
+      super.start();
+      myOriginalStarted = false;
+      myStartupAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(myShowRequest, SHOW_DELAY, TimeUnit.MILLISECONDS);
+    }
   }
 
   @Override
@@ -135,63 +140,69 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
   }
 
   @Override
-  public synchronized void stop() {
-    if (myOriginal.isRunning()) {
-      myOriginal.stop();
-    }
-    else {
+  public void stop() {
+    synchronized (getLock()) {
+      if (myOriginal.isRunning()) {
+        myOriginalStarted = true;
+        myOriginal.stop();
+      }
       myStartupAlarm.cancel(false);
 
-      if (!myOriginalStarted && myOriginal instanceof Disposable) {
-        // dispose original because start & stop were not called so original progress might not have released its resources 
-        Disposer.dispose(((Disposable)myOriginal));
-      }
-    }
+      // needed only for correct assertion of !progress.isRunning() in ApplicationImpl.runProcessWithProgressSynchronously
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
 
-    // needed only for correct assertion of !progress.isRunning() in ApplicationImpl.runProcessWithProgressSynchroniously
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
+      SwingUtilities.invokeLater(
+        () -> {
+          if (!myOriginalStarted && myOriginal instanceof Disposable) {
+            // dispose original because start & stop were not called so original progress might not have released its resources
+            Disposer.dispose((Disposable)myOriginal);
+          }
 
-    SwingUtilities.invokeLater(
-      () -> {
-        semaphore.waitFor();
-        if (myDialog != null){
-          //System.out.println("myDialog.destroyProcess()");
-          myDialog.close(DialogWrapper.OK_EXIT_CODE);
-          myDialog = null;
+          semaphore.waitFor();
+          if (myDialog != null){
+            myDialog.close(DialogWrapper.OK_EXIT_CODE);
+            myDialog = null;
+          }
         }
+      );
+
+      try {
+        super.stop(); // should be last to not leaveModal before closing the dialog
       }
-    );
-
-    try {
-      super.stop(); // should be last to not leaveModal before closing the dialog
-    }
-    finally {
-      semaphore.up();
+      finally {
+        semaphore.up();
+      }
     }
   }
 
   @Override
-  public synchronized void setText(String text) {
-    super.setText(text);
-    if (myOriginal.isRunning()) {
-      myOriginal.setText(text);
+  public void setText(String text) {
+    synchronized (getLock()) {
+      super.setText(text);
+      if (myOriginal.isRunning()) {
+        myOriginal.setText(text);
+      }
     }
   }
 
   @Override
-  public synchronized void setFraction(double fraction) {
-    super.setFraction(fraction);
-    if (myOriginal.isRunning()) {
-      myOriginal.setFraction(fraction);
+  public void setFraction(double fraction) {
+    synchronized (getLock()) {
+      super.setFraction(fraction);
+      if (myOriginal.isRunning()) {
+        myOriginal.setFraction(fraction);
+      }
     }
   }
   
   @Override
-  public synchronized void setText2(String text) {
-    super.setText2(text);
-    if (myOriginal.isRunning()) {
-      myOriginal.setText2(text);
+  public void setText2(String text) {
+    synchronized (getLock()) {
+      super.setText2(text);
+      if (myOriginal.isRunning()) {
+        myOriginal.setText2(text);
+      }
     }
   }
 

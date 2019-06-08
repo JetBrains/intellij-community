@@ -5,14 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUIScale
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
@@ -42,7 +45,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private var windowListener: WindowAdapter
     private val myComponentListener: ComponentListener
-    private val myIconProvider = JBUI.ScaleContext.Cache { ctx ->
+    private val myIconProvider = JBUIScale.ScaleContext.Cache { ctx ->
         ObjectUtils.notNull(
                 AppUIUtil.loadHiDPIApplicationIcon(ctx, 16), AllIcons.Icon_small)
     }
@@ -59,8 +62,8 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
     private val icon: Icon
         get() {
-            val ctx = JBUI.ScaleContext.create(window)
-            ctx.overrideScale(JBUI.ScaleType.USR_SCALE.of(1.0))
+            val ctx = JBUIScale.ScaleContext.create(window)
+            ctx.overrideScale(JBUIScale.ScaleType.USR_SCALE.of(1.0))
             return myIconProvider.getOrProvide(ctx) ?: AllIcons.Icon_small
         }
 
@@ -96,14 +99,14 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
                 onClose()
             }
 
-            override fun windowStateChanged(e: java.awt.event.WindowEvent?) {
+            override fun windowStateChanged(e: WindowEvent?) {
                 windowStateChanged()
             }
         }
 
         myComponentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent?) {
-                setCustomDecorationHitTestSpots()
+                updateCustomDecorationHitTestSpots()
             }
         }
 
@@ -125,6 +128,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     override fun addNotify() {
         super.addNotify()
         installListeners()
+        updateCustomDecorationHitTestSpots()
     }
 
     override fun removeNotify() {
@@ -146,15 +150,17 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         window.removeComponentListener(myComponentListener)
     }
 
-    protected fun setCustomDecorationHitTestSpots() {
-        JdkEx.setCustomDecorationHitTestSpots(window, getHitTestSpots())
+    protected fun updateCustomDecorationHitTestSpots() {
+        val toList = getHitTestSpots().map {it.getRectangleOn(window)}.toList()
+        JdkEx.setCustomDecorationHitTestSpots(window, toList)
     }
 
-    abstract fun getHitTestSpots(): List<Rectangle>
+    abstract fun getHitTestSpots(): List<RelativeRectangle>
 
     private fun setActive(value: Boolean) {
         myActive = value
         updateActive()
+        updateCustomDecorationHitTestSpots()
     }
 
     protected open fun updateActive() {
@@ -215,8 +221,11 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     inner class CustomFrameTopBorder(val isTopNeeded: ()-> Boolean = {true}, val isBottomNeeded: ()-> Boolean = {false}) : Border {
         val thickness = 1
         private val menuBarBorderColor: Color = JBColor.namedColor("MenuBar.borderColor", JBColor(Gray.xCD, Gray.x51))
+        private val affectsBorders: Boolean = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor.affects.borders") as Boolean? ?: true
         private val activeColor = Toolkit.getDefaultToolkit().getDesktopProperty("win.dwm.colorizationColor") as Color? ?:
          Toolkit.getDefaultToolkit().getDesktopProperty("win.frame.activeBorderColor") as Color? ?: menuBarBorderColor
+
+        private val windowsVersion = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
 
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
@@ -226,7 +235,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded() && myActive) {
+            if (isTopNeeded() && myActive && isAffectsBorder()) {
                 g.color = activeColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
@@ -238,9 +247,16 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
+      private fun isAffectsBorder(): Boolean {
+        if(windowsVersion.isNullOrEmpty()) return true
+
+        val winVersion =  windowsVersion.toIntOrNull() ?: return affectsBorders
+        return if(winVersion >= 1809) affectsBorders else true
+      }
+
         override fun getBorderInsets(c: Component): Insets {
             val scale = JBUI.scale(thickness)
-            return Insets(if (isTopNeeded()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
+            return Insets(if (isTopNeeded() && isAffectsBorder()) thickness else 0, 0, if (isBottomNeeded()) scale else 0, 0)
         }
 
         override fun isBorderOpaque(): Boolean {

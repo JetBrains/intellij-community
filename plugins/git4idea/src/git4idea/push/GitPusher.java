@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +34,11 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   @NotNull private final Project myProject;
   @NotNull private final GitVcsSettings mySettings;
   @NotNull private final GitPushSupport myPushSupport;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
 
   GitPusher(@NotNull Project project, @NotNull GitVcsSettings settings, @NotNull GitPushSupport pushSupport) {
     myProject = project;
     mySettings = settings;
     myPushSupport = pushSupport;
-    myRepositoryManager = GitUtil.getRepositoryManager(project);
   }
 
   @Override
@@ -58,11 +55,17 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
       pushTagMode = null;
       skipHook = false;
     }
-
-    GitPushResult result = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force, skipHook).execute();
-    GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
-    notification.notify(myProject);
     mySettings.setPushTagMode(pushTagMode);
+
+    GitPushOperation pushOperation = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force, skipHook);
+    pushAndNotify(myProject, pushOperation);
+  }
+
+  public static void pushAndNotify(@NotNull Project project, @NotNull GitPushOperation pushOperation) {
+    GitPushResult result = pushOperation.execute();
+    GitPushResultNotification notification = GitPushResultNotification.create(project, result, pushOperation,
+                                                                              GitUtil.getRepositoryManager(project).moreThanOneRoot());
+    notification.notify(project);
   }
 
   protected void expireExistingErrorsAndWarnings() {

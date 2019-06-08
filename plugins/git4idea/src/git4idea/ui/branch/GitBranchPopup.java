@@ -113,7 +113,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
         createWarningAction("Update checks not supported. Git 2.9+ required",
                             e -> ShowSettingsUtil.getInstance().showSettingsDialog(myProject, GitVcs.NAME)), false);
     }
-    else if (gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
+    else if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() &&
+             gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
       myPopup.addToolbarAction(createWarningAction("Update checks failed. Click to retry", e -> {
         gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
         myPopup.cancel();
@@ -122,7 +123,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @NotNull
-  private static AnAction createWarningAction(@NotNull String text, @NotNull Consumer<AnActionEvent> actionEventConsumer) {
+  private static AnAction createWarningAction(@NotNull String text, @NotNull Consumer<? super AnActionEvent> actionEventConsumer) {
     AnAction updateBranchInfoWithAuthenticationAction = DumbAwareAction.create(text, actionEventConsumer);
     Presentation presentation = updateBranchInfoWithAuthenticationAction.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Warning);
@@ -170,7 +171,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @Nullable
-  private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<GitRepository> allRepositories,
+  private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<? extends GitRepository> allRepositories,
                                                                             @NotNull String branch) {
     List<GitRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
     return repositories.isEmpty()

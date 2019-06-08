@@ -19,10 +19,6 @@ public abstract class CodeFoldingManager {
 
   public abstract void updateFoldRegions(@NotNull Editor editor);
 
-  /** to be removed in 2019.2 */
-  @Deprecated
-  public abstract void forceDefaultState(@NotNull Editor editor);
-
   @Nullable
   public abstract Runnable updateFoldRegionsAsync(@NotNull Editor editor, boolean firstTime);
 

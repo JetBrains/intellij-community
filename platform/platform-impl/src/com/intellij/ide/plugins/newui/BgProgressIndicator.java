@@ -28,7 +28,7 @@ public class BgProgressIndicator extends AbstractProgressIndicatorExBase {
   public void removeStateDelegate(@Nullable ProgressIndicatorEx delegate) {
     List<ProgressIndicatorEx> stateDelegates =
       ReflectionUtil.getField(AbstractProgressIndicatorExBase.class, this, List.class, "myStateDelegates");
-    synchronized (this) {
+    synchronized (getLock()) {
       if (stateDelegates == null) {
         return;
       }

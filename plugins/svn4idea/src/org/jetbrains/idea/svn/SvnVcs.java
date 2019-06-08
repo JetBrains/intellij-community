@@ -75,7 +75,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -254,7 +256,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     });
   }
 
-  public void processChangeLists(final List<LocalChangeList> lists) {
+  public void processChangeLists(final List<? extends LocalChangeList> lists) {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstanceChecked(myProject);
     plVcsManager.startBackgroundVcsOperation();
     try {
@@ -728,16 +730,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
     return Registry.is("svn.filter.unique.roots.by.url") ? filterUniqueByUrl(in, convertor) : filterUniqueByWorkingCopy(in, convertor);
   }
 
   @NotNull
-  private <S> List<S> filterUniqueByUrl(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    List<MyPair<S>> infos = newArrayList();
-    List<S> notMatched = newArrayList();
+  private <S> List<S> filterUniqueByUrl(@NotNull List<? extends S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+    List<MyPair<S>> infos = new ArrayList<>();
+    List<S> notMatched = new ArrayList<>();
     for (S s : in) {
       VirtualFile vf = convertor.apply(s);
       if (vf == null) continue;
@@ -761,8 +763,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @NotNull
-  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    Map<VirtualFile, S> filesMap = StreamEx.of(in).mapToEntry(convertor, identity()).distinctKeys().toMap();
+  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<? extends S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+    Map<VirtualFile, S> filesMap = StreamEx.of(in).<VirtualFile, S>mapToEntry(convertor, identity()).distinctKeys().toMap();
     Map<VirtualFile, List<VirtualFile>> byWorkingCopy =
       StreamEx.of(filesMap.keySet())
               .mapToEntry(

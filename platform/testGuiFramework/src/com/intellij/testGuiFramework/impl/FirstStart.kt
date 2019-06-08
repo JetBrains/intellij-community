@@ -5,7 +5,6 @@ import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
@@ -15,6 +14,7 @@ import com.intellij.testGuiFramework.impl.FirstStart.Utils.waitFrame
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.repeatUntil
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.silentWaitUntil
 import com.intellij.testGuiFramework.launcher.ide.IdeType
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
@@ -51,26 +51,22 @@ abstract class FirstStart(val ideType: IdeType) {
     catch (e: Exception) {
       when (e) {
         is ComponentLookupException -> {
-          takeScreenshot(e)
+          ScreenshotTaker.takeScreenshotAndHierarchy("FirstStartFailed-ComponentLookupException")
         }
         is WaitTimedOutError -> {
-          takeScreenshot(e)
+          ScreenshotTaker.takeScreenshotAndHierarchy("FirstStartFailed-WaitTimedOutError")
           throw exceptionWithHierarchy(e)
         }
         else -> {
-          takeScreenshot(e)
+          ScreenshotTaker.takeScreenshotAndHierarchy("FirstStartFailed-${e::class.java.canonicalName}")
           throw e
         }
       }
     }
   }
 
-  fun takeScreenshot(e: Throwable) {
-    ScreenshotOnFailure.takeScreenshot("FirstStartFailed", e)
-  }
-
   private fun exceptionWithHierarchy(e: Throwable): Throwable {
-    return Exception("Hierarchy log: ${ScreenshotOnFailure.getHierarchy()}", e)
+    return Exception("Hierarchy log: ${ScreenshotTaker.getHierarchy()}", e)
   }
 
   // should be initialized before IDE has been started

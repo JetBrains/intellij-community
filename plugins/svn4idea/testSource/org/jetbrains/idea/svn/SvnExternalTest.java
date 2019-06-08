@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
@@ -11,11 +11,13 @@ import org.jetbrains.idea.svn.api.Url;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -124,7 +126,8 @@ public class SvnExternalTest extends SvnTestCase {
 
   private void setNewDirectoryMappings(final File sourceDir) {
     runInEdtAndWait(
-      () -> vcsManager.setDirectoryMappings(list(new VcsDirectoryMapping(toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
+      () -> vcsManager.setDirectoryMappings(
+        Arrays.asList(new VcsDirectoryMapping(toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
   }
 
   @Test

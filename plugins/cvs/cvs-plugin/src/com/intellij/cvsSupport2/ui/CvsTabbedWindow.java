@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.CvsBundle;
@@ -188,14 +186,13 @@ public class CvsTabbedWindow implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
+      Object data = e.getData(ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY);
       e.getPresentation().setEnabled(data instanceof CvsException);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
+      Object data = e.getData(ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY);
       CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)Objects.requireNonNull(data)).getCvsRoot(), myProject);
     }
   }

@@ -31,6 +31,7 @@ import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
+import java.util.Objects;
 
 @State(name = "DevKit.ModuleBuildProperties")
 public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
@@ -68,8 +69,8 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
       State state = (State)o;
 
-      if (url != null ? !url.equals(state.url) : state.url != null) return false;
-      if (manifest != null ? !manifest.equals(state.manifest) : state.manifest != null) return false;
+      if (!Objects.equals(url, state.url)) return false;
+      if (!Objects.equals(manifest, state.manifest)) return false;
 
       return true;
     }
@@ -149,7 +150,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     myPluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
-    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(pluginXmlPath))));
+    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(pluginXmlPath)));
   }
 
   public void setManifestPath(@Nullable String manifestPath) {
@@ -162,7 +163,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     if (manifest == null) {
       Messages.showErrorDialog(myModule.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
       ReadAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(
-        VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(manifestPath)), myModule, null));
+        VfsUtilCore.pathToUrl(manifestPath), myModule, null));
     }
     else {
       WriteAction.run(()-> myManifestFilePointer = VirtualFilePointerManager.getInstance().create(manifest, myModule, null));

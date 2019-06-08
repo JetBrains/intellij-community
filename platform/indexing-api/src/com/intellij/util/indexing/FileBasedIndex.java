@@ -29,12 +29,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,6 +47,12 @@ public abstract class FileBasedIndex {
   public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, @NotNull ProgressIndicator indicator) {
     iterateIndexableFiles(processor, project, indicator);
   }
+
+  /**
+   * @return the file which the current thread is indexing right now, or null if current thread isn't indexing.
+   */
+  @Nullable
+  public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
@@ -69,7 +76,7 @@ public abstract class FileBasedIndex {
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
-  
+
   @NotNull
   public abstract <K, V> List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter);
 
@@ -138,6 +145,10 @@ public abstract class FileBasedIndex {
     return processAllKeys(indexId, processor, scope.getProject());
   }
 
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
+
   public static void iterateRecursively(@Nullable final VirtualFile root,
                                         @NotNull final ContentIterator processor,
                                         @Nullable final ProgressIndicator indicator,
@@ -197,7 +208,7 @@ public abstract class FileBasedIndex {
     void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
   }
 
-  // TODO: remove once changes becomes permanent
-  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping =
-    SystemProperties.getBooleanProperty("idea.enable.tracing.keyhash2virtualfile", true);
+  /** @deprecated inline true */
+  @Deprecated
+  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 }

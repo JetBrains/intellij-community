@@ -5,6 +5,7 @@ import com.intellij.bootRuntime.BinTrayUtil;
 import com.intellij.bootRuntime.Controller;
 import com.intellij.bootRuntime.bundles.Runtime;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 
@@ -12,6 +13,9 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 
 public class Install extends RuntimeCommand {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.bootRuntime.command.Install");
+
   public Install(Project project, Controller controller, Runtime runtime) {
     super(project, controller, "Install", runtime);
   }
@@ -24,7 +28,7 @@ public class Install extends RuntimeCommand {
         myController.restart();
       }
       catch (IOException ioe) {
-        ioe.printStackTrace();
+        LOG.warn(ioe);
       }
     });
   }

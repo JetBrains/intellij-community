@@ -12,7 +12,7 @@ class KtUnregisteredNamedColorInspectionTest : UnregisteredNamedColorInspectionT
       class InspectionTest {
         fun smth() {
           JBColor.namedColor("${knownNamedColor}", 0xcdcdcd)
-          JBColor.<warning descr="Named color key 'NotRegisteredKey' is not registered in '*.themeMetadata.json'">namedColor</warning>("NotRegisteredKey", 0xcdcdcd)
+          JBColor.<warning descr="Named color key 'NotRegisteredKey' is not registered in '*.themeMetadata.json' (Documentation)">namedColor</warning>("NotRegisteredKey", 0xcdcdcd)
         }
       }
     """.trimIndent())

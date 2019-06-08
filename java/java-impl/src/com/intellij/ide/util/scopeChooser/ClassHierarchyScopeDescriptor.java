@@ -48,7 +48,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
   }
 
   @Override
-  public String getDisplay() {
+  public String getDisplayName() {
     return IdeBundle.message("scope.class.hierarchy");
   }
 

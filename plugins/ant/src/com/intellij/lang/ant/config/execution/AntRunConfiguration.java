@@ -13,12 +13,12 @@ import com.intellij.lang.ant.config.impl.TargetChooserDialog;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -28,8 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -171,27 +169,24 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     private String myFileUrl = null;
     private String myTargetName = null;
 
-    private final JTextField myTextField = new JTextField();
+    private ExtendableTextField myTextField;
     private final PropertiesTable myPropTable = new PropertiesTable();
 
-    private final ActionListener myActionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        AntBuildTarget buildTarget = getTarget();
-        final TargetChooserDialog dlg = new TargetChooserDialog(getProject(), buildTarget);
-        if (dlg.showAndGet()) {
-          myFileUrl = null;
-          myTargetName = null;
-          buildTarget = dlg.getSelectedTarget();
-          if (buildTarget != null) {
-            final VirtualFile vFile = buildTarget.getModel().getBuildFile().getVirtualFile();
-            if (vFile != null) {
-              myFileUrl = vFile.getUrl();
-              myTargetName = buildTarget.getName();
-            }
+    private final Runnable myAction = () -> {
+      AntBuildTarget buildTarget = getTarget();
+      final TargetChooserDialog dlg = new TargetChooserDialog(getProject(), buildTarget);
+      if (dlg.showAndGet()) {
+        myFileUrl = null;
+        myTargetName = null;
+        buildTarget = dlg.getSelectedTarget();
+        if (buildTarget != null) {
+          final VirtualFile vFile = buildTarget.getModel().getBuildFile().getVirtualFile();
+          if (vFile != null) {
+            myFileUrl = vFile.getUrl();
+            myTargetName = buildTarget.getName();
           }
-          updateUI();
         }
+        updateUI();
       }
     };
 
@@ -224,9 +219,10 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     @NotNull
     @Override
     protected JComponent createEditor() {
-      myTextField.setEditable(false);
+      myTextField = new ExtendableTextField().addBrowseExtension(myAction, this);
+
       final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(LabeledComponent.create(new TextFieldWithBrowseButton(myTextField, myActionListener), "Target name", BorderLayout.WEST), BorderLayout.NORTH);
+      panel.add(LabeledComponent.create(myTextField, "Target name", BorderLayout.WEST), BorderLayout.NORTH);
 
       final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), "Ant Properties");
       tableComponent.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -308,7 +304,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     }
   }
 
-  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<? super BuildFileProperty> to) {
+  private static void copyProperties(final Iterable<? extends BuildFileProperty> from, final List<? super BuildFileProperty> to) {
     to.clear();
     for (BuildFileProperty p : from) {
       to.add(p.clone());

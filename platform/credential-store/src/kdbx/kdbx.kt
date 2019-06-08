@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.inputStream
 import org.bouncycastle.crypto.SkippingStreamCipher
 import org.bouncycastle.crypto.engines.Salsa20Engine
@@ -10,7 +11,6 @@ import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
 import java.io.InputStream
 import java.nio.file.Path
-import java.security.MessageDigest
 import java.util.*
 import java.util.zip.GZIPInputStream
 
@@ -54,19 +54,17 @@ internal class KdbxPassword(password: ByteArray) : KeePassCredentials {
   override val key: ByteArray
 
   init {
-    val md = sha256MessageDigest()
+    val md = DigestUtil.sha256()
     key = md.digest(md.digest(password))
   }
 }
-
-internal fun sha256MessageDigest(): MessageDigest = MessageDigest.getInstance("SHA-256")
 
 // 0xE830094B97205D2A
 private val SALSA20_IV = byteArrayOf(-24, 48, 9, 75, -105, 32, 93, 42)
 
 internal fun createSalsa20StreamCipher(key: ByteArray): SkippingStreamCipher {
   val streamCipher = Salsa20Engine()
-  val keyParameter = KeyParameter(sha256MessageDigest().digest(key))
+  val keyParameter = KeyParameter(DigestUtil.sha256().digest(key))
   streamCipher.init(true /* doesn't matter, Salsa20 encryption and decryption is completely symmetrical */, ParametersWithIV(keyParameter, SALSA20_IV))
   return streamCipher
 }

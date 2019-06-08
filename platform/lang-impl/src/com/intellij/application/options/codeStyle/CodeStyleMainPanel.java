@@ -10,6 +10,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -108,6 +109,11 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       public void settingsChanged(@NotNull CodeStyleSettings settings) {
         ensureCurrentPanel().reset(settings);
       }
+
+      @Override
+      public void overridingStatusChanged() {
+        ApplicationManager.getApplication().invokeLater(() -> mySchemesPanel.updateOverridingMessage(), ModalityState.any());
+      }
     });
 
     addWaitCard();
@@ -178,10 +184,6 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public boolean isModified() {
-    if (myModel.isSchemeListModified()) {
-      return true;
-    }
-
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
       //if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);
@@ -244,6 +246,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
         if (currentTab != null) {
           tabbedPanel.changeTab(currentTab);
         }
+        mySchemesPanel.setSeparatorVisible(false);
       }
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);

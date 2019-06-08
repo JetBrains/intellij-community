@@ -17,24 +17,25 @@ public class VFileCreateEvent extends VFileEvent {
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
-  private final boolean myEmptyDirectory;
+  private final ChildInfo[] myChildren;
   private VirtualFile myCreatedFile;
 
   public VFileCreateEvent(Object requestor,
                           @NotNull VirtualFile parent,
                           @NotNull String childName,
                           boolean isDirectory,
-                          @Nullable("null means read from the created file") FileAttributes attributes,
+                          @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
                           boolean isFromRefresh,
-                          boolean isEmptyDirectory) {
+                          @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
+                          ChildInfo[] children) {
     super(requestor, isFromRefresh);
     myParent = parent;
     myChildName = childName;
     myDirectory = isDirectory;
     myAttributes = attributes;
     mySymlinkTarget = symlinkTarget;
-    myEmptyDirectory = isEmptyDirectory;
+    myChildren = children;
   }
 
   @NotNull
@@ -63,7 +64,7 @@ public class VFileCreateEvent extends VFileEvent {
 
   /** @return true if the newly created file is a directory which has no children. */
   public boolean isEmptyDirectory() {
-    return isDirectory() && myEmptyDirectory;
+    return isDirectory() && myChildren != null && myChildren.length == 0;
   }
 
   @NotNull
@@ -81,6 +82,11 @@ public class VFileCreateEvent extends VFileEvent {
       myCreatedFile = createdFile = myParent.findChild(myChildName);
     }
     return createdFile;
+  }
+
+  @Nullable("null means children not available (e.g. the created file is not a directory) or unknown")
+  public ChildInfo[] getChildren() {
+    return myChildren;
   }
 
   public void resetCache() {
@@ -105,10 +111,7 @@ public class VFileCreateEvent extends VFileEvent {
 
     final VFileCreateEvent event = (VFileCreateEvent)o;
 
-    if (myDirectory != event.myDirectory) return false;
-    if (!myChildName.equals(event.myChildName)) return false;
-    if (!myParent.equals(event.myParent)) return false;
-    return true;
+    return myDirectory == event.myDirectory && myChildName.equals(event.myChildName) && myParent.equals(event.myParent);
   }
 
   @Override
@@ -122,6 +125,7 @@ public class VFileCreateEvent extends VFileEvent {
   @Override
   public String toString() {
     String kind = myDirectory ? (isEmptyDirectory() ? "(empty) " : "") + "dir " : "file ";
-    return "VfsEvent[create " + kind + myChildName + " in " + myParent.getUrl() + "]";
+    return "VfsEvent[create " + kind + myParent.getUrl() + "/"+ myChildName +"]"
+           + (myChildren == null ? "" : " with children:\n"+StringUtil.join(myChildren, Object::toString, "\n"));
   }
 }

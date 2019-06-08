@@ -86,8 +86,6 @@ public class PackageChooserDialog extends PackageChooser {
     myModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     createTreeModel();
     myTree = new Tree(myModel);
-
-    UIUtil.setLineStyleAngled(myTree);
     myTree.setCellRenderer(
       new DefaultTreeCellRenderer() {
         @Override

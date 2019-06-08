@@ -12,33 +12,32 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 
 /**
- * {@link com.intellij.codeInsight.completion.CompletionResultSet}s feed on {@link com.intellij.codeInsight.lookup.LookupElement}s,
+ * {@link CompletionResultSet}s feed on {@link LookupElement}s,
  * match them against specified
- * {@link com.intellij.codeInsight.completion.PrefixMatcher} and give them to special {@link com.intellij.util.Consumer}
- * (see {@link CompletionService#createResultSet(CompletionParameters, com.intellij.util.Consumer, CompletionContributor)})
+ * {@link PrefixMatcher} and give them to special {@link Consumer}
  * for further processing, which usually means
  * they will sooner or later appear in completion list. If they don't, there must be some {@link CompletionContributor}
  * up the invocation stack that filters them out.
  *
  * If you want to change the matching prefix, use {@link #withPrefixMatcher(PrefixMatcher)} or {@link #withPrefixMatcher(String)}
- * to obtain another {@link com.intellij.codeInsight.completion.CompletionResultSet} and give your lookup elements to that one.
+ * to obtain another {@link CompletionResultSet} and give your lookup elements to that one.
  *
  * @author peter
  */
 public abstract class CompletionResultSet implements Consumer<LookupElement> {
   private final PrefixMatcher myPrefixMatcher;
-  private final Consumer<CompletionResult> myConsumer;
+  private final Consumer<? super CompletionResult> myConsumer;
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
   protected final CompletionContributor myContributor;
   private boolean myStopped;
 
-  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<CompletionResult> consumer, CompletionContributor contributor) {
+  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<? super CompletionResult> consumer, CompletionContributor contributor) {
     myPrefixMatcher = prefixMatcher;
     myConsumer = consumer;
     myContributor = contributor;
   }
 
-  protected Consumer<CompletionResult> getConsumer() {
+  protected Consumer<? super CompletionResult> getConsumer() {
     return myConsumer;
   }
 
@@ -92,17 +91,17 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     endBatch();
   }
 
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull PrefixMatcher matcher);
 
   /**
    * Creates a default camel-hump prefix matcher based on given prefix
    */
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull String prefix);
 
   @NotNull
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   public abstract CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
 
   public abstract void addLookupAdvertisement(@NotNull String text);
@@ -111,7 +110,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
    * remain as they are though, so upon insertion the prefix case will be changed.
    */
-  @Contract(value="", pure=true)
+  @Contract(pure=true)
   @NotNull public abstract CompletionResultSet caseInsensitive();
 
   @NotNull
@@ -138,15 +137,15 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     return elements;
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer) {
-    runRemainingContributors(parameters, consumer, true);
+  public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
+    runRemainingContributors(parameters, (Consumer)consumer, true);
   }
 
   public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer, final boolean stop) {
     if (stop) {
       stopHere();
     }
-    myCompletionService.getVariantsFromContributors(parameters, myContributor, new BatchConsumer<CompletionResult>() {
+    myCompletionService.getVariantsFromContributors(parameters, myContributor, getPrefixMatcher(), new BatchConsumer<CompletionResult>() {
       @Override
       public void startBatch() {
         CompletionResultSet.this.startBatch();

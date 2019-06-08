@@ -10,6 +10,7 @@ enum OsFamily {
   WINDOWS("win", BuildOptions.OS_WINDOWS, "Windows"),
   MACOS("mac", BuildOptions.OS_MAC, "macOS"),
   LINUX("unix", BuildOptions.OS_LINUX, "Linux");
+  static final List<OsFamily> ALL = values().toList().asImmutable()
 
   final String distSuffix
   final String osId

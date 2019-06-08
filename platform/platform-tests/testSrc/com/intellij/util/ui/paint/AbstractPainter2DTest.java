@@ -2,6 +2,7 @@
 package com.intellij.util.ui.paint;
 
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;

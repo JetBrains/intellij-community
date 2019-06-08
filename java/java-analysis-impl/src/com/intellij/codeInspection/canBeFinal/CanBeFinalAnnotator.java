@@ -158,7 +158,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
             fieldsInitializedInInitializers = new HashSet<>();
           }
           for (PsiVariable psiVariable : writtenVariables) {
-            if (allFields.contains(psiVariable)) {
+            if (allFields.contains(psiVariable) && ControlFlowUtil.isVariableDefinitelyAssigned(psiVariable, flow)) {
               if (instanceInitializerInitializedFields.contains(psiVariable)) {
                 allFields.remove(psiVariable);
                 instanceInitializerInitializedFields.remove(psiVariable);

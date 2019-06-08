@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unused;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -53,7 +54,7 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
   private static GlobalSearchScope getWidestUseScope(@Nullable String key, @NotNull Project project, @NotNull Module ownModule) {
     if (key == null) return null;
 
-    Set<Module> modules = ContainerUtil.newLinkedHashSet();
+    Set<Module> modules = new LinkedHashSet<>();
     for (IProperty property : PropertiesImplUtil.findPropertiesByKey(project, key)) {
       Module module = ModuleUtilCore.findModuleForPsiElement(property.getPsiElement());
       if (module == null) {
@@ -157,8 +158,9 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     UnusedPropertiesSearchHelper(Module module) {
       myOwnUseScope = GlobalSearchScope.moduleWithDependentsScope(module);
       myModule = module;
-      mySearcher = (PropertySearcher)ContainerUtil.find(Extensions.getExtensions("com.intellij.referencesSearch"),
-                                                        new FilteringIterator.InstanceOf<>(PropertySearcher.class));
+      mySearcher = (PropertySearcher)ContainerUtil.find(
+        Extensions.getRootArea().getExtensionPoint("com.intellij.referencesSearch").getExtensions(),
+        new FilteringIterator.InstanceOf<>(PropertySearcher.class));
       mySearchHelper = PsiSearchHelper.getInstance(module.getProject());
     }
 

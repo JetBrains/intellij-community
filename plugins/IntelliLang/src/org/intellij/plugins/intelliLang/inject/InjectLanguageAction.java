@@ -49,8 +49,8 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
-  @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject language or reference";
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<? super PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
@@ -93,13 +92,13 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   @Override
   @NotNull
   public String getText() {
-    return INJECT_LANGUAGE_FAMILY;
+    return IntelliLangBundle.message("intelliLang.inject.language.action.text");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return INJECT_LANGUAGE_FAMILY;
+    return getText();
   }
 
   @Override
@@ -170,12 +169,18 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
       }
       if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
         Processor<? super PsiLanguageInjectionHost> fixer = host.getUserData(FIX_KEY);
-        String text = StringUtil.escapeXmlEntities(language.getDisplayName()) + " was temporarily injected.";
+        String text = IntelliLangBundle.message("intelliLang.temporary.injected", StringUtil.escapeXmlEntities(language.getDisplayName()));
         if (fixer != null) {
           SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
             SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
-          String fixText = text + "<br>Do you want to insert annotation? " + KeymapUtil
-            .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+          String fixText =
+            text +
+            "<br>" +
+            ((fixer instanceof MyFixAction)
+             ? ((MyFixAction)fixer).getText()
+             : IntelliLangBundle.message("intelliLang.suggest.insert.annotation")) +
+            " " +
+            KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
           fixPresenter.showFix(editor, host.getTextRange(), pointer, fixText, host1 -> {
             List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host1);
             if (files != null) {
@@ -264,11 +269,42 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return false;
   }
 
+
   public interface FixPresenter {
     void showFix(@NotNull Editor editor,
                  @NotNull TextRange range,
                  @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer,
                  @NotNull String text,
                  @NotNull Processor<PsiLanguageInjectionHost> data);
+  }
+
+
+  public static void addFixer(@NotNull PsiLanguageInjectionHost host,
+                              Processor<? super PsiLanguageInjectionHost> annotationFixer,
+                              String text) {
+    host.putUserData(FIX_KEY, withFixName(annotationFixer, text));
+  }
+
+  public static Processor<? super PsiLanguageInjectionHost> withFixName(Processor<? super PsiLanguageInjectionHost> fix, String text) {
+    return new MyFixAction(text, fix);
+  }
+
+  private static class MyFixAction implements Processor<PsiLanguageInjectionHost> {
+    private final String myText;
+    private final Processor<? super PsiLanguageInjectionHost> myFix;
+
+    private MyFixAction(String text, Processor<? super PsiLanguageInjectionHost> fix) {
+      myText = text;
+      myFix = fix;
+    }
+
+    public String getText() {
+      return myText;
+    }
+
+    @Override
+    public boolean process(PsiLanguageInjectionHost host) {
+      return myFix.process(host);
+    }
   }
 }

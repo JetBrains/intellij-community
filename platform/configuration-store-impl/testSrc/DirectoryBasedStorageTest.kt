@@ -2,8 +2,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.async.inWriteAction
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.impl.inWriteAction
 import com.intellij.openapi.components.MainConfigurationStateSplitter
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ProjectRule

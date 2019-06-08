@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -38,7 +38,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
       public void actionPerformed(ActionEvent e) {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.class);
         if (myIsLocal) {
-          setTransport(DebuggerSettings.getInstance().DEBUGGER_TRANSPORT);
+          setTransport(DebuggerSettings.getInstance().getTransport());
         }
         suggestAvailablePortIfNotSpecified();
         updateUI();
@@ -117,7 +117,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private int getTransport() {
     if (myIsLocal) {
-      return DebuggerSettings.getInstance().DEBUGGER_TRANSPORT;
+      return DebuggerSettings.getInstance().getTransport();
     }
     else {
       return mySocketTransport.isSelected() ? DebuggerSettings.SOCKET_TRANSPORT : DebuggerSettings.SHMEM_TRANSPORT;

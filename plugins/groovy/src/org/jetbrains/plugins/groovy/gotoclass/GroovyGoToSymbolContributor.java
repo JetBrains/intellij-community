@@ -15,13 +15,16 @@
  */
 package org.jetbrains.plugins.groovy.gotoclass;
 
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -29,36 +32,28 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotationMethodNameI
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * @author ilyas
  */
-public class GroovyGoToSymbolContributor implements ChooseByNameContributor {
+public class GroovyGoToSymbolContributor implements ChooseByNameContributorEx {
   @Override
-  @NotNull
-  public String[] getNames(Project project, boolean includeNonProjectItems) {
-    Set<String> symbols = new HashSet<>();
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, project));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, project));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, project));
-    return ArrayUtil.toStringArray(symbols);
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    StubIndex index = StubIndex.getInstance();
+    if (!index.processAllKeys(GrFieldNameIndex.KEY, processor, scope, filter)) return;
+    if (!index.processAllKeys(GrMethodNameIndex.KEY, processor, scope, filter)) return;
+    if (!index.processAllKeys(GrAnnotationMethodNameIndex.KEY, processor, scope, filter)) return;
   }
 
   @Override
-  @NotNull
-  public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
-    GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-
-    List<NavigationItem> symbols = new ArrayList<>();
-    symbols.addAll(StubIndex.getElements(GrFieldNameIndex.KEY, name, project, scope, GrField.class));
-    symbols.addAll(StubIndex.getElements(GrMethodNameIndex.KEY, name, project, scope, GrMethod.class));
-    symbols.addAll(StubIndex.getElements(GrAnnotationMethodNameIndex.KEY, name, project, scope, GrAnnotationMethod.class));
-
-    return symbols.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    StubIndex index = StubIndex.getInstance();
+    Project project = parameters.getProject();
+    GlobalSearchScope scope = parameters.getSearchScope();
+    IdFilter filter = parameters.getIdFilter();
+    if (!index.processElements(GrFieldNameIndex.KEY, name, project, scope, filter, GrField.class, processor)) return;
+    if (!index.processElements(GrMethodNameIndex.KEY, name, project, scope, filter, GrMethod.class, processor)) return;
+    if (!index.processElements(GrAnnotationMethodNameIndex.KEY, name, project, scope, filter, GrAnnotationMethod.class, processor)) return;
   }
-
 }

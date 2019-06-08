@@ -5,28 +5,30 @@
   <vendor url="http://editorconfig.org">Kirill Glazyrin and Kevin Bell, JetBrains</vendor>
 
   <description><![CDATA[
-      A JetBrains IDE plugin supporting the EditorConfig standard and EditorConfig language
+      Supports storing code formatting settings inside EditorConfig files, as well as editing EditorConfig files.
       ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
 
   <actions>
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
+    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction"
+            text="EditorConfig File" description="Create new EditorConfig file">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Standard support -->
-    <applicationService
-        serviceInterface="org.editorconfig.plugincomponents.EditorConfigNotifier"
-        serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
+    <applicationService serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
-    <applicationService
-        serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent"
-        serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
+    <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
+    <applicationService serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
     <postStartupActivity implementation="org.editorconfig.plugincomponents.ConfigProjectComponent"/>
+    <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
 
     <!-- Language support -->
     <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>
@@ -140,7 +142,7 @@
         key="inspection.space.in.header.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
-        level="WARNING"
+        level="WEAK WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigSpaceInHeaderInspection"/>
     <localInspection
         language="EditorConfig"
@@ -158,7 +160,7 @@
         key="inspection.header.many.wildcards.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
-        level="WARNING"
+        level="WEAK WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigNumerousWildcardsInspection"/>
     <localInspection
         language="EditorConfig"
@@ -176,6 +178,7 @@
         key="inspection.header.partially.overridden.name"
         groupKey="editorconfig.inspection.group"
         enabledByDefault="true"
+        level="WEAK WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPartialOverrideInspection"/>
 
     <!-- Pattern inspections -->
@@ -360,6 +363,11 @@
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigFileHierarchyService"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigFileHierarchyServiceImpl"/>
+
+    <schemeExporter
+        name="EditorConfig File"
+        schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+        implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
   </extensions>
 
 

@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -33,8 +34,11 @@ public class AntRunner extends GenericProgramRunner {
   @Override
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    state.execute(environment.getExecutor(), this);
-    return null;
+    ExecutionResult executionResult = state.execute(environment.getExecutor(), this);
+    if (executionResult == null) {
+      return null;
+    }
+    return new RunContentDescriptor(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), executionResult.getExecutionConsole().getComponent(), environment.getRunProfile().getName());
   }
 
   @NotNull

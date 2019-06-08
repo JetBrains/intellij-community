@@ -75,7 +75,7 @@ public final class PsiQuery<T extends PsiElement> {
   }
 
   @NotNull
-  public static <T extends PsiElement> PsiQuery<T> createFromQueries(@NotNull final List<PsiQuery<? extends T>> queriesWithElements) {
+  public static <T extends PsiElement> PsiQuery<T> createFromQueries(@NotNull final List<? extends PsiQuery<? extends T>> queriesWithElements) {
     final Set<T> result = new LinkedHashSet<>();
     queriesWithElements.forEach(o -> result.addAll(o.getElements()));
     return new PsiQuery<>(new ArrayList<>(result));
@@ -92,18 +92,18 @@ public final class PsiQuery<T extends PsiElement> {
   }
 
   @NotNull
-  public PsiQuery<T> filter(@NotNull final Predicate<T> filter) {
+  public PsiQuery<T> filter(@NotNull final Predicate<? super T> filter) {
     return new PsiQuery<>(asStream().filter(filter).collect(Collectors.toList()));
   }
 
   @NotNull
-  public <R extends PsiElement> PsiQuery<R> map(@NotNull final Function<T, R> map) {
+  public <R extends PsiElement> PsiQuery<R> map(@NotNull final Function<? super T, ? extends R> map) {
     return new PsiQuery<>(asStream().map(map).collect(Collectors.toList()));
   }
 
   @NotNull
   public <R extends PsiElement, F_R extends T> PsiQuery<R> map(@NotNull final PsiFilter<F_R> preFilter,
-                                                               @NotNull final Function<F_R, R> map) {
+                                                               @NotNull final Function<? super F_R, ? extends R> map) {
     return filter(preFilter).map(map);
   }
 

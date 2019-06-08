@@ -62,7 +62,7 @@ public interface InspectionProfile extends Comparable {
    * @param toolConsumer the callback that receives the tool.
    */
   <T extends InspectionProfileEntry>
-  void modifyToolSettings(@NotNull Key<T> shortNameKey, @NotNull PsiElement psiElement, @NotNull Consumer<T> toolConsumer);
+  void modifyToolSettings(@NotNull Key<T> shortNameKey, @NotNull PsiElement psiElement, @NotNull Consumer<? super T> toolConsumer);
 
   /**
    * @param element context element

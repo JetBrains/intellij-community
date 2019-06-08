@@ -39,7 +39,7 @@ public class InlineSameParameterValueTest extends LightQuickFixParameterizedTest
   }
 
   @Override
-  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
+  protected void doAction(@NotNull final ActionHint actionHint, @NotNull final String testFullPath, @NotNull final String testName) {
     final LocalQuickFix fix = (LocalQuickFix)new SameParameterValueInspection().getQuickFix(actionHint.getExpectedText());
     assert fix != null;
     final int offset = getEditor().getCaretModel().getOffset();

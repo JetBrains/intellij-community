@@ -277,8 +277,10 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         editor.getScrollingModel().enableAnimation();
       }
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) scrollingRunnable.run();
-    else UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+    AsyncEditorLoader.performWhenLoaded(editor, () -> {
+      if (ApplicationManager.getApplication().isUnitTestMode()) scrollingRunnable.run();
+      else UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+    });
   }
 
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {

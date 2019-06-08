@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class CompletionPreloader extends PreloadingActivity {
+final class CompletionPreloader extends PreloadingActivity {
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
     for (CompletionContributorEP extension : CompletionContributor.EP.getExtensionList()) {

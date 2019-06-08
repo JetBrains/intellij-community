@@ -30,11 +30,11 @@ class StackFrameList extends XDebuggerFramesList {
     myDebugProcess = debugProcess;
   }
 
-  void setFrameItems(@NotNull List<StackFrameItem> items) {
+  void setFrameItems(@NotNull List<? extends StackFrameItem> items) {
     setFrameItems(items, null);
   }
 
-  void setFrameItems(@NotNull List<StackFrameItem> items, Runnable onDone) {
+  void setFrameItems(@NotNull List<? extends StackFrameItem> items, Runnable onDone) {
     clear();
     if (!items.isEmpty()) {
       myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {

@@ -884,4 +884,43 @@ class TestType {
 }
 '''
   }
+
+  void 'test unknown argument plus'() {
+    testHighlighting '''
+class A1{}
+
+class E {
+    def m(){
+
+    }
+    def plus(A1 a1) {
+
+    }
+}
+
+new E() + a
+'''
+  }
+
+  void 'test unknown argument plus 2'() {
+    testHighlighting '''
+class A1{}
+class A2{}
+
+class E {
+    def m(){
+
+    }
+    def plus(A1 a1) {
+
+    }
+
+    def plus(A2 a2) {
+
+    }
+}
+
+new E() <weak_warning descr="Cannot infer argument types">+</weak_warning> a
+'''
+  }
 }

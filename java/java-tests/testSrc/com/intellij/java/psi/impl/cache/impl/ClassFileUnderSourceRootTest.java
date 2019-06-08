@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -30,7 +30,7 @@ import java.io.File;
 /**
  * @author max
  */
-public class ClassFileUnderSourceRootTest extends IdeaTestCase {
+public class ClassFileUnderSourceRootTest extends JavaProjectTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

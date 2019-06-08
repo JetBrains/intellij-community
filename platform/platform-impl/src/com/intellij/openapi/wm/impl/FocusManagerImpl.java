@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -20,12 +6,10 @@ import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -34,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -53,10 +36,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class FocusManagerImpl extends IdeFocusManager implements Disposable {
+public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
-
-  private final Application myApp;
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
@@ -78,15 +59,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private IdeFrame myLastFocusedFrame;
 
   @SuppressWarnings("UnusedParameters")  // the dependencies are needed to ensure correct loading order
-  public FocusManagerImpl(ServiceManagerImpl serviceManager, WindowManager wm, UiActivityMonitor monitor) {
-    myApp = ApplicationManager.getApplication();
+  public FocusManagerImpl() {
+    UiActivityMonitor.getInstance();
+
     myQueue = IdeEventQueue.getInstance();
 
     myFocusedComponentAlarm = new EdtAlarm();
     myForcedFocusRequestsAlarm = new EdtAlarm();
 
     final AppListener myAppListener = new AppListener();
-    myApp.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof FocusEvent) {
@@ -265,7 +247,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       if (permOwner != null) {
         result = permOwner;
       }
-      
+
       if (UIUtil.isMeaninglessFocusOwner(result)) {
         result = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       }
@@ -352,10 +334,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   }
 
-
-  static class EdtAlarm {
+  final static class EdtAlarm {
     private final Set<EdtRunnable> myRequests = new HashSet<>();
-    
+
     public void cancelAllRequests() {
       for (EdtRunnable each : myRequests) {
         each.expire();
@@ -441,8 +422,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public boolean isFocusTransferEnabled() {
-    if (Registry.is("focus.fix.lost.cursor")) return true;
-    return myApp.isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
+    if (Registry.is("focus.fix.lost.cursor")) {
+      return true;
+    }
+    return ApplicationManager.getApplication().isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
   }
 
   private static void assertDispatchThread() {

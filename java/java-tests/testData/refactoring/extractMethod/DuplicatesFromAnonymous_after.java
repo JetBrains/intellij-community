@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 class Main {
@@ -14,6 +16,7 @@ class Main {
     newMethod();
   }
 
+    @NotNull
     private Object[] newMethod() {
         return myScheduledUpdates.keySet().toArray(new Object[myScheduledUpdates.keySet().size()]);
     }

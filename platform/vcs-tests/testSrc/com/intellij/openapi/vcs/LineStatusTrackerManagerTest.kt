@@ -165,7 +165,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     ranges[1].assertChangeList("Test")
   }
 
-  @Bombed(month = Calendar.MAY, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit line from non-active list`() {
     createChangelist("Test")
 
@@ -183,7 +183,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
   }
 
-  @Bombed(month = Calendar.MAY, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line and line from non-active list`() {
     createChangelist("Test")
 

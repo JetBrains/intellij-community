@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.codeInspection.ex.Tools;
@@ -12,9 +12,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.commit.BaseCommitMessageInspection;
-import com.intellij.vcs.commit.CommitMessageInspectionProfile;
-import com.intellij.vcs.commit.SubjectLimitInspection;
+import com.intellij.vcs.commit.message.BaseCommitMessageInspection;
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -86,7 +87,7 @@ public class CommitPresentationUtil {
 
   @NotNull
   private static Set<String> findHashes(@NotNull String text) {
-    Set<String> result = ContainerUtil.newHashSet();
+    Set<String> result = new HashSet<>();
     Matcher matcher = HASH_PATTERN.matcher(text);
     while (matcher.find()) {
       result.add(matcher.group());
@@ -115,7 +116,7 @@ public class CommitPresentationUtil {
   @NotNull
   private static Set<String> findHashes(@NotNull Project project,
                                         @NotNull String message) {
-    Set<String> unresolvedHashes = ContainerUtil.newHashSet();
+    Set<String> unresolvedHashes = new HashSet<>();
     formatTextWithLinks(project, message, s -> {
       unresolvedHashes.addAll(findHashes(s));
       return s;

@@ -18,10 +18,14 @@ package com.intellij.util.ui.tree;
 import com.intellij.ui.TreeExpandCollapse;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Assertion;
+import com.intellij.util.ExceptionUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
+import java.awt.EventQueue;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
@@ -39,6 +43,10 @@ public class TreeUtilTest extends TestCase {
   }
 
   public void testRemoveSelected() {
+    waitForTestOnEDT(TreeUtilTest::implRemoveSelected);
+  }
+
+  private static void implRemoveSelected() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultTreeModel model = new DefaultTreeModel(root);
     DefaultMutableTreeNode child1 = new DefaultMutableTreeNode("1");
@@ -66,6 +74,10 @@ public class TreeUtilTest extends TestCase {
   }
 
   public void testMultiLevelRemove() {
+    waitForTestOnEDT(TreeUtilTest::implMultiLevelRemove);
+  }
+
+  private static void implMultiLevelRemove() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultTreeModel model = new DefaultTreeModel(root) {
         @Override
@@ -86,6 +98,10 @@ public class TreeUtilTest extends TestCase {
   }
 
   public void testRemoveLast() {
+    waitForTestOnEDT(TreeUtilTest::implRemoveLast);
+  }
+
+  private static void implRemoveLast() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultTreeModel model = new DefaultTreeModel(root);
     model.insertNodeInto(new DefaultMutableTreeNode("1"), root, 0);
@@ -167,5 +183,22 @@ public class TreeUtilTest extends TestCase {
     CHECK.compareAll(new String[]{"0", "00", "000", "001","01"}, order);
   }
 
-
+  public static void waitForTestOnEDT(@NotNull Runnable test) {
+    if (EventQueue.isDispatchThread()) {
+      test.run();
+    }
+    else {
+      try {
+        EventQueue.invokeAndWait(test);
+      }
+      catch (InterruptedException exception) {
+        throw new AssertionError(exception);
+      }
+      catch (InvocationTargetException exception) {
+        Throwable target = exception.getTargetException();
+        ExceptionUtil.rethrowUnchecked(target);
+        throw new AssertionError(target != null ? target : exception);
+      }
+    }
+  }
 }

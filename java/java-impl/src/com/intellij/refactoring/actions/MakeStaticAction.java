@@ -23,7 +23,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class MakeStaticAction extends BaseRefactoringAction {
+public class MakeStaticAction extends BaseJavaRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {
     return false;

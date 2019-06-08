@@ -16,14 +16,10 @@
 
 package com.intellij.formatting;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.emptyList();
@@ -137,7 +133,7 @@ public class AlignmentImpl extends Alignment {
   }
   
   public Set<LeafBlockWrapper> getOffsetResponsibleBlocks() {
-    return ContainerUtil.newHashSet(myOffsetRespBlocks);
+    return new HashSet<>(myOffsetRespBlocks);
   }
 
   @NotNull

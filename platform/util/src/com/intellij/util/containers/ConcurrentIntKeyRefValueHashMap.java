@@ -42,7 +42,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
 
   private void processQueue() {
     while (true) {
-      @SuppressWarnings("unchecked")
+      //noinspection unchecked
       IntReference<V> ref = (IntReference)myQueue.poll();
       if (ref == null) {
         return;

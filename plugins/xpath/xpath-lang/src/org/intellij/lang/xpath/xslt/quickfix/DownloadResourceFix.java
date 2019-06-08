@@ -86,7 +86,7 @@ public class DownloadResourceFix implements LocalQuickFix {
       super(project, progress);
     }
 
-    private static void processReferences(XmlTag[] subTags, Set<String> list) {
+    private static void processReferences(XmlTag[] subTags, Set<? super String> list) {
       for (XmlTag xmlTag : subTags) {
         final String href = xmlTag.getAttributeValue("href");
         // TODO: Handle relative dependencies!

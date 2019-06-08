@@ -21,7 +21,7 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
                                                                        myFixture.getFile());
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
-    String epDefinition = "[" + myModule.getName() + "] foo<br/>" +
+    String epDefinition = "[" + getModule().getName() + "] foo<br/>" +
                           "<b>bar</b> (extensionPointDocumentation.xml)<br/>" +
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
 
@@ -50,7 +50,7 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
                                                                        myFixture.getFile());
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
-    String epDefinition = "[" + myModule.getName() + "]<br/>" +
+    String epDefinition = "[" + getModule().getName() + "]<br/>" +
                           "<b>com.my.bar</b> (extensionPointDocumentationQualifiedName.xml)<br/>" +
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
 

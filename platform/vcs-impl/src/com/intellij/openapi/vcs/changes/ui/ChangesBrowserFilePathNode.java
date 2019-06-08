@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +100,6 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   @Override
   public int compareUserObjects(final FilePath o2) {
-    return getUserObject().getPath().compareToIgnoreCase(o2.getPath());
+    return compareFilePaths(getUserObject(), o2);
   }
 }

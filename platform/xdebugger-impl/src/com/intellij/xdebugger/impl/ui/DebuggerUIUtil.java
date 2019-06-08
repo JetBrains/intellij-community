@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -114,7 +114,7 @@ public class DebuggerUIUtil {
       popup.addListener(new JBPopupAdapter() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
-          Window window = UIUtil.getWindow(popup.getContent());
+          Window window = popup.isDisposed()  ? null : UIUtil.getWindow(popup.getContent());
           if (window != null) {
             Point expected = point.getScreenPoint();
             Rectangle screen = ScreenUtil.getScreenRectangle(expected);
@@ -379,12 +379,14 @@ public class DebuggerUIUtil {
 
   @Nullable
   public static String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
+    String res = null;
     if (valueNode.getValueContainer() instanceof XValueTextProvider) {
-      return ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
+      res = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
     }
-    else {
-      return valueNode.getRawValue();
+    if (res == null) {
+      res = valueNode.getRawValue();
     }
+    return res;
   }
 
   /**
@@ -413,17 +415,21 @@ public class DebuggerUIUtil {
     action.registerCustomShortcutSet(action.getShortcutSet(), component, parentDisposable);
   }
 
-  public static void registerExtraHandleShortcuts(final ListPopupImpl popup, String... actionNames) {
+  public static void registerExtraHandleShortcuts(ListPopupImpl popup, Ref<Boolean> showAd, String... actionNames) {
     for (String name : actionNames) {
       KeyStroke stroke = KeymapUtil.getKeyStroke(ActionManager.getInstance().getAction(name).getShortcutSet());
       if (stroke != null) {
         popup.registerAction("handleSelection " + stroke, stroke, new AbstractAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            showAd.set(false);
             popup.handleSelect(true);
           }
         });
       }
+    }
+    if (showAd.get()) {
+      popup.setAdText(getSelectionShortcutsAdText(actionNames));
     }
   }
 

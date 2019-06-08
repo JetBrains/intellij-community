@@ -17,10 +17,11 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface CustomScopesFilter {
   ExtensionPointName<CustomScopesFilter> EP_NAME = ExtensionPointName.create("com.intellij.customScopesFilter");
 
-  boolean excludeScope(@Nullable NamedScope scope);
+  boolean excludeScope(@NotNull NamedScope scope);
 }

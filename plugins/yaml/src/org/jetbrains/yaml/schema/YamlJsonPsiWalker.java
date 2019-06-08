@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -26,9 +27,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class YamlJsonPsiWalker implements JsonLikePsiWalker {
@@ -346,18 +345,16 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
                                        YAMLMapping.class, YAMLSequence.class);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public PsiElement getRoot(@NotNull PsiFile file) {
-    if (!(file instanceof YAMLFile)) return null;
-    List<YAMLDocument> documents = ((YAMLFile)file).getDocuments();
-    if (documents.size() != 1) {
-      return null;
+  public Collection<PsiElement> getRoots(@NotNull PsiFile file) {
+    if (!(file instanceof YAMLFile)) return ContainerUtil.emptyList();
+    Collection<PsiElement> roots = new HashSet<>();
+    for (YAMLDocument document : ((YAMLFile)file).getDocuments()) {
+      YAMLValue topLevelValue = document.getTopLevelValue();
+      roots.add(topLevelValue == null ? document : topLevelValue);
     }
-
-    YAMLDocument document = documents.get(0);
-    YAMLValue topLevelValue = document.getTopLevelValue();
-    return topLevelValue == null ? document : topLevelValue;
+    return roots;
   }
 
   @Nullable

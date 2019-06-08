@@ -53,12 +53,16 @@ class BuildOptions {
   static final String MAC_SIGN_STEP = "mac_sign"
   /** Build Linux artifacts. */
   static final String LINUX_ARTIFACTS_STEP = "linux_artifacts"
+  /** Build Linux tar.gz artifact without bundled JRE. */
+  static final String LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP = "linux_tar_gz_without_jre"
   /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced. */
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Build Frankenstein artifacts. */
   static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */
   static final String TOOLBOX_LITE_GEN_STEP = "toolbox_lite_gen"
+  /** Generate files containing lists of used third-party libraries */
+  static final String THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
 
   /**
    * Android Studio: If 'true', the UI test framework plugin and UI test code will be bundled.

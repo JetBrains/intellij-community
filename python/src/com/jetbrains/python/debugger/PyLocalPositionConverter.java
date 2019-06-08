@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -168,10 +169,10 @@ public class PyLocalPositionConverter implements PyPositionConverter {
       if (ind != -1) break;
     }
     if (ind != -1) {
-      return file.substring(0, ind + 4).toLowerCase() + file.substring(ind + 4);
+      return StringUtil.toLowerCase(file.substring(0, ind + 4)) + file.substring(ind + 4);
     }
     else {
-      return file.toLowerCase();
+      return StringUtil.toLowerCase(file);
     }
   }
   @Nullable

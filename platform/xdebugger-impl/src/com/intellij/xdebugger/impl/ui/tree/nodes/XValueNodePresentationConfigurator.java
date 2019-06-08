@@ -75,7 +75,7 @@ public final class XValueNodePresentationConfigurator {
   public static void setPresentation(@Nullable Icon icon,
                                      @NonNls @Nullable String type,
                                      @NonNls @NotNull String value,
-                                     @Nullable NotNullFunction<String, String> valuePresenter,
+                                     @Nullable NotNullFunction<? super String, String> valuePresenter,
                                      boolean hasChildren, ConfigurableXValueNode node) {
     doSetPresentation(icon,
                       valuePresenter == null ? new XRegularValuePresentation(value, type) : new XValuePresentationAdapter(value, type, valuePresenter),
@@ -108,9 +108,9 @@ public final class XValueNodePresentationConfigurator {
   private static final class XValuePresentationAdapter extends XValuePresentation {
     private final String myValue;
     private final String myType;
-    private final NotNullFunction<String, String> valuePresenter;
+    private final NotNullFunction<? super String, String> valuePresenter;
 
-    XValuePresentationAdapter(String value, String type, NotNullFunction<String, String> valuePresenter) {
+    XValuePresentationAdapter(String value, String type, NotNullFunction<? super String, String> valuePresenter) {
       myValue = value;
       myType = type;
       this.valuePresenter = valuePresenter;

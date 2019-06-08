@@ -59,9 +59,9 @@ public class GitLabelComparatorTest extends GitRefManagerTest {
           expect("origin/master", "origin/aaa"));
   }
 
-  public void test_remote_tracking_branch_is_to_the_left_of_other_remote_branches() {
+  public void test_remote_tracking_branch_is_not_special() {
     check(given("feature", "origin/aaa", "origin/feature"),
-          expect("feature", "origin/feature", "origin/aaa"));
+          expect("feature", "origin/aaa", "origin/feature"));
   }
 
   public void test_complex_1() {
@@ -71,7 +71,7 @@ public class GitLabelComparatorTest extends GitRefManagerTest {
 
   public void test_complex_2() {
     check(given("origin/master", "origin/great_feature", "refs/tags/v1", "release", "HEAD", "master"),
-          expect("HEAD", "master", "release", "origin/master", "origin/great_feature", "refs/tags/v1"));
+          expect("HEAD", "master", "origin/master", "release", "origin/great_feature", "refs/tags/v1"));
   }
 
   // may happen e.g. in multi-repo case

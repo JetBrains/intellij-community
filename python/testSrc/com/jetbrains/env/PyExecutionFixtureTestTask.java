@@ -239,6 +239,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
       super(new PlatformPythonModuleType(), fixtureBuilder);
     }
 
+    @NotNull
     @Override
     protected ModuleFixture instantiateFixture() {
       return new ModuleFixtureImpl(this);

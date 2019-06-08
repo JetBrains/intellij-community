@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
@@ -58,8 +59,11 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   }
 
   public void testSettingsCloneNotReferencingOriginal() throws IllegalAccessException {
-    JavaCodeStyleSettings original = JavaCodeStyleSettings.getInstance(getProject());
-    JavaCodeStyleSettings copy = (JavaCodeStyleSettings)original.clone();
+    CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
+    JavaCodeStyleSettings original = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    CodeStyleSettings clonedRoot = originalRoot.clone();
+    JavaCodeStyleSettings copy = clonedRoot.getCustomSettings(JavaCodeStyleSettings.class);
+    assertSame(clonedRoot, copy.getContainer());
     for (Field field : copy.getClass().getDeclaredFields()) {
       if (!isPrimitiveOrString(field.getType()) && (field.getModifiers() & Modifier.PUBLIC) != 0) {
         assertNotSame("Fields '" + field.getName() + "' reference the same value", field.get(original), field.get(copy));
@@ -80,6 +84,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleScheme testScheme = createTestScheme();
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11,22));
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     commonJavaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     commonJavaSettings.WRAP_ON_TYPING = CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
@@ -92,17 +97,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleSchemeJsonExporter exporter = new CodeStyleSchemeJsonExporter();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     exporter.exportScheme(testScheme, outputStream, Collections.singletonList("java"));
-    compareWithExpected(outputStream.toString(), j2eeProviderExists() ? "j2ee.json" : "json");
-  }
-
-  private static boolean j2eeProviderExists() {
-    List<CodeStyleSettingsProvider> providers = CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList();
-    for (CodeStyleSettingsProvider provider : providers) {
-      if (provider.getClass().getName().equals("com.intellij.javaee.JavaeeCodeStyleSettingsProvider")) {
-        return true;
-      }
-    }
-    return false;
+    compareWithExpected(outputStream.toString(), "json");
   }
 
   public void testSetProperties() {
@@ -111,11 +106,11 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE).getPropertyMapper(settings);
     setSimple(mapper, "align_group_field_declarations", "true");
     setSimple(mapper, "blank_lines_after_class_header", "1");
-    setSimple(mapper, "brace_style", "next_line");
+    setSimple(mapper, "block_brace_style", "next_line");
     setSimple(mapper, "indent_size", "2");
     setSimple(mapper, "doc_align_param_comments", "true");
     setList(mapper, "imports_layout",
-            Arrays.asList("com.jetbrains.*", "blank_line", "org.eclipse.bar", "static  **", "static org.eclipse.foo.**"));
+            Arrays.asList("com.jetbrains.*", "|", "org.eclipse.bar", "$**", "$org.eclipse.foo.**"));
     mapper.getAccessor("repeat_annotations").setFromString(" com.jetbrains.First,  com.jetbrains.Second");
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);

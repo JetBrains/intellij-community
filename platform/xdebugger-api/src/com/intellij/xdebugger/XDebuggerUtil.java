@@ -111,7 +111,7 @@ public abstract class XDebuggerUtil {
    * @param line 0-based line number
    * @param processor processor
    */
-  public abstract void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor);
+  public abstract void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<? super PsiElement> processor);
 
   /**
    * Disable value lookup in specified editor

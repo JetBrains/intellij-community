@@ -1,26 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.execution.wsl.WSLUtil.LOG;
 
 /**
  * Wraps {@link WSLDistribution} and fetches data from registry to find base path of distro on Windows
  */
 public class WSLDistributionWithRoot extends WSLDistribution {
-  private final static Logger LOG = Logger.getInstance(WSLDistributionWithRoot.class);
   private static final AtomicNotNullLazyValue<Map<String, String>> DISTRIBUTION_TO_ROOTFS =
     AtomicNotNullLazyValue.createValue(() -> {
-      final Map<String, String> result = ContainerUtil.newHashMap();
+      final Map<String, String> result = new HashMap<>();
 
       final String lxss = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Lxss";
       final List<String> distributions = WindowsRegistryUtil.readRegistryBranch(lxss);

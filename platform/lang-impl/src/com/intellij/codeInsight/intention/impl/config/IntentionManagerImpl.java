@@ -13,6 +13,7 @@ import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -53,13 +54,9 @@ public final class IntentionManagerImpl extends IntentionManager {
   public void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category) {
     addAction(action);
 
-    String descriptionDirectoryName;
-    if (action instanceof IntentionActionWrapper) {
-      descriptionDirectoryName = ((IntentionActionWrapper)action).getDescriptionDirectoryName();
-    }
-    else {
-      descriptionDirectoryName = IntentionActionWrapper.getDescriptionDirectoryName(action.getClass().getName());
-    }
+    String descriptionDirectoryName = action instanceof IntentionActionWrapper
+                                      ? ((IntentionActionWrapper)action).getDescriptionDirectoryName()
+                                      : IntentionActionWrapper.getDescriptionDirectoryName(action.getClass().getName());
     mySettings.registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
@@ -86,9 +83,9 @@ public final class IntentionManagerImpl extends IntentionManager {
   public IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull IntentionAction action) {
     checkForDuplicates();
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
-      final LocalInspectionToolWrapper localWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
+      LocalInspectionToolWrapper localWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
       if (localWrapper != null) {
-        return createFixAllIntention(localWrapper, action);
+        toolWrapper = localWrapper;
       }
     }
 
@@ -202,7 +199,9 @@ public final class IntentionManagerImpl extends IntentionManager {
        .collect(Collectors.groupingBy(action -> unwrap(action).getClass()))
        .values().stream()
        .filter(list -> list.size() > 1)
-       .map(dup -> dup.size() + " intention duplicates found for " + unwrap(dup.get(0)))
+       .map(dupList -> dupList.size() + " intention duplicates found for " + unwrap(dupList.get(0))
+                       + " (" + dupList.get(0).getClass()
+                       +"; plugin " + PluginManagerCore.getPluginOrPlatformByClassName(dupList.get(0).getClass().getName()) +")")
        .collect(Collectors.toList());
 
     if (!duplicates.isEmpty()) {
@@ -210,7 +209,8 @@ public final class IntentionManagerImpl extends IntentionManager {
     }
   }
 
-  private static IntentionAction unwrap(IntentionAction action) {
+  @NotNull
+  private static IntentionAction unwrap(@NotNull IntentionAction action) {
     return action instanceof IntentionActionDelegate ? unwrap(((IntentionActionDelegate)action).getDelegate()) : action;
   }
 

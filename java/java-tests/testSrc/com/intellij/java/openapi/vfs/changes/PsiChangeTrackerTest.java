@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFilter;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 
 import java.io.File;
 import java.util.HashMap;
@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiChangeTrackerTest extends IdeaTestCase {
+public class PsiChangeTrackerTest extends JavaProjectTestCase {
   private PsiFile myOriginalFile;
   private PsiFile myChangedFile;
 

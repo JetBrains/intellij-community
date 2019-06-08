@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -37,14 +37,13 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -360,7 +359,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
-    Optional<ChangesBrowserNode> node = treeModelData.nodesStream()
+    Optional<ChangesBrowserNode<?>> node = treeModelData.nodesStream()
       .filter(it -> it instanceof ChangesBrowserUnversionedFilesNode).findAny();
     if (!node.isPresent()) return false;
 
@@ -596,13 +595,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       myStateHolder.setChangelistId(changelistId);
     }
 
-    private void invalidateNodeSizes() {
-      TreeUI ui = getUI();
-      if (ui instanceof WideSelectionTreeUI) {
-        ((WideSelectionTreeUI)ui).invalidateNodeSizes();
-      }
-    }
-
     private class MyStateHolder extends PartiallyExcludedFilesStateHolder<Object> {
       MyStateHolder(@NotNull Project project, @NotNull String changelistId) {
         super(project, changelistId);
@@ -634,8 +626,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
         super.updateExclusionStates();
 
         MyChangesBrowserTreeList.this.notifyInclusionListener();
-        MyChangesBrowserTreeList.this.invalidateNodeSizes();
-        MyChangesBrowserTreeList.this.repaint();
+        TreeUtil.invalidateCacheAndRepaint(MyChangesBrowserTreeList.this.getUI());
       }
     }
   }

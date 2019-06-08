@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -55,6 +59,7 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiClassType castClassType = (PsiClassType)castType;
+
       final PsiExpression operand = expression.getOperand();
       if (operand == null) {
         return;
@@ -64,6 +69,11 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiClassType operandClassType = (PsiClassType)operandType;
+      if (!castClassType.isConvertibleFrom(operandClassType)) {
+        // don't warn on red code
+        return;
+      }
+
       final PsiClass castClass = castClassType.resolve();
       if (castClass == null || !castClass.isInterface()) {
         return;
@@ -73,6 +83,11 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
         return;
       }
       if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
+        return;
+      }
+      TypeConstraint constraint = CommonDataflow.getExpressionFact(operand, DfaFactType.TYPE_CONSTRAINT);
+      if (constraint != null &&
+          constraint.getInstanceofValues().stream().map(DfaPsiType::getPsiType).anyMatch(type -> castClassType.isAssignableFrom(type))) {
         return;
       }
       registerError(castTypeElement);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.notification.NotificationDisplayType;
@@ -22,7 +22,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.LegalNoticeDialog;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
     new NotificationGroup("Accepted language levels", NotificationDisplayType.STICKY_BALLOON, true);
 
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
-  public List<String> acceptedNames = ContainerUtil.newArrayList();
+  public List<String> acceptedNames = new ArrayList<>();
 
   @Override
   public void runActivity(@NotNull Project project) {
@@ -96,7 +96,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
     return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
-  private static void acceptAndRestore(Project project, Collection<Module> modules, LanguageLevel languageLevel) {
+  private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {
     if (!getSettings().acceptedNames.contains(languageLevel.name())) {
       getSettings().acceptedNames.add(languageLevel.name());
     }

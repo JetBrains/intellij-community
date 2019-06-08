@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.SwingActionLink;
@@ -109,7 +110,7 @@ public class RepositoryLibraryPropertiesEditor {
         mavenCoordinates.setText(repositoryLibraryDescription.getMavenCoordinates(model.getVersion()));
       }
     };
-    versionSelector.setRenderer(new VersionSelectorCellRenderer());
+    versionSelector.setRenderer(SimpleListCellRenderer.create("", VersionItem::getDisplayName));
     updateManageDependenciesLink();
     reloadVersionsAsync();
   }

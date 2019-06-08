@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.config;
 
 import com.intellij.openapi.components.*;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -165,7 +166,7 @@ public class CvsApplicationLevelConfiguration implements PersistentStateComponen
       return;
     }
     try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passFile)));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passFile), StandardCharsets.UTF_8));
       try {
         String line;
         while ((line = reader.readLine()) != null) {

@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.codeInspection.threading;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -37,13 +36,6 @@ public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
     METHOD_NAMES.add("stop");
     METHOD_NAMES.add("suspend");
     METHOD_NAMES.add("resume");
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Call to Thread.stop(), Thread.suspend(), or Thread.resume()";
   }
 
   @Override

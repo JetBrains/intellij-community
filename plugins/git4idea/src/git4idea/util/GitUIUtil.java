@@ -4,11 +4,10 @@ package git4idea.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
@@ -92,7 +91,8 @@ public class GitUIUtil {
    * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
    * Line separator is also replaced by &lt;br/&gt;
    */
-  public static @NotNull String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
+  @NotNull
+  public static String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
     if (errors == null) {
       return "";
     }
@@ -107,32 +107,6 @@ public class GitUIUtil {
 
   public static void notifyImportantError(Project project, String title, String description) {
     notifyMessage(project, title, description, true, null);
-  }
-
-  public static void notifyGitErrors(Project project, String title, String description, Collection<? extends VcsException> gitErrors) {
-    StringBuilder content = new StringBuilder();
-    if (!StringUtil.isEmptyOrSpaces(description)) {
-      content.append(description);
-    }
-    if (!gitErrors.isEmpty()) {
-      content.append("<br/>");
-    }
-    for (VcsException e : gitErrors) {
-      content.append(e.getLocalizedMessage()).append("<br/>");
-    }
-    notifyMessage(project, title, content.toString(), false, null);
-  }
-
-  /**
-   * @return a list cell renderer for virtual files (it renders presentable URL)
-   */
-  public static ListCellRendererWrapper<VirtualFile> getVirtualFileListCellRenderer() {
-    return new ListCellRendererWrapper<VirtualFile>() {
-      @Override
-      public void customize(final JList list, final VirtualFile file, final int index, final boolean selected, final boolean hasFocus) {
-        setText(file == null ? "(invalid)" : file.getPresentableUrl());
-      }
-    };
   }
 
   /**
@@ -162,7 +136,7 @@ public class GitUIUtil {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
-    gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
+    gitRootChooser.setRenderer(SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl));
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
@@ -229,17 +203,6 @@ public class GitUIUtil {
    */
   public static void showOperationError(final Project project, final String operation, final String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
-  }
-
-  /**
-   * Show errors on the tab
-   *
-   * @param project the context project
-   * @param title   the operation title
-   * @param errors  the errors to display
-   */
-  public static void showTabErrors(Project project, String title, List<VcsException> errors) {
-    AbstractVcsHelper.getInstance(project).showErrors(errors, title);
   }
 
   /**
@@ -368,5 +331,4 @@ public class GitUIUtil {
   private static String surround(String s, String tag) {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
-
 }

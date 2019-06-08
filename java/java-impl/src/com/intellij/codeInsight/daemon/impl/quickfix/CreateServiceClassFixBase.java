@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,11 +142,11 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     }
   }
 
-  public static class PsiDirectoryListCellRenderer extends ListCellRendererWrapper<PsiDirectory> {
+  public static class PsiDirectoryListCellRenderer extends SimpleListCellRenderer<PsiDirectory> {
     @Override
-    public void customize(JList list, PsiDirectory psiDir, int index, boolean selected, boolean hasFocus) {
-      if (psiDir != null) {
-        String text = ProjectUtil.calcRelativeToProjectPath(psiDir.getVirtualFile(), psiDir.getProject(), true, false, true);
+    public void customize(JList<? extends PsiDirectory> list, PsiDirectory value, int index, boolean selected, boolean hasFocus) {
+      if (value != null) {
+        String text = ProjectUtil.calcRelativeToProjectPath(value.getVirtualFile(), value.getProject(), true, false, true);
         setText(text);
       }
     }

@@ -150,7 +150,7 @@ public class SemServiceImpl extends SemService {
 
     ensureInitialized();
 
-    RecursionGuard.StackStamp stamp = RecursionManager.createGuard("semService").markStack();
+    RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
     LinkedHashSet<T> result = new LinkedHashSet<>();
     final Map<SemKey, List<SemElement>> map = new THashMap<>();

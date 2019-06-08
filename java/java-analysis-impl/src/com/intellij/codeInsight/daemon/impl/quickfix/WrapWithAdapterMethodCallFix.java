@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +172,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
   public WrapWithAdapterMethodCallFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     super(expression);
     myType = type;
-    myWrapper = StreamEx.of(WRAPPERS).findFirst(w -> w.isApplicable(expression, expression.getType(), type)).orElse(null);
+    myWrapper = ContainerUtil.find(WRAPPERS, w -> w.isApplicable(expression, expression.getType(), type));
   }
 
   @Nls

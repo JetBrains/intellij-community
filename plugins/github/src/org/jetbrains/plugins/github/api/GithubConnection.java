@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api;
 
 import com.google.gson.JsonElement;
@@ -6,7 +6,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.http.*;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.ContentType;
@@ -27,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.*;
@@ -298,7 +298,7 @@ public class GithubConnection {
 
   @NotNull
   private static JsonElement parseResponse(@NotNull InputStream githubResponse) throws IOException {
-    try (Reader reader = new InputStreamReader(githubResponse, CharsetToolkit.UTF8_CHARSET)) {
+    try (Reader reader = new InputStreamReader(githubResponse, StandardCharsets.UTF_8)) {
       return new JsonParser().parse(reader);
     }
     catch (JsonParseException jse) {

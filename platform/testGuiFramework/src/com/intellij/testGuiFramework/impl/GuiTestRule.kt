@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -35,6 +36,7 @@ import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import com.intellij.ui.Splash
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -67,7 +69,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
-class GuiTestRule : TestRule {
+class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
 
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
@@ -87,12 +89,19 @@ class GuiTestRule : TestRule {
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
     .aroundIfNotNull(createScreenRecordingRuleIfNeeded())
+    .let {
+      if (enableScreenshotsDuringTest)
+        it.around(ScreenshotsDuringTest(500))
+      else
+        it
+    }
 
   private val timeoutRule = Timeout(20, TimeUnit.MINUTES)
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
-    myTestShortName = "${description.testClass.simpleName}#${description.methodName}"
+    myTestShortName = "${description.testClass.simpleName}-${description.methodName}"
+    GuiTestNameHolder.initialize(myTestShortName)
     //do not apply timeout rule if it is already applied to a test class
     return if (description.testClass.fields.any { it.type == Timeout::class.java })
       myRuleChain.apply(base, description)
@@ -142,7 +151,7 @@ class GuiTestRule : TestRule {
             Assume.assumeTrue("IDE error list is empty", GuiTestUtilKt.fatalErrorsFromIde().isEmpty())
             assumeOnlyWelcomeFrameShowing()
           } catch (e: Exception) {
-            ScreenshotOnFailure.takeScreenshot("$myTestName.welcomeFrameCheckFail")
+            ScreenshotTaker.takeScreenshotAndHierarchy("welcomeFrameCheckFail")
             throw e
           }
           setUp()
@@ -183,6 +192,8 @@ class GuiTestRule : TestRule {
       errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: tearDown project")
       errors.addAll(thrownFromRunning(Runnable { this.tearDownProject() }))
+      LOG.info("tearDown: check opened modal dialogs appeared after attempt to close the project...")
+      errors.addAll(checkForModalDialogs())
       LOG.info("tearDown: waiting for welcome frame (return if necessary)...")
       errors.addAll(thrownFromRunning(Runnable { this.returnToTheFirstStepOfWelcomeFrame() }))
       LOG.info("tearDown: collecting fatal errors from IDE...")
@@ -190,7 +201,7 @@ class GuiTestRule : TestRule {
       LOG.info("tearDown: double checking return to the first step on a welcome frame")
       if (!isWelcomeFrameFirstStep() || anyIdeFrame(Timeouts.seconds01) != null) {
         LOG.warn("tearDown: IDE cannot return to welcome frame, need to restart IDE")
-        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromTearDown")
+        ScreenshotTaker.takeScreenshotAndHierarchy("thrownFromTearDown")
         GuiTestThread.client?.send(TransportMessage(MessageType.RESTART_IDE_AFTER_TEST,
                                                     "IDE cannot return to the Welcome frame")
         )
@@ -232,7 +243,7 @@ class GuiTestRule : TestRule {
         emptyList()
       }
       catch (e: Throwable) {
-        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromRunning")
+        ScreenshotTaker.takeScreenshotAndHierarchy("thrownFromRunning")
         listOf(e)
       }
 
@@ -251,7 +262,7 @@ class GuiTestRule : TestRule {
           }
           else {
             closedModalDialogSet.add(modalDialog)
-            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogFail")
+            ScreenshotTaker.takeScreenshotAndHierarchy("checkForModalDialogFail")
             if (isProcessIsRunningDialog(modalDialog))
               closeProcessIsRunningDialog(modalDialog)
             else
@@ -345,7 +356,7 @@ class GuiTestRule : TestRule {
       runOnEdt {
         TransactionGuard.submitTransaction(ApplicationManager.getApplication(), Runnable {
           for (project in openProjects) {
-            Assert.assertTrue("Failed to close project ${project.name}", ProjectUtil.closeAndDispose(project))
+            Assert.assertTrue("Failed to close project ${project.name}", ProjectManagerEx.getInstanceEx().closeAndDispose(project))
           }
         })
       }

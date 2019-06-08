@@ -79,7 +79,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");
     }
 
-    private static <T> Pair<List<T>, List<T>> partition(Iterable<T> iterable, Predicate<T> predicate) {
+    private static <T> Pair<List<T>, List<T>> partition(Iterable<? extends T> iterable, Predicate<? super T> predicate) {
       List<T> list1 = new SmartList<>();
       List<T> list2 = new SmartList<>();
       for (T value : iterable) {
@@ -143,16 +143,18 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       if (locals.size() == 1) {
         PsiLocalVariable variable = locals.get(0);
         PsiStatement declaration = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
-        if (declaration == null) return;
-        if (declaration.getParent() != tryStatement.getParent()) return;
-        List<PsiStatement> statements = collectStatementsBetween(declaration, tryStatement);
-        PsiJavaToken lBrace = tryBlock.getLBrace();
-        if (lBrace != null) {
-          for (int i = statements.size() - 1; i >= 0; i--) {
-            PsiStatement statement = statements.get(i);
-            tryBlock.addAfter(statement, lBrace);
-            if (statement.isValid()) {
-              statement.delete();
+        if (declaration != null)  {
+          if (declaration.getParent() == tryStatement.getParent()) {
+            List<PsiStatement> statements = collectStatementsBetween(declaration, tryStatement);
+            PsiJavaToken lBrace = tryBlock.getLBrace();
+            if (lBrace != null) {
+              for (int i = statements.size() - 1; i >= 0; i--) {
+                PsiStatement statement = statements.get(i);
+                tryBlock.addAfter(statement, lBrace);
+                if (statement.isValid()) {
+                  statement.delete();
+                }
+              }
             }
           }
         }
@@ -192,7 +194,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
 
-    private String joinToString(List<ResourceVariable> variables) {
+    private String joinToString(List<? extends ResourceVariable> variables) {
       return variables.stream().map(ResourceVariable::generateResourceDeclaration).collect(Collectors.joining("; "));
     }
 
@@ -313,6 +315,18 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       if (!initializersAreAtTheBeginning(initializerPositions)) return null;
 
       Collections.sort(resourceVariables, Comparator.comparing(o -> o.getInitializedElement(), PsiElementOrderComparator.getInstance()));
+      Optional<ResourceVariable> lastNonTryVar = StreamEx.of(ContainerUtil.reverse(resourceVariables))
+        .findFirst(r -> !PsiTreeUtil.isAncestor(tryStatement, r.myVariable, false));
+      if (lastNonTryVar.isPresent()) {
+        PsiVariable variable = lastNonTryVar.get().myVariable;
+        PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
+        List<PsiStatement> statements = collectStatementsBetween(statement, tryStatement);
+        boolean varUsedNotInTry = StreamEx.of(statements)
+          .flatMap(stmt -> StreamEx.ofTree((PsiElement)stmt, e -> StreamEx.of(e.getChildren())))
+          .select(PsiLocalVariable.class)
+          .anyMatch(variable1 -> isVariableUsedOutsideContext(variable1, tryStatement));
+        if (varUsedNotInTry) return null;
+      }
       return new Context(resourceVariables, new HashSet<>(statementsToDelete));
     }
 
@@ -360,7 +374,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return false;
   }
 
-  private static boolean resourceVariableUsedInCatches(PsiTryStatement tryStatement, Set<PsiVariable> collectedVariables) {
+  private static boolean resourceVariableUsedInCatches(PsiTryStatement tryStatement, Set<? extends PsiVariable> collectedVariables) {
     for (PsiCatchSection catchSection : tryStatement.getCatchSections()) {
       for (PsiVariable variable : collectedVariables) {
         if (VariableAccessUtils.variableIsUsed(variable, catchSection)) {

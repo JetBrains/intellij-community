@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,8 +21,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -49,7 +48,6 @@ import java.util.List;
  * @author nik
  */
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
-  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   @NonNls private static final String BR_NBSP = "<br>" + CommonXmlStrings.NBSP;
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
@@ -279,8 +277,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public S getState() {
-    Element propertiesElement =
-      myProperties == null ? null : JDOMUtil.internElement(XmlSerializer.serialize(myProperties.getState(), SERIALIZATION_FILTERS));
+    Object propertiesState = myProperties == null ? null : myProperties.getState();
+    Element element = propertiesState == null ? null : XmlSerializer.serialize(propertiesState);
+    Element propertiesElement = element == null ? null : JDOMUtil.internElement(element);
     myState.setCondition(BreakpointState.Condition.create(!myConditionEnabled, myCondition));
     myState.setLogExpression(BreakpointState.LogExpression.create(!myLogExpressionEnabled, myLogExpression));
     myState.setPropertiesElement(propertiesElement);

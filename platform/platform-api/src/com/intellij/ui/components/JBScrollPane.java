@@ -243,7 +243,7 @@ public class JBScrollPane extends JScrollPane {
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
 
-  public static boolean canBePreprocessed(MouseEvent e, JScrollBar bar) {
+  public static boolean canBePreprocessed(@NotNull MouseEvent e, @NotNull JScrollBar bar) {
     if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_PRESSED) {
       ScrollBarUI ui = bar.getUI();
       if (ui instanceof BasicScrollBarUI) {

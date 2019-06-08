@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.*;
@@ -32,7 +32,7 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
 
     final Project project = e.getProject();
 
-    final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
+    final List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
     if (selectedNodes == null || selectedNodes.size() != 1 || !(selectedNodes.get(0) instanceof RunConfigurationNode)) return;
 
     RunConfigurationNode runConfigurationNode = (RunConfigurationNode)selectedNodes.get(0);
@@ -40,7 +40,7 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
 
     if (settings == null || project == null) return;
 
-    ProjectSystemId projectSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
+    ProjectSystemId projectSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
     for (int i = executors.length; --i >= 0; ) {
       Executor executor = executors[i];
@@ -84,7 +84,6 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(myEnabled);
     }
   }

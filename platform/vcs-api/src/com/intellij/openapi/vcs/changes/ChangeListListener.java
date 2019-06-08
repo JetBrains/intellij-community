@@ -16,8 +16,6 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import java.util.Collection;
 import java.util.EventListener;
 
@@ -35,7 +33,6 @@ public interface ChangeListListener extends EventListener {
   default void changeListRenamed(ChangeList list, String oldName) {}
   default void changeListCommentChanged(ChangeList list, String oldComment) {}
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {}
-  @ApiStatus.Experimental
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
     defaultListChanged(oldDefaultList, newDefaultList);
   }

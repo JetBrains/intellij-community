@@ -33,11 +33,11 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 public class PostfixLiveTemplate extends CustomLiveTemplateBase {
@@ -168,7 +168,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     }
     PsiFile contextFile = callback.getFile();
     Language language = PsiUtilCore.getLanguageAtOffset(contextFile, offset);
-    String fileText = contextFile.getText();
+    CharSequence fileText = callback.getEditor().getDocument().getImmutableCharSequence();
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       if (StringUtil.isNotEmpty(computeTemplateKeyWithoutContextChecking(provider, fileText, offset + 1))) {
         return true;
@@ -208,7 +208,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file,
                                                                                  @NotNull Editor editor,
                                                                                  int offset) {
-    Collection<CustomLiveTemplateLookupElement> result = ContainerUtil.newHashSet();
+    Collection<CustomLiveTemplateLookupElement> result = new HashSet<>();
     CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       ProgressManager.checkCanceled();
@@ -335,7 +335,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @NotNull
   private static Set<String> getKeys(@NotNull PostfixTemplateProvider provider) {
-    Set<String> result = ContainerUtil.newHashSet();
+    Set<String> result = new HashSet<>();
     for (PostfixTemplate template : PostfixTemplatesUtils.getAvailableTemplates(provider)) {
       result.add(template.getKey());
     }

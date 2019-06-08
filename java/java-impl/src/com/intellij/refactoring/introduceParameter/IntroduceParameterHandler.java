@@ -198,8 +198,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private void chooseMethodToIntroduceParameter(final Editor editor,
-                                                final List<PsiMethod> validEnclosingMethods,
-                                                final PairConsumer<PsiMethod, PsiMethod> consumer) {
+                                                final List<? extends PsiMethod> validEnclosingMethods,
+                                                final PairConsumer<? super PsiMethod, ? super PsiMethod> consumer) {
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (validEnclosingMethods.size() == 1 || unitTestMode) {
       final PsiMethod methodToIntroduceParameterTo = validEnclosingMethods.get(0);
@@ -266,7 +266,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   private static void updateView(PsiMethod selectedMethod,
                                  Editor editor,
                                  TextAttributes attributes,
-                                 List<RangeHighlighter> highlighters,
+                                 List<? super RangeHighlighter> highlighters,
                                  JCheckBox superMethod) {
     final MarkupModel markupModel = editor.getMarkupModel();
     final PsiIdentifier nameIdentifier = selectedMethod.getNameIdentifier();
@@ -281,7 +281,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     superMethod.setEnabled(selectedMethod.findDeepestSuperMethod() != null);
   }
 
-  private static void dropHighlighters(List<RangeHighlighter> highlighters) {
+  private static void dropHighlighters(List<? extends RangeHighlighter> highlighters) {
     for (RangeHighlighter highlighter : highlighters) {
       highlighter.dispose();
     }
@@ -475,7 +475,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                             boolean delegate,
                             PsiType initializerType,
                             boolean mustBeFinal,
-                            List<UsageInfo> classMemberRefs, NameSuggestionsGenerator nameSuggestionGenerator) {
+                            List<? extends UsageInfo> classMemberRefs, NameSuggestionsGenerator nameSuggestionGenerator) {
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         final IntroduceParameterDialog dialog =
           new IntroduceParameterDialog(myProject, classMemberRefs, occurrences, myLocalVar, myExpr,
@@ -618,7 +618,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private void functionalInterfaceSelected(final PsiType selectedType,
-                                           final List<PsiMethod> enclosingMethods,
+                                           final List<? extends PsiMethod> enclosingMethods,
                                            final Project project,
                                            final Editor editor,
                                            final MyExtractMethodProcessor processor,

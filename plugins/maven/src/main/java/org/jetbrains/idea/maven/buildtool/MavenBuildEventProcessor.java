@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
-import com.intellij.build.events.impl.OutputBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputInstantReaderImpl;
@@ -34,7 +33,6 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
   @NotNull private final Project myProject;
   @NotNull private final BuildOutputInstantReaderImpl myInstantReader;
   @NotNull private final ExternalSystemTaskId myTaskId;
-  @NotNull private final String myTitle;
   @NotNull private final String myWorkingDir;
   @NotNull private final MavenLogOutputParser myParser;
   private final BuildDescriptor myDescriptor;
@@ -48,7 +46,6 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     myBuildProgressListener = buildProgressListener;
     myProject = project;
     myTaskId = taskId;
-    myTitle = descriptor.getTitle();
     myWorkingDir = workingDir;
     myDescriptor = descriptor;
 
@@ -56,8 +53,14 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
 
     myInstantReader = new BuildOutputInstantReaderImpl(
       myTaskId,
-      myBuildProgressListener,
+      wrapListener(project, myBuildProgressListener, myWorkingDir),
       Collections.singletonList(myParser));
+  }
+
+  private BuildProgressListener wrapListener(@NotNull Project project,
+                                             @NotNull BuildProgressListener listener,
+                                             @NotNull String workingDir) {
+    return new MavenProgressListener(project, listener, workingDir);
   }
 
   public void finish() {
@@ -83,14 +86,11 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
   }
 
   public void onTextAvailable(String text, boolean stdError) {
-    myBuildProgressListener.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
     myInstantReader.append(text);
   }
 
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key outputType) {
-    boolean stdError = outputType == ProcessOutputTypes.STDERR;
-    myBuildProgressListener.onEvent(new OutputBuildEventImpl(myTaskId, text, !stdError));
     myInstantReader.append(text);
   }
 }

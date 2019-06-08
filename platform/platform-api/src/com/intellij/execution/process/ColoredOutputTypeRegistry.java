@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -30,6 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -113,9 +102,30 @@ public class ColoredOutputTypeRegistry {
       return streamOutputType;
     }
     ProcessOutputType newKey = new ProcessOutputType(completeAttribute, streamOutputType);
-    AnsiConsoleViewContentType contentType = createAnsiConsoleViewContentType(attribute);
-    ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
+    ConsoleViewContentType.registerNewConsoleViewType(newKey, createAnsiConsoleViewContentType(attribute));
     attrsToKeyMap.put(completeAttribute, newKey);
+    return newKey;
+  }
+
+  /**
+   * Creates an {@link ProcessOutputType} from the {@link AnsiTerminalEmulator terminal emulator state} and stream type. Output type may be used
+   * later to print to the console
+   */
+  @NotNull
+  public ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType) {
+    Map<String, ProcessOutputType> attrsToKeyMap = ProcessOutputType.isStdout(streamType) ? myStdoutAttrsToKeyMap : myStderrAttrsToKeyMap;
+    String ansiSerializedState = terminal.getAnsiSerializedSGRState();
+    ProcessOutputType key = attrsToKeyMap.get(ansiSerializedState);
+    if (key != null) {
+      return key;
+    }
+
+    ProcessOutputType streamOutputType = streamType instanceof ProcessOutputType ?
+                                         (ProcessOutputType)streamType : (ProcessOutputType)ProcessOutputTypes.STDOUT;
+
+    ProcessOutputType newKey = new ProcessOutputType(ansiSerializedState, streamOutputType);
+    ConsoleViewContentType.registerNewConsoleViewType(newKey, new AnsiConsoleViewContentType(terminal));
+    attrsToKeyMap.put(ansiSerializedState, newKey);
     return newKey;
   }
 
@@ -165,7 +175,7 @@ public class ColoredOutputTypeRegistry {
   }
 
   @NotNull
-  private static AnsiConsoleViewContentType createAnsiConsoleViewContentType(@NotNull String attribute) {
+  private static ConsoleViewContentType createAnsiConsoleViewContentType(@NotNull String attribute) {
     int foregroundColor = -1;
     int backgroundColor = -1;
     boolean inverse = false;
@@ -224,11 +234,34 @@ public class ColoredOutputTypeRegistry {
   }
 
   private static class AnsiConsoleViewContentType extends ConsoleViewContentType {
-    private final int myBackgroundColor;
-    private final int myForegroundColor;
+    private final int myBackgroundColorIndex;
+    private final int myForegroundColorIndex;
+    @Nullable
+    private final Color myEnforcedBackgroundColor;
+    @Nullable
+    private final Color myEnforcedForegroundColor;
     private final boolean myInverse;
-    private final EffectType myEffectType;
+    @NotNull
+    private final List<EffectType> myEffectTypes;
     private final int myFontType;
+
+    private AnsiConsoleViewContentType(@NotNull String attribute,
+                                       int backgroundColorIndex,
+                                       int foregroundColorIndex,
+                                       @Nullable Color enforcedBackgroundColor,
+                                       @Nullable Color enforcedForegroundColor,
+                                       boolean inverse,
+                                       @NotNull List<EffectType> effectTypes,
+                                       int fontType) {
+      super(attribute, ConsoleViewContentType.NORMAL_OUTPUT_KEY);
+      myBackgroundColorIndex = backgroundColorIndex;
+      myEnforcedBackgroundColor = enforcedBackgroundColor;
+      myForegroundColorIndex = foregroundColorIndex;
+      myEnforcedForegroundColor = enforcedForegroundColor;
+      myInverse = inverse;
+      myEffectTypes = effectTypes.isEmpty() ? ContainerUtil.emptyList() : ContainerUtil.immutableList(effectTypes);
+      myFontType = fontType;
+    }
 
     private AnsiConsoleViewContentType(@NotNull String attribute,
                                        int backgroundColor,
@@ -236,18 +269,65 @@ public class ColoredOutputTypeRegistry {
                                        boolean inverse,
                                        @Nullable EffectType effectType,
                                        int fontType) {
-      super(attribute, ConsoleViewContentType.NORMAL_OUTPUT_KEY);
-      myBackgroundColor = backgroundColor;
-      myForegroundColor = foregroundColor;
-      myInverse = inverse;
-      myEffectType = effectType;
-      myFontType = fontType;
+      this(attribute, backgroundColor, foregroundColor, null, null, inverse,
+           effectType == null ? Collections.emptyList() : Collections.singletonList(effectType), fontType);
+    }
+
+    private AnsiConsoleViewContentType(@NotNull AnsiTerminalEmulator terminalEmulator) {
+      this(terminalEmulator.getAnsiSerializedSGRState(),
+           terminalEmulator.getBackgroundColorIndex(),
+           terminalEmulator.getForegroundColorIndex(),
+           terminalEmulator.getBackgroundColor(),
+           terminalEmulator.getForegroundColor(),
+           terminalEmulator.isInverse(),
+           computeEffectTypes(terminalEmulator),
+           computeAwtFont(terminalEmulator));
+    }
+
+    /**
+     * Computes effect types that can be represented by our editor
+     */
+    @NotNull
+    private static List<EffectType> computeEffectTypes(@NotNull AnsiTerminalEmulator terminalEmulator) {
+      ArrayList<EffectType> result = new ArrayList<>();
+      AnsiTerminalEmulator.Underline underline = terminalEmulator.getUnderline();
+      if (underline == AnsiTerminalEmulator.Underline.SINGLE_UNDERLINE) {
+        result.add(EffectType.LINE_UNDERSCORE);
+      }
+      else if (underline == AnsiTerminalEmulator.Underline.DOUBLE_UNDERLINE) {
+        result.add(EffectType.BOLD_LINE_UNDERSCORE);
+      }
+      if (terminalEmulator.isCrossedOut()) {
+        result.add(EffectType.STRIKEOUT);
+      }
+      AnsiTerminalEmulator.FrameType frameType = terminalEmulator.getFrameType();
+      if (frameType == AnsiTerminalEmulator.FrameType.FRAMED) {
+        result.add(EffectType.BOXED);
+      }
+      else if (frameType == AnsiTerminalEmulator.FrameType.ENCIRCLED) {
+        result.add(EffectType.ROUNDED_BOX);
+      }
+      return result;
+    }
+
+    /**
+     * Computes font style from boldness/italic flags
+     */
+    private static int computeAwtFont(@NotNull AnsiTerminalEmulator terminalEmulator) {
+      int result = 0;
+      if (terminalEmulator.getWeight() == AnsiTerminalEmulator.Weight.BOLD) {
+        result = Font.BOLD;
+      }
+      if (terminalEmulator.isItalic()) {
+        result |= Font.ITALIC;
+      }
+      return result;
     }
 
     @Override
     public TextAttributes getAttributes() {
       TextAttributes attrs = new TextAttributes();
-      attrs.setEffectType(myEffectType);
+      attrs.setEffectType(null); // re-setting default BOX
       if (myFontType != -1) {
         attrs.setFontType(myFontType);
       }
@@ -257,21 +337,25 @@ public class ColoredOutputTypeRegistry {
         attrs.setForegroundColor(backgroundColor);
         attrs.setEffectColor(backgroundColor);
         attrs.setBackgroundColor(foregroundColor);
+        myEffectTypes.forEach(it -> attrs.withAdditionalEffect(it, backgroundColor));
       }
       else {
         attrs.setForegroundColor(foregroundColor);
         attrs.setEffectColor(foregroundColor);
         attrs.setBackgroundColor(backgroundColor);
+        myEffectTypes.forEach(it -> attrs.withAdditionalEffect(it, foregroundColor));
       }
       return attrs;
     }
 
     private Color getForegroundColor() {
-      return myForegroundColor != -1 ? getAnsiColor(myForegroundColor) : getDefaultForegroundColor();
+      return myEnforcedForegroundColor != null ? myEnforcedForegroundColor :
+             myForegroundColorIndex != -1 ? getAnsiColor(myForegroundColorIndex) : getDefaultForegroundColor();
     }
 
     private Color getBackgroundColor() {
-      return myBackgroundColor != -1 ? getAnsiColor(myBackgroundColor) : getDefaultBackgroundColor();
+      return myEnforcedBackgroundColor != null ? myEnforcedBackgroundColor :
+             myBackgroundColorIndex != -1 ? getAnsiColor(myBackgroundColorIndex) : getDefaultBackgroundColor();
     }
   }
 }

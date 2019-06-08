@@ -25,4 +25,9 @@ public abstract class ExternalStringAccessor<T> extends CodeStyleFieldAccessor<T
   protected String parseString(@NotNull String string) {
     return string;
   }
+
+  @Override
+  protected String valueToString(@NotNull String value) {
+    return value;
+  }
 }

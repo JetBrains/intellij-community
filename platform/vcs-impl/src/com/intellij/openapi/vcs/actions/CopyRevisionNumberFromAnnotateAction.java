@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -32,7 +18,7 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
   private int myLineNumber = -1;
 
   public CopyRevisionNumberFromAnnotateAction(FileAnnotation annotation) {
-    super("Copy revision number");
+    super("Copy Revision Number");
     myAnnotation = annotation;
   }
 
@@ -41,16 +27,14 @@ public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction implem
     if (myLineNumber < 0) return;
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
     if (revisionNumber != null) {
-      final String revision = revisionNumber.asString();
-      CopyPasteManager.getInstance().setContents(new TextTransferable(revision));
+      CopyPasteManager.getInstance().setContents(new TextTransferable(revisionNumber.asString()));
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     final boolean enabled = myLineNumber >= 0 && myAnnotation.getLineRevisionNumber(myLineNumber) != null;
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override

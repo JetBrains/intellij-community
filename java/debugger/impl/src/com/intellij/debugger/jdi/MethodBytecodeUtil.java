@@ -105,7 +105,7 @@ public class MethodBytecodeUtil {
   }
 
   @NotNull
-  private static Attribute createAttribute(String name, ThrowableConsumer<DataOutputStream, IOException> generator) throws IOException {
+  private static Attribute createAttribute(String name, ThrowableConsumer<? super DataOutputStream, ? extends IOException> generator) throws IOException {
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
       writeClassHeader(dos, 0, ArrayUtil.EMPTY_BYTE_ARRAY);
       // we generate and put attribute right after the constant pool

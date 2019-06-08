@@ -42,10 +42,6 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
   return expression.type
 }
 
-fun getTopLevelTypeCached(expression: GrExpression): PsiType? {
-  return GroovyPsiManager.getInstance(expression.project).getTopLevelType(expression)
-}
-
 fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
   val qualifierExpression = ref?.qualifierExpression
   val spreadState = state[SpreadState.SPREAD_STATE]
@@ -74,11 +70,11 @@ fun PsiSubstitutor.putAll(parameters: Array<out PsiTypeParameter>, arguments: Ar
 }
 
 fun PsiClass.type(): PsiClassType {
-  return PsiElementFactory.SERVICE.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
+  return PsiElementFactory.getInstance(project).createType(this, PsiSubstitutor.EMPTY)
 }
 
 fun PsiClass.rawType(): PsiClassType {
-  val factory = PsiElementFactory.SERVICE.getInstance(project)
+  val factory = PsiElementFactory.getInstance(project)
   return factory.createType(this, factory.createRawSubstitutor(this))
 }
 

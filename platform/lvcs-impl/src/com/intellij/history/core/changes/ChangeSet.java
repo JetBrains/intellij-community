@@ -19,7 +19,6 @@ package com.intellij.history.core.changes;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.util.Producer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -32,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ChangeSet {
   private final long myId;
@@ -229,13 +229,13 @@ public class ChangeSet {
     v.end(this);
   }
 
-  private <T> T accessChanges(@NotNull Producer<T> func) {
+  private <T> T accessChanges(@NotNull Supplier<T> func) {
     if (isLocked) {
-      return func.produce();
+      return func.get();
     }
 
     synchronized (myChanges) {
-      return func.produce();
+      return func.get();
     }
   }
 

@@ -16,7 +16,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -71,11 +73,16 @@ public abstract class MethodContract {
     };
   }
 
+  @NotNull
   public static MethodContract singleConditionContract(ContractValue left,
                                                        RelationType relationType,
                                                        ContractValue right,
                                                        ContractReturnValue returnValue) {
-    ContractValue condition = ContractValue.condition(left, relationType, right);
+    return singleConditionContract(ContractValue.condition(left, relationType, right), returnValue);
+  }
+
+  @NotNull
+  private static MethodContract singleConditionContract(ContractValue condition, ContractReturnValue returnValue) {
     return new MethodContract(returnValue) {
       @Override
       String getArgumentsPresentation() {
@@ -87,5 +94,27 @@ public abstract class MethodContract {
         return Collections.singletonList(condition);
       }
     };
+  }
+
+  public static List<? extends MethodContract> toNonIntersectingContracts(List<? extends MethodContract> contracts) {
+    if (contracts.size() == 1) return contracts;
+    if (contracts.stream().allMatch(StandardMethodContract.class::isInstance)) {
+      @SuppressWarnings("unchecked") List<StandardMethodContract> standardContracts = (List<StandardMethodContract>)contracts;
+      return StandardMethodContract.toNonIntersectingStandardContracts(standardContracts);
+    }
+    if (contracts.size() == 2 && contracts.get(1).isTrivial()) {
+      List<MethodContract> result = new ArrayList<>();
+      result.add(contracts.get(0));
+      List<ContractValue> conditions = contracts.get(0).getConditions();
+      for (ContractValue condition : conditions) {
+        ContractValue inverted = condition.invert();
+        if (inverted == null) {
+          return null;
+        }
+        result.add(singleConditionContract(inverted, contracts.get(1).getReturnValue()));
+      }
+      return result;
+    }
+    return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -22,13 +22,13 @@ List<String> projectLibraries = [
   "OroMatcher",
   "commons-codec",
   "commons-logging",
+  "commons-compress",
   "Trove4j",
   "JDOM",
   "NanoXML",
   "Guava",
   "JUnit4",
   "netty-codec-http",
-  "netty-handler",
   "lz4-java",
   "gant-groovy",
   "Log4J",

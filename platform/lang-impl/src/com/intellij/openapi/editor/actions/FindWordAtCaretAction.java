@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
+
 public class FindWordAtCaretAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
@@ -36,7 +38,7 @@ public class FindWordAtCaretAction extends EditorAction {
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      return project != null;
+      return project != null && !SEARCH_DISABLED.get(editor, false);
     }
   }
 

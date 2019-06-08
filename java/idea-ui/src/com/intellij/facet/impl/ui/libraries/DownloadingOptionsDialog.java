@@ -31,7 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.CheckBoxListListener;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
@@ -61,7 +61,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private JLabel myFilesToDownloadLabel;
   private JLabel myCopyDownloadedFilesToLabel;
   private JPanel myNameWrappingPanel;
-  private final JComboBox myVersionComboBox;
+  private final JComboBox<FrameworkLibraryVersion> myVersionComboBox;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final DownloadableLibraryType myLibraryType;
   private FrameworkLibraryVersion myLastSelectedVersion;
@@ -75,16 +75,11 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
 
-    myVersionComboBox = new ComboBox();
+    myVersionComboBox = new ComboBox<>();
     for (FrameworkLibraryVersion version : versions) {
       myVersionComboBox.addItem(version);
     }
-    myVersionComboBox.setRenderer(new ListCellRendererWrapper<FrameworkLibraryVersion>() {
-      @Override
-      public void customize(JList list, FrameworkLibraryVersion value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getDefaultLibraryName());
-      }
-    });
+    myVersionComboBox.setRenderer(SimpleListCellRenderer.create("", FrameworkLibraryVersion::getDefaultLibraryName));
     myVersionComboBox.setSelectedItem(settings.getVersion());
     if (versions.size() > 1) {
       builder.addLabeledComponent("&Version:", myVersionComboBox);

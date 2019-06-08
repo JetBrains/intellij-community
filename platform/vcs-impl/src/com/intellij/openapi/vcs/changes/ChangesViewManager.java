@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -22,14 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +46,9 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.intellij.lang.annotations.JdkConstants;
+import com.intellij.vcs.commit.ChangesViewCommitPanel;
+import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,10 +60,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -74,7 +73,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_K
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.ui.IdeBorderFactory.createBorder;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.util.ui.UIUtil.addBorder;
@@ -91,6 +89,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
+  private ChangesViewCommitPanel myCommitPanel;
+  private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
   private final VcsConfiguration myVcsConfiguration;
   private JPanel myProgressLabel;
 
@@ -161,6 +161,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
+    if (myCommitPanel != null) Disposer.register(myContent, myCommitPanel);
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -185,6 +186,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return "ChangesViewManager";
   }
 
+  @Nullable
+  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return myCommitWorkflowHandler;
+  }
+
   private JComponent createChangeViewComponent() {
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
@@ -198,7 +204,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     };
     contentPanel.addToCenter(changesPanel);
     if (isNonModalCommit()) {
-      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
+      myCommitPanel = new ChangesViewCommitPanel(myView);
+      contentPanel.addToBottom(myCommitPanel);
+
+      myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
     }
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
@@ -224,14 +233,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     return panel;
   }
 
-  private static void registerShortcuts(@NotNull JComponent component) {
+  private void registerShortcuts(@NotNull JComponent component) {
     registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
     registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
     registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
     registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
-    registerWithShortcutSet("ChangesView.SetDefault",
-                            new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), component);
-    registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), component);
+
+    if (myCommitPanel != null) myCommitPanel.setupShortcuts(component);
   }
 
   @NotNull
@@ -245,7 +253,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
     ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
     ignoreGroup.add(new ToggleShowIgnoredAction());
-    ignoreGroup.add(new IgnoredSettingsAction());
     group.add(ignoreGroup);
     group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
     group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
@@ -255,11 +262,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
     toolbar.setTargetComponent(myView);
     return toolbar;
-  }
-
-  @JdkConstants.InputEventMask
-  private static int ctrlMask() {
-    return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
   }
 
   private void updateProgressComponent(@NotNull final Factory<? extends JComponent> progress) {
@@ -451,7 +453,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     public boolean myShowFlatten = true;
 
     @XCollection
-    public Set<String> groupingKeys = newHashSet();
+    public Set<String> groupingKeys = new HashSet<>();
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;

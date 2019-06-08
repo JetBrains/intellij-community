@@ -6,12 +6,8 @@ package com.intellij.java.navigation
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.application.ModalityState
 import com.intellij.psi.*
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.Consumer
-import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
@@ -541,22 +537,8 @@ class Intf {
     return calcPopupElements(createPopup(model), text, checkboxState)
   }
 
-  static ArrayList<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
-    List<Object> elements = ['empty']
-    def semaphore = new Semaphore(1)
-    popup.scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, SelectMostRelevant.INSTANCE, { set ->
-      elements = set as List<Object>
-      semaphore.up()
-    } as Consumer<Set<?>>)
-    def start = System.currentTimeMillis()
-    while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 10_000_000) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-    }
-    if (!semaphore.waitFor(10)) {
-      printThreadDump()
-      fail()
-    }
-    return elements
+  static List<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
+    return popup.calcPopupElements(text, checkboxState)
   }
 
   private ChooseByNamePopup createPopup(ChooseByNameModel model, PsiElement context = null) {

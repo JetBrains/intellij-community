@@ -42,6 +42,10 @@ public class UniqueNameBuilder<T> {
     return myPaths.containsKey(file);
   }
 
+  public int size() {
+    return myPaths.size();
+  }
+
   private static class Node {
     final String myText;
     final THashMap<String, Node> myChildren;

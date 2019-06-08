@@ -1,19 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistic.eventLog
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger
+import com.intellij.configurationStore.jdomSerializer
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.BeanBinding
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import org.jdom.Element
 import java.util.*
 
 private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
-private val GROUP = FeatureUsageGroup("settings", 2)
+private val GROUP = EventLogGroup("settings", 2)
 
 object FeatureUsageSettingsEvents {
   val printer = FeatureUsageSettingsEventPrinter(false)
@@ -32,12 +32,10 @@ object FeatureUsageSettingsEvents {
 }
 
 open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) {
-  private val defaultFilter = SkipDefaultsSerializationFilter()
-
   fun logDefaultConfigurationState(componentName: String, clazz: Class<*>, project: Project?) {
     try {
       if (recordDefault) {
-        val default = defaultFilter.getDefaultValue(clazz)
+        val default = jdomSerializer.getDefaultSerializationFilter().getDefaultValue(clazz)
         logConfigurationState(componentName, default, project)
       }
       else {
@@ -67,8 +65,8 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     for (accessor in accessors) {
       val type = accessor.genericType
       if (type === Boolean::class.javaPrimitiveType) {
-        val value = accessor.read(state)
-        val isNotDefault = defaultFilter.accepts(accessor, state)
+        val value = accessor.readUnsafe(state)
+        val isNotDefault = jdomSerializer.getDefaultSerializationFilter().accepts(accessor, state)
         if (recordDefault || isNotDefault) {
           val content = HashMap<String, Any>()
           content["name"] = accessor.name
@@ -101,7 +99,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
   }
 
   @Suppress("SameParameterValue")
-  protected open fun logConfig(group: FeatureUsageGroup, eventId: String, data: Map<String, Any>) {
+  protected open fun logConfig(group: EventLogGroup, eventId: String, data: Map<String, Any>) {
     FeatureUsageLogger.logState(group, eventId, data)
   }
 

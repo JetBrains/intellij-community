@@ -174,7 +174,7 @@ abstract class UndoRedo {
     return readOnlyFiles;
   }
 
-  private void reportCannotUndo(String message, Collection<DocumentReference> problemFiles) {
+  private void reportCannotUndo(String message, Collection<? extends DocumentReference> problemFiles) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(
         message + "\n" + StringUtil.join(problemFiles, StringUtil.createToStringFunction(DocumentReference.class), "\n"));

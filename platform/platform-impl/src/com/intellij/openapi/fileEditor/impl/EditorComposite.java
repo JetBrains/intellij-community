@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -71,7 +71,7 @@ public abstract class EditorComposite implements Disposable {
   /**
    * Editors which are opened in the composite
    */
-  protected FileEditor[] myEditors;
+  volatile FileEditor[] myEditors;
   /**
    * This is initial timestamp of the file. It uses to implement
    * "close non modified editors first" feature.
@@ -87,7 +87,7 @@ public abstract class EditorComposite implements Disposable {
   private final FileEditorManagerEx myFileEditorManager;
   private final Map<FileEditor, JComponent> myTopComponents = new HashMap<>();
   private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<>();
-  private final Map<FileEditor, String> myDisplayNames = ContainerUtil.newHashMap();
+  private final Map<FileEditor, String> myDisplayNames = new HashMap<>();
 
   /**
    * @param file {@code file} for which composite is being constructed
@@ -100,6 +100,7 @@ public abstract class EditorComposite implements Disposable {
   EditorComposite(@NotNull final VirtualFile file,
                   @NotNull final FileEditor[] editors,
                   @NotNull final FileEditorManagerEx fileEditorManager) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
     myEditors = editors;
     if (ArrayUtil.contains(null, editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
@@ -490,6 +491,7 @@ public abstract class EditorComposite implements Disposable {
 
   void addEditor(@NotNull FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    //noinspection NonAtomicOperationOnVolatileField : field is modified only in EDT
     myEditors = ArrayUtil.append(myEditors, editor);
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(myEditors);

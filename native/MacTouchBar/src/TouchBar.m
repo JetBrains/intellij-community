@@ -59,7 +59,7 @@ void selectItemsToShow(id touchBar, const char** ppIds, int count) {
             [all addObject:nsId];
     }
 
-    TouchBar * tb = (TouchBar *)touchBar; // TODO: check types
+    TouchBar * tb = (TouchBar *)touchBar;
     dispatch_async(dispatch_get_main_queue(), ^{
         [tb.touchBar setDefaultItemIdentifiers:all];
     });
@@ -76,7 +76,7 @@ id createTouchBar(const char * name, createItem jcreator, const char * escId) {
 
 void setPrincipal(id tbobj, const char * uid) {
     NSAutoreleasePool * edtPool = [[NSAutoreleasePool alloc] init];
-    TouchBar * tb = (TouchBar *)tbobj; // TODO: check types
+    TouchBar * tb = (TouchBar *)tbobj;
     [tb.touchBar setPrincipalItemIdentifier:createStringFromUTF8(uid)];
     [edtPool release];
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -453,30 +454,9 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     template.setToReformat(true);
 
     final SuggestedNameInfo suggestedNameInfo = IntroduceVariableBase.getSuggestedName(type, initializer, initializer);
-
-    Set<LookupElement> itemSet = new LinkedHashSet<>();
-    for (String name : suggestedNameInfo.names) {
-      itemSet.add(LookupElementBuilder.create(name));
-    }
-    final LookupElement[] lookupItems = itemSet.toArray(LookupElement.EMPTY_ARRAY);
     final Result result = suggestedNameInfo.names.length == 0 ? null : new TextResult(suggestedNameInfo.names[0]);
 
-    Expression expr = new Expression() {
-      @Override
-      public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        return lookupItems.length > 1 ? lookupItems : null;
-      }
-
-      @Override
-      public Result calculateResult(ExpressionContext context) {
-        return result;
-      }
-
-      @Override
-      public Result calculateQuickResult(ExpressionContext context) {
-        return result;
-      }
-    };
+    Expression expr = new ConstantNode(result).withLookupStrings(suggestedNameInfo.names.length > 1 ? suggestedNameInfo.names : ArrayUtil.EMPTY_STRING_ARRAY);
     template.addVariable("", expr, expr, true);
 
     return template;

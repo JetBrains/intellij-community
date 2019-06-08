@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
 import java.lang.reflect.Method;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -115,7 +116,7 @@ public class Bootstrap {
   private static List<File> readDependenciesTxt(String basePath, URL dependenciesTxtUrl) throws Exception {
     List<File> files = new ArrayList<>();
 
-    try (BufferedReader br = new BufferedReader(new InputStreamReader(dependenciesTxtUrl.openStream()))) {
+    try (BufferedReader br = new BufferedReader(new InputStreamReader(dependenciesTxtUrl.openStream(), StandardCharsets.UTF_8))) {
       String line;
       while ((line = br.readLine()) != null) {
         File file = new File(basePath + line);
@@ -129,6 +130,6 @@ public class Bootstrap {
   }
 
   private static boolean isMac() {
-    return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("mac");
+    return System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("mac");
   }
 }

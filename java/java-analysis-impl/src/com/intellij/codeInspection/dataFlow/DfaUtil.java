@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.TextRange;
@@ -20,6 +20,7 @@ import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,7 @@ public class DfaUtil {
   /**
    * @deprecated for removal; use {@link #checkNullability(PsiVariable, PsiElement)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @NotNull
   public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
@@ -150,7 +152,18 @@ public class DfaUtil {
       return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullability(method, InferenceFromSourceUtil.suppressNullable(method));
+    return inferBlockNullability(method, suppressNullable(method));
+  }
+
+  private static boolean suppressNullable(PsiMethod method) {
+    if (method.getParameterList().isEmpty()) return false;
+
+    for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
+      if (contract.getReturnValue().isNull()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -312,7 +325,8 @@ public class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover given expression.
+   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor, boolean)}) to cover 
+   * given expression.
    *
    * @param expression expression to cover
    * @return a dataflow context; null if no applicable context found.
@@ -410,8 +424,35 @@ public class DfaUtil {
     return null;
   }
 
+  @NotNull
+  public static List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
+                                                                 @NotNull List<? extends MethodContract> contracts) {
+    if (method == null) return contracts;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    List<MethodContract> rangeContracts = new ArrayList<>();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      LongRangeSet fromType = LongRangeSet.fromType(parameter.getType());
+      if (fromType == null) continue;
+      LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
+      if (fromAnnotation.min() > fromType.min()) {
+        MethodContract contract = MethodContract.singleConditionContract(
+          ContractValue.argument(i), DfaRelationValue.RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
+          ContractReturnValue.fail());
+        rangeContracts.add(contract);
+      }
+      if (fromAnnotation.max() < fromType.max()) {
+        MethodContract contract = MethodContract.singleConditionContract(
+          ContractValue.argument(i), DfaRelationValue.RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
+          ContractReturnValue.fail());
+        rangeContracts.add(contract);
+      }
+    }
+    return ContainerUtil.concat(rangeContracts, contracts);
+  }
+
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
-    final Map<PsiElement, PlaceResult> myResults = ContainerUtil.newHashMap();
+    final Map<PsiElement, PlaceResult> myResults = new HashMap<>();
 
     static class PlaceResult {
       final MultiValuesMap<PsiVariable, FList<PsiExpression>> myValues = new MultiValuesMap<>(true);

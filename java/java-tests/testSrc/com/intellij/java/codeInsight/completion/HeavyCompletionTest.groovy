@@ -141,7 +141,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   void testPreferOwnMethods() {
     def nanoUrls = IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("NanoXML")
-    ModuleRootModificationUtil.addModuleLibrary(myModule, 'nano1', nanoUrls, [])
+    ModuleRootModificationUtil.addModuleLibrary(module, 'nano1', nanoUrls, [])
 
     assert JavaPsiFacade.getInstance(project).findClass('net.n3.nanoxml.StdXMLParser', GlobalSearchScope.allScope(project))
 
@@ -183,7 +183,7 @@ public class Test {
   }
 
   void testForbiddenApiVariants() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_4)
+    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_4)
     myFixture.addClass("""\
 package java.nio.channels;
 public class SocketChannel {
@@ -212,7 +212,7 @@ public class SocketChannel {
   }
 
   void "test seemingly scrambled subclass"() {
-    PsiTestUtil.addLibrary(myModule, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar")
+    PsiTestUtil.addLibrary(module, JavaTestUtil.getJavaTestDataPath() + "/codeInsight/completion/normal/seemsScrambled.jar")
     myFixture.configureByText 'a.java', '''import test.Books;
 
 class Foo {{ Books.Test.v<caret> }}

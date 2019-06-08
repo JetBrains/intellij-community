@@ -27,6 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+@Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class GradleRunTaskDialog extends DialogWrapper {
 
   private final Project myProject;
@@ -75,7 +77,6 @@ public class GradleRunTaskDialog extends DialogWrapper {
       commandLineComboBox.setLightWeightPopupEnabled(false);
 
       EditorComboBoxEditor editor = new StringComboboxEditor(myProject, PlainTextFileType.INSTANCE, commandLineComboBox);
-      //noinspection GtkPreferredJComboBoxRenderer
       commandLineComboBox.setRenderer(new EditorComboBoxRenderer(editor));
 
       commandLineComboBox.setEditable(true);

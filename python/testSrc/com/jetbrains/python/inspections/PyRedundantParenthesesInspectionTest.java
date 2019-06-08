@@ -97,4 +97,9 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
   public void testNestedParentheses() {
     doTest();
   }
+
+  // PY-21530
+  public void testReferenceExpression() {
+    doTest();
+  }
 }

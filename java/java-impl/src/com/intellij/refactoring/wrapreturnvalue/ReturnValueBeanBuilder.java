@@ -45,7 +45,7 @@ class ReturnValueBeanBuilder {
     myPackageName = packageName;
   }
 
-  public void setTypeArguments(List<PsiTypeParameter> typeParams) {
+  public void setTypeArguments(List<? extends PsiTypeParameter> typeParams) {
     myTypeParams.clear();
     myTypeParams.addAll(typeParams);
   }

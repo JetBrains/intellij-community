@@ -20,7 +20,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import java.io.File;
 import java.io.IOException;
 
-public class SuspiciousPackagePrivateAccessInspectionTestCase extends LightInspectionTestCase {
+public abstract class SuspiciousPackagePrivateAccessInspectionTestCase extends LightInspectionTestCase {
   private final ProjectWithDepModuleDescriptor myProjectDescriptor = new ProjectWithDepModuleDescriptor(LanguageLevel.HIGHEST);
   private final String myExtension;
 

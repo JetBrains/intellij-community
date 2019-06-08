@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -9,32 +9,30 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  */
-@State(name = "GradleExtensions", storages = {@Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)})
-public class GradleExtensionsSettings implements PersistentStateComponent<GradleExtensionsSettings.Settings> {
+public class GradleExtensionsSettings {
 
   private static final Logger LOG = Logger.getInstance(GradleExtensionsSettings.class);
   private final Settings myState = new Settings();
@@ -46,18 +44,6 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
         myState.remove(linkedProjectPaths);
       }
     });
-  }
-
-  @Nullable
-  @Override
-  public Settings getState() {
-    // cleanup GradleExtensions entries created by previous version from workspace file
-    // TODO remove PersistentStateComponent implementation in future version
-    return new Settings();
-  }
-
-  @Override
-  public void loadState(@NotNull Settings state) {
   }
 
   @NotNull
@@ -72,29 +58,34 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
       DataNode<ProjectData> projectDataNode = projectInfo.getExternalProjectStructure();
       if (projectDataNode == null) continue;
 
-      Collection<DataNode<GradleExtensions>> nodes = new SmartList<>();
-      for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE)) {
-        ContainerUtil.addIfNotNull(nodes, ExternalSystemApiUtil.find(moduleNode, GradleExtensionsDataService.KEY));
+      String projectPath = projectInfo.getExternalProjectPath();
+      try {
+        Collection<DataNode<GradleExtensions>> nodes = new SmartList<>();
+        for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE)) {
+          ContainerUtil.addIfNotNull(nodes, ExternalSystemApiUtil.find(moduleNode, GradleExtensionsDataService.KEY));
+        }
+        getInstance(project).add(projectPath, nodes);
       }
-      getInstance(project).add(projectInfo.getExternalProjectPath(), nodes);
+      catch (ClassCastException e) {
+        // catch deserialization issue caused by fast serializer
+        LOG.debug(e);
+        ExternalProjectsManager.getInstance(project).getExternalProjectsWatcher().markDirty(projectPath);
+      }
     }
   }
 
   public static class Settings {
-    @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "project", keyAttributeName = "path")
-    @NotNull
     public Map<String, GradleProject> projects = new HashMap<>();
 
     public void add(@NotNull String rootPath,
                     @NotNull Collection<DataNode<GradleExtensions>> extensionsData) {
-      Map<String, GradleExtensions> extensionMap = ContainerUtil.newHashMap();
+      Map<String, GradleExtensions> extensionMap = new HashMap<>();
       for (DataNode<GradleExtensions> node : extensionsData) {
         DataNode<?> parent = node.getParent();
         if (parent == null) continue;
         if (!(parent.getData() instanceof ModuleData)) continue;
-        String projectPath = ((ModuleData)parent.getData()).getLinkedExternalProjectPath();
-        extensionMap.put(projectPath, node.getData());
+        String gradlePath = GradleProjectResolverUtil.getGradlePath((ModuleData)parent.getData());
+        extensionMap.put(gradlePath, node.getData());
       }
 
       add(rootPath, extensionMap);
@@ -105,27 +96,25 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
       for (Map.Entry<String, GradleExtensions> entry : extensions.entrySet()) {
         GradleExtensionsData extensionsData = new GradleExtensionsData();
         GradleExtensions gradleExtensions = entry.getValue();
-        try {
-          File parentProjectDir = gradleExtensions.getParentProjectDir();
-          if (parentProjectDir != null) {
-            extensionsData.parent = ExternalSystemApiUtil.toCanonicalPath(parentProjectDir.getCanonicalPath());
-          }
-        }
-        catch (IOException e) {
-          LOG.warn("construction of the canonical path for the gradle project fails", e);
-        }
+        extensionsData.parent = gradleExtensions.getParentProjectPath();
+
         for (org.jetbrains.plugins.gradle.model.GradleExtension extension : gradleExtensions.getExtensions()) {
           GradleExtension gradleExtension = new GradleExtension();
           gradleExtension.name = extension.getName();
           gradleExtension.rootTypeFqn = extension.getTypeFqn();
-          gradleExtension.namedObjectTypeFqn = extension.getNamedObjectTypeFqn();
-          extensionsData.extensions.add(gradleExtension);
+          extensionsData.extensions.put(extension.getName(), gradleExtension);
+        }
+        for (org.jetbrains.plugins.gradle.model.GradleConvention convention : gradleExtensions.getConventions()) {
+          GradleConvention gradleConvention = new GradleConvention();
+          gradleConvention.name = convention.getName();
+          gradleConvention.typeFqn = convention.getTypeFqn();
+          extensionsData.conventions.add(gradleConvention);
         }
         for (GradleProperty property : gradleExtensions.getGradleProperties()) {
           GradleProp gradleProp = new GradleProp();
           gradleProp.name = property.getName();
           gradleProp.typeFqn = property.getTypeFqn();
-          extensionsData.properties.add(gradleProp);
+          extensionsData.properties.put(gradleProp.name, gradleProp);
         }
         for (ExternalTask task : gradleExtensions.getTasks()) {
           GradleTask gradleTask = new GradleTask();
@@ -147,15 +136,21 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
           }
 
           gradleTask.description = description.toString();
-          extensionsData.tasks.add(gradleTask);
+          extensionsData.tasksMap.put(gradleTask.name, gradleTask);
         }
+        extensionsData.tasks = new SmartList<>(extensionsData.tasksMap.values());
         for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
           GradleConfiguration gradleConfiguration = new GradleConfiguration();
           gradleConfiguration.name = configuration.getName();
           gradleConfiguration.description = configuration.getDescription();
           gradleConfiguration.visible = configuration.isVisible();
           gradleConfiguration.scriptClasspath = configuration.isScriptClasspathConfiguration();
-          extensionsData.configurations.add(gradleConfiguration);
+          if (gradleConfiguration.scriptClasspath) {
+            extensionsData.buildScriptConfigurations.put(configuration.getName(), gradleConfiguration);
+          }
+          else {
+            extensionsData.configurations.put(configuration.getName(), gradleConfiguration);
+          }
         }
         gradleProject.extensions.put(entry.getKey(), extensionsData);
         extensionsData.myGradleProject = gradleProject;
@@ -174,55 +169,56 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
       this.projects = projects;
     }
 
+    /**
+     * Returns extensions available in the context of the gradle project related to the IDE module.
+     */
     @Nullable
     public GradleExtensionsData getExtensionsFor(@Nullable Module module) {
       if (module == null) return null;
       return getExtensionsFor(ExternalSystemApiUtil.getExternalRootProjectPath(module),
-                              ExternalSystemApiUtil.getExternalProjectPath(module));
+                              GradleProjectResolverUtil.getGradlePath(module));
     }
 
+    /**
+     * Returns extensions available in the context of the specified (using gradle path notation, e.g. `:sub-project`) gradle project.
+     *
+     * @param rootProjectPath file path of the root gradle project
+     * @param gradlePath      gradle project path notation
+     * @return gradle extensions
+     */
     @Nullable
-    public GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String projectPath) {
-      if (rootProjectPath == null || projectPath == null) return null;
+    public GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String gradlePath) {
+      if (rootProjectPath == null || gradlePath == null) return null;
       GradleProject gradleProject = projects.get(rootProjectPath);
       if (gradleProject == null) return null;
-      return gradleProject.extensions.get(projectPath);
+      return gradleProject.extensions.get(gradlePath);
     }
   }
 
-  @Tag("sub-project")
   static class GradleProject {
-    @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "project", keyAttributeName = "path")
-    @NotNull
     public Map<String, GradleExtensionsData> extensions = new HashMap<>();
   }
 
-
-  @Tag("extensions")
   public static class GradleExtensionsData {
-    public GradleExtensionsData() {
-    }
-
-    @Transient
     private GradleProject myGradleProject;
-
-    @Attribute("parent")
     public String parent;
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleExtension> extensions = new SmartList<>();
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleProp> properties = new SmartList<>();
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleTask> tasks = new SmartList<>();
-    @Property(surroundWithTag = false)
-    @XCollection
-    public List<GradleConfiguration> configurations = new SmartList<>();
-
-    @Transient
+    @NotNull
+    public final Map<String, GradleExtension> extensions = new HashMap<>();
+    @NotNull
+    public final List<GradleConvention> conventions = new SmartList<>();
+    @NotNull
+    public final Map<String, GradleProp> properties = new HashMap<>();
+    @NotNull
+    public final Map<String, GradleTask> tasksMap = new LinkedHashMap<>();
+    /**
+     * @deprecated to be removed, use {@link GradleExtensionsData#tasksMap} instead
+     */
+    @Deprecated
+    public List<GradleTask> tasks = Collections.emptyList();
+    @NotNull
+    public final Map<String, GradleConfiguration> configurations = new HashMap<>();
+    @NotNull
+    public final Map<String, GradleConfiguration> buildScriptConfigurations = new HashMap<>();
     @Nullable
     public GradleExtensionsData getParent() {
       if (myGradleProject == null) return null;
@@ -236,15 +232,14 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
 
     @NotNull
     public Collection<GradleProp> findAllProperties() {
-      return findAllProperties(this, ContainerUtil.newHashMap());
+      return findAllProperties(this, new HashMap<>());
     }
 
     @NotNull
     private static Collection<GradleProp> findAllProperties(@NotNull GradleExtensionsData extensionsData,
                                                             @NotNull Map<String, GradleProp> result) {
-      for (GradleProp property : extensionsData.properties) {
-        if (result.containsKey(property.name)) continue;
-        result.put(property.name, property);
+      for (GradleProp property : extensionsData.properties.values()) {
+        result.putIfAbsent(property.name, property);
       }
       if (extensionsData.getParent() != null) {
         findAllProperties(extensionsData.getParent(), result);
@@ -254,9 +249,8 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
 
     @Nullable
     private static GradleProp findProperty(@NotNull GradleExtensionsData extensionsData, String propName) {
-      for (GradleProp property : extensionsData.properties) {
-        if (property.name.equals(propName)) return property;
-      }
+      GradleProp prop = extensionsData.properties.get(propName);
+      if (prop != null) return prop;
       if (extensionsData.parent != null && extensionsData.myGradleProject != null) {
         GradleExtensionsData parentData = extensionsData.myGradleProject.extensions.get(extensionsData.parent);
         if (parentData != null) {
@@ -271,14 +265,9 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     String getTypeFqn();
   }
 
-  @Tag("ext")
   public static class GradleExtension implements TypeAware {
-    @Attribute("name")
     public String name;
-    @Attribute("type")
     public String rootTypeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
-    @Attribute("objectType")
-    public String namedObjectTypeFqn;
 
     @Override
     public String getTypeFqn() {
@@ -286,14 +275,20 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("prop")
-  public static class GradleProp implements TypeAware {
-    @Attribute("name")
+  public static class GradleConvention implements TypeAware {
     public String name;
-    @Attribute("type")
+    public String typeFqn = CommonClassNames.JAVA_LANG_OBJECT_SHORT;
+
+    @Override
+    public String getTypeFqn() {
+      return typeFqn;
+    }
+  }
+
+  public static class GradleProp implements TypeAware {
+    public String name;
     public String typeFqn = CommonClassNames.JAVA_LANG_STRING;
     @Nullable
-    @Text
     public String value;
 
     @Override
@@ -302,14 +297,10 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("task")
   public static class GradleTask implements TypeAware {
-    @Attribute("name")
     public String name;
-    @Attribute("type")
     public String typeFqn = GradleCommonClassNames.GRADLE_API_DEFAULT_TASK;
     @Nullable
-    @Text
     public String description;
 
     @Override
@@ -318,15 +309,10 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     }
   }
 
-  @Tag("conf")
   public static class GradleConfiguration {
-    @Attribute("name")
     public String name;
-    @Attribute("visible")
     public boolean visible = true;
-    @Attribute("scriptClasspath")
     public boolean scriptClasspath;
-    @Text
     public String description;
   }
 }

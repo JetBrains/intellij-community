@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ReadAction;
@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +16,7 @@ import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
@@ -24,7 +24,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
   private static final Logger LOG = Logger.getInstance(IdeaCommitHandler.class);
 
   @Nullable private final ProgressIndicator myProgress;
-  @NotNull private final List<VirtualFile> myDeletedFiles = ContainerUtil.newArrayList();
+  @NotNull private final List<VirtualFile> myDeletedFiles = new ArrayList<>();
   private final boolean myCheckCancel;
   private final boolean myTrackDeletedFiles;
 

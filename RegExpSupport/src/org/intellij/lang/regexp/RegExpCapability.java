@@ -128,6 +128,11 @@ public enum RegExpCapability {
    * MySQL character classes [=c=] [.class.] [:<:] [:>:]
    */
   MYSQL_BRACKET_EXPRESSIONS,
+
+  /**
+   * \g{[integer]} \g[unsigned integer]
+   */
+  PCRE_BACK_REFERENCES,
   ;
   static final EnumSet<RegExpCapability> DEFAULT_CAPABILITIES = EnumSet.of(NESTED_CHARACTER_CLASSES,
                                                                            ALLOW_HORIZONTAL_WHITESPACE_CLASS,

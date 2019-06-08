@@ -84,14 +84,14 @@ public class ArrangementSettingsSerializationTest {
     return section(null, null, rule(byName, tokens));
   }
 
-  private static StdArrangementSettings settings(@NotNull List<ArrangementGroupingRule> groupings,
-                                                 @NotNull List<ArrangementSectionRule> sections) {
+  private static StdArrangementSettings settings(@NotNull List<? extends ArrangementGroupingRule> groupings,
+                                                 @NotNull List<? extends ArrangementSectionRule> sections) {
     return new StdArrangementSettings(groupings, sections);
   }
 
-  private static StdArrangementExtendableSettings extendableSettings(@NotNull List<ArrangementGroupingRule> groupings,
-                                                                     @NotNull List<ArrangementSectionRule> sections,
-                                                                     @NotNull Collection<StdArrangementRuleAliasToken> tokens) {
+  private static StdArrangementExtendableSettings extendableSettings(@NotNull List<? extends ArrangementGroupingRule> groupings,
+                                                                     @NotNull List<? extends ArrangementSectionRule> sections,
+                                                                     @NotNull Collection<? extends StdArrangementRuleAliasToken> tokens) {
     return new StdArrangementExtendableSettings(groupings, sections, tokens);
   }
 

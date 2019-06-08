@@ -5,6 +5,7 @@ import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import one.util.streamex.StreamEx;
@@ -38,14 +39,11 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
   @NotNull private final GithubGitHelper myGitHelper;
   @NotNull private final GithubHttpAuthDataProvider myAuthDataProvider;
 
-  public GithubRepositoryHostingService(@NotNull GithubAuthenticationManager manager,
-                                        @NotNull GithubApiRequestExecutorManager executorManager,
-                                        @NotNull GithubGitHelper gitHelper,
-                                        @NotNull GithubHttpAuthDataProvider authDataProvider) {
-    myAuthenticationManager = manager;
-    myExecutorManager = executorManager;
-    myGitHelper = gitHelper;
-    myAuthDataProvider = authDataProvider;
+  public GithubRepositoryHostingService() {
+    myAuthenticationManager = GithubAuthenticationManager.getInstance();
+    myExecutorManager = GithubApiRequestExecutorManager.getInstance();
+    myGitHelper = GithubGitHelper.getInstance();
+    myAuthDataProvider = GitHttpAuthDataProvider.EP_NAME.findExtensionOrFail(GithubHttpAuthDataProvider.class);
   }
 
   @NotNull
@@ -144,7 +142,15 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
   @Nullable
   private InteractiveGitHttpAuthDataProvider getProvider(@NotNull Project project, @NotNull String url, @Nullable String login) {
     Set<GithubAccount> potentialAccounts = myAuthDataProvider.getSuitableAccounts(project, url, login);
-    if (potentialAccounts.isEmpty()) return null;
-    return new InteractiveGithubHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
+    if (!potentialAccounts.isEmpty()) {
+      return new InteractiveSelectGithubAccountHttpAuthDataProvider(project, potentialAccounts, myAuthenticationManager);
+    }
+
+    if (GithubServerPath.DEFAULT_SERVER.matches(url)) {
+      return new InteractiveCreateGithubAccountHttpAuthDataProvider(project, myAuthenticationManager,
+                                                                    GithubServerPath.DEFAULT_SERVER, login);
+    }
+
+    return null;
   }
 }

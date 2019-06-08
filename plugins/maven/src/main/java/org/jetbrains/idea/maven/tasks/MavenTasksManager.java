@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.google.common.collect.Sets;
@@ -7,7 +7,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,8 +29,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
-public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
-                                                                              ProjectComponent {
+public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenTasksManagerState myState = new MavenTasksManagerState();
@@ -85,7 +83,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     if (!isNormalProject()) return;
     if (isInitialized.getAndSet(true)) return;
 
@@ -100,7 +98,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
       }
 
       @Override
-      public boolean execute(CompileContext context) {
+      public boolean execute(@NotNull CompileContext context) {
         return doExecute(myBefore, context);
       }
     }

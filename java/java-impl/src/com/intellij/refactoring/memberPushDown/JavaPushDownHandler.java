@@ -67,7 +67,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   }
 
   @NotNull
-  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<String> errorMessage) {
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<? super String> errorMessage) {
     List<PsiElement> elements = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
@@ -80,7 +80,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     return elements;
   }
 
-  private static String collectElementsUnderCaret(PsiElement element, List<PsiElement> elements) {
+  private static String collectElementsUnderCaret(PsiElement element, List<? super PsiElement> elements) {
     while (true) {
       if (element == null || element instanceof PsiFile) {
         return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));

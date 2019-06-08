@@ -10,9 +10,10 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
-import com.intellij.util.xml.DomUtil
+import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
+import java.util.*
 
 fun locateExtensionsByPsiClass(psiClass: PsiClass): List<ExtensionCandidate> {
   return findExtensionsByClassName(psiClass.project, ClassUtil.getJVMClassName(psiClass) ?: return emptyList())
@@ -26,34 +27,27 @@ fun locateExtensionsByExtensionPointAndId(extensionPoint: ExtensionPoint, extens
   return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId)
 }
 
-private fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean, callback: (Extension, XmlTag) -> Boolean) {
+internal fun processExtensionDeclarations(name: String, project: Project, strictMatch: Boolean = true, callback: (Extension, XmlTag) -> Boolean) {
   val scope = PluginRelatedLocatorsUtils.getCandidatesScope(project)
   PsiSearchHelper.getInstance(project).processElementsWithWord(
     { element, offsetInElement ->
-      if (element !is XmlTag) {
+      val elementAtOffset = (element as? XmlTag)?.findElementAt(offsetInElement) ?: return@processElementsWithWord true
+      if (strictMatch) {
+        if (!elementAtOffset.textMatches(name)) {
+          return@processElementsWithWord true
+        }
+      }
+      else if (!StringUtil.contains(elementAtOffset.text, name)) {
         return@processElementsWithWord true
       }
 
-      val elementAtOffset = element.findElementAt(offsetInElement)
-      if (elementAtOffset == null) {
-        return@processElementsWithWord true
-      }
-
-      val foundText = elementAtOffset.text
-      if (!strictMatch && !StringUtil.contains(foundText, name)) {
-        return@processElementsWithWord true
-      }
-      if (strictMatch && !StringUtil.equals(foundText, name)) {
-        return@processElementsWithWord true
-      }
-
-      val dom = DomUtil.getDomElement(element) as? Extension ?: return@processElementsWithWord true
-      callback(dom, element)
-    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, true /* case-sensitive */)
+      val extension = DomManager.getDomManager(project).getDomElement(element) as? Extension ?: return@processElementsWithWord true
+      callback(extension, element)
+    }, scope, name, UsageSearchContext.IN_FOREIGN_LANGUAGES, /* case-sensitive = */ true)
 }
 
 private fun findExtensionsByClassName(project: Project, className: String): List<ExtensionCandidate> {
-  val result = SmartList<ExtensionCandidate>()
+  val result = Collections.synchronizedList(SmartList<ExtensionCandidate>())
   val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
   processExtensionsByClassName(project, className) { tag, _ ->
     result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(tag)))
@@ -63,7 +57,7 @@ private fun findExtensionsByClassName(project: Project, className: String): List
 }
 
 internal inline fun processExtensionsByClassName(project: Project, className: String, crossinline processor: (XmlTag, ExtensionPoint) -> Boolean) {
-  processExtensionDeclarations(className, project, true) { extension, tag ->
+  processExtensionDeclarations(className, project) { extension, tag ->
     extension.extensionPoint?.let { processor(tag, it) } ?: true
   }
 }
@@ -76,7 +70,7 @@ internal class ExtensionByExtensionPointLocator(private val project: Project,
   private fun processCandidates(processor: (XmlTag) -> Boolean) {
     // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
     // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
-    val epNameToSearch = if (pointQualifiedName == "com.intellij.compiler.task") "compiler.task" else StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
+    val epNameToSearch = StringUtil.substringAfterLast(pointQualifiedName, ".") ?: return
     processExtensionDeclarations(epNameToSearch, project, false /* not strict match */) { extension, tag ->
       val ep = extension.extensionPoint ?: return@processExtensionDeclarations true
       if (ep.effectiveQualifiedName == pointQualifiedName && (extensionId == null || extensionId == extension.id.stringValue)) {
@@ -90,7 +84,7 @@ internal class ExtensionByExtensionPointLocator(private val project: Project,
   }
 
   override fun findCandidates(): List<ExtensionCandidate> {
-    val result = SmartList<ExtensionCandidate>()
+    val result = Collections.synchronizedList(SmartList<ExtensionCandidate>())
     val smartPointerManager by lazy { SmartPointerManager.getInstance(project) }
     processCandidates {
       result.add(ExtensionCandidate(smartPointerManager.createSmartPsiElementPointer(it)))

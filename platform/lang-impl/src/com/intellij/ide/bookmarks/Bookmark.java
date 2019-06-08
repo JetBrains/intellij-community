@@ -53,7 +53,7 @@ import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +67,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 import static com.intellij.ide.ui.UISettings.setupAntialiasing;
+import static com.intellij.util.ui.JBUIScale.ScaleType.OBJ_SCALE;
 
 public class Bookmark implements Navigatable, Comparable<Bookmark> {
   static final Icon DEFAULT_ICON = new MyCheckedIcon();
@@ -342,7 +343,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return result.toString();
   }
 
-  static class MnemonicIcon extends JBUI.CachingScalableJBIcon<MnemonicIcon> {
+  static class MnemonicIcon extends JBCachingScalableIcon<MnemonicIcon> {
     private static final MnemonicIcon[] cache = new MnemonicIcon[36];//0..9  + A..Z
     private final char myMnemonic;
 
@@ -403,7 +404,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
 
     private int scale(int width) {
-      return (int)Math.ceil(scaleVal(width, JBUI.ScaleType.OBJ_SCALE));
+      return (int)Math.ceil(scaleVal(width, OBJ_SCALE));
     }
 
     @Override
@@ -427,7 +428,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
   }
 
-  private static class MyCheckedIcon extends JBUI.CachingScalableJBIcon<MyCheckedIcon> implements RetrievableIcon {
+  private static class MyCheckedIcon extends JBCachingScalableIcon<MyCheckedIcon> implements RetrievableIcon {
     @NotNull
     @Override
     public Icon retrieveIcon() {
@@ -445,7 +446,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
 
     private int scale(int width) {
-      return (int)Math.ceil(scaleVal(width, JBUI.ScaleType.OBJ_SCALE));
+      return (int)Math.ceil(scaleVal(width, OBJ_SCALE));
     }
 
     @Override

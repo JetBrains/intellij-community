@@ -18,7 +18,8 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author konstantin.aleev
@@ -27,8 +28,8 @@ public interface RunDashboardRunConfigurationNode extends RunDashboardNode, User
   @NotNull
   RunnerAndConfigurationSettings getConfigurationSettings();
 
-  @Nullable
-  RunDashboardContributor getContributor();
+  @NotNull
+  List<RunDashboardCustomizer> getCustomizers();
 
   @NotNull
   RunDashboardRunConfigurationStatus getStatus();

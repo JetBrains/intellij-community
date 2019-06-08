@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -34,6 +35,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +43,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+
+import static org.junit.Assert.*;
 
 @RunFirst
 @SkipSlowTestLocally
@@ -65,7 +69,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(theChild);
     UIUtil.pump(); // wait for all event handlers to calm down
 
-    LOG.debug("Start searching...");
+    Logger.getInstance(VfsUtilPerformanceTest.class).debug("Start searching...");
     PlatformTestUtil.startPerformanceTest("finding child", 1500, () -> {
       for (int i = 0; i < 1_000_000; i++) {
         VirtualFile child = vDir.findChild("5111.txt");
@@ -197,7 +201,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   private void doAsyncRefreshTest() throws Exception {
     int N = 1_000;
-    byte[] data = "xxx".getBytes(CharsetToolkit.UTF8_CHARSET);
+    byte[] data = "xxx".getBytes(StandardCharsets.UTF_8);
 
     File temp = myTempDir.newFolder();
     LocalFileSystem fs = LocalFileSystem.getInstance();
@@ -310,7 +314,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     return temp;
   }
 
-  private static void processEvents(List<VFileEvent> events) {
+  private static void processEvents(List<? extends VFileEvent> events) {
     WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
   }
 
@@ -318,7 +322,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     events.clear();
     TempFileSystem fs = TempFileSystem.getInstance();
     IntStream.range(0, N)
-      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, null, false, false))
+      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, null, null, false, null))
       .peek(event -> {
         if (fs.findModelChild(temp, event.getChildName()) == null) {
           fs.createChildFile(this, temp, event.getChildName());

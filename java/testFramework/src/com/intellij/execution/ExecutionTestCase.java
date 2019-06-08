@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class ExecutionTestCase extends IdeaTestCase {
+public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
   private int myTimeout;
   private static File ourOutputRoot;
@@ -87,7 +87,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
       PsiTestUtil.addContentRoot(myModule, moduleDir);
       PsiTestUtil.addSourceRoot(myModule, srcDir);
       IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
-      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(myModuleOutputDir.getAbsolutePath())), false);
+      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(myModuleOutputDir.getAbsolutePath()), false);
     });
   }
 

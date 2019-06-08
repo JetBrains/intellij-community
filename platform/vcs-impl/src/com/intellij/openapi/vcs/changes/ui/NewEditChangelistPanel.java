@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.Set;
 
 public abstract class NewEditChangelistPanel extends JPanel {
@@ -166,24 +167,21 @@ public abstract class NewEditChangelistPanel extends JPanel {
   }
 
   private static EditorTextField createEditorField(final Project project, final int defaultLines) {
-    final EditorTextField editorField;
-
-    final Set<EditorCustomization> editorFeatures = ContainerUtil.newHashSet();
+    final Set<EditorCustomization> editorFeatures = new HashSet<>();
     ContainerUtil.addIfNotNull(editorFeatures, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
-    double scaleFactor = 1.3;
     if (defaultLines == 1) {
       editorFeatures.add(HorizontalScrollBarEditorCustomization.DISABLED);
       editorFeatures.add(OneLineEditorCustomization.ENABLED);
     }
     else {
       editorFeatures.add(SoftWrapsEditorCustomization.ENABLED);
-      scaleFactor = 2.1;
     }
-    editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
-    final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
-    editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * scaleFactor)));
-    editorField.addSettingsProvider(editor -> editor.getContentComponent()
-      .setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.emptyLeft(2))));
+    EditorTextField editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
+
+    if (defaultLines > 1) {
+      editorField.addSettingsProvider(editor -> editor.getContentComponent()
+        .setBorder(new CompoundBorder(editor.getContentComponent().getBorder(), JBUI.Borders.empty(2, 5))));
+    }
     return editorField;
   }
 

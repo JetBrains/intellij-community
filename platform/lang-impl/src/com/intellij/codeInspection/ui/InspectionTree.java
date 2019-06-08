@@ -66,8 +66,7 @@ public class InspectionTree extends Tree {
   private final OccurenceNavigator myOccurenceNavigator = new MyOccurrenceNavigator();
   private final InspectionResultsView myView;
 
-  public InspectionTree(@NotNull GlobalInspectionContextImpl context,
-                        @NotNull InspectionResultsView view) {
+  public InspectionTree(@NotNull InspectionResultsView view) {
     myView = view;
     myModel = new InspectionTreeModel();
     Disposer.register(view, myModel);
@@ -75,7 +74,6 @@ public class InspectionTree extends Tree {
 
     setCellRenderer(new InspectionTreeCellRenderer(view));
     setRootVisible(false);
-    UIUtil.setLineStyleAngled(this);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getSelectionModel().addTreeSelectionListener(e -> {
         if (isUnderQueueUpdate()) return;
@@ -93,7 +91,7 @@ public class InspectionTree extends Tree {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            if (myView != null && !myView.isDisposed()) {
+            if (!myView.isDisposed()) {
               OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myView), false);
             }
           }
@@ -114,7 +112,7 @@ public class InspectionTree extends Tree {
           EdtInvocationManager.getInstance().invokeLater(() -> {
             expandPath(new TreePath(myModel.getRoot()));
             SmartExpander.installOn(InspectionTree.this);
-            if (myView != null && !myView.isDisposed()) {
+            if (!myView.isDisposed()) {
               myView.syncRightPanel();
             }
           });

@@ -2,8 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,12 +23,22 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     myManager = manager;
   }
 
+  @Override
+  @NotNull
+  public TypeDfaState initial() {
+    return new TypeDfaState();
+  }
+
   @NotNull
   @Override
   public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
     if (ins.isEmpty()) return new TypeDfaState();
 
     TypeDfaState result = new TypeDfaState(ins.get(0));
+    if (ins.size() == 1) {
+      return result;
+    }
+
     for (int i = 1; i < ins.size(); i++) {
       result.joinState(ins.get(i), myManager);
     }
@@ -47,11 +55,11 @@ class TypeDfaState {
   private final Map<VariableDescriptor, DFAType> myVarTypes;
 
   TypeDfaState() {
-    myVarTypes = ContainerUtil.newHashMap();
+    myVarTypes = new HashMap<>();
   }
 
   TypeDfaState(TypeDfaState another) {
-    myVarTypes = ContainerUtil.newHashMap(another.myVarTypes);
+    myVarTypes = new HashMap<>(another.myVarTypes);
   }
 
   Map<VariableDescriptor, DFAType> getVarTypes() {
@@ -99,13 +107,8 @@ class TypeDfaState {
     return result == null ? DFAType.create(null) : result.copy();
   }
 
-  Map<VariableDescriptor, PsiType> getBindings() {
-    HashMap<VariableDescriptor, PsiType> map = ContainerUtil.newHashMap();
-    for (Map.Entry<VariableDescriptor, DFAType> entry : myVarTypes.entrySet()) {
-      DFAType value = entry.getValue();
-      map.put(entry.getKey(), value == null ? null : value.getResultType());
-    }
-    return map;
+  Map<VariableDescriptor, DFAType> getBindings() {
+    return new HashMap<>(myVarTypes);
   }
 
   void putType(VariableDescriptor descriptor, @Nullable DFAType type) {

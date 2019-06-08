@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
@@ -15,6 +15,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -85,20 +86,15 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public Set<String> getUsedVariableNames() {
-    final LinkedHashSet<String> set = TemplateImplUtil.parseVariableNames(pattern);
+    final Set<String> set = TemplateImplUtil.parseVariableNames(pattern);
     set.add(Configuration.CONTEXT_VAR_NAME);
     return set;
   }
 
   public void removeUnusedVariables() {
-    final Set<String> nameSet = getUsedVariableNames();
-    for (final Iterator<String> iterator = variableConstraints.keySet().iterator(); iterator.hasNext(); ) {
-      final String key = iterator.next();
-      if (!nameSet.contains(key)) {
-        iterator.remove();
-      }
-    }
+    variableConstraints.keySet().removeIf(key -> !getUsedVariableNames().contains(key));
   }
+
   public MatchVariableConstraint getVariableConstraint(String name) {
     return variableConstraints.get(name);
   }
@@ -155,6 +151,7 @@ public class MatchOptions implements JDOMExternalizable {
     StringToConstraintsTransformer.transformCriteria(criteria, this);
   }
 
+  @Nullable
   public SearchScope getScope() {
     return scope;
   }
@@ -285,7 +282,8 @@ public class MatchOptions implements JDOMExternalizable {
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     result = 29 * result + pattern.hashCode();
     result = 29 * result + variableConstraints.hashCode();
-    if (scope != null) result = 29 * result + scope.hashCode();
+    if (scope != null) //noinspection deprecation
+      result = 29 * result + scope.hashCode();
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
     if (myDialect != null) result = 29 * result + myDialect.hashCode();
     return result;

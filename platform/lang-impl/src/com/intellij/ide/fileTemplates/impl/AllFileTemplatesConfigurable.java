@@ -259,7 +259,6 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         if (myCurrentTab == null) {
           e.getPresentation().setEnabled(false);
           return;
@@ -276,7 +275,6 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         e.getPresentation().setEnabled(!(myCurrentTab == myCodeTemplatesList || myCurrentTab == myOtherTemplatesList));
       }
     };
@@ -288,7 +286,6 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         e.getPresentation().setEnabled(myCurrentTab != myCodeTemplatesList
                                        && myCurrentTab != myOtherTemplatesList
                                        && myCurrentTab.getSelectedTemplate() != null);
@@ -302,7 +299,6 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        super.update(e);
         if (myCurrentTab == null) {
           e.getPresentation().setEnabled(false);
           return;
@@ -438,7 +434,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
 
   @Override
   public boolean isProjectLevel() {
-    return myScheme != null && !myScheme.getProject().isDefault();
+    return myScheme != null && myScheme != FileTemplatesScheme.DEFAULT && !myScheme.getProject().isDefault();
   }
 
   // internal template could not be removed and should be rendered bold

@@ -329,10 +329,10 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   }
   private static class CopyToClipboardAction extends DumbAwareAction {
     private static final NotificationGroup GROUP = NotificationGroup.toolWindowGroup("Analyze thread dump", ToolWindowId.RUN, false);
-    private final List<ThreadState> myThreadDump;
+    private final List<? extends ThreadState> myThreadDump;
     private final Project myProject;
 
-    private CopyToClipboardAction(List<ThreadState> threadDump, Project project) {
+    private CopyToClipboardAction(List<? extends ThreadState> threadDump, Project project) {
       super("Copy to Clipboard", "Copy whole thread dump to clipboard", PlatformIcons.COPY_ICON);
       myThreadDump = threadDump;
       myProject = project;
@@ -390,15 +390,15 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  public static ExporterToTextFile createToFileExporter(Project project, List<ThreadState> threadStates) {
+  public static ExporterToTextFile createToFileExporter(Project project, List<? extends ThreadState> threadStates) {
     return new MyToFileExporter(project, threadStates);
   }
 
   private static class MyToFileExporter implements ExporterToTextFile {
     private final Project myProject;
-    private final List<ThreadState> myThreadStates;
+    private final List<? extends ThreadState> myThreadStates;
 
-    private MyToFileExporter(Project project, List<ThreadState> threadStates) {
+    private MyToFileExporter(Project project, List<? extends ThreadState> threadStates) {
       myProject = project;
       myThreadStates = threadStates;
     }

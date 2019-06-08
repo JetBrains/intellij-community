@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.application.ReadAction;
@@ -22,7 +22,6 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
@@ -56,7 +55,7 @@ public class VcsStructureChooser extends DialogWrapper {
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myRoots;
   @NotNull private final Map<VirtualFile, String> myModulesSet;
-  @NotNull private final Set<VirtualFile> mySelectedFiles = ContainerUtil.newHashSet();
+  @NotNull private final Set<VirtualFile> mySelectedFiles = new HashSet<>();
 
   @NotNull private final SelectionManager mySelectionManager;
 
@@ -82,7 +81,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @NotNull
   private Map<VirtualFile, String> calculateModules(@NotNull List<? extends VirtualFile> roots) {
-    Map<VirtualFile, String> result = ContainerUtil.newHashMap();
+    Map<VirtualFile, String> result = new HashMap<>();
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside

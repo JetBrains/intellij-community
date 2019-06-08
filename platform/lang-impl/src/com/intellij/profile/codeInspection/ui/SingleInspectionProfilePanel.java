@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.profile.codeInspection.ui;
 
@@ -11,6 +11,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -172,14 +173,14 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public static String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return "No highlighting, only fix"; //todo severity presentation
-    return StringUtil.capitalizeWords(severity.getName().toLowerCase(Locale.US), true);
+    return StringUtil.capitalizeWords(StringUtil.toLowerCase(severity.getName()), true);
   }
 
   private static boolean isDescriptorAccepted(Descriptor descriptor,
                                               @NonNls String filter,
                                               final boolean forceInclude,
                                               final List<Set<String>> keySetList, final Set<String> quoted) {
-    filter = filter.toLowerCase();
+    filter = StringUtil.toLowerCase(filter);
     if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
     }
@@ -199,7 +200,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
       final String description = descriptor.getToolWrapper().loadDescription();
-      if (description != null && StringUtil.containsIgnoreCase(description.toLowerCase(Locale.US), stripped)) {
+      if (description != null && StringUtil.containsIgnoreCase(StringUtil.toLowerCase(description), stripped)) {
         if (!forceInclude) return true;
       } else if (forceInclude) return false;
     }
@@ -517,7 +518,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
-    UIUtil.setLineStyleAngled(myTreeTable.getTree());
     TreeUtil.installActions(myTreeTable.getTree());
 
 
@@ -919,12 +919,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     myDisposable = null;
   }
 
-  private JPanel createInspectionProfileSettingsPanel() {
-
-    myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
-    myBrowser.setEditable(false);
-    myBrowser.setBorder(JBUI.Borders.empty(5));
-    myBrowser.addHyperlinkListener(new HyperlinkAdapter() {
+  public static HyperlinkAdapter createSettingsHyperlinkListener(Project project){
+    return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         String description = e.getDescription();
@@ -932,9 +928,11 @@ public class SingleInspectionProfilePanel extends JPanel {
           DataContext context = DataManager.getInstance().getDataContextFromFocus().getResult();
           if (context != null) {
             Settings settings = Settings.KEY.getData(context);
+            String configId = description.substring(SETTINGS.length());
             if (settings != null) {
-              String configId = description.substring(SETTINGS.length());
               settings.select(settings.find(configId));
+            } else {
+              ShowSettingsUtilImpl.showSettingsDialog(project, configId, "");
             }
           }
         }
@@ -942,7 +940,15 @@ public class SingleInspectionProfilePanel extends JPanel {
           BrowserUtil.browse(description);
         }
       }
-    });
+    };
+  }
+
+  private JPanel createInspectionProfileSettingsPanel() {
+
+    myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
+    myBrowser.setEditable(false);
+    myBrowser.setBorder(JBUI.Borders.empty(5));
+    myBrowser.addHyperlinkListener(createSettingsHyperlinkListener(myProjectProfileManager.getProject()));
 
     initToolStates();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
@@ -1002,7 +1008,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (myProfile.isChanged()) return true;
     if (myProfile.getSource().isProjectLevel() != myProfile.isProjectLevel()) return true;
     if (!Comparing.strEqual(myProfile.getSource().getName(), myProfile.getName())) return true;
-    if (!Comparing.equal(myInitialScopesOrder, myProfile.getScopesOrder())) return true;
+    if (!Arrays.equals(myInitialScopesOrder, myProfile.getScopesOrder())) return true;
     return descriptorsAreChanged();
   }
 

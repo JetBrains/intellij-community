@@ -54,7 +54,7 @@ public abstract class ReferenceProvidersRegistry {
     if (hints == PsiReferenceService.Hints.NO_HINTS) {
       return CachedValuesManager.getCachedValue(context, () ->
         CachedValueProvider.Result.create(getInstance().doGetReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS),
-                                          PsiModificationTracker.MODIFICATION_COUNT));
+                                          PsiModificationTracker.MODIFICATION_COUNT)).clone();
     }
 
     return getInstance().doGetReferencesFromProviders(context, hints);

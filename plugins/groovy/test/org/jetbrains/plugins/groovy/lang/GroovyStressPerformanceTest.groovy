@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -221,7 +221,7 @@ def foo(List<String> list, SomeClass sc) {
   List<String> result
   for (s in list) {
 ${
-'''
+      '''
     bar(s, result)
     bar2(s, result, sc)
     bar3(foo:s, bar:result, sc)
@@ -239,7 +239,7 @@ class SomeClass {
   void someMethod(String s) {}
 }
 """
-    measureHighlighting(text, 14_000)
+    measureHighlighting(text, 7_000)
   }
 
   void "test constructor call's"() {

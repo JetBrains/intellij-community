@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.icons.AllIcons;
@@ -32,10 +32,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Interactive rebase editor. It allows reordering of the entries and changing commit status.
@@ -444,7 +441,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     @Override
     public Collection<String> getTextLinesToCopy() {
       if (myCommitsTable.getSelectedRowCount() > 0) {
-        List<String> lines = ContainerUtil.newArrayList();
+        List<String> lines = new ArrayList<>();
         for (int row : myCommitsTable.getSelectedRows()) {
           lines.add(myTableModel.getStringToCopy(row));
         }

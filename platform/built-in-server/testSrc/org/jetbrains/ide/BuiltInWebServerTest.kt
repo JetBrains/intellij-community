@@ -3,8 +3,8 @@ package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.async.inWriteAction
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.impl.inWriteAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
-import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.createHeavyProject
 import com.intellij.testFramework.use
@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -78,7 +79,13 @@ internal class HeavyBuiltInWebServerTest {
   companion object {
     @JvmField
     @ClassRule
-    val appRule = ProjectRule()
+    val appRule = ApplicationRule()
+
+    @BeforeClass
+    @JvmStatic
+    fun runServer() {
+      BuiltInServerManager.getInstance().waitForStart()
+    }
   }
 
   @Rule

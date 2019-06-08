@@ -38,9 +38,9 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   private JRadioButton myUsingFileSystemRadioButton;
   private JRadioButton myUsingVcsRadioButton;
   private JComboBox<String> myChangelist;
-  private List<FileInfo> myFiles;
+  private List<? extends FileInfo> myFiles;
 
-  public ReadOnlyStatusDialog(Project project, @NotNull List<FileInfo> files) {
+  public ReadOnlyStatusDialog(Project project, @NotNull List<? extends FileInfo> files) {
     super(project);
     setTitle(VcsBundle.message("dialog.title.clear.read.only.file.status"));
     myFiles = files;

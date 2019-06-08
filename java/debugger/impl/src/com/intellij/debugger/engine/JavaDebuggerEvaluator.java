@@ -137,7 +137,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
             text.set(new TextWithImportsImpl(element));
             CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
             try {
-              return factory.getEvaluatorBuilder().build(element, debuggerContext.getSourcePosition());
+              return factory.getEvaluatorBuilder().build(element, ContextUtil.getSourcePosition(evalContext));
             }
             catch (UnsupportedExpressionException ex) {
               PsiElement context = PositionUtil.getContextElement(debuggerContext);

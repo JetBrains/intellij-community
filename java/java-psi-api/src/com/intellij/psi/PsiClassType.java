@@ -90,6 +90,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     return getParameters().length;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (!(obj instanceof PsiClassType)) {
@@ -166,6 +167,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     return false;
   }
 
+  @Override
   public int hashCode() {
     final String className = getClassName();
     if (className == null) return 0;

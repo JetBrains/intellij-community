@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,6 +24,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.execution.wsl.WSLUtil.LOG;
+
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
@@ -35,7 +36,6 @@ public class WSLDistribution {
   static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
@@ -68,6 +68,7 @@ public class WSLDistribution {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
       final ProcessOutput output = executeOnWsl(10000, "cat", releaseInfo);
+      if (LOG.isDebugEnabled()) LOG.debug("Reading release info: " + getId());
       if (!output.checkSuccess(LOG)) return null;
       for (String line : output.getStdoutLines(true)) {
         if (line.startsWith(key) && line.length() >= (key.length() + 1)) {

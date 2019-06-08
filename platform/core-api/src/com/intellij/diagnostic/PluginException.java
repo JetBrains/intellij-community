@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents an internal error caused by a plugin. It may happen if the plugin's code fails with an exception, or if the plugin violates
- * some contract of IntelliJ Platform. If such exceptions are thrown or logged via {@link com.intellij.openapi.diagnostic.Logger#error(Throwable)}
+ * some contract of IntelliJ Platform. If such exceptions are thrown or logged via {@link Logger#error(Throwable)}
  * method and reported to JetBrains by user, they may be automatically attributed to corresponding plugins.
  *
  * <p> If the problem is caused by a class, use {@link #createByClass} to create
@@ -64,6 +64,7 @@ public class PluginException extends RuntimeException {
    * Creates an exception caused by a problem in a plugin's code.
    * @param pluginClass a problematic class which caused the error
    */
+  @NotNull
   public static PluginException createByClass(@NotNull String errorMessage, @Nullable Throwable cause, @NotNull Class pluginClass) {
     return PluginProblemReporter.getInstance().createPluginExceptionByClass(errorMessage, cause, pluginClass);
   }
@@ -72,6 +73,7 @@ public class PluginException extends RuntimeException {
    * Creates an exception caused by a problem in a plugin's code, takes error message from the cause exception.
    * @param pluginClass a problematic class which caused the error
    */
+  @NotNull
   public static PluginException createByClass(@NotNull Throwable cause, @NotNull Class pluginClass) {
     return PluginProblemReporter.getInstance().createPluginExceptionByClass(StringUtil.notNullize(cause.getMessage()), cause, pluginClass);
   }

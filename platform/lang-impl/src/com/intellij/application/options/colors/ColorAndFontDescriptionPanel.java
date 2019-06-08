@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -14,11 +14,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.BitUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -28,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -51,7 +54,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
   private final Map<String, EffectType> myEffectsMap;
   {
-    Map<String, EffectType> map = ContainerUtil.newLinkedHashMap();
+    Map<String, EffectType> map = new LinkedHashMap<>();
     map.put(ApplicationBundle.message("combobox.effect.underscored"), EffectType.LINE_UNDERSCORE);
     map.put(ApplicationBundle.message("combobox.effect.boldunderscored"), EffectType.BOLD_LINE_UNDERSCORE);
     map.put(ApplicationBundle.message("combobox.effect.underwaved"), EffectType.WAVE_UNDERSCORE);
@@ -60,7 +63,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     map.put(ApplicationBundle.message("combobox.effect.bold.dottedline"), EffectType.BOLD_DOTTED_LINE);
     myEffectsMap = Collections.unmodifiableMap(map);
   }
-  private JComboBox myEffectsCombo;
+  private JComboBox<String> myEffectsCombo;
 
   private JBCheckBox myCbBold;
   private JBCheckBox myCbItalic;
@@ -75,15 +78,8 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     add(myPanel, BorderLayout.CENTER);
 
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
-    //noinspection unchecked
-    myEffectsCombo.setModel(new CollectionComboBoxModel<>(ContainerUtil.newArrayList(myEffectsMap.keySet())));
-    //noinspection unchecked
-    myEffectsCombo.setRenderer(new ListCellRendererWrapper<String>() {
-      @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        setText(value != null ? value : "<invalid>");
-      }
-    });
+    myEffectsCombo.setModel(new CollectionComboBoxModel<>(new ArrayList<>(myEffectsMap.keySet())));
+    myEffectsCombo.setRenderer(SimpleListCellRenderer.create("<invalid>", Functions.id()));
 
     ActionListener actionListener = e -> {
       if (myUiEventsEnabled) {

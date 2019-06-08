@@ -123,7 +123,7 @@ public final class FileAttributes {
   @Override
   public int hashCode() {
     int result = type != null ? type.hashCode() : 0;
-    result = 31 * result + (int)flags;
+    result = 31 * result + flags;
     result = 31 * result + (int)(length ^ (length >>> 32));
     result = 31 * result + (int)(lastModified ^ (lastModified >>> 32));
     return result;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -108,8 +108,8 @@ public class Restarter {
   }
 
   private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
-    Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
-    Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
+    Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
+    Shell32 shell32 = Native.load("shell32", Shell32.class);
 
     int pid = WinProcessManager.getCurrentProcessId();
     IntByReference argc = new IntByReference();

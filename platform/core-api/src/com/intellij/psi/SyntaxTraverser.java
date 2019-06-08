@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -415,7 +415,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
           int count = structure.getChildren(node, ref);
           if (count == 0) return ContainerUtil.emptyIterator();
           T[] array = ref.get();
-          LinkedList<T> list = ContainerUtil.newLinkedList();
+          LinkedList<T> list = new LinkedList<>();
           for (int i = 0; i < count; i++) {
             T child = array[i];
             IElementType childType = typeOf(child);

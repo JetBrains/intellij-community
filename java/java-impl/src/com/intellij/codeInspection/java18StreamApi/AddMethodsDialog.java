@@ -17,7 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -41,7 +41,7 @@ public class AddMethodsDialog extends DialogWrapper {
   private JPanel myPanel;
   private ComboBox myTemplatesCombo;
   private ClassNameReferenceEditor myClassNameEditor;
-  private ComboBox myMethodNameCombo;
+  private ComboBox<Collection<PsiMethod>> myMethodNameCombo;
   private ActionUsagePanel myBeforeActionPanel;
   private ActionUsagePanel myAfterActionPanel;
   private JPanel myExamplePanel;
@@ -118,15 +118,7 @@ public class AddMethodsDialog extends DialogWrapper {
         myTemplatesCombo.setSelectedItem(templatesAsList.get(0));
       }
     });
-    myMethodNameCombo.setRenderer(new ListCellRendererWrapper<Collection<PsiMethod>>() {
-      @Override
-      public void customize(JList list, Collection<PsiMethod> methods, int index, boolean selected, boolean hasFocus) {
-        if (methods != null) {
-          LOG.assertTrue(!methods.isEmpty());
-          setText(ContainerUtil.getFirstItem(methods).getName());
-        }
-      }
-    });
+    myMethodNameCombo.setRenderer(SimpleListCellRenderer.create("", value -> value.iterator().next().getName()));
     myClassNameEditor.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {

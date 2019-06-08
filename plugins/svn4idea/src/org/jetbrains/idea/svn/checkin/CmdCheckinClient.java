@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -22,9 +22,7 @@ import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,10 +76,10 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
   @NotNull
   private List<File> filterCommittables(@NotNull List<File> committables) throws SvnBindException {
-    final Set<String> childrenOfSomebody = ContainerUtil.newHashSet();
+    final Set<String> childrenOfSomebody = new HashSet<>();
     new AbstractFilterChildren<File>() {
       @Override
-      protected void sortAscending(List<File> list) {
+      protected void sortAscending(List<? extends File> list) {
         Collections.sort(list);
       }
 
@@ -95,9 +93,9 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
         }
         return isAncestor;
       }
-    }.doFilter(ContainerUtil.newArrayList(committables));
+    }.doFilter(new ArrayList<>(committables));
     if (!childrenOfSomebody.isEmpty()) {
-      List<File> result = ContainerUtil.newArrayList();
+      List<File> result = new ArrayList<>();
       StatusClient statusClient = myFactory.createStatusClient();
 
       for (File file : committables) {

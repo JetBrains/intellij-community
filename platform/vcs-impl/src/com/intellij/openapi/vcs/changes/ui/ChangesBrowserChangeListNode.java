@@ -122,7 +122,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
-  private static void addIfNotNull(final List<VirtualFile> unversionedFiles1, final List<VirtualFile> ignoredFiles) {
+  private static void addIfNotNull(final List<? super VirtualFile> unversionedFiles1, final List<? extends VirtualFile> ignoredFiles) {
     if (ignoredFiles != null) {
       unversionedFiles1.addAll(ignoredFiles);
     }
@@ -136,6 +136,6 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @Override
   public int compareUserObjects(final ChangeList o2) {
-    return getUserObject().getName().compareToIgnoreCase(o2.getName());
+    return compareFileNames(getUserObject().getName(), o2.getName());
   }
 }

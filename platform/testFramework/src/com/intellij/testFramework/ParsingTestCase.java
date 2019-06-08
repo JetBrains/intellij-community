@@ -45,6 +45,7 @@ import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -135,8 +136,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected <T> void addExplicitExtension(LanguageExtension<T> instance, Language language, T object) {
-    instance.addExplicitExtension(language, object);
-    Disposer.register(getTestRootDisposable(), () -> instance.removeExplicitExtension(language, object));
+    instance.addExplicitExtension(language, object, myProject);
   }
 
   @Override
@@ -272,7 +272,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
   protected PsiFile createFile(@NotNull String name, @NotNull String text) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
-    virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    virtualFile.setCharset(StandardCharsets.UTF_8);
     return createFile(virtualFile);
   }
 

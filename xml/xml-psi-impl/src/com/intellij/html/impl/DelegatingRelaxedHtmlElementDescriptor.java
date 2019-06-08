@@ -3,6 +3,7 @@
  */
 package com.intellij.html.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -80,7 +81,7 @@ public class DelegatingRelaxedHtmlElementDescriptor implements XmlElementDescrip
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    final XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(attributeName.toLowerCase(), context);
+    final XmlAttributeDescriptor descriptor = myDelegate.getAttributeDescriptor(StringUtil.toLowerCase(attributeName), context);
     if (descriptor != null) return descriptor;
 
     return RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);

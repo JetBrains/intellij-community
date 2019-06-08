@@ -25,6 +25,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.Disposer;
@@ -76,6 +77,9 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   protected void processContextHints() {
     super.processContextHints();
     myFocusTrackerSupport.processContextHints(myRequest, myContext);
+
+    Float proportion = myContext.getUserData(DiffUserDataKeysEx.TWO_SIDE_SPLITTER_PROPORTION);
+    if (proportion != null && proportion >= 0.05 && proportion <= 0.95) myContentPanel.getSplitter().setProportion(proportion);
   }
 
   @Override
@@ -83,6 +87,9 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   protected void updateContextHints() {
     super.updateContextHints();
     myFocusTrackerSupport.updateContextHints(myRequest, myContext);
+
+    float proportion = myContentPanel.getSplitter().getProportion();
+    myContext.putUserData(DiffUserDataKeysEx.TWO_SIDE_SPLITTER_PROPORTION, proportion);
   }
 
   //

@@ -20,7 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-public class FormatProcessorUtils {
+class FormatProcessorUtils {
   
   
   private static int calcShift(@NotNull final IndentInside oldIndent,
@@ -31,11 +31,11 @@ public class FormatProcessorUtils {
     return newIndent.getSpacesCount(options) - oldIndent.getSpacesCount(options);
   }
   
-  public static int replaceWhiteSpace(final FormattingModel model,
-                                       @NotNull final LeafBlockWrapper block,
-                                       int shift,
-                                       final CharSequence _newWhiteSpace,
-                                       final CommonCodeStyleSettings.IndentOptions options
+  static int replaceWhiteSpace(final FormattingModel model,
+                               @NotNull final LeafBlockWrapper block,
+                               int shift,
+                               final CharSequence _newWhiteSpace,
+                               final CommonCodeStyleSettings.IndentOptions options
   ) {
     final WhiteSpace whiteSpace = block.getWhiteSpace();
     final TextRange textRange = whiteSpace.getTextRange();

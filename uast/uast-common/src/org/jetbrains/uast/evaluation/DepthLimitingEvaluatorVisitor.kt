@@ -13,13 +13,18 @@ internal class DepthLimitingEvaluatorVisitor(val depthLimit: kotlin.Int,
 
   private var depth: Int = 0
 
+  private var errorLogged = false
+
   private inline fun <T : UElement> wrapCall(node: T,
                                              data: UEvaluationState,
                                              delegateCall: (T, UEvaluationState) -> UEvaluationInfo): UEvaluationInfo {
     try {
       depth++
       if (depth > depthLimit) {
-        LOG.info("evaluation depth exceeded $depth > $depthLimit for '$node' in '${node.sourcePsi?.containingFile?.name}'")
+        if (!errorLogged) {
+          LOG.info("evaluation depth exceeded $depth > $depthLimit for '$node' in '${node.sourcePsi?.containingFile?.name}'")
+          errorLogged = true
+        }
         return UUndeterminedValue to data
       }
       return delegateCall(node, data)

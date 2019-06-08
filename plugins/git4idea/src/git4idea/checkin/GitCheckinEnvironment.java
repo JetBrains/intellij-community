@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -40,8 +40,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
@@ -128,19 +126,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return true;
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
-                                                             PairConsumer<Object, Object> additionalDataConsumer) {
-    return new GitCheckinOptions(myProject, panel);
+  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+    return new GitCheckinOptions(myProject, commitPanel);
   }
 
   @Override
   @Nullable
-  public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    LinkedHashSet<String> messages = newLinkedHashSet();
+  public String getDefaultMessageFor(@NotNull FilePath[] filesToCheckin) {
+    LinkedHashSet<String> messages = new LinkedHashSet<>();
     GitRepositoryManager manager = getRepositoryManager(myProject);
-    for (VirtualFile root : gitRoots(asList(filesToCheckin))) {
+    for (VirtualFile root : getRootsForFilePathsIfAny(myProject, asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
       if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
         LOG.warn("Unregistered repository: " + root);
@@ -183,13 +180,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return GitBundle.getString("commit.action.name");
   }
 
+  @NotNull
   @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
-                                   @NotNull String message,
-                                   @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
+                                   @NotNull String commitMessage,
+                                   @NotNull CommitContext commitContext,
+                                   @NotNull Set<String> feedback) {
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
-    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
+    Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
     LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
 
     List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
@@ -198,7 +197,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
       if (myNextCommitCommitRenamesSeparately) {
-        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, message);
+        Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
         toCommit = pair.first;
         List<VcsException> moveExceptions = pair.second;
 
@@ -208,14 +207,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
 
-      exceptions.addAll(commitRepository(repository, toCommit, message));
+      exceptions.addAll(commitRepository(repository, toCommit, commitMessage));
     }
 
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
       ModalityState modality = ModalityState.defaultModalityState();
       TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
-      List<GitRepository> preselectedRepositories = newArrayList(repositories);
+      List<GitRepository> preselectedRepositories = new ArrayList<>(repositories);
       GuiUtils.invokeLaterIfNeeded(
         () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
                                            GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),
@@ -766,25 +765,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-
-  @Override
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
-  }
-
-  /**
-   * Preform a merge commit
-   *
-   * @param project          a project
-   * @param root             a vcs root
-   * @param added            added files
-   * @param removed          removed files
-   * @param messageFile      a message file for commit
-   * @param author           an author
-   * @param exceptions       the list of exceptions to report
-   * @param partialOperation
-   * @return true if merge commit was successful
-   */
   private boolean mergeCommit(@NotNull Project project,
                               @NotNull VirtualFile root,
                               @NotNull Collection<? extends CommitChange> rootChanges,
@@ -1001,11 +981,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
-      sortedFiles = sortFilePathsByGitRoot(files);
+      sortedFiles = sortFilePathsByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -1056,11 +1036,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
-      sortedFiles = sortFilesByGitRoot(files);
+      sortedFiles = sortFilesByGitRoot(myProject, files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -1095,28 +1075,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
   }
 
-  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull List<? extends Change> changes, List<? super VcsException> exceptions) {
+  @NotNull
+  private static Map<VirtualFile, Collection<Change>> sortChangesByGitRoot(@NotNull Project project,
+                                                                           @NotNull List<? extends Change> changes,
+                                                                           @NotNull List<? super VcsException> exceptions) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : changes) {
-      // note that any path will work, because changes could happen within single vcs root
-      final FilePath filePath = getFilePath(change);
-      final VirtualFile vcsRoot;
       try {
+        // note that any path will work, because changes could happen within single vcs root
+        final FilePath filePath = getFilePath(change);
+
         // the parent paths for calculating roots in order to account for submodules that contribute
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
-        vcsRoot = getGitRoot(filePath.getParentPath());
+        GitRepository repository = getRepositoryForFile(project, assertNotNull(filePath.getParentPath()));
+        Collection<Change> changeList = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+        changeList.add(change);
       }
       catch (VcsException e) {
         exceptions.add(e);
-        continue;
       }
-      Collection<Change> changeList = result.get(vcsRoot);
-      if (changeList == null) {
-        changeList = new ArrayList<>();
-        result.put(vcsRoot, changeList);
-      }
-      changeList.add(change);
     }
     return result;
   }
@@ -1181,7 +1159,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
       authorLabel.setLabelFor(myAuthorField);
 
-      myAmendComponent = new MyAmendComponent(project, getRepositoryManager(project), panel);
+      myAmendComponent = new MyAmendComponent(getRepositoryManager(project), panel);
       mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
       mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
       mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
@@ -1199,7 +1177,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     public boolean isAmend() {
-      return myAmendComponent.isAmend();
+      return myAmendComponent.isAmendMode();
     }
 
     @Nullable
@@ -1251,20 +1229,20 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     private class MyAmendComponent extends AmendComponent {
-      MyAmendComponent(@NotNull Project project, @NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
-        super(project, manager, panel);
-        myAmend.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            updateRenamesCheckboxState();
-          }
-        });
+      MyAmendComponent(@NotNull GitRepositoryManager manager, @NotNull CheckinProjectPanel panel) {
+        super(manager, panel);
+      }
+
+      @Override
+      protected void amendModeToggled() {
+        updateRenamesCheckboxState();
+        super.amendModeToggled();
       }
 
       @NotNull
       @Override
       protected Set<VirtualFile> getVcsRoots(@NotNull Collection<? extends FilePath> files) {
-        return gitRoots(files);
+        return getRootsForFilePathsIfAny(myProject, files);
       }
 
       @Nullable
@@ -1300,7 +1278,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       else {
         myCommitRenamesSeparatelyCheckbox.setVisible(true);
-        myCommitRenamesSeparatelyCheckbox.setEnabled(!myAmendComponent.isAmend());
+        myCommitRenamesSeparatelyCheckbox.setEnabled(!myAmendComponent.isAmendMode());
       }
     }
 

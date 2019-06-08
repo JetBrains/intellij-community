@@ -245,16 +245,19 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   }
 
   @Override
+  @NotNull
   public String getPresentableName() {
     return "JaCoCo";
   }
 
   @Override
+  @NotNull
   public String getId() {
     return "jacoco";
   }
 
   @Override
+  @NotNull
   public String getDataFileExtension() {
     return "exec";
   }

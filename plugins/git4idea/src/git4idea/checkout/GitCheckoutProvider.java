@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -32,11 +32,11 @@ import java.util.stream.Collectors;
  * Checkout provider for the Git
  */
 public class GitCheckoutProvider extends CheckoutProviderEx {
+  public GitCheckoutProvider() {
+  }
 
-  private final Git myGit;
-
-  public GitCheckoutProvider(@NotNull Git git) {
-    myGit = git;
+  @Deprecated
+  public GitCheckoutProvider(@SuppressWarnings("unused") @NotNull Git git) {
   }
 
   @Override
@@ -64,7 +64,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
     final String directoryName = dialog.getDirectoryName();
     final String parentDirectory = dialog.getParentDirectory();
-    clone(project, myGit, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
+    clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
   }
 
   public static void clone(final Project project, @NotNull final Git git, final Listener listener, final VirtualFile destinationParent,
@@ -106,7 +106,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
       return true;
     }
     String description = result.getErrorOutput().stream().
-      filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into") 
+      filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into")
                     && !StringUtil.startsWithIgnoreCase(msg, "remote:")
                     && !StringUtil.startsWithIgnoreCase(msg, "submodule")).
       map (msg -> GitUtil.cleanupErrorPrefixes(msg)).

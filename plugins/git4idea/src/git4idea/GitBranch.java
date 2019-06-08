@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * <p>Represents a Git branch, local or remote.</p>
+ * Represents a Git branch, local or remote.
  *
  * <p>Local and remote branches are different in that nature, that remote branch has complex name ("origin/master") containing both
  *    the name of the remote and the name of the branch. And while the standard name of the remote branch if origin/master,
@@ -21,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
  * </p>
  *
  * <p>GitBranches are equal, if their full names are equal. That means that if two GitBranch objects have different hashes, they
- *    are considered equal. But in this case an error if logged, becase it means that one of this GitBranch instances is out-of-date, and
- *    it is required to use an {@link GitRepository#update(TrackedTopic...) updated} version.</p>
+ *    are considered equal. But in this case an error if logged, because it means that one of this GitBranch instances is out-of-date, and
+ *    it is required to use an {@link GitRepository#update()} updated} version.</p>
  */
 public abstract class GitBranch extends GitReference {
 

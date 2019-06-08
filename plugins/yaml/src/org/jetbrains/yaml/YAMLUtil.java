@@ -366,7 +366,7 @@ public class YAMLUtil {
     }
   }
 
-  private static void deleteElementsOfType(@NotNull final Supplier<PsiElement> element, @NotNull final TokenSet types) {
+  private static void deleteElementsOfType(@NotNull final Supplier<? extends PsiElement> element, @NotNull final TokenSet types) {
     while (element.get() != null && types.contains(PsiUtilCore.getElementType(element.get()))) {
       element.get().delete();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
@@ -143,8 +143,8 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull
   public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds, boolean reportNotFound) {
-    Set<Integer> result = ContainerUtil.newHashSet();
-    Set<CommitId> matchedIds = ContainerUtil.newHashSet();
+    Set<Integer> result = new HashSet<>();
+    Set<CommitId> matchedIds = new HashSet<>();
     for (int i = 0; i < myCommitIdIndexes.size(); i++) {
       CommitId commitId = myCommitIdIndexes.get(i);
       if (commitIds.contains(commitId)) {

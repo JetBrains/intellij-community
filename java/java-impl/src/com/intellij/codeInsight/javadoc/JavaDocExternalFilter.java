@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
@@ -86,8 +85,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     myElement = element;
 
     String projectPath = "/" + myProject.getName() + "/";
-    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort()
-      + "/" + BuiltinWebServerAccess.getUserAuthenticationToken() + projectPath;
+    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + projectPath;
     if (docURL.startsWith(builtInServer)) {
       Url url = Urls.parseFromIdea(docURL);
       if (url != null) {

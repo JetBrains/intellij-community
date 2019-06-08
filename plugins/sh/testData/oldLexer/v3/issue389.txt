@@ -1,0 +1,3 @@
+word ('a\\nb')
+\n ('\n')
+word ('a\\n\\nb')

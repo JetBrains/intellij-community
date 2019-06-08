@@ -15,34 +15,33 @@ public interface PsiJavaParserFacade {
   /**
    * Creates a JavaDoc tag from the specified text.
    *
-   * @param docTagText the text of the JavaDoc tag.
+   * @param text the text of the JavaDoc tag.
    * @return the created tag.
    * @throws IncorrectOperationException if the text of the tag is not valid.
    */
   @NotNull
-  PsiDocTag createDocTagFromText(@NotNull String docTagText) throws IncorrectOperationException;
+  PsiDocTag createDocTagFromText(@NotNull String text) throws IncorrectOperationException;
 
   /**
    * Creates a JavaDoc comment from the specified text.
    *
-   * @param docCommentText the text of the JavaDoc comment.
+   * @param text the text of the JavaDoc comment.
    * @return the created comment.
    * @throws IncorrectOperationException if the text of the comment is not valid.
    */
   @NotNull
-  PsiDocComment createDocCommentFromText(@NotNull String docCommentText) throws IncorrectOperationException;
+  PsiDocComment createDocCommentFromText(@NotNull String text) throws IncorrectOperationException;
 
   /**
    * Creates a JavaDoc comment from the specified text.
    *
-   * @param docCommentText the text of the JavaDoc comment.
-   * @param docCommentText the text of the JavaDoc comment.
+   * @param text the text of the JavaDoc comment.
    * @param context the PSI element used as context for resolving references inside this javadoc
    * @return the created comment.
    * @throws IncorrectOperationException if the text of the comment is not valid.
    */
   @NotNull
-  PsiDocComment createDocCommentFromText(@NotNull String docCommentText, @Nullable PsiElement context) throws IncorrectOperationException;
+  PsiDocComment createDocCommentFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java class with a dummy name from the specified body text (the text between the braces).

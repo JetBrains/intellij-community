@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.psi;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public interface XPathNodeTest extends XPathElement, QNameElement {
         ELEMENT, ATTRIBUTE, NAMESPACE, UNKNOWN;
 
         public String getType() {
-            return name().toLowerCase();
+            return StringUtil.toLowerCase(name());
         }
     }
 

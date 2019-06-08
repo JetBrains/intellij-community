@@ -21,6 +21,7 @@ import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
@@ -109,6 +110,8 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
         }
       }
     };
+    int verticalPositionBefore = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
     editor.getFoldingModel().runBatchFoldingOperation(operation);
+    EditorUtil.runWithAnimationDisabled(editor, () -> editor.getScrollingModel().scrollVertically(verticalPositionBefore));
   }
 }

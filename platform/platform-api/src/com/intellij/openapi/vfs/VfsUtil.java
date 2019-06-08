@@ -507,16 +507,6 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   @NotNull
-  public static VirtualFile getRootFile(@NotNull VirtualFile file) {
-    while (true) {
-      VirtualFile parent = file.getParent();
-      if (parent == null) break;
-      file = parent;
-    }
-    return file;
-  }
-
-  @NotNull
   public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
     if (file.isValid()) {
       VirtualFileSystem fileSystem = file.getFileSystem();

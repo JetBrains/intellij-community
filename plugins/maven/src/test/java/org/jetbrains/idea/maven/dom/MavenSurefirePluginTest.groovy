@@ -1,17 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
+
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 
 /**
  * @author Sergey Evdokimov
  */
-class MavenSurefirePluginTest extends MavenDomTestCase {
+class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp()
     setRepositoryPath(new MavenCustomRepositoryHelper(myDir, "plugins").getTestDataPath("plugins"))
+    //need to recreate fixture
+    myIndicesFixture = new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins", ['local1'] as String[])
+    myIndicesFixture.setUp();
   }
 
   void testCompletion() {
@@ -137,7 +142,7 @@ class MavenSurefirePluginTest extends MavenDomTestCase {
   <version>1.0</version>
 
     <properties>
-    <aaa>\${<error>surefire.forkNumber</error>}</aaa>
+    <aaa>\${<error descr="Cannot resolve symbol 'surefire.forkNumber'">surefire.forkNumber</error>}</aaa>
   </properties>
 
   <build>
@@ -155,7 +160,7 @@ class MavenSurefirePluginTest extends MavenDomTestCase {
           <execution>
             <goals>
               <goal>test</goal>
-              <goal>\${<error>surefire.threadNumber</error>}</goal>
+              <goal>\${<error descr="Cannot resolve symbol 'surefire.threadNumber'">surefire.threadNumber</error>}</goal>
             </goals>
             <configuration>
               <debugForkedProcess>\${surefire.threadNumber}</debugForkedProcess>

@@ -106,4 +106,16 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
     List<String> actual = ContainerUtil.map(myItems, element -> element.getLookupString());
     assertContainsOrdered(actual, strings);
   }
+
+  public void testPreserveColonWs() throws Exception {
+    baseReplaceTest("preserveColon", "testReplaceStringAndWhitespace");
+  }
+
+  public void testPreserveColonInsertWsString() throws Exception {
+    baseInsertTest("preserveColon", "testInsertStringAndWhitespace");
+  }
+
+  public void testPreserveColonInsertWsNonString() throws Exception {
+    baseInsertTest("preserveColon", "testInsertNonStringAndWhitespace");
+  }
 }

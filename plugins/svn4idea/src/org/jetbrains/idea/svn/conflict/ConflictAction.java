@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.conflict;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.bind.annotation.XmlEnumValue;
+import java.util.HashMap;
 import java.util.Map;
 
 public enum ConflictAction {
@@ -14,7 +14,7 @@ public enum ConflictAction {
   @XmlEnumValue("delete") DELETE("delete", "deleted"),
   @XmlEnumValue("replace") REPLACE("replace", "replaced");
 
-  @NotNull private static final Map<String, ConflictAction> ourAllActions = ContainerUtil.newHashMap();
+  @NotNull private static final Map<String, ConflictAction> ourAllActions = new HashMap<>();
 
   static {
     for (ConflictAction action : ConflictAction.values()) {

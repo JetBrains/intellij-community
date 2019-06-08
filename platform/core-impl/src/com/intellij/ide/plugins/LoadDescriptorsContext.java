@@ -1,20 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.concurrency.SameThreadExecutorService;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import org.jdom.*;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 final class LoadDescriptorsContext implements AutoCloseable {
   @NotNull
@@ -83,13 +81,15 @@ final class LoadDescriptorsContext implements AutoCloseable {
   private final static class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
     // doesn't make sense to intern class name since it is unique
     // ouch, do we really cannot agree how to name implementation class attribute?
-    private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(Arrays.asList(
+    private static final List<String> CLASS_NAME_LIST = Arrays.asList(
       "implementation-class", "implementation",
       "serviceImplementation", "class", "className", "beanClass",
       "serviceInterface", "interface", "interfaceClass", "instance",
-      "qualifiedName"));
+      "qualifiedName");
 
-    private final Interner<String> stringInterner = new Interner<String>(CLASS_NAMES) {
+    private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
+
+    private final Interner<String> stringInterner = new Interner<String>(ContainerUtil.concat(CLASS_NAME_LIST, IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES)) {
       @NotNull
       @Override
       public String intern(@NotNull String name) {
@@ -97,6 +97,12 @@ final class LoadDescriptorsContext implements AutoCloseable {
         return name.length() < 64 ? super.intern(name) : name;
       }
     };
+
+    @NotNull
+    @Override
+    public Interner<String> stringInterner() {
+      return stringInterner;
+    }
 
     @NotNull
     @Override
@@ -125,44 +131,6 @@ final class LoadDescriptorsContext implements AutoCloseable {
       else {
         return super.text(stringInterner.intern(text), parentElement);
       }
-    }
-  }
-
-  // don't want to use Guava (MoreExecutors.newDirectExecutorService()) here
-  private static final class SameThreadExecutorService extends AbstractExecutorService {
-    private volatile boolean isTerminated;
-
-    @Override
-    public void shutdown() {
-      isTerminated = true;
-    }
-
-    @Override
-    public boolean isShutdown() {
-      return isTerminated;
-    }
-
-    @Override
-    public boolean isTerminated() {
-      return isTerminated;
-    }
-
-    @Override
-    public boolean awaitTermination(long theTimeout, @NotNull TimeUnit theUnit) {
-      shutdown();
-      return true;
-    }
-
-    @NotNull
-    @Contract(pure = true)
-    @Override
-    public List<Runnable> shutdownNow() {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public void execute(@NotNull Runnable command) {
-      command.run();
     }
   }
 }

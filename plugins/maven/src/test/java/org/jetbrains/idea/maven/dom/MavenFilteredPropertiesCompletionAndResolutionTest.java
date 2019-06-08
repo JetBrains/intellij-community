@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 
-public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
+public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   public void testBasic() throws Exception {
     createProjectSubDir("res");
 

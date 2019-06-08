@@ -7,11 +7,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
-import org.jetbrains.plugins.groovy.lang.resolve.doResolveStatic
 
 fun GrReferenceExpression.createDescriptor(): VariableDescriptor? {
   val referenceName = this.referenceName ?: return null
-  val resolved = this.doResolveStatic()?.element as? GrVariable
+  val resolved = staticReference.resolve() as? GrVariable
   if (resolved != null) return ResolvedVariableDescriptor(resolved)
   return VariableNameDescriptor(referenceName)
 }

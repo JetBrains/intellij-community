@@ -73,7 +73,7 @@ final class CommandModeConsumer implements Consumer<String> {
 
   @Override
   public void consume(final String t) {
-    /**
+    /*
      * We need to: 1) parse input 2) fetch command 3) split its arguments.
      */
     final PsiFileFactory fileFactory = PsiFileFactory.getInstance(myModule.getProject());

@@ -28,7 +28,7 @@ import java.util.Collection;
 public interface FileWatcherNotificationSink {
   void notifyManualWatchRoots(@NotNull Collection<String> roots);
 
-  void notifyMapping(@NotNull Collection<Pair<String, String>> mapping);
+  void notifyMapping(@NotNull Collection<? extends Pair<String, String>> mapping);
 
   void notifyDirtyPath(@NotNull String path);
 

@@ -4,7 +4,6 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.newui.CellPluginComponent
 import com.intellij.ide.plugins.newui.TabHeaderComponent
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
@@ -56,8 +55,8 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
 
   fun showInstallPluginFromDiskDialog() {
     step("call 'Install Plugin from Disk dialog'") {
-      val actionButton: ActionButton = waitUntilFound(findTabHeader(), ActionButton::class.java, Timeouts.defaultTimeout) { true }
-      robot().click(actionButton)
+      val actionButton = actionButtonByIcon("gearPlain.svg")
+      actionButton.click()
       popupMenu("Install Plugin from Disk...").clickSearchedItem()
     }
   }

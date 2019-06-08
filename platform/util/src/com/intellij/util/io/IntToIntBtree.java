@@ -3,7 +3,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -418,13 +417,7 @@ public class IntToIntBtree {
       if (isIndexLeaf() && isHashedLeaf()) {
         return hashIndex(value);
       }
-      return ObjectUtils.binarySearch(0, getChildrenCount(), new IntIntFunction() {
-        @Override
-        public int fun(int mid) {
-          int midValue = keyAt(mid);
-          return Integer.compare(midValue, value);
-        }
-      });
+      return ObjectUtils.binarySearch(0, getChildrenCount(), mid -> Integer.compare(keyAt(mid), value));
     }
 
     final int addressAt(int i) {

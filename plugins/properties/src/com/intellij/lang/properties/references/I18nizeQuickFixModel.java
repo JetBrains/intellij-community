@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author cdr
- */
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 
 import java.util.Collection;
 
+/**
+ * @author cdr
+ */
 public interface I18nizeQuickFixModel {
   String getValue();
 

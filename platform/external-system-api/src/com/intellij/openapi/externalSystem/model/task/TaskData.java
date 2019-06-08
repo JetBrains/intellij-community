@@ -1,94 +1,91 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Container for external system task information.
- *
- * @author Denis Zhdanov
  */
-public class TaskData extends AbstractExternalEntityData implements ExternalConfigPathAware, Comparable<TaskData> {
+public final class TaskData extends AbstractExternalEntityData implements ExternalConfigPathAware, Comparable<TaskData> {
+  @NotNull private final String name;
+  @Nullable private final String description;
+  @NotNull private final String linkedExternalProjectPath;
+  @Nullable private String group;
+  @Nullable private String type;
+  private boolean inherited;
+  private boolean isTest;
 
-  private static final long serialVersionUID = 1L;
-
-  @NotNull private final String myName;
-  @Nullable private final String myDescription;
-  @NotNull private final String myLinkedExternalProjectPath;
-  @Nullable private String myGroup;
-  @Nullable private String myType;
-  private boolean myInherited;
-  private boolean myIsTest;
-
-  public TaskData(@NotNull ProjectSystemId owner, @NotNull String name, @NotNull String path, @Nullable String description) {
+  @PropertyMapping({"owner", "name", "linkedExternalProjectPath", "description"})
+  public TaskData(@NotNull ProjectSystemId owner, @NotNull String name, @NotNull String linkedExternalProjectPath, @Nullable String description) {
     super(owner);
-    myName = name;
-    myLinkedExternalProjectPath = path;
-    myDescription = description;
+    this.name = name;
+    this.linkedExternalProjectPath = linkedExternalProjectPath;
+    this.description = description;
   }
 
   @NotNull
   public String getName() {
-    return myName;
+    return name;
   }
 
   @Override
   @NotNull
   public String getLinkedExternalProjectPath() {
-    return myLinkedExternalProjectPath;
+    return linkedExternalProjectPath;
   }
 
   @Nullable
   public String getDescription() {
-    return myDescription;
+    return description;
   }
 
   @Nullable
   public String getGroup() {
-    return myGroup;
+    return group;
   }
 
   public void setGroup(@Nullable String group) {
-    myGroup = group;
+    this.group = group;
   }
 
   @Nullable
   public String getType() {
-    return myType;
+    return type;
   }
 
   public void setType(@Nullable String type) {
-    myType = type;
+    this.type = type;
   }
 
   public boolean isInherited() {
-    return myInherited;
+    return inherited;
   }
 
   public void setInherited(boolean inherited) {
-    myInherited = inherited;
+    this.inherited = inherited;
   }
 
   public boolean isTest() {
-    return myIsTest;
+    return isTest;
   }
 
   public void setTest(boolean test) {
-    myIsTest = test;
+    isTest = test;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myName.hashCode();
-    result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
-    result = 31 * result + myLinkedExternalProjectPath.hashCode();
-    result = 31 * result + (myInherited ? 1 : 0);
-    result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
+    result = 31 * result + name.hashCode();
+    result = 31 * result + (group != null ? group.hashCode() : 0);
+    result = 31 * result + linkedExternalProjectPath.hashCode();
+    result = 31 * result + (inherited ? 1 : 0);
+    result = 31 * result + (description != null ? description.hashCode() : 0);
     return result;
   }
 
@@ -101,22 +98,22 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
 
     TaskData data = (TaskData)o;
 
-    if (myInherited != data.myInherited) return false;
-    if (!myName.equals(data.myName)) return false;
-    if (myGroup != null ? !myGroup.equals(data.myGroup) : data.myGroup != null) return false;
-    if (!myLinkedExternalProjectPath.equals(data.myLinkedExternalProjectPath)) return false;
-    if (myDescription != null ? !myDescription.equals(data.myDescription) : data.myDescription != null) return false;
+    if (inherited != data.inherited) return false;
+    if (!name.equals(data.name)) return false;
+    if (group != null ? !group.equals(data.group) : data.group != null) return false;
+    if (!linkedExternalProjectPath.equals(data.linkedExternalProjectPath)) return false;
+    if (description != null ? !description.equals(data.description) : data.description != null) return false;
 
     return true;
   }
 
   @Override
   public int compareTo(@NotNull TaskData that) {
-    return myName.compareTo(that.getName());
+    return name.compareTo(that.getName());
   }
 
   @Override
   public String toString() {
-    return myName;
+    return name;
   }
 }

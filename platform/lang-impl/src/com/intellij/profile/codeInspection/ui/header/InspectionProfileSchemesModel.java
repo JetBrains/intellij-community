@@ -10,7 +10,6 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

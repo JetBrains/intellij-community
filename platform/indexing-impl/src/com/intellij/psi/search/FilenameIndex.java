@@ -56,7 +56,7 @@ public class FilenameIndex {
     return ArrayUtil.toStringArray(names);
   }
 
-  public static void processAllFileNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public static void processAllFileNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     getService().processAllFileNames(processor, scope, filter);
   }
 

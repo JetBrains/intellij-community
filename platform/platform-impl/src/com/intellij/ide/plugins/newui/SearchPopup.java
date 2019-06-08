@@ -20,17 +20,20 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 /**
  * @author Alexander Lobas
  */
-public class SearchPopup implements CaretListener {
+public class SearchPopup extends ComponentAdapter implements CaretListener {
   public final Type type;
 
   private final JBPopupListener myListener;
   private final JBTextField myEditor;
   private JBPopup myPopup;
   private LightweightWindowEvent myEvent;
+  private Component myDialogComponent;
 
   public final CollectionListModel<Object> model;
   public JList<Object> list;
@@ -78,6 +81,11 @@ public class SearchPopup implements CaretListener {
     skipCaretEvent = true;
     myPopup.addListener(myListener);
     myEditor.addCaretListener(this);
+
+    myDialogComponent = myEditor.getRootPane().getParent();
+    if (myDialogComponent != null) {
+      myDialogComponent.addComponentListener(this);
+    }
 
     if (async) {
       //noinspection SSBasedInspection
@@ -129,6 +137,10 @@ public class SearchPopup implements CaretListener {
 
   public void hide() {
     myEditor.removeCaretListener(this);
+    if (myDialogComponent != null) {
+      myDialogComponent.removeComponentListener(this);
+      myDialogComponent = null;
+    }
     if (myPopup != null) {
       myPopup.cancel();
       myPopup = null;
@@ -144,5 +156,17 @@ public class SearchPopup implements CaretListener {
       hide();
       myListener.onClosed(myEvent);
     }
+  }
+
+  @Override
+  public void componentMoved(ComponentEvent e) {
+    if (myPopup != null && isValid()) {
+      update();
+    }
+  }
+
+  @Override
+  public void componentResized(ComponentEvent e) {
+    componentMoved(e);
   }
 }

@@ -23,7 +23,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -36,7 +36,6 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author peter
@@ -46,8 +45,6 @@ public class EditorNotificationsImpl extends EditorNotifications {
   private static final ProjectExtensionPointName<Provider> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
 
   private final Key<CancellablePromise<?>> CURRENT_UPDATE = Key.create("EditorNotifications update"); // non-static, per-project
-  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
-    "EditorNotificationsImpl Pool");
   private final MergingUpdateQueue myUpdateMerger;
   @NotNull private final Project myProject;
 
@@ -92,24 +89,27 @@ public class EditorNotificationsImpl extends EditorNotifications {
         prev.cancel();
       }
 
-      CancellablePromise<List<Runnable>> promise = ReadAction.
-        nonBlocking(() -> calcNotificationUpdates(file)).
-        expireWhen(() -> !file.isValid() || myProject.isDisposed()).
-        finishOnUiThread(ModalityState.any(), updates -> {
+      List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
+                                                      editor -> !(editor instanceof TextEditor)
+                                                                || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
+
+      CancellablePromise<List<Runnable>> promise = ReadAction
+        .nonBlocking(() -> calcNotificationUpdates(file, editors))
+        .expireWith(myProject)
+        .expireWhen(() -> !file.isValid())
+        .finishOnUiThread(ModalityState.any(), updates -> {
           for (Runnable update : updates) {
             update.run();
           }
-        }).
-        submit(ourExecutor);
+        })
+        .submit(NonUrgentExecutor.getInstance());
       file.putUserData(CURRENT_UPDATE, promise);
       promise.onProcessed(__ -> file.putUserData(CURRENT_UPDATE, null));
     });
   }
 
   @NotNull
-  private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file) {
-    List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file),
-                                                    editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
+  private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<? extends FileEditor> editors) {
     List<Provider> providers = DumbService.getDumbAwareExtensions(myProject, EP_PROJECT);
     List<Runnable> updates = new SmartList<>();
     for (FileEditor editor : editors) {

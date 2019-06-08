@@ -3,6 +3,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 class Test {
+
+  List<String> testNullable(List<Integer> input) {
+    // suppress for nullable
+    List<String> list = input.stream().map(integer -> integer == null ? null : integer.toString()).collect(Collectors.toList());
+      return Collections.unmodifiableList(list);
+  }
+
   List<String> test(String[] list) {
       return Arrays.stream(list).filter(s -> !s.isEmpty()).collect(Collectors.toUnmodifiableList());
   }

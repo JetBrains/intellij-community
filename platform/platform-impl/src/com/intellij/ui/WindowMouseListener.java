@@ -252,21 +252,18 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
           reshapeInvocator = new MethodInvocator(classWComponentPeer, "reshapeNoCheck",
                                                  int.class, int.class, int.class, int.class);
 
-          xAccessor = new FieldAccessor<>(Component.class, "x");
-          yAccessor = new FieldAccessor<>(Component.class, "y");
-          widthAccessor = new FieldAccessor<>(Component.class, "width");
-          heightAccessor = new FieldAccessor<>(Component.class, "height");
+          xAccessor = new FieldAccessor<>(Component.class, "x", Integer.TYPE);
+          yAccessor = new FieldAccessor<>(Component.class, "y", Integer.TYPE);
+          widthAccessor = new FieldAccessor<>(Component.class, "width", Integer.TYPE);
+          heightAccessor = new FieldAccessor<>(Component.class, "height", Integer.TYPE);
 
-          addMouseListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "addMouseListener", MouseListener.class);
-          addMouseMotionListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "addMouseMotionListener", MouseMotionListener.class);
-          removeMouseListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "removeMouseListener", MouseListener.class);
-          removeMouseMotionListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "removeMouseMotionListener", MouseMotionListener.class);
-
-        } catch (ClassNotFoundException ignored) {
+          Class<?> peerClass = Class.forName("sun.awt.windows.WWindowPeer");
+          addMouseListenerMethod = new MethodInvocator(peerClass, "addMouseListener", MouseListener.class);
+          addMouseMotionListenerMethod = new MethodInvocator(peerClass, "addMouseMotionListener", MouseMotionListener.class);
+          removeMouseListenerMethod = new MethodInvocator(peerClass, "removeMouseListener", MouseListener.class);
+          removeMouseMotionListenerMethod = new MethodInvocator(peerClass, "removeMouseMotionListener", MouseMotionListener.class);
+        }
+        catch (ClassNotFoundException ignored) {
         }
       }
     }

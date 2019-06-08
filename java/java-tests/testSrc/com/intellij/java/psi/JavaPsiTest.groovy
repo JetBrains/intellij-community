@@ -75,6 +75,12 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
     assert myFixture.editor.document.text.startsWith('package foo;')
   }
 
+  void "test deleting lone import after semicolon leaves PSI consistent"() {
+    def file = configureFile("package p;;import javax.swing.*;")
+    runCommand { file.importList.importStatements[0].delete() }
+    PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(file)
+  }
+
   private PsiJavaFile configureFile(String text) {
     myFixture.configureByText("a.java", text) as PsiJavaFile
   }

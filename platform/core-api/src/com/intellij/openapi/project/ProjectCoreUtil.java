@@ -20,10 +20,14 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
 public class ProjectCoreUtil {
+  @Deprecated
+  @ApiStatus.Experimental
   public static volatile Project theProject;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
@@ -37,7 +41,7 @@ public class ProjectCoreUtil {
   }
 
   /**
-   * @return the only open project if there is one, null if no or several projects are open
+   * @return the only open project if there is one, null if no projects open, or several projects are open, or default project is created
    */
   @Nullable
   public static Project theOnlyOpenProject() {

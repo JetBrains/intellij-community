@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
-  protected Module myModule;
 
   @Override
   protected void setUp() throws Exception {
@@ -37,8 +36,6 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-
-    myModule = myFixture.getModule();
   }
 
   protected TempDirTestFixture createTempDirTestFixture() {
@@ -58,7 +55,6 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     }
     finally {
       myFixture = null;
-      myModule = null;
       super.tearDown();
     }
   }

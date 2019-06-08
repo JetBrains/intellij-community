@@ -48,7 +48,7 @@ public class FrameworksTree extends CheckboxTree {
     putClientProperty("JTree.lineStyle", "None");
   }
 
-  public void setRoots(List<FrameworkSupportNodeBase> roots) {
+  public void setRoots(List<? extends FrameworkSupportNodeBase> roots) {
     CheckedTreeNode root = new CheckedTreeNode(null);
     for (FrameworkSupportNodeBase base : roots) {
       root.add(base);

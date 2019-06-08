@@ -101,7 +101,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
             if (returnStatements.length > 1) {
               return false;
             }
-            final PsiElement callParent = call.getParent();
+            final PsiElement callParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
             return callParent instanceof PsiStatement ||
                    callParent instanceof PsiLocalVariable;
           }, newExpression, aClass.getBaseClassType(), new ReplaceAnonymousWithLambdaBodyFix());

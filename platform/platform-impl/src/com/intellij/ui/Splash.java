@@ -95,8 +95,7 @@ public class Splash extends JDialog implements StartupProgress {
     for (ProgressSlide progressSlide : progressSlides) {
       String url = progressSlide.getUrl();
       Icon icon = IconLoader.getIcon(url);
-      Icon iconSnapshot = IconLoader.getIconSnapshot(icon);
-      progressSlide.setImageIcon(iconSnapshot);
+      progressSlide.setImageIcon(icon);
       myProgressSlideImages.add(progressSlide);
     }
 

@@ -170,11 +170,7 @@ public class MessageDialog extends DialogWrapper {
         return p;
       });
       animate();
-      try {
-        Class.forName("java.awt.Window").getDeclaredMethod("setOpacity", float.class).invoke(getPeer().getWindow(), .8f);
-      }
-      catch (Exception ignored) {
-      }
+      getPeer().getWindow().setOpacity(.8f);
       setAutoAdjustable(false);
       setSize(getPreferredSize().width, 0);//initial state before animation, zero height
     }

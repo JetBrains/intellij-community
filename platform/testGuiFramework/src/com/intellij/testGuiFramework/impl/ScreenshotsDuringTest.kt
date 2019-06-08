@@ -18,25 +18,14 @@ import java.util.concurrent.TimeUnit
  * Rule that takes a screenshot every second.
  */
 class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int = 100, private val keepScreenshots: Boolean = false) : TestWatcher() {
-  private val myScreenshotTaker = ScreenshotTaker()
   private val myExecutorService: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
   private var myFolder: File? = null
   private var isTestSuccessful = false
-  private val screenshotName
-    get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis()) + ".jpg"
 
 
   override fun starting(description: Description) {
-    val folderName = description.testClass.simpleName + "-" + description.methodName
-    try {
-      myFolder = File(GuiTestPaths.failedTestScreenshotDir, folderName)
-      ensureExists(myFolder!!)
-    }
-    catch (e: IOException) {
-      logError("Could not create folder $folderName")
-    }
-
-    myExecutorService.scheduleAtFixedRate({ myScreenshotTaker.safeTakeScreenshotAndSave(File(myFolder, screenshotName)) },
+    myFolder = ScreenshotTaker.getFolder()
+    myExecutorService.scheduleAtFixedRate({ ScreenshotTaker.take() },
                                           100, myPeriod.toLong(), TimeUnit.MILLISECONDS)
   }
 

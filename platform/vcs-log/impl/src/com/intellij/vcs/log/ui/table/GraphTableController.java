@@ -21,8 +21,10 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -133,8 +135,9 @@ public class GraphTableController {
       return;
     }
 
-    if (answer.getCursorToSet() != null) {
-      myTable.setCursor(answer.getCursorToSet());
+    Cursor cursorToSet = answer.getCursorToSet();
+    if (cursorToSet != null) {
+      myTable.setCursor(UIUtil.cursorIfNotDefault(cursorToSet));
     }
     if (answer.getCommitToJump() != null) {
       Integer row = myTable.getModel().getVisiblePack().getVisibleGraph().getVisibleRowIndex(answer.getCommitToJump());
@@ -264,7 +267,8 @@ public class GraphTableController {
         // and by the left border otherwise
         int commitColumnIndex = myTable.convertColumnIndexToView(COMMIT_COLUMN);
         boolean useLeftBorder = c > commitColumnIndex;
-        if ((useLeftBorder ? isOnLeftBorder(e, c) : isOnRightBorder(e, c)) && (column == AUTHOR_COLUMN || column == DATE_COLUMN)) {
+        if ((useLeftBorder ? isOnLeftBorder(e, c) : isOnRightBorder(e, c)) &&
+            ArrayUtil.indexOf(DYNAMIC_COLUMNS, column) != -1) {
           myTable.resetColumnWidth(column);
         }
         else {
@@ -273,7 +277,8 @@ public class GraphTableController {
           int c2 =
             myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUI.scale(BORDER_THICKNESS), e.getPoint().y));
           int column2 = myTable.convertColumnIndexToModel(c2);
-          if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && (column2 == AUTHOR_COLUMN || column2 == DATE_COLUMN)) {
+          if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) &&
+              ArrayUtil.indexOf(DYNAMIC_COLUMNS, column) != -1) {
             myTable.resetColumnWidth(column2);
           }
         }
@@ -343,8 +348,8 @@ public class GraphTableController {
     }
 
     private void restoreCursor(int newCursorType) {
-      if (myLastCursor != null && myTable.getCursor().getType() == newCursorType) {
-        myTable.setCursor(myLastCursor);
+      if (myTable.getCursor().getType() == newCursorType) {
+        myTable.setCursor(UIUtil.cursorIfNotDefault(myLastCursor));
         myLastCursor = null;
       }
     }

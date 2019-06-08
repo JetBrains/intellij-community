@@ -48,6 +48,9 @@ public class TouchBarsManager {
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
   public static void onApplicationInitialized() {
+    ApplicationManager.getApplication().executeOnPooledThread(TouchBarsManager::_onApplicationInitialized);
+  }
+  private static void _onApplicationInitialized() {
     if (!isTouchBarAvailable())
       return;
 

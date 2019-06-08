@@ -54,7 +54,7 @@ public class JUnitDependencyScopeSuggesterTest extends JavaCodeInsightFixtureTes
   }
 
   private DependencyScope getScope(String name) {
-    LibraryOrderEntry entry = OrderEntryUtil.findLibraryOrderEntry(ModuleRootManager.getInstance(myModule), name);
+    LibraryOrderEntry entry = OrderEntryUtil.findLibraryOrderEntry(ModuleRootManager.getInstance(getModule()), name);
     assertNotNull(entry);
     Library library = entry.getLibrary();
     assertNotNull(library);

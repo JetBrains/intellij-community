@@ -18,14 +18,14 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import java.util.HashMap;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.lang.reflect.Field;
-import java.util.Locale;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -195,7 +195,7 @@ public class KeyStrokeAdapter implements KeyListener {
           }
           return getKeyStroke(token.charAt(0), modifiers);
         }
-        String tokenLowerCase = token.toLowerCase(Locale.ENGLISH);
+        String tokenLowerCase = StringUtil.toLowerCase(token);
         if (pressed || released || i == count) {
           if (st.hasMoreTokens()) {
             LOG.error("key stroke declaration has more tokens: " + st.nextToken());
@@ -322,7 +322,7 @@ public class KeyStrokeAdapter implements KeyListener {
         for (Field field : KeyEvent.class.getFields()) {
           String name = field.getName();
           if (name.startsWith("VK_")) {
-            name = name.substring(3).toLowerCase(Locale.ENGLISH);
+            name = StringUtil.toLowerCase(name.substring(3));
             int code = field.getInt(KeyEvent.class);
             myNameToCode.put(name, code);
             myCodeToName.put(code, name);

@@ -206,11 +206,11 @@ public class CaptureAgent {
   }
 
   private static class CaptureInstrumentor extends ClassVisitor {
-    private final List<InstrumentPoint> myInstrumentPoints;
+    private final List<? extends InstrumentPoint> myInstrumentPoints;
     private final Map<String, String> myFields = new HashMap<String, String>();
     private String mySuperName;
 
-    CaptureInstrumentor(int api, ClassVisitor cv, List<InstrumentPoint> instrumentPoints) {
+    CaptureInstrumentor(int api, ClassVisitor cv, List<? extends InstrumentPoint> instrumentPoints) {
       super(api, cv);
       this.myInstrumentPoints = instrumentPoints;
     }

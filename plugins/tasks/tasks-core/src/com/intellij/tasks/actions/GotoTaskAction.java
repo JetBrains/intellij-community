@@ -134,13 +134,14 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
+    @NotNull
     @Override
     public ListCellRenderer getListCellRenderer() {
       return myListCellRenderer;
     }
 
     @Override
-    public String getElementName(Object element) {
+    public String getElementName(@NotNull Object element) {
       if (element instanceof TaskPsiElement) {
         return TaskUtil.getTrimmedSummary(((TaskPsiElement)element).getTask());
       }

@@ -4,8 +4,8 @@ package com.intellij.openapi.externalSystem.configurationStore
 import com.intellij.configurationStore.ESCAPED_MODULE_DIR
 import com.intellij.configurationStore.useAndDispose
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.async.coroutineDispatchingContext
-import com.intellij.openapi.application.async.inWriteAction
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.impl.inWriteAction
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage

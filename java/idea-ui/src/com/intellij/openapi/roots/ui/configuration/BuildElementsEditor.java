@@ -198,7 +198,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
         catch (IOException e) {
           canonicalPath = path;
         }
-        commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
+        commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(canonicalPath));
       }
     };
 

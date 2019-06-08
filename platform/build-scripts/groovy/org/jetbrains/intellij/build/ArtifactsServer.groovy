@@ -19,5 +19,9 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 interface ArtifactsServer {
+  /**
+   * Returns full URL which can be used to download an artifact.
+   * @param relativePath path to an artifact from {@link org.jetbrains.intellij.build.BuildPaths#artifacts} directory
+   */
   String urlToArtifact(String relativePath)
 }

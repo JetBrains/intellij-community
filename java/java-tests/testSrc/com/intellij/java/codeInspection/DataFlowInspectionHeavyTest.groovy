@@ -34,9 +34,9 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
   void testDifferentAnnotationsWithDifferentLanguageLevels() {
     def module6 = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'mod6', myFixture.tempDirFixture.findOrCreateDir('mod6'))
     IdeaTestUtil.setModuleLanguageLevel(module6, LanguageLevel.JDK_1_6)
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8)
-    ModuleRootModificationUtil.addDependency(myModule, module6)
-    ModuleRootModificationUtil.setModuleSdk(module6, ModuleRootManager.getInstance(myModule).sdk)
+    IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_1_8)
+    ModuleRootModificationUtil.addDependency(module, module6)
+    ModuleRootModificationUtil.setModuleSdk(module6, ModuleRootManager.getInstance(module).sdk)
 
     myFixture.addFileToProject 'mod6/annos/annos.java', annotationsText("ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE")
     myFixture.addFileToProject 'mod6/foo/ObjectUtils.java', '''
@@ -81,7 +81,7 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test no always failing calls in tests"() {
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("test"), true)
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("test"), true)
 
     myFixture.addFileToProject("test/org/junit/Test.java", """
 package org.junit;

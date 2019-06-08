@@ -18,7 +18,7 @@ class AddImportActionTest extends LightCodeInsightFixtureTestCase {
   private CommonCodeStyleSettings settings
 
   void testMap15() {
-    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_5, {
       myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {

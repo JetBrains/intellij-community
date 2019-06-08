@@ -241,7 +241,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
 
   @Override
   protected void activate() {
-    CvsStorageSupportingDeletionComponent.getInstance(myProject).init(getProject());
+    CvsStorageSupportingDeletionComponent.getInstance(myProject).activate();
     CvsEntriesManager.getInstance().addCvsEntriesListener(myCvsEntriesListener);
   }
 
@@ -375,6 +375,11 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
   }
 
   @Override
+  public boolean needsLegacyDefaultMappings() {
+    return true;
+  }
+
+  @Override
   public MergeProvider getMergeProvider() {
     if (myMergeProvider != null) {
       myMergeProvider = new CvsMergeProvider();
@@ -393,7 +398,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     return in;
   }
 }

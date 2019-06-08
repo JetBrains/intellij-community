@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -36,7 +36,7 @@ import java.io.File;
 /**
  * @author dsl
  */
-public class ExportingModulesTest extends IdeaTestCase {
+public class ExportingModulesTest extends JavaProjectTestCase {
   public void test1() {
     final String rootPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/moduleRootManager/exportedModules/";
     final VirtualFile testRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath);

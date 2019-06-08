@@ -44,7 +44,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
     return createRevisionReverter(getDifferences());
   }
 
-  public Reverter createRevisionReverter(List<Difference> diffs) {
+  public Reverter createRevisionReverter(List<? extends Difference> diffs) {
     return new DifferenceReverter(myProject, myVcs, myGateway, diffs, getLeftRevision());
   }
 }

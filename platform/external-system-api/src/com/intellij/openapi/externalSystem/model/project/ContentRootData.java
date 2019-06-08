@@ -1,10 +1,11 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,25 +13,20 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
-public class ContentRootData extends AbstractExternalEntityData {
+public final class ContentRootData extends AbstractExternalEntityData {
+  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();
 
-  private static final long serialVersionUID = 1L;
-
-  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> myData = ContainerUtilRt.newHashMap();
-
-  @NotNull private final String myRootPath;
+  @NotNull private final String rootPath;
 
   /**
    * Creates new {@code GradleContentRootImpl} object.
    *
    * @param rootPath  path to the root directory
    */
+  @PropertyMapping({"owner", "rootPath"})
   public ContentRootData(@NotNull ProjectSystemId owner, @NotNull String rootPath) {
     super(owner);
-    myRootPath = ExternalSystemApiUtil.toCanonicalPath(rootPath);
+    this.rootPath = ExternalSystemApiUtil.toCanonicalPath(rootPath);
   }
 
   /**
@@ -39,7 +35,7 @@ public class ContentRootData extends AbstractExternalEntityData {
    */
   @NotNull
   public Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
-    final Collection<SourceRoot> result = myData.get(type);
+    final Collection<SourceRoot> result = data.get(type);
     return result == null ? Collections.emptyList() : result;
   }
 
@@ -58,9 +54,9 @@ public class ContentRootData extends AbstractExternalEntityData {
    */
   public void storePath(@NotNull ExternalSystemSourceType type, @NotNull String path, @Nullable String packagePrefix) throws IllegalArgumentException {
     if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
-      Collection<SourceRoot> paths = myData.get(type);
+      Collection<SourceRoot> paths = data.get(type);
       if (paths == null) {
-        myData.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
+        data.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
       }
       paths.add(new SourceRoot(
         ExternalSystemApiUtil.toCanonicalPath(path),
@@ -79,16 +75,16 @@ public class ContentRootData extends AbstractExternalEntityData {
 
   @NotNull
   public String getRootPath() {
-    return myRootPath;
+    return rootPath;
   }
 
   @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder("content root:");
-    for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : myData.entrySet()) {
-      buffer.append(entry.getKey().toString().toLowerCase(Locale.ENGLISH)).append("=").append(entry.getValue()).append("|");
+    for (Map.Entry<ExternalSystemSourceType, Collection<SourceRoot>> entry : data.entrySet()) {
+      buffer.append(StringUtil.toLowerCase(entry.getKey().toString())).append("=").append(entry.getValue()).append("|");
     }
-    if (!myData.isEmpty()) {
+    if (!data.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     return buffer.toString();
@@ -96,24 +92,30 @@ public class ContentRootData extends AbstractExternalEntityData {
 
   public static class SourceRoot implements Serializable {
     @NotNull
-    private final String myPath;
+    private final String path;
 
     @Nullable
-    private final String myPackagePrefix;
+    private final String packagePrefix;
 
     public SourceRoot(@NotNull String path, @Nullable String prefix) {
-      myPath = path;
-      myPackagePrefix = prefix;
+      this.path = path;
+      packagePrefix = prefix;
+    }
+
+    @SuppressWarnings("unused")
+    private SourceRoot() {
+      path = "";
+      packagePrefix = "";
     }
 
     @NotNull
     public String getPath() {
-      return myPath;
+      return path;
     }
 
     @Nullable
     public String getPackagePrefix() {
-      return myPackagePrefix;
+      return packagePrefix;
     }
 
     @Override
@@ -121,24 +123,24 @@ public class ContentRootData extends AbstractExternalEntityData {
       if (this == o) return true;
       if (!(o instanceof SourceRoot)) return false;
       SourceRoot root = (SourceRoot)o;
-      if (myPackagePrefix != null ? !myPackagePrefix.equals(root.myPackagePrefix) : root.myPackagePrefix != null) return false;
-      if (!myPath.equals(root.myPath)) return false;
+      if (packagePrefix != null ? !packagePrefix.equals(root.packagePrefix) : root.packagePrefix != null) return false;
+      if (!path.equals(root.path)) return false;
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myPath.hashCode();
-      result = 31 * result + (myPackagePrefix != null ? myPackagePrefix.hashCode() : 0);
+      int result = path.hashCode();
+      result = 31 * result + (packagePrefix != null ? packagePrefix.hashCode() : 0);
       return result;
     }
 
     @Override
     public String toString() {
       StringBuilder buffer = new StringBuilder("source_root(");
-      buffer.append(myPath);
-      if (myPackagePrefix != null) {
-        buffer.append(", ").append(myPackagePrefix);
+      buffer.append(path);
+      if (packagePrefix != null) {
+        buffer.append(", ").append(packagePrefix);
       }
       buffer.append(")");
       return buffer.toString();
@@ -150,7 +152,7 @@ public class ContentRootData extends AbstractExternalEntityData {
 
     @Override
     public int compare(@NotNull SourceRoot o1, @NotNull SourceRoot o2) {
-      return StringUtil.naturalCompare(o1.myPath, o2.myPath);
+      return StringUtil.naturalCompare(o1.path, o2.path);
     }
   }
 }

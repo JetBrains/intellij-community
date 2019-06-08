@@ -168,7 +168,7 @@ public class LineFragment extends LineBlock implements Fragment {
     }
   }
 
-  public void setChildren(ArrayList<Fragment> fragments) {
+  public void setChildren(ArrayList<? extends Fragment> fragments) {
     LOG.assertTrue(myChildren == FragmentList.EMPTY);
     ArrayList<Fragment> shifted =
         FragmentListImpl.shift(fragments, myRange1, myRange2, getStartingLine1(), getStartingLine2());

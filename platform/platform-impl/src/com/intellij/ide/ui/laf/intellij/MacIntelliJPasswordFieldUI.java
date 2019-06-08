@@ -40,7 +40,8 @@ public class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
 
         g.fillRect(r.x, r.y, r.width, r.height);
       }
-    } else {
+    }
+    else {
       super.paintBackground(g);
     }
   }

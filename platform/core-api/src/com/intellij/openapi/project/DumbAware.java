@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.startup.StartupActivity;
+
 /**
  * A marker interface for the things that are allowed to run in dumb mode (when indices are in background update).
  * Implementors must take care of handling and/or not calling non-DumbAware parts of system.
  * <p/>
  * Some known implementors are:
- * <li> {@link com.intellij.openapi.actionSystem.AnAction}s
+ * <li> {@link com.intellij.openapi.actionSystem.AnAction}s (see {@link com.intellij.openapi.project.DumbAwareAction})
  * <li> {@link com.intellij.openapi.fileEditor.FileEditorProvider}s
- * <li> post-startup activities ({@link com.intellij.openapi.startup.StartupManager#registerPostStartupActivity(Runnable)})
+ * <li> post-startup activities ({@link StartupActivity} / {@link com.intellij.openapi.startup.StartupManager#registerPostStartupActivity(Runnable)})
  * <li> Stacktrace {@link com.intellij.execution.filters.Filter}s
  * <li> {@link com.intellij.ide.SelectInTarget}s
  * <li> {@link com.intellij.ide.IconProvider}s

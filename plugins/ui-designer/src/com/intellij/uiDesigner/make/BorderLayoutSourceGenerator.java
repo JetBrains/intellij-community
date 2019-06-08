@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.make;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +26,7 @@ public class BorderLayoutSourceGenerator extends LayoutSourceGenerator {
     generator.startMethodCall(parentVariable, "add");
     generator.pushVar(variable);
     generator.checkParameter();
-    generator.append("BorderLayout." + ((String) component.getCustomLayoutConstraints()).toUpperCase());
+    generator.append("BorderLayout." + StringUtil.toUpperCase(((String) component.getCustomLayoutConstraints())));
     generator.endMethod();
   }
 }

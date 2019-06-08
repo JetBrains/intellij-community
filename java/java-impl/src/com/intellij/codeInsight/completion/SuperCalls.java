@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.scope.CompletionElement;
@@ -14,6 +14,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -25,7 +26,7 @@ class SuperCalls {
                                                         ElementFilter elementFilter,
                                                         JavaCompletionProcessor.Options options,
                                                         Condition<? super String> nameCondition) {
-    Set<LookupElement> set = ContainerUtil.newLinkedHashSet();
+    Set<LookupElement> set = new LinkedHashSet<>();
     for (final String className : getContainingClassNames(element)) {
       PsiReferenceExpression fakeSuper = JavaCompletionUtil.createReference(className + ".super.rulez", element);
       PsiElement leaf = ObjectUtils.assertNotNull(fakeSuper.getReferenceNameElement());
@@ -67,7 +68,7 @@ class SuperCalls {
   }
 
   private static Set<String> getContainingClassNames(PsiElement position) {
-    Set<String> result = ContainerUtil.newLinkedHashSet();
+    Set<String> result = new LinkedHashSet<>();
     boolean add = false;
     while (position != null) {
       if (position instanceof PsiAnonymousClass) {

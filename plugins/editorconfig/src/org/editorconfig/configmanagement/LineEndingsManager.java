@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.LineSeparator;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
@@ -23,7 +23,6 @@ import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author Dennis.Ushakov
@@ -66,13 +65,13 @@ public class LineEndingsManager implements FileDocumentManagerListener {
 
   private void applySettings(VirtualFile file) {
     if (file == null) return;
-    if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
+    if (!Utils.isEnabled(CodeStyle.getSettings(myProject))) return;
 
     final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
     final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
     if (!lineEndings.isEmpty()) {
       try {
-        LineSeparator separator = LineSeparator.valueOf(lineEndings.toUpperCase(Locale.US));
+        LineSeparator separator = LineSeparator.valueOf(StringUtil.toUpperCase(lineEndings));
         String oldSeparator = file.getDetectedLineSeparator();
         String newSeparator = separator.getSeparatorString();
         if (!StringUtil.equals(oldSeparator, newSeparator)) {

@@ -25,15 +25,15 @@ import org.jetbrains.uast.java.JavaConverter
 import org.jetbrains.uast.java.lz
 
 class JavaUNamedExpression(
-  override val psi: PsiNameValuePair,
+  override val sourcePsi: PsiNameValuePair,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UNamedExpression {
   override fun evaluate(): Any? = expression.evaluate()
 
   override val name: String?
-    get() = psi.name
+    get() = sourcePsi.name
 
   override val expression: UExpression by lz {
-    psi.value?.let { value -> JavaConverter.convertPsiElement(value, this) } as? UExpression ?: UastEmptyExpression(this)
+    sourcePsi.value?.let { value -> JavaConverter.convertPsiElement(value, this) } as? UExpression ?: UastEmptyExpression(this)
   }
 }

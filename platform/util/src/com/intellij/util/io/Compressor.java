@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
@@ -138,8 +138,11 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addFile(@NotNull String entryName, @NotNull File file) throws IOException {
-    entryName = entryName(entryName);
-    if (accepts(entryName)) {
+    addFile(entryName(entryName), file, true);
+  }
+
+  private void addFile(String entryName, File file, boolean checkParents) throws IOException {
+    if (accepts(entryName, checkParents)) {
       try (InputStream source = new FileInputStream(file)) {
         writeFileEntry(entryName, source, file.length(), file.lastModified());
       }
@@ -152,7 +155,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addFile(@NotNull String entryName, @NotNull byte[] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName)) {
+    if (accepts(entryName, true)) {
       writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));
     }
   }
@@ -163,7 +166,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addFile(@NotNull String entryName, @NotNull InputStream content, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName)) {
+    if (accepts(entryName, true)) {
       writeFileEntry(entryName, content, -1, timestamp(timestamp));
     }
   }
@@ -174,7 +177,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addDirectory(@NotNull String entryName, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName)) {
+    if (accepts(entryName, true)) {
       writeDirectoryEntry(entryName, timestamp(timestamp));
     }
   }
@@ -184,7 +187,10 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
-    addRecursively(entryName(prefix), directory);
+    prefix = entryName(prefix);
+    if (accepts(prefix, true)) {
+      addRecursively(prefix, directory);
+    }
   }
 
   //<editor-fold desc="Internal interface">
@@ -200,23 +206,38 @@ public abstract class Compressor implements Closeable {
     return timestamp == -1 ? System.currentTimeMillis() : timestamp;
   }
 
-  private boolean accepts(String entryName) {
-    return myFilter == null || myFilter.value(entryName);
+  private boolean accepts(String entryName, boolean checkParents) {
+    if (myFilter == null) return true;
+    if (checkParents) {
+      int p = -1;
+      while ((p = entryName.indexOf('/', p + 1)) > 0) {
+        if (!myFilter.value(entryName.substring(0, p))) {
+          return false;
+        }
+      }
+    }
+    return myFilter.value(entryName);
   }
 
   private void addRecursively(String prefix, File directory) throws IOException {
+    if (!prefix.isEmpty()) {
+      if (!accepts(prefix, false)) {
+        return;
+      }
+      else {
+        writeDirectoryEntry(prefix, directory.lastModified());
+      }
+    }
+
     File[] children = directory.listFiles();
     if (children != null) {
-      if (!prefix.isEmpty()) {
-        addDirectory(prefix, directory.lastModified());
-      }
       for (File child: children) {
         String name = prefix.isEmpty() ? child.getName() : prefix + '/' + child.getName();
         if (child.isDirectory()) {
           addRecursively(name, child);
         }
         else {
-          addFile(name, child);
+          addFile(name, child, false);
         }
       }
     }

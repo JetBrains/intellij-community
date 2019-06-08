@@ -78,7 +78,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
 
   @NotNull
   private static Color getBackgroundColor(@NotNull EditorColorsScheme colorsScheme, boolean selected) {
-    return selected ? HintUtil.getRecentLocationsSelectionColor() : colorsScheme.getDefaultBackground();
+    return selected ? HintUtil.getRecentLocationsSelectionColor(colorsScheme) : colorsScheme.getDefaultBackground();
   }
 
   @NotNull
@@ -232,7 +232,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
                                        boolean hasFocus) {
   }
 
-  private static void selectSearchResultsInEditor(@NotNull Editor editor, @NotNull Iterator<TextRange> resultIterator) {
+  private static void selectSearchResultsInEditor(@NotNull Editor editor, @NotNull Iterator<? extends TextRange> resultIterator) {
     if (!editor.getCaretModel().supportsMultipleCarets()) {
       return;
     }

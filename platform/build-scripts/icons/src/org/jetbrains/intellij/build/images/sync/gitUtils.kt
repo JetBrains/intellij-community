@@ -6,7 +6,7 @@ import java.io.IOException
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
+internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
   try {
     val gitVersion = execute(null, it, "--version")
@@ -136,9 +136,8 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
 }
 
 internal fun commitAndPush(repo: File, branch: String, message: String): String {
-  execute(repo, GIT, "checkout", "-B", branch)
   execute(repo, GIT, "commit", "-m", message)
-  push(repo, "$branch:$branch")
+  push(repo, "+$branch:$branch")
   return commitInfo(repo)?.hash ?: error("Unable to read last commit")
 }
 
@@ -172,7 +171,7 @@ internal fun getOriginUrl(repo: File): String {
       }
     }
   }
-  return origins[repo]!!
+  return origins.getValue(repo)
 }
 
 @Volatile
@@ -189,6 +188,9 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
       if (!latestChangeCommits.containsKey(file)) {
         val commitInfo = commitInfo(repo, "--", path)
         if (commitInfo != null) {
+          if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
+            return null
+          }
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits += file to commitInfo
           }
@@ -197,7 +199,7 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
       }
     }
   }
-  return latestChangeCommits[file]!!
+  return latestChangeCommits.getValue(file)
 }
 
 /**
@@ -273,7 +275,7 @@ internal fun head(repo: File): String {
       }
     }
   }
-  return heads[repo]!!
+  return heads.getValue(repo)
 }
 
 internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {

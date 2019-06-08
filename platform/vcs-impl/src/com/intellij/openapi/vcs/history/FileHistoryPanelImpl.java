@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
@@ -86,8 +86,8 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   @NotNull private final FileHistoryRefresherI myRefresherI;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
-  @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = ContainerUtil.newHashMap();
-  @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = ContainerUtil.newHashMap();
+  @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = new HashMap<>();
+  @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<>();
   @NotNull private final DetailsPanel myDetails;
   @NotNull private final DualView myDualView;
   @Nullable private final JComponent myAdditionalDetails;

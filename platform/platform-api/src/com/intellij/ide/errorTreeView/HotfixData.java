@@ -22,9 +22,9 @@ public class HotfixData {
   private final String myId;
   private final String myErrorText;
   private final String myFixComment;
-  private final Consumer<HotfixGate> myFix;
+  private final Consumer<? super HotfixGate> myFix;
 
-  public HotfixData(@NotNull final String id, @NotNull final String errorText, @NotNull String fixComment, final Consumer<HotfixGate> fix) {
+  public HotfixData(@NotNull final String id, @NotNull final String errorText, @NotNull String fixComment, final Consumer<? super HotfixGate> fix) {
     myErrorText = errorText;
     myFixComment = fixComment;
     myFix = fix;
@@ -39,7 +39,7 @@ public class HotfixData {
     return myErrorText;
   }
 
-  public Consumer<HotfixGate> getFix() {
+  public Consumer<? super HotfixGate> getFix() {
     return myFix;
   }
 

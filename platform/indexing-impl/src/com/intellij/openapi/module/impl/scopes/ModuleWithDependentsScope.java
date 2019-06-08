@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
  */
 public class ModuleWithDependentsScope extends GlobalSearchScope {
   private final Set<Module> myRootModules;
-
   private final ProjectFileIndexImpl myProjectFileIndex;
   private final Set<Module> myModules = new THashSet<>();
   private final Set<Module> myProductionOnTestModules = new THashSet<>();
@@ -52,7 +51,7 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
     this(module.getProject(), Collections.singleton(module));
   }
 
-  public ModuleWithDependentsScope(@NotNull Project project, @NotNull Collection<Module> modules) {
+  public ModuleWithDependentsScope(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     super(project);
     myRootModules = new LinkedHashSet<>(modules);
 
@@ -156,17 +155,17 @@ public class ModuleWithDependentsScope extends GlobalSearchScope {
   @Override
   @NonNls
   public String toString() {
-    return "Module with dependents:" + StringUtil.join(myRootModules, Module::getName, ",");
+    return "Modules with dependents:" + StringUtil.join(myRootModules, Module::getName, ",");
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    return o instanceof ModuleWithDependentsScope && myRootModules.equals(((ModuleWithDependentsScope)o).myRootModules);
+    return o instanceof ModuleWithDependentsScope && myModules.equals(((ModuleWithDependentsScope)o).myModules);
   }
 
   @Override
   public int calcHashCode() {
-    return myRootModules.hashCode();
+    return myModules.hashCode();
   }
 }

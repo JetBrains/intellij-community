@@ -82,10 +82,6 @@
       <separator/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
-    <action id="Subversion.MarkLocallyDeletedTreeResolved"
-            class="org.jetbrains.idea.svn.actions.MarkLocallyDeletedTreeConflictResolvedAction">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowDiff"/>
-    </action>
     <reference id="Subversion.MarkTreeResolved">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowDiff"/>
     </reference>
@@ -115,28 +111,22 @@
   <extensions defaultExtensionNs="com.intellij">
     <vcsCheckinHandlerFactory implementation="org.jetbrains.idea.svn.checkin.SvnCheckinHandlerFactory"/>
     <checkoutProvider implementation="org.jetbrains.idea.svn.checkout.SvnCheckoutProvider"/>
-    <applicationService serviceInterface="org.jetbrains.idea.svn.SvnApplicationSettings"
-                        serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.SvnConfiguration"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.SvnFileUrlMapping"
                     serviceImplementation="org.jetbrains.idea.svn.SvnFileUrlMappingImpl"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"
-                    serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.history.LoadedRevisionsCache"
-                    serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"
-                    serviceImplementation="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"/>
-    <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"
-                    serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"/>
-    <applicationService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"
-                        serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"/>
-    <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"
-                        serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"/>
+    <projectService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
+    <projectService serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
+    <projectService serviceImplementation="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"/>
+    <projectService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"
                         serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
-    <search.topHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
-    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"/>
+    <search.projectOptionsTopHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
+    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"
+         areChildrenValidMappings="true"/>
     <projectConfigurable id="vcs.Subversion" displayName="Subversion" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">
       <configurable id="vcs.Subversion.Presentation" displayName="Presentation"
@@ -163,7 +153,6 @@
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffTool"/>
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnPhantomChangeDiffRequestProvider$SvnPhantomDiffTool"/>
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider$SvnTreeConflictDiffTool"/>
-    <applicationService serviceInterface="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"
-                        serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
   </extensions>
 </idea-plugin>

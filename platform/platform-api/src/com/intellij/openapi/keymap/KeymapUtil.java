@@ -36,8 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class KeymapUtil {
 
@@ -263,15 +264,7 @@ public class KeymapUtil {
     if (shortcuts.length == 0) {
       return "";
     }
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < shortcuts.length; i++) {
-      Shortcut shortcut = shortcuts[i];
-      if (i > 0) {
-        buffer.append(' ');
-      }
-      buffer.append(getShortcutText(shortcut));
-    }
-    return buffer.toString();
+    return Arrays.stream(shortcuts).map(KeymapUtil::getShortcutText).collect(Collectors.joining(" "));
   }
 
   /**

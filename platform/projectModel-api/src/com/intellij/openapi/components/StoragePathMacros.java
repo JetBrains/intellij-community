@@ -34,7 +34,7 @@ public final class StoragePathMacros {
   /**
    * Application level non-roamable storage.
    */
-  public static final String NOT_ROAMABLE_FILE = PathManager.DEFAULT_OPTIONS_FILE;
+  public static final String NON_ROAMABLE_FILE = PathManager.DEFAULT_OPTIONS_FILE;
 
   private StoragePathMacros() {
   }

@@ -21,11 +21,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -39,7 +38,7 @@ import java.util.Date;
  */
 public class ChooseStacktraceDialog extends DialogWrapper {
 
-  private JList myList;
+  private JList<Comment> myList;
   private JPanel myPanel;
   private JPanel myEditorPanel;
   private final AnalyzeStacktraceUtil.StacktraceEditorPanel myEditor;
@@ -57,30 +56,15 @@ public class ChooseStacktraceDialog extends DialogWrapper {
     ContainerUtil.addAll(list, comments);
 
     myList.setModel(new CollectionListModel<>(list));
-    myList.setCellRenderer(new ColoredListCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof Description) {
-          append("Description");
-        }
-        else {
-          append("Commented by " + ((Comment)value).getAuthor() + " (" + ((Comment)value).getDate() + ")");
-        }
-      }
-    });
-
+    myList.setCellRenderer(SimpleListCellRenderer.create("", o ->
+      o instanceof Description ? "Description" : "Commented by " + o.getAuthor() + " (" + o.getDate() + ")"));
     myEditor = AnalyzeStacktraceUtil.createEditorPanel(project, myDisposable);
     myEditorPanel.add(myEditor, BorderLayout.CENTER);
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        Object value = myList.getSelectedValue();
-        if (value instanceof Comment) {
-          myEditor.setText(((Comment)value).getText());
-        }
-        else {
-          myEditor.setText("");
-        }
+        Comment value = myList.getSelectedValue();
+        myEditor.setText(value != null ? value.getText() : "");
       }
     });
     myList.setSelectedValue(list.get(0), false);

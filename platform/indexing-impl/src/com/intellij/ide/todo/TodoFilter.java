@@ -44,7 +44,7 @@ public class TodoFilter implements Cloneable {
     myTodoPatterns = new SmartHashSet<>();
   }
 
-  public TodoFilter(@NotNull Element element, @NotNull List<TodoPattern> patterns) {
+  public TodoFilter(@NotNull Element element, @NotNull List<? extends TodoPattern> patterns) {
     setName("");
     myTodoPatterns = new SmartHashSet<>();
     readExternal(element, patterns);
@@ -112,7 +112,7 @@ public class TodoFilter implements Cloneable {
     return myTodoPatterns.isEmpty();
   }
 
-  private void readExternal(@NotNull Element element, @NotNull List<TodoPattern> patterns) {
+  private void readExternal(@NotNull Element element, @NotNull List<? extends TodoPattern> patterns) {
     myName = element.getAttributeValue(ATTRIBUTE_NAME);
     if (myName == null) {
       throw new IllegalArgumentException();

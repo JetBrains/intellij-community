@@ -1,22 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -29,9 +30,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class IoTestUtil {
+  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
+
   private IoTestUtil() { }
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
+  private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
 
   @Nullable
   public static String getUnicodeName() {
@@ -43,7 +46,7 @@ public class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(Predicate<String> predicate) {
+  private static String filterParts(Predicate<? super String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -82,6 +85,10 @@ public class IoTestUtil {
     return linkFile;
   }
 
+  public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
+    Assume.assumeTrue("Expected can create symlinks", isSymLinkCreationSupported);
+  }
+
   @NotNull
   public static File createJunction(@NotNull String target, @NotNull String junction) {
     assertTrue(SystemInfo.isWindows);
@@ -115,7 +122,7 @@ public class IoTestUtil {
   }
 
   private static char getFirstFreeDriveLetter() {
-    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> root.getPath().toUpperCase(Locale.US).charAt(0));
+    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> StringUtil.toUpperCase(root.getPath()).charAt(0));
     for (char c = 'E'; c <= 'Z'; c++) {
       if (!roots.contains(c)) {
         return c;
@@ -143,7 +150,7 @@ public class IoTestUtil {
       Process process = builder.start();
       StringBuilder output = new StringBuilder();
       Thread thread = new Thread(() -> {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
           String line;
           while ((line = reader.readLine()) != null) {
             output.append(line).append('\n');
@@ -201,7 +208,7 @@ public class IoTestUtil {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (int i = 0; i < namesAndTexts.length; i += 2) {
         stream.putNextEntry(new ZipEntry(namesAndTexts[i]));
-        if (namesAndTexts[i + 1] != null) stream.write(namesAndTexts[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
+        if (namesAndTexts[i + 1] != null) stream.write(namesAndTexts[i + 1].getBytes(StandardCharsets.UTF_8));
         stream.closeEntry();
       }
       return jarFile;
@@ -212,7 +219,7 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String,byte[]>> namesAndContents) {
+  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;
@@ -311,6 +318,24 @@ public class IoTestUtil {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @SuppressWarnings({"SSBasedInspection", "ResultOfMethodCallIgnored"})
+  private static boolean canCreateSymlinks() {
+    File target = null, link = null;
+    try {
+      target = File.createTempFile("IOTestUtil_link_target.", ".txt");
+      link = new File(target.getParent(), target.getName().replace("IOTestUtil_link_target", "IOTestUtil_link"));
+      Files.createSymbolicLink(link.toPath(), target.toPath());
+      return true;
+    }
+    catch (IOException e) {
+      return false;
+    }
+    finally {
+      if (link != null) link.delete();
+      if (target != null) target.delete();
     }
   }
 }

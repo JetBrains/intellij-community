@@ -12,17 +12,15 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -33,7 +31,7 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     File dir = createTempDir("foo");
     File file = new File(dir, "some.txt");
     Files.write(file.toPath(), "first line\nsecond line".getBytes(StandardCharsets.UTF_8));
-    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://" + file.getAbsolutePath());
+    VirtualFile virtualFile = getVirtualFile(file);
     assertNotNull(virtualFile);
 
     useRealFileEditorManager();
@@ -47,14 +45,7 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
 
     String threadDumpBefore = ThreadDumper.dumpThreadsToString();
 
-    GCUtil.tryGcSoftlyReachableObjects();
-
-    WeakReference<Object> weakReference = new WeakReference<>(new Object());
-    do {
-      //noinspection CallToSystemGC
-      System.gc();
-    }
-    while (weakReference.get() != null);
+    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(virtualFile)).tryGc();
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null) {

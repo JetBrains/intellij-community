@@ -13,6 +13,8 @@ import java.io.File;
 
 import static com.intellij.mock.MockVirtualFile.dir;
 import static com.intellij.mock.MockVirtualFile.file;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class VfsUtilLightTest extends BareTestFixtureTestCase {
   private static VirtualFile myRoot;
@@ -62,7 +64,7 @@ public class VfsUtilLightTest extends BareTestFixtureTestCase {
     VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl("jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/");
     assertNotNull(jarRoot);
 
-    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, null, null, false, false);
+    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, null, null, false, null);
     assertEquals(FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/x.txt", event.getPath());
   }
 }

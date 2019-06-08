@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.JBTabsPresentation;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
@@ -37,26 +24,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author pegov
  */
-public class JBEditorTabs extends JBTabsImpl {
-  public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
+public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
+  private boolean myAlphabeticalModeChanged = false;
+  @Nullable
+  private Supplier<? extends Color> myEmptySpaceColorCallback;
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
-    Registry.get(TABS_ALPHABETICAL_KEY).addListener(new RegistryValueListener.Adapter() {
-
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          resetTabsCache();
-          relayout(true, false);
-        });
-      }
-    }, parent);
+    ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(UISettingsListener.TOPIC, (settings) -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        resetTabsCache();
+        relayout(true, false);
+      });
+    });
+    setSupportsCompression(true);
   }
 
   @Override
@@ -68,11 +55,6 @@ public class JBEditorTabs extends JBTabsImpl {
       return new ScrollableSingleRowLayout(this);
     }
     return super.createSingleRowLayout();
-  }
-
-  @Override
-  public boolean supportsCompression() {
-    return true;
   }
 
   @Nullable
@@ -170,11 +152,21 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean isAlphabeticalMode() {
-    return Registry.is(TABS_ALPHABETICAL_KEY);
+    if (myAlphabeticalModeChanged) {
+      return super.isAlphabeticalMode();
+    }
+    return UISettings.getInstance().getSortTabsAlphabetically();
   }
 
-  public static void setAlphabeticalMode(boolean on) {
-    Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
+  @Override
+  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
+    myAlphabeticalModeChanged = true;
+    return super.setAlphabeticalMode(alphabeticalMode);
+  }
+
+  @Override
+  public void setEmptySpaceColorCallback(@NotNull Supplier<? extends Color> callback) {
+    myEmptySpaceColorCallback = callback;
   }
 
   @Override
@@ -237,6 +229,9 @@ public class JBEditorTabs extends JBTabsImpl {
   }
 
   protected Color getEmptySpaceColor() {
+    if (myEmptySpaceColorCallback != null) {
+      return myEmptySpaceColorCallback.get();
+    }
     return getPainter().getEmptySpaceColor();
   }
 

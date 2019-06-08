@@ -188,7 +188,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   private static void setSystemProperty(@NotNull String propertyName,
                                         @Nullable String newPropertyValue,
-                                        @Nullable List<Pair<String, String>> backup) {
+                                        @Nullable List<? super Pair<String, String>> backup) {
     if (backup != null) {
       String oldValue = System.getProperty(propertyName);
       backup.add(Pair.create(propertyName, oldValue));
@@ -216,7 +216,8 @@ public class PtyCommandLine extends GeneralCommandLine {
       .setConsole(myConsoleMode)
       .setCygwin(cygwin)
       .setLogFile(getPtyLogFile())
-      .setRedirectErrorStream(isRedirectErrorStream());
+      .setRedirectErrorStream(isRedirectErrorStream())
+      .setWindowsAnsiColorEnabled(!Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode"));
     return builder.start();
   }
 }

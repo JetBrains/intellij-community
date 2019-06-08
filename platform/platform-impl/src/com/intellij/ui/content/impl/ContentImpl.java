@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.icons.AllIcons;
@@ -46,7 +46,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private JComponent myActionsContextComponent;
   private JComponent mySearchComponent;
 
-  private Computable<JComponent> myFocusRequest;
+  private Computable<? extends JComponent> myFocusRequest;
   private BusyObject myBusyObject;
   private String mySeparator;
   private Icon myPopupIcon;
@@ -81,12 +81,12 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setPreferredFocusableComponent(final JComponent c) {
+  public void setPreferredFocusableComponent(JComponent c) {
     setPreferredFocusedComponent(() -> c);
   }
 
   @Override
-  public void setPreferredFocusedComponent(final Computable<JComponent> computable) {
+  public void setPreferredFocusedComponent(@SuppressWarnings("BoundedWildcard") Computable<? extends JComponent> computable) {
     myFocusRequest = computable;
   }
 
@@ -217,7 +217,6 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     Disposer.dispose(this);
   }
 
-  //TODO[anton,vova] investigate
   @Override
   public boolean isValid() {
     return myManager != null;

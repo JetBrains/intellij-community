@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -17,10 +17,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
@@ -58,6 +60,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -88,8 +91,6 @@ public abstract class UsefulTestCase extends TestCase {
   private final List<String> myPathsToKeep = new ArrayList<>();
 
   private String myTempDir;
-
-  static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
@@ -351,15 +352,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-    if (policy != null && !policy.runInDispatchThread()) {
-      runnable.run();
-    }
-    else {
+    if (runInDispatchThread()) {
       EdtTestUtilKt.runInEdtAndWait(() -> {
         runnable.run();
         return null;
       });
+    }
+    else {
+      runnable.run();
     }
   }
 
@@ -730,13 +730,12 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertOneOf(T value, @NotNull T... values) {
-    boolean found = false;
     for (T v : values) {
       if (Objects.equals(value, v)) {
-        found = true;
+        return;
       }
     }
-    Assert.assertTrue(value + " should be equal to one of " + Arrays.toString(values), found);
+    Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
   }
 
   public static void printThreadDump() {
@@ -770,11 +769,15 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSize(int expectedSize, @NotNull Object[] array) {
-    assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    if (array.length != expectedSize) {
+      assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
+    }
   }
 
   public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
-    assertEquals(toString(c), expectedSize, c.size());
+    if (c.size() != expectedSize) {
+      assertEquals(toString(c), expectedSize, c.size());
+    }
   }
 
   @NotNull
@@ -842,7 +845,7 @@ public abstract class UsefulTestCase extends TestCase {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println("File " + filePath + " created.");
       }
-      fileText = FileUtil.loadFile(new File(filePath), CharsetToolkit.UTF8_CHARSET);
+      fileText = FileUtil.loadFile(new File(filePath), StandardCharsets.UTF_8);
     }
     catch (FileNotFoundException e) {
       VfsTestUtil.overwriteTestData(filePath, actualText);
@@ -892,8 +895,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings,
-                                                    @NotNull CodeInsightSettings settings) {
+  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings, @NotNull CodeInsightSettings settings) {
     if (!oldSettings.equals(settings)) {
       Element newS = new Element("temp");
       settings.writeExternal(newS);

@@ -9,31 +9,27 @@ import com.intellij.openapi.util.Conditions
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
+import com.intellij.util.text.nullize
 import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
-import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.channel.socket.oio.OioServerSocketChannel
-import io.netty.channel.socket.oio.OioSocketChannel
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
 import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
-import org.jetbrains.ide.PooledThreadExecutor
 import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.Socket
-import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -54,10 +50,11 @@ fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
   return bootstrap
 }
 
+@Suppress("DEPRECATION")
 private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> {
   return when {
     this is NioEventLoopGroup -> NioServerSocketChannel::class.java
-    this is OioEventLoopGroup -> OioServerSocketChannel::class.java
+    this is io.netty.channel.oio.OioEventLoopGroup -> io.netty.channel.socket.oio.OioServerSocketChannel::class.java
     //  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
     else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
   }
@@ -69,7 +66,8 @@ inline fun ChannelFuture.addChannelListener(crossinline listener: (future: Chann
 
 // if NIO, so, it is shared and we must not shutdown it
 fun EventLoop.shutdownIfOio() {
-  (parent() as? OioEventLoopGroup)?.shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
+  @Suppress("DEPRECATION")
+  (parent() as? io.netty.channel.oio.OioEventLoopGroup)?.shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
 }
 
 // Event loop will be shut downed only if OIO
@@ -107,7 +105,8 @@ private fun doConnect(bootstrap: Bootstrap,
   }
 
   var attemptCount = 0
-  if (bootstrap.config().group() !is OioEventLoopGroup) {
+  @Suppress("DEPRECATION")
+  if (bootstrap.config().group() !is io.netty.channel.oio.OioEventLoopGroup) {
     return connectNio(bootstrap, remoteAddress, maxAttemptCount, stopCondition, attemptCount)
   }
 
@@ -115,7 +114,8 @@ private fun doConnect(bootstrap: Bootstrap,
 
   while (true) {
     try {
-      val channel = OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
+      @Suppress("DEPRECATION")
+      val channel = io.netty.channel.socket.oio.OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
       BootstrapUtil.initAndRegister(channel, bootstrap).sync()
       return ConnectToChannelResult(channel)
     }
@@ -198,6 +198,13 @@ val Channel.uriScheme: String
 val HttpRequest.host: String?
   get() = headers().getAsString(HttpHeaderNames.HOST)
 
+val HttpRequest.hostName: String?
+  get() {
+    val hostAndPort = headers().getAsString(HttpHeaderNames.HOST).nullize() ?: return null
+    val portIndex = hostAndPort.lastIndexOf(':')
+    return if (portIndex > 0) hostAndPort.substring(0, portIndex).nullize() else hostAndPort
+  }
+
 val HttpRequest.origin: String?
   get() = headers().getAsString(HttpHeaderNames.ORIGIN)
 
@@ -221,7 +228,7 @@ inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
   }
 }
 
-fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = false): Boolean {
+fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
   if (NetUtils.isLocalhost(host)) {
     return true
   }
@@ -257,6 +264,7 @@ fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Bool
   return parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback, hostsOnly) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback, hostsOnly)
 }
 
+@Suppress("SpellCheckingInspection")
 private fun isTrustedChromeExtension(url: Url): Boolean {
   return url.scheme == "chrome-extension" &&
          (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" ||
@@ -298,35 +306,6 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
 fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
 fun ByteBuf.writeUtf8(data: CharSequence): Int = writeCharSequence(data, Charsets.UTF_8)
-
-@Suppress("FunctionName")
-fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
-//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-//    try {
-//      return KQueueEventLoopGroup(workerCount, threadFactory)
-//    }
-//    catch (e: Throwable) {
-//      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
-//    }
-//  }
-
-  return NioEventLoopGroup(workerCount, threadFactory)
-}
-
-@Suppress("FunctionName")
-fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
-//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-//    try {
-//      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
-//    }
-//    catch (e: Throwable) {
-//      // error instead of warn to easy spot it
-//      logger<BuiltInServer>().error("Cannot use native event loop group", e)
-//    }
-//  }
-
-  return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
-}
 
 class ConnectToChannelResult {
   val channel: Channel?

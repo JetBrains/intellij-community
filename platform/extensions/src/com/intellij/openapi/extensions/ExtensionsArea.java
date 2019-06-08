@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.picocontainer.MutablePicoContainer;
 
 /**
  * @see Extensions#getArea(AreaInstance)
@@ -37,6 +38,9 @@ public interface ExtensionsArea  {
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NonNls @NotNull String extensionPointName);
 
+  @Nullable
+  <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName);
+
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
 
@@ -54,7 +58,7 @@ public interface ExtensionsArea  {
   void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener);
 
   @NotNull
-  AreaPicoContainer getPicoContainer();
+  MutablePicoContainer getPicoContainer();
 
   void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement);
 
@@ -64,6 +68,7 @@ public interface ExtensionsArea  {
    * @param extensionElement element from plugin.xml file where extension settings are specified
    * @param extensionNs extension namespace which is prepended to the tag name from {@code extensionElement} to form the qualified extension name.
    */
+  @TestOnly
   void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, @Nullable String extensionNs);
 
   void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement);

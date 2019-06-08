@@ -26,15 +26,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class DeleteCatchFix implements IntentionAction {
   private final PsiParameter myCatchParameter;
+  private final String myTypeText;
 
   public DeleteCatchFix(@NotNull PsiParameter myCatchParameter) {
     this.myCatchParameter = myCatchParameter;
+    myTypeText = JavaHighlightUtil.formatType(myCatchParameter.getType());
   }
 
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("delete.catch.text", JavaHighlightUtil.formatType(myCatchParameter.getType()));
+    return QuickFixBundle.message("delete.catch.text", myTypeText);
   }
 
   @Override

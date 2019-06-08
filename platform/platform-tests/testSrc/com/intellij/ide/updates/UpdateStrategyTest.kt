@@ -6,6 +6,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.*
 import org.junit.Test
 
 // unless stated otherwise, the behavior described in cases is true for 162+

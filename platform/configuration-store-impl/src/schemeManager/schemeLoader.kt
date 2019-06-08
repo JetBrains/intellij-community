@@ -1,11 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
-import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.LazySchemeProcessor
-import com.intellij.configurationStore.createDataDigest
-import com.intellij.configurationStore.digest
-import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.configurationStore.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
@@ -33,7 +29,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
                                                          private val oldSchemes: ConcurrentList<T>,
                                                          private val preScheduledFilesToDelete: MutableSet<String>,
                                                          private val isDuringLoad: Boolean) {
-  private val filesToDelete: MutableSet<String> = THashSet()
+  private val filesToDelete: MutableSet<String> = THashSet<String>()
 
   private val schemes = oldSchemes.toMutableList()
   private var newSchemesOffset = schemes.size
@@ -295,11 +291,11 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
   override fun toString() = fileName
 }
 
-internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: Any): VirtualFile {
-  return findChild(fileName) ?: runUndoTransparentWriteAction { createChildData(requestor, fileName) }
+internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageManagerFileWriteRequestor): VirtualFile {
+  return findChild(fileName) ?: runAsWriteActionIfNeeded { createChildData(requestor, fileName) }
 }
 
-internal fun createDir(ioDir: Path, requestor: Any): VirtualFile {
+internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   ioDir.createDirectories()
   val parentFile = ioDir.parent
   val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath))

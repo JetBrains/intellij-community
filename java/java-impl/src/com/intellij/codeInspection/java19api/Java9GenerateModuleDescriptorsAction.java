@@ -244,7 +244,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       createFilesLater(moduleInfos);
     }
 
-    private void createFilesLater(List<ModuleInfo> moduleInfos) {
+    private void createFilesLater(List<? extends ModuleInfo> moduleInfos) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myProject.isDisposed()) {
           CommandProcessor.getInstance().executeCommand(myProject, () ->

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,11 +14,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.serialization.SerializationException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializationException;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -117,16 +116,14 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
 
-  public boolean SHOW_SOURCE_INFERRED_ANNOTATIONS = true;
-
   @OptionTag("SMART_BACKSPACE") // explicit name makes it work also for obfuscated private field's name
   private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
-  
+
   @Transient
   @NotNull
   public SmartBackspaceMode getBackspaceMode() {
     SmartBackspaceMode[] values = SmartBackspaceMode.values();
-    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF; 
+    return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF;
   }
 
   @Transient
@@ -141,7 +138,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SMART_END_ACTION = true;
   public boolean JAVADOC_GENERATE_CLOSING_TAG = true;
 
-  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED;
+  public boolean SURROUND_SELECTION_ON_QUOTE_TYPED = true;
 
   public boolean AUTOINSERT_PAIR_BRACKET = true;
   public boolean AUTOINSERT_PAIR_QUOTE = true;
@@ -179,7 +176,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
 
-  public boolean TAB_EXITS_BRACKETS_AND_QUOTES;
+  public boolean TAB_EXITS_BRACKETS_AND_QUOTES = true;
 
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings
@@ -197,9 +194,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     setDefaults();
 
     try {
-      XmlSerializer.deserializeInto(this, state);
+      XmlSerializer.deserializeInto(state, this);
     }
-    catch (XmlSerializationException e) {
+    catch (SerializationException e) {
       LOG.info(e);
     }
   }
@@ -228,11 +225,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     return element;
   }
 
-  public void writeExternal(final Element element) {
+  public void writeExternal(@NotNull Element element) {
     try {
-      XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
+      XmlSerializer.serializeObjectInto(this, element);
     }
-    catch (XmlSerializationException e) {
+    catch (SerializationException e) {
       LOG.info(e);
     }
   }

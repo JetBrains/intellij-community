@@ -103,7 +103,7 @@ public class ThreadDumpParser {
   }
 
   @Nullable
-  private static ThreadState findLockOwner(List<ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
+  private static ThreadState findLockOwner(List<? extends ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
     if (lockId == null) return null;
 
     final String marker = "- locked <" + lockId + ">";

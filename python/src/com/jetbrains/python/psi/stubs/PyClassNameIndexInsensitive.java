@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
@@ -38,6 +39,6 @@ public class PyClassNameIndexInsensitive extends StringStubIndexExtension<PyClas
   }
 
   public static Collection<PyClass> find(String name, Project project) {
-    return StubIndex.getElements(KEY, name.toLowerCase(), project, ProjectScope.getProjectScope(project), PyClass.class);
+    return StubIndex.getElements(KEY, StringUtil.toLowerCase(name), project, ProjectScope.getProjectScope(project), PyClass.class);
   }
 }

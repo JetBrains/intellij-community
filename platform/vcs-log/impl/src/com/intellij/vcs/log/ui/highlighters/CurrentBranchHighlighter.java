@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.ui.JBColor.namedColor;
@@ -20,7 +20,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
                                                               new JBColor(new Color(228, 250, 255), new Color(63, 71, 73)));
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUi myLogUi;
-  @NotNull private final Map<VirtualFile, Boolean> myIsHighlighted = ContainerUtil.newHashMap();
+  @NotNull private final Map<VirtualFile, Boolean> myIsHighlighted = new HashMap<>();
 
   public CurrentBranchHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
     myLogData = logData;

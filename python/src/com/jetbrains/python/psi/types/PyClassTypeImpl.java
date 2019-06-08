@@ -162,7 +162,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (resolveContext.allowProperties()) {
-      final Ref<ResolveResultList> resultRef = findProperty(name, direction, true, resolveContext.getTypeEvalContext());
+      final Ref<ResolveResultList> resultRef = findProperty(name, direction, false, resolveContext.getTypeEvalContext());
       if (resultRef != null) {
         return resultRef.get();
       }
@@ -187,20 +187,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     final List<? extends RatedResolveResult> classMembers = resolveInner(myClass, myIsDefinition, name, location, context);
-
-    if (PyNames.__CLASS__.equals(name)) {
-      return resolveDunderClass(context, classMembers);
-    }
-
     if (!classMembers.isEmpty()) {
       return classMembers;
-    }
-
-    if (PyNames.DOC.equals(name)) {
-      return Optional
-        .ofNullable(PyBuiltinCache.getInstance(myClass).getObjectType())
-        .map(type -> type.resolveMember(name, location, direction, resolveContext))
-        .orElse(Collections.emptyList());
     }
 
     classMember = resolveByOverridingAncestorsMembersProviders(this, name, location, resolveContext);
@@ -340,36 +328,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
     return resultRef;
-  }
-
-  @Nullable
-  private List<? extends RatedResolveResult> resolveDunderClass(@NotNull TypeEvalContext context, @NotNull List<? extends RatedResolveResult> classMembers) {
-    final boolean newStyleClass = myClass.isNewStyleClass(context);
-
-    if (!myIsDefinition) {
-      if (newStyleClass && !classMembers.isEmpty()) {
-        return classMembers;
-      }
-
-      return ResolveResultList.to(
-        myClass.getAncestorClasses(context)
-        .stream()
-        .filter(cls -> !PyUtil.isObjectClass(cls))
-        .<PsiElement>map(cls -> cls.findClassAttribute(PyNames.__CLASS__, true, context))
-        .filter(target -> target != null)
-        .findFirst()
-        .orElse(myClass)
-      );
-    }
-
-    if (LanguageLevel.forElement(myClass).isPython2() && !newStyleClass) {
-      return classMembers;
-    }
-
-    return Optional
-      .ofNullable(PyBuiltinCache.getInstance(myClass).getTypeType())
-      .map(typeType -> ResolveResultList.to(typeType.getPyClass()))
-      .orElse(null);
   }
 
   @Nullable

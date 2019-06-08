@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -41,6 +42,8 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.jetbrains.concurrency.Promise.State.PENDING;
+
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsTree myProjectsTree;
   protected MavenProjectsManager myProjectsManager;
@@ -59,20 +62,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-      Messages.setTestDialog(TestDialog.DEFAULT);
-      removeFromLocalRepository("test");
-      ExternalSystemTestCase.deleteBuildSystemDirectory();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      myProjectsManager = null;
-      myProjectsTree = null;
-      super.tearDown();
-    }
+    new RunAll(
+      () -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests(),
+      () -> Messages.setTestDialog(TestDialog.DEFAULT),
+      () -> removeFromLocalRepository("test"),
+      () -> ExternalSystemTestCase.deleteBuildSystemDirectory(),
+      () -> myProjectsManager = null,
+      () -> myProjectsTree = null,
+      () -> super.tearDown()
+    ).run();
   }
 
   @Override

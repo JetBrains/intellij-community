@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -23,6 +24,7 @@ public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails
                       @NotNull VcsLogIndex index,
                       @NotNull Disposable parentDisposable) {
     super(storage, logProviders, new VcsCommitCache<>(), index, parentDisposable);
+    LowMemoryWatcher.register(() -> clear(), this);
   }
 
   @Nullable

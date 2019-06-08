@@ -17,8 +17,9 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
@@ -34,19 +35,14 @@ import java.util.Map;
 @TestOnly
 public class EditorListenerTracker {
   private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;
-  private final boolean myDefaultProjectInitialized;
 
   public EditorListenerTracker() {
     EncodingManager.getInstance(); //adds listeners
     before = ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).getListeners();
-    myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
   public void checkListenersLeak() throws AssertionError {
     try {
-      // listeners may hang on default project
-      if (myDefaultProjectInitialized != ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) return;
-
       EditorEventMulticasterImpl multicaster = (EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster();
       Map<Class<? extends EventListener>, List<? extends EventListener>> after = multicaster.getListeners();
       Map<Class<? extends EventListener>, List<? extends EventListener>> leaked = new LinkedHashMap<>();
@@ -57,6 +53,8 @@ public class EditorListenerTracker {
         if (beforeList != null) {
           afterList.removeAll(beforeList);
         }
+        // listeners may hang on default project which comes and goes unpredictably, so just ignore them
+        afterList.removeIf(listener -> listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject());
         if (!afterList.isEmpty()) {
           leaked.put(aClass, afterList);
         }

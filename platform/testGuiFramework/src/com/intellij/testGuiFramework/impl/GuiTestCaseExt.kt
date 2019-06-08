@@ -13,6 +13,7 @@ import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.timing.Timeout
 import org.hamcrest.Matcher
 import org.junit.Assert.assertTrue
 import org.junit.rules.ErrorCollector
@@ -83,6 +84,9 @@ fun GuiTestCase.waitAMoment() {
           catch (ignore: IllegalStateException) {
             // asyncIcon searched earlier might disappear at all (it's ok)
           }
+          catch (ignore: IllegalArgumentException) {
+            // asyncIcon searched earlier might disappear at all (it's ok)
+          }
           catch (e: WaitTimedOutError) {
             throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
           }
@@ -116,10 +120,10 @@ fun GuiTestCase.waitAMoment() {
  * @param name - name of item kind, such as "Library" or "Facet". Used for understandable error message
  * @param predicate - searcher rule, how to compare an item and name. By default they are compared by equality
  * */
-fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality) {
+fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout) {
   ideFrame {
     logInfo("Check that $name -> ${expectedItem.joinToString(" -> ")} exists in a tree element")
-    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
+    kotlin.assert(exists { jTree(*expectedItem, predicate = predicate, timeout = timeout) }) { "$name '${expectedItem.joinToString(", ")}' not found" }
   }
 }
 
@@ -207,7 +211,6 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
                 fixtureByTextAnyState.isEnabled
               }
               catch (e: Exception) {
-                logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
                 false
               }
               logInfo("'$text' button is ${if(isReimportButtonEnabled) "enabled" else "disabled"}")
@@ -216,7 +219,7 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
           // second, check status in the Build tool window
           toolwindow(id = "Build") {
             content(tabName = "Sync") {
-              val tree = treeTable().target.tree
+              val tree = treeTable().target().tree
               val pathStrings = listOf(rootPath)
               val treePath = try {
                 ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(pathStrings = pathStrings, predicate = Predicate.startWith)
@@ -339,9 +342,13 @@ fun GuiTestCase.checkGutterIcons(gutterIcon: GutterFixture.GutterIcon,
   ideFrame {
     step("check whether $expectedNumberOfIcons '$gutterIcon' gutter icons are present") {
       editor {
-        step("wait for gutter icons appearing") {
+        step("wait for editor file has been loaded") {
           waitUntilFileIsLoaded()
           waitUntilErrorAnalysisFinishes()
+        }
+      }
+      editor {
+        step("wait for gutter icons appearing") {
           gutter.waitUntilIconsShown(mapOf(gutterIcon to expectedNumberOfIcons))
           moveToLine(expectedNumberOfIcons)
         }
@@ -406,5 +413,13 @@ fun GuiTestCase.createJdk(jdkPath: String, jdkName: String = ""): String{
       }
     } // ideFrame
     return@step installedJdkName
+  }
+}
+
+fun <T1, T2, R> combine(first: Iterable<T1>,
+                        second: Iterable<T2>,
+                        combiner: (T1, T2) -> R): List<R> = first.flatMap { firstItem ->
+  second.map { secondItem ->
+    combiner(firstItem, secondItem)
   }
 }

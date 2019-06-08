@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
@@ -39,6 +39,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -266,11 +268,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   private class MyPatchModel extends AbstractTableModel implements MultiReorderedModel {
 
     @NotNull private final MqPatchDetails.MqPatchEnum[] myColumnNames = MqPatchDetails.MqPatchEnum.values();
-    @NotNull private final Map<String, MqPatchDetails> myPatchesWithDetails = ContainerUtil.newHashMap();
+    @NotNull private final Map<String, MqPatchDetails> myPatchesWithDetails = new HashMap<>();
     @NotNull private final List<String> myPatches;
 
     MyPatchModel(@NotNull List<String> names) {
-      myPatches = ContainerUtil.newArrayList(names);
+      myPatches = new ArrayList<>(names);
       readMqPatchesDetails();
     }
 

@@ -134,7 +134,7 @@ public final class ScriptRunnerUtil {
                                                                   @Nullable VirtualFile scriptFile,
                                                                   @Nullable String workingDirectory,
                                                                   long timeout,
-                                                                  Condition<Key> scriptOutputType,
+                                                                  Condition<? super Key> scriptOutputType,
                                                                   @NonNls String... parameters) throws ExecutionException {
     final OSProcessHandler processHandler = execute(exePathString, workingDirectory, scriptFile, parameters);
 
@@ -151,11 +151,11 @@ public final class ScriptRunnerUtil {
   }
 
   public static class ScriptOutput extends ProcessAdapter {
-    private final Condition<Key> myScriptOutputType;
+    private final Condition<? super Key> myScriptOutputType;
     public final StringBuilder myFilteredOutput;
     public final StringBuffer myMergedOutput;
 
-    private ScriptOutput(Condition<Key> scriptOutputType) {
+    private ScriptOutput(Condition<? super Key> scriptOutputType) {
       myScriptOutputType = scriptOutputType;
       myFilteredOutput = new StringBuilder();
       myMergedOutput = new StringBuffer();

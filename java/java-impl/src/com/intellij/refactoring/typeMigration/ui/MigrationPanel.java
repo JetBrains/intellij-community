@@ -84,7 +84,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     myRootsTree = new MyTree();
     TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
     structure.setRoots(currentRoot);
-    StructureTreeModel model = new StructureTreeModel(structure, AlphaComparator.INSTANCE);
+    StructureTreeModel model = new StructureTreeModel<>(structure, AlphaComparator.INSTANCE, this);
     myRootsTree.setModel(new AsyncTreeModel(model, this));
 
     initTree(myRootsTree);
@@ -242,7 +242,6 @@ public class MigrationPanel extends JPanel implements Disposable {
     tree.setCellRenderer(rootsTreeCellRenderer);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
-    UIUtil.setLineStyleAngled(tree);
 
     TreeUtil.installActions(tree);
     TreeUtil.expandAll(tree);
@@ -306,7 +305,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       return null;
     }
 
-    private static void collectInfos(final Set<TypeMigrationUsageInfo> usageInfos, final MigrationNode currentNode) {
+    private static void collectInfos(final Set<? super TypeMigrationUsageInfo> usageInfos, final MigrationNode currentNode) {
       usageInfos.add(currentNode.getInfo());
       if (!currentNode.areChildrenInitialized()) return;
       final Collection<? extends AbstractTreeNode> nodes = currentNode.getChildren();
@@ -363,7 +362,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     @Nullable
     private TypeMigrationUsageInfo[] getUsages(AnActionEvent context) {
-      return MIGRATION_USAGES_KEYS.getData(context.getDataContext());
+      return context.getData(MIGRATION_USAGES_KEYS);
     }
 
     @Override

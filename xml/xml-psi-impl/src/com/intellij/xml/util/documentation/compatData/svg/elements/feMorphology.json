@@ -21,7 +21,7 @@
               "version_added": "4"
             },
             "firefox_android": {
-              "version_added": null
+              "version_added": "4"
             },
             "ie": {
               "version_added": true
@@ -39,7 +39,7 @@
               "version_added": null
             },
             "webview_android": {
-              "version_added": null
+              "version_added": true
             }
           },
           "status": {
@@ -86,7 +86,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -115,7 +115,7 @@
                 "version_added": "4"
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": "4"
               },
               "ie": {
                 "version_added": true
@@ -133,7 +133,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -162,7 +162,7 @@
                 "version_added": "4"
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": "4"
               },
               "ie": {
                 "version_added": true
@@ -180,7 +180,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {
@@ -209,7 +209,7 @@
                 "version_added": "4"
               },
               "firefox_android": {
-                "version_added": null
+                "version_added": "4"
               },
               "ie": {
                 "version_added": true
@@ -227,7 +227,7 @@
                 "version_added": null
               },
               "webview_android": {
-                "version_added": null
+                "version_added": true
               }
             },
             "status": {

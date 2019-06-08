@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services.bintray;
 
 import com.google.gson.Gson;
@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -225,7 +226,7 @@ public class BintrayEndpoint {
   private <Data> void handleRequest(HttpRequests.Request request, Class<Data> responseDataClass,
                                     ThrowableConsumer<Data, IOException> responseHandler) throws IOException {
     try (InputStream in = request.getInputStream();
-         Reader reader = new InputStreamReader(in)) {
+         Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
       Data data = gson.fromJson(reader, responseDataClass);
       responseHandler.consume(data);
     }

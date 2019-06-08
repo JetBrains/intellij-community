@@ -93,7 +93,7 @@ public class EditorAdapter {
   }
 
   @NotNull
-  private Runnable writingCommand(@NotNull Collection<Line> lines) {
+  private Runnable writingCommand(@NotNull Collection<? extends Line> lines) {
     final Runnable command = () -> {
       Document document = myEditor.getDocument();
 

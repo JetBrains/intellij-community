@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -21,6 +21,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -111,7 +112,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
     myProvider = provider;
-    myTree = new InspectionTree(globalInspectionContext, this);
+    myTree = new InspectionTree(this);
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
@@ -165,15 +166,14 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
     PsiManager.getInstance(getProject()).addPsiTreeChangeListener(new InspectionViewChangeAdapter(this), this);
 
-    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(getProject());
-    profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
+    getProject().getMessageBus().connect(this).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
       public void profileChanged(InspectionProfile profile) {
-        if (profile == profileManager.getCurrentProfile()) {
+        if (profile == ProjectInspectionProfileManager.getInstance(getProject()).getCurrentProfile()) {
           InspectionResultsView.this.profileChanged();
         }
       }
-    }, this);
+    });
 
     if (!isSingleInspectionRun()) {
       mySettingsEnabled = true;
@@ -429,7 +429,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           }
         }
       }
-      final PsiFile file = selectedElement.getContainingFile();
+      final PsiFile file = InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(selectedElement);
       final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       if (document == null) {
         return Pair.create(InspectionResultsViewUtil.createLabelForText("Can't open preview for \'" + file.getName() + "\'"), null);

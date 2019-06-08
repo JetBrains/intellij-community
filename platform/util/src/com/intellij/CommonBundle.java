@@ -47,6 +47,10 @@ public class CommonBundle extends BundleBase {
   }
 
   public static String messageOrDefault(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
+    if (bundle == null) return defaultValue;
+    if (!bundle.containsKey(key)) {
+      return postprocessValue(bundle, useDefaultValue(bundle, key, defaultValue), params);
+    }
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
@@ -80,6 +84,10 @@ public class CommonBundle extends BundleBase {
     return message("title.error");
   }
 
+  /**
+   * @deprecated Use more informative title instead
+   */
+  @Deprecated
   public static String getWarningTitle() {
     return message("title.warning");
   }

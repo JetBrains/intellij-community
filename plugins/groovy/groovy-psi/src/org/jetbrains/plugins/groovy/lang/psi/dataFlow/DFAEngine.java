@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -19,12 +19,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.revers
 public class DFAEngine<E> {
 
   private final Instruction[] myFlow;
-  private final DfaInstance<E> myDfa;
+  private final DfaInstance<? super E> myDfa;
   private final Semilattice<E> mySemilattice;
 
   private WorkCounter myCounter = null;
 
-  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<E> dfa, @NotNull Semilattice<E> semilattice) {
+  public DFAEngine(@NotNull Instruction[] flow, @NotNull DfaInstance<? super E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
@@ -67,7 +67,7 @@ public class DFAEngine<E> {
   @Nullable
   private List<E> performDFA(boolean timeout) {
     final int n = myFlow.length;
-    final List<E> info = new ArrayList<>(Collections.nCopies(n, myDfa.initial()));
+    final List<E> info = new ArrayList<>(Collections.nCopies(n, mySemilattice.initial()));
     final CallEnvironment env = new MyCallEnvironment(n);
 
     final WorkList workList = new WorkList(n, getFlowOrder());
@@ -77,11 +77,12 @@ public class DFAEngine<E> {
       if (timeout && checkCounter()) return null;
       final int num = workList.next();
       final Instruction curr = myFlow[num];
-      final E oldE = info.get(num);                     // saved outbound state
-      final E newE = getInboundState(curr, info, env);  // inbound state
-      myDfa.fun(newE, curr);                            // newly modified outbound state
-      if (!mySemilattice.eq(newE, oldE)) {              // if outbound state changed
-        info.set(num, newE);                            // save new state
+      final E oldE = info.get(num);                      // saved outbound state
+      final List<E> ins = getPrevInfos(curr, info, env); // states from all inbound edges
+      final E newE = mySemilattice.join(ins);            // inbound state
+      myDfa.fun(newE, curr);                             // newly modified outbound state
+      if (!mySemilattice.eq(newE, oldE)) {               // if outbound state changed
+        info.set(num, newE);                             // save new state
         for (Instruction next : getNext(curr, env)) {
           workList.offer(next.num());
         }
@@ -102,12 +103,12 @@ public class DFAEngine<E> {
   }
 
   @NotNull
-  private E getInboundState(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
+  private List<E> getPrevInfos(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
     List<E> prevInfos = new ArrayList<>();
     for (Instruction i : getPrevious(instruction, env)) {
       prevInfos.add(info.get(i.num()));
     }
-    return mySemilattice.join(prevInfos);
+    return prevInfos;
   }
 
   @NotNull

@@ -103,6 +103,12 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
+  public <T> T as(Class<T> clazz) {
+    final T t = super.as(clazz);
+    return t == null ? myDelegate.as(clazz) : t;
+  }
+
+  @Override
   public boolean isCaseSensitive() {
     return myDelegate.isCaseSensitive();
   }

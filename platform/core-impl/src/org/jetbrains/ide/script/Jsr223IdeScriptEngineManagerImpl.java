@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide.script;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -38,10 +24,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 
@@ -69,7 +52,7 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @NotNull
   @Override
   public List<String> getFileExtensions(@Nullable String language) {
-    List<String> extensions = ContainerUtil.newArrayList();
+    List<String> extensions = new ArrayList<>();
     List<ScriptEngineFactory> factories = getScriptEngineManager().getEngineFactories();
     for (ScriptEngineFactory factory : factories) {
       if (language == null || factory.getLanguageName().equals(language)) {
@@ -311,7 +294,7 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
           ClassLoader l = descriptor.getPluginClassLoader();
           Enumeration<URL> urls = l == null ? null : l.getResources(name);
           if (urls == null || !urls.hasMoreElements()) continue;
-          if (result == null) result = ContainerUtil.newLinkedHashSet();
+          if (result == null) result = new LinkedHashSet<>();
           ContainerUtil.addAll(result, urls);
         }
         if (result != null) {

@@ -40,6 +40,11 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Exit = IconLoader.getIcon("/actions/exit.svg");
     /** 16x16 */ public static final Icon Expandall = IconLoader.getIcon("/actions/expandall.svg");
     /** 16x16 */ public static final Icon Find = IconLoader.getIcon("/actions/find.svg");
+    /** 16x16 */ public static final Icon FindAndShowNextMatches = IconLoader.getIcon("/actions/findAndShowNextMatches.svg");
+    /** 16x16 */ public static final Icon FindAndShowPrevMatches = IconLoader.getIcon("/actions/findAndShowPrevMatches.svg");
+    /** 16x16 */ public static final Icon FindBackward = IconLoader.getIcon("/actions/findBackward.svg");
+    /** 16x16 */ public static final Icon FindEntireFile = IconLoader.getIcon("/actions/findEntireFile.svg");
+    /** 16x16 */ public static final Icon FindForward = IconLoader.getIcon("/actions/findForward.svg");
     /** 16x16 */ public static final Icon ForceRefresh = IconLoader.getIcon("/actions/forceRefresh.svg");
     /** 16x16 */ public static final Icon Forward = IconLoader.getIcon("/actions/forward.svg");
     /** 16x16 */ public static final Icon GC = IconLoader.getIcon("/actions/gc.svg");
@@ -56,6 +61,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Highlighting = IconLoader.getIcon("/actions/highlighting.svg");
     /** 16x16 */ public static final Icon Install = IconLoader.getIcon("/actions/install.svg");
     /** 16x16 */ public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.svg");
+    /** 16x16 */ public static final Icon IntentionBulbGrey = IconLoader.getIcon("/actions/intentionBulbGrey.svg");
     /** 16x16 */ public static final Icon Lightning = IconLoader.getIcon("/actions/lightning.svg");
     /** 16x16 */ public static final Icon ListChanges = IconLoader.getIcon("/actions/listChanges.svg");
     /** 16x16 */ public static final Icon ListFiles = IconLoader.getIcon("/actions/listFiles.svg");
@@ -931,7 +937,8 @@ public class AllIcons {
     /** 16x16 */ public static final Icon LayoutPreviewOnly = IconLoader.getIcon("/general/layoutPreviewOnly.svg");
     /** 14x14 */ public static final Icon LinkDropTriangle = IconLoader.getIcon("/general/linkDropTriangle.svg");
     /** 16x16 */ public static final Icon Locate = IconLoader.getIcon("/general/locate.svg");
-    /** 24x16 */ public static final Icon Modified = IconLoader.getIcon("/general/modified.svg");
+    /** 13x13 */ public static final Icon Modified = IconLoader.getIcon("/general/modified.svg");
+    /** 13x13 */ public static final Icon ModifiedSelected = IconLoader.getIcon("/general/modifiedSelected.svg");
     /** 16x16 */ public static final Icon MoreTabs = IconLoader.getIcon("/general/moreTabs.svg");
     /** 16x16 */ public static final Icon Mouse = IconLoader.getIcon("/general/mouse.svg");
     /** 16x16 */ public static final Icon Note = IconLoader.getIcon("/general/note.svg");
@@ -1548,10 +1555,10 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Subtypes = IconLoader.getIcon("/hierarchy/subtypes.svg");
     /** 16x16 */ public static final Icon Supertypes = IconLoader.getIcon("/hierarchy/supertypes.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Forward */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Modified */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Base = AllIcons.Actions.Forward;
+    public static final Icon Base = AllIcons.General.Modified;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Hierarchy.Subtypes */
     @SuppressWarnings("unused")
@@ -2878,6 +2885,7 @@ public class AllIcons {
     /** 13x13 */ public static final Icon ToolWindowProfiler = IconLoader.getIcon("/toolwindows/toolWindowProfiler.svg");
     /** 13x13 */ public static final Icon ToolWindowProject = IconLoader.getIcon("/toolwindows/toolWindowProject.svg");
     /** 13x13 */ public static final Icon ToolWindowRun = IconLoader.getIcon("/toolwindows/toolWindowRun.svg");
+    /** 13x13 */ public static final Icon ToolWindowServices = IconLoader.getIcon("/toolwindows/toolWindowServices.svg");
     /** 13x13 */ public static final Icon ToolWindowStructure = IconLoader.getIcon("/toolwindows/toolWindowStructure.svg");
     /** 13x13 */ public static final Icon ToolWindowTodo = IconLoader.getIcon("/toolwindows/toolWindowTodo.svg");
     /** 13x13 */ public static final Icon ToolWindowUIDesigner = IconLoader.getIcon("/toolwindows/toolWindowUIDesigner.svg");

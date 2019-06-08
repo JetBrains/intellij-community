@@ -26,7 +26,7 @@ import javax.swing.*;
 
 public class DefaultIconDeferrer extends IconDeferrer {
   @Override
-  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
+  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<? super T, ? extends Icon> f) {
     return f.fun(param);
   }
 

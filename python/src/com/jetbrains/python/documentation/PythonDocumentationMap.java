@@ -188,7 +188,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       }
       urlPattern = urlPattern
         .replace("{" + entry.getKey() + "}", entry.getValue())
-        .replace("{" + entry.getKey() + ".lower}", entry.getValue().toLowerCase())
+        .replace("{" + entry.getKey() + ".lower}", StringUtil.toLowerCase(entry.getValue()))
         .replace("{" + entry.getKey() + ".slashes}", entry.getValue().replace(".", "/"))
         .replace("{" + entry.getKey() + ".dashes}", entry.getValue().replace("_", "-"));
     }

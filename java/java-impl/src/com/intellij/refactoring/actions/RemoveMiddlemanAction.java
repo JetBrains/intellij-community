@@ -25,7 +25,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.removemiddleman.RemoveMiddlemanHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class RemoveMiddlemanAction extends BaseRefactoringAction{
+public class RemoveMiddlemanAction extends BaseJavaRefactoringAction{
 
   @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext context) {

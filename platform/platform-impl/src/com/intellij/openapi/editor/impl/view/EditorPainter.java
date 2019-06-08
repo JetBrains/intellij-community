@@ -152,9 +152,9 @@ public class EditorPainter implements TextDrawingCallback {
     if (!isMarginShown()) return;
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
     float baseMarginWidth = getBaseMarginWidth(myView);
+    int baseMarginX = myCorrector.marginX(baseMarginWidth);
     if (marginWidths == null) {
-      int x = myCorrector.marginX(baseMarginWidth);
-      LinePainter2D.paint((Graphics2D)g, x, 0, x, clip.height);
+      LinePainter2D.paint((Graphics2D)g, baseMarginX, 0, baseMarginX, clip.height);
     }
     else {
       int lineHeight = myView.getLineHeight();
@@ -164,13 +164,11 @@ public class EditorPainter implements TextDrawingCallback {
         int yStart = i == 0 ? 0 : y;
         int yEnd = i == displayedLinesCount ? clip.y + clip.height : y + lineHeight;
         float width = marginWidths.x[i];
-        if (width == 0) width = baseMarginWidth;
-        int x = myCorrector.marginX(width);
+        int x = width == 0 ? baseMarginX : (int) width;
         g.fillRect(x, yStart, 1,  yEnd - yStart);
         if (i < displayedLinesCount) {
           float nextWidth = marginWidths.x[i + 1];
-          if (nextWidth == 0) nextWidth = baseMarginWidth;
-          int nextX = myCorrector.marginX(nextWidth);
+          int nextX = nextWidth == 0 ? baseMarginX : (int)nextWidth;
           if (nextX != x) g.fillRect(Math.min(x, nextX), y + lineHeight - 1, Math.abs(x - nextX) + 1, 1);
         }
       }
@@ -413,12 +411,11 @@ public class EditorPainter implements TextDrawingCallback {
     if (separatorColor == null && lineSeparatorRenderer == null) {
       return;
     }
-    int line = myDocument.getLineNumber(marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP
-                                        ? marker.getStartOffset()
-                                        : marker.getEndOffset());
-    int visualLine = myView.logicalToVisualPosition(new LogicalPosition(line + (marker.getLineSeparatorPlacement() == 
-                                                                                SeparatorPlacement.TOP ? 0 : 1), 0), false).line;
-    int y = (visualLine == 0 ? -1 : myView.visualLineToY(visualLine - 1) + myView.getLineHeight() - 1) + yShift;
+    boolean isTop = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP;
+    int edgeOffset = isTop ? myDocument.getLineStartOffset(myDocument.getLineNumber(marker.getStartOffset()))
+                           : myDocument.getLineEndOffset(myDocument.getLineNumber(marker.getEndOffset()));
+    int visualLine = myView.offsetToVisualLine(edgeOffset, !isTop);
+    int y = myView.visualLineToY(visualLine) + (isTop ? 0 : myView.getLineHeight()) - 1 + yShift;
     int startX = myCorrector.lineSeparatorStart(clip.x);
     int endX = myCorrector.lineSeparatorEnd(clip.x + clip.width);
     g.setColor(separatorColor);

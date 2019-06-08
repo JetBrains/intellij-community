@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
 
 import static git4idea.config.GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR;
-import static git4idea.test.GitExecutor.modify;
+import static git4idea.test.GitTestUtil.makeCommit;
 
 public class GitUserFilterTest extends GitSingleRepoTest {
   /**
@@ -27,12 +27,7 @@ public class GitUserFilterTest extends GitSingleRepoTest {
       @Override
       @NotNull
       protected String commit(@NotNull VcsUser user) {
-        String userName = user.getName();
-        String userEmail = user.getEmail();
-        GitTestUtil.setupUsername(myProject, userName, userEmail);
-        String commit = modify(GitUserFilterTest.this, "file.txt");
-        GitTestUtil.setupDefaultUsername(myProject);
-        return commit;
+        return makeCommit(GitUserFilterTest.this, user, "file.txt");
       }
     };
   }

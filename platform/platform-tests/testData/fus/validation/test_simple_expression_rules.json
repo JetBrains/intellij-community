@@ -1,0 +1,32 @@
+{
+  "groups": [
+    {
+      "id": "my.simple.expression",
+      "builds": [
+        {
+          "from": "191.4811"
+        }
+      ],
+      "rules": {
+        "event_id": [
+          "JUST_TEXT[_{regexp:\\d+(\\+)?}_],xxx:{enum:AAA|BBB|CCC},zzz{enum#myEnum},yyy"
+        ],
+        "enums": {
+          "myEnum": [
+            "REF_AAA",
+            "REF_BBB",
+            "REF_CCC"
+          ]
+        }
+      }
+    },  {
+      "id": "my.simple.enum.node.with.empty.value",
+      "builds": [{"from": "191.4811"}],
+      "rules": {
+        "event_id": [
+          "{enum:AAA|}foo"
+        ]
+      }
+    }
+  ]
+}

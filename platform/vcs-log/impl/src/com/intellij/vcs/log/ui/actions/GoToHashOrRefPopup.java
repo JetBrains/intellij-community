@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
@@ -31,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -129,7 +129,7 @@ public class GoToHashOrRefPopup {
     @NotNull private final Project myProject;
     @NotNull private final VcsLogColorManager myColorManager;
     @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
-    @NotNull private final Map<VirtualFile, String> myCachedRootNames = ContainerUtil.newHashMap();
+    @NotNull private final Map<VirtualFile, String> myCachedRootNames = new HashMap<>();
 
     private VcsRefDescriptor(@NotNull Project project,
                              @NotNull VcsLogColorManager manager,

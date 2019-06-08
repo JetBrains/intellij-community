@@ -5,6 +5,8 @@ import java.io.File;
 import java.util.Objects;
 
 /**
+ * 0-based position in file.
+ *
  * @author Vladislav.Soroka
  */
 public class FilePosition {
@@ -14,10 +16,23 @@ public class FilePosition {
   private final int myEndLine;
   private final int myEndColumn;
 
+  /**
+   * @param file file
+   * @param line 0-based line number
+   * @param column 0-based column number
+   */
   public FilePosition(File file, int line, int column) {
     this(file, line, column, line, column);
   }
 
+  /**
+   *
+   * @param file file
+   * @param startLine 0-based start line number
+   * @param startColumn 0-based start column number
+   * @param endLine 0-based end number
+   * @param endColumn 0-based end column number
+   */
   public FilePosition(File file, int startLine, int startColumn, int endLine, int endColumn) {
     myFile = file;
     myStartLine = startLine;

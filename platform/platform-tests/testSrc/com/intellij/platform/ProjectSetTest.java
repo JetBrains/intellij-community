@@ -9,7 +9,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsCheckoutProcessor;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectSetProcessor;
@@ -23,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +32,6 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class ProjectSetTest extends LightPlatformTestCase {
-
   private static String getTestDataPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "projectSet/";
   }
@@ -62,7 +61,6 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   public void testVcsCheckoutProcessor() throws IOException {
-
     final List<Pair<String, String>> pairs = new ArrayList<>();
     VcsCheckoutProcessor.EXTENSION_POINT_NAME.getPoint(null).registerExtension(new VcsCheckoutProcessor() {
       @NotNull
@@ -103,7 +101,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     Project project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
     assertNotNull(project);
-    ((ProjectManagerEx)ProjectManager.getInstance()).forceCloseProject(project, true);
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
   }
 
   @Override
@@ -112,7 +110,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
   }
 
   private static void readDescriptor(@NotNull File descriptor, @Nullable ProjectSetProcessor.Context context) throws IOException {
-    try (InputStreamReader input = new InputStreamReader(new FileInputStream(descriptor), CharsetToolkit.UTF8_CHARSET)) {
+    try (InputStreamReader input = new InputStreamReader(new FileInputStream(descriptor), StandardCharsets.UTF_8)) {
       JsonElement parse = new JsonParser().parse(input);
       new ProjectSetReader().readDescriptor(parse.getAsJsonObject(), context);
     }

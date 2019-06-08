@@ -1,0 +1,2 @@
+SHELL_SCRIPT
+  PsiComment(shebang)('#!/bin/bash')

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Preconditions;
@@ -16,6 +16,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -23,7 +24,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -39,7 +39,7 @@ public class PyPsiUtils {
 
   @NotNull
   protected static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
-    T[] psiElements = (T[])Array.newInstance(array.getClass().getComponentType(), nodes.length);
+    T[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
     for (int i = 0; i < nodes.length; i++) {
       //noinspection unchecked
       psiElements[i] = (T)nodes[i].getPsi();
@@ -456,7 +456,7 @@ public class PyPsiUtils {
   }
 
   public static List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
-    List<PyExpression> result = ContainerUtil.newArrayList();
+    List<PyExpression> result = new ArrayList<>();
     final PyTargetExpression attr = file.findTopLevelAttribute(name);
     if (attr != null) {
       sequenceToList(result, attr.findAssignedValue());
@@ -475,7 +475,7 @@ public class PyPsiUtils {
   }
 
   public static List<String> getStringValues(PyExpression[] elements) {
-    List<String> results = ContainerUtil.newArrayList();
+    List<String> results = new ArrayList<>();
     for (PyExpression element : elements) {
       if (element instanceof PyStringLiteralExpression) {
         results.add(((PyStringLiteralExpression)element).getStringValue());

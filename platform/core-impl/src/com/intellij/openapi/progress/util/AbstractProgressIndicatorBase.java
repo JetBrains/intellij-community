@@ -47,28 +47,31 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private TDoubleArrayList myFractionStack; // guarded by this
   private Stack<String> myText2Stack; // guarded by this
 
-  ProgressIndicator myModalityProgress;
+  private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile int myNonCancelableSectionCount;
+  private final Object lock = ObjectUtils.sentinel("APIB lock");
 
   @Override
-  public synchronized void start() {
-    LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
-    if (myFinished) {
-      if (myCanceled && !isReuseable()) {
-        if (ourReportedReuseExceptions.add(getClass())) {
-          LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
+  public void start() {
+    synchronized (getLock()) {
+      LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
+      if (myFinished) {
+        if (myCanceled && !isReuseable()) {
+          if (ourReportedReuseExceptions.add(getClass())) {
+            LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
+          }
         }
+        myCanceled = false;
+        myFinished = false;
       }
-      myCanceled = false;
-      myFinished = false;
-    }
 
-    myText = "";
-    myFraction = 0;
-    myText2 = "";
-    startSystemActivity();
-    myRunning = true;
+      myText = "";
+      myFraction = 0;
+      myText2 = "";
+      startSystemActivity();
+      myRunning = true;
+    }
   }
 
   private static final Set<Class> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
@@ -78,11 +81,13 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  public synchronized void stop() {
+  public void stop() {
+    synchronized (getLock()) {
     // LOG.assertTrue(myRunning, "stop() should be called only if start() called before");  // avoid youtrack.jetbrains.com/issue/CPP-6914
-    myRunning = false;
-    myFinished = true;
-    stopSystemActivity();
+      myRunning = false;
+      myFinished = true;
+      stopSystemActivity();
+    }
   }
 
   private void startSystemActivity() {
@@ -182,23 +187,27 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  public synchronized void pushState() {
-    getTextStack().push(myText);
-    getFractionStack().add(myFraction);
-    getText2Stack().push(myText2);
+  public void pushState() {
+    synchronized (getLock()) {
+      getTextStack().push(myText);
+      getFractionStack().add(myFraction);
+      getText2Stack().push(myText2);
+    }
   }
 
   @Override
-  public synchronized void popState() {
-    LOG.assertTrue(!myTextStack.isEmpty());
-    String oldText = myTextStack.pop();
-    String oldText2 = myText2Stack.pop();
-    setText(oldText);
-    setText2(oldText2);
+  public void popState() {
+    synchronized (getLock()) {
+      LOG.assertTrue(!myTextStack.isEmpty());
+      String oldText = myTextStack.pop();
+      String oldText2 = myText2Stack.pop();
+      setText(oldText);
+      setText2(oldText2);
 
-    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
-    if (!isIndeterminate()) {
-      setFraction(oldFraction);
+      double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+      if (!isIndeterminate()) {
+        setFraction(oldFraction);
+      }
     }
   }
 
@@ -221,6 +230,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return myModalityProgress != null;
   }
 
+  final boolean isModalEntity() {
+    return myModalityProgress == this;
+  }
+
   @Override
   @NotNull
   public ModalityState getModalityState() {
@@ -228,14 +241,22 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  public void setModalityProgress(ProgressIndicator modalityProgress) {
+  public void setModalityProgress(@Nullable ProgressIndicator modalityProgress) {
     LOG.assertTrue(!isRunning());
     myModalityProgress = modalityProgress;
-    ModalityState currentModality = ApplicationManager.getApplication().getCurrentModalityState();
-    myModalityState = myModalityProgress != null ? ((ModalityStateEx)currentModality).appendProgress(myModalityProgress) : currentModality;
+    setModalityState(modalityProgress);
+  }
+
+  private void setModalityState(@Nullable ProgressIndicator modalityProgress) {
+    ModalityState modalityState = ModalityState.defaultModalityState();
+
     if (modalityProgress != null) {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(myModalityState);
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      modalityState = ((ModalityStateEx)modalityState).appendProgress(modalityProgress);
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(modalityState);
     }
+
+    myModalityState = modalityState;
   }
 
   @Override
@@ -265,27 +286,29 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return isModal();
   }
 
-  public synchronized void initStateFrom(@NotNull final ProgressIndicator indicator) {
-    myRunning = indicator.isRunning();
-    myCanceled = indicator.isCanceled();
-    myFraction = indicator.getFraction();
-    myIndeterminate = indicator.isIndeterminate();
-    myText = indicator.getText();
+  public void initStateFrom(@NotNull final ProgressIndicator indicator) {
+    synchronized (getLock()) {
+      myRunning = indicator.isRunning();
+      myCanceled = indicator.isCanceled();
+      myFraction = indicator.getFraction();
+      myIndeterminate = indicator.isIndeterminate();
+      myText = indicator.getText();
 
-    myText2 = indicator.getText2();
+      myText2 = indicator.getText2();
 
-    myFraction = indicator.getFraction();
+      myFraction = indicator.getFraction();
 
-    if (indicator instanceof AbstractProgressIndicatorBase) {
-      AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
+      if (indicator instanceof AbstractProgressIndicatorBase) {
+        AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
 
-      myTextStack = stacked.myTextStack == null ? null : new Stack<>(stacked.getTextStack());
+        myTextStack = stacked.myTextStack == null ? null : new Stack<>(stacked.getTextStack());
 
-      myText2Stack = stacked.myText2Stack == null ? null : new Stack<>(stacked.getText2Stack());
+        myText2Stack = stacked.myText2Stack == null ? null : new Stack<>(stacked.getText2Stack());
 
-      myFractionStack = stacked.myFractionStack == null ? null : new TDoubleArrayList(stacked.getFractionStack().toNativeArray());
+        myFractionStack = stacked.myFractionStack == null ? null : new TDoubleArrayList(stacked.getFractionStack().toNativeArray());
+      }
+      dontStartActivity();
     }
-    dontStartActivity();
   }
 
   protected void dontStartActivity() {
@@ -311,5 +334,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     Stack<String> stack = myText2Stack;
     if (stack == null) myText2Stack = stack = new Stack<>(2);
     return stack;
+  }
+
+  @NotNull
+  protected Object getLock() {
+    return lock;
   }
 }

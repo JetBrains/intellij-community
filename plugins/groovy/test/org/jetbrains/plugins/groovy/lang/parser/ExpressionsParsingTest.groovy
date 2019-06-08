@@ -662,6 +662,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$closureArg3() { doTest() }
 
+  void testcommandExpr$closureArg4() { doTest() }
+
+  void testcommandExpr$closureArg5() { doTest() }
+
   void testcommandExpr$not() { doTest() }
 
   void testcommandExpr$methodCall() { doTest() }
@@ -849,6 +853,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testlambda$methodCall16() { doTest() }
 
   void testlambda$methodCall17() { doTest() }
+
+  void testlambda$methodCall18() { doTest() }
+
+  void testlambda$methodCall19() { doTest() }
 
   void testlambda$command1() { doTest() }
 

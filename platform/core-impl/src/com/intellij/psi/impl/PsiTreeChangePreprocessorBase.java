@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -8,11 +9,17 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** @deprecated see {@link com.intellij.psi.util.PsiModificationTracker#getOutOfCodeBlockModificationTracker()} */
+@Deprecated
 public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePreprocessor {
   protected final PsiManager myPsiManager;
 
   public PsiTreeChangePreprocessorBase(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
+  }
+
+  public PsiTreeChangePreprocessorBase(@NotNull Project project) {
+    myPsiManager = PsiManager.getInstance(project);
   }
 
   protected abstract boolean acceptsEvent(@NotNull PsiTreeChangeEventImpl event);

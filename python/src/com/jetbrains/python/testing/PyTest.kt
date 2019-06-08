@@ -40,6 +40,11 @@ class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
 class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyTestConfiguration>(configuration, environment) {
   override fun getRunner(): PythonHelper = PythonHelper.PYTEST
+
+  override fun customizeEnvironmentVars(envs: MutableMap<String, String>, passParentEnvs: Boolean) {
+    super.customizeEnvironmentVars(envs, passParentEnvs)
+    envs[PYTEST_RUN_CONFIG] = "True"
+  }
 }
 
 
@@ -83,3 +88,5 @@ object PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
 
   override fun getId() = "py.test" //Do not rename: used as ID for run configurations
 }
+
+private const val PYTEST_RUN_CONFIG: String = "PYTEST_RUN_CONFIG"

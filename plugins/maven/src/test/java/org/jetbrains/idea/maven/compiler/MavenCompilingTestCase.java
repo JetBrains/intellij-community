@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.testFramework.CompilerTester;
-import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
       }
     }
     catch (Exception e) {
-      ExceptionUtilRt.rethrow(e);
+      ExceptionUtil.rethrow(e);
     }
   }
 

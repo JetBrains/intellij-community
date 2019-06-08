@@ -41,11 +41,11 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
                                                           @NotNull String name,
                                                           @NotNull String text) {
     if (isModuleSdk) {
-      ModuleRootModificationUtil.setModuleSdk(myModule, sdk);
+      ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
     }
     else {
       setProjectSdk(sdk);
-      ModuleRootModificationUtil.setSdkInherited(myModule);
+      ModuleRootModificationUtil.setSdkInherited(getModule());
     }
 
     final PsiFile psiFile = myFixture.configureByText(name, text);

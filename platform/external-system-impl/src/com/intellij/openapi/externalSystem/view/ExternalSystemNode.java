@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -73,13 +59,13 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   protected static final ExternalSystemNode[] NO_CHILDREN = new ExternalSystemNode[0];
 
   private final ExternalProjectsView myExternalProjectsView;
-  private final List<ExternalSystemNode<?>> myChildrenList = ContainerUtil.newArrayList();
+  private final List<ExternalSystemNode<?>> myChildrenList = new ArrayList<>();
   protected DataNode<T> myDataNode;
   @Nullable
   private ExternalSystemNode myParent;
   private ExternalSystemNode[] myChildren;
   private ExternalProjectsStructure.ErrorLevel myErrorLevel = ExternalProjectsStructure.ErrorLevel.NONE;
-  private final List<String> myErrors = ContainerUtil.newArrayList();
+  private final List<String> myErrors = new ArrayList<>();
   private ExternalProjectsStructure.ErrorLevel myTotalErrorLevel = null;
 
   public ExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
@@ -255,14 +241,14 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   public boolean add(ExternalSystemNode externalSystemNode) {
-    return addAll(ContainerUtil.list(externalSystemNode));
+    return addAll(Collections.singletonList(externalSystemNode));
   }
 
-  public boolean removeAll(Collection<ExternalSystemNode> externalSystemNodes) {
+  public boolean removeAll(Collection<? extends ExternalSystemNode> externalSystemNodes) {
     return removeAll(externalSystemNodes, false);
   }
 
-  private boolean removeAll(Collection<ExternalSystemNode> externalSystemNodes, boolean silently) {
+  private boolean removeAll(Collection<? extends ExternalSystemNode> externalSystemNodes, boolean silently) {
     if (externalSystemNodes.isEmpty()) return false;
 
     for (ExternalSystemNode externalSystemNode : externalSystemNodes) {
@@ -277,7 +263,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   public void remove(ExternalSystemNode externalSystemNode) {
-    removeAll(ContainerUtil.list(externalSystemNode));
+    removeAll(Collections.singletonList(externalSystemNode));
   }
 
   protected void childrenChanged() {

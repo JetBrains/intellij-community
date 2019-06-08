@@ -83,7 +83,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void addPath(List<File> list, String path) {
+  private static void addPath(List<? super File> list, String path) {
     File file = new File(path);
     if (file.exists()) {
       list.add(file);

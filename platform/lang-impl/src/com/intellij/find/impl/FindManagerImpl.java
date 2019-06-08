@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -108,7 +94,7 @@ public class FindManagerImpl extends FindManager {
   private FindUIHelper myHelper;
   private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
 
-  public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
+  public FindManagerImpl(@NotNull Project project, @NotNull FindSettings findSettings, @NotNull UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
     myBus = bus;
     findSettings.initModelBySetings(myFindInProjectModel);
@@ -215,7 +201,7 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
-    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup") && Registry.is("ide.find.as.popup.allow.multiline"));
+    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup.allow.multiline"));
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
@@ -416,9 +402,9 @@ public class FindManagerImpl extends FindManager {
       boolean previousCharacterIsSameAsNext = text.charAt(startOffset - 1) == text.charAt(startOffset);
 
       boolean firstCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(startOffset));
-      isWordStart = !firstCharacterIsIdentifier && !previousCharacterIsSameAsNext ||
-                    firstCharacterIsIdentifier && !previousCharacterIsIdentifier;
-    } else {
+      isWordStart = firstCharacterIsIdentifier ? !previousCharacterIsIdentifier : !previousCharacterIsSameAsNext;
+    }
+    else {
       isWordStart = true;
     }
 
@@ -427,11 +413,11 @@ public class FindManagerImpl extends FindManager {
     if (endOffset != text.length()) {
       boolean nextCharacterIsIdentifier = Character.isJavaIdentifierPart(text.charAt(endOffset));
       boolean nextCharacterIsSameAsPrevious = endOffset > 0 && text.charAt(endOffset) == text.charAt(endOffset - 1);
-      boolean lastSearchedCharacterIsIdentifier = endOffset  > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
+      boolean lastSearchedCharacterIsIdentifier = endOffset > 0 && Character.isJavaIdentifierPart(text.charAt(endOffset - 1));
 
-      isWordEnd = lastSearchedCharacterIsIdentifier && !nextCharacterIsIdentifier ||
-                  !lastSearchedCharacterIsIdentifier && !nextCharacterIsSameAsPrevious;
-    } else {
+      isWordEnd = lastSearchedCharacterIsIdentifier ? !nextCharacterIsIdentifier : !nextCharacterIsSameAsPrevious;
+    }
+    else {
       isWordEnd = true;
     }
 
@@ -594,7 +580,7 @@ public class FindManagerImpl extends FindManager {
           }
         }
         else {
-          relevantLanguages = ContainerUtil.newHashSet();
+          relevantLanguages = new HashSet<>();
           if (ftype instanceof AbstractFileType) {
             if (model.isInCommentsOnly()) {
               tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
@@ -620,7 +606,7 @@ public class FindManagerImpl extends FindManager {
         finally {
           LayeredLexer.ourDisableLayersFlag.set(null);
         }
-        
+
         model.putUserData(ourCommentsLiteralsSearchDataKey, data);
       }
 
@@ -655,7 +641,7 @@ public class FindManagerImpl extends FindManager {
               }
             }
           }
-          
+
           final int tokenContentStart = start;
 
           while (true) {
@@ -687,7 +673,7 @@ public class FindManagerImpl extends FindManager {
                 else {
                   int diff = 0;
                   if (start == end || start == matchEnd) {
-                    diff = scanningForward ? 1 : -1;
+                    diff = 1;
                   }
                   start = matchEnd + diff;
                   continue;
@@ -736,7 +722,6 @@ public class FindManagerImpl extends FindManager {
     return tokensOfInterest;
   }
 
-  @Nullable
   private static SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
     SyntaxHighlighter syntaxHighlighter = lang != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file) : null;
     if (lang == null || syntaxHighlighter instanceof PlainSyntaxHighlighter) {
@@ -777,7 +762,7 @@ public class FindManagerImpl extends FindManager {
       }
     } catch (StackOverflowError soe) {
       String stringToFind = model.getStringToFind();
-      
+
       if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
         String content = stringToFind + " produced stack overflow when matching content of the file";
@@ -791,7 +776,7 @@ public class FindManagerImpl extends FindManager {
       return NOT_FOUND_RESULT;
     }
   }
-  
+
   private static final IntObjectMap<Boolean> ourReportedPatterns = ContainerUtil.createConcurrentIntObjectMap();
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
@@ -900,7 +885,7 @@ public class FindManagerImpl extends FindManager {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
     else if (isTailLower && (isReplacementLowercase || isReplacementUppercase)) {
-      buffer.append(toReplace.substring(1).toLowerCase());
+      buffer.append(StringUtil.toLowerCase(toReplace.substring(1)));
     }
     else {
       buffer.append(toReplace.substring(1));
@@ -1080,9 +1065,7 @@ public class FindManagerImpl extends FindManager {
       if (o1 == null) {
         return startOffset - o2.getEndOffset();
       }
-      else {
-        return o1.getEndOffset() - startOffset;
-      }
+      return o1.getEndOffset() - startOffset;
     });
     if (i < 0) {
       i = -i - 1;

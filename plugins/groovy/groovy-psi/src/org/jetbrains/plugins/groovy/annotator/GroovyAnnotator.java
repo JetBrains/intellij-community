@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -59,19 +60,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
@@ -86,7 +88,6 @@ import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 import java.util.*;
 
 import static com.intellij.psi.util.PsiTreeUtil.findChildOfType;
-import static com.intellij.util.ArrayUtil.contains;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkInnerClassReferenceFromInstanceContext;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkUnresolvedCodeReference;
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
@@ -357,30 +358,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else if (elementType == GroovyTokenTypes.mREGEX_LITERAL || elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
       checkRegexLiteral(nameElement);
     }
-  }
-
-  @Override
-  public void visitTypeDefinitionBody(@NotNull GrTypeDefinitionBody typeDefinitionBody) {
-    final PsiElement parent = typeDefinitionBody.getParent();
-    if (!(parent instanceof GrAnonymousClassDefinition)) return;
-
-    final PsiElement prev = typeDefinitionBody.getPrevSibling();
-    if (!PsiUtil.isLineFeed(prev)) return;
-
-    final PsiElement newExpression = parent.getParent();
-    if (!(newExpression instanceof GrNewExpression)) return;
-
-    final GrStatementOwner statementOwner = PsiTreeUtil.getParentOfType(newExpression, GrStatementOwner.class);
-
-    final GrParenthesizedExpression parenthesizedExpression = PsiTreeUtil.getParentOfType(newExpression, GrParenthesizedExpression.class);
-    if (parenthesizedExpression != null && PsiTreeUtil.isAncestor(statementOwner, parenthesizedExpression, true)) return;
-
-    final GrArgumentList argumentList = PsiTreeUtil.getParentOfType(newExpression, GrArgumentList.class);
-    if (argumentList != null && !(argumentList instanceof GrCommandArgumentList)) {
-      if (PsiTreeUtil.isAncestor(statementOwner, argumentList, true)) return;
-    }
-
-    myHolder.createErrorAnnotation(typeDefinitionBody, GroovyBundle.message("ambiguous.code.block"));
   }
 
   @Override
@@ -1170,7 +1147,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private void checkNamedArgs(GrNamedArgument[] namedArguments, boolean forArgList) {
     highlightNamedArgs(namedArguments);
 
-    Set<Object> existingKeys = ContainerUtil.newHashSet();
+    Set<Object> existingKeys = new HashSet<>();
     for (GrNamedArgument namedArgument : namedArguments) {
       GrArgumentLabel label = namedArgument.getLabel();
       Object value = PsiUtil.getLabelValue(label);
@@ -1242,10 +1219,40 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    super.visitLambdaExpression(expression);
+
+    PsiElement arrow = expression.getArrow();
+    myHolder.createInfoAnnotation(arrow, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    super.visitBlockLambdaBody(body);
+
+    PsiElement lBrace = body.getLBrace();
+    if (lBrace != null) {
+      myHolder.createInfoAnnotation(lBrace, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+    }
+
+    PsiElement rBrace = body.getRBrace();
+    if (rBrace != null) {
+      myHolder.createInfoAnnotation(rBrace, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+    }
+  }
+
+  @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
     super.visitClosure(closure);
-    if (!closure.hasParametersSection() && !followsError(closure) && isClosureAmbiguous(closure)) {
-      myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
+
+    myHolder.createInfoAnnotation(closure.getLBrace(), null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    PsiElement rBrace = closure.getRBrace();
+    if (rBrace != null) {
+      myHolder.createInfoAnnotation(rBrace, null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    }
+    PsiElement closureArrow = closure.getArrow();
+    if (closureArrow != null) {
+      myHolder.createInfoAnnotation(closureArrow, null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
     }
 
     if (TypeInferenceHelper.isTooComplexTooAnalyze(closure)) {
@@ -1264,51 +1271,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       myHolder
         .createWeakWarningAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("closure.is.too.complex.to.analyze"));
     }
-  }
-
-  /**
-   * for example if (!(a inst)) {}
-   * ^
-   * we are here
-   */
-
-  private static boolean followsError(GrClosableBlock closure) {
-    PsiElement prev = closure.getPrevSibling();
-    return prev instanceof PsiErrorElement || prev instanceof PsiWhiteSpace && prev.getPrevSibling() instanceof PsiErrorElement;
-  }
-
-  private static boolean isClosureAmbiguous(GrClosableBlock closure) {
-    if (mayBeAnonymousBody(closure)) return true;
-    PsiElement place = closure;
-    while (true) {
-      PsiElement parent = place.getParent();
-      if (parent == null || parent instanceof GrUnAmbiguousClosureContainer) return false;
-
-      if (PsiUtil.isExpressionStatement(place)) return true;
-      if (parent.getFirstChild() != place) return false;
-      place = parent;
-    }
-  }
-
-  private static boolean mayBeAnonymousBody(GrClosableBlock closure) {
-    final PsiElement parent = closure.getParent();
-    if (!(parent instanceof GrMethodCallExpression)) {
-      return false;
-    }
-    final GrMethodCallExpression callExpression = (GrMethodCallExpression)parent;
-    if (!(callExpression.getInvokedExpression() instanceof GrNewExpression)) {
-      return false;
-    }
-    if (!contains(closure, callExpression.getClosureArguments())) {
-      return false;
-    }
-    PsiElement run = callExpression.getParent();
-    while (run != null) {
-      if (run instanceof GrParenthesizedExpression) return false;
-      if (run instanceof GrReturnStatement || run instanceof GrAssertStatement || run instanceof GrThrowStatement) return true;
-      run = run.getParent();
-    }
-    return false;
   }
 
   @Override
@@ -1432,6 +1394,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitAnnotationMethod(@NotNull GrAnnotationMethod annotationMethod) {
     super.visitAnnotationMethod(annotationMethod);
+
+    final PsiReferenceList list = annotationMethod.getThrowsList();
+    if (list.getReferencedTypes().length > 0) {
+      myHolder.createErrorAnnotation(list, GroovyBundle.message("throws.clause.is.not.allowed.in.at.interface"));
+    }
 
     final GrAnnotationMemberValue value = annotationMethod.getDefaultValue();
     if (value == null) return;

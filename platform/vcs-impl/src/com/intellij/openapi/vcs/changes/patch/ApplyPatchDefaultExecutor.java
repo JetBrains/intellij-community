@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
@@ -64,8 +64,11 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
   public static void applyAdditionalInfoBefore(final Project project,
                                                @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, ? extends PatchSyntaxException> additionalInfo,
                                                @Nullable CommitContext commitContext) {
-    final PatchEP[] extensions = PatchEP.EP_NAME.getExtensions(project);
-    if (extensions.length == 0 || additionalInfo == null) return;
+    final List<PatchEP> extensions = PatchEP.EP_NAME.getExtensions(project);
+    if (extensions.isEmpty() || additionalInfo == null) {
+      return;
+    }
+
     try {
       Map<String, Map<String, CharSequence>> additionalInfoMap = additionalInfo.compute();
       for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfoMap.entrySet()) {

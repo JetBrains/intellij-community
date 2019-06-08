@@ -24,12 +24,16 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   public RepositoryLibraryProperties() {
   }
 
+  public RepositoryLibraryProperties(JpsMavenRepositoryLibraryDescriptor descriptor) {
+    myDescriptor = descriptor;
+  }
+
   public RepositoryLibraryProperties(String mavenId, final boolean includeTransitiveDependencies) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, includeTransitiveDependencies, Collections.emptyList());
+    this(new JpsMavenRepositoryLibraryDescriptor(mavenId, includeTransitiveDependencies, Collections.emptyList()));
   }
 
   public RepositoryLibraryProperties(String mavenId, String packaging, final boolean includeTransitiveDependencies) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, packaging, includeTransitiveDependencies, Collections.emptyList());
+    this(new JpsMavenRepositoryLibraryDescriptor(mavenId, packaging, includeTransitiveDependencies, Collections.emptyList()));
   }
 
   public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
@@ -40,8 +44,8 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
                                      @NotNull String artifactId,
                                      @NotNull String version,
                                      boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies,
-                                                           excludedDependencies);
+    this(new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies,
+                                                           excludedDependencies));
   }
 
   @Override
@@ -108,7 +112,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version, getPackaging(), isIncludeTransitiveDependencies(), getExcludedDependencies());
   }
 
-  private <T> T call(Function<? super JpsMavenRepositoryLibraryDescriptor, T> method, final T defaultValue) {
+  private <T> T call(Function<? super JpsMavenRepositoryLibraryDescriptor, ? extends T> method, final T defaultValue) {
     final JpsMavenRepositoryLibraryDescriptor descriptor = myDescriptor;
     return descriptor != null ? method.apply(descriptor) : defaultValue;
   }

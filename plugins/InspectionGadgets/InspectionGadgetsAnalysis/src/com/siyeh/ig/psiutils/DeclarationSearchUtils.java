@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,16 +30,12 @@ public class DeclarationSearchUtils {
 
   private DeclarationSearchUtils() {}
 
-  public static boolean variableNameResolvesToTarget(
-    @NotNull String variableName, @NotNull PsiVariable target,
-    @NotNull PsiElement context) {
-
+  public static boolean variableNameResolvesToTarget(@NotNull String variableName, @NotNull PsiVariable target,
+                                                     @NotNull PsiElement context) {
     final Project project = context.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
-    final PsiVariable variable =
-      resolveHelper.resolveAccessibleReferencedVariable(
-        variableName, context);
+    final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(variableName, context);
     return target.equals(variable);
   }
 
@@ -97,5 +93,16 @@ public class DeclarationSearchUtils {
       return zeroResult;
     }
     return cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+  }
+
+  public static PsiField findFirstFieldInDeclaration(PsiField field) {
+    final PsiTypeElement typeElement = field.getTypeElement();
+    if (typeElement == null) return field; // e.g. enum constant
+    return (PsiField)typeElement.getParent();
+  }
+
+  public static PsiField findNextFieldInDeclaration(PsiField field) {
+    final PsiField nextField = PsiTreeUtil.getNextSiblingOfType(field, PsiField.class);
+    return nextField != null && field.getTypeElement() == nextField.getTypeElement() ? nextField : null;
   }
 }

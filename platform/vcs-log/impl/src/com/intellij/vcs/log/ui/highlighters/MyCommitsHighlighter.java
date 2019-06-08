@@ -19,12 +19,13 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
@@ -58,8 +59,8 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   // returns true if only one user commits to this repository
   private boolean isSingleUser() {
     NotNullFunction<VcsUser, String> nameToString = user -> VcsUserUtil.getNameInStandardForm(VcsUserUtil.getShortPresentation(user));
-    Set<String> allUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myLogData.getAllUsers(), nameToString));
-    Set<String> currentUserNames = ContainerUtil.newHashSet(ContainerUtil.map(myLogData.getCurrentUser().values(), nameToString));
+    Set<String> allUserNames = new HashSet<>(ContainerUtil.map(myLogData.getAllUsers(), nameToString));
+    Set<String> currentUserNames = new HashSet<>(ContainerUtil.map(myLogData.getCurrentUser().values(), nameToString));
     return allUserNames.size() == currentUserNames.size() && currentUserNames.containsAll(allUserNames);
   }
 

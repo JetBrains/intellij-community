@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,14 +77,14 @@ public class AnnotateLocalFileAction {
 
   private static boolean isAnnotated(@NotNull AnActionEvent e) {
     List<Editor> editors = getEditors(e.getDataContext());
-    return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
+    return ContainerUtil.exists(editors, editor -> AnnotateToggleAction.hasVcsAnnotations(editor));
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
     if (!selected) {
       List<Editor> editors = getEditors(e.getDataContext());
       for (Editor editor : editors) {
-        editor.getGutter().closeAllAnnotations();
+        AnnotateToggleAction.closeVcsAnnotations(editor);
       }
     }
     else {
@@ -126,7 +127,8 @@ public class AnnotateLocalFileAction {
     final Ref<FileAnnotation> fileAnnotationRef = new Ref<>();
     final Ref<VcsException> exceptionRef = new Ref<>();
 
-    VcsAnnotateUtil.getBackgroundableLock(project, file).lock();
+    final BackgroundableActionLock actionLock = VcsAnnotateUtil.getBackgroundableLock(project, file);
+    actionLock.lock();
 
     final Task.Backgroundable annotateTask = new Task.Backgroundable(project, VcsBundle.message("retrieving.annotations"), true) {
       @Override
@@ -152,8 +154,6 @@ public class AnnotateLocalFileAction {
 
       @Override
       public void onSuccess() {
-        VcsAnnotateUtil.getBackgroundableLock(project, file).unlock();
-
         if (!exceptionRef.isNull()) {
           LOG.warn(exceptionRef.get());
           AbstractVcsHelper.getInstance(project).showErrors(Collections.singletonList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
@@ -162,6 +162,11 @@ public class AnnotateLocalFileAction {
         if (!fileAnnotationRef.isNull()) {
           AnnotateToggleAction.doAnnotate(editor, project, fileAnnotationRef.get(), vcs);
         }
+      }
+
+      @Override
+      public void onFinished() {
+        actionLock.unlock();
       }
     };
     ProgressManager.getInstance().run(annotateTask);

@@ -11,6 +11,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 class ExpressionConstraint(private val leftType: PsiType?, private val expression: GrExpression) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+    if (!session.checkPredicates(expression)) return true
+
     when (expression) {
       is GrMethodCall -> {
         val result = expression.advancedResolve() as? GroovyMethodResult ?: return true

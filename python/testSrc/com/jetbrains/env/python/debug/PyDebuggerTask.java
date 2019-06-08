@@ -4,6 +4,8 @@ package com.jetbrains.env.python.debug;
 import com.google.common.collect.Sets;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.KillableColoredProcessHandler;
@@ -17,9 +19,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.python.PythonDebuggerTest;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebugValueExecutionService;
+import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -29,6 +33,8 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -121,7 +127,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
     WriteAction.computeAndWait(() -> {
       myExecutionResult =
-        pyState.execute(executor, runner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
+        pyState.execute(executor, createCommandLinePatchers(runner, pyState, profile, serverLocalPort));
 
       mySession = XDebuggerManager.getInstance(getProject()).
         startSession(env, new XDebugProcessStarter() {
@@ -180,6 +186,35 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     });
 
     doTest(myOutputPrinter);
+  }
+
+  protected boolean usePytestRunner() {
+    return false;
+  }
+
+  protected CommandLinePatcher[] createCommandLinePatchers(PyDebugRunner runner, PythonCommandLineState pyState, RunProfile profile,
+                                                           int serverLocalPort) {
+    final CommandLinePatcher[] debugPatchers = runner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort);
+    if (!usePytestRunner()) {
+      return debugPatchers;
+    }
+    ArrayList<CommandLinePatcher> result = new ArrayList<>();
+    result.add(pytestPatcher());
+    result.addAll(Arrays.asList(debugPatchers));
+    return result.toArray(new CommandLinePatcher[0]);
+  }
+
+  private static CommandLinePatcher pytestPatcher() {
+    return new CommandLinePatcher() {
+      @Override
+      public void patchCommandLine(GeneralCommandLine commandLine) {
+        final ParamsGroup scriptGroup = commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
+        scriptGroup.addParameterAt(0, "--path");
+        scriptGroup.addParameterAt(0, PythonHelper.PYTEST.asParamString());
+
+        commandLine.getEnvironment().put("PYTEST_RUN_CONFIG", "True");
+      }
+    };
   }
 
   protected String getExecutorId() {

@@ -8,7 +8,6 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +97,7 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
     @Override
     protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
       if (isLombokVal(modifierList.getParent())) {
-        THashSet<String> result = ContainerUtil.newTroveSet(modifiers);
+        THashSet<String> result = new THashSet<>(modifiers);
         result.add(PsiModifier.FINAL);
         return result;
       }

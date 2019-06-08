@@ -36,10 +36,11 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     final Project project = psiFile.getProject();
     if (project.isDisposed() || !Utils.isEnabled(settings)) return null;
 
+    final EditorConfigFilesCollector filesCollector = new EditorConfigFilesCollector();
     // Get editorconfig settings
     final List<EditorConfig.OutPair> outPairs =
       SettingsProviderComponent.getInstance().getOutPairs(
-        project, file, EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()));
+        project, file, filesCollector);
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, outPairs, file, settings);
   }
@@ -163,7 +164,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   @Nullable
   @Override
   public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
-    return new EditorConfigStatusUIContributor(indentOptions);
+    return new EditorConfigIndentStatusBarUIContributor(indentOptions);
   }
 
 }

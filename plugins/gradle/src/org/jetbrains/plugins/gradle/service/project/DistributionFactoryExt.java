@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
@@ -29,9 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 
 import static org.gradle.internal.FileUtils.hasExtension;
@@ -63,7 +60,9 @@ public class DistributionFactoryExt extends DistributionFactory {
           setDistributionField(connector, distribution);
         }
         catch (Exception e) {
-          throw new ExternalSystemException(e);
+          ExternalSystemException externalSystemException = new ExternalSystemException(e);
+          externalSystemException.initCause(e);
+          throw externalSystemException;
         }
       }
     }
@@ -158,8 +157,8 @@ public class DistributionFactoryExt extends DistributionFactory {
       if (installedDistribution == null) {
         final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener, clock);
         File installDir;
-        Set<String> propertiesToCleanup = ContainerUtil.newHashSet();
-        Map<String, String> propertiesToRestore = ContainerUtil.newHashMap();
+        Set<String> propertiesToCleanup = new HashSet<>();
+        Map<String, String> propertiesToRestore = new HashMap<>();
         try {
           cancellationToken.addCallback(() -> installer.cancel());
           File effectiveGradleUserHome = determineRealUserHomeDir(userHomeDir);
@@ -207,7 +206,7 @@ public class DistributionFactoryExt extends DistributionFactory {
 
     @NotNull
     private static Map<String, String> readGradleProperties(File userHomeDir, @Nullable File projectDir) {
-      Map<String, String> gradleProperties = ContainerUtil.newHashMap();
+      Map<String, String> gradleProperties = new HashMap<>();
       gradleProperties.putAll(SystemPropertiesHandler.getSystemProperties(new File(userHomeDir, "gradle.properties")));
       if (projectDir != null) {
         gradleProperties.putAll(SystemPropertiesHandler.getSystemProperties(new File(projectDir, "gradle.properties")));

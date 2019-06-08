@@ -22,7 +22,7 @@ public class YAMLRenamePsiElementProcessor extends RenamePsiElementProcessor {
     YAMLAnchor anchor = (YAMLAnchor)element;
 
     int start = anchor.getTextOffset();
-    Collection<PsiReference> uses = findReferences(anchor);
+    Collection<PsiReference> uses = findReferences(anchor, anchor.getUseScope(), false);
     OptionalInt lastUsePosOpt = uses.stream().mapToInt(r -> r.getElement().getTextOffset()).max();
     int endOfScope = lastUsePosOpt.isPresent() ? lastUsePosOpt.getAsInt() : file.getTextLength();
 
@@ -43,7 +43,7 @@ public class YAMLRenamePsiElementProcessor extends RenamePsiElementProcessor {
     Optional<YAMLAnchor> prevOpt = allAnchors.subList(0, idx).stream().filter(hasNewName).reduce((x1, x2) -> x2);
     if (prevOpt.isPresent()) {
       YAMLAnchor prev = prevOpt.get();
-      findReferences(prev).stream()
+      findReferences(prev, prev.getUseScope(), false).stream()
                           .map(r -> r.getElement())
                           .filter(alias -> start < alias.getTextOffset() && alias.getTextOffset() < endOfScope)
                           .forEach(alias -> conflicts.putValue(alias, YAMLBundle.message("YAMLAnchorRenameProcessor.lost.alias")));

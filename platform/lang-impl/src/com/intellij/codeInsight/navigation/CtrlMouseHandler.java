@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -747,7 +748,7 @@ public class CtrlMouseHandler {
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
         if (isTaskOutdated(editor)) return;
-        showHint(info, docInfo, editor);
+        addHighlighterAndShowHint(info, docInfo, editor);
       });
     }
 
@@ -770,7 +771,7 @@ public class CtrlMouseHandler {
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getDocument().hostToInjected(myHostOffset) : myHostOffset;
     }
 
-    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull EditorEx editor) {
+    private void addHighlighterAndShowHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull EditorEx editor) {
       if (myDisposed || editor.isDisposed()) return;
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myHighlighter.getStoredInfo())) {
@@ -789,9 +790,12 @@ public class CtrlMouseHandler {
         return;
       }
 
-      myHighlighter = installHighlighterSet(info, editor);
+      boolean highlighterOnly = EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement() &&
+                                DocumentationManager.getInstance(myProject).getDocInfoHint() != null;
 
-      if (docInfo.text == null) return;
+      myHighlighter = installHighlighterSet(info, editor, highlighterOnly);
+
+      if (highlighterOnly || docInfo.text == null) return;
 
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null
@@ -914,7 +918,7 @@ public class CtrlMouseHandler {
   }
 
   @NotNull
-  private HighlightersSet installHighlighterSet(@NotNull Info info, @NotNull EditorEx editor) {
+  private HighlightersSet installHighlighterSet(@NotNull Info info, @NotNull EditorEx editor, boolean highlighterOnly) {
     editor.getContentComponent().addKeyListener(myEditorKeyListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     if (info.isNavigatable()) {
@@ -923,16 +927,19 @@ public class CtrlMouseHandler {
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
     List<RangeHighlighter> highlighters = new ArrayList<>();
-    TextAttributes attributes = info.isNavigatable()
-                                ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
-                                : new TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN);
-    for (TextRange range : info.getRanges()) {
-      TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
-      final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                                                       HighlighterLayer.HYPERLINK,
-                                                                                       attr,
-                                                                                       HighlighterTargetArea.EXACT_RANGE);
-      highlighters.add(highlighter);
+
+    if (!highlighterOnly || info.isNavigatable()) {
+      TextAttributes attributes = info.isNavigatable()
+                                  ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
+                                  : new TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN);
+      for (TextRange range : info.getRanges()) {
+        TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
+        final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                                                         HighlighterLayer.HYPERLINK,
+                                                                                         attr,
+                                                                                         HighlighterTargetArea.EXACT_RANGE);
+        highlighters.add(highlighter);
+      }
     }
 
     return new HighlightersSet(highlighters, editor, info);

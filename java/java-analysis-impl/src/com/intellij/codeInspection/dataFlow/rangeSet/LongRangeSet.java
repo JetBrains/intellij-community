@@ -158,6 +158,8 @@ public abstract class LongRangeSet {
     }
   }
 
+  public abstract String getPresentationText(PsiType type);
+
   /**
    * Performs a supported binary operation from token (defined in {@link JavaTokenType}).
    *
@@ -182,6 +184,9 @@ public abstract class LongRangeSet {
     }
     if (token.equals(JavaTokenType.OR)) {
       return bitwiseOr(right, isLong);
+    }
+    if (token.equals(JavaTokenType.XOR)) {
+      return bitwiseXor(right, isLong);
     }
     if (token.equals(JavaTokenType.PERC)) {
       return mod(right);
@@ -261,6 +266,21 @@ public abstract class LongRangeSet {
   public LongRangeSet bitwiseOr(LongRangeSet other, boolean isLong) {
     if (this.isEmpty() || other.isEmpty()) return empty();
     LongRangeSet result = fromBits(getBitwiseMask().or(other.getBitwiseMask()));
+    return isLong ? result : result.intersect(Range.INT_RANGE);
+  }
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x ^ y} operation for
+   * all {@code x} from this set and for all {@code y} from the other set. The resulting set may contain
+   * some more values.
+   *
+   * @param other other set to perform bitwise-xor with
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet bitwiseXor(LongRangeSet other, boolean isLong) {
+    if (this.isEmpty() || other.isEmpty()) return empty();
+    LongRangeSet result = fromBits(getBitwiseMask().xor(other.getBitwiseMask()));
     return isLong ? result : result.intersect(Range.INT_RANGE);
   }
 
@@ -569,9 +589,11 @@ public abstract class LongRangeSet {
     if (value == Long.MAX_VALUE) return "Long.MAX_VALUE";
     if (value == Long.MAX_VALUE - 1) return "Long.MAX_VALUE-1";
     if (value == Long.MIN_VALUE) return "Long.MIN_VALUE";
+    if (value == Long.MIN_VALUE + 1) return "Long.MIN_VALUE+1";
     if (value == Integer.MAX_VALUE) return "Integer.MAX_VALUE";
     if (value == Integer.MAX_VALUE - 1) return "Integer.MAX_VALUE-1";
     if (value == Integer.MIN_VALUE) return "Integer.MIN_VALUE";
+    if (value == Integer.MIN_VALUE + 1) return "Integer.MIN_VALUE+1";
     return String.valueOf(value);
   }
   /**
@@ -877,6 +899,11 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public String getPresentationText(PsiType type) {
+      return "unknown";
+    }
+
+    @Override
     public LongRangeSet castTo(PsiPrimitiveType type) {
       if (TypeConversionUtil.isIntegralNumberType(type)) {
         return this;
@@ -944,6 +971,11 @@ public abstract class LongRangeSet {
 
     Point(long value) {
       myValue = value;
+    }
+
+    @Override
+    public String getPresentationText(PsiType type) {
+      return formatNumber(myValue);
     }
 
     @Override
@@ -1210,6 +1242,26 @@ public abstract class LongRangeSet {
       }
       myFrom = from;
       myTo = to;
+    }
+
+    @Override
+    public String getPresentationText(PsiType type) {
+      LongRangeSet set = fromType(type);
+      if (set != null) {
+        if (set.min() == myFrom) {
+          if (set.max() == myTo) {
+            return "any value";
+          }
+          return "<= " + LongRangeSet.formatNumber(myTo);
+        }
+        else if (set.max() == myTo) {
+          return ">= " + LongRangeSet.formatNumber(myFrom);
+        }
+      }
+      if (myTo - myFrom == 1) {
+        return myFrom + " or " + myTo;
+      }
+      return "in " + toString();
     }
 
     @Override
@@ -1543,6 +1595,25 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public String getPresentationText(PsiType type) {
+      LongRangeSet set = fromType(type);
+      if (set != null) {
+        set = modRange(set.min(), set.max(), myMod, myBits);
+        String prefix = null;
+        if (set.min() == myFrom) {
+          prefix = set.max() == myTo ? "" : "<= " + LongRangeSet.formatNumber(myTo) + "; ";
+        }
+        else if (set.max() == myTo) {
+          prefix = ">= " + LongRangeSet.formatNumber(myFrom) + "; ";
+        }
+        if (prefix != null) {
+          return prefix + getSuffix();
+        }
+      }
+      return "in " + super.toString() + "; " + getSuffix();
+    }
+
+    @Override
     public boolean contains(long value) {
       return super.contains(value) && isSet(myBits, remainder(value, myMod));
     }
@@ -1727,14 +1798,21 @@ public abstract class LongRangeSet {
 
     @Override
     public String toString() {
+      return super.toString() + ": " + getSuffix();
+    }
+
+    private String getSuffix() {
       String suffix;
       if (myMod == 2) {
         suffix = myBits == 1 ? "even" : "odd";
       }
+      else if (myBits == 1) {
+        suffix = "divisible by " + myMod;
+      }
       else {
         suffix = IntStreamEx.of(BitSet.valueOf(new long[]{myBits})).joining(", ", "<", "> mod " + myMod);
       }
-      return super.toString() + ": " + suffix;
+      return suffix;
     }
 
     @Override
@@ -1780,7 +1858,9 @@ public abstract class LongRangeSet {
           result = setBits;
         }
       }
-      return new BitString(result, mask).and(super.getBitwiseMask());
+      BitString intersection = new BitString(result, mask).intersect(super.getBitwiseMask());
+      assert intersection != null;
+      return intersection;
     }
 
     private long getMask() {
@@ -1918,6 +1998,21 @@ public abstract class LongRangeSet {
         if (result.isEmpty()) return true;
       }
       return false;
+    }
+
+    @Override
+    public String getPresentationText(PsiType type) {
+      LongRangeSet set = fromType(type);
+      if (set != null) {
+        LongRangeSet diff = set.subtract(this);
+        if (diff instanceof Point) {
+          return "!= " + diff.min();
+        }
+      }
+      if (myRanges.length == 4 && myRanges[0] == myRanges[1] && myRanges[2] == myRanges[3]) {
+        return myRanges[0] + " or " + myRanges[2];
+      }
+      return "in " + toString();
     }
 
     @Override

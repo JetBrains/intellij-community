@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -46,6 +46,7 @@ import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   static class State {
     @NotNull
-    private Charset myDefaultEncoding = CharsetToolkit.UTF8_CHARSET;
+    private Charset myDefaultEncoding = StandardCharsets.UTF_8;
 
     @Attribute("default_encoding")
     @NotNull
@@ -117,11 +118,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }, this);
   }
 
-  private static boolean isEditorOpenedFor(Document document) {
+  private static boolean isEditorOpenedFor(@NotNull Document document) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) return false;
     Project project = guessProject(virtualFile);
-    return project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getEditors(virtualFile).length != 0;
+    return project != null && !project.isDisposed() && FileEditorManager.getInstance(project).isFileOpen(virtualFile);
   }
 
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
@@ -216,6 +217,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
+  @NotNull
   public State getState() {
     return myState;
   }
@@ -266,7 +268,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Nullable
-  private static Project guessProject(final VirtualFile virtualFile) {
+  private static Project guessProject(@Nullable VirtualFile virtualFile) {
     return ProjectLocator.getInstance().guessProjectForFile(virtualFile);
   }
 

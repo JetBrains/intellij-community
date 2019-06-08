@@ -1,0 +1,10 @@
+{
+  '@id':0,
+  bean:null,
+  list:[
+    foo,
+    bar
+  ],
+  children:[
+  ]
+}

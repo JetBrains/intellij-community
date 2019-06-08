@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,17 +28,25 @@ public class RunAnythingManager {
     myProject = project;
   }
 
-  static RunAnythingManager getInstance(@NotNull Project project) {
+  public static RunAnythingManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, RunAnythingManager.class);
   }
 
   public void show(@Nullable String searchText, @NotNull AnActionEvent initEvent) {
+    show(searchText, true, initEvent);
+  }
+
+  public void show(@Nullable String searchText, boolean selectSearchText, @NotNull AnActionEvent initEvent) {
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+
     Project project = initEvent.getProject();
 
     myRunAnythingUI = createView(initEvent);
 
     if (searchText != null && !searchText.isEmpty()) {
       myRunAnythingUI.getSearchField().setText(searchText);
+    }
+    if (selectSearchText) {
       myRunAnythingUI.getSearchField().selectAll();
     }
 

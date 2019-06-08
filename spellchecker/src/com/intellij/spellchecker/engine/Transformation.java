@@ -15,11 +15,11 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Set;
 
 @SuppressWarnings({"ALL"})
@@ -33,7 +33,7 @@ public class Transformation {
       return null;
     }
 
-    return word.toLowerCase(Locale.ENGLISH);
+    return StringUtil.toLowerCase(word);
   }
 
   @Nullable

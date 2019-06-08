@@ -37,11 +37,11 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
   private final ModulesComboBox myModulesComboBox;
   private final Project myProject;
-  private final List<OrderRoot> myRoots;
+  private final List<? extends OrderRoot> myRoots;
   private final JPanel myPanel;
   private final String myDefaultName;
 
-  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<OrderRoot> roots) {
+  public CreateLibraryFromFilesDialog(@NotNull Project project, @NotNull List<? extends OrderRoot> roots) {
     super(project, true);
     setTitle("Create Library");
     myProject = project;
@@ -92,7 +92,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
   }
 
   @Nullable
-  private Module findModule(List<OrderRoot> roots) {
+  private Module findModule(List<? extends OrderRoot> roots) {
     for (OrderRoot root : roots) {
       Module module = null;
       final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(root.getFile());

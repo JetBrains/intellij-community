@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
-import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
@@ -81,13 +80,6 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
       System.out.println("GetArtifacts: " + new HashSet<>(instance.getArtifactIds("org.apache.maven.plugins")));
       System.out.println("Indexes: " + instance.getIndices());
-
-      for (MavenIndex index : instance.getIndices()) {
-        System.out.println("Index: repositoryId=" + index.getRepositoryId() + " repositoryUrl=" + index.getRepositoryUrl() + " repositoryPathOrUrl" + index.getRepositoryPathOrUrl());
-        System.out.println("Dir: " + index.getDir());
-        index.printInfo();
-      }
-
       throw new AssertionError("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins") + " Indexes: " + instance.getIndices());
     }
   }

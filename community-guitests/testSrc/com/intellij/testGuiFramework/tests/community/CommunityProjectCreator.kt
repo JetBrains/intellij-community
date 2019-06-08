@@ -2,15 +2,16 @@
 package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
-import com.intellij.testGuiFramework.util.Key.A
-import com.intellij.testGuiFramework.util.Key.V
+import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.CONTROL
 import com.intellij.testGuiFramework.util.Modifier.META
 import com.intellij.testGuiFramework.util.plus
+import com.intellij.testGuiFramework.util.step
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
@@ -32,7 +33,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     with(guiTestCase) {
       welcomeFrame {
         actionLink("Create New Project").click()
-        waitProgressDialogUntilGone(robot = robot(), progressTitle =  "Loading Templates", timeoutToAppear = Timeouts.seconds02)
+        waitProgressDialogUntilGone(robot = robot(), progressTitle = "Loading Templates", timeoutToAppear = Timeouts.seconds02)
         dialog("New Project") {
           jList("Java").clickItem("Java")
           button("Next").click()
@@ -57,7 +58,9 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     try {
       val dialogFixture = dialog(IdeBundle.message("title.file.already.exists"), false, timeout = Timeouts.seconds01)
       dialogFixture.button("Yes").click()
-    } catch (cle: ComponentLookupException) { /*do nothing here */ }
+    }
+    catch (cle: ComponentLookupException) { /*do nothing here */
+    }
   }
 
   fun GuiTestCase.openMainInCommandLineProject() {
@@ -98,9 +101,11 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
           path(project.name, "src", "com.company").rightClick()
         }
         menu("New", "Java Class").click()
-        dialog("Create New Class") {
+        step("Find CreateWithTemplatesDialogPanel to detect popup for a new class") {
+          findComponentWithTimeout(null, CreateWithTemplatesDialogPanel::class.java,
+                                   Timeouts.seconds02)
           typeText(fileName)
-          button("OK").click()
+          shortcut(ENTER)
         }
         editor("$fileName.java") {
           shortcut(CONTROL + A, META + A)

@@ -63,7 +63,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     super(project);
 
     myNamedScopeManager = namedScopeManager;
-    namedScopeManager.addScopeListener(() -> reloadScopes());
+    namedScopeManager.addScopeListener(() -> reloadScopes(), project);
   }
 
   @Override
@@ -172,6 +172,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return IdeBundle.message("shared.scopes.node.text");

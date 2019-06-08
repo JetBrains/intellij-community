@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -141,7 +141,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @NotNull
   @Override
-  public String suggestSdkName(String currentSdkName, String sdkHome) {
+  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
     if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
@@ -331,8 +331,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
     JpsModel model = JpsSerializationManager.getInstance().loadModel(sdkHome, PathManager.getOptionsPath());
     JpsSdkReference<JpsDummyElement> sdkRef = model.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
-    String sdkName = sdkRef == null ? null : sdkRef.getSdkName();
-    Sdk internalJava = sdkModel.findSdk(sdkName);
+    Sdk internalJava = sdkRef == null ? null : sdkModel.findSdk(sdkRef.getSdkName());
     if (internalJava != null && isValidInternalJdk(sdk, internalJava)) {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }
@@ -357,7 +356,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     double delta = 1 / (2 * Math.max(0.5, modules.size()));
     JpsJavaExtensionService javaService = JpsJavaExtensionService.getInstance();
     VirtualFileManager vfsManager = VirtualFileManager.getInstance();
-    Set<VirtualFile> addedRoots = ContainerUtil.newTroveSet();
+    Set<VirtualFile> addedRoots = new THashSet<>();
     for (JpsModule o : modules) {
       indicator.setFraction(indicator.getFraction() + delta);
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {

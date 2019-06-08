@@ -8,16 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
-/**
- * @author Alexander Kireyev
- */
-public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
+public abstract class ExtensionComponentAdapter implements LoadingOrder.Orderable {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   private final PluginDescriptor myPluginDescriptor;
   @NotNull
   private Object myImplementationClassOrName; // Class or String
-  private boolean myNotificationSent;
 
   private final String myOrderId;
   private final LoadingOrder myOrder;
@@ -32,6 +28,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
     myOrderId = orderId;
     myOrder = order;
   }
+
+  abstract boolean isInstanceCreated();
 
   @NotNull
   public Object createInstance(@Nullable PicoContainer container) {
@@ -60,7 +58,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
 
   @NotNull
   protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
-    return ReflectionUtil.newInstance(clazz);
+    return ReflectionUtil.newInstance(clazz, false);
   }
 
   protected void initInstance(@NotNull Object instance) {
@@ -108,16 +106,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable {
     return ((Class)implementationClassOrName).getName();
   }
 
-  final boolean isNotificationSent() {
-    return myNotificationSent;
-  }
-
-  final void setNotificationSent() {
-    myNotificationSent = true;
-  }
-
   @Override
   public String toString() {
-    return "ExtensionComponentAdapter[" + getAssignableToClassName() + "]: plugin=" + myPluginDescriptor;
+    return "ExtensionComponentAdapter(impl=" + getAssignableToClassName() + ", plugin=" + myPluginDescriptor + ")";
   }
 }

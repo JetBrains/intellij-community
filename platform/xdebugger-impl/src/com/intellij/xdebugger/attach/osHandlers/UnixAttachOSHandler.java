@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.attach.osHandlers;
 
 import com.intellij.execution.ExecutionException;
@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,7 +60,7 @@ public abstract class UnixAttachOSHandler extends AttachOSHandler {
           LOGGER.warn(PTRACE_SCOPE_PATH + " file exists but you don't have permissions to read it.");
           return 3; // The strongest possible level
         }
-        final BufferedReader buf = new BufferedReader(new InputStreamReader(fileStream));
+        final BufferedReader buf = new BufferedReader(new InputStreamReader(fileStream, StandardCharsets.UTF_8));
 
         final String fileContent = buf.readLine();
         try (Scanner scanner = new Scanner(fileContent)) {

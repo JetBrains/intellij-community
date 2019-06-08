@@ -2,13 +2,13 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public interface MavenLogEntryReader {
 
@@ -17,11 +17,18 @@ public interface MavenLogEntryReader {
   @Nullable
   MavenLogEntry readLine();
 
-  default List<MavenLogEntry> readUntil(Predicate<MavenLogEntry> logEntryPredicate) {
+
+  /**
+   * Read lines while predicate is true
+   *
+   * @param logEntryPredicate
+   * @return
+   */
+  default List<MavenLogEntry> readWhile(Predicate<MavenLogEntry> logEntryPredicate) {
     List<MavenLogEntry> result = new SmartList<>();
     MavenLogEntry next;
     while ((next = readLine()) != null) {
-      if (logEntryPredicate.apply(next)) {
+      if (logEntryPredicate.test(next)) {
         result.add(next);
       }
       else {
@@ -30,6 +37,23 @@ public interface MavenLogEntryReader {
       }
     }
     return result;
+  }
+
+  /**
+   * read first line which matches the predicate, other lines are ignored
+   *
+   * @param logEntryPredicate
+   * @return
+   */
+  default MavenLogEntry findFirst(Predicate<MavenLogEntry> logEntryPredicate) {
+    MavenLogEntry result;
+    MavenLogEntry next;
+    while ((result = readLine()) != null) {
+      if (logEntryPredicate.test(result)) {
+        return result;
+      }
+    }
+    return null;
   }
 
   class MavenLogEntry {

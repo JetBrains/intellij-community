@@ -138,7 +138,7 @@ final class ShortcutFilteringPanel extends JPanel {
   }
 
   void showPopup(Component component, Component emitter) {
-    if (myPopup == null || myPopup.getContent() == null) {
+    if (myPopup == null || myPopup.isDisposed()) {
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, myKeyboardPanel.myFirstStroke)
         .setRequestFocus(true)
         .setTitle(KeyMapBundle.message("filter.settings.popup.title"))

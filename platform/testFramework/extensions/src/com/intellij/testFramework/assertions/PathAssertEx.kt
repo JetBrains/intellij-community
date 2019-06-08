@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.assertions
 
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.io.readText
 import com.intellij.util.io.size
 import junit.framework.ComparisonFailure
-import org.assertj.core.api.AbstractStringAssert
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.ComparatorBasedComparisonStrategy
 import org.assertj.core.internal.Iterables
@@ -65,16 +64,3 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
   }
 }
 
-class StringAssertEx(actual: String?) : AbstractStringAssert<StringAssertEx>(actual, StringAssertEx::class.java) {
-  fun isEqualTo(expected: Path) {
-    isNotNull
-
-    compareFileContent(actual, expected)
-  }
-
-  fun toMatchSnapshot(snapshotFile: Path) {
-    isNotNull
-
-    compareFileContent(actual, snapshotFile)
-  }
-}

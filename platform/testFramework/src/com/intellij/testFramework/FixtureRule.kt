@@ -6,10 +6,11 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.async.coroutineDispatchingContext
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -96,6 +98,12 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
 
   public override fun after() {
     if (projectOpened.compareAndSet(true, false)) {
+      if (sharedProject != null) {
+        ApplicationManager.getApplication().invokeAndWait {
+          (UndoManager.getInstance(sharedProject!!) as UndoManagerImpl).dropHistoryInTests()
+          (UndoManager.getInstance(sharedProject!!) as UndoManagerImpl).flushCurrentCommandMerger()
+        }
+      }
       sharedProject?.let { runInEdtAndWait { ProjectManagerEx.getInstanceEx().forceCloseProject(it, false) } }
     }
   }
@@ -292,6 +300,10 @@ suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: Temporar
 
 suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> String)? = null, task: suspend (Project) -> Unit) {
   createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
+}
+
+fun refreshProjectConfigDir(project: Project) {
+  LocalFileSystem.getInstance().findFileByPath(project.stateStore.projectConfigDir!!)!!.refresh(false, true)
 }
 
 suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend () -> T): T {

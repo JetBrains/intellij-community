@@ -93,6 +93,7 @@ public class IdeaNotNullHelper {
                     for (AnnotationExprent ann : annotations) {
                       if (ann.getClassName().equals("org/jetbrains/annotations/NotNull")) {
                         is_notnull_check = true;
+                        break;
                       }
                     }
                   }
@@ -162,6 +163,7 @@ public class IdeaNotNullHelper {
       for (AnnotationExprent ann : annotations) {
         if (ann.getClassName().equals("org/jetbrains/annotations/NotNull")) {
           is_notnull_check = true;
+          break;
         }
       }
     }

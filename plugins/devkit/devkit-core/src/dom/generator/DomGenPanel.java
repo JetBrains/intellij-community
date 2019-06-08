@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,14 +62,14 @@ public class DomGenPanel {
 
   private void createUIComponents() {
     mySchemaLocation = new TextFieldWithBrowseButton();
-    final String title = "Choose XSD or DTD schema";
+    final String title = "Choose XSD or DTD Schema";
     mySchemaLocation.addBrowseFolderListener(title, "Make sure there are only necessary schemes in directory where your XSD or DTD schema is located", myProject, new FileTypeDescriptor(title, "xsd", "dtd"));
     mySchemaLocation.getTextField().setEditable(false);
     mySchemaLocation.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final File file = new File(mySchemaLocation.getText());
-        if (file.exists() && file.getName().toLowerCase().endsWith(".xsd")) {
+        if (file.exists() && StringUtil.toLowerCase(file.getName()).endsWith(".xsd")) {
           final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
           if (vf != null) {
             final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);

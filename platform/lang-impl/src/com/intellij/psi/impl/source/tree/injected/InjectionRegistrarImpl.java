@@ -96,7 +96,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
 
   @Nullable
   InjectionResult getInjectedResult() {
-    return resultFiles == null && resultReferences == null ? null : new InjectionResult(resultFiles, resultReferences);
+    return resultFiles == null && resultReferences == null ? null : new InjectionResult(myHostPsiFile, resultFiles, resultReferences);
   }
 
   @NotNull

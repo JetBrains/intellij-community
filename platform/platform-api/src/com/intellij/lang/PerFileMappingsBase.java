@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -42,7 +42,7 @@ import java.util.*;
  */
 public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
   private List<PerFileMappingState> myDeferredMappings;
-  private final Map<VirtualFile, T> myMappings = ContainerUtil.newHashMap();
+  private final Map<VirtualFile, T> myMappings = new HashMap<>();
 
   public PerFileMappingsBase() {
     installDeleteUndo();
@@ -162,7 +162,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     Collection<VirtualFile> oldFiles;
     synchronized (myMappings) {
       myDeferredMappings = null;
-      oldFiles = ContainerUtil.newArrayList(myMappings.keySet());
+      oldFiles = new ArrayList<>(myMappings.keySet());
       myMappings.clear();
       myMappings.putAll(mappings);
       cleanup();
@@ -354,8 +354,8 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         List<? extends VFileEvent> eventsFiltered = JBIterable.from(events).filter(VFileDeleteEvent.class).toList();
         if (eventsFiltered.isEmpty()) return null;
 
-        Map<String, T> removed = ContainerUtil.newHashMap();
-        Map<String, T> added = ContainerUtil.newHashMap();
+        Map<String, T> removed = new HashMap<>();
+        Map<String, T> added = new HashMap<>();
         NavigableSet<VirtualFile> navSet = null;
 
         synchronized (myMappings) {

@@ -28,6 +28,10 @@ import java.io.File;
  * @author pegov
  */
 public class ShowLogAction extends AnAction implements DumbAware {
+  public ShowLogAction() {
+    getTemplatePresentation().setText(getActionName());
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final File logFile = new File(PathManager.getLogPath(), "idea.log");

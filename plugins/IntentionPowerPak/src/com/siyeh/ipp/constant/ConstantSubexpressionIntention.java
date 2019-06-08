@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,13 @@
  */
 package com.siyeh.ipp.constant;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.*;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.HighlightUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +50,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     }
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
     final PsiPolyadicExpression subexpression = ConstantSubexpressionPredicate.getSubexpression(polyadicExpression, token);
-    final String text = HighlightUtil.getPresentableText(subexpression);
+    final String text = getPresentableText(subexpression);
     return IntentionPowerPackBundle.message("constant.expression.intention.name", text);
   }
 
@@ -152,5 +148,28 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     }
 
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString(), commentTracker);
+  }
+
+  private static String getPresentableText(PsiElement element) {
+    return getPresentableText(element, new StringBuilder()).toString();
+  }
+
+  private static StringBuilder getPresentableText(PsiElement element, StringBuilder builder) {
+    if (element == null) {
+      return builder;
+    }
+    if (element instanceof PsiWhiteSpace) {
+      return builder.append(' ');
+    }
+    final PsiElement[] children = element.getChildren();
+    if (children.length != 0) {
+      for (PsiElement child : children) {
+        getPresentableText(child, builder);
+      }
+    }
+    else {
+      builder.append(element.getText());
+    }
+    return builder;
   }
 }

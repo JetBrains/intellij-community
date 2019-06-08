@@ -87,7 +87,7 @@ public abstract class ConfigurationFactory {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.icons.AllIcons.General.Add}
+   * @deprecated Use {@link com.intellij.icons.AllIcons.General#Add}
    */
   @Deprecated
   public Icon getAddIcon() {

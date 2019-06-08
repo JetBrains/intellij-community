@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
+ * @see CompletionContributor
  */
 public abstract class CompletionProvider<V extends CompletionParameters> {
 

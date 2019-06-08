@@ -1,8 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/**
- * @author cdr
- */
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -54,6 +50,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * @author cdr
+ */
 public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuickFixModel {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
 

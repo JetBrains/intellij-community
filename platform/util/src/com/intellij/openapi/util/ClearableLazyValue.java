@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe version: {@link AtomicClearableLazyValue}.
  */
 public abstract class ClearableLazyValue<T> {
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("ClearableLazyValue");
 
   @NotNull
   public static <T> ClearableLazyValue<T> create(final Computable<? extends T> computable) {
@@ -44,7 +43,7 @@ public abstract class ClearableLazyValue<T> {
   public T getValue() {
     T result = myValue;
     if (result == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       result = compute();
       if (stamp.mayCacheNow()) {
         myValue = result;

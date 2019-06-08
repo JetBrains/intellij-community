@@ -194,7 +194,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  public List<Module> chooseModules(final List<Module> modules, final String title) {
+  public List<Module> chooseModules(final List<? extends Module> modules, final String title) {
     return new ChooseModulesDialog(getProject(), modules, title, null).showAndGetResult();
   }
 

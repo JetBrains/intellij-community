@@ -77,7 +77,7 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
                                                @NotNull CharSequence text2,
                                                @NotNull LineOffsets lineOffsets1,
                                                @NotNull LineOffsets lineOffsets2,
-                                               @Nullable List<Range> linesRanges,
+                                               @Nullable List<? extends Range> linesRanges,
                                                @NotNull IgnorePolicy ignorePolicy,
                                                @NotNull HighlightPolicy highlightPolicy,
                                                @NotNull ProgressIndicator indicator) {

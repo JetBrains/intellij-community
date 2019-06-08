@@ -19,6 +19,7 @@ import com.intellij.BundleBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageViewPresentation;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public final class UsageType {
@@ -58,7 +59,7 @@ public final class UsageType {
 
   private final String myName;
 
-  public UsageType(@NotNull String name) {
+  public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name) {
     myName = name;
   }
 

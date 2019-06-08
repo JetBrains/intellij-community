@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -46,7 +32,8 @@ public class InjectionCache {
   private final CachedValue<Collection<String>> myXmlIndex;
   private final Project myProject;
 
-  public InjectionCache(final Project project, final Configuration configuration) {
+  public InjectionCache(@NotNull Project project) {
+    Configuration configuration = Configuration.getProjectInstance(project);
     myProject = project;
     myXmlIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
       final Map<ElementPattern<?>, BaseInjection> map = new THashMap<>();
@@ -57,7 +44,7 @@ public class InjectionCache {
         }
       }
       final Set<String> stringSet = PatternValuesIndex.buildStringIndex(map.keySet());
-      return new CachedValueProvider.Result<Collection<String>>(stringSet, configuration);
+      return new CachedValueProvider.Result<>(stringSet, configuration);
     }, false);
 
     myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {

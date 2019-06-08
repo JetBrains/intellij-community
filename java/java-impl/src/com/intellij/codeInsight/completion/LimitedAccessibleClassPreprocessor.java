@@ -17,11 +17,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 
@@ -35,18 +33,18 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
   private final PsiElement myContext;
   private final CompletionParameters myParameters;
   private final boolean myFilterByScope;
-  private final Consumer<? super PsiClass> myConsumer;
+  private final Processor<? super PsiClass> myProcessor;
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private int myCount;
   private final Set<String> myQNames = new THashSet<>();
   private final boolean myPkgContext;
   private final String myPackagePrefix;
 
-  LimitedAccessibleClassPreprocessor(CompletionParameters parameters, boolean filterByScope, Consumer<? super PsiClass> consumer) {
+  LimitedAccessibleClassPreprocessor(CompletionParameters parameters, boolean filterByScope, Processor<? super PsiClass> processor) {
     myContext = parameters.getPosition();
     myParameters = parameters;
     myFilterByScope = filterByScope;
-    myConsumer = consumer;
+    myProcessor = processor;
     myPkgContext = JavaCompletionUtil.inSomePackage(myContext);
     myPackagePrefix = getPackagePrefix(myContext, myParameters.getOffset());
   }
@@ -70,7 +68,9 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
       if (PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
         return true;
       }
-      if (!StringUtil.isCapitalized(psiClass.getName()) && !Registry.is("ide.completion.show.lower.case.classes")) {
+      String name = psiClass.getName();
+      if (name != null && !name.isEmpty() && Character.isLowerCase(name.charAt(0)) &&
+          !Registry.is("ide.completion.show.lower.case.classes")) {
         return true;
       }
     }
@@ -82,7 +82,7 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
         LOG.debug("Processing class " + qName);
       }
       if (qName != null && qName.startsWith(myPackagePrefix) && myQNames.add(qName)) {
-        myConsumer.consume(psiClass);
+        if (!myProcessor.process(psiClass)) return false;
         if (++myCount > myLimit) {
           LOG.debug("Limit reached");
           return false;

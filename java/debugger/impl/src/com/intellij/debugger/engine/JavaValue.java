@@ -155,7 +155,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         myValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
           @Override
           public void labelChanged() {
-            Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
+            Icon nodeIcon = place == XValuePlace.TOOLTIP
+                            ? myValueDescriptor.getValueIcon()
+                            : DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
 
             XValuePresentation presentation = createPresentation(myValueDescriptor);
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
@@ -163,7 +165,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             if (!fullEvaluatorSet && lastRenderer instanceof CompoundNodeRenderer) {
               fullEvaluatorSet = setFullValueEvaluator(((CompoundNodeRenderer)lastRenderer).getLabelRenderer());
             }
-            if (!fullEvaluatorSet && getValueText().length() > XValueNode.MAX_VALUE_LENGTH) {
+            if (!fullEvaluatorSet && myValueDescriptor.getValueText().length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new JavaFullValueEvaluator(myEvaluationContext) {
                 @Override
                 public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
@@ -196,15 +198,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   public static XValuePresentation createPresentation(ValueDescriptorImpl descriptor) {
-    XValuePresentation presentation = null;
     Renderer lastLabelRenderer = descriptor.getLastLabelRenderer();
-    if (lastLabelRenderer instanceof ValueLabelRenderer) {
-      presentation = ((ValueLabelRenderer)lastLabelRenderer).getPresentation(descriptor);
+    if (lastLabelRenderer instanceof XValuePresentationProvider) {
+      return ((XValuePresentationProvider)lastLabelRenderer).getPresentation(descriptor);
     }
-    if (presentation == null) {
-      presentation = new JavaValuePresentation(descriptor);
-    }
-    return presentation;
+    return new JavaValuePresentation(descriptor);
   }
 
   public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {
@@ -286,7 +284,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          public void addChildren(List<DebuggerTreeNode> nodes, boolean last) {
+          public void addChildren(List<? extends DebuggerTreeNode> nodes, boolean last) {
             XValueChildrenList childrenList = XValueChildrenList.EMPTY;
             if (!nodes.isEmpty()) {
               childrenList = new XValueChildrenList(nodes.size());
@@ -306,7 +304,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          public void setChildren(List<DebuggerTreeNode> nodes) {
+          public void setChildren(List<? extends DebuggerTreeNode> nodes) {
             addChildren(nodes, true);
           }
 
@@ -503,8 +501,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
-  @NotNull
+  @Nullable
   public String getValueText() {
+    if (myValueDescriptor.getLastLabelRenderer() instanceof XValuePresentationProvider) {
+      return null;
+    }
     return myValueDescriptor.getValueText();
   }
 
@@ -514,10 +515,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return new XReferrersProvider() {
       @Override
       public XValue getReferringObjectsValue() {
-        MemoryAgent memoryAgent = getEvaluationContext().getDebugProcess().getMemoryAgent();
         ReferringObjectsProvider provider = ReferringObjectsProvider.BASIC_JDI;
-        if (memoryAgent != null && memoryAgent.canFindGcRoots()) {
-          provider = new MemoryAgentReferringObjectsProvider(memoryAgent, MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
+
+        if (MemoryAgent.get(getEvaluationContext().getDebugProcess()).capabilities().canGetReferringObjects()) {
+          provider = new MemoryAgentReferringObjectsProvider(MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
         }
         return new JavaReferringObjectsValue(JavaValue.this, provider, null);
       }

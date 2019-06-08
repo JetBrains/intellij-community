@@ -17,9 +17,12 @@ package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.CodeInsightActions;
@@ -27,6 +30,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -58,6 +62,11 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testLambdaMarker() {
+    GutterIconDescriptor.Option option = JavaLineMarkerProvider.LAMBDA_OPTION;
+    boolean isEnabled = LineMarkerSettings.getSettings().isEnabled(option);
+    LineMarkerSettings.getSettings().setEnabled(option, true);
+    Disposer.register(getTestRootDisposable(), () -> LineMarkerSettings.getSettings().setEnabled(option, isEnabled));
+
     configureByFile(getBasePath() + getTestName(false) + ".java");
 
     doHighlighting();

@@ -10,7 +10,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Utils {
-  private static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+  private static final String OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   public static final boolean IS_WINDOWS = OS_NAME.startsWith("windows");
   public static final boolean IS_MAC = OS_NAME.startsWith("mac");
 

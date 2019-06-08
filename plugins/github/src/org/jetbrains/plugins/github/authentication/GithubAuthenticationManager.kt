@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication
 
 import com.intellij.openapi.components.service
@@ -60,6 +60,18 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @JvmOverloads
   fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? {
     val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique).withServer(server.toUrl(), false)
+    DialogManager.show(dialog)
+    if (!dialog.isOK) return null
+
+    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
+  }
+
+  @CalledInAwt
+  @JvmOverloads
+  fun requestNewAccountForServer(server: GithubServerPath, login: String, project: Project?, parentComponent: Component? = null): GithubAccount? {
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, ::isAccountUnique)
+      .withServer(server.toUrl(), false)
+      .withCredentials(login, editableLogin = false)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 

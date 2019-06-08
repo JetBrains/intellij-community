@@ -192,7 +192,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
     return true;
   }
 
-  public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<Library> libraries) {
+  public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<? extends Library> libraries) {
     VirtualFile srcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
     if (srcFile == null) return;
 
@@ -207,7 +207,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
     doAttachSourceJars(libraries, roots);
   }
 
-  private static void doAttachSourceJars(@NotNull Collection<Library> libraries, VirtualFile[] roots) {
+  private static void doAttachSourceJars(@NotNull Collection<? extends Library> libraries, VirtualFile[] roots) {
     WriteAction.run(() -> {
       for (Library library : libraries) {
         Library.ModifiableModel model = library.getModifiableModel();

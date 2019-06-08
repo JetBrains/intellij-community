@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -44,9 +45,9 @@ public class FileWatcher {
   };
 
   static class DirtyPaths {
-    final Set<String> dirtyPaths = ContainerUtil.newTroveSet();
-    final Set<String> dirtyPathsRecursive = ContainerUtil.newTroveSet();
-    final Set<String> dirtyDirectories = ContainerUtil.newTroveSet();
+    final Set<String> dirtyPaths = new THashSet<>();
+    final Set<String> dirtyPathsRecursive = new THashSet<>();
+    final Set<String> dirtyDirectories = new THashSet<>();
 
     static final DirtyPaths EMPTY = new DirtyPaths();
 
@@ -222,7 +223,7 @@ public class FileWatcher {
     }
 
     @Override
-    public void notifyMapping(@NotNull Collection<Pair<String, String>> mapping) {
+    public void notifyMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
       if (!mapping.isEmpty()) {
         myPathMap.addMapping(mapping);
       }
@@ -311,15 +312,15 @@ public class FileWatcher {
   public static final String RESET = "(reset)";
   public static final String OTHER = "(other)";
 
-  private volatile Consumer<String> myTestNotifier;
+  private volatile Consumer<? super String> myTestNotifier;
 
   private void notifyOnEvent(String path) {
-    Consumer<String> notifier = myTestNotifier;
+    Consumer<? super String> notifier = myTestNotifier;
     if (notifier != null) notifier.accept(path);
   }
 
   @TestOnly
-  public void startup(@Nullable Consumer<String> notifier) throws Exception {
+  public void startup(@Nullable Consumer<? super String> notifier) throws Exception {
     myTestNotifier = notifier;
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : myWatchers) {

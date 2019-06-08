@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.ExecutionException;
@@ -84,7 +70,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
-import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -99,10 +84,7 @@ import java.util.function.Predicate;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findAll;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
-/**
- * @author Denis Zhdanov
- */
-public class GradleManager
+public final class GradleManager
   implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
   GradleProjectSettings,
   GradleSettingsListener,
@@ -115,15 +97,12 @@ public class GradleManager
   @NotNull private final ExternalSystemAutoImportAware myAutoImportDelegate =
     new CachingExternalSystemAutoImportAware(new GradleAutoImportAware());
 
-  @NotNull
-  private final GradleInstallationManager myInstallationManager;
-
   @NotNull private static final NotNullLazyValue<List<GradleProjectResolverExtension>> RESOLVER_EXTENSIONS =
     new AtomicNotNullLazyValue<List<GradleProjectResolverExtension>>() {
       @NotNull
       @Override
       protected List<GradleProjectResolverExtension> compute() {
-        List<GradleProjectResolverExtension> result = ContainerUtilRt.newArrayList();
+        List<GradleProjectResolverExtension> result = new ArrayList<>();
 
         // It's possible usecase when 'java' subsystem dependent plugins bundled with the non-java IDE using fat plugin distribution.
         // This approach can lead to unwanted/incompatible extensions to be loaded.
@@ -156,10 +135,6 @@ public class GradleManager
       }
     };
 
-  public GradleManager(@NotNull GradleInstallationManager manager) {
-    myInstallationManager = manager;
-  }
-
   @NotNull
   @Override
   public ProjectSystemId getSystemId() {
@@ -185,7 +160,8 @@ public class GradleManager
       final Project project = pair.first;
       final String projectPath = pair.second;
       GradleSettings settings = GradleSettings.getInstance(project);
-      File gradleHome = myInstallationManager.getGradleHome(project, projectPath);
+      GradleInstallationManager gradleInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
+      File gradleHome = gradleInstallationManager.getGradleHome(project, projectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
         try {
@@ -218,7 +194,7 @@ public class GradleManager
       }
 
       final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
-      final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, rootProjectPath);
+      final Sdk gradleJdk = gradleInstallationManager.getGradleJdk(project, rootProjectPath);
       final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
       if (!StringUtil.isEmpty(javaHome)) {
         LOG.info("Instructing gradle to use java from " + javaHome);
@@ -237,7 +213,7 @@ public class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
         result.setUseQualifiedModuleNames(projectLevelSettings.isUseQualifiedModuleNames());
       }
-      boolean delegatedBuildEnabled = GradleSettingsService.getInstance(project).isDelegatedBuildEnabled(projectPath);
+      boolean delegatedBuildEnabled = GradleProjectSettings.isDelegatedBuildEnabled(project, projectPath);
       result.setDelegatedBuild(delegatedBuildEnabled);
 
       configureExecutionWorkspace(projectLevelSettings, settings, result, project, projectPath);
@@ -303,7 +279,7 @@ public class GradleManager
 
   @Override
   public void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
-    final Set<String> additionalEntries = ContainerUtilRt.newHashSet();
+    final Set<String> additionalEntries = new HashSet<>();
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
       ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(extension.getClass()));
       for (Class aClass : extension.getExtraProjectModelClasses()) {
@@ -503,8 +479,8 @@ public class GradleManager
   @Nullable
   private static Map<String, String> patchLinkedProjects(@NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
-    Collection<GradleProjectSettings> correctedSettings = ContainerUtilRt.newArrayList();
-    Map<String/* old path */, String/* new path */> adjustedPaths = ContainerUtilRt.newHashMap();
+    Collection<GradleProjectSettings> correctedSettings = new ArrayList<>();
+    Map<String/* old path */, String/* new path */> adjustedPaths = new HashMap<>();
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       String oldPath = projectSettings.getExternalProjectPath();
       if (oldPath != null && new File(oldPath).isFile() && FileUtilRt.extensionEquals(oldPath, GradleConstants.EXTENSION)) {
@@ -531,7 +507,8 @@ public class GradleManager
   }
 
   private static void patchAvailableProjects(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
-    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects = ContainerUtilRt.newHashMap();
+    Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> adjustedAvailableProjects =
+      new HashMap<>();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : localSettings.getAvailableProjects().entrySet()) {
       String newPath = adjustedPaths.get(entry.getKey().getPath());
       if (newPath == null) {

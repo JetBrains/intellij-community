@@ -118,8 +118,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   private void updateIconsLayout(Rectangle bounds) {
     JTextComponent c = getComponent();
-    Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null || UIUtil.getParentOfType(JSpinner.class, c) != null ?
-                    JBUI.emptyInsets() : getDefaultMargins();
+    Insets margin = UIUtil.getParentOfType(JComboBox.class, c) != null ||
+                    UIUtil.getParentOfType(JSpinner.class, c) != null ||
+                    UIUtil.isClientPropertyTrue(c, "TextFieldWithoutMargins") ? JBUI.emptyInsets() : getDefaultMargins();
 
     JBInsets.removeFrom(bounds, c.getInsets());
     JBInsets.removeFrom(bounds, margin);
@@ -129,16 +130,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (holder.extension.isIconBeforeText()) {
         int offset = holder.extension.getAfterIconOffset();
         holder.bounds.x = bounds.x;
-        bounds.width -= holder.bounds.width + gap;
-        bounds.x += holder.bounds.width + gap + offset;
 
-        margin.left += holder.bounds.width + gap + offset;
+        int extensionWidth = holder.bounds.width + gap + offset;
+        bounds.x += extensionWidth;
+        bounds.width -= extensionWidth;
+        margin.left += extensionWidth;
       }
       else {
-        bounds.width -= holder.bounds.width + gap;
-        holder.bounds.x = bounds.x + bounds.width + gap;
+        holder.bounds.x = bounds.x + bounds.width - holder.bounds.width;
 
-        margin.right += holder.bounds.width + gap;
+        int extensionWidth = holder.bounds.width + gap;
+        bounds.width -= extensionWidth;
+        margin.right += extensionWidth;
       }
       int top = (bounds.height - holder.bounds.height) / 2;
       if (top > gap) {
@@ -161,8 +164,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   /**
-     * Adds listeners to the current text component and sets its variant.
-     */
+   * Adds listeners to the current text component and sets its variant.
+   */
   @Override
   protected void installListeners() {
     JTextComponent component = getComponent();
@@ -333,6 +336,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
 
     @Override
+    public void mouseExited(MouseEvent e) {
+      if (!icons.isEmpty()) {
+        handleMouse(e, false);
+      }
+    }
+
+    @Override
     public void mouseClicked(MouseEvent e) {
       if (!icons.isEmpty()) {
         handleMouse(e, true);
@@ -412,7 +422,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return JBUI.emptyInsets();
   }
 
-    @Override
+  @Override
   protected Rectangle getVisibleEditorRect() {
     JTextComponent c = getComponent();
     Rectangle bounds = new Rectangle(c.getSize());
@@ -526,10 +536,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         }
       }
       else if ("search".equals(variant)) {
+        Object extension = getComponent().getClientProperty("search.extension");
+        if (extension instanceof Extension) {
+          addExtension((Extension)extension);
+        }
         addExtension(new SearchExtension());
         addExtension(new ClearExtension());
       }
-
     }
     updateIconsLayout(new Rectangle(getComponent().getSize())); // Effectively update margins
   }
@@ -623,7 +636,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public String getTooltip() {
       String prefix = null;
-      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY ) != null) prefix = "Recent Search";
+      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY) != null) prefix = "Recent Search";
       if (getActionOnClick() != null) prefix = "Search History";
       return (prefix == null) ? null : prefix + " (" + KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory") + ")";
     }

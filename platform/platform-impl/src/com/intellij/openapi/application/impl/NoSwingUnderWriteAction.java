@@ -29,6 +29,6 @@ class NoSwingUnderWriteAction {
       public void afterWriteActionFinished(@NotNull Object action) {
         reported.set(false);
       }
-    });
+    }, application);
   }
 }

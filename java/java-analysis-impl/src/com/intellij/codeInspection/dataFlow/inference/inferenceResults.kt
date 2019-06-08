@@ -37,19 +37,19 @@ data class ExpressionRange internal constructor (internal val startOffset: Int, 
 
 data class PurityInferenceResult(internal val mutatedRefs: List<ExpressionRange>, internal val singleCall: ExpressionRange?) {
 
-  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock): Boolean = !mutatesNonLocals(method, body) && callsOnlyPureMethods(body)
+  fun isPure(method: PsiMethod, body: () -> PsiCodeBlock): Boolean = !mutatesNonLocals(method, body) && callsOnlyPureMethods(method, body)
 
   private fun mutatesNonLocals(method: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     return mutatedRefs.any { range -> !isLocalVarReference(range.restoreExpression(body()), method) }
   }
 
-  private fun callsOnlyPureMethods(body: () -> PsiCodeBlock): Boolean {
+  private fun callsOnlyPureMethods(currentMethod: PsiMethod, body: () -> PsiCodeBlock): Boolean {
     if (singleCall == null) return true
 
     val psiCall = singleCall.restoreExpression(body()) as PsiCall
     val method = psiCall.resolveMethod()
     if (method != null) {
-      return JavaMethodContractUtil.isPure(method)
+      return method == currentMethod || JavaMethodContractUtil.isPure(method)
     } else if (psiCall is PsiNewExpression && psiCall.argumentList?.expressionCount == 0) {
       val psiClass = psiCall.classOrAnonymousClassReference?.resolve() as? PsiClass
       if (psiClass != null) {
@@ -96,20 +96,13 @@ interface MethodReturnInferenceResult {
   @Suppress("EqualsOrHashCode")
   data class Predefined(internal val value: Nullability) : MethodReturnInferenceResult {
     override fun hashCode(): Int = value.ordinal
-    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability = when {
-      value == Nullability.NULLABLE && InferenceFromSourceUtil.suppressNullable(
-        method) -> Nullability.UNKNOWN
-      else -> value
-    }
+    override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability = value
   }
 
   data class FromDelegate(internal val value: Nullability, internal val delegateCalls: List<ExpressionRange>) : MethodReturnInferenceResult {
     override fun getNullability(method: PsiMethod, body: () -> PsiCodeBlock): Nullability {
-      if (value == Nullability.NULLABLE) {
-        return if (InferenceFromSourceUtil.suppressNullable(method)) Nullability.UNKNOWN
-        else Nullability.NULLABLE
-      }
       return when {
+        value == Nullability.NULLABLE -> Nullability.NULLABLE 
         delegateCalls.all { range -> isNotNullCall(range, body()) } -> Nullability.NOT_NULL
         else -> Nullability.UNKNOWN
       }

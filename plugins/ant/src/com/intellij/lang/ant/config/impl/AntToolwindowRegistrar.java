@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
@@ -73,7 +73,7 @@ public class AntToolwindowRegistrar implements ProjectComponent {
     });
   }
 
-  private boolean initializeAndRun(CompileContext context, Processor<AntConfigurationBase> action) {
+  private boolean initializeAndRun(CompileContext context, Processor<? super AntConfigurationBase> action) {
     context.getProgressIndicator().pushState();
     try {
       context.getProgressIndicator().setText(AntBundle.message("loading.ant.config.progress"));

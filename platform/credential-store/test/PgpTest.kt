@@ -51,7 +51,7 @@ internal class PgpTest {
   @Test
   fun decrypt() {
     val encryptedFile = Paths.get(SystemProperties.getUserHome(), "test.gpg")
-    assumeTrue(encryptedFile.exists())
+    assumeTrue("$encryptedFile doesn't exist", encryptedFile.exists())
 
     assertThat(Pgp().decrypt(encryptedFile.readBytes()).toString(Charsets.UTF_8)).isEqualTo("foo bar")
   }

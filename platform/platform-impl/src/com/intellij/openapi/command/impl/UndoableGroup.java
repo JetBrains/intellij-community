@@ -158,7 +158,7 @@ class UndoableGroup implements Dumpable {
     if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
   }
 
-  private static void performActions(@NotNull Collection<UndoableAction> actions, boolean isUndo, boolean useBulkMode)
+  private static void performActions(@NotNull Collection<? extends UndoableAction> actions, boolean isUndo, boolean useBulkMode)
     throws UnexpectedUndoException {
     Set<DocumentEx> bulkDocuments = new THashSet<>();
     try {

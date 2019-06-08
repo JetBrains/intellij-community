@@ -20,10 +20,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
 
 public class CreateConstantFieldFromUsageFix extends CreateFieldFromUsageFix {
   @Override
@@ -35,7 +34,7 @@ public class CreateConstantFieldFromUsageFix extends CreateFieldFromUsageFix {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     String refName = myReferenceExpression.getReferenceName();
-    return refName.toUpperCase(Locale.ENGLISH).equals(refName);
+    return StringUtil.toUpperCase(refName).equals(refName);
   }
 
   public CreateConstantFieldFromUsageFix(PsiReferenceExpression referenceElement) {

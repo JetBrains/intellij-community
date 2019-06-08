@@ -13,17 +13,27 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseInjectedFileChangesHandler implements InjectedFileChangesHandler {
 
-  protected final Editor myEditor;
-  protected final Document myOrigDocument;
-  protected final Document myNewDocument;
+  protected final Editor myHostEditor;
+
+  protected final Document myHostDocument;
+
+  protected final Document myFragmentDocument;
+
   protected final Project myProject;
+
+  /**
+   * File injected in the Host
+   * <p>
+   * NOTE: implementations rarely need to access this field.
+   * It is useful mostly only for {@link PsiFile#isValid()} check but implementations could work even having {@link #myInjectedFile} invalidated
+   */
   protected PsiFile myInjectedFile;
 
-  public BaseInjectedFileChangesHandler(Editor editor, Document newDocument, PsiFile injectedFile) {
-    myProject = editor.getProject();
-    myEditor = editor;
-    myOrigDocument = editor.getDocument();
-    myNewDocument = newDocument;
+  public BaseInjectedFileChangesHandler(Editor hostEditor, Document fragmentDocument, PsiFile injectedFile) {
+    myProject = hostEditor.getProject();
+    myHostEditor = hostEditor;
+    myHostDocument = hostEditor.getDocument();
+    myFragmentDocument = fragmentDocument;
     myInjectedFile = injectedFile;
   }
 

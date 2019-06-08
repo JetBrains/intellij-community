@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon;
 
@@ -38,12 +38,12 @@ public abstract class DaemonCodeAnalyzer {
   public abstract boolean isAutohintsAvailable(@Nullable PsiFile file);
 
   /**
-   * Force rehighlighting for all files.
+   * Force re-highlighting for all files.
    */
   public abstract void restart();
 
   /**
-   * Force rehighlighting for a specific file.
+   * Force re-highlighting for a specific file.
    * @param file the file to rehighlight.
    */
   public abstract void restart(@NotNull PsiFile file);

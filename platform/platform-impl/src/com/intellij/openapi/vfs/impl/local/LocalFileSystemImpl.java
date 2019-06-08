@@ -3,15 +3,16 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
@@ -27,7 +29,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable {
+public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
   private static final String FS_ROOT = "/";
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
@@ -69,14 +71,15 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     private final Map<String, TreeNode> nodes = new THashMap<>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
-  public LocalFileSystemImpl(@NotNull Application app, @NotNull ManagingFS managingFS) {
-    myManagingFS = managingFS;
+  public LocalFileSystemImpl() {
+    myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS);
     if (myWatcher.isOperational()) {
       JobScheduler.getScheduler().scheduleWithFixedDelay(
-        () -> { if (!app.isDisposed()) storeRefreshStatusToFiles(); },
+        () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     }
+    Disposer.register(ApplicationManager.getApplication(), this);
   }
 
   @NotNull
@@ -265,14 +268,16 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @NotNull
   @Override
-  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
-                                               @Nullable Collection<String> recursiveRoots,
-                                               @Nullable Collection<String> flatRoots) {
-    recursiveRoots = ObjectUtils.notNull(recursiveRoots, Collections.emptyList());
-    flatRoots = ObjectUtils.notNull(flatRoots, Collections.emptyList());
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> _watchRequests,
+                                               @Nullable Collection<String> _recursiveRoots,
+                                               @Nullable Collection<String> _flatRoots) {
+    Collection<WatchRequest> watchRequests = ContainerUtil.skipNulls(_watchRequests);
+    LOG.assertTrue(watchRequests.size() == _watchRequests.size(), "watch requests collection should not contain `null` elements");
+    Collection<String> recursiveRoots = ObjectUtils.notNull(_recursiveRoots, Collections.emptyList());
+    Collection<String> flatRoots = ObjectUtils.notNull(_flatRoots, Collections.emptyList());
 
-    Set<String> recursiveWatches = new HashSet<>();
-    Set<String> flatWatches = new HashSet<>();
+    Set<String> recursiveWatches = new HashSet<>(watchRequests.size());
+    Set<String> flatWatches = new HashSet<>(watchRequests.size());
     for (LocalFileSystem.WatchRequest watch : watchRequests) {
       (watch.isToWatchRecursively() ? recursiveWatches : flatWatches).add(watch.getRootPath());
     }
@@ -284,7 +289,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
       return watchRequests instanceof Set ? (Set<WatchRequest>)watchRequests : new HashSet<>(watchRequests);
     }
 
-    Set<WatchRequest> result = new HashSet<>();
+    Set<WatchRequest> result = new HashSet<>(recursiveRoots.size() + flatRoots.size());
     synchronized (myLock) {
       boolean update = doAddRootsToWatch(recursiveRoots, flatRoots, result);
       update |= doRemoveWatchedRoots(watchRequests);

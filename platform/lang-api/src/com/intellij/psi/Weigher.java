@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows to add custom logic to common comparators. Should be registered under "weigher" extension point with "key" parameter specified.
+ * Allows to add custom logic to common comparators. Should be registered under {@code com.intellij.weigher} extension point with {@code key} parameter specified.
  * It's almost a must to specify how your weigher relates to the others by priority (see {@link com.intellij.openapi.extensions.LoadingOrder}).
- *
+ * <p>
  * Known key values include:
- *  <li> "proximity" to measure proximity level of an element in a particular place (location)
- *  <li> "completion" ({@link com.intellij.codeInsight.completion.CompletionService#RELEVANCE_KEY}) - to compare lookup elements by relevance and move preferred items to the top
- *
- * Your weigher should return {@link Comparable} instances of the same type.   
+ * <li> "proximity" to measure proximity level of an element in a particular place (location)
+ * <li> "completion" ({@link com.intellij.codeInsight.completion.CompletionService#RELEVANCE_KEY}) - to compare lookup elements by relevance and move preferred items to the top
+ * <p>
+ * Your weigher should return {@link Comparable} instances of the same type.
  *
  * @author peter
  */
@@ -41,5 +41,6 @@ public abstract class Weigher<T, Location> {
     return myDebugName == null ? super.toString() : myDebugName;
   }
 
-  @Nullable public abstract Comparable weigh(@NotNull T element, @NotNull Location location);
+  @Nullable
+  public abstract Comparable weigh(@NotNull T element, @NotNull Location location);
 }

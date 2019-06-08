@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffDialogHints;
@@ -325,7 +325,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @NotNull
   private List<FilePatch> getOriginalRemaining() {
     Collection<AbstractFilePatchInProgress> notIncluded = ContainerUtil.subtract(myPatches, getIncluded());
-    List<FilePatch> remainingOriginal = ContainerUtil.newArrayList();
+    List<FilePatch> remainingOriginal = new ArrayList<>();
     for (AbstractFilePatchInProgress progress : notIncluded) {
       progress.reset();
       remainingOriginal.add(progress.getPatch());
@@ -380,7 +380,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (author != null) {
         myChangeListChooser.setData(new ChangeListData(author));
       }
-      List<FilePatch> filePatches = ContainerUtil.newArrayList();
+      List<FilePatch> filePatches = new ArrayList<>();
       if (myReader != null) {
         filePatches.addAll(myReader.getAllPatches());
       }

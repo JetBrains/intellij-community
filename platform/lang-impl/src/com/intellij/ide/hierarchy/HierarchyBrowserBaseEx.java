@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -361,7 +361,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           return;
         }
         Comparator<NodeDescriptor> comparator = getComparator();
-        StructureTreeModel myModel = comparator == null ? new StructureTreeModel<>(structure) : new StructureTreeModel<>(structure, comparator);
+        StructureTreeModel myModel = comparator == null ? new StructureTreeModel<>(structure, sheet)
+                                                        : new StructureTreeModel<>(structure, comparator, sheet);
         AsyncTreeModel atm = new AsyncTreeModel(myModel, sheet);
         tree.setModel(atm);
 
@@ -657,8 +658,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       final DataContext dataContext = event.getDataContext();
       final HierarchyBrowserBaseEx browser = (HierarchyBrowserBaseEx)dataContext.getData(myBrowserDataKey);
       if (browser == null) {
-        presentation.setVisible(false);
-        presentation.setEnabled(false);
+        presentation.setEnabledAndVisible(false);
         return;
       }
 

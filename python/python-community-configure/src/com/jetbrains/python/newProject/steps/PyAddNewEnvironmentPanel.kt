@@ -2,8 +2,9 @@
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
@@ -14,7 +15,6 @@ import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
-import javax.swing.JList
 
 /**
  * @author vlan
@@ -41,14 +41,10 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
   private val listeners = mutableListOf<Runnable>()
 
   init {
-    nameExtensionComponent = JComboBox(panels.toTypedArray()).apply {
-      renderer = object : ColoredListCellRenderer<PyAddNewEnvPanel>() {
-        override fun customizeCellRenderer(list: JList<out PyAddNewEnvPanel>, value: PyAddNewEnvPanel?, index: Int, selected: Boolean,
-                                           hasFocus: Boolean) {
-          val panel = value ?: return
-          append(panel.envName)
-          icon = panel.icon
-        }
+    nameExtensionComponent = ComboBox(panels.toTypedArray()).apply {
+      renderer = SimpleListCellRenderer.create {label, value, _ ->
+        label.text = value?.envName ?: return@create
+        label.icon = value.icon
       }
       selectedItem = selectedPanel
       addItemListener {

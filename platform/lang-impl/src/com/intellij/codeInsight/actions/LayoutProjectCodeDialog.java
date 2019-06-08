@@ -3,7 +3,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindSettings;
-import com.intellij.find.impl.FindDialog;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
@@ -111,7 +110,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   }
 
   private void initFileTypeFilter() {
-    FindDialog.initFileFilter(myFileFilter, myEnableFileNameFilterCb);
+    FindInProjectUtil.initFileFilter(myFileFilter, myEnableFileNameFilterCb);
     myEnableFileNameFilterCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

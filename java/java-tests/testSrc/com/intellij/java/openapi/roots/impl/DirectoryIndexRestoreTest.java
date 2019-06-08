@@ -8,19 +8,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @PlatformTestCase.WrapInCommand
-public class DirectoryIndexRestoreTest extends IdeaTestCase {
+public class DirectoryIndexRestoreTest extends JavaProjectTestCase {
   private VirtualFile myTempVFile;
   private String myTestDirPath;
 
@@ -58,22 +54,21 @@ public class DirectoryIndexRestoreTest extends IdeaTestCase {
       return !found;
     };
     File topFile = new File(myTempVFile.getPath(), "top");
+    assertTrue(topFile.exists());
     File bakFile = new File(myTempVFile.getPath(), "top.bak");
-    String topPath = FileUtil.toSystemIndependentName(topFile.getPath());
+    assertFalse(bakFile.exists());
 
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
     assertEquals(1, counter.get());
 
     FileUtil.rename(topFile, bakFile);
     List<String> events1 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(Collections.singletonList("D : " + topPath), events1);
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
-    assertEquals(1, counter.get());
+    assertEquals("Events recorded: "+events1, 1, counter.get());
 
     FileUtil.rename(bakFile, topFile);
     List<String> events2 = VfsTestUtil.print(VfsTestUtil.getEvents(() -> myTempVFile.refresh(false, true)));
-    assertEquals(Collections.singletonList("C : " + topPath), events2);
     ProjectRootManager.getInstance(myProject).getFileIndex().iterateContent(iterator);
-    assertEquals(2, counter.get());
+    assertEquals("Events recorded: "+events2, 2, counter.get());
   }
 }

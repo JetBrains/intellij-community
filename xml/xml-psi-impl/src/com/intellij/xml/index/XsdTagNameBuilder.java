@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -20,7 +21,7 @@ import java.util.Collection;
 public class XsdTagNameBuilder implements NanoXmlBuilder {
   @NotNull
   public static Collection<String> computeTagNames(final InputStream is) {
-    return computeTagNames(new InputStreamReader(is));
+    return computeTagNames(new InputStreamReader(is, StandardCharsets.UTF_8));
   }
 
   @NotNull

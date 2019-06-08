@@ -1,0 +1,14 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        COMMAND_SUBSTITUTION_COMMAND
+          PsiElement(OPEN_BACKQUOTE)('`')
+          COMPOUND_LIST
+            PIPELINE_COMMAND
+              PIPELINE
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('echo')
+            PsiElement(\n)('\n')
+          PsiElement(CLOSE_BACKQUOTE)('`')

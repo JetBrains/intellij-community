@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options;
 
@@ -16,12 +16,12 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -190,9 +190,9 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   protected Configurable[] buildConfigurables() {
     CodeStyleGroupProviderFactory groupProviderFactory = new CodeStyleGroupProviderFactory(getModel(), this);
     myPanels = new ArrayList<>();
-    Set<CodeStyleGroupProvider> addedGroupProviders = ContainerUtil.newHashSet();
+    Set<CodeStyleGroupProvider> addedGroupProviders = new HashSet<>();
 
-    final List<CodeStyleSettingsProvider> providers = ContainerUtil.newArrayList();
+    final List<CodeStyleSettingsProvider> providers = new ArrayList<>();
     providers.addAll(CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
     providers.addAll(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
 

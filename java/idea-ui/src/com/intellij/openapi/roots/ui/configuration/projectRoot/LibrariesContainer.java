@@ -40,7 +40,7 @@ public interface LibrariesContainer {
 
   enum LibraryLevel {GLOBAL, PROJECT, MODULE;
     public String toString() {
-      return StringUtil.capitalize(name().toLowerCase());
+      return StringUtil.capitalize(StringUtil.toLowerCase(name()));
     }
   }
 

@@ -104,7 +104,7 @@ public class JavaColorProvider implements ElementColorProvider {
   }
 
   @Nullable
-  private static Color getColor(List<UExpression> args) {
+  private static Color getColor(List<? extends UExpression> args) {
     try {
       ColorConstructors type = args.isEmpty() ? null : getConstructorType(args.size(), args.get(0).getExpressionType());
       if (type != null) {
@@ -268,9 +268,9 @@ public class JavaColorProvider implements ElementColorProvider {
         text = "0x";
         Color c = new Color(newValue, hasAlpha);
         if (hasAlpha) {
-          text += Integer.toHexString(c.getAlpha()).toUpperCase();
+          text += StringUtil.toUpperCase(Integer.toHexString(c.getAlpha()));
         }
-        text += ColorUtil.toHex(c).toUpperCase();
+        text += StringUtil.toUpperCase(ColorUtil.toHex(c));
       }
       else {
         text = Integer.toString(newValue);

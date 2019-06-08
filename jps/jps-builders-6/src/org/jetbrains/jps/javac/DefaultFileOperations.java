@@ -23,7 +23,7 @@ class DefaultFileOperations implements FileOperations {
   private static final File[] NULL_FILE_ARRAY = new File[0];
   private static final Archive NULL_ARCHIVE = new Archive() {
     @Override
-    public Iterable<JavaFileObject> list(String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) {
+    public Iterable<JavaFileObject> list(String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) {
       return Collections.emptyList();
     }
     @Override
@@ -134,7 +134,7 @@ class DefaultFileOperations implements FileOperations {
     return StringUtilRt.endsWithIgnoreCase(name, ".jar") || StringUtilRt.endsWithIgnoreCase(name, ".zip");
   }
 
-  private void listRecursively(File fileOrDir, List<File> result) {
+  private void listRecursively(File fileOrDir, List<? super File> result) {
     final File[] files = listChildren(fileOrDir);
     if (files != null) {
       for (File file : files) {
@@ -192,7 +192,7 @@ class DefaultFileOperations implements FileOperations {
 
     @NotNull
     @Override
-    public Iterable<JavaFileObject> list(final String relPath, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
+    public Iterable<JavaFileObject> list(final String relPath, Set<? extends JavaFileObject.Kind> kinds, boolean recurse) throws IOException{
       final Collection<ZipEntry> entries = myPaths.get(relPath);
       if (entries == null || entries.isEmpty()) {
         return Collections.emptyList();

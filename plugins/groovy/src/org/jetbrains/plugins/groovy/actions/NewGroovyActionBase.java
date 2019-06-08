@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
@@ -37,7 +38,9 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   @NonNls
   public static final String GROOVY_EXTENSION = ".groovy";
 
-  public NewGroovyActionBase(String text, String description, Icon icon) {
+  public NewGroovyActionBase(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                             @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                             Icon icon) {
     super(text, description, icon);
   }
 

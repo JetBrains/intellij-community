@@ -218,7 +218,7 @@ public class LibraryOptionsPanel implements Disposable {
         onVersionChanged(getPresentableVersion());
       }
     });
-    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer<LibraryEditor>(myExistingLibraryComboBox) {
+    myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer<LibraryEditor>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends LibraryEditor> list, LibraryEditor value, int index, boolean selected,
                                            boolean hasFocus) {

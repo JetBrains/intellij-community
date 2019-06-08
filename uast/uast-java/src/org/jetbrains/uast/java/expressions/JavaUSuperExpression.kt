@@ -24,16 +24,16 @@ import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.USuperExpression
 
 class JavaUSuperExpression(
-  override val psi: PsiSuperExpression,
+  override val sourcePsi: PsiSuperExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USuperExpression, UMultiResolvable {
   override val label: String?
-    get() = psi.qualifier?.qualifiedName
+    get() = sourcePsi.qualifier?.qualifiedName
 
   override val labelIdentifier: UIdentifier?
-    get() = psi.qualifier?.let { UIdentifier(it, this) }
+    get() = sourcePsi.qualifier?.let { UIdentifier(it, this) }
 
-  override fun resolve(): PsiElement? = psi.qualifier?.resolve()
+  override fun resolve(): PsiElement? = sourcePsi.qualifier?.resolve()
   override fun multiResolve(): Iterable<ResolveResult> =
-    psi.qualifier?.multiResolve(false)?.asIterable() ?: emptyList()
+    sourcePsi.qualifier?.multiResolve(false)?.asIterable() ?: emptyList()
 }

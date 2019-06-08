@@ -18,7 +18,9 @@ public abstract class RemoteDesktopService {
 
   public static boolean isRemoteSession() {
     if (!SystemInfo.isWindows) return false;
-    return ApplicationManager.getApplication() != null && getInstance().isRemoteDesktopConnected();
+    if (ApplicationManager.getApplication() == null) return false;
+    RemoteDesktopService instance = getInstance();
+    return instance != null && instance.isRemoteDesktopConnected();
   }
 
   public abstract boolean isRemoteDesktopConnected();

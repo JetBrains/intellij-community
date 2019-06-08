@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class SvnMergeInfoCache {
@@ -38,7 +39,7 @@ public class SvnMergeInfoCache {
 
   private SvnMergeInfoCache(@NotNull Project project) {
     myProject = project;
-    myCurrentUrlMapping = ContainerUtil.newHashMap();
+    myCurrentUrlMapping = new HashMap<>();
   }
 
   public static SvnMergeInfoCache getInstance(@NotNull Project project) {
@@ -94,21 +95,9 @@ public class SvnMergeInfoCache {
     return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;
   }
 
-  public enum MergeCheckResult {
-    COMMON,
-    MERGED,
-    NOT_MERGED,
-    NOT_EXISTS;
-
-    @NotNull
-    public static MergeCheckResult getInstance(boolean merged) {
-      return merged ? MERGED : NOT_MERGED;
-    }
-  }
-
   static class CopyRevison {
     private final String myPath;
-    private final long myRevision;
+    private volatile long myRevision;
 
     CopyRevison(final SvnVcs vcs, final String path, @NotNull Url repositoryRoot, @NotNull Url branchUrl, @NotNull Url trunkUrl) {
       myPath = path;
@@ -129,8 +118,11 @@ public class SvnMergeInfoCache {
 
         @Override
         public void onSuccess() {
-          if (myData != null && myData.getCopySourceRevision() != -1) {
-            BackgroundTaskUtil.syncPublisher(vcs.getProject(), SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+          if (myData != null) {
+            myRevision = myData.getCopySourceRevision();
+            if (myRevision != -1) {
+              BackgroundTaskUtil.syncPublisher(vcs.getProject(), SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+            }
           }
         }
 

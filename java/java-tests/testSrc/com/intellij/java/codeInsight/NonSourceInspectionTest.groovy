@@ -32,8 +32,8 @@ import groovy.transform.CompileStatic
 class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   void "test inspection outside source root"() {
-    PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("src"))
+    PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
     
     myFixture.addFileToProject("src/foo/GenericQuery.java", """
 package foo;
@@ -61,8 +61,8 @@ class SomeClass {
   }
 
   void "test resolve super constructor reference"() {
-    PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).sdk)
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("src"))
+    PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
 
     myFixture.addFileToProject("src/Foo.java", """
 class Foo<T> {

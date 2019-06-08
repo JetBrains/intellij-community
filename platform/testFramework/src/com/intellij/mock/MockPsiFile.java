@@ -63,7 +63,7 @@ public class MockPsiFile extends MockPsiElement implements PsiFile {
   }
 
   @Override
-  public boolean processChildren(final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(@NotNull final PsiElementProcessor<PsiFileSystemItem> processor) {
     return true;
   }
 

@@ -42,7 +42,9 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Stream;
@@ -485,7 +487,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
           result.put(currentScope, currentSeverity);
         }
         else {
-          Set<String> toolsToCheck = ContainerUtil.newHashSet(allScopes.keySet());
+          Set<String> toolsToCheck = new HashSet<>(allScopes.keySet());
           toolsToCheck.removeAll(currentSeverityAndOccurrences.getOccurrences().keySet());
           boolean doContinue = false;
           final Map<String, HighlightSeverity> lowerScopeOccurrences = myScopeToAverageSeverityMap.get(myDefaultScopeName).getOccurrences();

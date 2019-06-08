@@ -35,7 +35,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.ExceptionUtilRt;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.FileTreePrinterKt;
@@ -331,7 +331,7 @@ public class CompilerTester {
 
     void throwException() {
       if (myError != null) {
-        ExceptionUtilRt.rethrow(myError);
+        ExceptionUtil.rethrow(myError);
       }
     }
 

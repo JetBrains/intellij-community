@@ -4,11 +4,6 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
-
-import static org.jetbrains.plugins.groovy.bundled.BundledGroovy.getBundledGroovyFile;
 
 public class GroovyFacetUtil {
   public static final String PLUGIN_MODULE_ID = "PLUGIN_MODULE";
@@ -20,11 +15,5 @@ public class GroovyFacetUtil {
 
   public static boolean isAcceptableModuleType(ModuleType type) {
     return type instanceof JavaModuleType || PLUGIN_MODULE_ID.equals(type.getId()) || "ANDROID_MODULE".equals(type.getId());
-  }
-
-  @Deprecated
-  @NotNull
-  public static File getBundledGroovyJar() {
-    return getBundledGroovyFile();
   }
 }

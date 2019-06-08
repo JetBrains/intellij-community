@@ -235,7 +235,7 @@ public class MagicCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static LookupElement decorate(CompletionParameters parameters, List<ExpectedTypeInfo> types, LookupElement element) {
+  private static LookupElement decorate(CompletionParameters parameters, List<? extends ExpectedTypeInfo> types, LookupElement element) {
     if (!types.isEmpty() && parameters.getCompletionType() == CompletionType.SMART) {
       element = JavaSmartCompletionContributor.decorate(element, types);
     }

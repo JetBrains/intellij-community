@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -182,7 +183,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   }
 
   @Override
-  protected void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
+  protected void exportScheme(@Nullable Project project, @NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
     EditorColorsScheme schemeToExport = scheme;
     if (scheme instanceof AbstractColorsScheme) {
       EditorColorsScheme parent = ((AbstractColorsScheme)scheme).getParentScheme();
@@ -192,7 +193,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     }
     schemeToExport = (EditorColorsScheme)schemeToExport.clone();
     schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
-    super.exportScheme(schemeToExport, exporterName);
+    super.exportScheme(project, schemeToExport, exporterName);
   }
 
   @NotNull

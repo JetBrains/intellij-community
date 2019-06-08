@@ -13,8 +13,8 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -167,12 +167,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                             final String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(new ListCellRendererWrapper<T>() {
-      @Override
-      public void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
-        setText(adapter.toPresentation(value));
-      }
-    });
+    list.setCellRenderer(SimpleListCellRenderer.create("", adapter::toPresentation));
     addButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -26,7 +26,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -37,8 +36,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
 public class CustomActionsSchema implements PersistentStateComponent<Element> {
@@ -76,7 +75,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     if (TouchBarsManager.isTouchBarAvailable())
       myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
 
-    ArrayList<Couple<String>> extList = ContainerUtil.newArrayList();
+    ArrayList<Couple<String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
       (groupId, groupTitle) -> extList.add(Couple.of(groupId, groupTitle));
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {

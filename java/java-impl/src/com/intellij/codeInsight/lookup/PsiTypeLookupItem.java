@@ -99,7 +99,16 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
 
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
+    SmartPsiElementPointer<PsiElement> pointer = null;
+    if (getObject() instanceof PsiElement) {
+      PsiElement psiElement = (PsiElement)getObject();
+      pointer = SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(psiElement);
+    }
     myImportFixer.handleInsert(context, this);
+    // restore PSI element tucked in this.myObject and possibly made invalid by import fixer
+    if (pointer != null) {
+      setObject(pointer.getElement());
+    }
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     if (position != null) {

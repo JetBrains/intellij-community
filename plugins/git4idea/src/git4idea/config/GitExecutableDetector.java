@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ public class GitExecutableDetector {
     List<File> distrs = new ArrayList<>();
     for (String programFiles : PROGRAM_FILES) {
       File pf = new File(getWinRoot(), programFiles);
-      File[] children = pf.listFiles(pathname -> pathname.isDirectory() && pathname.getName().toLowerCase().startsWith("git"));
+      File[] children = pf.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
       if (!pf.exists() || children == null) {
         continue;
       }
@@ -172,8 +173,8 @@ public class GitExecutableDetector {
 
     @Override
     public int compare(File f1, File f2) {
-      String name1 = f1.getName().toLowerCase();
-      String name2 = f2.getName().toLowerCase();
+      String name1 = StringUtil.toLowerCase(f1.getName());
+      String name2 = StringUtil.toLowerCase(f2.getName());
 
       // C:\Program Files\Git is better candidate for _default_ than C:\Program Files\Git_1.8.0
       if (name1.equals("git")) {
@@ -206,8 +207,8 @@ public class GitExecutableDetector {
       }
 
       // probably some unrecognized format of Git directory naming => just compare lexicographically
-      String name1 = f1.getName().toLowerCase();
-      String name2 = f2.getName().toLowerCase();
+      String name1 = StringUtil.toLowerCase(f1.getName());
+      String name2 = StringUtil.toLowerCase(f2.getName());
       return name1.compareTo(name2);
     }
 

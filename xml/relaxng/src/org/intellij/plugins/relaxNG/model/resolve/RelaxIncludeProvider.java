@@ -75,9 +75,9 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
   private static class RngBuilderAdapter implements NanoXmlBuilder {
     boolean isRNG;
     boolean isInclude;
-    private final ArrayList<FileIncludeInfo> myInfos;
+    private final ArrayList<? super FileIncludeInfo> myInfos;
 
-    RngBuilderAdapter(ArrayList<FileIncludeInfo> infos) {
+    RngBuilderAdapter(ArrayList<? super FileIncludeInfo> infos) {
       myInfos = infos;
     }
 

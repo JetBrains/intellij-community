@@ -19,6 +19,7 @@ package com.intellij.psi.formatter;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModelEx;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class PsiBasedFormattingModel implements FormattingModelEx {
 
@@ -87,11 +90,16 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
 
     if (leafElement != null) {
       PsiFile hostFile = myASTNode.getPsi().getContainingFile();
-      PsiElement injectedElement = InjectedLanguageManager.getInstance(hostFile.getProject()).findInjectedElementAt(hostFile, offset);
-
-      TextRange effectiveRange = injectedElement != null ? rangeInInjectedDocument(textRange, injectedElement) : null;
-      if (effectiveRange == null) {
-        effectiveRange = textRange;
+      TextRange effectiveRange = textRange;
+      List<DocumentWindow> injections =
+        InjectedLanguageManager.getInstance(hostFile.getProject()).getCachedInjectedDocumentsInRange(hostFile, TextRange.from(offset, 0));
+      if (!injections.isEmpty()) {
+        PsiElement injectedElement = PsiDocumentManager.getInstance(myProject).getPsiFile(injections.get(0));
+        PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(injectedElement);
+        TextRange corrected = host == null ? null : correctRangeByInjection(textRange, host);
+        if (corrected != null) {
+          effectiveRange = corrected;
+        }
       }
 
       if (leafElement.getPsi() instanceof PsiFile) {
@@ -112,10 +120,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     }
   }
 
-  private static TextRange rangeInInjectedDocument(TextRange textRange, PsiElement injectedElement) {
-    PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(injectedElement);
-    if (host == null) return null;
-
+  private static TextRange correctRangeByInjection(TextRange textRange, PsiLanguageInjectionHost host) {
     ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
     if (manipulator == null) return null;
 

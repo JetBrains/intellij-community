@@ -150,7 +150,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private void collectElements(HierarchyNodeDescriptor descriptor, Set<PsiElement> out) {
+  private void collectElements(HierarchyNodeDescriptor descriptor, Set<? super PsiElement> out) {
     if (descriptor == null) {
       return;
     }
@@ -281,7 +281,6 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     tree.setToggleClickCount(-1);
     tree.setCellRenderer(new HierarchyNodeRenderer());
-    UIUtil.setLineStyleAngled(tree);
     new TreeSpeedSearch(tree);
     TreeUtil.installActions(tree);
     myAutoScrollToSourceHandler.install(tree);

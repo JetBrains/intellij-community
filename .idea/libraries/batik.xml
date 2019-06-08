@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="batik" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.xmlgraphics:batik-all:1.10" />
+    <properties include-transitive-deps="false" maven-id="org.apache.xmlgraphics:batik-all:1.11" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-all/1.10/batik-all-1.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/batik-all/1.11/batik-all-1.11.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -36,7 +36,7 @@ public class TypeFilter extends FilterAction {
   }
 
   @Override
-  public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     return myTable.getProfile().isApplicableConstraint(UIUtil.TYPE, nodes, completePattern, target);
   }
 

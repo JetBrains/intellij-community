@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
@@ -30,6 +30,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import icons.GradleIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
@@ -45,8 +46,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
+ * @deprecated Use {@link JavaGradleProjectImportBuilder} instead
  */
-public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
+@Deprecated
+public final class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
+  public GradleProjectImportBuilder() {
+    this(ProjectDataManager.getInstance());
+  }
+
   /**
    * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
    */
@@ -209,5 +216,15 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   @Override
   public Project createProject(String name, String path) {
     return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+  }
+
+  private static GradleProjectImportBuilder ourInstance = null;
+
+  @ApiStatus.Experimental
+  static GradleProjectImportBuilder getInstance() {
+    if (ourInstance == null) {
+      ourInstance = new GradleProjectImportBuilder();
+    }
+    return ourInstance;
   }
 }

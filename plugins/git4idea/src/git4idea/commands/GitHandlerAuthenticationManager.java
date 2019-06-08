@@ -8,11 +8,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.BuiltinWebServerAccess;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
+import git4idea.GitUtil;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
@@ -55,7 +54,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   @NotNull
   public static GitHandlerAuthenticationManager prepare(@NotNull Project project, @NotNull GitLineHandler handler) throws IOException {
     GitHandlerAuthenticationManager manager = new GitHandlerAuthenticationManager(project, handler);
-    tryRunOrClose(manager, () -> {
+    GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareHttpAuth();
       if (GitVcsApplicationSettings.getInstance().isUseIdeaSsh()) {
         manager.prepareSshAuth();
@@ -86,14 +85,12 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
-    // Android Studio specific authentication to the builtin webserver
-    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
     myHandler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
-        String lowerCaseLine = line.toLowerCase();
+        String lowerCaseLine = StringUtil.toLowerCase(line);
         if (lowerCaseLine.contains("authentication failed") ||
             lowerCaseLine.contains("403 forbidden") ||
             lowerCaseLine.contains("error: 400") ||
@@ -144,8 +141,6 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
-    // Android Studio specific authentication to the builtin webserver
-    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", mySshHandler, port));
 
     final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
@@ -193,8 +188,6 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
                                            service.getScriptPath(useBatchFile).getPath());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
-    // Android Studio specific authentication to the builtin webserver
-    myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
     LOG.debug(String.format("myHandler=%s, port=%s", myNativeSshHandler, port));
 
     // SSH_ASKPASS is ignored if DISPLAY variable is not set
@@ -218,20 +211,5 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
       String host = URLUtil.parseHostFromSshUrl(url);
       return httpConfigurable.isProxyException(host);
     });
-  }
-
-  private static void tryRunOrClose(@NotNull AutoCloseable closeable, @NotNull ThrowableRunnable<IOException> runnable) throws IOException {
-    try {
-      runnable.run();
-    }
-    catch (Throwable e) {
-      try {
-        closeable.close();
-      }
-      catch (Throwable e2) {
-        e.addSuppressed(e2);
-      }
-      throw e;
-    }
   }
 }

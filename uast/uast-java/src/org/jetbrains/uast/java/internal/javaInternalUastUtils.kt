@@ -73,7 +73,7 @@ val PsiModifierListOwner.annotations: Array<PsiAnnotation>
   get() = modifierList?.annotations ?: emptyArray()
 
 internal inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P): P {
-  val unwrapped = if (element is T) element.psi else element
+  val unwrapped = if (element is T) element.javaPsi else element
   assert(unwrapped !is UElement)
   return unwrapped as P
 }

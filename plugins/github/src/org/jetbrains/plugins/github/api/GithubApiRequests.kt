@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import com.intellij.util.ThrowableConvertor
@@ -182,7 +182,7 @@ object GithubApiRequests {
 
       @JvmStatic
       fun add(server: GithubServerPath, username: String, repoName: String, collaborator: String) =
-        Put.json<Any>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", collaborator))
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", collaborator))
     }
 
     object Issues : Entity("/issues") {
@@ -319,6 +319,14 @@ object GithubApiRequests {
           .withOperationName("rebase and merge pull request ${pullRequest.number}")
 
       private fun getMergeUrl(pullRequest: GithubPullRequest) = pullRequest.url + "/merge"
+
+      @JvmStatic
+      fun getListETag(server: GithubServerPath, repoPath: GithubFullPath) =
+        object : Get<String?>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix,
+                                     GithubApiUrlQueryBuilder.urlQuery { param(GithubRequestPagination(pageSize = 1)) })) {
+
+          override fun extractResult(response: GithubApiResponse) = response.findHeader("ETag")
+        }.withOperationName("get pull request list ETag")
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic

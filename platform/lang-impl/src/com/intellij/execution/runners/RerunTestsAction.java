@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionManager;
@@ -9,9 +10,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +29,7 @@ import java.util.Set;
  */
 public class RerunTestsAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   public static final String ID = "RerunTests";
-  private static final Set<RunContentDescriptor> REGISTRY = ContainerUtil.newHashSet();
+  private static final Set<RunContentDescriptor> REGISTRY = new HashSet<>();
 
   public static void register(@NotNull final RunContentDescriptor descriptor) {
     if (!Disposer.isDisposed(descriptor) && REGISTRY.add(descriptor)) {
@@ -49,7 +51,7 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    List<RunContentDescriptor> descriptors = ContainerUtil.newArrayList(REGISTRY);
+    List<RunContentDescriptor> descriptors = new ArrayList<>(REGISTRY);
     for (RunContentDescriptor descriptor : descriptors) {
       if (Disposer.isDisposed(descriptor)) {
         REGISTRY.remove(descriptor);

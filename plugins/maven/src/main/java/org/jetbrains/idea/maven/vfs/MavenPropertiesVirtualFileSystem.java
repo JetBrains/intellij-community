@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.vfs;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -76,7 +77,7 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
         String key = each.getKey();
         if (key.startsWith("=")) continue;
-        envProperties.setProperty(SystemInfo.isWindows ? key.toUpperCase() : key, each.getValue());
+        envProperties.setProperty(SystemInfo.isWindows ? StringUtil.toUpperCase(key) : key, each.getValue());
       }
 
       myEnvPropertiesFile = new MavenPropertiesVirtualFile(ENV_PROPERTIES_FILE, envProperties, this);

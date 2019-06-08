@@ -26,6 +26,22 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                     "}\n", 1);
   }
   
+  public void testUnwrapNestedLambda2() {
+    assertUnwrapped("{\n" +
+                    "    bar(() -> bar(() -> {\n" +
+                    "                         Sys<caret>tem.gc();\n" +
+                    "                         System.gc();\n" +
+                    "                         }));\n" +
+                    "}\n",
+
+                    "{\n" +
+                    "    bar(() -> {\n" +
+                    "                         System.gc();\n" +
+                    "                         System.gc();\n" +
+                    "                         });\n" +
+                    "}\n", 1);
+  }
+  
   public void testUnwrapExpressionDeclaration() {
     assertUnwrapped("{\n" +
                     "    interface I {int get();}" +

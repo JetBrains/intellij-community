@@ -2,7 +2,6 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
@@ -16,6 +15,8 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -283,7 +284,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return optionsComponent != null ? optionsComponent.getLibraryCompositionSettings() : null;
   }
 
-  private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
+  private Collection<FrameworkSupportNodeBase> createNodes(List<? extends FrameworkSupportInModuleProvider> providers,
                                                            Set<String> associated,
                                                            final Collection<String> preselected) {
     Map<String, FrameworkSupportNode> nodes = new HashMap<>();
@@ -304,8 +305,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider,
                                           final Map<String, FrameworkSupportNode> nodes,
                                           final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
-                                          List<FrameworkSupportNodeBase> roots,
-                                          List<FrameworkSupportInModuleProvider> providers,
+                                          List<? super FrameworkSupportNodeBase> roots,
+                                          List<? extends FrameworkSupportInModuleProvider> providers,
                                           Set<String> associated,
                                           Map<String, FrameworkSupportNodeBase> associatedNodes) {
     String id = provider.getFrameworkType().getId();
@@ -372,7 +373,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return list;
   }
 
-  private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result) {
+  private static void addChildFrameworks(final List<? extends FrameworkSupportNodeBase> list, final List<? super FrameworkSupportNode> result) {
     for (FrameworkSupportNodeBase node : list) {
       if (node.isChecked() || node instanceof FrameworkGroupNode) {
         if (node instanceof FrameworkSupportNode) {
@@ -390,7 +391,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (!compositionSettings.downloadFiles(parentComponent)) {
         int answer = Messages.showYesNoDialog(parentComponent,
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                                              "Libraries Are Required", Messages.getWarningIcon());
         return answer == Messages.YES;
       }
     }
@@ -454,8 +455,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
     }
   }
 
-  private void sortFrameworks(final List<FrameworkSupportNode> nodes) {
+  private void sortFrameworks(final List<? extends FrameworkSupportNode> nodes) {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
     Collections.sort(nodes, (o1, o2) -> comparator.compare(o1.getUserObject(), o2.getUserObject()));
+  }
+
+  public void reportFeatureUsageData(FeatureUsageData data) {
+    List<FrameworkSupportNode> nodes = getSelectedNodes();
+    for (int i = 0; i < nodes.size(); i++) {
+      FrameworkSupportNode node = nodes.get(i);
+      FrameworkSupportInModuleProvider provider = node.getUserObject();
+      String id = PluginInfoDetectorKt.getPluginInfo(provider.getClass()).isSafeToReport() ? provider.getId() : "third-party";
+      data.addData("framework" + i, id);
+    }
   }
 }

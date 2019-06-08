@@ -16,13 +16,9 @@ import java.util.List;
  * @author stathik
  */
 public class PluginNode implements IdeaPluginDescriptor {
-  public static final int STATUS_UNKNOWN = 0;
-  public static final int STATUS_INSTALLED = 1;
-  public static final int STATUS_MISSING = 2;
-  public static final int STATUS_CURRENT = 3;
-  public static final int STATUS_NEWEST = 4;
-  public static final int STATUS_DOWNLOADED = 5;
-  public static final int STATUS_DELETED = 6;
+  public enum Status {
+    UNKNOWN, INSTALLED, DOWNLOADED, DELETED
+  }
 
   private PluginId id;
   private String name;
@@ -44,7 +40,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private long date = Long.MAX_VALUE;
   private List<PluginId> myDependencies;
   private PluginId[] myOptionalDependencies;
-  private int myStatus = STATUS_UNKNOWN;
+  private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
   private String myDownloadUrl;
   private String myRepositoryName;
@@ -171,16 +167,11 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.sinceBuild = sinceBuild;
   }
 
-  /**
-   * In complex environment use PluginManagerColumnInfo.getRealNodeState () method instead.
-   *
-   * @return Status of plugin
-   */
-  public int getStatus() {
+  public Status getStatus() {
     return myStatus;
   }
 
-  public void setStatus(int status) {
+  public void setStatus(Status status) {
     myStatus = status;
   }
 
@@ -272,6 +263,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   /**
    * Methods below implement PluginDescriptor and IdeaPluginDescriptor interface
    */
+  @Nullable
   @Override
   public PluginId getPluginId() {
     return id;
@@ -309,7 +301,7 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   @Nullable
-  public List<Element> getActionsDescriptionElements() {
+  public List<Element> getAndClearActionDescriptionElements() {
     return null;
   }
 
@@ -368,6 +360,11 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
+  public boolean isImplementationDetail() {
+    return false;
+  }
+
+  @Override
   public boolean isEnabled() {
     return myEnabled;
   }
@@ -375,20 +372,6 @@ public class PluginNode implements IdeaPluginDescriptor {
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
-  }
-
-  @Nullable
-  public String getStatusText() {
-    switch (myStatus) {
-      case STATUS_UNKNOWN:
-        return "Available";
-      case STATUS_INSTALLED:
-        return "Installed";
-      case STATUS_NEWEST:
-        return "Ready to update";
-      default:
-        return null;
-    }
   }
 
   public String getDownloadUrl() {

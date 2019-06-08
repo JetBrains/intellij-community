@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -30,7 +30,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -61,6 +60,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -246,7 +246,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       try {
         myListenersFile = FileUtil.createTempFile("junit_listeners_", "", true);
         javaParameters.getProgramParametersList().add("@@" + myListenersFile.getPath());
-        FileUtil.writeToFile(myListenersFile, buf.toString().getBytes(CharsetToolkit.UTF8_CHARSET));
+        FileUtil.writeToFile(myListenersFile, buf.toString().getBytes(StandardCharsets.UTF_8));
       }
       catch (IOException e) {
         LOG.error(e);
@@ -279,8 +279,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     //add standard engines only if no engine api is present
-    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
-        !isCustomJUnit5(globalSearchScope)) {
+    if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
       PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
         () -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
@@ -299,6 +298,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
       }
     }
+  }
+
+  public static boolean hasJUnit5EnginesAPI(GlobalSearchScope globalSearchScope, JavaPsiFacade psiFacade) {
+    return hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope);
   }
 
   private static String getVersion(PsiClass classFromCommon) {

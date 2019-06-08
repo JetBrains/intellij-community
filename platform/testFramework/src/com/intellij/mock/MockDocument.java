@@ -44,11 +44,6 @@ public class MockDocument extends UserDataHolderBase implements DocumentEx {
     myModStamp = newModificationStamp;
   }
 
-  @Override
-  public void moveText(int srcStart, int srcEnd, int dstOffset) {
-    throw new UnsupportedOperationException();
-  }
-
   public CharSequence textToCharArray() {
     return getText();
   }

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -34,8 +35,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
@@ -281,7 +280,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  private void obtainCurrentScopes(final HashSet<String> scopes) {
+  private void obtainCurrentScopes(final HashSet<? super String> scopes) {
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final NamedScope scope = (NamedScope)node.getConfigurable().getEditableObject();
@@ -337,7 +336,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       myFromPopup = fromPopup;
       final Presentation presentation = getTemplatePresentation();
       presentation.setIcon(IconUtil.getAddIcon());
-      setShortcutSet(CommonShortcuts.INSERT);
+      registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
     }
 
 
@@ -407,6 +406,9 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
     protected MyMoveAction(String text, Icon icon, int direction) {
       super(text, text, icon);
+      ShortcutSet shortcutSet = direction < 0 ? CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.UP)
+                                              : CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.DOWN);
+      registerCustomShortcutSet(shortcutSet, myTree);
       myDirection = direction;
     }
 
@@ -438,7 +440,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     MyCopyAction() {
       super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"),
             COPY_ICON);
-      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
+      registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
     }
 
     @Override

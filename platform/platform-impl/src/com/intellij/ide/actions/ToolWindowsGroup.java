@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -8,10 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -57,7 +57,7 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
   public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipHidden) {
     ActionManager actionManager = ActionManager.getInstance();
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    List<ActivateToolWindowAction> result = ContainerUtil.newArrayList();
+    List<ActivateToolWindowAction> result = new ArrayList<>();
     for (String id : manager.getToolWindowIds()) {
       if (shouldSkipHidden && !manager.getToolWindow(id).isShowStripeButton()) continue;
       String actionId = ActivateToolWindowAction.getActionIdForToolWindow(id);

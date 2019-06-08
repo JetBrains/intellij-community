@@ -5,7 +5,7 @@
 
   <extensionPoints>
     <<error descr="<extensionPoint> must not specify both 'name' and 'qualifiedName' attributes">extensionPoint</error> name="myName" qualifiedName="myQualifiedName" interface="java.lang.Runnable"/>
-    <<error descr="<extensionPoint> must not specify both 'interface' and 'beanClass' attributes">extensionPoint</error> interface="java.lang.Runnable" beanClass="java.lang.Runnable" name="aaa"/>
+    <extensionPoint <error descr="<extensionPoint> must not specify both 'interface' and 'beanClass' attributes">interface="java.lang.Runnable"</error> <error descr="<extensionPoint> must not specify both 'interface' and 'beanClass' attributes">beanClass="java.lang.Runnable"</error> name="aaa"/>
 
     <extensionPoint name="name1" interface="java.lang.Runnable"/>
     <extensionPoint name="name2" beanClass="java.lang.Runnable"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pytestLegacy;
 
 import com.google.common.collect.Lists;
@@ -51,9 +51,9 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration> configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration<PyTestRunConfiguration> configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final PsiElement element = sourceElement.get();
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (!(configuration instanceof PyTestRunConfiguration)) {
@@ -145,7 +145,8 @@ public final class PyTestConfigurationProducer extends PythonTestLegacyConfigura
   }
 
   @Override
-  public boolean isConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration configuration,
+                                            @NotNull ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null) return false;
     if (!(configuration instanceof PyTestRunConfiguration)) return false;

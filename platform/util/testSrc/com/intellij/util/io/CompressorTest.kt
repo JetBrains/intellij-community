@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.testFramework.rules.TempDirectory
@@ -30,10 +30,12 @@ class CompressorTest {
   @Test fun simpleZipWithFilters() {
     val zip = tempDir.newFile("test.zip")
     val set = mutableSetOf<String>()
-    Compressor.Zip(zip).filter(set::add).use {
+    Compressor.Zip(zip).filter { set.add(it) && it != "d1" }.use {
       it.addFile("file1.txt", "123".toByteArray())
       it.addFile("file2.txt", "456".toByteArray())
       it.addFile("file1.txt", "789".toByteArray())
+      it.addFile("d1/d11/f.txt", "-".toByteArray())
+      it.addDirectory("d1/d12")
     }
     assertZip(zip, "file1.txt" to "123", "file2.txt" to "456")
   }

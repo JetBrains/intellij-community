@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.GraphicsUtil
@@ -23,6 +24,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
@@ -88,9 +90,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     set(value) {
       state.reuseNotModifiedTabs = value
     }
-
-  val maxClipboardContents: Int
-    get() = state.maxClipboardContents
 
   var disableMnemonics: Boolean
     get() = state.disableMnemonics
@@ -339,13 +338,48 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
       state.consoleCommandHistoryLimit = value
     }
 
+  var sortTabsAlphabetically: Boolean
+    get() = state.sortTabsAlphabetically
+    set(value) {
+      state.sortTabsAlphabetically = value
+    }
+
+  var openTabsAtTheEnd: Boolean
+    get() = state.openTabsAtTheEnd
+    set(value) {
+      state.openTabsAtTheEnd = value
+    }
+
+  var showInplaceComments: Boolean
+    get() = state.showInplaceComments
+    set(value) {
+      state.showInplaceComments = value
+    }
+
+  val showInplaceCommentsInternal: Boolean
+    get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
+
+  init {
+    // TODO Remove the registry keys and migration code in 2019.3
+    if (Registry.`is`("tabs.alphabetical")) {
+      sortTabsAlphabetically = true
+    }
+    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
+      openTabsAtTheEnd = true
+    }
+  }
+
   companion object {
     init {
       verbose("defFontSize=%d, defFontScale=%.2f", defFontSize, defFontScale)
     }
 
     @JvmStatic
-    private fun verbose(msg: String, vararg args: Any) = if (JBUI.SCALE_VERBOSE) LOG.info(String.format(msg, *args)) else {}
+    private fun verbose(msg: String, vararg args: Any) {
+      if (UIUtil.SCALE_VERBOSE) {
+        LOG.info(String.format(msg, *args))
+      }
+    }
 
     const val ANIMATION_DURATION = 300 // Milliseconds
 
@@ -435,7 +469,7 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
      */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
+      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
     }
 
     @JvmStatic
@@ -484,7 +518,9 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
             verbose("oldDefFontScale=%.2f", oldDefFontScale)
           }
         }
-        if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)
+        if (readScale != defFontScale && readScale != oldDefFontScale) {
+          size = ((readSize / readScale) * defFontScale).roundToInt()
+        }
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
@@ -560,10 +596,6 @@ class UISettings @JvmOverloads constructor(private val notRoamableOptions: NotRo
     }
     if (state.alphaModeRatio < 0.0f || state.alphaModeRatio > 1.0f) {
       state.alphaModeRatio = 0.5f
-    }
-
-    if (state.maxClipboardContents <= 0) {
-      state.maxClipboardContents = 5
     }
 
     fireUISettingsChanged()

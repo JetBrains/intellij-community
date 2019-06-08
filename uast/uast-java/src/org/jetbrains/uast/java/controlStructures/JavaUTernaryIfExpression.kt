@@ -22,12 +22,12 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
 class JavaUTernaryIfExpression(
-  override val psi: PsiConditionalExpression,
+  override val sourcePsi: PsiConditionalExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UIfExpression {
-  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
-  override val thenExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
-  override val elseExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }
+  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.condition, this) }
+  override val thenExpression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.thenExpression, this) }
+  override val elseExpression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.elseExpression, this) }
 
   override val isTernary: Boolean
     get() = true

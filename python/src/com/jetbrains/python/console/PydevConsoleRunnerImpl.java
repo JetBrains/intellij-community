@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Lists;
@@ -48,7 +48,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiFile;
@@ -90,10 +89,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
@@ -165,7 +163,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private List<AnAction> fillRunActionsToolbar(final DefaultActionGroup toolbarActions) {
-    List<AnAction> actions = ContainerUtil.newArrayList();
+    List<AnAction> actions = new ArrayList<>();
     // Rerun
     actions.add(createRerunAction());
     // Stop
@@ -195,7 +193,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private List<AnAction> fillOutputActionsToolbar(final DefaultActionGroup toolbarActions) {
-    List<AnAction> actions = ContainerUtil.newArrayList();
+    List<AnAction> actions = new ArrayList<>();
     // Use soft wraps
     actions.add(new SoftWrapAction());
     // Scroll to the end
@@ -478,7 +476,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         assert data != null;
         myProcessHandler =
           manager.createConsoleProcessHandler(process, myConsoleView, myPydevConsoleCommunication,
-                                              commandLine, CharsetToolkit.UTF8_CHARSET,
+                                              commandLine, StandardCharsets.UTF_8,
                                               manager.setupMappings(myProject, data, null),
                                               myRemoteConsoleProcessData.getSocketProvider());
       }
@@ -488,7 +486,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
     else {
       myProcessHandler = new PyConsoleProcessHandler(process, myConsoleView, myPydevConsoleCommunication, commandLine,
-                                                     CharsetToolkit.UTF8_CHARSET);
+                                                     StandardCharsets.UTF_8);
     }
     return myProcessHandler;
   }

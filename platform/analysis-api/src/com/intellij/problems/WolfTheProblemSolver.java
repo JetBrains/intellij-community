@@ -25,17 +25,17 @@ public abstract class WolfTheProblemSolver {
 
   public abstract boolean isProblemFile(VirtualFile virtualFile);
 
-  public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
-  public abstract void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
+  public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems);
+  public abstract void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
-  public abstract boolean hasProblemFilesBeneath(@NotNull Condition<VirtualFile> condition);
+  public abstract boolean hasProblemFilesBeneath(@NotNull Condition<? super VirtualFile> condition);
 
   public abstract boolean hasProblemFilesBeneath(@NotNull Module scope);
 
   public abstract Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message);
 
-  public abstract void reportProblems(final VirtualFile file, Collection<Problem> problems);
+  public abstract void reportProblems(final VirtualFile file, Collection<? extends Problem> problems);
 
   public abstract boolean hasSyntaxErrors(final VirtualFile file);
 

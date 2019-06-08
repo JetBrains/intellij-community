@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +35,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -101,7 +101,7 @@ public class RecentProjectPanel extends JPanel {
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
 
     myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
-    Collection<String> pathsToCheck = ContainerUtil.newHashSet();
+    Collection<String> pathsToCheck = new HashSet<>();
     for (AnAction action : recentProjectActions) {
       if (action instanceof ReopenProjectAction) {
         final ReopenProjectAction item = (ReopenProjectAction)action;
@@ -140,7 +140,7 @@ public class RecentProjectPanel extends JPanel {
             } else if (selection != null) {
               AnAction selectedAction = (AnAction) selection;
               AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
-              selectedAction.actionPerformed(actionEvent);
+              ActionUtil.performActionDumbAware(selectedAction, actionEvent);
 
               // remove action from list if needed
               if (selectedAction instanceof ReopenProjectAction) {
@@ -163,7 +163,7 @@ public class RecentProjectPanel extends JPanel {
         if (selectedValued != null) {
           for (Object selection : selectedValued) {
             AnActionEvent event = AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN);
-            ((AnAction)selection).actionPerformed(event);
+            ActionUtil.performActionDumbAware((AnAction)selection, event);
           }
         }
       }
@@ -708,6 +708,7 @@ public class RecentProjectPanel extends JPanel {
                            (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight());
   }
 
+  //todo better code to guess if it is a real file system path or just a tutorial's description
   public static boolean isFileSystemPath(String path) {
     return path.indexOf('/') != -1 || path.indexOf('\\') != -1;
   }

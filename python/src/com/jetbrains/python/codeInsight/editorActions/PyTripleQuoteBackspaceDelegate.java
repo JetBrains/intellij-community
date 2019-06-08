@@ -36,13 +36,14 @@ public class PyTripleQuoteBackspaceDelegate extends BackspaceHandlerDelegate {
       if (!(quoteHandler instanceof BaseQuoteHandler)) return;
 
       final int offset = editor.getCaretModel().getCurrentCaret().getOffset();
-      String text = editor.getDocument().getText();
+      CharSequence text = editor.getDocument().getCharsSequence();
       boolean mayBeTripleQuote = offset >= 3 && offset + 2 < text.length();
       if (mayBeTripleQuote) {
-        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+        final int quoteOffset = offset - 1;
+        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(quoteOffset);
         boolean hasTripleQuoteAfter = offset + 2 < text.length() &&
                                       text.charAt(offset) == c && text.charAt(offset + 1) == c && text.charAt(offset + 2) == c;
-        isTripleQuote = quoteHandler.isOpeningQuote(iterator, offset - 1) && hasTripleQuoteAfter;
+        isTripleQuote = quoteHandler.isOpeningQuote(iterator, quoteOffset) && hasTripleQuoteAfter;
       }
     }
   }

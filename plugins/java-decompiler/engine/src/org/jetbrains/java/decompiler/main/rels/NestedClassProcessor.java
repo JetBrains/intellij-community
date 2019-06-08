@@ -798,7 +798,7 @@ public class NestedClassProcessor {
     return null;
   }
 
-  private static Statement getDefStatement(Statement stat, VarType classType, Set<Statement> setStats) {
+  private static Statement getDefStatement(Statement stat, VarType classType, Set<? super Statement> setStats) {
     List<Exprent> lst = new ArrayList<>();
     Statement retStat = null;
 

@@ -120,11 +120,11 @@ public abstract class CachedMultipleDomModelFactory<Scope extends UserDataHolder
 
     /**
      * Factory method to create combined model for given module.
-     * Used by {@link #computeCombinedModel(com.intellij.openapi.module.Module)}.
+     * Used by {@link #computeCombinedModel(UserDataHolder)}.
      *
-     * @param configFiles file set including all files for all models returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
-     * @param mergedModel merged model for all models returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
-     * @param firstModel the first model returned by {@link #getAllModels(com.intellij.openapi.module.Module)}.
+     * @param configFiles file set including all files for all models returned by {@link #getAllModels(UserDataHolder)}.
+     * @param mergedModel merged model for all models returned by {@link #getAllModels(UserDataHolder)}.
+     * @param firstModel the first model returned by {@link #getAllModels(UserDataHolder)}.
      * @param scope
      * @return combined model.
      */

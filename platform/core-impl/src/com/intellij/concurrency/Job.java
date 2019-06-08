@@ -19,34 +19,25 @@
  */
 package com.intellij.concurrency;
 
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.NonExtendable
 public interface Job<T> {
-
-  String getTitle();
-
-  void addTask(@NotNull Callable<T> task);
-
-  void addTask(@NotNull Runnable task, T result);
-
-  void addTask(@NotNull Runnable task);
-
-  List<T> scheduleAndWaitForResults() throws Throwable;
-
   void cancel();
 
   boolean isCanceled();
 
-  void schedule();
-
   boolean isDone();
 
+  /**
+   * Waits until all work is executed.
+   * Note that calling {@link #cancel()} might not lead to this method termination because the job can be in the middle of execution.
+   * @throws TimeoutException when timeout expires
+   */
   void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException;
 
   @NotNull
@@ -66,39 +57,8 @@ public interface Job<T> {
     }
 
     @Override
-    public String getTitle() {
-      return null;
-    }
-
-    @Override
-    public void addTask(@NotNull Callable task) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public void addTask(@NotNull Runnable task, Object result) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public void addTask(@NotNull Runnable task) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public List scheduleAndWaitForResults() throws Throwable {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
     public boolean isCanceled() {
       return true;
     }
-
-    @Override
-    public void schedule() {
-      throw new IncorrectOperationException();
-    }
   };
-
 }

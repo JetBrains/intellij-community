@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,8 +33,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-
 public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   public SvnCheckinHandlerFactory() {
     super(SvnVcs.getKey());
@@ -55,7 +53,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         if (executor instanceof LocalCommitExecutor) return ReturnResult.COMMIT;
         final SvnVcs vcs = SvnVcs.getInstance(project);
         MultiMap<Url, WorkingCopyFormat> copiesInfo = splitIntoCopies(vcs, panel.getSelectedChanges());
-        List<Url> repoUrls = newArrayList();
+        List<Url> repoUrls = new ArrayList<>();
         for (Map.Entry<Url, Collection<WorkingCopyFormat>> entry : copiesInfo.entrySet()) {
           if (entry.getValue().size() > 1) {
             repoUrls.add(entry.getKey());

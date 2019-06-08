@@ -20,10 +20,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +34,7 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   private final Set<VirtualFile> myRoots;
 
   public NonClasspathDirectoriesScope(@NotNull Collection<VirtualFile> roots) {
-    myRoots = ContainerUtil.newHashSet(roots);
+    myRoots = new HashSet<>(roots);
   }
 
   @Override

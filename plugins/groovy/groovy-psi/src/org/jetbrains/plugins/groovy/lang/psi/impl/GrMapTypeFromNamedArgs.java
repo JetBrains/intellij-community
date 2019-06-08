@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -17,10 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GrMapTypeFromNamedArgs extends GrMapType {
 
@@ -39,7 +35,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     @NotNull
     @Override
     protected LinkedHashMap<String, PsiType> compute() {
-      LinkedHashMap<String, PsiType> result = ContainerUtil.newLinkedHashMap();
+      LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
       for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
         result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
       }
@@ -55,8 +51,8 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   public GrMapTypeFromNamedArgs(@NotNull JavaPsiFacade facade, @NotNull GlobalSearchScope scope, @NotNull GrNamedArgument[] namedArgs) {
     super(facade, scope);
 
-    myStringEntries = ContainerUtil.newLinkedHashMap();
-    myOtherEntries = ContainerUtil.newArrayList();
+    myStringEntries = new LinkedHashMap<>();
+    myOtherEntries = new ArrayList<>();
     for (GrNamedArgument namedArg : namedArgs) {
       final GrArgumentLabel label = namedArg.getLabel();
       final GrExpression expression = namedArg.getExpression();
@@ -93,34 +89,6 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   @Override
   public boolean isEmpty() {
     return myStringEntries.isEmpty() && myOtherEntries.isEmpty();
-  }
-
-  @NotNull
-  @Override
-  protected PsiType[] getAllKeyTypes() {
-    Set<PsiType> result = ContainerUtil.newHashSet();
-    if (!myStringEntries.isEmpty()) {
-      result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, getResolveScope()));
-    }
-    for (Couple<GrExpression> entry : myOtherEntries) {
-      result.add(inferTypePreventingRecursion(entry.first));
-    }
-    result.remove(null);
-    return result.toArray(createArray(result.size()));
-  }
-
-  @NotNull
-  @Override
-  protected PsiType[] getAllValueTypes() {
-    Set<PsiType> result = ContainerUtil.newHashSet();
-    for (GrExpression expression : myStringEntries.values()) {
-      result.add(inferTypePreventingRecursion(expression));
-    }
-    for (Couple<GrExpression> entry : myOtherEntries) {
-      result.add(inferTypePreventingRecursion(entry.second));
-    }
-    result.remove(null);
-    return result.toArray(createArray(result.size()));
   }
 
   @Nullable

@@ -62,11 +62,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.configurationScript",
     "intellij.yaml",
     "intellij.tasks.core",
-    "intellij.tasks.java",
     "intellij.gradle",
     "intellij.vcs.git",
-    "intellij.platform.remoteServers.git",
-    "intellij.java.remoteServers.git",
     "intellij.vcs.svn",
     "intellij.vcs.hg",
     "intellij.vcs.github",
@@ -78,11 +75,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.coverage",
     "intellij.java.decompiler",
     "intellij.platform.langInjection",
-    "intellij.java.langInjection",
-    "intellij.xml.langInjection",
-    "intellij.java.langInjection.jps",
     "intellij.java.debugger.streams",
-    "intellij.android.smali"
+    "intellij.android.smali",
+    "intellij.sh",
+    "intellij.vcs.changeReminder"
     /* Disabled in Android Studio
     "intellij.ant",
     "intellij.java.byteCodeViewer",
@@ -91,6 +87,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.javaFX.community",
     "intellij.maven",
     "intellij.java.guiForms.designer",
+    "intellij.statsCollector",
     "intellij.xpath",
     "intellij.xslt.debugger",
     */
@@ -166,10 +163,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withoutProjectLibrary("kotlin-plugin") // Android Studio: we already copy Kotlin from prebuilts.
       }
     } as Consumer<PlatformLayout>
-
-/* Android Studio: disabled
-    productLayout.setPluginPublishingSpec("intellij.statsCollector", new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: false))
-Android Studio: disabled */
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]

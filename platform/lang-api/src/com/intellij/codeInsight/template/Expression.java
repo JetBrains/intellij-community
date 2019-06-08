@@ -32,4 +32,13 @@ public abstract class Expression {
   public String getAdvertisingText() {
     return null;
   }
+
+  /**
+   * @return true if {@link Expression#calculateResult(com.intellij.codeInsight.template.ExpressionContext)} or
+   *                 {@link Expression#calculateQuickResult(com.intellij.codeInsight.template.ExpressionContext)}
+   *         require committed PSI for their calculation or false otherwise
+   */
+  public boolean requiresCommittedPSI() {
+    return true;
+  }
 }

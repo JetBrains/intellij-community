@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import org.jetbrains.annotations.NotNull;
@@ -114,15 +115,20 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
 
   protected final void installIcon(@Nullable Icon elementIcon, boolean changes) {
     if (changes && myIsBase) {
-      //add right arrow to the base element
-      LayeredIcon icon = new LayeredIcon(2);
-      icon.setIcon(elementIcon, 0);
-      icon.setIcon(AllIcons.Actions.Forward, 1, -AllIcons.Actions.Forward.getIconWidth() / 2, 0);
-      setIcon(icon);
+      //add 'base' marker to the element icon
+      setIcon(getBaseMarkerIcon(elementIcon));
     }
     else {
       setIcon(elementIcon);
     }
+  }
+
+  @NotNull
+  protected Icon getBaseMarkerIcon(@Nullable Icon sourceIcon) {
+    LayeredIcon icon = new LayeredIcon(2);
+    icon.setIcon(sourceIcon, 0);
+    icon.setIcon(AllIcons.General.Modified, 1, -AllIcons.General.Modified.getIconWidth(), 0);
+    return icon;
   }
 
   protected final void installIcon(@NotNull PsiElement element, boolean changes) {

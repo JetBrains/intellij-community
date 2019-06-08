@@ -32,12 +32,10 @@ public class PlainTextTodoIndexer extends VersionedTodoIndexer {
   @Override
   @NotNull
   public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
-    String chars = inputData.getContentAsText().toString(); // matching strings is faster than HeapCharBuffer
-
     final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
-    if (indexPatterns.length <= 0) {
-      return Collections.emptyMap();
-    }
+    if (indexPatterns.length <= 0) return Collections.emptyMap();
+
+    String chars = inputData.getContentAsText().toString(); // matching strings is faster than HeapCharBuffer
     OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
     for (IndexPattern indexPattern : indexPatterns) {
       Pattern pattern = indexPattern.getOptimizedIndexingPattern();

@@ -28,7 +28,7 @@ public class TypeRepr {
   interface AbstractType extends RW.Savable {
     AbstractType[] EMPTY_TYPE_ARRAY = new AbstractType[0];
 
-    void updateClassUsages(DependencyContext context, int owner, Set<UsageRepr.Usage> s);
+    void updateClassUsages(DependencyContext context, int owner, Set<? super UsageRepr.Usage> s);
     String getDescr(DependencyContext context);
     @Override
     void save(DataOutput out);
@@ -43,7 +43,7 @@ public class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final Set<? super UsageRepr.Usage> s) {
 
     }
 
@@ -106,7 +106,7 @@ public class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final Set<? super UsageRepr.Usage> s) {
       elementType.updateClassUsages(context, owner, s);
     }
 
@@ -151,7 +151,7 @@ public class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final Set<? super UsageRepr.Usage> s) {
       s.add(UsageRepr.createClassUsage(context, className));
     }
 

@@ -92,7 +92,7 @@ public class GitUpdateProcess {
       repository.update();
     }
 
-    mySubmodulesInDetachedHead = ContainerUtil.newLinkedHashMap();
+    mySubmodulesInDetachedHead = new LinkedHashMap<>();
     for (GitRepository repository : myRepositories) {
       if (!repository.isOnBranch()) {
         GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
@@ -193,7 +193,7 @@ public class GitUpdateProcess {
     }
 
     // save local changes if needed (update via merge may perform without saving).
-    final Collection<VirtualFile> myRootsToSave = ContainerUtil.newArrayList();
+    final Collection<VirtualFile> myRootsToSave = new ArrayList<>();
     LOG.info("updateImpl: identifying if save is needed...");
     for (Map.Entry<GitRepository, GitUpdater> entry : updaters.entrySet()) {
       GitRepository repo = entry.getKey();
@@ -326,8 +326,8 @@ public class GitUpdateProcess {
   private Map<GitRepository, GitBranchPair> checkTrackedBranchesConfiguration() {
     LOG.info("checking tracked branch configuration...");
 
-    Map<GitRepository, GitLocalBranch> currentBranches = ContainerUtil.newLinkedHashMap();
-    List<GitRepository> detachedHeads = ContainerUtil.newArrayList();
+    Map<GitRepository, GitLocalBranch> currentBranches = new LinkedHashMap<>();
+    List<GitRepository> detachedHeads = new ArrayList<>();
     for (GitRepository repository : myRepositories) {
       if (mySubmodulesInDetachedHead.containsKey(repository)) {
         LOG.debug("Repository " + repository + " is a submodule in detached HEAD state, not checking its tracked branch");
@@ -354,8 +354,8 @@ public class GitUpdateProcess {
       }
     }
 
-    Map<GitRepository, GitBranchPair> trackedBranches = ContainerUtil.newLinkedHashMap();
-    List<GitRepository> noTrackedBranch = ContainerUtil.newArrayList();
+    Map<GitRepository, GitBranchPair> trackedBranches = new LinkedHashMap<>();
+    List<GitRepository> noTrackedBranch = new ArrayList<>();
     for (GitRepository repository: currentBranches.keySet()) {
       GitLocalBranch branch = currentBranches.get(repository);
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, branch);
@@ -470,7 +470,7 @@ public class GitUpdateProcess {
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
     params.setReverse(true);
-    return !new GitConflictResolver(myProject, myGit, rebasingRoots, params) {
+    return !new GitConflictResolver(myProject, rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
       }

@@ -179,14 +179,14 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static abstract class Node {
+  private abstract static class Node {
     volatile Node parent;
     volatile ThreeState visibility;
     volatile List<FileNode> children = emptyList();
     volatile boolean valid;
 
     @NotNull
-    abstract List<FileNode> getChildren(@NotNull List<FileNode> oldList);
+    abstract List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList);
 
     final List<FileNode> getChildren() {
       List<FileNode> oldList = children;
@@ -237,7 +237,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
     @NotNull
     @Override
-    List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
+    List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList) {
       List<FileNode> list = new SmartList<>();
       Mapper mapper = new Mapper(oldList);
       if (showModules) {
@@ -299,7 +299,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
     @NotNull
     @Override
-    List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
+    List<FileNode> getChildren(@NotNull List<? extends FileNode> oldList) {
       visibility = ThreeState.NO;
 
       VirtualFile file = getVirtualFile();
@@ -328,7 +328,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return list;
     }
 
-    void invalidateChildren(Predicate<FileNode> validator) {
+    void invalidateChildren(Predicate<? super FileNode> validator) {
       if (valid || !file.isDirectory()) {
         if (validator == null || !validator.test(this)) {
           validator = null; // all children will be invalid

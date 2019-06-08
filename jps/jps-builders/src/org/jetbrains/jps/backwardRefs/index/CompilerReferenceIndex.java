@@ -6,22 +6,27 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.InvertedIndex;
-import com.intellij.util.indexing.impl.*;
-import com.intellij.util.io.*;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
-import java.io.DataOutputStream;
 import java.io.*;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -69,7 +74,7 @@ public class CompilerReferenceIndex<Input> {
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
         public int enumerate(String value) throws IOException {
-          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : value.toLowerCase(Locale.ROOT));
+          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : StringUtil.toLowerCase(value));
         }
       };
 
@@ -89,7 +94,7 @@ public class CompilerReferenceIndex<Input> {
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
     }
     catch (IOException e) {
-      removeIndexFiles(myBuildDir);
+      removeIndexFiles(myBuildDir, e);
       throw new BuildDataCorruptedException(e);
     }
   }
@@ -132,21 +137,26 @@ public class CompilerReferenceIndex<Input> {
     }
     final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
-      removeIndexFiles(myBuildDir);
+      removeIndexFiles(myBuildDir, exception);
       if (myRebuildRequestCause == null) {
         throw new RuntimeException(exception);
       }
       return;
     }
     if (myRebuildRequestCause != null) {
-      removeIndexFiles(myBuildDir);
+      removeIndexFiles(myBuildDir, myRebuildRequestCause);
     }
   }
 
   public static void removeIndexFiles(File buildDir) {
+    removeIndexFiles(buildDir, null);
+  }
+
+  public static void removeIndexFiles(File buildDir, Throwable cause) {
     final File indexDir = getIndexDir(buildDir);
     if (indexDir.exists()) {
       FileUtil.delete(indexDir);
+      LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
     }
   }
 
@@ -160,6 +170,11 @@ public class CompilerReferenceIndex<Input> {
 
   public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
     File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
+
+    if (!versionFile.exists()) {
+      LOG.info("backward reference index version doesn't exist");
+      return true;
+    }
 
     try (DataInputStream is = new DataInputStream(new FileInputStream(versionFile))) {
       int currentIndexVersion = is.readInt();
@@ -198,9 +213,10 @@ public class CompilerReferenceIndex<Input> {
   
   public void setRebuildRequestCause(Throwable e) {
     myRebuildRequestCause = e;
+    LOG.error(e);
   }
 
-  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
+  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<? super Exception> exceptionProcessor) {
     try {
       index.dispose();
     }
@@ -209,7 +225,7 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  private static void close(Closeable closeable, Processor<Exception> exceptionProcessor) {
+  private static void close(Closeable closeable, Processor<? super Exception> exceptionProcessor) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (closeable) {
       try {
@@ -231,17 +247,8 @@ public class CompilerReferenceIndex<Input> {
       throws IOException {
       super(extension,
             createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new KeyCollectionBasedForwardIndex<Key, Value>(extension) {
-              @NotNull
-              @Override
-              public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-                IndexId<Key, Value> id = getIndexExtension().getName();
-                return new PersistentHashMap<>(new File(indexDir, id.getName() + ".inputs"),
-                                               EnumeratorIntegerDescriptor.INSTANCE,
-                                               new InputIndexDataExternalizer<>(extension.getKeyDescriptor(),
-                                                                                id));
-              }
-            });
+            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs")),
+            readOnly ? null : new KeyCollectionForwardIndexAccessor<>(extension));
     }
 
     @Override

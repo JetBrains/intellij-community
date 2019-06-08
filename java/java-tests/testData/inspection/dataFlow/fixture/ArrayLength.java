@@ -52,8 +52,12 @@ public final class ArrayLength {
   }
 
   public static void testArray(int[] x, int a) {
-    x[<warning descr="Array index is out of bounds">-1</warning>] = -2;
-    x[<warning descr="Array index is out of bounds">x.length</warning>] = -1;
+    if(Math.random() > 0.5) {
+      x[<warning descr="Array index is out of bounds">-1</warning>] = -2;
+    }
+    if(Math.random() > 0.5) {
+      x[<warning descr="Array index is out of bounds">x.length</warning>] = -1;
+    }
     x[a] = 6;
     if(<warning descr="Condition 'a < 0' is always 'false'">a < 0</warning>) {
       System.out.println("never");

@@ -237,12 +237,12 @@ public class NullityInferrer {
     }
   }
 
-  public void collect(List<UsageInfo> usages) {
+  public void collect(List<? super UsageInfo> usages) {
     collect(usages, true);
     collect(usages, false);
   }
 
-  private void collect(List<UsageInfo> usages, boolean nullable) {
+  private void collect(List<? super UsageInfo> usages, boolean nullable) {
     final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> set = nullable ? myNullableSet : myNotNullSet;
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> elementPointer : set) {
       final PsiModifierListOwner element = elementPointer.getElement();

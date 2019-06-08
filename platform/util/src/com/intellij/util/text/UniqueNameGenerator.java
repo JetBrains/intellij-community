@@ -31,7 +31,7 @@ import java.util.Set;
 public class UniqueNameGenerator implements Condition<String> {
   private final Set<String> myExistingNames = new THashSet<>();
 
-  public <T> UniqueNameGenerator(@NotNull Collection<T> elements, @Nullable Function<T, String> namer) {
+  public <T> UniqueNameGenerator(@NotNull Collection<? extends T> elements, @Nullable Function<? super T, String> namer) {
     for (T t : elements) {
       addExistingName(namer != null ? StringUtil.notNullize(namer.fun(t)) : t.toString());
     }

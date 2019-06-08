@@ -12,16 +12,20 @@ import java.io.File;
 public abstract class CoverageRunner {
   public static final ExtensionPointName<CoverageRunner> EP_NAME = ExtensionPointName.create("com.intellij.coverageRunner");
 
+  @Nullable
   public abstract ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite baseCoverageSuite);
 
+  @NotNull
   public abstract String getPresentableName();
 
   @NotNull
   public abstract String getId();
 
+  @NotNull
   @NonNls
   public abstract String getDataFileExtension();
 
+  @NotNull
   @NonNls
   public String[] getDataFileExtensions() {
     return new String[]{getDataFileExtension()};

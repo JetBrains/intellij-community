@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -110,8 +109,8 @@ public final class GitVersion implements Comparable<GitVersion> {
     Type type;
     if (SystemInfo.isWindows) {
       String suffix = getStringGroup(m, 5);
-      if (suffix.toLowerCase(Locale.ENGLISH).contains("msysgit") ||
-          suffix.toLowerCase(Locale.ENGLISH).contains("windows")) {
+      if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
+          StringUtil.toLowerCase(suffix).contains("windows")) {
         type = Type.MSYS;
       }
       else {

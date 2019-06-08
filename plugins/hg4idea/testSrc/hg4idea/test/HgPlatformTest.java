@@ -18,6 +18,7 @@ package hg4idea.test;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.touch;
@@ -66,6 +68,8 @@ public abstract class HgPlatformTest extends VcsPlatformTest {
     createRepository(projectRoot);
     myRepository = projectRoot;
     setUpHgrc(myRepository);
+
+    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(myRepository.getPath(), HgVcs.VCS_NAME)));
   }
 
   @Override

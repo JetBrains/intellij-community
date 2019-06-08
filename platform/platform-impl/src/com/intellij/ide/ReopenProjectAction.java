@@ -36,6 +36,10 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     presentation.setDescription(PathUtil.toSystemDependentName(projectPath));
   }
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

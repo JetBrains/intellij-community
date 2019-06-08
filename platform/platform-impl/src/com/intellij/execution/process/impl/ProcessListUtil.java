@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.process.impl;
 
@@ -28,12 +14,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -125,7 +111,7 @@ public class ProcessListUtil {
       List<String> cmdline;
       try (FileInputStream stream = new FileInputStream(new File(each, "cmdline"))) {
         //noinspection SSBasedInspection - no better candidate for system encoding anyways
-        String cmdlineString = new String(FileUtil.loadBytes(stream));
+        String cmdlineString = new String(FileUtil.loadBytes(stream), StandardCharsets.UTF_8);
         cmdline = StringUtil.split(cmdlineString, "\0");
       }
       catch (IOException e) {
@@ -220,7 +206,7 @@ public class ProcessListUtil {
 
   @Nullable
   private static List<MacProcessInfo> doParseMacOutput(String output) {
-    List<MacProcessInfo> result = ContainerUtil.newArrayList();
+    List<MacProcessInfo> result = new ArrayList<>();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
 
@@ -334,7 +320,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> parseWMICOutput(@NotNull String output) {
-    List<ProcessInfo> result = ContainerUtil.newArrayList();
+    List<ProcessInfo> result = new ArrayList<>();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
 
@@ -383,7 +369,7 @@ public class ProcessListUtil {
 
   @Nullable
   static List<ProcessInfo> parseListTasksOutput(@NotNull String output) {
-    List<ProcessInfo> result = ContainerUtil.newArrayList();
+    List<ProcessInfo> result = new ArrayList<>();
 
     CSVReader reader = new CSVReader(new StringReader(output));
     try {

@@ -17,7 +17,6 @@ public abstract class SmartStepTarget {
   private final String myLabel;
   private final boolean myNeedBreakpointRequest;
   private Range<Integer> myExpressionLines;
-  final Throwable myCreationStack = new Throwable();
 
   protected SmartStepTarget(@Nullable String label, @Nullable PsiElement highlightElement, boolean needBreakpointRequest, Range<Integer> expressionLines) {
     myHighlightElement = highlightElement;
@@ -57,5 +56,10 @@ public abstract class SmartStepTarget {
   @NotNull
   public String getPresentation() {
     return StringUtil.notNullize(getLabel());
+  }
+
+  @Override
+  public String toString() {
+    return getPresentation();
   }
 }

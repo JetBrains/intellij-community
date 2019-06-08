@@ -63,10 +63,8 @@
     <applicationService serviceInterface="com.intellij.psi.EmptySubstitutor"
                         serviceImplementation="com.intellij.psi.impl.EmptySubstitutorImpl"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.ConcurrencyAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
-    <projectService serviceInterface="com.intellij.psi.controlFlow.ControlFlowFactory"
-                    serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.ConcurrencyAnnotationsManager"/>
+    <projectService serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
     <projectService serviceInterface="com.intellij.psi.SmartTypePointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.PsiResolveHelper"
@@ -77,16 +75,14 @@
                     serviceImplementation="com.intellij.psi.impl.PsiElementFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.JvmPsiConversionHelper"
                     serviceImplementation="com.intellij.psi.impl.JvmPsiConversionHelperImpl"/>
-    <projectService serviceInterface="com.intellij.psi.impl.source.resolve.JavaResolveCache"
-                    serviceImplementation="com.intellij.psi.impl.source.resolve.JavaResolveCache"/>
+    <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.JavaResolveCache"/>
     <projectService serviceInterface="com.intellij.psi.PsiNameHelper"
                     serviceImplementation="com.intellij.psi.impl.PsiNameHelperImpl"/>
     <projectService serviceInterface="com.intellij.lang.jvm.facade.JvmFacade"
                     serviceImplementation="com.intellij.lang.jvm.facade.JvmFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.JavaPsiFacade"
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
-    <projectService serviceInterface="org.jetbrains.uast.UastContext"
-                    serviceImplementation="org.jetbrains.uast.UastContext"/>
+    <projectService serviceImplementation="org.jetbrains.uast.UastContext"/>
 
     <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>

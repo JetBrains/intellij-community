@@ -54,7 +54,7 @@ public class GlobalSearchScopes extends GlobalSearchScopesCore {
   }
 
   @Nullable
-  public static GlobalSearchScope executionScope(@NotNull Collection<Module> modules) {
+  public static GlobalSearchScope executionScope(@NotNull Collection<? extends Module> modules) {
     if (modules.isEmpty()) return null;
     List<GlobalSearchScope> scopes = ContainerUtil.map2List(
       modules, module -> GlobalSearchScope.moduleRuntimeScope(module, true));

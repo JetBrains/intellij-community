@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -8,7 +8,6 @@ import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
@@ -31,6 +30,7 @@ import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.picocontainer.MutablePicoContainer;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -236,7 +236,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
 
-        AreaPicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
+        MutablePicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
         final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
         container.unregisterComponent(key);
         container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
@@ -847,14 +847,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        final List<Trinity<String, String, String>> variants = ContainerUtil.list(
-          Trinity.create("yes", "barkling", "dog"),
-          Trinity.create("yes", "meowing", "cat"),
-          Trinity.create("yes", "crowling", "mouse"),
-          Trinity.create("not", "apparel", "schrank"),
-          Trinity.create("not", "dinner", "tisch"),
-          Trinity.create("not", "rest", "sessel")
-        );
+        final List<Trinity<String, String, String>> variants = Arrays.asList(
+          (Trinity<String, String, String>[])new Trinity[]{Trinity.create("yes", "barkling", "dog"),
+            Trinity.create("yes", "meowing", "cat"), Trinity.create("yes", "crowling", "mouse"),
+            Trinity.create("not", "apparel", "schrank"), Trinity.create("not", "dinner", "tisch"),
+            Trinity.create("not", "rest", "sessel")});
         variants.forEach(
           t -> {
             final PsiFile file = configureByText(JsonFileType.INSTANCE, String.format("{\"alive\":\"%s\",\n" +

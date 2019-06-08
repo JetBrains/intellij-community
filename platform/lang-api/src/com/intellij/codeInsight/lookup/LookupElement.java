@@ -91,12 +91,23 @@ public abstract class LookupElement extends UserDataHolderBase {
     presentation.setItemText(getLookupString());
   }
 
-  @SuppressWarnings("unchecked")
+  /** Prefer to use {@link #as(Class)} */
   @Nullable
   public <T> T as(ClassConditionKey<T> conditionKey) {
+    //noinspection unchecked
     return conditionKey.isInstance(this) ? (T) this : null;
   }
-  
+
+  /**
+   * Return the first element of the given class in a {@link LookupElementDecorator} wrapper chain.
+   * If this object is not a decorator, return it if it's instance of the given class, otherwise null.
+   */
+  @Nullable
+  public <T> T as(Class<T> clazz) {
+    //noinspection unchecked
+    return clazz.isInstance(this) ? (T) this : null;
+  }
+
   public boolean isCaseSensitive() {
     return true;
   }

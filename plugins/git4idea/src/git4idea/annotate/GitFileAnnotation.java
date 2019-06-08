@@ -112,7 +112,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public String getAnnotatedContent() {
     try {
-      ContentRevision revision = GitContentRevision.createRevision(myFilePath, myBaseRevision, myProject, null);
+      ContentRevision revision = GitContentRevision.createRevision(myFilePath, myBaseRevision, myProject);
       return revision.getContent();
     }
     catch (VcsException e) {

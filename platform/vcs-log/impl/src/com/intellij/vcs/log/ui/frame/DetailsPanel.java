@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -36,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.ProfileChangeAdapter;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -45,7 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.vcs.commit.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -64,10 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
@@ -123,7 +106,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     setLayout(new BorderLayout());
     add(myLoadingPanel, BorderLayout.CENTER);
 
-    ProjectInspectionProfileManager.getInstance(logData.getProject()).addProfileChangeListener(new ProfileChangeAdapter() {
+    logData.getProject().getMessageBus().connect(this).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
       public void profileChanged(@Nullable InspectionProfile profile) {
         if (CommitMessageInspectionProfile.getInstance(myLogData.getProject()).equals(profile)) {
@@ -131,7 +114,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
           ApplicationManager.getApplication().invokeLater(DetailsPanel.this::update, ModalityState.NON_MODAL);
         }
       }
-    }, this);
+    });
 
     myEmptyText.setText("Commit details");
     Disposer.register(parent, this);
@@ -209,8 +192,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
         MultiMap<String, CommitId> resolvedHashes = MultiMap.createSmart();
 
-        Set<String> fullHashes =
-          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
+        Set<String> fullHashes = new HashSet<>(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
         for (String fullHash : fullHashes) {
           Hash hash = HashImpl.build(fullHash);
           for (VirtualFile root : myLogData.getRoots()) {
@@ -287,7 +269,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     protected void onDetailsLoaded(@NotNull List<? extends VcsCommitMetadata> detailsList) {
       List<CommitId> ids = ContainerUtil.map(detailsList,
                                              detail -> new CommitId(detail.getId(), detail.getRoot()));
-      Set<String> unResolvedHashes = ContainerUtil.newHashSet();
+      Set<String> unResolvedHashes = new HashSet<>();
       List<CommitPresentation> presentations = ContainerUtil.map(detailsList,
                                                                  detail -> buildPresentation(myLogData.getProject(), detail,
                                                                                              unResolvedHashes));
@@ -309,7 +291,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       rebuildCommitPanels(selection);
       List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
+        List<Collection<VcsRef>> result = new ArrayList<>();
         for (Integer row : currentSelection) {
           result.add(myGraphTable.getModel().getRefsAtRow(row));
         }

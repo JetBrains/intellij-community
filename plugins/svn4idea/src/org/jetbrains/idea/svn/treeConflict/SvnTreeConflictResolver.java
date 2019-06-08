@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.history.LocalHistory;
@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -21,6 +20,7 @@ import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class SvnTreeConflictResolver {
@@ -99,7 +99,7 @@ public class SvnTreeConflictResolver {
       updateFile(ioFile, Revision.HEAD);
       FileUtil.delete(ioFile);
     } else {
-      Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : ContainerUtil.newHashSet();
+      Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : new HashSet<>();
 
       revert(ioFile);
       for (File wasAdded : usedToBeAdded) {
@@ -111,7 +111,7 @@ public class SvnTreeConflictResolver {
 
   @NotNull
   private Set<File> getDescendantsWithAddedStatus(@NotNull File ioFile) throws SvnBindException {
-    final Set<File> result = ContainerUtil.newHashSet();
+    final Set<File> result = new HashSet<>();
     StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
 
     statusClient.doStatus(ioFile, Depth.INFINITY, false, false, false, false, status -> {

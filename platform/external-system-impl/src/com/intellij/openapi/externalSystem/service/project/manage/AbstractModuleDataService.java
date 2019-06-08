@@ -44,7 +44,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.JBUI;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +122,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
-  private void createModules(@NotNull Collection<DataNode<E>> toCreate, @NotNull IdeModifiableModelsProvider modelsProvider) {
+  private void createModules(@NotNull Collection<? extends DataNode<E>> toCreate, @NotNull IdeModifiableModelsProvider modelsProvider) {
     for (final DataNode<E> module : toCreate) {
       ModuleData data = module.getData();
       final Module created = modelsProvider.newModule(data);
@@ -154,9 +153,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   }
 
   @NotNull
-  private Collection<DataNode<E>> filterExistingModules(@NotNull Collection<DataNode<E>> modules,
+  private Collection<DataNode<E>> filterExistingModules(@NotNull Collection<? extends DataNode<E>> modules,
                                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
-    Collection<DataNode<E>> result = ContainerUtilRt.newArrayList();
+    Collection<DataNode<E>> result = new ArrayList<>();
     for (DataNode<E> node : modules) {
       ModuleData moduleData = node.getData();
       Module module = modelsProvider.findIdeModule(moduleData);
@@ -222,7 +221,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
       Set<Path> orphanModules = project.getUserData(ORPHAN_MODULE_FILES);
       if (orphanModules == null) {
-        orphanModules = ContainerUtil.newLinkedHashSet();
+        orphanModules = new LinkedHashSet<>();
         project.putUserData(ORPHAN_MODULE_FILES, orphanModules);
       }
 
@@ -287,7 +286,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       project.putUserData(ORPHAN_MODULE_FILES, null);
       project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);
       StringBuilder modulesToRestoreText = new StringBuilder();
-      List<Pair<String, Path>> modulesToRestore = ContainerUtil.newArrayList();
+      List<Pair<String, Path>> modulesToRestore = new ArrayList<>();
       for (Path modulePath : orphanModules) {
         try {
           String path = FileUtil.loadFile(modulePath.resolveSibling(modulePath.getFileName() + ".path").toFile());
@@ -327,7 +326,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);
   }
 
-  private static boolean showRemovedOrphanModules(@NotNull final List<Pair<String, Path>> orphanModules,
+  private static boolean showRemovedOrphanModules(@NotNull final List<? extends Pair<String, Path>> orphanModules,
                                                   @NotNull final Project project) {
     final CheckBoxList<Pair<String, Path>> orphanModulesList = new CheckBoxList<>();
     DialogWrapper dialog = new DialogWrapper(project) {

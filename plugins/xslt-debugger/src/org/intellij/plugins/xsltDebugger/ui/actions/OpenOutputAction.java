@@ -23,12 +23,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class OpenOutputAction extends AnAction {
   private final AdditionalTabComponent myConsole;
@@ -48,7 +48,7 @@ public class OpenOutputAction extends AnAction {
         @NotNull
         @Override
         public Charset getCharset() {
-          return CharsetToolkit.UTF8_CHARSET;
+          return StandardCharsets.UTF_8;
         }
       };
       FileEditorManager.getInstance(e.getProject()).openFile(file, true);

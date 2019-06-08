@@ -17,6 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
+import com.intellij.diff.editor.ChainDiffVirtualFile;
 import com.intellij.diff.impl.DiffRequestPanelImpl;
 import com.intellij.diff.impl.DiffWindow;
 import com.intellij.diff.merge.*;
@@ -27,9 +28,13 @@ import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.external.ExternalMergeTool;
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +79,13 @@ public class DiffManagerImpl extends DiffManagerEx {
 
   @Override
   public void showDiffBuiltin(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
+    if (Registry.is("show.diff.as.editor.tab") &&
+        project != null &&
+        DiffUtil.getWindowMode(hints) == WindowWrapper.Mode.FRAME) {
+      ChainDiffVirtualFile diffFile = new ChainDiffVirtualFile(requests);
+      FileEditorManager.getInstance(project).openFile(diffFile, true);
+      return;
+    }
     new DiffWindow(project, requests, hints).show();
   }
 
@@ -121,6 +133,12 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   @CalledInAwt
   public void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request) {
-    new MergeWindow(project, request).show();
+    new MergeWindow.ForRequest(project, request, DiffDialogHints.MODAL).show();
+  }
+
+  @Override
+  @CalledInAwt
+  public void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequestProducer requestProducer, @NotNull DiffDialogHints hints) {
+    new MergeWindow.ForProducer(project, requestProducer, hints).show();
   }
 }

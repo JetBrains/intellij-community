@@ -37,7 +37,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
-  protected LibraryDescriptor merge(final List<LibraryDescriptor> entries) {
+  protected LibraryDescriptor merge(final List<? extends LibraryDescriptor> entries) {
     final ModuleInsight insight = getInsight();
     LibraryDescriptor mainLib = null;
     for (LibraryDescriptor entry : entries) {
@@ -53,7 +53,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
-  protected LibraryDescriptor split(final LibraryDescriptor entry, final String newEntryName, final Collection<File> extractedData) {
+  protected LibraryDescriptor split(final LibraryDescriptor entry, final String newEntryName, final Collection<? extends File> extractedData) {
     return getInsight().splitLibrary(entry, newEntryName, extractedData);
   }
 

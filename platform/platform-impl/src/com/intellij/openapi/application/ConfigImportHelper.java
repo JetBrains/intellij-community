@@ -3,7 +3,6 @@ package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
-import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
@@ -18,7 +17,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +53,7 @@ public class ConfigImportHelper {
 
   public static final String CONFIG = "config";
   private static final String[] OPTIONS = {
-    OPTIONS_DIRECTORY + '/' + StoragePathMacros.NOT_ROAMABLE_FILE,
+    OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE,
     OPTIONS_DIRECTORY + '/' + IDE_GENERAL_XML,
     OPTIONS_DIRECTORY + "/options.xml"};
   private static final String BIN = "bin";
@@ -65,11 +63,10 @@ public class ConfigImportHelper {
 
   private ConfigImportHelper() { }
 
-  public static void importConfigsTo(@NotNull String newConfigPath, @NotNull Logger log) {
+  public static void importConfigsTo(@NotNull Path newConfigDir, @NotNull Logger log) {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = getConfigImportSettings();
-    Path newConfigDir = Paths.get(newConfigPath);
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, SystemInfo.isMac, true);
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
@@ -80,13 +77,10 @@ public class ConfigImportHelper {
     Pair<Path, Path> result = dialog.getSelectedFile();
     if (result != null) {
       doImport(result.first, newConfigDir, result.second, log);
-      settings.importFinished(newConfigPath);
+      if (settings != null) {
+        settings.importFinished(newConfigDir);
+      }
       System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
-    }
-
-    CloudConfigProvider provider = CloudConfigProvider.getProvider();
-    if (provider != null) {
-      provider.importFinished(newConfigDir);
     }
   }
 
@@ -127,6 +121,7 @@ public class ConfigImportHelper {
     return false;
   }
 
+  @Nullable
   private static ConfigImportSettings getConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
@@ -136,7 +131,7 @@ public class ConfigImportHelper {
       }
     }
     catch (ClassNotFoundException | RuntimeException ignored) { }
-    return new ConfigImportSettings();
+    return null;
   }
 
   @NotNull
@@ -144,7 +139,7 @@ public class ConfigImportHelper {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
     // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
-    List<Path> homes = ContainerUtilRt.newArrayListWithCapacity(2);
+    List<Path> homes = new ArrayList<>(2);
     homes.add((isMacOs ? newConfigDir : newConfigDir.getParent()).getParent());
     String nameWithSelector = StringUtil.notNullize(
       PathManager.getPathsSelector(),
@@ -159,7 +154,7 @@ public class ConfigImportHelper {
       if (!homes.contains(configHome)) homes.add(configHome);
     }
 
-    List<Path> candidates = ContainerUtil.newArrayList();
+    List<Path> candidates = new ArrayList<>();
     for (Path dir : homes) {
       if (dir == null || !Files.isDirectory(dir)) continue;
 
@@ -419,13 +414,12 @@ public class ConfigImportHelper {
   /**
    * Fix VM options in the custom *.vmoptions file which don't work with the current IDE version.
    */
-  private static void updateVMOptions(@NotNull Path newConfigDir, Logger log) {
+  private static void updateVMOptions(@NotNull Path newConfigDir, @NotNull Logger log) {
     Path vmOptionsFile = newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
         List<String> lines = Files.readAllLines(vmOptionsFile);
-        List<String> updatedLines =
-          ContainerUtil.map(lines, line -> line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line);
+        List<String> updatedLines = ContainerUtil.map(lines, ConfigImportHelper::replaceVMOptions);
         if (!updatedLines.equals(lines)) {
           PathKt.write(vmOptionsFile, StringUtil.join(updatedLines, "\n"));
         }
@@ -434,6 +428,11 @@ public class ConfigImportHelper {
         log.warn("Failed to update custom VM options file " + vmOptionsFile, e);
       }
     }
+  }
+
+  private static String replaceVMOptions(String line) {
+    line = line.trim().equals("-XX:MaxJavaStackTraceDepth=-1") ? "-XX:MaxJavaStackTraceDepth=10000" : line;
+    return line.trim().startsWith("-agentlib:yjpagent") ? "" : line;
   }
 
   private static boolean blockImport(@NotNull Path path, Path oldConfig, Path newConfig) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -156,7 +155,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
           return false;
         });
 
-        ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           for (Library library : toSync) {
             if (LibraryTableImplUtil.isValidLibrary(library)) {
               RepositoryUtils.reloadDependencies(project, (LibraryEx)library);

@@ -30,6 +30,7 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
 import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
@@ -61,6 +62,12 @@ public class RedundantSuppressTest extends InspectionTestCase {
         return myInspectionToolWrappers;
       }
     });
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -32,6 +18,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -64,9 +51,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   protected DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
-    myDefaultVariableStates = ContainerUtil.newTroveMap();
-    myEqClasses = ContainerUtil.newArrayList();
-    myVariableStates = ContainerUtil.newLinkedHashMap();
+    myDefaultVariableStates = new THashMap<>();
+    myEqClasses = new ArrayList<>();
+    myVariableStates = new LinkedHashMap<>();
     myDistinctClasses = new DistinctPairSet(this);
     myStack = new Stack<>();
     myIdToEqClassesIndices = new MyIdMap();
@@ -80,9 +67,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myStack = new Stack<>(toCopy.myStack);
     myDistinctClasses = new DistinctPairSet(this, toCopy.myDistinctClasses);
 
-    myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
+    myEqClasses = new ArrayList<>(toCopy.myEqClasses);
     myIdToEqClassesIndices = (MyIdMap)toCopy.myIdToEqClassesIndices.clone();
-    myVariableStates = ContainerUtil.newLinkedHashMap(toCopy.myVariableStates);
+    myVariableStates = new LinkedHashMap<>(toCopy.myVariableStates);
 
     myCachedNonTrivialEqClasses = toCopy.myCachedNonTrivialEqClasses;
     myCachedHash = toCopy.myCachedHash;
@@ -134,7 +121,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   LinkedHashSet<EqClass> getNonTrivialEqClasses() {
     if (myCachedNonTrivialEqClasses != null) return myCachedNonTrivialEqClasses;
 
-    LinkedHashSet<EqClass> result = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<EqClass> result = new LinkedHashSet<>();
     for (EqClass eqClass : myEqClasses) {
       if (eqClass != null && eqClass.size() > 1) {
         result.add(eqClass);
@@ -955,12 +942,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
       if (right instanceof DfaVariableValue) {
-        // a+b (rel) c && a == c => b (rel) 0 
+        // a+b (rel) c && a == c => b (rel) 0
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ? correctedRelation.getFlipped() : correctedRelation;
+          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ?
+                                       Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
           if (!applyCondition(myFactory.createCondition(sum.getRight(), finalRelation, myFactory.getInt(0)))) return false;
         }
-        // a+b (rel) c && b == c => a (rel) 0 
+        // a+b (rel) c && b == c => a (rel) 0
         if (op == DfaBinOpValue.BinOp.PLUS && areEqual(sum.getRight(), right)) {
           if (!applyCondition(myFactory.createCondition(sum.getLeft(), correctedRelation, myFactory.getInt(0)))) return false;
         }
@@ -1123,7 +1111,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applySpecialFieldEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
-    Couple<DfaValue> pair = left instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)left, right) : 
+    Couple<DfaValue> pair = left instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)left, right) :
                             right instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)right, left) : null;
     return pair == null || applyCondition(myFactory.createCondition(pair.getFirst(), RelationType.EQ, pair.getSecond()));
   }
@@ -1135,7 +1123,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     PsiType leftType = getPsiType(dfaLeft);
     PsiType rightType = getPsiType(dfaRight);
-    if (TypeConversionUtil.isPrimitiveWrapper(leftType) && 
+    if (TypeConversionUtil.isPrimitiveWrapper(leftType) &&
         TypeConversionUtil.isPrimitiveWrapper(rightType) && !leftType.equals(rightType)) {
       // Boxes of different type (e.g. Long and Integer), cannot be equal even if unboxed values are equal
       return negated;
@@ -1354,7 +1342,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value) {
     DfaVariableState state = getVariableState(var);
-    removeEquivalenceForVariableAndWrappers(var);
+    if (factType.equals(DfaFactType.NULLABILITY) && value == DfaNullability.NOT_NULL && isNull(var)) {
+      removeEquivalenceForVariableAndWrappers(var);
+    }
     setVariableState(var, state.withFact(factType, value));
     updateEqClassesByState(var);
   }
@@ -1381,6 +1371,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return state.myFactMap;
       }
       value = resolveVariableValue((DfaVariableValue)value);
+      if (value instanceof DfaVariableValue) {
+        return getDefaultState((DfaVariableValue)value).myFactMap;
+      }
     }
     if (value instanceof DfaBinOpValue) {
       return DfaFactMap.EMPTY.with(DfaFactType.RANGE, getValueFact(value, DfaFactType.RANGE));
@@ -1463,7 +1456,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushFields() {
-    Set<DfaVariableValue> vars = ContainerUtil.newLinkedHashSet(getChangedVariables());
+    Set<DfaVariableValue> vars = new LinkedHashSet<>(getChangedVariables());
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
         vars.addAll(aClass.getVariables(true));
@@ -1549,7 +1542,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void removeEquivalence(DfaValue var) {
     int varID = var.getID();
     Integer varClassIndex = myIdToEqClassesIndices.get(varID);
-    if (varClassIndex == null) return;
+    if (varClassIndex == null) {
+      var = canonicalize(var);
+      varID = var.getID();
+      varClassIndex = myIdToEqClassesIndices.get(varID);
+      if (varClassIndex == null) return;
+    }
 
     EqClass varClass = myEqClasses.get(varClassIndex);
 
@@ -1581,8 +1579,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else {
       DfaVariableValue newCanonical = varClass.getCanonicalVariable();
-      if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical && 
-          (ControlFlowAnalyzer.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) || 
+      if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical &&
+          (ControlFlowAnalyzer.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
            newCanonical.getDepth() <= previousCanonical.getDepth())) {
         // Do not transfer to deeper qualifier. E.g. if we have two classes like (a, b.c) (a.d, e),
         // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
@@ -1634,6 +1632,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     mergeStacks(other);
     myCachedHash = null;
     myCachedNonTrivialEqClasses = null;
+    afterMerge(other);
+  }
+
+  /**
+   * Custom logic to be implemented by subclasses
+   * @param other
+   */
+  protected void afterMerge(DfaMemoryStateImpl other) {
+
   }
 
   private void mergeStacks(DfaMemoryStateImpl other) {
@@ -1662,7 +1669,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : vars) {
       DfaVariableState state = getVariableState(var);
       DfaVariableState otherState = other.getVariableState(var);
-      setVariableState(var, state.withFacts(state.myFactMap.unite(otherState.myFactMap)));
+      DfaFactMap result = state.myFactMap.unite(otherState.myFactMap);
+      Nullability nullability = state.getNullability();
+      Nullability otherNullability = otherState.getNullability();
+      if (nullability != otherNullability && (nullability == Nullability.NULLABLE || otherNullability == Nullability.NULLABLE)) {
+        // When merging nullable with something we cannot warn about nullability violation anymore
+        // because we lose the information about coherent state, thus noise warnings could be produced
+        result = result.with(DfaFactType.NULLABILITY, DfaNullability.FLUSHED);
+      }
+      setVariableState(var, state.withFacts(result));
     }
   }
 

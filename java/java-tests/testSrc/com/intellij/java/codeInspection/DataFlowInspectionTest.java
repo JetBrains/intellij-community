@@ -24,7 +24,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
+    return JAVA_1_7_ANNOTATED;
   }
 
   @Override
@@ -278,6 +278,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public void testImmutableClassNonGetterMethod() {
+    myFixture.addClass("package com.google.auto.value; public @interface AutoValue {}");
     myFixture.addClass("package javax.annotation.concurrent; public @interface Immutable {}");
     doTest();
   }

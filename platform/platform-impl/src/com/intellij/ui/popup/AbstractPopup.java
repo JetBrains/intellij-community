@@ -32,10 +32,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
@@ -121,7 +118,8 @@ public class AbstractPopup implements JBPopup {
   InputEvent myDisposeEvent;
 
   private Runnable myFinalRunnable;
-  @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
+  private Runnable myOkHandler;
+  @Nullable private BooleanFunction<? super KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
   private final List<Runnable> myResizeListeners = new ArrayList<>();
@@ -157,15 +155,20 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private JLabel myAdComponent;
   private boolean myDisposed;
+  private boolean myNormalWindowLevel;
 
   private UiActivity myActivityKey;
   private Disposable myProjectDisposable;
 
   private volatile State myState = State.NEW;
 
+  void setNormalWindowLevel(boolean normalWindowLevel) {
+    myNormalWindowLevel = normalWindowLevel;
+  }
+
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
 
-  private void debugState(String message, State... states) {
+  private void debugState(@NotNull String message, @NotNull State... states) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(hashCode() + " - " + message);
       if (!ApplicationManager.getApplication().isDispatchThread()) {
@@ -182,6 +185,7 @@ public class AbstractPopup implements JBPopup {
 
   protected AbstractPopup() { }
 
+  @NotNull
   protected AbstractPopup init(Project project,
                      @NotNull JComponent component,
                      @Nullable JComponent preferredFocusedComponent,
@@ -220,7 +224,7 @@ public class AbstractPopup implements JBPopup {
                      boolean showBorder,
                      Color borderColor,
                      boolean cancelOnWindowDeactivation,
-                     @Nullable BooleanFunction<KeyEvent> keyEventHandler) {
+                     @Nullable BooleanFunction<? super KeyEvent> keyEventHandler) {
     assert !requestFocus || focusable : "Incorrect argument combination: requestFocus=true focusable=false";
 
     all.add(this);
@@ -345,11 +349,6 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  @Deprecated
-  public static void suppressMacCornerFor(JComponent popupComponent) {
-  }
-
-
   public String getDimensionServiceKey() {
     return myDimensionServiceKey;
   }
@@ -376,7 +375,8 @@ public class AbstractPopup implements JBPopup {
       wrapper.add(myAdComponent, BorderLayout.CENTER);
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
-    } else {
+    }
+    else {
       myAdComponent.setText(s);
       myAdComponent.setHorizontalAlignment(alignment);
     }
@@ -386,7 +386,7 @@ public class AbstractPopup implements JBPopup {
     return getCenterOf(aContainer, content.getPreferredSize());
   }
 
-  private static Point getCenterOf(final Component aContainer, final Dimension contentSize) {
+  private static Point getCenterOf(@NotNull Component aContainer, @NotNull Dimension contentSize) {
     final JComponent component = getTargetComponent(aContainer);
 
     Rectangle visibleBounds = component != null
@@ -401,6 +401,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showCenteredInCurrentWindow(@NotNull Project project) {
+    if (UiInterceptors.tryIntercept(this)) return;
     Window window = null;
 
     Component focusedComponent = getWndManager().getFocusedComponent(project);
@@ -434,6 +435,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
+    if (UiInterceptors.tryIntercept(this)) return;
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
@@ -444,15 +446,14 @@ public class AbstractPopup implements JBPopup {
     show(owner, point.x, point.y, false);
   }
 
+  @NotNull
   @Override
   public Point getBestPositionFor(@NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null && editor.getComponent().isShowing()) {
       return getBestPositionFor(editor).getScreenPoint();
     }
-    else {
-      return relativePointByQuickSearch(dataContext).getScreenPoint();
-    }
+    return relativePointByQuickSearch(dataContext).getScreenPoint();
   }
 
   @Override
@@ -479,7 +480,8 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  private RelativePoint relativePointByQuickSearch(final DataContext dataContext) {
+  @NotNull
+  private RelativePoint relativePointByQuickSearch(@NotNull DataContext dataContext) {
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     if (dominantArea != null) {
@@ -534,6 +536,8 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInBestPositionFor(@NotNull Editor editor) {
+    // Intercept before the following assert; otherwise assertion may fail
+    if (UiInterceptors.tryIntercept(this)) return;
     assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
 
     // Set the accessible parent so that screen readers don't announce
@@ -643,6 +647,7 @@ public class AbstractPopup implements JBPopup {
     return rectangle.getLocation();
   }
 
+  @NotNull
   private Dimension getPreferredContentSize() {
     if (myForcedSize != null) {
       return myForcedSize;
@@ -657,6 +662,7 @@ public class AbstractPopup implements JBPopup {
   @Override
   public final void closeOk(@Nullable InputEvent e) {
     setOk(true);
+    myFinalRunnable = FunctionUtil.composeRunnables(myOkHandler, myFinalRunnable);
     cancel(e);
   }
 
@@ -746,11 +752,12 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void show(final Component owner) {
+  public void show(@NotNull final Component owner) {
     show(owner, -1, -1, true);
   }
 
-  public void show(Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+  public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+    if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManagerEx.getApplicationEx() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
@@ -762,7 +769,6 @@ public class AbstractPopup implements JBPopup {
     debugState("show popup", State.INIT);
     myState = State.SHOWING;
 
-    installWindowHook(this);
     installProjectDisposer();
     addActivity();
 
@@ -775,6 +781,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     prepareToShow();
+    installWindowHook(this);
 
     Dimension sizeToSet = null;
 
@@ -1013,6 +1020,9 @@ public class AbstractPopup implements JBPopup {
     myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
 
     myWindow = window;
+    if (myNormalWindowLevel) {
+      myWindow.setType(Window.Type.NORMAL);
+    }
     setMinimumSize(myMinSize);
 
     final Disposable tb = TouchBarsManager.showPopupBar(this, myContent);
@@ -1276,6 +1286,7 @@ public class AbstractPopup implements JBPopup {
     return new PopupComponent.Factory.AwtDefault();
   }
 
+  @NotNull
   @Override
   public JComponent getContent() {
     return myContent;
@@ -1345,10 +1356,9 @@ public class AbstractPopup implements JBPopup {
     return myComponent;
   }
 
-  public void setProject(Project project) {
-    myProject = project;
+  public Project getProject() {
+    return myProject;
   }
-
 
   @Override
   public void dispose() {
@@ -1584,6 +1594,7 @@ public class AbstractPopup implements JBPopup {
     return window;
   }
 
+  @NotNull
   @Override
   public Point getLocationOnScreen() {
     Window window = getContentWindow(myContent);
@@ -1602,7 +1613,7 @@ public class AbstractPopup implements JBPopup {
     setSize(size, true);
   }
 
-  private void setSize(Dimension size, boolean adjustByContent) {
+  private void setSize(@NotNull Dimension size, boolean adjustByContent) {
     if (isBusy()) return;
 
     Dimension toSet = new Dimension(size);
@@ -1656,7 +1667,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void setCaption(String title) {
+  public void setCaption(@NotNull String title) {
     if (myCaption instanceof TitlePanel) {
       ((TitlePanel)myCaption).setText(title);
     }
@@ -1716,7 +1727,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public <T> T getUserData(final Class<T> userDataClass) {
+  public <T> T getUserData(@NotNull final Class<T> userDataClass) {
     if (myUserData != null) {
       for (Object o : myUserData) {
         if (userDataClass.isInstance(o)) {
@@ -1853,6 +1864,10 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
+  public void setOkHandler(Runnable okHandler) {
+    myOkHandler = okHandler;
+  }
+
   @Override
   public void setFinalRunnable(Runnable finalRunnable) {
     myFinalRunnable = finalRunnable;
@@ -1871,7 +1886,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
-    BooleanFunction<KeyEvent> handler = myKeyEventHandler;
+    BooleanFunction<? super KeyEvent> handler = myKeyEventHandler;
     if (handler != null && handler.fun(e)) {
       return true;
     }

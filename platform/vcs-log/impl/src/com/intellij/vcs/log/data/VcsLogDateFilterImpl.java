@@ -18,13 +18,13 @@ package com.intellij.vcs.log.data;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogDateFilter;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Date;
-import java.util.Set;
 
+@ApiStatus.Internal
 public class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
 
   @Nullable private final Date myAfter;

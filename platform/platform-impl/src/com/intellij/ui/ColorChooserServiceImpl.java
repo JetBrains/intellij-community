@@ -33,7 +33,7 @@ public class ColorChooserServiceImpl extends ColorChooserService {
                           String caption,
                           Color preselectedColor,
                           boolean enableOpacity,
-                          List<ColorPickerListener> listeners,
+                          List<? extends ColorPickerListener> listeners,
                           boolean opacityInPercent) {
     return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
@@ -45,7 +45,7 @@ public class ColorChooserServiceImpl extends ColorChooserService {
                           @Nls(capitalization = Nls.Capitalization.Title) String caption,
                           Color preselectedColor,
                           boolean enableOpacity,
-                          List<ColorPickerListener> listeners,
+                          List<? extends ColorPickerListener> listeners,
                           boolean opacityInPercent) {
     return showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }

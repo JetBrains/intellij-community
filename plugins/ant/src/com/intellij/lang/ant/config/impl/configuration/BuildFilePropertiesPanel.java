@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.lang.ant.AntBundle;
@@ -21,7 +7,6 @@ import com.intellij.lang.ant.config.impl.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
@@ -35,7 +20,6 @@ import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,8 +35,8 @@ public class BuildFilePropertiesPanel {
   private final Form myForm;
   private AntBuildFileBase myBuildFile;
 
-  private BuildFilePropertiesPanel(@NotNull final Project project) {
-    myForm = new Form(project);
+  private BuildFilePropertiesPanel() {
+    myForm = new Form();
   }
 
   private void reset(final AntBuildFileBase buildFile) {
@@ -90,8 +74,8 @@ public class BuildFilePropertiesPanel {
     Disposer.dispose(myForm);
   }
 
-  public static boolean editBuildFile(AntBuildFileBase buildFile, @NotNull final Project project) {
-    BuildFilePropertiesPanel panel = new BuildFilePropertiesPanel(project);
+  public static boolean editBuildFile(AntBuildFileBase buildFile) {
+    BuildFilePropertiesPanel panel = new BuildFilePropertiesPanel();
     panel.reset(buildFile);
     return panel.showDialog();
   }
@@ -135,20 +119,19 @@ public class BuildFilePropertiesPanel {
     private JCheckBox myCollapseFinishedTargets;
     private final Tab[] myTabs;
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
-    private final TabbedPaneWrapper myWrapper;
 
-    private Form(@NotNull final Project project) {
+    private Form() {
       myTabs = new Tab[]{
         new PropertiesTab(),
-        new ExecutionTab(GlobalAntConfiguration.getInstance(), project),
+        new ExecutionTab(GlobalAntConfiguration.getInstance()),
         new AdditionalClasspathTab(),
         new FiltersTab()
       };
 
       myHeapSizeLabel.setLabelFor(myXmx);
-      myWrapper = new TabbedPaneWrapper(this);
+      TabbedPaneWrapper wrapper = new TabbedPaneWrapper(this);
       myTabsPlace.setLayout(new BorderLayout());
-      myTabsPlace.add(myWrapper.getComponent(), BorderLayout.CENTER);
+      myTabsPlace.add(wrapper.getComponent(), BorderLayout.CENTER);
 
       myBinding.bindBoolean(myRunInBackground, AntBuildFileImpl.RUN_IN_BACKGROUND);
       myBinding.bindBoolean(myCloseOnNoError, AntBuildFileImpl.CLOSE_ON_NO_ERRORS);
@@ -158,7 +141,7 @@ public class BuildFilePropertiesPanel {
       myBinding.bindInt(myXss, AntBuildFileImpl.MAX_STACK_SIZE);
 
       for (Tab tab : myTabs) {
-        myWrapper.addTab(tab.getDisplayName(), tab.getComponent());
+        wrapper.addTab(tab.getDisplayName(), tab.getComponent());
       }
     }
 
@@ -414,11 +397,9 @@ public class BuildFilePropertiesPanel {
 
     private AntReference myProjectDefaultAnt = null;
     private final GlobalAntConfiguration myAntGlobalConfiguration;
-    private final Project myProject;
 
-    ExecutionTab(final GlobalAntConfiguration antConfiguration, @NotNull final Project project) {
+    ExecutionTab(final GlobalAntConfiguration antConfiguration) {
       myAntGlobalConfiguration = antConfiguration;
-      myProject = project;
       myAntCommandLine.attachLabel(myAntCmdLineLabel);
       myAntCommandLine.setDialogCaption(AntBundle.message("run.execution.tab.ant.command.line.dialog.title"));
       setLabelFor(myJDKLabel, myJDKs);

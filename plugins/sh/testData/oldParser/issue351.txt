@@ -1,0 +1,20 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(&)('&')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          HEREDOC
+            PsiElement(HEREDOC_MARKER_TAG)('<<')
+            PsiWhiteSpace(' ')
+            PsiElement(HEREDOC_MARKER_START)('EOF')
+            PsiElement(\n)('\n')
+            PsiElement(HEREDOC_CONTENT)(' content\n')
+            PsiElement(HEREDOC_MARKER_END)('EOF')

@@ -15,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import java.io.*
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 
 object ExecUtil {
   private val hasGkSudo = PathExecLazyValue("gksudo")
@@ -26,6 +25,7 @@ object ExecUtil {
   private val hasUrxvt = PathExecLazyValue("urxvt")
   private val hasXTerm = PathExecLazyValue("xterm")
   private val hasSetsid = PathExecLazyValue("setsid")
+  private val hasEnv = PathExecLazyValue("env")
 
   private const val nicePath = "/usr/bin/nice"
   private val hasNice by lazy { File(nicePath).exists() }
@@ -47,7 +47,7 @@ object ExecUtil {
   fun loadTemplate(loader: ClassLoader, templateName: String, variables: Map<String, String>?): String {
     val stream = loader.getResourceAsStream(templateName) ?: throw IOException("Template '$templateName' not found by $loader")
 
-    val template = FileUtil.loadTextAndClose(InputStreamReader(stream, StandardCharsets.UTF_8))
+    val template = FileUtil.loadTextAndClose(InputStreamReader(stream, Charsets.UTF_8))
     if (variables == null || variables.isEmpty()) {
       return template
     }
@@ -67,7 +67,7 @@ object ExecUtil {
   fun createTempExecutableScript(prefix: String, suffix: String, content: String): File {
     val tempDir = File(PathManager.getTempPath())
     val tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true)
-    FileUtil.writeToFile(tempFile, content.toByteArray(StandardCharsets.UTF_8))
+    FileUtil.writeToFile(tempFile, content.toByteArray(Charsets.UTF_8))
     if (!tempFile.setExecutable(true, true)) {
       throw ExecutionException("Failed to make temp file executable: $tempFile")
     }
@@ -133,31 +133,35 @@ object ExecUtil {
       }
       SystemInfo.isMac -> {
         val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
+        val messageArg = if (SystemInfo.isMacOSYosemite) " with prompt \"${prompt.replace("\"", "\\\"")}\"" else ""
         val escapedScript =
           "tell current application\n" +
           "   activate\n" +
-          "   do shell script " + escapedCommand + " with administrator privileges without altering line endings\n" +
+          "   do shell script ${escapedCommand}${messageArg} with administrator privileges without altering line endings\n" +
           "end tell"
         GeneralCommandLine(osascriptPath, "-e", escapedScript)
       }
       hasGkSudo.value -> {
-        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + command)
+        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(commandLine) + command)
       }
       hasKdeSudo.value -> {
-        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + command)
+        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(commandLine) + command)
       }
       hasPkExec.value -> {
-        command.add(0, "pkexec")
-        GeneralCommandLine(command)
+        GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)
       }
       SystemInfo.isUnix && hasTerminalApp() -> {
         val escapedCommandLine = StringUtil.join(command, { escapeUnixShellArgument(it) }, " ")
+        val escapedEnvCommand = when (val args = envCommandArgs(commandLine)) {
+          emptyList<String>() -> ""
+          else -> "env " + StringUtil.join(args, { escapeUnixShellArgument(it) }, " ") + " "
+        }
         val script = createTempExecutableScript(
           "sudo", ".sh",
           "#!/bin/sh\n" +
           "echo " + escapeUnixShellArgument(prompt) + "\n" +
           "echo\n" +
-          "sudo -- " + escapedCommandLine + "\n" +
+          "sudo -- " + escapedEnvCommand + escapedCommandLine + "\n" +
           "STATUS=$?\n" +
           "echo\n" +
           "read -p \"Press Enter to close this window...\" TEMP\n" +
@@ -175,6 +179,20 @@ object ExecUtil {
       .withParentEnvironmentType(commandLine.parentEnvironmentType)
       .withRedirectErrorStream(commandLine.isRedirectErrorStream)
   }
+
+  private fun envCommand(commandLine: GeneralCommandLine): List<String> =
+    when (val args = envCommandArgs(commandLine)) {
+      emptyList<String>() -> emptyList()
+      else -> listOf("env") + args
+    }
+
+  private fun envCommandArgs(commandLine: GeneralCommandLine): List<String> =
+    // sudo doesn't pass parent process environment for security reasons,
+    // for the same reasons we pass only explicitly configured env variables
+    when (val env = commandLine.environment) {
+      emptyMap<String, String>() -> emptyList()
+      else -> env.map { entry -> "${entry.key}=${entry.value}" }
+    }
 
   @JvmStatic
   @Throws(IOException::class, ExecutionException::class)

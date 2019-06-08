@@ -2,10 +2,10 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.StoreAwareProjectManager
+import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.configurationStore.StoreReloadManagerImpl
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -62,7 +62,7 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
     }
 
     if (list.isNotEmpty()) {
-      (ProjectManager.getInstance() as StoreAwareProjectManager).registerChangedSchemes(list, applicator, project)
+      (StoreReloadManager.getInstance() as StoreReloadManagerImpl).registerChangedSchemes(list, applicator, project)
     }
   }
 

@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +88,9 @@ public abstract class IdeFrameDecorator implements Disposable {
     @Override
     public boolean isInFullScreen() {
       if (myFrame == null) return false;
+      if (UIUtil.isWindowClientPropertyTrue(myFrame, WindowManagerImpl.FULL_SCREEN)) return true;
 
+      // [tav] todo: should we keep this logic for backward compatible behaviour?
       Rectangle frameBounds = myFrame.getBounds();
       GraphicsDevice device = ScreenUtil.getScreenDevice(frameBounds);
       return device != null && device.getDefaultConfiguration().getBounds().equals(frameBounds) && myFrame.isUndecorated();
@@ -188,6 +192,10 @@ public abstract class IdeFrameDecorator implements Disposable {
   }
 
   public static boolean isCustomDecoration() {
-    return SystemInfo.isWindows && Registry.is("ide.win.frame.decoration") && JdkEx.isCustomDecorationSupported();
+    return SystemInfo.isWindows && isCustomDecorationActive() && JdkEx.isCustomDecorationSupported();
+  }
+
+  public static boolean isCustomDecorationActive() {
+    return Registry.is("ide.win.frame.decoration");
   }
 }

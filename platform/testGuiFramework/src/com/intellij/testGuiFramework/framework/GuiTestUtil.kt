@@ -89,7 +89,6 @@ object GuiTestUtil {
 
   const val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
   const val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
-  const val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
 
   val gradleHomePath: File?
@@ -185,8 +184,6 @@ object GuiTestUtil {
 
   // Called by GuiTestPaths via reflection.
   fun waitForIdeToStart() {
-    val firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START)
-    val isFirstStart = firstStart != null && firstStart.toLowerCase() == "true"
     GuiActionRunner.executeInEDT(false)
     var robot: Robot? = null
     try {
@@ -546,28 +543,34 @@ object GuiTestUtil {
   }
 
   /**
-   * Waits for a first component which passes the given matcher under the given root to become visible.
+   * Waits for a list of components which passes the given matcher under the given root to become visible.
+   * Note: doesn't throw [WaitTimedOutError] or [ComponentLookupException]
+   * @return empty List<T> if no element matching to [matcher] is found
+   * @return List<T> with found elements matching to [matcher]
    */
   fun <T : Component> waitUntilFoundList(root: Container?,
                                          timeout: Timeout,
                                          matcher: GenericTypeMatcher<T>): List<T> {
-    var reference: AtomicReferenceArray<T>? = null
-    Pause.pause(object : Condition("Find component using " + matcher.toString()) {
-      override fun test(): Boolean {
-        val finder = GuiRobotHolder.robot.finder()
-        val allFound = if (root != null) finder.findAll(root, matcher) else finder.findAll(matcher)
-        if (allFound.isNotEmpty()) {
-          reference = AtomicReferenceArray(allFound.size)
-          allFound.withIndex().forEach { (index, found) ->
-            reference!!.set(index, found)
+    return try {
+      var reference: AtomicReferenceArray<T>? = null
+      Pause.pause(object : Condition("Find component using $matcher") {
+        override fun test(): Boolean {
+          val finder = GuiRobotHolder.robot.finder()
+          val allFound = if (root != null) finder.findAll(root, matcher) else finder.findAll(matcher)
+          if (allFound.isNotEmpty()) {
+            reference = AtomicReferenceArray(allFound.size)
+            allFound.withIndex().forEach { (index, found) ->
+              reference!!.set(index, found)
+            }
           }
+          return allFound.isNotEmpty()
         }
-        return allFound.isNotEmpty()
-      }
-    }, timeout)
-
-    return if (reference == null) listOf()
-    else (0 until reference!!.length()).map { reference!!.get(it) }
+      }, timeout)
+      (0 until reference!!.length()).map { reference!!.get(it) }
+    }
+    catch (notFound: WaitTimedOutError) {
+      emptyList()
+    }
   }
 
 
@@ -712,19 +715,18 @@ object GuiTestUtil {
                      vararg pathStrings: String,
                      predicate: FinderPredicate = Predicate.equality): JTree = step("search '${pathStrings.joinToString()}' in tree") {
     try {
-      waitUntilFound(
-        robot = GuiRobotHolder.robot,
-        root = container,
-        matcher = GuiTestUtilKt.typeMatcher(JTree::class.java) {
-          // the found tree should have meaningful model
-          it.hasValidModel() &&
-          (pathStrings.isEmpty() || ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath())
-        },
-        timeout = timeout
-      )
+      GuiTestUtilKt.withPauseWhenNull(
+        conditionText = "tree with path ${pathStrings.joinToString()}",
+        timeout = timeout) {
+        val trees = waitUntilFoundList(container, Timeouts.noTimeout, GuiTestUtilKt.typeMatcher(JTree::class.java) { it.hasValidModel() })
+        if(pathStrings.isEmpty()) trees.firstOrNull()
+        else trees.firstOrNull {
+          ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
+        }
+      }
     }
-    catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
+    catch (notFound: WaitTimedOutError){
+      throw ComponentLookupException("JTree by path [${pathStrings.joinToString()}] not found")
     }
   }
 

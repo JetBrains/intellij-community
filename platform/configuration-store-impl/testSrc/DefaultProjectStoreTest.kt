@@ -78,27 +78,27 @@ internal class DefaultProjectStoreTest {
 
   @Test
   fun `new project from default - directory-based storage`() = runBlocking {
-    val defaultProject = ProjectManager.getInstance().defaultProject
     val defaultTestComponent = TestComponent()
     defaultTestComponent.loadState(JDOMUtil.load("""
       <component>
         <main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" />
       </component>""".trimIndent()))
-    val stateStore = defaultProject.stateStore as ComponentStoreImpl
-    stateStore.initComponent(defaultTestComponent, true)
+    val stateStore = ProjectManager.getInstance().defaultProject.stateStore as ComponentStoreImpl
+    stateStore.initComponent(defaultTestComponent, null)
     try {
       // obviously, project must be directory-based also
       createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true) {
         val component = TestComponent()
-        it.stateStore.initComponent(component, true)
+        it.stateStore.initComponent(component, null)
         assertThat(component.state).isEqualTo(defaultTestComponent.state)
       }
     }
     finally {
       // clear state
       defaultTestComponent.loadState(Element("empty"))
-      defaultProject.stateStore.save()
-      stateStore.removeComponent(TEST_COMPONENT_NAME)
+      val defaultStore = ProjectManager.getInstance().defaultProject.stateStore as ComponentStoreImpl
+      defaultStore.save()
+      defaultStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }
 
@@ -112,7 +112,7 @@ internal class DefaultProjectStoreTest {
     assertThat(element.isEmpty()).isTrue()
 
     val directoryTree = tempDir.getDirectoryTree()
-    assertThat(directoryTree.trim()).isEqualTo(testData.resolve("testData1.txt"))
+    assertThat(directoryTree.trim()).toMatchSnapshot(testData.resolve("testData1.txt"))
   }
 
   @Test
@@ -125,6 +125,6 @@ internal class DefaultProjectStoreTest {
     assertThat(element).isEqualTo(loadElement(testData.resolve("normalize-ipr.xml")))
 
     val directoryTree = tempDir.getDirectoryTree()
-    assertThat(directoryTree.trim()).isEqualTo(testData.resolve("testData1-ipr.txt"))
+    assertThat(directoryTree.trim()).toMatchSnapshot(testData.resolve("testData1-ipr.txt"))
   }
 }

@@ -122,7 +122,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
                 }
               }
             }
-            return CachedValueProvider.Result.create(meths, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+            return CachedValueProvider.Result.create(meths, PsiModificationTracker.MODIFICATION_COUNT);
           });
           for (PsiMethod setter : setters) {
             children.add(factory.fun(setter));

@@ -23,6 +23,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     super(toolWrapper, context);
   }
 
+  @NotNull
   @Override
   public RefFilter getFilter() {
     return myFilter;

@@ -23,9 +23,8 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +35,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
@@ -215,7 +215,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @NotNull
   final FinalizableCommand createAddButtonCmd(final StripeButton button,
                                               @NotNull WindowInfoImpl info,
-                                              @NotNull Comparator<StripeButton> comparator,
+                                              @NotNull Comparator<? super StripeButton> comparator,
                                               @NotNull Runnable finishCallBack) {
     final WindowInfoImpl copiedInfo = info.copy();
     myId2Button.put(copiedInfo.getId(), button);
@@ -946,11 +946,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class AddToolStripeButtonCmd extends FinalizableCommand {
     private final StripeButton myButton;
     private final WindowInfoImpl myInfo;
-    private final Comparator<StripeButton> myComparator;
+    private final Comparator<? super StripeButton> myComparator;
 
     AddToolStripeButtonCmd(final StripeButton button,
                            @NotNull WindowInfoImpl info,
-                           @NotNull Comparator<StripeButton> comparator,
+                           @NotNull Comparator<? super StripeButton> comparator,
                            @NotNull Runnable finishCallBack) {
       super(finishCallBack);
       myButton = button;

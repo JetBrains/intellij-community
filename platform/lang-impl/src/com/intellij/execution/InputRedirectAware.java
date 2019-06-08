@@ -1,20 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 public interface InputRedirectAware extends RunConfiguration {
-  List<String> TYPES_WITH_REDIRECT_AWARE_UI = Arrays.asList("Application", "Java Scratch", "JUnit", "JarApplication");
+  List<String> TYPES_WITH_REDIRECT_AWARE_UI = ContainerUtil.immutableList("Application", "Java Scratch", "JUnit", "JarApplication");
 
   @NotNull
   InputRedirectOptions getInputRedirectOptions();

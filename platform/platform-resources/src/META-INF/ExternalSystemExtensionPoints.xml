@@ -28,6 +28,8 @@
                     interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemOutputParserProvider"
                     interface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystemOutputDispatcher"
+                    interface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemViewContributor"
                     interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectStructureCustomizer"

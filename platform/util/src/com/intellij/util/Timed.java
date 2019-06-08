@@ -27,7 +27,7 @@ abstract class Timed<T> implements Disposable {
   protected T myT;
   private boolean myPolled;
 
-  protected Timed(@Nullable final Disposable parentDisposable) {
+  Timed(@Nullable final Disposable parentDisposable) {
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
     }
@@ -54,6 +54,8 @@ abstract class Timed<T> implements Disposable {
   protected final void remove() {
     ourReferences.remove(this);
     myPolled = false;
+    myLastCheckedAccessCount = 0;
+    myAccessCount = 0;
   }
 
   protected synchronized boolean isLocked() {
@@ -73,6 +75,10 @@ abstract class Timed<T> implements Disposable {
         LOG.error(e);
       }
     }, SERVICE_DELAY, SERVICE_DELAY, TimeUnit.SECONDS);
+  }
+
+  public synchronized boolean isCached() {
+    return myT != null;
   }
 
   static void disposeTimed() {

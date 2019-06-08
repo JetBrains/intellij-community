@@ -99,7 +99,7 @@ abstract class VcsStatusMerger<S> {
 
 data class VcsFileStatusInfo(val type: Change.Type, val firstPath: String, val secondPath: String?) {
   override fun toString(): String {
-    var s = type.toString() + " " + firstPath
+    var s = "$type $firstPath"
     if (secondPath != null) {
       s += " -> $secondPath"
     }

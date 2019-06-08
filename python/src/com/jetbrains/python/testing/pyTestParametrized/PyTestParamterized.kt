@@ -35,9 +35,9 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
 
 
   val parameterNames = when (parameterNamesExpression) {
-  //For cases when parameters are written as literals "spam,eggs"
-    is String -> parameterNamesExpression.split(',').map(String::trim)
-  // For cases when written as tuple or list: ("spam", "eggs")
+    //For cases when parameters are written as literals "spam,eggs"
+    is String -> parameterNamesExpression.split(',').map(String::trim).filterNot { it.isBlank() }
+    // For cases when written as tuple or list: ("spam", "eggs")
     is List<*> -> parameterNamesExpression.filterIsInstance<String>()
     else -> emptyList()
   }

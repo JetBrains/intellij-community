@@ -8,7 +8,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
+import com.intellij.util.ui.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -78,7 +79,7 @@ public class ToolWindowIcon implements Icon, IconLoader.MenuBarIconProvider {
         }
       }
     };
-    ScaleContext ctx = ScaleContext.create(c, (Graphics2D)g);
+    ScaleContext ctx = ScaleContext.create((Graphics2D)g);
     Image rawImage = ImageUtil.filter(IconUtil.toImage(myIcon, ctx), filter);
     Image hidpiImage = ImageUtil.ensureHiDPI(rawImage, ctx);
     UIUtil.drawImage(g, hidpiImage, x, y, null);

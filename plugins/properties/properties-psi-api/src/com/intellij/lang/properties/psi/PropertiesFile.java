@@ -45,7 +45,8 @@ public interface PropertiesFile {
   /**
    * @return All properties found in this file.
    */
-  @NotNull List<IProperty> getProperties();
+  @NotNull
+  List<IProperty> getProperties();
 
   /**
    *
@@ -57,13 +58,16 @@ public interface PropertiesFile {
   IProperty findPropertyByKey(@NotNull @NonNls String key);
 
   /**
-   * @param key
    * @return All properties found in this file with the name specified.
    */
-  @NotNull List<IProperty> findPropertiesByKey(@NotNull @NonNls String key);
+  @NotNull
+  List<IProperty> findPropertiesByKey(@NotNull @NonNls String key);
 
-  @NotNull ResourceBundle getResourceBundle();
-  @NotNull Locale getLocale();
+  @NotNull
+  ResourceBundle getResourceBundle();
+
+  @NotNull
+  Locale getLocale();
 
   /**
    * Adds property to the end of the file.
@@ -71,12 +75,12 @@ public interface PropertiesFile {
    * @param property to add. Typically you create the property via {@link PropertiesElementFactory}.
    * @return newly added property.
    * It is this value you use to do actual PSI work, e.g. call {@link PsiElement#delete()} to remove this property from the file.
-   * @throws IncorrectOperationException
-   * @deprecated
+   * @deprecated use {@link #addProperty(String, String)} instead
    * @see #addProperty(String, String)
    */
   @Deprecated
-  @NotNull PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
+  @NotNull
+  PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
 
   /**
    * Adds property to the the file after the specified property.
@@ -88,9 +92,9 @@ public interface PropertiesFile {
    * @param anchor property after which to add the new property
    * @return newly added property.
    * It is this value you use to do actual PSI work, e.g. call {@link PsiElement#delete()} to remove this property from the file.
-   * @throws IncorrectOperationException
    */
-  @NotNull PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException;
+  @NotNull
+  PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException;
 
   /**
    * Adds property to the the file after the specified property.
@@ -100,18 +104,21 @@ public interface PropertiesFile {
    * @param value of a property to add.
    * @param anchor property after which to add the new property
    * @return newly added property.
-   * @throws IncorrectOperationException
    */
-  IProperty addPropertyAfter(String key, String value, IProperty anchor) throws IncorrectOperationException;
+  @NotNull
+  IProperty addPropertyAfter(@NotNull String key, @NotNull String value, IProperty anchor) throws IncorrectOperationException;
 
-  IProperty addProperty(String key, String value);
+  @NotNull
+  IProperty addProperty(@NotNull String key, @NotNull String value);
 
   /**
    * @return Property key to the property value map.
    * Do not modify this map. It's no use anyway.
    */
-  @NotNull Map<String,String> getNamesMap();
+  @NotNull
+  Map<String,String> getNamesMap();
 
+  @NotNull
   String getName();
 
   VirtualFile getVirtualFile();
@@ -121,6 +128,7 @@ public interface PropertiesFile {
    */
   PsiDirectory getParent();
 
+  @NotNull
   Project getProject();
 
   String getText();

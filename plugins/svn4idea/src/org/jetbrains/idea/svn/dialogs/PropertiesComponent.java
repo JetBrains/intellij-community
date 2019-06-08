@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
@@ -400,7 +400,7 @@ public class PropertiesComponent extends JPanel {
       if (myVcs == null) {
         return;
       }
-      VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+      VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vf != null) {
         File f = virtualToIoFile(vf);
         if (!f.equals(myFile)) {

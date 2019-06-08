@@ -57,7 +57,7 @@ public class JdkBundleTest {
 
   @Test
   public void testStandardMacOsBundles() {
-    assumeTrue(SystemInfo.isMac);
+    assumeTrue("Mac-only", SystemInfo.isMac);
     for (File vm : Objects.requireNonNull(new File("/Library/Java/JavaVirtualMachines").listFiles())) {
       if (new File(vm, "Contents/Home/bin/java").isFile()) {
         JdkBundle bundle = JdkBundle.createBundle(vm);

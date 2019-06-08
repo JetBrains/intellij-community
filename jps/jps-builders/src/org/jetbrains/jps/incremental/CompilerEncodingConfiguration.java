@@ -140,7 +140,7 @@ public class CompilerEncodingConfiguration {
     return myUrlToCharset.get(JpsPathUtil.pathToUrl(FileUtilRt.toSystemIndependentName(file.getAbsolutePath())));
   }
 
-  private static boolean shouldHonorEncodingForCompilation(Iterable<JavaBuilderExtension> builders, File file) {
+  private static boolean shouldHonorEncodingForCompilation(Iterable<? extends JavaBuilderExtension> builders, File file) {
     for (JavaBuilderExtension extension : builders) {
       if (extension.shouldHonorFileEncodingForCompilation(file)) {
         return true;

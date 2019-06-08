@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
 import com.intellij.psi.html.HtmlTag;
@@ -23,7 +24,7 @@ public class XmlInvalidIdInspection extends XmlDuplicatedIdInspection {
     String idRef = XmlHighlightVisitor.getUnquotedValue(value, tag);
 
     if (tag instanceof HtmlTag) {
-      idRef = idRef.toLowerCase();
+      idRef = StringUtil.toLowerCase(idRef);
     }
 
     if (XmlUtil.isSimpleValue(idRef, value) && refHolder.isIdReferenceValue(value)) {

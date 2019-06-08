@@ -27,9 +27,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class PackageScope extends GlobalSearchScope {
@@ -48,8 +48,7 @@ public class PackageScope extends GlobalSearchScope {
 
     Project project = myPackage.getProject();
     myPackageQualifiedName = myPackage.getQualifiedName();
-    myDirs = ContainerUtil.newHashSet(
-      PackageIndex.getInstance(project).getDirsByPackageName(myPackageQualifiedName, true).findAll());
+    myDirs = new HashSet<>(PackageIndex.getInstance(project).getDirsByPackageName(myPackageQualifiedName, true).findAll());
     myIncludeLibraries = includeLibraries;
 
     myPartOfPackagePrefix = JavaPsiFacade.getInstance(getProject()).isPartOfPackagePrefix(myPackageQualifiedName);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -22,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -116,7 +103,7 @@ public class CodeStyleSettingPresentation {
 
     //-----------------------------------BLANK_LINES_SETTINGS-----------------------------------------------------
 
-    Map<SettingsGroup, List<CodeStyleSettingPresentation>> result = ContainerUtil.newLinkedHashMap();
+    Map<SettingsGroup, List<CodeStyleSettingPresentation>> result = new LinkedHashMap<>();
     result.put(new SettingsGroup(BLANK_LINES_KEEP), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("KEEP_BLANK_LINES_IN_DECLARATIONS",
                                        ApplicationBundle.message("editbox.keep.blanklines.in.declarations")),
@@ -153,7 +140,7 @@ public class CodeStyleSettingPresentation {
 
     //-----------------------------------SPACING_SETTINGS-----------------------------------------------------
 
-    result = ContainerUtil.newLinkedHashMap();
+    result = new LinkedHashMap<>();
     result.put(new SettingsGroup(SPACES_BEFORE_PARENTHESES), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("SPACE_BEFORE_METHOD_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses")),
@@ -235,7 +222,7 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("SPACE_WITHIN_PARENTHESES", ApplicationBundle.message("checkbox.spaces.within.parentheses")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_METHOD_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.declaration.parentheses")),
-      new CodeStyleSettingPresentation("SPACE_WITHIN_EMPTY_METHOD_PARENTHESES", 
+      new CodeStyleSettingPresentation("SPACE_WITHIN_EMPTY_METHOD_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.checkbox.spaces.empty.method.declaration.parentheses")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_METHOD_CALL_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.call.parentheses")),
@@ -287,7 +274,7 @@ public class CodeStyleSettingPresentation {
 
     //-----------------------------------WRAPPING_AND_BRACES_SETTINGS-----------------------------------------------------
 
-    result = ContainerUtil.newLinkedHashMap();
+    result = new LinkedHashMap<>();
     result.put(new SettingsGroup(null), ContainerUtil.immutableList(
       new CodeStyleBoundedIntegerSettingPresentation("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), 0, 999,
                                                      -1,
@@ -500,7 +487,7 @@ public class CodeStyleSettingPresentation {
 
     //-----------------------------------INDENT_SETTINGS-----------------------------------------------------
 
-    result = ContainerUtil.newLinkedHashMap();
+    result = new LinkedHashMap<>();
     result.put(new SettingsGroup(null), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("INDENT_SIZE", ApplicationBundle.message("editbox.indent.indent"))
     ));
@@ -532,6 +519,6 @@ public class CodeStyleSettingPresentation {
         return INDENT_STANDARD_SETTINGS;
       case LANGUAGE_SPECIFIC:
     }
-    return ContainerUtil.newLinkedHashMap();
+    return new LinkedHashMap<>();
   }
 }

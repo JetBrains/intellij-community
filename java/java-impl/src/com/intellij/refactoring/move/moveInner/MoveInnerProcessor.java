@@ -104,7 +104,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     LOG.assertTrue(myTargetContainer != null);
 
-    Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass).findAll();
+    Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass, myRefactoringScope).findAll();
     ArrayList<UsageInfo> usageInfos = new ArrayList<>(innerClassRefs.size());
     for (PsiReference innerClassRef : innerClassRefs) {
       PsiElement ref = innerClassRef.getElement();
@@ -132,8 +132,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     else {
       newQName = myNewClassName;
     }
-    MoveClassesOrPackagesUtil.findNonCodeUsages(mySearchInComments, mySearchInNonJavaFiles,
-                                                myInnerClass, newQName, usageInfos);
+    MoveClassesOrPackagesUtil.findNonCodeUsages(myInnerClass, myRefactoringScope, mySearchInComments, mySearchInNonJavaFiles,
+                                                newQName, usageInfos);
     return usageInfos.toArray(UsageInfo.EMPTY_ARRAY);
   }
 

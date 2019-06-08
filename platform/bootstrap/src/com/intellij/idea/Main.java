@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,6 +15,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 public class Main {
   public static final int NO_GRAPHICS = 1;
@@ -31,7 +34,7 @@ public class Main {
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final String[] NO_ARGS = {};
+  private static final String[] NO_ARGS = ArrayUtil.EMPTY_STRING_ARRAY;
   private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions");
   private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
@@ -79,7 +82,7 @@ public class Main {
     return isCommandLine;
   }
 
-  public static void setFlags(String[] args) {
+  public static void setFlags(@NotNull String[] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isCommandLine(args);
     if (isHeadless()) {
@@ -87,7 +90,7 @@ public class Main {
     }
   }
 
-  public static boolean isHeadless(String[] args) {
+  public static boolean isHeadless(@NotNull String[] args) {
     if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
       return true;
     }
@@ -141,6 +144,14 @@ public class Main {
     }
 
     t.printStackTrace(new PrintWriter(message));
+
+    Properties sp = System.getProperties();
+    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
+    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
+    String arch = sp.getProperty("os.arch", "(unknown arch)");
+    String home = sp.getProperty("java.home", "(unknown java.home)");
+    message.append("\n-----\nJRE ").append(jre).append(' ').append(arch).append(" by ").append(vendor).append('\n').append(home);
+
     showMessage(title, message.toString(), true);
   }
 

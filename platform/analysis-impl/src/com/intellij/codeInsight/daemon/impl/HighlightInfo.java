@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -394,6 +394,7 @@ public class HighlightInfo implements Segment {
     @NotNull Builder range(@NotNull TextRange textRange);
     @NotNull Builder range(@NotNull ASTNode node);
     @NotNull Builder range(@NotNull PsiElement element);
+    @NotNull Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement);
     @NotNull Builder range(@NotNull PsiElement element, int start, int end);
     @NotNull Builder range(int start, int end);
 
@@ -554,6 +555,13 @@ public class HighlightInfo implements Segment {
       assert psiElement == null : " psiElement already set";
       psiElement = element;
       return range(element.getTextRange());
+    }
+
+    @NotNull
+    @Override
+    public Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
+      TextRange absoluteRange = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
+      return range(element, absoluteRange.getStartOffset(), absoluteRange.getEndOffset());
     }
 
     @NotNull
@@ -943,7 +951,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  public void unregisterQuickFix(@NotNull Condition<IntentionAction> condition) {
+  public void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
     quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
   }
 }

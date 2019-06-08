@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +11,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
-  public JavaConcatenationToInjectorAdapter(ConcatenationInjectorManager manager) {
-    super(manager);
+  public JavaConcatenationToInjectorAdapter(@NotNull Project project) {
+    super(project);
   }
 
   @Override

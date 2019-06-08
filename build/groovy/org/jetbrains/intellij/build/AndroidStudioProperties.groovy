@@ -495,7 +495,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     StudioMacDistributionCustomizer(String projectHome) {
       urlSchemes = ["idea"]
       associateIpr = true
-      enableYourkitAgentInEAP = false
       bundleIdentifier = "com.google.android.studio"
       dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
       // For now we have all 3 platform icons checked in and we change

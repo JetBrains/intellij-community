@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
@@ -35,6 +36,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
+  /**
+   * By default button representing popup action group displays 'dropdown' icon.
+   * This key allows to avoid 'dropdown' icon painting, just put it in ActionButton's presentation or template presentation of ActionGroup like this:
+   * <code>presentaion.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE)</code>
+   */
+
+  public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
   private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
@@ -179,8 +187,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
       showPopupMenu(event, (ActionGroup) myAction);
-    } else {
-      ActionUtil.performActionDumbAware(myAction, event);
+    }
+    else {
+      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
     }
   }
 
@@ -351,7 +360,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public void paintComponent(Graphics g) {
     jComponentPaint(g);
     paintButtonLook(g);
-    paintDownArrowIfGroup(g);
+    if (shallPaintDownArrow()) {
+      paintDownArrow(g);
+    }
   }
 
   // used in Rider, please don't change visibility
@@ -359,17 +370,23 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     super.paintComponent(g);
   }
 
-  private void paintDownArrowIfGroup(Graphics g) {
-    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return;
+  protected boolean shallPaintDownArrow() {
+    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return false;
+    if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    return true;
+  }
+
+  private void paintDownArrow(Graphics g) {
     Container parent = getParent();
     boolean horizontal = !(parent instanceof ActionToolbarImpl) ||
                          ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
     int x = horizontal ? JBUI.scale(6) : JBUI.scale(5);
     int y = horizontal ? JBUI.scale(5) : JBUI.scale(6);
-    if (isButtonEnabled()) {
-      AllIcons.General.Dropdown.paintIcon(this, g, x, y);
-    } else {
-      IconLoader.getDisabledIcon(AllIcons.General.Dropdown).paintIcon(this, g, x, y);
+    Icon arrowIcon = isButtonEnabled() ? AllIcons.General.Dropdown :
+                     IconLoader.getDisabledIcon(AllIcons.General.Dropdown);
+    if (arrowIcon != null) {
+      arrowIcon.paintIcon(this, g, x, y);
     }
   }
 

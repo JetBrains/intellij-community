@@ -68,7 +68,7 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
   }
 
   @Nullable
-  private static FileReference findFileReference(final List<PsiReference> references) {
+  private static FileReference findFileReference(final List<? extends PsiReference> references) {
     FileReference fileReference = null;
     for (PsiReference reference : references) {
       if (reference instanceof FileReference) {

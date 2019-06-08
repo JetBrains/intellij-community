@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,7 +90,7 @@ public class CommandLineProcessor {
   }
 
   @Nullable
-  public static Project processExternalCommandLine(List<String> args, @Nullable String currentDirectory) {
+  public static Project processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
@@ -100,11 +98,15 @@ public class CommandLineProcessor {
     if (args.isEmpty()) return null;
 
     String command = args.get(0);
-    for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
+    for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getIterable()) {
+      if (starter == null) {
+        break;
+      }
+
       if (command.equals(starter.getCommandName())) {
-        if (starter instanceof ApplicationStarterEx && ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
+        if (starter.canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
-          ((ApplicationStarterEx)starter).processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
+          starter.processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
         }
         else {
           String title = "Cannot execute command '" + command + "'";
@@ -114,15 +116,10 @@ public class CommandLineProcessor {
         return null;
       }
     }
+
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-      try {
-        String url = URLDecoder.decode(command, "UTF-8");
-        JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-        ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      }
-      catch (UnsupportedEncodingException e) {
-        LOG.error(e);
-      }
+      JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
+      ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       return null;
     }
 

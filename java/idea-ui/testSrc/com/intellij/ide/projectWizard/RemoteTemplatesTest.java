@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -18,25 +19,33 @@ import com.intellij.util.containers.MultiMap;
  * @author Dmitry Avdeev
  */
 public class RemoteTemplatesTest extends NewProjectWizardTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Registry.get("new.project.load.remote.templates").setValue(true, getTestRootDisposable());
+  }
+
   public void testParsing() throws Exception {
-    MultiMap<String, ArchivedProjectTemplate> map = RemoteTemplatesFactory.createFromText("<templates>\n" +
-                                                                                  "  <template>\n" +
-                                                                                  "    <name>Facelets Demo</name>\n" +
-                                                                                  "    <description><![CDATA[\n" +
-                                                                                  "    Demonstrates IDEA support for Facelets technology\n" +
-                                                                                  "    ]]>\n" +
-                                                                                  "    </description>\n" +
-                                                                                  "    <path>facelets.zip</path>\n" +
-                                                                                  "    <moduleType>JAVA_MODULE</moduleType>\n" +
-                                                                                  "  </template>\n" +
-                                                                                  "  <template>\n" +
-                                                                                  "    <name>Incompatible</name>\n" +
-                                                                                  "    <description>Incompatible</description>\n" +
-                                                                                  "    <path>incompatible.zip</path>\n" +
-                                                                                  "    <moduleType>JAVA_MODULE</moduleType>\n" +
-                                                                                  "    <requiredPlugin>unknown.plugin</requiredPlugin>\n" +
-                                                                                  "  </template>\n" +
-                                                                                  "</templates>");
+    MultiMap<String, ArchivedProjectTemplate> map = RemoteTemplatesFactory.createFromText(
+      "<templates>\n" +
+      "  <template>\n" +
+      "    <name>Facelets Demo</name>\n" +
+      "    <description><![CDATA[\n" +
+      "    Demonstrates IDEA support for Facelets technology\n" +
+      "    ]]>\n" +
+      "    </description>\n" +
+      "    <path>facelets.zip</path>\n" +
+      "    <moduleType>JAVA_MODULE</moduleType>\n" +
+      "  </template>\n" +
+      "  <template>\n" +
+      "    <name>Incompatible</name>\n" +
+      "    <description>Incompatible</description>\n" +
+      "    <path>incompatible.zip</path>\n" +
+      "    <moduleType>JAVA_MODULE</moduleType>\n" +
+      "    <requiredPlugin>unknown.plugin</requiredPlugin>\n" +
+      "  </template>\n" +
+      "</templates>");
     assertEquals(1, map.size());
 
     ProjectTemplate facelets = map.values().iterator().next();

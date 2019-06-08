@@ -19,7 +19,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,9 +56,14 @@ public class Queue<T> {
       myLast = myArray.length;
     }
     myLast--;
-    @SuppressWarnings("unchecked") T result = (T)myArray[myLast];
+    T result = getRaw(myLast);
     myArray[myLast] = null;
     return result;
+  }
+
+  private T getRaw(int last) {
+    //noinspection unchecked
+    return (T)myArray[last];
   }
 
   public T peekLast() {
@@ -67,8 +71,7 @@ public class Queue<T> {
     if (last == 0) {
       last = myArray.length;
     }
-    @SuppressWarnings("unchecked") T result = (T)myArray[last-1];
-    return result;
+    return getRaw(last - 1);
   }
 
 
@@ -93,8 +96,7 @@ public class Queue<T> {
   @NotNull
   public T[] toArray(T[] array) {
     if (array.length < size()) {
-      //noinspection unchecked
-      array = (T[])Array.newInstance(array.getClass().getComponentType(), size());
+      array = ArrayUtil.newArray(ArrayUtil.getComponentType(array), size());
     }
 
     return normalize(array);
@@ -115,8 +117,7 @@ public class Queue<T> {
     if (isEmpty()) {
       throw new IndexOutOfBoundsException("queue is empty");
     }
-    @SuppressWarnings("unchecked") T t = (T)myArray[myFirst];
-    return t;
+    return getRaw(myFirst);
   }
 
   private int copyFromTo(int first, int last, Object[] result, int destinationPos) {
@@ -154,10 +155,9 @@ public class Queue<T> {
     if (isWrapped && arrayIndex >= myArray.length) {
       arrayIndex -= myArray.length;
     }
-    final Object old = myArray[arrayIndex];
+    T old = getRaw(arrayIndex);
     myArray[arrayIndex] = value;
-    @SuppressWarnings("unchecked") T t = (T)old;
-    return t;
+    return old;
   }
 
   public T get(int index) {
@@ -165,24 +165,23 @@ public class Queue<T> {
     if (isWrapped && arrayIndex >= myArray.length) {
       arrayIndex -= myArray.length;
     }
-    @SuppressWarnings("unchecked") T t = (T)myArray[arrayIndex];
-    return t;
+    return getRaw(arrayIndex);
   }
 
-  public boolean process(@NotNull Processor<T> processor) {
+  public boolean process(@NotNull Processor<? super T> processor) {
     if (isWrapped) {
       for (int i = myFirst; i < myArray.length; i++) {
-        @SuppressWarnings("unchecked") T t = (T)myArray[i];
+        T t = getRaw(i);
         if (!processor.process(t)) return false;
       }
       for (int i = 0; i < myLast; i++) {
-        @SuppressWarnings("unchecked") T t = (T)myArray[i];
+        T t = getRaw(i);
         if (!processor.process(t)) return false;
       }
     }
     else {
       for (int i = myFirst; i < myLast; i++) {
-        @SuppressWarnings("unchecked") T t = (T)myArray[i];
+        T t = getRaw(i);
         if (!processor.process(t)) return false;
       }
     }

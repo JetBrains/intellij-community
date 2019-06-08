@@ -19,11 +19,7 @@ package com.intellij.ui.components.labels;
 
 public interface LinkListener<T> {
 
-  LinkListener NULL = new LinkListener() {
-    @Override
-    public void linkSelected(LinkLabel aSource, Object aLinkData) {
-    }
-  };
+  LinkListener NULL = (__, ___) -> { };
 
   void linkSelected(LinkLabel aSource, T aLinkData);
 

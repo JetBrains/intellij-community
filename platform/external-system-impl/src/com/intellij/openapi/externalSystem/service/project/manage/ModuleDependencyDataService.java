@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -32,13 +18,9 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -75,8 +57,8 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
                                                  @NotNull final Module module,
                                                  @NotNull final IdeModifiableModelsProvider modelsProvider) {
     final Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
-      ContainerUtilRt.newHashMap();
-    final Map<OrderEntry, OrderAware> orderEntryDataMap = ContainerUtil.newLinkedHashMap();
+      new HashMap<>();
+    final Map<OrderEntry, OrderAware> orderEntryDataMap = new LinkedHashMap<>();
 
     for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
       if (entry instanceof ModuleOrderEntry) {
@@ -84,7 +66,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         toRemove.put(Pair.create(e.getModuleName(), e.getScope()), e);
       }
     }
-    final Set<ModuleDependencyData> processed = ContainerUtil.newHashSet();
+    final Set<ModuleDependencyData> processed = new HashSet<>();
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
       final ModuleDependencyData dependencyData = dependencyNode.getData();

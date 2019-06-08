@@ -186,7 +186,7 @@ public abstract class PsiDocumentManager {
    * @param files the files to reparse.
    * @param includeOpenFiles if true, the files opened in editor tabs will also be reparsed.
    */
-  public abstract void reparseFiles(@NotNull final Collection<VirtualFile> files, final boolean includeOpenFiles);
+  public abstract void reparseFiles(@NotNull final Collection<? extends VirtualFile> files, final boolean includeOpenFiles);
 
   /**
    * Listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.

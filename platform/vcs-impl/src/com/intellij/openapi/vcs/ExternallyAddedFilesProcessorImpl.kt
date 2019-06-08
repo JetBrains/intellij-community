@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -26,7 +27,7 @@ private const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES"
 private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
 class ExternallyAddedFilesProcessorImpl(project: Project,
-                                        parentDisposable: Disposable,
+                                        private val parentDisposable: Disposable,
                                         private val vcs: AbstractVcs<*>,
                                         private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
@@ -41,7 +42,9 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
 
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
-  init {
+  private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
+
+  fun install() {
     runReadAction {
       if (!project.isDisposed) {
         changeListManager.addChangeListListener(this, parentDisposable)
@@ -126,7 +129,11 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> =
-    changeListManager.unversionedFiles.filter { isUnder(files, it) }
+    changeListManager.unversionedFiles
+      .asSequence()
+      .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
+      .filter { isUnder(files, it) }
+      .toSet()
 
   override fun rememberForAllProjects() {}
 

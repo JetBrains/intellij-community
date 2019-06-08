@@ -180,6 +180,9 @@ idea.fatal.error.notification=disabled
     def builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
       builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
+      if (!builtinPluginsRepoUrl.startsWith("https:")) {
+        buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
+      }
     }
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
@@ -266,7 +269,7 @@ idea.fatal.error.notification=disabled
 
     def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
     for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
-      def publishingSpec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
+      def publishingSpec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
       if (publishingSpec == null) {
         buildContext.messages.error("buildContext.productProperties.productLayout.pluginModulesToPublish doesn't have info for $plugin.mainModule")
       }
@@ -281,8 +284,8 @@ idea.fatal.error.notification=disabled
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
-            def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
-            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
+            def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
+            pluginsToPublish.put(plugin, spec ?: plugin.defaultPublishingSpec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
           }
         }
         else {
@@ -290,6 +293,11 @@ idea.fatal.error.notification=disabled
         }
       }
     }
+    return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
+  }
+
+  private DistributionJARsBuilder compilePlatformAndPluginModules(File patchedApplicationInfo,
+                                                                  LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish) {
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
     compileModules(distributionJARsBuilder.modulesForPluginsToPublish)
 
@@ -337,7 +345,6 @@ idea.fatal.error.notification=disabled
       /* AndroidStudio: we don't need to download JREs, they are already available in prebuilts.
       setupJBre()
       */
-      setupBundledMaven()
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -402,6 +409,22 @@ idea.fatal.error.notification=disabled
     logFreeDiskSpace("after building distributions")
   }
 
+  @Override
+  void buildNonBundledPlugins(List<String> mainPluginModules) {
+    checkProductProperties()
+    checkPluginModules(mainPluginModules, "mainPluginModules", [] as Set<String>)
+    copyDependenciesFile()
+    def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
+    def plugins = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
+    for (plugin in plugins) {
+      def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin)
+      pluginsToPublish[plugin] = spec ?: plugin.defaultPublishingSpec ?: new PluginPublishingSpec()
+    }
+    def distributionJARsBuilder = compilePlatformAndPluginModules(patchApplicationInfo(), pluginsToPublish)
+    distributionJARsBuilder.buildSearchableOptions()
+    distributionJARsBuilder.buildNonBundledPlugins()
+  }
+
   private void setupJBre() {
     logFreeDiskSpace("before downloading JREs")
     String[] args = [
@@ -410,6 +433,15 @@ idea.fatal.error.notification=disabled
     ]
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+    }
+    [
+      'intellij.build.bundle.second.jre',
+      'intellij.build.bundled.second.jre.build',
+      'intellij.build.bundled.second.jre.version'
+    ].each { prop ->
+      System.getProperty(prop)?.with {
+        args += "-D$prop=$it"
+      }
     }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")
@@ -489,7 +521,6 @@ idea.fatal.error.notification=disabled
     def properties = buildContext.productProperties
     checkPaths(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
     checkPaths(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
-    checkPaths([properties.yourkitAgentBinariesDirectoryPath], "productProperties.yourkitAgentBinariesDirectoryPath")
     checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
 
     checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile")
@@ -602,7 +633,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
-    if (!pluginModules) {
+    if (pluginModules == null) {
       return
     }
     checkModules(pluginModules, fieldName)

@@ -42,7 +42,7 @@ public class DefaultJDOMExternalizer {
 
   private static final ConcurrentMap<Class, Map<String, Field>> ourFieldCache = ConcurrentFactoryMap.createMap(c -> {
     Map<String, Field> result = new LinkedHashMap<>();
-    for (Field field : ReflectionUtil.collectFields(c)) {
+    for (Field field : c.getFields()) {
       String name = field.getName();
       if (name.indexOf('$') >= 0 || result.containsKey(name)) continue;
       int modifiers = field.getModifiers();

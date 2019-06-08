@@ -48,7 +48,7 @@ class GrLibrarySourceHighlightingTest extends GrHighlightingTestBase {
   final String basePath = "highlighting/librarySources"
 
   void "test no errors trait highlighting"() {
-    def clazz = JavaPsiFacade.getInstance(project).findClass("somepackage.CC", GlobalSearchScope.moduleWithLibrariesScope(myModule))
+    def clazz = JavaPsiFacade.getInstance(project).findClass("somepackage.CC", GlobalSearchScope.moduleWithLibrariesScope(module))
     def psiFile = (clazz as ClsClassImpl).sourceMirrorClass.containingFile
     myFixture.configureFromExistingVirtualFile(psiFile.virtualFile)
     myFixture.testHighlighting()

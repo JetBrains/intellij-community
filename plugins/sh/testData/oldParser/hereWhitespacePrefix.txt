@@ -1,0 +1,34 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('x')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<-')
+              PsiWhiteSpace(' ')
+              PsiElement(HEREDOC_MARKER_START)('EOL')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('        Text\n')
+              PsiElement(HEREDOC_MARKER_END)('EOL')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('x')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            HEREDOC
+              PsiElement(HEREDOC_MARKER_TAG)('<<-')
+              PsiWhiteSpace(' ')
+              PsiElement(HEREDOC_MARKER_START)('EOL')
+              PsiElement(\n)('\n')
+              PsiElement(HEREDOC_CONTENT)('        Text\n    ')
+              PsiElement(HEREDOC_MARKER_END)('EOL')

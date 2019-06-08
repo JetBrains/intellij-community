@@ -10,18 +10,7 @@ enum class BundleState {
   DOWNLOADED,
   EXTRACTED,
   INSTALLED,
-  UNINSTALLED;
-
-  fun getRepresentaton(): String {
-    return when {
-      this == REMOTE -> "Remote"
-      this == DOWNLOADED -> "Downloaded"
-      this == EXTRACTED -> "Extracted"
-      this == INSTALLED -> "Inst"
-      this == UNINSTALLED -> "Uninst"
-      else -> "Unknown"
-    }
-  }
+  UNINSTALLED
 }
 
 class Model(var selectedBundle: Runtime, val bundles:MutableList<Runtime>) {
@@ -44,9 +33,9 @@ class Model(var selectedBundle: Runtime, val bundles:MutableList<Runtime>) {
                                             BinTrayUtil.getJdkConfigFilePath().exists() &&
                                             FileUtil.loadFile(BinTrayUtil.getJdkConfigFilePath()).startsWith(bundle.installationPath.absolutePath)
 
-  fun isExtracted(bundle:Runtime):Boolean = bundle.transitionPath.exists()
+  private fun isExtracted(bundle:Runtime):Boolean = bundle.transitionPath.exists()
 
-  fun isDownloaded(bundle:Runtime):Boolean = bundle.downloadPath.exists()
+  private fun isDownloaded(bundle:Runtime):Boolean = bundle.downloadPath.exists()
 
   fun isRemote(bundle:Runtime):Boolean = bundle is Remote
 }

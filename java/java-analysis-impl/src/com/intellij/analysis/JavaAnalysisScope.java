@@ -59,6 +59,7 @@ public class JavaAnalysisScope extends AnalysisScope {
         for (final PsiClass aClass : classes) {
           if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
             onlyPackLocalClasses = false;
+            break;
           }
         }
         if (onlyPackLocalClasses) {

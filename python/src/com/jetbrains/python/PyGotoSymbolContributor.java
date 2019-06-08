@@ -1,52 +1,61 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Collections;
 
 /**
  * @author yole
  */
-public class PyGotoSymbolContributor implements GotoClassContributor {
+public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNameContributorEx {
   @Override
-  @NotNull
-  public String[] getNames(final Project project, final boolean includeNonProjectItems) {
-    Set<String> symbols = new HashSet<>();
-    symbols.addAll(PyClassNameIndex.allKeys(project));
-    symbols.addAll(PyModuleNameIndex.getAllKeys(project));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY, project));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(PyVariableNameIndex.KEY, project));
-    symbols.addAll(StubIndex.getInstance().getAllKeys(PyClassAttributesIndex.KEY, project));
-    return ArrayUtil.toStringArray(symbols);
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    FileBasedIndex fileIndex = FileBasedIndex.getInstance();
+    StubIndex stubIndex = StubIndex.getInstance();
+    if (!fileIndex.processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter)) return;
+    if (!stubIndex.processAllKeys(PyClassNameIndex.KEY, processor, scope, filter)) return;
+    if (!stubIndex.processAllKeys(PyFunctionNameIndex.KEY, processor, scope, filter)) return;
+    if (!stubIndex.processAllKeys(PyVariableNameIndex.KEY, processor, scope, filter)) return;
+    if (!stubIndex.processAllKeys(PyClassAttributesIndex.KEY, processor, scope, filter)) return;
   }
 
   @Override
-  @NotNull
-  public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, final boolean includeNonProjectItems) {
-    final GlobalSearchScope scope = includeNonProjectItems
-                                    ? PyProjectScopeBuilder.excludeSdkTestsScope(project)
-                                    : GlobalSearchScope.projectScope(project);
-
-    List<NavigationItem> symbols = new ArrayList<>();
-    symbols.addAll(PyClassNameIndex.find(name, project, scope));
-    symbols.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
-    symbols.addAll(PyFunctionNameIndex.find(name, project, scope));
-    symbols.addAll(PyVariableNameIndex.find(name, project, scope));
-    symbols.addAll(PyClassAttributesIndex.findClassAndInstanceAttributes(name, project, scope));
-    return symbols.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    Project project = parameters.getProject();
+    GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestScope(parameters.getSearchScope());
+    IdFilter filter = parameters.getIdFilter();
+    FileBasedIndex fileIndex = FileBasedIndex.getInstance();
+    StubIndex stubIndex = StubIndex.getInstance();
+    PsiManager psiManager = PsiManager.getInstance(project);
+    if (!fileIndex.getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
+      if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
+      PsiFile psiFile = psiManager.findFile(file);
+      return !(psiFile instanceof PyFile) || processor.process(psiFile);
+    }, scope)) return;
+    if (!stubIndex.processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
+    if (!stubIndex.processElements(PyFunctionNameIndex.KEY, name, project, scope, filter, PyFunction.class, processor)) return;
+    if (!stubIndex.processElements(PyVariableNameIndex.KEY, name, project, scope, filter, PyTargetExpression.class, processor)) return;
+    if (!stubIndex.processElements(PyClassAttributesIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
   }
 
   @Override

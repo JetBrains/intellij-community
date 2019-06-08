@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -43,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene.Kudelevsky
@@ -199,7 +201,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
     else if (element instanceof PsiJavaCodeReferenceElement) {
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression || parent instanceof PsiAnnotation) {
+      if (parent instanceof PsiTypeElement || parent instanceof PsiNewExpression
+          || parent instanceof PsiAnnotation || parent instanceof PsiAnonymousClass) {
         return parent;
       }
     }
@@ -318,7 +321,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       else if (shouldTryClassPattern(result)) {
         final PsiElement[] classPattern =
           createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, extension, project, false);
-        if (classPattern.length == 1) {
+        if (classPattern.length <= result.size()) {
           return classPattern;
         }
       }
@@ -366,10 +369,16 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean shouldTryClassPattern(List<PsiElement> elements) {
-    if (elements.size() < 2) {
+    if (elements.isEmpty()) {
       return false;
     }
     final PsiElement firstElement = elements.get(0);
+    if (firstElement instanceof PsiDeclarationStatement && firstElement.getFirstChild() instanceof PsiClass) {
+      return true;
+    }
+    if (elements.size() < 2) {
+      return false;
+    }
     final PsiElement secondElement = elements.get(1);
     final PsiElement lastElement = elements.get(elements.size() - 1);
 
@@ -411,6 +420,42 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     return factory.createCodeBlockCodeFragment(text, context, true);
+  }
+
+  @Override
+  public String getCodeFragmentText(PsiFile fragment) {
+    final List<String> imports = StringUtil.split(((JavaCodeFragment)fragment).importsToString(), ",");
+    final Map<String, String> importMap =
+      imports.stream().collect(Collectors.toMap(s -> s.substring(s.lastIndexOf('.') + 1), Function.identity()));
+    final StringBuilder result = new StringBuilder();
+    fragment.accept(new JavaRecursiveElementWalkingVisitor() {
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        visitReferenceElement(expression);
+      }
+
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        if (!reference.isQualified()) {
+          final String text = reference.getText();
+          final String fqName = importMap.get(text);
+          result.append(fqName != null ? fqName : text);
+        }
+        else {
+          super.visitReferenceElement(reference);
+        }
+      }
+
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        if (element.getFirstChild() == null) {
+          result.append(element.getText());
+        }
+      }
+    });
+    return result.toString();
   }
 
   @Override
@@ -831,7 +876,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (variableNode != null) {
           final PsiElement grandParent = variableNode.getParent().getParent();
           if (grandParent instanceof PsiExpressionStatement) {
-            if (hasSemicolon(grandParent)) return false;
+            if (isCompleteStatement((PsiExpressionStatement)grandParent)) return false;
           }
           else if (grandParent instanceof PsiStatement) return false;
         }
@@ -901,7 +946,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           !PsiTreeUtil.isAncestor(((PsiForStatement)greatGrandParent).getBody(), variableNode, true)) {
         return true;
       }
-      if (hasSemicolon(grandParent)) {
+      if (isCompleteStatement((PsiExpressionStatement)grandParent)) {
         if (greatGrandParent instanceof PsiLoopStatement || greatGrandParent instanceof PsiIfStatement) return false;
         return !(greatGrandParent instanceof PsiCodeBlock) ||
                !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
@@ -924,8 +969,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
     if (grandParent instanceof PsiExpressionList && grandParent.getParent() instanceof PsiSwitchLabelStatementBase)  return true;
-    if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) {
+    if (grandParent instanceof PsiExpressionStatement && isCompleteStatement((PsiExpressionStatement)grandParent)) {
       final PsiElement greatGrandParent = grandParent.getParent();
+      if (greatGrandParent instanceof PsiForStatement) {
+        final PsiForStatement forStatement = (PsiForStatement)greatGrandParent;
+        return forStatement.getInitialization() == grandParent || forStatement.getUpdate() == grandParent;
+      }
       return greatGrandParent instanceof PsiCodeBlock;
     }
     if (grandParent instanceof PsiReferenceList) {
@@ -972,7 +1021,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return name != null && !"_Dummy_".equals(name);
   }
 
-  private static boolean hasSemicolon(PsiElement element) {
+  private static boolean isCompleteStatement(PsiExpressionStatement element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiForStatement && ((PsiForStatement)parent).getUpdate() == element) {
+      return true;
+    }
     PsiElement lastChild = element.getLastChild();
     while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
       lastChild = lastChild.getPrevSibling();

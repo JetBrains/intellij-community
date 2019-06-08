@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,12 +19,10 @@ public class VcsActionGroup extends DefaultActionGroup implements DumbAware {
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();
     if (project == null || !project.isOpen()) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
     }
     else {
-      presentation.setVisible(true);
-      presentation.setEnabled(true);
+      presentation.setEnabledAndVisible(true);
     }
   }
 }

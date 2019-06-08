@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiFileProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -43,9 +44,11 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
 
   @NotNull
   @Override
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInCommentsAndStrings) {
     final List<PsiReference> results = new ArrayList<>();
-    for (PsiReference reference : super.findReferences(element)) {
+    for (PsiReference reference : super.findReferences(element, searchScope, searchInCommentsAndStrings)) {
       if (isNotAliasedInImportElement(reference)) {
         results.add(reference);
       }

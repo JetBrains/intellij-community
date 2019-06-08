@@ -123,7 +123,7 @@ public class GitPreservingProcess {
       @NotNull
       @Override
       public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
-        return String.format("<html>Changes from <b><code>%s</code></b></html>", myDestinationName);
+        return String.format("<html>Changes from <b>%s</b></html>", myDestinationName);
       }
     };
 

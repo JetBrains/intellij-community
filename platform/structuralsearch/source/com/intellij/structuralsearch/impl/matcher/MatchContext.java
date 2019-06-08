@@ -1,9 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchResultSink;
+import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,14 +27,28 @@ public class MatchContext {
   private GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
 
-  private List<PsiElement> myMatchedNodes;
+  private final Stack<List<PsiElement>> mySavedMatchedNodes = new Stack<>();
+  private List<PsiElement> myMatchedNodes = new SmartList<>();
 
-  public List<PsiElement> getMatchedNodes() {
-    return myMatchedNodes;
+  public void addMatchedNode(PsiElement node) {
+    myMatchedNodes.add(node);
   }
 
-  public void setMatchedNodes(final List<PsiElement> matchedNodes) {
-    myMatchedNodes = matchedNodes;
+  public void removeMatchedNode(PsiElement node) {
+    myMatchedNodes.remove(node);
+  }
+
+  public void saveMatchedNodes() {
+    mySavedMatchedNodes.push(myMatchedNodes);
+    myMatchedNodes = new SmartList<>();
+  }
+
+  public void restoreMatchedNodes() {
+    myMatchedNodes = mySavedMatchedNodes.tryPop();
+  }
+
+  public void clearMatchedNodes() {
+    myMatchedNodes.clear();
   }
 
   @FunctionalInterface
@@ -135,6 +152,53 @@ public class MatchContext {
   public void notifyMatchedElements(Collection<PsiElement> matchedElements) {
     if (!myMatchedElementsListenerStack.isEmpty()) {
       myMatchedElementsListenerStack.peek().matchedElements(matchedElements);
+    }
+  }
+
+  public void dispatchMatched() {
+    if (myMatchedNodes.isEmpty()) {
+      return;
+    }
+    final MatchResultImpl result = getResult();
+    if (doDispatch(result)) return;
+
+    // There is no substitutions so show the context
+
+    processNoSubstitutionMatch(myMatchedNodes, result);
+    getSink().newMatch(result);
+  }
+
+  private boolean doDispatch(final MatchResult result) {
+    boolean ret = false;
+
+    for (MatchResult r : result.getChildren()) {
+      if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
+        ret |= doDispatch(r);
+      }
+      else if (r.isTarget()) {
+        getSink().newMatch(r);
+        ret = true;
+      }
+    }
+    return ret;
+  }
+
+  private static void processNoSubstitutionMatch(List<PsiElement> matchedNodes, MatchResultImpl result) {
+    boolean complexMatch = matchedNodes.size() > 1;
+    final PsiElement match = matchedNodes.get(0);
+
+    if (!complexMatch) {
+      result.setMatchRef(new SmartPsiPointer(match));
+      result.setMatchImage(match.getText());
+    }
+    else {
+      for (final PsiElement matchStatement : matchedNodes) {
+        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
+      }
+
+      result.setMatchRef(new SmartPsiPointer(match));
+      result.setMatchImage(match.getText());
+      result.setName(MatchResult.MULTI_LINE_MATCH);
     }
   }
 }

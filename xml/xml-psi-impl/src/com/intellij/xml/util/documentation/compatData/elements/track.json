@@ -10,7 +10,7 @@
             },
             "chrome_android": {
               "version_added": "25",
-              "notes": "Doesn’t work for fullscreen video."
+              "notes": "Doesn't work for fullscreen video."
             },
             "edge": {
               "version_added": true
@@ -70,7 +70,7 @@
             },
             "webview_android": {
               "version_added": true,
-              "notes": "Doesn’t work for fullscreen video."
+              "notes": "Doesn't work for fullscreen video."
             }
           },
           "status": {

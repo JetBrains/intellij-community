@@ -48,7 +48,7 @@ public class ProjectSetReader {
     runProcessor(processors, context, descriptor.entrySet().iterator());
   }
 
-  private static void runProcessor(final Map<String, ProjectSetProcessor> processors, final ProjectSetProcessor.Context context, final Iterator<Map.Entry<String, JsonElement>> iterator) {
+  private static void runProcessor(final Map<String, ProjectSetProcessor> processors, final ProjectSetProcessor.Context context, final Iterator<? extends Map.Entry<String, JsonElement>> iterator) {
     if (!iterator.hasNext()) return;
     final Map.Entry<String, JsonElement> entry = iterator.next();
     String key = entry.getKey();

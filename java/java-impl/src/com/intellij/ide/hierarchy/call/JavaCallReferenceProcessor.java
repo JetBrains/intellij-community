@@ -84,17 +84,40 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
 
     final PsiElement element = reference.getElement();
     final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
+    CallHierarchyNodeDescriptor parentDescriptor = (CallHierarchyNodeDescriptor) data.getNodeDescriptor();
+    if (isRecursiveNode(method, parentDescriptor)) return false;
 
     synchronized (methodToDescriptorMap) {
       CallHierarchyNodeDescriptor d = (CallHierarchyNodeDescriptor)methodToDescriptorMap.get(key);
       if (d == null) {
-        d = new CallHierarchyNodeDescriptor(myProject, (CallHierarchyNodeDescriptor)data.getNodeDescriptor(), element, false, true);
+        d = new CallHierarchyNodeDescriptor(myProject, parentDescriptor, element, false, true);
         methodToDescriptorMap.put(key, d);
       }
       else if (!d.hasReference(reference)) {
         d.incrementUsageCount();
       }
       d.addReference(reference);
+    }
+    return false;
+  }
+
+  private static boolean isRecursiveNode(@NotNull PsiMethod method, @NotNull CallHierarchyNodeDescriptor parentDescriptor) {
+    // detect recursion
+    // the current call-site calls *method*
+    // Thus, we already have a node that represents *method*
+    // Check whether we have any other node along the parent-chain that represents that same method
+
+    NodeDescriptor ancestorDescriptor = parentDescriptor;
+    // Start check on grandparent
+    while ((ancestorDescriptor = ancestorDescriptor.getParentDescriptor()) != null) {
+      if (ancestorDescriptor instanceof CallHierarchyNodeDescriptor) {
+        PsiMember ancestorCallSite = ((CallHierarchyNodeDescriptor)ancestorDescriptor).getEnclosingElement();
+        if (ancestorCallSite == method) {
+          // We have at least two occurrences in the parent chain of method already
+          // Don't search any deeper
+          return true;
+        }
+      }
     }
     return false;
   }

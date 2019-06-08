@@ -4,7 +4,6 @@ package com.intellij.psi.statistics;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +20,7 @@ public abstract class StatisticsManager {
    */
   public static final int RECENCY_OBLIVION_THRESHOLD = 10000;
 
-  private static final KeyedExtensionCollector<Statistician, Key> COLLECTOR = new KeyedExtensionCollector<Statistician, Key>("com.intellij.statistician") {
-    @Override
-    @NotNull
-    protected String keyToString(@NotNull final Key key) {
-      return key.toString();
-    }
-  };
+  private static final KeyedExtensionCollector<Statistician, Key> COLLECTOR = new KeyedExtensionCollector<>("com.intellij.statistician");
 
   @Nullable
   public static <T, Loc> StatisticsInfo serialize(Key<? extends Statistician<T, Loc>> key, T element, Loc location) {
@@ -52,12 +45,16 @@ public abstract class StatisticsManager {
   public abstract int getUseCount(@NotNull StatisticsInfo info);
 
   /**
-   * @return the position of {@code info.getValue()} in all recently registered entries with the same {@code info.getContext()}. 0 if it it's the most recent entry, {@code Integer.MAX_INT} if it was never used, or was used too long ago (more than {@link #RECENCY_OBLIVION_THRESHOLD} other entries with the same context have been registered with {@link #incUseCount(StatisticsInfo)} since.
+   * @return the position of {@code info.getValue()} in all recently registered entries with the same {@code info.getContext()}.
+   * {@code 0} if it it's the most recent entry, {@code Integer.MAX_INT} if it was never used or was used too long ago
+   * (more than {@link #RECENCY_OBLIVION_THRESHOLD} since other entries with the same context have been registered
+   * with {@link #incUseCount(StatisticsInfo)}).
    */
   public abstract int getLastUseRecency(@NotNull StatisticsInfo info);
 
   /**
-   * Register a usage of an <context, value> entry represented by info parameter. This will affect subsequent {@link #getUseCount(StatisticsInfo)} and {@link #getLastUseRecency(StatisticsInfo)} results.
+   * Registers a usage of an <context, value> entry represented by info parameter.
+   * This will affect subsequent {@link #getUseCount(StatisticsInfo)} and {@link #getLastUseRecency(StatisticsInfo)} results.
    */
   public abstract void incUseCount(@NotNull StatisticsInfo info);
 
@@ -66,9 +63,7 @@ public abstract class StatisticsManager {
     return info == null ? 0 : getUseCount(info);
   }
 
-  public <T, Loc> void incUseCount(final Key<? extends Statistician<T, Loc>> key,
-                                   final T element,
-                                   final Loc location) {
+  public <T, Loc> void incUseCount(final Key<? extends Statistician<T, Loc>> key, final T element, final Loc location) {
     final StatisticsInfo info = serialize(key, element, location);
     if (info != null) {
       incUseCount(info);
@@ -78,5 +73,5 @@ public abstract class StatisticsManager {
   /**
    * @return infos by this context ordered by usage time: recent first
    */
-  public abstract StatisticsInfo[] getAllValues(@NonNls String context);
+  public abstract StatisticsInfo[] getAllValues(String context);
 }

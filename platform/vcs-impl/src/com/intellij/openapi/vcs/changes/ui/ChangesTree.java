@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -8,11 +8,13 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -21,15 +23,11 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -46,7 +44,6 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -108,6 +105,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     if (myShowCheckboxes) {
       new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+      installCheckBoxClickHandler();
     }
     installEnterKeyHandler();
     installDoubleClickHandler();
@@ -119,6 +117,33 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setEmptyText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+  }
+
+  /**
+   * There is special logic for {@link com.intellij.ide.dnd.DnDAware} components in
+   * {@link com.intellij.openapi.wm.impl.IdeGlassPaneImpl#dispatch(AWTEvent)} that doesn't call
+   * {@link Component#processMouseEvent(MouseEvent)} in case of mouse clicks over selection.
+   *
+   * So we add "checkbox mouse clicks" handling as a listener.
+   */
+  private void installCheckBoxClickHandler() {
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        if (myShowCheckboxes && isEnabled()) {
+          int row = getRowForLocation(event.getX(), event.getY());
+          if (row >= 0) {
+            final Rectangle baseRect = getRowBounds(row);
+            baseRect.setSize(myCheckboxWidth, baseRect.height);
+            if (baseRect.contains(event.getPoint())) {
+              setSelectionRow(row);
+              toggleChanges(getSelectedUserObjects());
+            }
+          }
+        }
+        return false;
+      }
+    }.installOn(this);
   }
 
   protected void installEnterKeyHandler() {
@@ -154,8 +179,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        TreePath clickPath =
-          getUI() instanceof WideSelectionTreeUI ? getClosestPathForLocation(e.getX(), e.getY()) : getPathForLocation(e.getX(), e.getY());
+        TreePath clickPath = WideSelectionTreeUI.isWideSelection(ChangesTree.this)
+                             ? getClosestPathForLocation(e.getX(), e.getY())
+                             : getPathForLocation(e.getX(), e.getY());
         if (clickPath == null) return false;
 
         final int row = getRowForLocation(e.getPoint().x, e.getPoint().y);
@@ -216,12 +242,19 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void addSelectionListener(@NotNull Runnable runnable) {
-    addTreeSelectionListener(new TreeSelectionListener() {
+    addSelectionListener(runnable, null);
+  }
+
+  public void addSelectionListener(@NotNull Runnable runnable, @Nullable Disposable parent) {
+    TreeSelectionListener listener = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         runnable.run();
       }
-    });
+    };
+
+    addTreeSelectionListener(listener);
+    if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
   }
 
   public void setInclusionListener(@Nullable Runnable runnable) {
@@ -258,6 +291,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return getGroupingSupport().getGrouping();
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   public boolean isShowFlatten() {
     return !myGroupingSupport.isDirectory();
   }
@@ -272,13 +310,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     List<Object> oldSelection = getSelectedUserObjects();
     rebuildTree();
     setSelectedChanges(oldSelection);
-  }
-
-  private void setChildIndent(boolean isFlat) {
-    BasicTreeUI treeUI = (BasicTreeUI)getUI();
-
-    treeUI.setLeftChildIndent(!isFlat ? UIUtil.getTreeLeftChildIndent() : 0);
-    treeUI.setRightChildIndent(!isFlat ? UIUtil.getTreeRightChildIndent() : 0);
   }
 
   private boolean isCurrentModelFlat() {
@@ -306,7 +337,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
       setModel(model);
       myIsModelFlat = isCurrentModelFlat();
-      setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
+      setShowsRootHandles(!myGroupingSupport.isNone() || !myIsModelFlat);
 
       if (myKeepTreeState) {
         //noinspection ConstantConditions
@@ -326,6 +357,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   protected void resetTreeState() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (hasAtLeastNodes(this, 30000)) {
+      TreeUtil.collapseAll(this, 1);
+      return;
+    }
+
     TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;
@@ -357,6 +394,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       setSelectionRow(selectedTreeRow);
     }
     TreeUtil.showRowCentered(this, selectedTreeRow, false);
+  }
+
+  private static boolean hasAtLeastNodes(@NotNull Tree tree, int nodeNumber) {
+    return TreeUtil.treeTraverser(tree).traverse().take(nodeNumber).size() >= nodeNumber;
   }
 
   public void selectFile(@Nullable VirtualFile toSelect) {
@@ -721,24 +762,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private static VirtualFile getVirtualFileFor(@NotNull FilePath filePath) {
     if (filePath.isNonLocal()) return null;
     return ChangesUtil.findValidParentAccurately(filePath);
-  }
-
-  @Override
-  protected void processMouseEvent(MouseEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-      if (myShowCheckboxes && isEnabled() && !e.isPopupTrigger()) {
-        int row = getRowForLocation(e.getX(), e.getY());
-        if (row >= 0) {
-          final Rectangle baseRect = getRowBounds(row);
-          baseRect.setSize(myCheckboxWidth, baseRect.height);
-          if (baseRect.contains(e.getPoint())) {
-            setSelectionRow(row);
-            toggleChanges(getSelectedUserObjects());
-          }
-        }
-      }
-    }
-    super.processMouseEvent(e);
   }
 
   @Override

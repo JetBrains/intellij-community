@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ public abstract class MergeRequest implements UserDataHolder {
   public abstract String getTitle();
 
   /**
-   * Called on conflict resolve end. Should be called exactly once for each request, that was shown.
+   * Called on conflict resolve end. Should be called exactly once for each request that was shown.
    *
-   * MergeRequest should keep initial state of its content and restore it on {@link MergeResult.CANCEL}
+   * MergeRequest should keep the initial state of its content and restore it on {@link MergeResult#CANCEL}
    */
   @CalledInAwt
   public abstract void applyResult(@NotNull MergeResult result);

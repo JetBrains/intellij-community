@@ -17,7 +17,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -134,9 +133,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
-      final Runnable runnable = (DumbAwareRunnable)() -> showNotification(notification, project);
+      Runnable runnable = () -> showNotification(notification, project);
       if (project == null) {
-        UIUtil.invokeLaterIfNeeded(runnable);
+        GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
@@ -352,7 +351,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       layoutData.borderColor = BORDER_COLOR;
     }
 
-    boolean actions = !notification.getActions().isEmpty();
+    boolean actions = !notification.getActions().isEmpty() || notification.getContextHelpAction() != null;
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationFullContent;
 
     final JEditorPane text = new JEditorPane() {
@@ -808,7 +807,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     private Component myLastComponent;
 
-    public void addComponent(@NotNull Component component, @NotNull Function<Component, Rectangle> hover) {
+    public void addComponent(@NotNull Component component, @NotNull Function<? super Component, ? extends Rectangle> hover) {
       myComponents.add(Pair.create(component, hover));
     }
 
@@ -1169,7 +1168,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       return layoutSize(component -> component.getMinimumSize());
     }
 
-    private Dimension layoutSize(@NotNull Function<Component, Dimension> size) {
+    private Dimension layoutSize(@NotNull Function<? super Component, ? extends Dimension> size) {
       Dimension titleSize = myTitleComponent == null ? new Dimension() : size.fun(myTitleComponent);
       Dimension centeredSize = myCenteredComponent == null ? new Dimension() : size.fun(myCenteredComponent);
       Dimension actionSize = myActionPanel == null ? new Dimension() : size.fun(myActionPanel);

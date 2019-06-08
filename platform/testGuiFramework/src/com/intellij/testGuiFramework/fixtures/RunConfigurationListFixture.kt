@@ -3,6 +3,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.actionButton
 import com.intellij.testGuiFramework.impl.popupMenu
 import com.intellij.testGuiFramework.util.logInfo
@@ -27,7 +28,9 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    * except for "Edit configuration" and "save configuration"
    */
   fun getRunConfigurationList(): List<String> {
-    showPopup()
+    GuiTestUtilKt.repeatUntil({ GuiTestUtilKt.isComponentShowing(JList::class.java) }, {
+      showPopup()
+    })
     val list = myRobot.finder()
       .find(myIde.target()) { it is JList<*> } as JList<*>
     val returnList: MutableList<String> = mutableListOf()

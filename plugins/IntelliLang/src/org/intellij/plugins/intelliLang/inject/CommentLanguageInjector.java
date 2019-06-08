@@ -1,7 +1,9 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -18,7 +20,6 @@ import java.util.List;
  * @author gregsh
  */
 public class CommentLanguageInjector implements MultiHostInjector {
-
   private final LanguageInjectionSupport[] mySupports;
   private final LanguageInjectionSupport myInjectorSupport = new AbstractLanguageInjectionSupport() {
     @NotNull
@@ -39,9 +40,8 @@ public class CommentLanguageInjector implements MultiHostInjector {
     }
   };
 
-
-  /** */
-  public CommentLanguageInjector(Configuration configuration) {
+  public CommentLanguageInjector(@NotNull Project project) {
+    Configuration.getProjectInstance(project);
     List<LanguageInjectionSupport> supports = new ArrayList<>(InjectorUtils.getActiveInjectionSupports());
     supports.add(myInjectorSupport);
     mySupports = supports.toArray(new LanguageInjectionSupport[0]);

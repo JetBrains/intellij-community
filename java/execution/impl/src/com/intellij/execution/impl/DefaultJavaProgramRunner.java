@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
@@ -53,6 +52,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -236,7 +236,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
             vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
             InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
               .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
-            String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
+            String text = StreamUtil.readText(inputStream, StandardCharsets.UTF_8);
             List<ThreadState> threads = ThreadDumpParser.parse(text);
             DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
             return;
@@ -286,7 +286,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
             // 1 second delay to allow jvm to start correctly
             JobScheduler.getScheduler()
               .schedule(() -> myEnabled.set(!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated() &&
-                                            JavaDebuggerAttachUtil.canAttach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()))),
+                                            JavaDebuggerAttachUtil.canAttach(myProcessHandler)),
                         1, TimeUnit.SECONDS);
           }
         }
@@ -343,7 +343,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      JavaDebuggerAttachUtil.attach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()), e.getProject());
+      JavaDebuggerAttachUtil.attach(myProcessHandler, e.getProject());
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {

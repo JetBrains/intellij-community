@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonWriter;
-import com.intellij.openapi.application.ApplicationStarterEx;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,20 +15,15 @@ import java.util.stream.Stream;
 /**
  * @author Ivan Chirkov
  */
-public class BundledPluginsLister extends ApplicationStarterEx {
-  @Override
-  public boolean isHeadless() {
-    return true;
-  }
-
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
+public class BundledPluginsLister implements ApplicationStarter {
   @Override
   public String getCommandName() {
     return "listBundledPlugins";
   }
 
   @Override
-  public void premain(String[] args) {
-  }
+  public void premain(String[] args) { }
 
   @Override
   public void main(String[] args) {
@@ -35,15 +31,15 @@ public class BundledPluginsLister extends ApplicationStarterEx {
       OutputStream out;
       if (args.length == 2) {
         File outFile = new File(args[1]);
-        File parentFile = outFile.getParentFile();
-        if (parentFile != null) parentFile.mkdirs();
+        FileUtil.createParentDirs(outFile);
+        //noinspection IOResourceOpenedButNotSafelyClosed
         out = new FileOutputStream(outFile);
       }
       else {
         out = System.out;
       }
 
-      try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET))) {
+      try (JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
         IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
 
         List<String> modules = Arrays.stream(plugins)
@@ -63,7 +59,7 @@ public class BundledPluginsLister extends ApplicationStarterEx {
       }
     }
     catch (IOException e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
       System.exit(1);
     }
 

@@ -82,7 +82,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     return result;
   }
 
-  private static List<TextRange> getActualTodoRanges(List<HighlightInfo> highlightInfos) {
+  private static List<TextRange> getActualTodoRanges(List<? extends HighlightInfo> highlightInfos) {
     return highlightInfos.stream()
       .filter(info -> info.type == HighlightInfoType.TODO)
       .map(info -> TextRange.create(info.getHighlighter()))
@@ -90,11 +90,11 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
       .collect(Collectors.toList());
   }
 
-  private static void assertTodoRanges(List<TextRange> expectedTodoRanges, List<TextRange> actualTodoRanges) {
+  private static void assertTodoRanges(List<? extends TextRange> expectedTodoRanges, List<? extends TextRange> actualTodoRanges) {
     assertEquals("Unexpected todos highlighting", generatePresentation(expectedTodoRanges), generatePresentation(actualTodoRanges));
   }
 
-  private static String generatePresentation(List<TextRange> ranges) {
+  private static String generatePresentation(List<? extends TextRange> ranges) {
     StringBuilder b = new StringBuilder(myEditor.getDocument().getText());
     int prevStart = Integer.MAX_VALUE;
     for (int i = ranges.size() - 1; i >= 0; i--) {

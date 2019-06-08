@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlEnumValue;
+import java.util.HashMap;
 import java.util.Map;
 
 public enum Depth {
@@ -17,7 +17,7 @@ public enum Depth {
   @XmlEnumValue("empty") EMPTY("empty"),
   @XmlEnumValue("exclude") EXCLUDE("exclude");
 
-  @NotNull private static final Map<String, Depth> ourAllDepths = ContainerUtil.newHashMap();
+  @NotNull private static final Map<String, Depth> ourAllDepths = new HashMap<>();
 
   static {
     for (Depth action : Depth.values()) {

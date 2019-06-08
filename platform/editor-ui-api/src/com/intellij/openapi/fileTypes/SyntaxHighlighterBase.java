@@ -27,11 +27,15 @@ import java.util.Map;
 public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   private static final Logger LOG = Logger.getInstance(SyntaxHighlighterBase.class);
 
-  protected static final TextAttributesKey[] EMPTY = new TextAttributesKey[0];
+  /**
+   * @deprecated Use {@link TextAttributesKey#EMPTY_ARRAY} instead
+   */
+  @Deprecated
+  protected static final TextAttributesKey[] EMPTY = TextAttributesKey.EMPTY_ARRAY;
 
   @NotNull
   public static TextAttributesKey[] pack(@Nullable TextAttributesKey key) {
-    return key == null ? EMPTY : new TextAttributesKey[]{key};
+    return key == null ? TextAttributesKey.EMPTY_ARRAY : new TextAttributesKey[]{key};
   }
 
   @NotNull

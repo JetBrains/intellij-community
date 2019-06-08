@@ -37,8 +37,12 @@ public class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
     PsiElement[] children = e.getChildren();
     if (children.length > 0) {
       int start = findOpeningBrace(children);
-      int end = findClosingBrace(children, start);
-      result.addAll(expandToWholeLine(editorText, new TextRange(start, end)));
+
+      // in non-Java PsiClasses, there can be no opening brace
+      if (start != 0) {
+        int end = findClosingBrace(children, start);
+        result.addAll(expandToWholeLine(editorText, new TextRange(start, end)));
+      }
     }
 
     return result;

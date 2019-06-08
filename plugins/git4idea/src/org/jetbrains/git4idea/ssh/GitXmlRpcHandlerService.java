@@ -33,7 +33,7 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
  *     <li>If the operation requires user interaction, the registered handler is called via XML RPC protocol.
  *         It can show a dialog in the GUI and return the answer via XML RPC to the external application, that further provides
  *         this value to the Git process.</li>
- *     <li>{@link #unregisterHandler(int) Unregister} the handler after operation has completed.</li>
+ *     <li>{@link #unregisterHandler(UUID)} Unregister} the handler after operation has completed.</li>
  *   </ol>
  * </p>
  */
@@ -108,10 +108,9 @@ public abstract class GitXmlRpcHandlerService<T> {
   protected abstract void customizeScriptGenerator(@NotNull ScriptGenerator generator);
 
   /**
-   * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
+   * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(UUID)}.
    *
-   * @param handler          a handler to register
-   * @param parentDisposable a disposable to unregister the handler if it doesn't get unregistered manually
+   * @param handler a handler to register
    * @return an identifier to pass to the environment variable
    */
   @NotNull
@@ -130,7 +129,7 @@ public abstract class GitXmlRpcHandlerService<T> {
 
   /**
    * Creates an implementation of the xml rpc handler, which methods will be called from the external application.
-   * This method should just delegate the call to the specific handler of type {@link T}, which can be achieved by {@link #getHandler(int)}.
+   * This method should just delegate the call to the specific handler of type {@link T}, which can be achieved by {@link #getHandler(UUID)}.
    * @return New instance of the xml rpc handler delegate.
    */
   @NotNull

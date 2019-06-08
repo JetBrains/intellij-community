@@ -3,14 +3,15 @@ package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.psi.search.scope.packageSet.FilteredNamedScope;
 import com.intellij.ui.OffsetIcon;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
-public final class ChangeListScope extends FilteredNamedScope {
+public final class ChangeListScope extends FilteredNamedScope implements WeighedItem {
   public static final String NAME = IdeBundle.message("scope.modified.files");
   private static final Icon ICON = new OffsetIcon(AllIcons.Scope.ChangedFiles);
 
@@ -42,5 +43,10 @@ public final class ChangeListScope extends FilteredNamedScope {
     String string = super.toString();
     if (AllIcons.Scope.ChangedFilesAll == getIcon()) string += "; ALL";
     return string;
+  }
+
+  @Override
+  public int getWeight() {
+    return AllIcons.Scope.ChangedFilesAll == getIcon() ? 0 : 1;
   }
 }

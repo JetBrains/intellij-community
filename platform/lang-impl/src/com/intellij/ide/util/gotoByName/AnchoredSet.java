@@ -3,6 +3,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -13,10 +14,11 @@ import java.util.Set;
 class AnchoredSet {
   private final Set<Object> myAnchors;
 
-  AnchoredSet(Set<Object> elements) {
-    this.myAnchors = new LinkedHashSet<>(ContainerUtil.map(elements, TreeAnchorizer.getService()::createAnchor));
+  AnchoredSet(@NotNull Set<Object> elements) {
+    myAnchors = new LinkedHashSet<>(ContainerUtil.map(elements, TreeAnchorizer.getService()::createAnchor));
   }
 
+  @NotNull
   Set<Object> getElements() {
     return new LinkedHashSet<>(ContainerUtil.mapNotNull(myAnchors, TreeAnchorizer.getService()::retrieveElement));
   }

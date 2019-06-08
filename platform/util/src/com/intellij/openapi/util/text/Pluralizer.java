@@ -32,6 +32,7 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,8 +61,8 @@ class Pluralizer {
   private final Map<String, String> irregularSingles = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
   private final Map<String, String> irregularPlurals = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
   private final Set<String> uncountables = ContainerUtil.newTroveSet(CaseInsensitiveStringHashingStrategy.INSTANCE);
-  private final List<Pair<Pattern, String>> pluralRules = ContainerUtil.newArrayList();
-  private final List<Pair<Pattern, String>> singularRules = ContainerUtil.newArrayList();
+  private final List<Pair<Pattern, String>> pluralRules = new ArrayList<>();
+  private final List<Pair<Pattern, String>> singularRules = new ArrayList<>();
 
   /**
    * Pass in a word token to produce a function that can replicate the case on
@@ -97,7 +98,7 @@ class Pluralizer {
   /**
    * Sanitize a word by passing in the word and sanitization rules.
    */
-  private String sanitizeWord(String word, List<Pair<Pattern, String>> rules) {
+  private String sanitizeWord(String word, List<? extends Pair<Pattern, String>> rules) {
     if (StringUtil.isEmpty(word) || uncountables.contains(word)) return word;
 
     int len = rules.size();
@@ -116,7 +117,7 @@ class Pluralizer {
    * Replace a word with the updated word.
    * @return null if no applicable rules found
    */
-  private String replaceWord(String word, Map<String, String> replaceMap, Map<String, String> keepMap, List<Pair<Pattern, String>> rules) {
+  private String replaceWord(String word, Map<String, String> replaceMap, Map<String, String> keepMap, List<? extends Pair<Pattern, String>> rules) {
     if (StringUtil.isEmpty(word)) return word;
 
     // Get the correct token and case restoration functions.
@@ -182,8 +183,8 @@ class Pluralizer {
   }
 
   static {
-    final Pluralizer pluralizer = new Pluralizer(); 
-    
+    final Pluralizer pluralizer = new Pluralizer();
+
     /*
      * Irregular rules.
      */

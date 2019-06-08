@@ -270,6 +270,7 @@ object GuiTestLocalLauncher {
    */
   private fun getDefaultAndCustomVmOptions(ide: Ide, customVmOptions: List<String> = emptyList()): List<String> {
     return listOf<String>()
+      .plusIf(GuiTestOptions.xssSize != 0, "-Xss${GuiTestOptions.xssSize}m")
       .plus("-Xmx${GuiTestOptions.xmxSize}m")
       .plus("-XX:ReservedCodeCacheSize=240m")
       .plus("-XX:+UseConcMarkSweepGC")
@@ -278,7 +279,7 @@ object GuiTestLocalLauncher {
       .plus("-ea")
       .plus("-Xbootclasspath/p:${GuiTestOptions.bootClasspath}")
       .plus("-Dsun.awt.disablegrab=true")
-      .plus("-Dsun.io.useCanonCaches=false")
+      .plus("-Dsun.io.useCanonPrefixCache=false")
       .plus("-Djava.net.preferIPv4Stack=true")
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal}")
@@ -288,6 +289,8 @@ object GuiTestLocalLauncher {
       .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
       .plus("-Didea.gui.tests.log.file=${GuiTestOptions.guiTestLogFile}")
       .plus("-Dfile.encoding=${GuiTestOptions.encoding}")
+      .plus("-Djb.privacy.policy.text=<!--999.999-->")
+      .plus("-Djb.consents.confirmation.enabled=false")
       .plusIf(System.getProperty("java.io.tmpdir") != null, "-Djava.io.tmpdir=${System.getProperty("java.io.tmpdir")}")
       .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(ide.ideType.ideSpecificOptions)

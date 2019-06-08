@@ -1,19 +1,14 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractNamedData extends AbstractExternalEntityData implements Named {
-
-  private static final long serialVersionUID = 1L;
-
   @NotNull
-  private String myExternalName;
+  private String externalName;
   @NotNull
-  private String myInternalName;
+  private String internalName;
 
   public AbstractNamedData(@NotNull ProjectSystemId owner, @NotNull String externalName) {
     this(owner, externalName, externalName);
@@ -21,8 +16,8 @@ public abstract class AbstractNamedData extends AbstractExternalEntityData imple
 
   public AbstractNamedData(@NotNull ProjectSystemId owner, @NotNull String externalName, @NotNull String internalName) {
     super(owner);
-    myExternalName = externalName;
-    myInternalName = internalName;
+    this.externalName = externalName;
+    this.internalName = internalName;
   }
 
   /**
@@ -47,30 +42,30 @@ public abstract class AbstractNamedData extends AbstractExternalEntityData imple
   @NotNull
   @Override
   public String getExternalName() {
-    return myExternalName;
+    return externalName;
   }
 
   @Override
   public void setExternalName(@NotNull String name) {
-    myExternalName = name;
+    externalName = name;
   }
 
   @NotNull
   @Override
   public String getInternalName() {
-    return myInternalName;
+    return internalName;
   }
 
   @Override
   public void setInternalName(@NotNull String name) {
-    myInternalName = name;
+    internalName = name;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myExternalName.hashCode();
-    result = 31 * result + myInternalName.hashCode();
+    result = 31 * result + externalName.hashCode();
+    result = 31 * result + internalName.hashCode();
     return result;
   }
 
@@ -80,8 +75,8 @@ public abstract class AbstractNamedData extends AbstractExternalEntityData imple
 
     AbstractNamedData data = (AbstractNamedData)o;
 
-    if (!myExternalName.equals(data.myExternalName)) return false;
-    if (!myInternalName.equals(data.myInternalName)) return false;
+    if (!externalName.equals(data.externalName)) return false;
+    if (!internalName.equals(data.internalName)) return false;
     return true;
   }
 }

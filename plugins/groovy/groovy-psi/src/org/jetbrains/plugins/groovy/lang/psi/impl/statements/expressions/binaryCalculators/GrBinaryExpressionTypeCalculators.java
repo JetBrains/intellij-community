@@ -4,13 +4,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binary
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID;
@@ -18,7 +18,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NID;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 
 public class GrBinaryExpressionTypeCalculators {
-  private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
+  private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = new LinkedHashMap<>();
 
   static {
     MAP.put(GroovyTokenTypes.mPLUS, GrNumericBinaryExpressionTypeCalculator.INSTANCE);

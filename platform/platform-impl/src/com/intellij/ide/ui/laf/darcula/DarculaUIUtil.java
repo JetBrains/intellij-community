@@ -87,7 +87,8 @@ public class DarculaUIUtil {
     try {
       g2.translate(r.x, r.y);
       paintFocusBorder(g2, r.width, r.height, COMPONENT_ARC.getFloat(), true);
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
@@ -123,7 +124,8 @@ public class DarculaUIUtil {
     float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : LW.getFloat();
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                       MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
     float outerArc = arc > 0 ? arc + bw - JBUI.scale(2f) : bw;
     float rightOuterArc = symmetric ? outerArc : JBUI.scale(6f);
@@ -142,7 +144,7 @@ public class DarculaUIUtil {
     float rightInnerArc = symmetric ? outerArc : JBUI.scale(7f);
     Path2D innerRect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
     innerRect.moveTo(width - rightInnerArc, bw);
-    innerRect.quadTo(width - bw, bw , width - bw, rightInnerArc);
+    innerRect.quadTo(width - bw, bw, width - bw, rightInnerArc);
     innerRect.lineTo(width - bw, height - rightInnerArc);
     innerRect.quadTo(width - bw, height - bw, width - rightInnerArc, height - bw);
     innerRect.lineTo(outerArc, height - bw);
@@ -163,8 +165,8 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @see javax.swing.plaf.basic.BasicTextUI#getNextVisualPositionFrom(JTextComponent, int, Position.Bias, int, Position.Bias[])
    * @return -1 if visual position shouldn't be patched, otherwise selection start or selection end
+   * @see javax.swing.plaf.basic.BasicTextUI#getNextVisualPositionFrom(JTextComponent, int, Position.Bias, int, Position.Bias[])
    */
   public static int getPatchedNextVisualPositionFrom(JTextComponent t, int pos, int direction) {
     if (!isCurrentEventShiftDownEvent()) {
@@ -197,7 +199,8 @@ public class DarculaUIUtil {
         outline.setGraphicsColor(g2, true);
         g2.fill(border);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }
@@ -221,7 +224,8 @@ public class DarculaUIUtil {
 
       if (isTableCellEditor(c)) {
         paintCellEditorBorder((Graphics2D)g, c, new Rectangle(x, y, width, height), hasFocus);
-      } else {
+      }
+      else {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
           if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
@@ -229,7 +233,8 @@ public class DarculaUIUtil {
             g2.fillRect(x, y, width, height);
           }
 
-          Rectangle2D rect = new Rectangle2D.Float(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3)*2, height - JBUI.scale(3)*2);
+          Rectangle2D rect = new Rectangle2D.Float(
+            x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3) * 2, height - JBUI.scale(3) * 2);
           g2.setColor(c.getBackground());
           g2.fill(rect);
 
@@ -242,8 +247,8 @@ public class DarculaUIUtil {
           outline.append(rect, false);
           outline.append(new Rectangle2D.Float((float)rect.getX() + bw,
                                                (float)rect.getY() + bw,
-                                               (float)rect.getWidth() - 2*bw,
-                                               (float)rect.getHeight() - 2*bw), false);
+                                               (float)rect.getWidth() - 2 * bw,
+                                               (float)rect.getHeight() - 2 * bw), false);
           g2.setColor(Gray.xBC);
           g2.fill(outline);
 
@@ -252,16 +257,18 @@ public class DarculaUIUtil {
           Object op = editorTextField.getClientProperty("JComponent.outline");
           if (editorTextField.isEnabled() && op != null) {
             paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
-          } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
+          }
+          else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
             paintFocusBorder(g2, width, height, 0, true);
           }
-        } finally {
+        }
+        finally {
           g2.dispose();
         }
       }
     }
 
-      @Override
+    @Override
     public Insets getBorderInsets(Component c) {
       return isTableCellEditor(c) || isCompact(c) || isComboBoxEditor(c) ?
              JBUI.insets(2, 3).asUIResource() : JBUI.insets(5, 8).asUIResource();
@@ -330,13 +337,16 @@ public class DarculaUIUtil {
         if (editorTextField.isEnabled() && op != null) {
           Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
           bw = isCellRenderer ? 1 : 2;
-        } else {
+        }
+        else {
           if (hasFocus) {
             g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-          } else if (editorTextField.isEnabled() &&
-                     editorTextField.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+          }
+          else if (editorTextField.isEnabled() &&
+                   editorTextField.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
             g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
-          } else {
+          }
+          else {
             g2.setColor(UIManager.getColor("TextField.borderColor"));
           }
 
@@ -357,7 +367,8 @@ public class DarculaUIUtil {
         border.append(innerRect, false);
 
         g2.fill(border);
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
@@ -366,7 +377,8 @@ public class DarculaUIUtil {
     public Insets getBorderInsets(Component c) {
       if (UIUtil.getParentOfType(ComboBoxCompositeEditor.class, c) != null) {
         return JBUI.emptyInsets().asUIResource();
-      } else {
+      }
+      else {
         return (isTableCellEditor(c) ? JBUI.insets(1) : isComboBoxEditor(c) ? JBUI.insets(1, 6) : JBUI.insets(4, 6)).asUIResource();
       }
     }
@@ -380,7 +392,7 @@ public class DarculaUIUtil {
 
   public static class MouseHoverPropertyTrigger extends MouseAdapter {
     private final JComponent repaintComponent;
-    private final String     hoverProperty;
+    private final String hoverProperty;
 
     public MouseHoverPropertyTrigger(@NotNull JComponent repaintComponent, @NotNull String hoverProperty) {
       this.repaintComponent = repaintComponent;
@@ -453,7 +465,6 @@ public class DarculaUIUtil {
   }
 
   /**
-   *
    * @deprecated use BUTTON_ARC.get() instead
    */
   @Deprecated
@@ -467,22 +478,19 @@ public class DarculaUIUtil {
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
     return enabled ?
-            focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
-            JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
+           focused ? JBColor.namedColor("Component.focusedBorderColor", JBColor.namedColor("Outline.focusedColor", 0x87AFDA)) :
+           JBColor.namedColor("Component.borderColor", JBColor.namedColor("Outline.color", Gray.xBF)) :
            JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
   }
 
+  @Deprecated
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
-    return enabled ?
-      editable ? JBColor.namedColor("ComboBox.ArrowButton.background", JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC)) :
-                 JBColor.namedColor("ComboBox.ArrowButton.nonEditableBackground", JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC))
-      : UIUtil.getPanelBackground();
+    return JBUI.CurrentTheme.Arrow.backgroundColor(enabled, editable);
   }
 
+  @Deprecated
   public static Color getArrowButtonForegroundColor(boolean enabled) {
-    return enabled ?
-      JBColor.namedColor("ComboBox.ArrowButton.iconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonForeground", Gray.x66)) :
-      JBColor.namedColor("ComboBox.ArrowButton.disabledIconColor", JBColor.namedColor("ComboBox.darcula.arrowButtonDisabledForeground", Gray.xAB));
+    return JBUI.CurrentTheme.Arrow.foregroundColor(enabled);
   }
 
   public static Dimension maximize(@Nullable Dimension s1, @NotNull Dimension s2) {

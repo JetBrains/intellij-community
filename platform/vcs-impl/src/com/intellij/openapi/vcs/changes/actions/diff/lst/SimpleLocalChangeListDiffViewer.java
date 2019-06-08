@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
@@ -45,10 +45,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -104,7 +102,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     myExcludeAllCheckboxPanel = new ExcludeAllCheckboxPanel();
     JPanel titleWithCheckbox = JBUI.Panels.simplePanel(titles.get(1)).addToLeft(myExcludeAllCheckboxPanel);
 
-    return DiffUtil.createSyncHeightComponents(ContainerUtil.list(titles.get(0), titleWithCheckbox));
+    return DiffUtil.createSyncHeightComponents(Arrays.asList(titles.get(0), titleWithCheckbox));
   }
 
   @NotNull
@@ -136,7 +134,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     try {
       indicator.checkCanceled();
 
-      TrackerData data = ReadAction.compute(() -> {
+      TrackerData data = ReadAction.compute(() -> partialTracker.readLock(() -> {
         boolean isReleased = partialTracker.isReleased();
         boolean isOperational = partialTracker.isOperational();
         List<String> affectedChangelistIds = partialTracker.getAffectedChangeListsIds();
@@ -153,7 +151,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
         TrackerDiffData diffData = new TrackerDiffData(ranges, localText, vcsText, trackerVcsText);
         return new TrackerData(isReleased, affectedChangelistIds, diffData);
-      });
+      }));
 
 
       if (data.isReleased) {
@@ -203,7 +201,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
     if (myTextDiffProvider.isHighlightingDisabled()) {
-      return apply(new CompareData(null, ranges.isEmpty()));
+      return apply(createCompareData(null, ranges.isEmpty()));
     }
 
 
@@ -226,7 +224,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       changes.addAll(ContainerUtil.map(rangeFragments, fragment -> new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit)));
     }
 
-    return apply(new CompareData(changes, isContentsEqual));
+    return apply(createCompareData(changes, isContentsEqual));
   }
 
   @Override

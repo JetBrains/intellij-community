@@ -33,6 +33,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,10 +46,7 @@ import java.util.Optional;
 */
 public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement> {
 
-  private final JList myList;
-
-  public SearchEverywherePsiRenderer(JList list) {
-    myList = list;
+  public SearchEverywherePsiRenderer() {
     setFocusBorderEnabled(false);
     setLayout(new BorderLayout() {
       @Override
@@ -78,15 +76,17 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     return StringUtil.notNullize(name, "<unnamed>");
   }
 
+  @Nullable
   @Override
   protected String getContainerText(PsiElement element, String name) {
-    return getSymbolContainerText(name, element);
+    return getContainerTextForLeftComponent(element, name, -1, null);
   }
 
-  private String getSymbolContainerText(String name, PsiElement element) {
+  @Nullable
+  @Override
+  protected String getContainerTextForLeftComponent(PsiElement element, String name, int maxWidth, FontMetrics fm) {
     String text = SymbolPresentationUtil.getSymbolContainerText(element);
 
-    if (myList.getWidth() == 0) return text;
     if (text == null) return null;
 
     if (text.startsWith("(") && text.endsWith(")")) {
@@ -119,11 +119,10 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
 
     boolean in = text.startsWith("in ");
     if (in) text = text.substring(3);
-    FontMetrics fm = myList.getFontMetrics(myList.getFont());
-    int maxWidth = myList.getWidth() - fm.stringWidth(name) - 16 - myRightComponentWidth - 20;
     String left = in ? "(in " : "(";
     String right = ")";
     String adjustedText = left + text + right;
+    if (maxWidth < 0) return adjustedText;
 
     int fullWidth = fm.stringWidth(adjustedText);
     if (fullWidth < maxWidth) return adjustedText;

@@ -7,18 +7,9 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.containers.MultiMap
-import org.junit.Before
 import org.junit.Test
 
 class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
-  private lateinit var searcher: AnnotationsLocationSearcher
-
-  @Before
-  override fun setUp() {
-    super.setUp()
-
-    searcher = AnnotationsLocationSearcher.getInstance(getProject())
-  }
 
   private fun configureExtensionPoint(secondProvider: AnnotationsLocationProvider? = null) {
     val testAnnotationProvider = TestAnnotationProvider()
@@ -34,7 +25,7 @@ class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
     configureExtensionPoint()
 
     val library = createLibrary("unknown-library")
-    assertEmpty(searcher.findAnnotationsLocation(library, null, null, null))
+    assertEmpty(AnnotationsLocationSearcher.findAnnotationsLocation(library, null, null, null))
   }
 
   @Test
@@ -42,7 +33,7 @@ class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
     configureExtensionPoint()
 
     val library = createLibrary("known-library-name")
-    assertSize(1, searcher.findAnnotationsLocation(library, null, null, null))
+    assertSize(1, AnnotationsLocationSearcher.findAnnotationsLocation(library, null, null, null))
   }
 
   @Test
@@ -57,7 +48,7 @@ class AnnotationsLocationSearcherTest : LightPlatformTestCase() {
 
     configureExtensionPoint(secondProvider)
     val library = createLibrary("known-library-name")
-    assertSize(2, searcher.findAnnotationsLocation(library, null, null, null))
+    assertSize(2, AnnotationsLocationSearcher.findAnnotationsLocation(library, null, null, null))
   }
 
   private fun createLibrary(libraryName: String): Library {

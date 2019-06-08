@@ -1,11 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -18,7 +16,6 @@ import java.util.*;
 
 @State(name = "masterDetails", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
-  private final SkipDefaultValuesSerializationFilters mySerializationFilter = new SkipDefaultValuesSerializationFilters();
   private final Map<String, ComponentState> myStates = new HashMap<>();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
@@ -30,11 +27,11 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
     ComponentState state = myStates.get(key);
     if (state == null) return null;
     final Element settings = state.mySettings;
-    return settings != null ? XmlSerializer.deserialize(settings, stateClass) : null;
+    return settings == null ? null : XmlSerializer.deserialize(settings, stateClass);
   }
 
   public void setComponentState(@NotNull @NonNls String key, @NotNull MasterDetailsState state) {
-    final Element element = XmlSerializer.serialize(state, mySerializationFilter);
+    final Element element = XmlSerializer.serialize(state);
     final ComponentState componentState = new ComponentState();
     componentState.myKey = key;
     componentState.mySettings = element;

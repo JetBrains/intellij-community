@@ -3,6 +3,7 @@ package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +27,11 @@ public class DeprecationInspection extends DeprecationInspectionBase {
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES,
-                                         IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED,
-                                         IGNORE_IN_SAME_OUTERMOST_CLASS, false, null);
+    return ApiUsageUastVisitor.createPsiElementVisitor(
+      new DeprecatedApiUsageProcessor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES,
+                                      IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED,
+                                      IGNORE_IN_SAME_OUTERMOST_CLASS, false, null)
+    );
   }
 
   @Override

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +13,6 @@ import java.util.List;
  * @see Block#getSpacing(Block, Block)
  */
 public abstract class Spacing {
-  private static final NotNullLazyValue<Formatter> FORMATTER = NotNullLazyValue.createValue(() -> Formatter.getInstance());
-
   /**
    * Creates a regular spacing setting instance.
    *
@@ -37,7 +34,7 @@ public abstract class Spacing {
                                       int minLineFeeds,
                                       boolean keepLineBreaks,
                                       int keepBlankLines) {
-    return FORMATTER.getValue().createSpacing(minSpaces, maxSpaces, minLineFeeds, keepLineBreaks, keepBlankLines);
+    return Formatter.getInstance().createSpacing(minSpaces, maxSpaces, minLineFeeds, keepLineBreaks, keepBlankLines);
   }
 
   /**
@@ -62,7 +59,7 @@ public abstract class Spacing {
                                       boolean keepLineBreaks,
                                       int keepBlankLines,
                                       int prefLineFeeds) {
-    return FORMATTER.getValue().createSpacing(minSpaces, maxSpaces, minLineFeeds, keepLineBreaks, keepBlankLines, prefLineFeeds);
+    return Formatter.getInstance().createSpacing(minSpaces, maxSpaces, minLineFeeds, keepLineBreaks, keepBlankLines, prefLineFeeds);
   }
 
   /**
@@ -71,7 +68,7 @@ public abstract class Spacing {
    * @return the spacing setting instance.
    */
   public static Spacing getReadOnlySpacing() {
-    return FORMATTER.getValue().getReadOnlySpacing();
+    return Formatter.getInstance().getReadOnlySpacing();
   }
 
   /**
@@ -113,8 +110,7 @@ public abstract class Spacing {
                                                  boolean keepLineBreaks,
                                                  int keepBlankLines)
   {
-    return FORMATTER
-      .getValue().createDependentLFSpacing(minSpaces, maxSpaces, dependency, keepLineBreaks, keepBlankLines, DependentSpacingRule.DEFAULT);
+    return Formatter.getInstance().createDependentLFSpacing(minSpaces, maxSpaces, dependency, keepLineBreaks, keepBlankLines, DependentSpacingRule.DEFAULT);
   }
 
   /**
@@ -144,7 +140,7 @@ public abstract class Spacing {
                                                  int keepBlankLines,
                                                  @NotNull DependentSpacingRule rule)
   {
-    return FORMATTER.getValue().createDependentLFSpacing(minSpaces, maxSpaces, dependencyRange, keepLineBreaks, keepBlankLines, rule);
+    return Formatter.getInstance().createDependentLFSpacing(minSpaces, maxSpaces, dependencyRange, keepLineBreaks, keepBlankLines, rule);
   }
 
   /**
@@ -159,7 +155,7 @@ public abstract class Spacing {
    */
   public static Spacing createSafeSpacing(boolean keepLineBreaks,
                                           int keepBlankLines) {
-    return FORMATTER.getValue().createSafeSpacing(keepLineBreaks, keepBlankLines);
+    return Formatter.getInstance().createSafeSpacing(keepLineBreaks, keepBlankLines);
   }
 
   /**
@@ -182,6 +178,6 @@ public abstract class Spacing {
                                                         final int maxSpaces,
                                                         final boolean keepLineBreaks,
                                                         final int keepBlankLines) {
-    return FORMATTER.getValue().createKeepingFirstColumnSpacing(minSpaces, maxSpaces, keepLineBreaks, keepBlankLines);
+    return Formatter.getInstance().createKeepingFirstColumnSpacing(minSpaces, maxSpaces, keepLineBreaks, keepBlankLines);
   }
 }

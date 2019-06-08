@@ -27,6 +27,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
+import git4idea.history.GitHistoryUtils;
 import git4idea.history.GitLogUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +77,7 @@ public class GitRebaseOverMergeProblem {
                                    @NotNull String currentRef) {
     String range = baseRef + ".." + currentRef;
     try {
-      List<GitCommit> commits = GitLogUtil.collectFullDetails(project, root, range, "--merges");
+      List<GitCommit> commits = GitHistoryUtils.history(project, root, range, "--merges");
       return StreamEx.of(commits).anyMatch(commit -> !commit.getChanges().isEmpty());
     }
     catch (VcsException e) {

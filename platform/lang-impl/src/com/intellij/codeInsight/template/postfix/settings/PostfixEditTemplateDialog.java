@@ -8,8 +8,8 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,10 +59,9 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return FormBuilder.createFormBuilder()
-                      .addLabeledComponent("Key:", myTemplateNameTextField)
-                      .addComponent(myEditor.getComponent())
-                      .addComponentFillVertically(new Spacer(), 0)
-                      .getPanel();
+      .addLabeledComponent("Key:", myTemplateNameTextField)
+      .addComponentFillVertically(myEditor.getComponent(), UIUtil.DEFAULT_VGAP)
+      .getPanel();
   }
 
   @Nullable

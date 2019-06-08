@@ -28,7 +28,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.ObjectUtils.sentinel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.vcs.commit.CommitMessageInspectionProfile.getSubjectRightMargin
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
 import java.awt.Point
 import javax.swing.JList
 import javax.swing.ListSelectionModel.SINGLE_SELECTION
@@ -91,6 +91,8 @@ class ShowMessageHistoryAction : DumbAwareAction() {
         }
 
         override fun onClosed(event: LightweightWindowEvent) {
+          // IDEA-195094 Regression: New CTRL-E in "commit changes" breaks keyboard shortcuts
+          commitMessage.editorField.requestFocusInWindow()
           // Use invokeLater() as onClosed() is called before callback from setItemChosenCallback
           getApplication().invokeLater { chosenMessage ?: cancelPreview(project, commitMessage) }
         }

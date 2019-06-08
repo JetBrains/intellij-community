@@ -1,6 +1,8 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.UsageView;
@@ -27,7 +29,9 @@ public class UsageViewContext {
 
   public void configure(@NotNull UsageViewPresentation presentation) {
     final String pattern = myConfiguration.getMatchOptions().getSearchPattern();
-    final String scopeText = myConfiguration.getMatchOptions().getScope().getDisplayName();
+    SearchScope scope = myConfiguration.getMatchOptions().getScope();
+    assert scope != null;
+    final String scopeText = scope.getDisplayName();
     presentation.setScopeText(scopeText);
     final String usagesString = SSRBundle.message("occurrences.of", pattern);
     presentation.setUsagesString(usagesString);
@@ -36,6 +40,7 @@ public class UsageViewContext {
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences", scopeText));
     presentation.setTargetsNodeText(SSRBundle.message("targets.node.text"));
     presentation.setCodeUsages(false);
+    presentation.setUsageTypeFilteringAvailable(true);
   }
 
   protected void configureActions() {}

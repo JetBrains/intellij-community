@@ -24,19 +24,19 @@
  */
 package org.jetbrains.plugins.javaFX.manifest;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.header.HeaderParser;
 import org.jetbrains.lang.manifest.header.HeaderParserProvider;
 import org.jetbrains.lang.manifest.header.impl.StandardHeaderParser;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class JavaFxManifestHeaderParsers implements HeaderParserProvider {
   private final Map<String, HeaderParser> myParsers;
 
   public JavaFxManifestHeaderParsers() {
-    myParsers = ContainerUtil.newHashMap();
+    myParsers = new HashMap<>();
     myParsers.put("JavaFX-Application-Class", StandardHeaderParser.INSTANCE);
     myParsers.put("JavaFX-Version", StandardHeaderParser.INSTANCE);
     myParsers.put("JavaFX-Class-Path", StandardHeaderParser.INSTANCE);

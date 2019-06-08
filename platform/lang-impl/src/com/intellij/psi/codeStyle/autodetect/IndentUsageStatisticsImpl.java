@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +7,7 @@ import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntIterator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -37,8 +24,8 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private int myTotalLinesWithWhiteSpaces = 0;
 
   private final TIntIntHashMap myIndentToUsagesMap = new TIntIntHashMap();
-  private List<IndentUsageInfo> myIndentUsages = ContainerUtil.newArrayList();
-  private final Stack<IndentData> myParentIndents = ContainerUtil.newStack(new IndentData(0, 0));
+  private List<IndentUsageInfo> myIndentUsages = new ArrayList<>();
+  private final Stack<IndentData> myParentIndents = new Stack<>(new IndentData(0, 0));
 
   public IndentUsageStatisticsImpl(@NotNull List<? extends LineIndentInfo> lineInfos) {
     myLineInfos = lineInfos;
@@ -49,7 +36,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
 
   @NotNull
   private static List<IndentUsageInfo> toIndentUsageList(@NotNull TIntIntHashMap indentToUsages) {
-    List<IndentUsageInfo> indentUsageInfos = ContainerUtil.newArrayList();
+    List<IndentUsageInfo> indentUsageInfos = new ArrayList<>();
     TIntIntIterator it = indentToUsages.iterator();
     while (it.hasNext()) {
       it.advance();

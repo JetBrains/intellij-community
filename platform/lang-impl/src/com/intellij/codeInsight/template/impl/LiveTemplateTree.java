@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.ide.CopyProvider;
@@ -28,7 +14,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.JdomKt;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -101,7 +86,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
                                           template -> JDOMUtil.writeElement(
                                             TemplateSettings.serializeTemplate(template, templateSettings.getDefaultTemplate(template), TemplateContext.getIdToType())),
                                           SystemProperties.getLineSeparator())));
-    
+
   }
 
   @Override
@@ -117,7 +102,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
   @Override
   public boolean isPastePossible(@NotNull DataContext dataContext) {
     if (myConfigurable.getSingleSelectedGroup() == null) return false;
-    
+
     String s = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     return s != null && s.trim().startsWith("<template ");
   }
@@ -136,7 +121,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     assert buffer != null;
 
     try {
-      for (Element templateElement : JdomKt.loadElement("<root>" + buffer + "</root>").getChildren(TemplateSettings.TEMPLATE)) {
+      for (Element templateElement : JDOMUtil.load("<root>" + buffer + "</root>").getChildren(TemplateSettings.TEMPLATE)) {
         TemplateImpl template = TemplateSettings.readTemplateFromElement(group.getName(), templateElement, getClass().getClassLoader());
         while (group.containsTemplate(template.getKey(), template.getId())) {
           template.setKey(template.getKey() + "1");

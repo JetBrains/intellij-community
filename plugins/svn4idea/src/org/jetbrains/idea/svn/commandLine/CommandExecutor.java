@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutionException;
@@ -25,6 +25,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,7 +65,7 @@ public class CommandExecutor {
       myListeners.addListener(new CommandCancelTracker());
     }
     myLock = new Object();
-    myTempFiles = ContainerUtil.newArrayList();
+    myTempFiles = new ArrayList<>();
     myCommandLine = createCommandLine();
     myCommandLine.setExePath(exePath);
     myCommandLine.setWorkDirectory(command.getWorkingDirectory());
@@ -116,7 +118,7 @@ public class CommandExecutor {
         beforeCreateProcess();
         myProcess = createProcess();
         myHandler = createProcessHandler();
-        myProcessWriter = new OutputStreamWriter(myHandler.getProcessInput());
+        myProcessWriter = new OutputStreamWriter(myHandler.getProcessInput(), StandardCharsets.UTF_8);
         startHandlingStreams();
       }
       catch (ExecutionException e) {

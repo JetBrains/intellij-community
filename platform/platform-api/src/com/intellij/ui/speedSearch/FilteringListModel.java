@@ -123,11 +123,11 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     return myOriginalModel;
   }
 
-  public void addAll(List<T> elements) {
+  public void addAll(List<? extends T> elements) {
     ListUtil.addAllItems(myOriginalModel, elements);
   }
 
-  public void replaceAll(List<T> elements) {
+  public void replaceAll(List<? extends T> elements) {
     myData.clear();
     ListUtil.removeAllItems(myOriginalModel);
     ListUtil.addAllItems(myOriginalModel, elements);

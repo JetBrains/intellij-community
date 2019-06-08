@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.components.*;
@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newTreeSet;
 import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
 import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
@@ -396,7 +395,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   public static class AuthStorage {
 
     @NotNull private final TreeSet<String> myKeys = newTreeSet();
-    @NotNull private final Map<String, Object> myStorage = newHashMap();
+    @NotNull private final Map<String, Object> myStorage = new HashMap<>();
 
     @NotNull
     public static String getKey(@NotNull String type, @NotNull String realm) {

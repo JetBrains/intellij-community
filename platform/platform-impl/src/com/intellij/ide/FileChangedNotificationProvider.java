@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -30,13 +31,21 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
   private static final Logger LOG = Logger.getInstance(FileChangedNotificationProvider.class);
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.changed.notification.panel");
 
-  public FileChangedNotificationProvider(@NotNull Project project) {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(project);
+  public FileChangedNotificationProvider() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
 
     connection.subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
       @Override
       public void onFrameActivated() {
-        if (!project.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+        if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+          return;
+        }
+
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          if (project.isDisposed()) {
+            continue;
+          }
+
           EditorNotifications notifications = EditorNotifications.getInstance(project);
           for (VirtualFile file : FileEditorManager.getInstance(project).getSelectedFiles()) {
             notifications.updateNotifications(file);
@@ -48,7 +57,15 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (!project.isDisposed() && !GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+        if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+          return;
+        }
+
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          if (project.isDisposed()) {
+            continue;
+          }
+
           Set<VirtualFile> openFiles = ContainerUtil.newHashSet(FileEditorManager.getInstance(project).getSelectedFiles());
           EditorNotifications notifications = EditorNotifications.getInstance(project);
           for (VFileEvent event : events) {
@@ -85,6 +102,7 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
     return null;
   }
 
+  @NotNull
   private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull Project project) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(IdeBundle.message("file.changed.externally.message"));

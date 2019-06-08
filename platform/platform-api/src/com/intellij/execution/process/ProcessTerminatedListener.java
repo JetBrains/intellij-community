@@ -20,10 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
 
 /**
  * @author dyoma
@@ -83,7 +82,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
       // Quote from http://support.microsoft.com/kb/308558:
       //   If the result code has the "C0000XXX" format, the task did not complete successfully (the "C" indicates an error condition).
       //   The most common "C" error code is "0xC000013A: The application terminated as a result of a CTRL+C".
-      result.append(" (0x").append(Integer.toHexString(exitCode).toUpperCase(Locale.ENGLISH));
+      result.append(" (0x").append(StringUtil.toUpperCase(Integer.toHexString(exitCode)));
       if (exitCode == 0xC000013A) {
         result.append(": interrupted by Ctrl+C");
       }

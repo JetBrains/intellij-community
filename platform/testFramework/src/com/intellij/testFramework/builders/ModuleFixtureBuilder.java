@@ -17,6 +17,7 @@
 package com.intellij.testFramework.builders;
 
 import com.intellij.testFramework.fixtures.ModuleFixture;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -29,7 +30,8 @@ public interface ModuleFixtureBuilder<T extends ModuleFixture> {
    * @param contentRootPath path to your content folder
    * @return current builder
    */
-  ModuleFixtureBuilder<T> addContentRoot(final String contentRootPath);
+  @NotNull
+  ModuleFixtureBuilder<T> addContentRoot(@NotNull String contentRootPath);
 
   /**
    * Add source root to the module configuration.
@@ -38,18 +40,20 @@ public interface ModuleFixtureBuilder<T extends ModuleFixture> {
    * @param sourceRootPath path to your source folder (relative to the first content root)
    * @return current builder
    */
-  ModuleFixtureBuilder<T> addSourceRoot(String sourceRootPath);
+  @NotNull
+  ModuleFixtureBuilder<T> addSourceRoot(@NotNull String sourceRootPath);
 
   /**
    * Sets compiler output path.
    *
    * @param outputPath absolute path.
    */
-  void setOutputPath(String outputPath);
+  void setOutputPath(@NotNull String outputPath);
 
-  void setTestOutputPath(String outputPath);
+  void setTestOutputPath(@NotNull String outputPath);
 
+  @NotNull
   T getFixture();
 
-  void addSourceContentRoot(String path);
+  void addSourceContentRoot(@NotNull String path);
 }

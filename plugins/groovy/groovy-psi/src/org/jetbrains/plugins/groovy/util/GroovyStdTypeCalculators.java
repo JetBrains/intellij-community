@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
@@ -31,11 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Sergey Evdokimov
  */
 public class GroovyStdTypeCalculators {
-
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("GrDescriptorReturnTypeCalculator getClosureReturnType");
-
-  private GroovyStdTypeCalculators() {
-  }
 
   public static class ClosureTypeExtractor implements PairFunction<GrMethodCall, PsiMethod, PsiType> {
     @Override
@@ -54,7 +47,7 @@ public class GroovyStdTypeCalculators {
 
       final GrClosableBlock finalClosure = closure;
 
-      return ourGuard.doPreventingRecursion(methodCall, true, (NullableComputable<PsiType>)() -> {
+      return RecursionManager.doPreventingRecursion(methodCall, true, () -> {
         PsiType returnType = finalClosure.getReturnType();
         if (PsiType.VOID.equals(returnType)) return null;
         return returnType;

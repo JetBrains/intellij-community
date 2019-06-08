@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,12 +10,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
-import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
@@ -60,13 +61,17 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   };
 
   public boolean TRACING_FILTERS_ENABLED = true;
-  public int DEBUGGER_TRANSPORT;
+
+  @OptionTag("DEBUGGER_TRANSPORT")
+  private int DEBUGGER_TRANSPORT;
+
   public boolean FORCE_CLASSIC_VM = true;
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
-  public boolean ENABLE_MEMORY_AGENT =
+  public volatile boolean ENABLE_MEMORY_AGENT =
     ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isUnitTestMode();
+  public boolean ALWAYS_SMART_STEP_INTO = true;
   public boolean SKIP_SYNTHETIC_METHODS = true;
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
@@ -116,7 +121,11 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @Nullable
   @Override
   public Element getState() {
-    Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
+    Element state = XmlSerializer.serialize(this);
+    if (state == null) {
+      state = new Element("state");
+    }
+
     try {
     if (!Arrays.equals(DEFAULT_STEPPING_FILTERS, mySteppingFilters)) {
       DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
@@ -140,7 +149,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   @Override
   public void loadState(@NotNull Element state) {
-    XmlSerializer.deserializeInto(this, state);
+    XmlSerializer.deserializeInto(state, this);
 
     try {
     List<Element> steppingFiltersElement = state.getChildren("filter");
@@ -179,6 +188,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       ALWAYS_DEBUG == secondSettings.ALWAYS_DEBUG &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       ENABLE_MEMORY_AGENT == secondSettings.ENABLE_MEMORY_AGENT &&
+      ALWAYS_SMART_STEP_INTO == secondSettings.ALWAYS_SMART_STEP_INTO &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
       SKIP_CONSTRUCTORS == secondSettings.SKIP_CONSTRUCTORS &&
@@ -341,5 +351,18 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public interface CapturePointsSettingsListener extends EventListener{
     void capturePointsChanged();
+  }
+
+  @Transient
+  public int getTransport() {
+    if (!SystemInfo.isWindows) {
+      return SOCKET_TRANSPORT;
+    }
+    return DEBUGGER_TRANSPORT;
+  }
+
+  @Transient
+  public void setTransport(int transport) {
+    DEBUGGER_TRANSPORT = transport;
   }
 }

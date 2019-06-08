@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.testFramework.PsiTestUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.LambdaBodyCanBeCodeBlockInspection;
@@ -35,4 +36,11 @@ public class LambdaBodyCanBeCodeBlockFixTest extends IGQuickFixesTestCase {
   public void testVoidCompatibleInExpr() {
     doTest();
   }
+
+  public void testLambdaWithInvalidCodeInside() {
+    myFixture.configureByFile(myRelativePath + "/" + getTestName(false) + ".java");
+    myFixture.launchAction(myFixture.findSingleIntention(myDefaultHint));
+    PsiTestUtil.checkFileStructure(myFixture.getFile());
+  }
+
 }

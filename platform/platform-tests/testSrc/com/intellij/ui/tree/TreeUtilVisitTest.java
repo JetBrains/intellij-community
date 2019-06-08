@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.TreeUtil;
@@ -11,6 +9,7 @@ import org.junit.Test;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -648,7 +647,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedUserObjectsWithCollapsedPath33Under33() {
-    testCollectExpandedUserObjects(set(), test -> {
+    testCollectExpandedUserObjects(new HashSet<>(), test -> {
       test.getTree().collapseRow(15); // 33
       TreePath root = test.getTree().getPathForRow(15); // 33
       return TreeUtil.collectExpandedUserObjects(test.getTree(), root);

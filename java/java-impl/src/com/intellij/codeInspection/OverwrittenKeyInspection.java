@@ -103,7 +103,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       PsiExpression arg = call.getArgumentList().getExpressions()[0];
       Object key = getKey(arg);
       if (key == null) return statement;
-      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(call.getMethodExpression()));
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()));
       if (qualifier == null) return statement;
       PsiVariable qualifierVar =
         qualifier instanceof PsiReferenceExpression ? tryCast(((PsiReferenceExpression)qualifier).resolve(), PsiVariable.class) : null;
@@ -116,7 +116,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         PsiMethodCallExpression nextCall = tryCast(nextStatement.getExpression(), PsiMethodCallExpression.class);
         if (!myMatcher.test(nextCall)) break;
         PsiExpression nextQualifier =
-          PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(nextCall.getMethodExpression()));
+          PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(nextCall.getMethodExpression()));
         if (nextQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, nextQualifier)) break;
         if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, nextCall.getArgumentList())) break;
         PsiExpression nextArg = nextCall.getArgumentList().getExpressions()[0];

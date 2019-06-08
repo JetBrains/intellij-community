@@ -57,4 +57,9 @@ class TypeInsightTest extends GroovyLatestTest implements TypingTest {
     expressionTypeTest '--1f', JAVA_LANG_DOUBLE
     expressionTypeTest '--1d', JAVA_LANG_DOUBLE
   }
+
+  @Test
+  void 'intdiv'() {
+    expressionTypeTest '1.intdiv(2)', JAVA_LANG_INTEGER
+  }
 }

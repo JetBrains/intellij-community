@@ -3,10 +3,12 @@ package com.intellij.ide;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -26,7 +28,7 @@ import java.beans.PropertyChangeSupport;
   storages = @Storage(GeneralSettings.IDE_GENERAL_XML),
   reportStatistic = true
 )
-public class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
+public final class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final String IDE_GENERAL_XML = "ide.general.xml";
 
   public static final int OPEN_PROJECT_ASK = -1;
@@ -69,12 +71,9 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   public GeneralSettings() {
   }
 
-  public void addPropertyChangeListener(PropertyChangeListener listener){
-    myPropertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  public void removePropertyChangeListener(PropertyChangeListener listener){
-    myPropertyChangeSupport.removePropertyChangeListener(listener);
+  public void addPropertyChangeListener(@NotNull String propertyName, @NotNull Disposable parentDisposable, @NotNull PropertyChangeListener listener) {
+    myPropertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+    Disposer.register(parentDisposable, () -> myPropertyChangeSupport.removePropertyChangeListener(propertyName, listener));
   }
 
   public String getBrowserPath() {

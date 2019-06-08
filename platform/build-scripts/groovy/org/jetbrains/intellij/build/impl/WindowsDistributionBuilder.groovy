@@ -42,11 +42,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           exclude(name: "breakgen*")
         }
       }
-      if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {
-        fileset(dir: buildContext.productProperties.yourkitAgentBinariesDirectoryPath) {
-          include(name: "yjpagent*.dll")
-        }
-      }
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
 
@@ -79,8 +74,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     /* Android Studio: no need to download JREs
     def arch = customizer.bundledJreArchitecture
     //do not include win32 launcher into winzip with 9+ jbr bundled
-    def List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
-    def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
+    List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
+    String jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
     if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && buildContext.bundledJreManager.is32bitArchSupported()) {
@@ -113,7 +108,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 /* Android Studio: removed by Change Idc07b110 / commit f20681e
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, !buildContext.bundledJreManager.is32bitArchSupported() ? excludeList : [])
       if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath, excludeList)
+        buildWinZip([secondJreDirectoryPath], ".win", winDistPath, excludeList)
       }
     }
 
@@ -138,7 +133,7 @@ Android Studio: removed by Change Idc07b110 / commit f20681e */
       if (secondJreDirectoryPath != null) {
         generateProductJson(productJsonDir, secondJreDirectoryPath != null)
         new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
       }
     } */
   }
@@ -184,9 +179,8 @@ Android Studio: removed by Change Idc07b110 / commit f20681e */
 
   private void generateVMOptions(String winDistPath, Collection<JvmArchitecture> architectures) {
     architectures.each {
-      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName)
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
       new File(winDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }
 
@@ -310,7 +304,7 @@ TODO(b/118034991): generate product-info.json files (or not) */
   private void generateProductJson(String targetDir, boolean isJreIncluded) {
     def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
-    def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
+    def javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }

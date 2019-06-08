@@ -5,8 +5,8 @@ class AccessingProtectedMembersNotFromSubclass {
     ProtectedMembers aClass = new ProtectedMembers();
     aClass.<warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>();
     ProtectedMembers.<warning descr="Method ProtectedMembers.staticMethod() is protected and used not through a subclass here, but declared in a different module 'dep'">staticMethod</warning>();
-    <warning descr="Constructor ProtectedConstructors.ProtectedConstructors() is protected and used not through a subclass here, but declared in a different module 'dep'">new ProtectedConstructors()</warning>;
-    <warning descr="Constructor ProtectedConstructors.ProtectedConstructors(int) is protected and used not through a subclass here, but declared in a different module 'dep'">new ProtectedConstructors(1)</warning>;
+    new <warning descr="Constructor ProtectedConstructors.ProtectedConstructors() is protected and used not through a subclass here, but declared in a different module 'dep'">ProtectedConstructors</warning>();
+    new <warning descr="Constructor ProtectedConstructors.ProtectedConstructors(int) is protected and used not through a subclass here, but declared in a different module 'dep'">ProtectedConstructors</warning>(1);
     new ProtectedConstructors() {};
     new ProtectedConstructors(1) {};
   }

@@ -619,7 +619,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     Set<String> openPaths;
     boolean forceNewFrame = true;
     synchronized (myStateLock) {
-      openPaths = ContainerUtil.newLinkedHashSet(myState.openPaths);
+      openPaths = new LinkedHashSet<>(myState.openPaths);
       if (openPaths.isEmpty()) {
         openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
         forceNewFrame = false;
@@ -677,14 +677,14 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   private final class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
-    public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
+    public void appFrameCreated(@NotNull List<String> commandLineArgs, @NotNull final Ref<? super Boolean> willOpenProject) {
       if (willReopenProjectOnStart()) {
         willOpenProject.set(Boolean.TRUE);
       }
     }
 
     @Override
-    public void appStarting(Project projectFromCommandLine) {
+    public void appStarting(@Nullable Project projectFromCommandLine) {
       if (projectFromCommandLine != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
         return;
       }

@@ -158,25 +158,27 @@ public class DescriptorComposer extends HTMLComposerImpl {
       descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
     }
     final String reference = "#ref";
-    final boolean containsReference = descriptionTemplate.contains(reference);
     String res = descriptionTemplate.replaceAll(reference, anchor.toString());
-    final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
+    int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuilder lineAnchor = new StringBuilder();
     if (expression != null && lineNumber >= 0) {
       Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-      lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
-      lineAnchor.append("<a HREF=\"");
-      int offset = doc.getLineStartOffset(lineNumber);
-      offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-      lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
-      lineAnchor.append("\">");
-      lineAnchor.append((lineNumber + 1));
-      lineAnchor.append("</a>");
-      final String location = "#loc";
-      if (!res.contains(location)) {
-        res += " (" + location + ")";
+      if (doc != null && lineNumber < doc.getLineCount()) {
+        lineNumber = Math.min(lineNumber, doc.getLineCount() - 1);
+        lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
+        lineAnchor.append("<a HREF=\"");
+        int offset = doc.getLineStartOffset(lineNumber);
+        offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+        lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
+        lineAnchor.append("\">");
+        lineAnchor.append((lineNumber + 1));
+        lineAnchor.append("</a>");
+        final String location = "#loc";
+        if (!res.contains(location)) {
+          res += " (" + location + ")";
+        }
+        res = res.replaceAll(location, lineAnchor.toString());
       }
-      res = res.replaceAll(location, lineAnchor.toString());
     }
     buf.append(res.replace("#end", "").replace("#treeend",""));
     buf.append(BR).append(BR);

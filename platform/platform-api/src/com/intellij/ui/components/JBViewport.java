@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +19,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
-import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.UIResource;
-import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
@@ -447,13 +446,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         if (view instanceof JComponent) {
           JComponent component = (JComponent)view;
           if (component instanceof JTree) {
-            // invalidate cached preferred size
             JTree tree = (JTree)component;
-            TreeUI ui = tree.getUI();
-            if (ui instanceof BasicTreeUI) {
-              BasicTreeUI basic = (BasicTreeUI)ui;
-              basic.setLeftChildIndent(basic.getLeftChildIndent());
-            }
+            TreeUtil.invalidateCacheAndRepaint(tree.getUI());
           }
           component.revalidate();
         }

@@ -32,7 +32,7 @@ import javax.swing.*;
 
 public abstract class SuppressIntentionAction implements Iconable, IntentionAction {
   private String myText = "";
-  public static SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
+  public static final SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
 
   @Override
   public Icon getIcon(int flags) {

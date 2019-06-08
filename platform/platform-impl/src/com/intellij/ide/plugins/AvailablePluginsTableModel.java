@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.plugins;
 
@@ -92,14 +92,14 @@ public class AvailablePluginsTableModel extends PluginTableModel {
       IdeaPluginDescriptor existing = PluginManager.getPlugin(descr.getPluginId());
       if (existing != null) {
         PluginNode node = (PluginNode)descr;
-        node.setStatus(PluginNode.STATUS_INSTALLED);
+        node.setStatus(PluginNode.Status.INSTALLED);
         node.setInstalledVersion(existing.getVersion());
       }
     }
   }
 
   @Override
-  public void updatePluginsList(List<IdeaPluginDescriptor> list) {
+  public void updatePluginsList(List<? extends IdeaPluginDescriptor> list) {
     view.clear();
     myAvailableCategories.clear();
     filtered.clear();

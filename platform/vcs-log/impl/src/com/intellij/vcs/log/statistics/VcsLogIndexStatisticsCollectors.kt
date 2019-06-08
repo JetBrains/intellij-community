@@ -94,7 +94,7 @@ class VcsLogIndexCollectorState {
        storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
 class VcsLogIndexCollector : PersistentStateComponent<VcsLogIndexCollectorState> {
   private val lock = Any()
-  private lateinit var state: VcsLogIndexCollectorState
+  private var state: VcsLogIndexCollectorState
 
   init {
     synchronized(lock) {

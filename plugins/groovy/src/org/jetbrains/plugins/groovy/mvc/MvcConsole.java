@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -46,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -200,7 +199,7 @@ public class MvcConsole implements Disposable {
                                                  final String... input) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert module.getProject() == myProject;
-    
+
     final MyProcessInConsole process = new MyProcessInConsole(module, commandLine, onDone, showConsole, closeOnDone, input);
     if (isExecuting()) {
       myProcessQueue.add(process);
@@ -243,7 +242,7 @@ public class MvcConsole implements Disposable {
       handler = new OSProcessHandler(commandLine);
 
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      OutputStreamWriter writer = new OutputStreamWriter(handler.getProcess().getOutputStream());
+      OutputStreamWriter writer = new OutputStreamWriter(handler.getProcess().getOutputStream(), StandardCharsets.UTF_8);
       for (String s : input) {
         writer.write(s);
       }
@@ -340,7 +339,6 @@ public class MvcConsole implements Disposable {
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
       e.getPresentation().setEnabled(isEnabled());
     }
 

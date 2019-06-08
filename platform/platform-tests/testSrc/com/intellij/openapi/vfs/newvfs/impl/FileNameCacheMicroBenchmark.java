@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,13 +6,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -191,7 +177,7 @@ public class FileNameCacheMicroBenchmark {
 
   private static long runThreads(final int[] ids, int threadCount, final int queryCount, final TestIteration testIteration) throws InterruptedException, ExecutionException {
     long start = System.currentTimeMillis();
-    List<Future<?>> futures = ContainerUtil.newArrayList();
+    List<Future<?>> futures = new ArrayList<>();
     Random seedRandom = new Random();
     for (int i = 0; i < threadCount; i++) {
       final Random threadRandom = new Random(seedRandom.nextInt());

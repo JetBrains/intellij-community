@@ -16,7 +16,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
     { "BACK_SPACE",               "EditorBackSpace", "Images.Thumbnails.UpFolder"},
     { "ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
-                                  "EditorEnter", "Images.Thumbnails.EnterAction", "NextTemplateVariable", "PropertyInspectorActions.EditValue",
+                                  "EditorEnter", "Images.Thumbnails.EnterAction", "NextTemplateVariable",
                                   "SearchEverywhere.SelectItem"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
@@ -64,7 +64,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
-    { "ctrl alt H",               "CallHierarchy", "ChangesView.ShelveSilently"},
     { "ctrl alt U",               "ShowUmlDiagramPopup", "ChangesView.UnshelveSilently"},
     { "ctrl alt shift P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction"},
     { "control MINUS",            "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
@@ -89,6 +88,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control F10",        "Console.Open", "RunClass", "RunTargetAction"},
     { "shift control F8",         "ViewBreakpoints", "EditBreakpoint"},
     { "shift control G",          "ClassTemplateNavigation", "GoToClass"},
+    { "shift control H",          "ChangesView.ShelveSilently", "MethodHierarchy"},
     { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", "Terminal.MoveToolWindowTabLeft"},
     { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight", "Terminal.MoveToolWindowTabRight"},
     { "shift control T",          "GotoTest", "Images.ShowThumbnails", "RunDashboard.ShowConfigurations"},
@@ -301,6 +301,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control F7",         "HighlightUsagesInFile", "XDebugger.NewWatch"},
     { "shift control UP",         "EditorDuplicate", "ResizeToolWindowUp", },
     { "shift ctrl C",             "CommentByLineComment", "DatabaseView.CopyDdlAction"},
+    { "shift control H",          "ChangesView.ShelveSilently", "ReplaceInPath"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit"},
     });
@@ -350,7 +351,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
     { "shift meta F6",            "Diff.PrevChange", "PreviousTab"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
-    { "meta alt H",               "ChangesView.ShelveSilently", "RunDashboard.ShowConfigurations"}
     });
     put("Sublime Text", new String[][] {
     { "F2",                       "Arrangement.Rule.Edit", "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},

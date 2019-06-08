@@ -126,7 +126,7 @@ public class ExecutionModes {
                           @NotNull String commandLineString,
                           @NotNull ProcessOutput outputCollected) {
       super.onTimeout(processHandler, commandLineString, outputCollected);
-      String output = " stdout: " + outputCollected.getStdout() + "; stderr: " + outputCollected.getStderr();
+      String output = "\n    stdout: " + outputCollected.getStdout() + ";\n    stderr: " + outputCollected.getStderr();
       LOG.error("Timeout (" + getTimeout() + " sec) on executing: " + commandLineString + "; output collected: " + output);
     }
 

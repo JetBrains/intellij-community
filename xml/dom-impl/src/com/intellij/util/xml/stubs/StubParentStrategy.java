@@ -17,6 +17,7 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -76,7 +77,7 @@ public class StubParentStrategy implements DomParentStrategy {
   public XmlElement getXmlElement() {
     DomStub parentStub = myStub.getParentStub();
     if (parentStub == null) return null;
-    List<DomStub> children = parentStub.getChildrenStubs();
+    List<? extends Stub> children = parentStub.getChildrenStubs();
     if (children.isEmpty()) return null;
     XmlTag parentTag = parentStub.getHandler().getXmlTag();
     if (parentTag == null) return null;

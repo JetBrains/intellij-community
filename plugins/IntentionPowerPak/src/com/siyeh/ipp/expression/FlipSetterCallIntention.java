@@ -57,8 +57,9 @@ public class FlipSetterCallIntention extends Intention {
     if (!(argument instanceof PsiMethodCallExpression)) return;
     final PsiMethodCallExpression call2 = (PsiMethodCallExpression)argument;
 
-    final PsiExpression qualifierExpression1 = ExpressionUtils.getQualifierOrThis(call.getMethodExpression());
-    final PsiExpression qualifierExpression2 = ExpressionUtils.getQualifierOrThis(call2.getMethodExpression());
+    final PsiExpression qualifierExpression1 = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
+    final PsiExpression qualifierExpression2 = ExpressionUtils.getEffectiveQualifier(call2.getMethodExpression());
+    if (qualifierExpression1 == null || qualifierExpression2 == null) return;
     final PsiMethod setter = call.resolveMethod();
     final PsiMethod getter = call2.resolveMethod();
     final PsiMethod get = PropertyUtil.getReversePropertyMethod(setter);

@@ -149,7 +149,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     return kc == KeyEvent.VK_ESCAPE || skipAction(e, myActionsToSkip);
   }
 
-  private static boolean skipAction(KeyEvent e, List<AnAction> actionsToSkip) {
+  private static boolean skipAction(KeyEvent e, List<? extends AnAction> actionsToSkip) {
     if (actionsToSkip != null) {
       final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
       for (AnAction action : actionsToSkip) {
@@ -284,7 +284,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences());
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences(), null);
   }
 
   @Override

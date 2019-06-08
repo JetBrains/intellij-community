@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.Contract;
 
 import java.util.List;
@@ -129,7 +130,8 @@ class CompletionAssertions {
     final TextRange range = insertedElement.getTextRange();
     CharSequence fileCopyText = fileCopy.getViewProvider().getContents();
     if ((range.getEndOffset() > fileCopyText.length()) ||
-        !fileCopyText.subSequence(range.getStartOffset(), range.getEndOffset()).toString().equals(insertedElement.getText())) {
+        !isEquals(fileCopyText.subSequence(range.getStartOffset(), range.getEndOffset()),
+                  insertedElement.getNode().getChars())) {
       throw new RuntimeExceptionWithAttachments(
         "Inconsistent completion tree",
         "range=" + range,
@@ -137,6 +139,14 @@ class CompletionAssertions {
         createAstAttachment(fileCopy, originalFile),
         new Attachment("Element at caret.txt", insertedElement.getText()));
     }
+  }
+
+  private static boolean isEquals(CharSequence left, CharSequence right) {
+    if (left == right) return true;
+    if (left instanceof ImmutableCharSequence && right instanceof ImmutableCharSequence) {
+      return left.equals(right);
+    }
+    return left.toString().equals(right.toString());
   }
 
   static void assertCorrectOriginalFile(String prefix, PsiFile file, PsiFile copy) {

@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.SVGLoader;
-import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -16,8 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
+import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.util.ui.JBUIScale.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.TestScaleHelper.loadImage;
 import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 import static junit.framework.TestCase.assertEquals;
@@ -39,6 +39,16 @@ public class SvgIconSizeTest {
 
     test(ScaleContext.create(SYS_SCALE.of(1)));
     test(ScaleContext.create(SYS_SCALE.of(2)));
+
+    float currentSysScale = JBUI.sysScale();
+    if (currentSysScale != 2) {
+      JBUI.setSystemScaleFactor(2);
+      /*
+       * Test with the system scale equal to the current system scale.
+       */
+      test(ScaleContext.create(SYS_SCALE.of(2)));
+      JBUI.setSystemScaleFactor(currentSysScale);
+    }
 
     /*
      * Test overridden size.

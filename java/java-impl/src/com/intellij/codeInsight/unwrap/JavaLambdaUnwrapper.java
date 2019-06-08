@@ -53,7 +53,12 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
     }
 
     if (body instanceof PsiCodeBlock) {
-      context.extractFromCodeBlock((PsiCodeBlock)body, from);
+      if (from.getParent() instanceof PsiLambdaExpression) {
+        context.extractElement(body, from);
+      }
+      else {
+        context.extractFromCodeBlock((PsiCodeBlock)body, from);
+      }
     }
     else {
       context.extractElement(body, from);

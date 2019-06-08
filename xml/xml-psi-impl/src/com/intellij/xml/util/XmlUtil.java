@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -35,7 +35,6 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -123,7 +122,7 @@ public class XmlUtil {
   @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   @NonNls public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
-  public static final List<String> ourSchemaUrisList = Arrays.asList(SCHEMA_URIS);
+  public static final List<String> ourSchemaUrisList = ContainerUtil.immutableList(SCHEMA_URIS);
   public static final Key<Boolean> ANT_FILE_SIGN = new Key<>("FORCED ANT FILE");
   @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
@@ -805,7 +804,7 @@ public class XmlUtil {
     return processEnumerationValues(element, tagProcessor, new HashSet<>());
   }
 
-  private static boolean processEnumerationValues(XmlTag element, Processor<? super XmlTag> tagProcessor, Set<XmlTag> visited) {
+  private static boolean processEnumerationValues(XmlTag element, Processor<? super XmlTag> tagProcessor, Set<? super XmlTag> visited) {
     if (!visited.add(element)) return true;
     boolean exhaustiveEnum = true;
 
@@ -1044,20 +1043,14 @@ public class XmlUtil {
     final Map<String, List<String>> tags = new LinkedHashMap<>();
     final Map<String, List<MyAttributeInfo>> attributes = new LinkedHashMap<>();
 
-    try {
-      XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, true);
-      final XmlTag rootTag = doc.getRootTag();
-      computeTag(rootTag, tags, attributes, full);
+    final XmlTag rootTag = doc.getRootTag();
+    computeTag(rootTag, tags, attributes, full);
 
-      // For supporting not well-formed XML
-      for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
-        if (element instanceof XmlTag) {
-          computeTag((XmlTag)element, tags, attributes, full);
-        }
+    // For supporting not well-formed XML
+    for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
+      if (element instanceof XmlTag) {
+        computeTag((XmlTag)element, tags, attributes, full);
       }
-    }
-    finally {
-      XmlEntityRefImpl.setNoEntityExpandOutOfDocument(doc, false);
     }
 
     final StringBuilder buffer = new StringBuilder();

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("NotNullLazyKey");
   private final NotNullFunction<? super H, ? extends T> myFunction;
 
   private NotNullLazyKey(@NotNull @NonNls String name, @NotNull NotNullFunction<? super H, ? extends T> function) {
@@ -35,7 +34,7 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
   public final T getValue(@NotNull H h) {
     T data = h.getUserData(this);
     if (data == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       data = myFunction.fun(h);
       if (stamp.mayCacheNow()) {
         if (h instanceof UserDataHolderEx) {

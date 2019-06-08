@@ -286,7 +286,12 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
     if (!BitUtil.isSet(options, SHOW_REDUNDANT_MODIFIERS)
         ? list.hasExplicitModifier(PsiModifier.STATIC)
-        : list.hasModifierProperty(PsiModifier.STATIC)) appendModifier(buffer, PsiModifier.STATIC);
+        : list.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY) ||
+          !(element instanceof PsiClass && ((PsiClass)element).isEnum())) {
+        appendModifier(buffer, PsiModifier.STATIC);
+      }
+    }
 
     boolean isInterface = element instanceof PsiClass && ((PsiClass)element).isInterface();
     if (!isInterface && //cls modifier list
@@ -296,7 +301,12 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
 
     if (!BitUtil.isSet(options, SHOW_REDUNDANT_MODIFIERS)
         ? list.hasExplicitModifier(PsiModifier.FINAL)
-        : list.hasModifierProperty(PsiModifier.FINAL)) appendModifier(buffer, PsiModifier.FINAL);
+        : list.hasModifierProperty(PsiModifier.FINAL)) {
+      if (!BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY) ||
+          !(element instanceof PsiClass && ((PsiClass)element).isEnum())) {
+        appendModifier(buffer, PsiModifier.FINAL);
+      }
+    }
 
     if (list.hasModifierProperty(PsiModifier.NATIVE) && !BitUtil.isSet(options, JAVADOC_MODIFIERS_ONLY)) {
       appendModifier(buffer, PsiModifier.NATIVE);

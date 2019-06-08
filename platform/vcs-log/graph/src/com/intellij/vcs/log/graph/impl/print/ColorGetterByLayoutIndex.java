@@ -39,37 +39,37 @@ public class ColorGetterByLayoutIndex<CommitId> {
   }
 
   public int getColorId(@NotNull GraphElement element) {
-    int upNodeIndex, downNodeIndex;
     if (element instanceof GraphNode) {
-      upNodeIndex = ((GraphNode)element).getNodeIndex();
-      downNodeIndex = upNodeIndex;
+      int nodeIndex = ((GraphNode)element).getNodeIndex();
+      return getNodeColor(nodeIndex, getLayoutIndex(nodeIndex));
     }
     else {
       GraphEdge edge = (GraphEdge)element;
       NormalEdge normalEdge = LinearGraphUtils.asNormalEdge(edge);
-      if (normalEdge != null) {
-        upNodeIndex = normalEdge.up;
-        downNodeIndex = normalEdge.down;
+      if (normalEdge == null) {
+        int nodeIndex = LinearGraphUtils.getNotNullNodeIndex(edge);
+        return getNodeColor(nodeIndex, getLayoutIndex(nodeIndex));
       }
-      else {
-        upNodeIndex = LinearGraphUtils.getNotNullNodeIndex(edge);
-        downNodeIndex = upNodeIndex;
+
+      int upLayoutIndex = getLayoutIndex(normalEdge.up);
+      int downLayoutIndex = getLayoutIndex(normalEdge.down);
+
+      if (upLayoutIndex >= downLayoutIndex) {
+        return getNodeColor(normalEdge.up, upLayoutIndex);
       }
+
+      return getNodeColor(normalEdge.down, downLayoutIndex);
     }
+  }
 
-    int upLayoutIndex = getLayoutIndex(upNodeIndex);
-    int downLayoutIndex = getLayoutIndex(downNodeIndex);
-
-    CommitId headCommitId = getOneOfHeads(upNodeIndex);
-    if (upLayoutIndex != downLayoutIndex) {
-      return myColorManager.getColorOfFragment(headCommitId, Math.max(upLayoutIndex, downLayoutIndex));
-    }
-
-    if (upLayoutIndex == myPermanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(getHeadNodeId(upNodeIndex))) {
+  protected int getNodeColor(int nodeIndex, int layoutIndex) {
+    int headNodeId = getHeadNodeId(nodeIndex);
+    CommitId headCommitId = myPermanentGraphInfo.getPermanentCommitsInfo().getCommitId(headNodeId);
+    if (layoutIndex == myPermanentGraphInfo.getPermanentGraphLayout().getLayoutIndex(headNodeId)) {
       return myColorManager.getColorOfBranch(headCommitId);
     }
     else {
-      return myColorManager.getColorOfFragment(headCommitId, upLayoutIndex);
+      return myColorManager.getColorOfFragment(headCommitId, layoutIndex);
     }
   }
 
@@ -77,10 +77,6 @@ public class ColorGetterByLayoutIndex<CommitId> {
     int nodeId = getNodeId(upNodeIndex);
     if (nodeId < 0) return 0;
     return myPermanentGraphInfo.getPermanentGraphLayout().getOneOfHeadNodeIndex(nodeId);
-  }
-
-  private CommitId getOneOfHeads(int upNodeIndex) {
-    return myPermanentGraphInfo.getPermanentCommitsInfo().getCommitId(getHeadNodeId(upNodeIndex));
   }
 
   private int getLayoutIndex(int upNodeIndex) {

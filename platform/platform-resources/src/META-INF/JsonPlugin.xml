@@ -2,14 +2,6 @@
 
   <module value="com.intellij.modules.json"/>
 
-  <application-components>
-    <!-- Add your application components here -->
-  </application-components>
-
-  <actions>
-    <!-- Add your actions here -->
-  </actions>
-
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <fileTypeFactory implementation="com.intellij.json.json5.Json5FileTypeFactory"/>
@@ -18,7 +10,6 @@
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
-    <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
     <statusBarWidgetProvider implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetProvider" />
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
@@ -35,8 +26,7 @@
     <typedHandler implementation="com.intellij.json.editor.JsonTypedHandler" id="JsonTypedHandler"/>
     <copyPastePreProcessor implementation="com.intellij.json.editor.JsonCopyPasteProcessor"/>
     <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable"/>
-    <applicationService serviceInterface="com.intellij.json.editor.JsonEditorOptions"
-                        serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
+    <applicationService serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>

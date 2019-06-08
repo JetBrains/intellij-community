@@ -311,13 +311,13 @@
           "__compat": {
             "support": {
               "chrome": {
-                "version_added": true
+                "version_added": "61"
               },
               "chrome_android": {
-                "version_added": true
+                "version_added": "61"
               },
               "edge": {
-                "version_added": false
+                "version_added": "16"
               },
               "edge_mobile": {
                 "version_added": false
@@ -358,22 +358,22 @@
                 "version_added": false
               },
               "opera": {
-                "version_added": false
+                "version_added": "48"
               },
               "opera_android": {
-                "version_added": null
+                "version_added": "45"
               },
               "safari": {
-                "version_added": false
+                "version_added": "11"
               },
               "safari_ios": {
-                "version_added": false
+                "version_added": "11"
               },
               "samsunginternet_android": {
                 "version_added": true
               },
               "webview_android": {
-                "version_added": true
+                "version_added": "61"
               }
             },
             "status": {
@@ -633,7 +633,7 @@
                   "version_added": "48"
                 },
                 "opera_android": {
-                  "version_added": "48"
+                  "version_added": "45"
                 },
                 "safari": {
                   "version_added": "10.1"

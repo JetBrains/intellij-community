@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -8,9 +8,9 @@ import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,18 +28,16 @@ import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 
 public class BrowserUtil {
   // The pattern for 'scheme' mainly according to RFC1738.
-  // We have to violate the RFC since we need to distinguish
-  // real schemes from local Windows paths; The only difference
-  // with RFC is that we do not allow schemes with length=1 (in other case
-  // local paths like "C:/temp/index.html" would be erroneously interpreted as
-  // external URLs.)
+  // We have to violate the RFC since we need to distinguish real schemes from local Windows paths;
+  // the only difference with RFC is that we do not allow schemes with length=1
+  // (otherwise local paths like "C:/temp/index.html" would be incorrectly interpreted as URLs).
   private static final Pattern ourExternalPrefix = Pattern.compile("^[\\w+.\\-]{2,}:");
   private static final Pattern ourAnchorSuffix = Pattern.compile("#(.*)$");
 
   private BrowserUtil() { }
 
   public static boolean isAbsoluteURL(String url) {
-    return ourExternalPrefix.matcher(url.toLowerCase(Locale.ENGLISH)).find();
+    return ourExternalPrefix.matcher(StringUtil.toLowerCase(url)).find();
   }
 
   public static String getDocURL(String url) {
@@ -53,8 +50,12 @@ public class BrowserUtil {
     return isAbsoluteURL(url) ? VfsUtilCore.convertToURL(url) : new URL("file", "", url);
   }
 
+  public static void open(@NotNull String url) {
+    getBrowserLauncher().open(url);
+  }
+
   public static void browse(@NotNull VirtualFile file) {
-    browse(file.getUrl());
+    browse(file.getUrl(), null);
   }
 
   public static void browse(@NotNull File file) {
@@ -62,43 +63,27 @@ public class BrowserUtil {
   }
 
   public static void browse(@NotNull URL url) {
-    browse(url.toExternalForm());
+    browse(url.toExternalForm(), null);
   }
 
-  /**
-   * @deprecated Use {@link #browse(String)}
-   */
-  @Deprecated
-  public static void launchBrowser(@NotNull String url) {
-    browse(url);
-  }
-
-  public static void browse(@NotNull @NonNls String url) {
-    getBrowserLauncher().browse(url, null);
-  }
-
-  private static BrowserLauncher getBrowserLauncher() {
-    BrowserLauncher launcher = ApplicationManager.getApplication() == null ? null : BrowserLauncher.getInstance();
-    return launcher == null ? new BrowserLauncherAppless() : launcher;
-  }
-
-  public static void open(@NotNull String url) {
-    getBrowserLauncher().open(url);
-  }
-
-  /**
-   * tries to launch a browser using every possible way
-   */
   public static void browse(@NotNull URI uri) {
     getBrowserLauncher().browse(uri);
+  }
+
+  public static void browse(@NotNull String url) {
+    browse(url, null);
   }
 
   public static void browse(@NotNull String url, @Nullable Project project) {
     getBrowserLauncher().browse(url, null, project);
   }
 
+  private static BrowserLauncher getBrowserLauncher() {
+    return ApplicationManager.getApplication() != null ? BrowserLauncher.getInstance() : new BrowserLauncherAppless();
+  }
+
   @NotNull
-  public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName, boolean newWindowIfPossible) {
+  public static List<String> getOpenBrowserCommand(@NotNull String browserPathOrName, boolean newWindowIfPossible) {
     if (new File(browserPathOrName).isFile()) {
       return Collections.singletonList(browserPathOrName);
     }
@@ -136,4 +121,12 @@ public class BrowserUtil {
       return "";
     }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated Use {@link #browse(String)} */
+  @Deprecated
+  public static void launchBrowser(@NotNull String url) {
+    browse(url);
+  }
+  //</editor-fold>
 }

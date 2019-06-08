@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,6 +40,14 @@ public abstract class RunAnythingGroup {
    */
   @NotNull
   public abstract String getTitle();
+
+  /**
+   * @return Group icon to be presented to the left of the group separator rule
+   */
+  @Nullable
+  public Icon getIcon() {
+    return null;
+  }
 
   /**
    * @return Current group maximum number of items to be shown.
@@ -90,7 +99,7 @@ public abstract class RunAnythingGroup {
    * @return group title if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
   @Nullable
-  public static String getTitle(@NotNull Collection<RunAnythingGroup> groups, int titleIndex) {
+  public static String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return Optional.ofNullable(findGroup(groups, titleIndex)).map(RunAnythingGroup::getTitle).orElse(null);
   }
 
@@ -100,15 +109,34 @@ public abstract class RunAnythingGroup {
    * @return group if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
   @Nullable
-  public static RunAnythingGroup findGroup(@NotNull Collection<RunAnythingGroup> groups, int titleIndex) {
-    return groups.stream().filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst().orElse(null);
+  public static RunAnythingGroup findGroup(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
+    return groups.stream().filter(runAnythingGroup -> titleIndex == ((RunAnythingGroup)runAnythingGroup).myTitleIndex).findFirst().orElse(null);
+  }
+
+  /**
+   * Finds group {@code itemIndex} belongs to.
+   */
+  @Nullable
+  public static RunAnythingGroup findItemGroup(@NotNull List<? extends RunAnythingGroup> groups, int itemIndex) {
+    RunAnythingGroup runAnythingGroup = null;
+    for (RunAnythingGroup group : groups) {
+      if (group.myTitleIndex == -1) {
+        continue;
+      }
+      if (group.myTitleIndex > itemIndex) {
+        break;
+      }
+      runAnythingGroup = group;
+    }
+
+    return runAnythingGroup;
   }
 
   /**
    * Shifts {@link #myTitleIndex} starting from {@code baseIndex} to {@code shift}.
    */
-  private static void shiftTitleIndex(@NotNull Collection<RunAnythingGroup> groups, int baseIndex, int shift) {
-    groups.stream()
+  private static void shiftTitleIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int baseIndex, int shift) {
+    ((Collection<RunAnythingGroup>)groups).stream()
           .filter(runAnythingGroup -> runAnythingGroup.myTitleIndex != -1 && runAnythingGroup.myTitleIndex > baseIndex)
           .forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex += shift);
   }
@@ -123,8 +151,8 @@ public abstract class RunAnythingGroup {
   /**
    * Clears {@link #myTitleIndex} of all groups.
    */
-  private static void clearTitleIndex(@NotNull Collection<RunAnythingGroup> groups) {
-    groups.forEach(runAnythingGroup -> runAnythingGroup.myTitleIndex = -1);
+  private static void clearTitleIndex(@NotNull Collection<? extends RunAnythingGroup> groups) {
+    groups.forEach(runAnythingGroup -> ((RunAnythingGroup)runAnythingGroup).myTitleIndex = -1);
   }
 
   /**
@@ -160,7 +188,7 @@ public abstract class RunAnythingGroup {
   /**
    * Shifts {@link #myMoreIndex} and {@link #myTitleIndex} of all groups starting from {@code baseIndex} to {@code shift}.
    */
-  public static void shiftIndexes(@NotNull Collection<RunAnythingGroup> groups, int baseIndex, int shift) {
+  public static void shiftIndexes(@NotNull Collection<? extends RunAnythingGroup> groups, int baseIndex, int shift) {
     shiftTitleIndex(groups, baseIndex, shift);
     shiftMoreIndex(groups, baseIndex, shift);
   }
@@ -168,7 +196,7 @@ public abstract class RunAnythingGroup {
   /**
    * Clears {@link #myMoreIndex} and {@link #myTitleIndex} of all groups.
    */
-  public static void clearIndexes(@NotNull Collection<RunAnythingGroup> groups) {
+  public static void clearIndexes(@NotNull Collection<? extends RunAnythingGroup> groups) {
     clearTitleIndex(groups);
     clearMoreIndex(groups);
   }

@@ -340,14 +340,12 @@ public class ExceptionWorker {
   private static class StackFrameMatcher implements PsiElementFilter {
     private final String myMethodName;
     private final String myClassName;
-    private final String mySimpleName;
     private final boolean myHasDollarInName;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
       myMethodName = info.methodNameRange.substring(line);
       myClassName = info.classFqnRange.substring(line);
-      mySimpleName = StringUtil.getShortName(myClassName);
-      myHasDollarInName = mySimpleName.contains("$");
+      myHasDollarInName = StringUtil.getShortName(myClassName).contains("$");
     }
 
     @Override

@@ -15,7 +15,7 @@
  */
 repositories {
   maven {
-    url 'http://repo.labs.intellij.net/jet-sign'
+    url 'https://repo.labs.intellij.net/jet-sign'
   }
 }
 

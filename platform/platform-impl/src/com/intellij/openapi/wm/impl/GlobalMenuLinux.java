@@ -1,12 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.UIUtil;
 /* Android Studio: b/67589184
@@ -423,7 +423,7 @@ Android Studio: b/67589184 */
     return _findMenuItem(myRoots, uid);
   }
 
-  private static MenuItemInternal _findMenuItem(List<MenuItemInternal> kids, int uid) {
+  private static MenuItemInternal _findMenuItem(List<? extends MenuItemInternal> kids, int uid) {
     if (kids == null || kids.isEmpty())
       return null;
 
@@ -699,58 +699,45 @@ Android Studio: b/67589184 */
 
   public static boolean isAvailable() { return ourLib != null; }
 
-  private static boolean _isUnderVMWare() {
-    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
-    final GeneralCommandLine cmdLine = new GeneralCommandLine("lspci");
-    try {
-      final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
-      final String stdout = out.getStdout();
-      return stdout.toLowerCase().contains("vmware");
-    } catch (ExecutionException e) {
-      LOG.error(e);
-    }
-    return false;
-  }
-
   private static GlobalMenuLib _loadLibrary() {
     if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line
-    try {
-      if (!SystemInfo.isLinux
-          || Registry.is("linux.native.menu.force.disable")
-          || isCLionSwiftPluginInstalled()
-      )
-        return null;
-      if (!Experiments.isFeatureEnabled("linux.native.menu"))
-        return null;
-    } catch (Throwable e) {
-      LOG.error(e);
+    if (!SystemInfo.isLinux ||
+        Registry.is("linux.native.menu.force.disable") ||
+        !Experiments.isFeatureEnabled("linux.native.menu") ||
+        !JnaLoader.isLoaded() ||
+        isUnderVMWithSwiftPluginInstalled()) {
       return null;
     }
 
     try {
       NativeLibraryLoader.loadPlatformLibrary("dbm");
 
-      // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-      // the way we tell CF to interpret our char*
-      // May be removed if we use toStringViaUTF16
-      System.setProperty("jna.encoding", "UTF8");
-
-      final Map<String, Object> options = new HashMap<>();
-      return Native.loadLibrary("dbm", GlobalMenuLib.class, options);
-    } catch (UnsatisfiedLinkError ule) {
+      return Native.load("dbm", GlobalMenuLib.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    }
+    catch (UnsatisfiedLinkError ule) {
       LOG.info("disable global-menu integration because some of shared libraries isn't installed: " + ule);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       LOG.error(e);
-    } finally {
-      System.clearProperty("jna.encoding");
     }
 
     return null;
   }
 
-  private static boolean isCLionSwiftPluginInstalled() {
-    // Workaround OC-18001 CLion crashes after opening Swift project on Linux
-    return PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"));
+  private static boolean isUnderVMWithSwiftPluginInstalled() {
+    // Workaround OC-18001 OC-18634 CLion crashes after opening Swift project on Linux
+    if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
+      try {
+        String stdout = StringUtil.toLowerCase(
+          ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout());
+        return stdout.contains("vmware") || stdout.contains("virtualbox");
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    return false;
   }
 
   private static class MenuItemInternal {

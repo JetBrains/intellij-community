@@ -15,6 +15,7 @@
  */
 package com.intellij.credentialStore.kdbx;
 
+import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -53,7 +54,7 @@ final class HashedBlockOutputStream extends OutputStream {
   private final ByteArrayOutputStream blockOutputStream = new ByteArrayOutputStream();
   private boolean isClosed = false;
 
-  private final MessageDigest md = KdbxKt.sha256MessageDigest();
+  private final MessageDigest md = DigestUtil.sha256();
 
   HashedBlockOutputStream(OutputStream outputStream) {
     this.outputStream = outputStream;

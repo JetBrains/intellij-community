@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,26 +47,26 @@ public class IdeGlassPaneUtil {
     return (IdeGlassPane)gp;
   }
 
-  public static void installPainter(final JComponent target, final Painter painter, final Disposable parent) {
+  public static void installPainter(final JComponent target, final Painter painter, @NotNull Disposable parent) {
     final UiNotifyConnector connector = new UiNotifyConnector(target, new Activatable() {
-
-      IdeGlassPane myPane;
+      private IdeGlassPane myPane;
+      private Disposable myPanePainterListeners = Disposer.newDisposable();
 
       @Override
       public void showNotify() {
         IdeGlassPane pane = find(target);
         if (myPane != null && myPane != pane) {
-          myPane.removePainter(painter);
+          Disposer.dispose(myPanePainterListeners);
         }
         myPane = pane;
-        myPane.addPainter(target, painter, parent);
+        myPanePainterListeners = Disposer.newDisposable("PanePainterListeners");
+        Disposer.register(parent, myPanePainterListeners);
+        myPane.addPainter(target, painter, myPanePainterListeners);
       }
 
       @Override
       public void hideNotify() {
-        if (myPane != null) {
-          myPane.removePainter(painter);
-        }
+        Disposer.dispose(myPanePainterListeners);
       }
     });
     Disposer.register(parent, connector);

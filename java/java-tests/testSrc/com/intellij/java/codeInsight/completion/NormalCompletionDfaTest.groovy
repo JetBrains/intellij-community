@@ -142,11 +142,35 @@ public class Main {
 
     public static void main(String[] args) {
         PublicInterface i = PublicInterface.createPrivateImplementation();
-        i.getV<caret>x
+        i.getVa<caret>x
     }
 }'''
 
     assert myFixture.complete(CompletionType.BASIC, 2).size() == 0
+  }
+
+  void 'test show methods accessible on base type but inaccessible on cast type'() {
+    def clazz = myFixture.addClass '''
+package some;
+import another.*;
+
+public class Super {
+    void foo() {}
+    
+    void test(Super o) {
+      if (o instanceof Sub) {
+        o.fo<caret>o
+      }
+    }
+}
+
+'''
+    myFixture.addClass 'package another; public class Sub extends some.Super {}'
+
+    myFixture.configureFromExistingVirtualFile(clazz.containingFile.virtualFile)
+
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['foo']
   }
 
   private void doTestSecond() {

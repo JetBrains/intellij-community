@@ -54,7 +54,7 @@ public abstract class JpsFacetConfigurationSerializer<E extends JpsElement> {
     return module.getContainer().getChild(myRole) != null;
   }
 
-  public void saveExtension(JpsModule module, @NotNull List<FacetState> states) {
+  public void saveExtension(JpsModule module, @NotNull List<? super FacetState> states) {
     E extension = module.getContainer().getChild(myRole);
     if (extension != null) {
       FacetState state = new FacetState();

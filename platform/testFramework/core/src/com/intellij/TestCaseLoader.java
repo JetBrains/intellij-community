@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.idea.Bombed;
@@ -10,6 +10,7 @@ import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestSorter;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
@@ -26,6 +27,7 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.ToIntFunction;
 
@@ -54,6 +56,11 @@ public class TestCaseLoader {
    */
   private static final String ALL_TESTS_GROUP = "ALL";
   private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
+  /**
+   * By default test classes run in alphabetical order. Pass {@code "reversed"} to this property to run test classes in reversed alphabetical order.
+   * This help to find problems when test A modifies global state causing test B to fail if it runs after A.
+   */
+  private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
 
   private final List<Class> myClassList = new ArrayList<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
@@ -95,7 +102,7 @@ public class TestCaseLoader {
     MultiMap<String, String> groups = MultiMap.createLinked();
 
     for (URL fileUrl : groupingFileUrls) {
-      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream())) {
+      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream(), StandardCharsets.UTF_8)) {
         groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
       }
       catch (IOException e) {
@@ -229,28 +236,8 @@ public class TestCaseLoader {
     return myClassLoadingErrors;
   }
 
-  private static final List<String> ourRankList = getTeamCityRankList();
-
-  private static List<String> getTeamCityRankList() {
-    if (isPerformanceTestsRun()) {
-      // let performance test order be stable to decrease the variation in their timings
-      return Collections.emptyList();
-    }
-
-    String filePath = System.getProperty("teamcity.tests.recentlyFailedTests.file", null);
-    if (filePath != null) {
-      try {
-        return FileUtil.loadLines(filePath);
-      }
-      catch (IOException ignored) { }
-    }
-
-    return Collections.emptyList();
-  }
-
   private static int getRank(Class aClass) {
     if (runFirst(aClass)) return 0;
-    if (isPerformanceTestsRun()) return 1;
 
     // PlatformLiteFixture is the very special test case because it doesn't load all the XMLs with component/extension declarations
     // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension
@@ -260,14 +247,10 @@ public class TestCaseLoader {
     // it creates problems during testing. Simply speaking, if the instance of PlatformLiteFixture is the first one in a suite, it pollutes
     // static final fields (and all other kinds of caches) with invalid values. To avoid it, such tests should always be the last.
     if (isPlatformLiteFixture(aClass)) {
-      return ourRankList.size() + 1;
+      return 2;
     }
 
-    int i = ourRankList.indexOf(aClass.getName());
-    if (i != -1) {
-      return i;
-    }
-    return ourRankList.size();
+    return 1;
   }
 
   private static boolean runFirst(Class testClass) {
@@ -316,11 +299,12 @@ public class TestCaseLoader {
       catch (Throwable ignore) { }
     }
 
+    Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
       @NotNull
       @Override
       public List<Class> sorted(@NotNull List<Class> tests, @NotNull ToIntFunction<? super Class> ranker) {
-        return ContainerUtil.sorted(tests, Comparator.comparingInt(ranker));
+        return ContainerUtil.sorted(tests, Comparator.<Class>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }
     };
   }
@@ -347,7 +331,7 @@ public class TestCaseLoader {
     return TestFrameworkUtil.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
-  public void fillTestCases(String rootPackage, List<File> classesRoots) {
+  public void fillTestCases(String rootPackage, List<? extends File> classesRoots) {
     long before = System.currentTimeMillis();
     for (File classesRoot : classesRoots) {
       int oldCount = getClassesCount();

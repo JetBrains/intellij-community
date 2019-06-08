@@ -29,7 +29,8 @@ public class DarculaTreeUI extends WideSelectionTreeUI {
     return new DarculaTreeUI();
   }
 
-  @Override protected void installDefaults() {
+  @Override
+  protected void installDefaults() {
     super.installDefaults();
     if (tree.isForegroundSet()) {
       tree.setForeground(null);

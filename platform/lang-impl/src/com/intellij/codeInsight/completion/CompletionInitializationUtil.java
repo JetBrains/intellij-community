@@ -35,7 +35,7 @@ import java.util.Objects;
 public class CompletionInitializationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionServiceUtil");
 
-  public static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
+  static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
                                                                                @NotNull Editor editor,
                                                                                @NotNull Caret caret,
                                                                                int invocationCount,
@@ -116,6 +116,9 @@ public class CompletionInitializationUtil {
                                                      CompletionProcessEx indicator,
                                                      OffsetsInFile topLevelOffsets) {
     CompletionAssertions.checkEditorValid(initContext.getEditor());
+    if (initContext.getDummyIdentifier().isEmpty()) {
+      return topLevelOffsets;
+    }
 
     Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
     OffsetMap hostMap = topLevelOffsets.getOffsets();
@@ -141,7 +144,9 @@ public class CompletionInitializationUtil {
     OffsetsInFile translatedOffsets = hostCopyOffsets.toInjectedIfAny(hostStartOffset);
     if (translatedOffsets != hostCopyOffsets) {
       PsiFile injected = translatedOffsets.getFile();
-      if (injected instanceof PsiFileImpl && InjectedLanguageManager.getInstance(originalFile.getProject()).isInjectedFragment(originalFile)) {
+      if (originalFile != injected &&
+          injected instanceof PsiFileImpl &&
+          InjectedLanguageManager.getInstance(originalFile.getProject()).isInjectedFragment(originalFile)) {
         ((PsiFileImpl)injected).setOriginalFile(originalFile);
       }
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injected);
@@ -158,7 +163,7 @@ public class CompletionInitializationUtil {
   @NotNull
   private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
     PsiElement insertedElement = offsets.getFile().findElementAt(offset);
-    if (insertedElement == null && offsets.getFile().getTextLength() == 0) {
+    if (insertedElement == null && offsets.getFile().getTextLength() == offset) {
       insertedElement = PsiTreeUtil.getDeepestLast(offsets.getFile());
     }
     CompletionAssertions.assertCompletionPositionPsiConsistent(offsets, offset, originalFile, insertedElement);

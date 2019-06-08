@@ -43,8 +43,8 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -565,6 +565,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private void adjustTargetClassReferences(final PsiElement body) throws IncorrectOperationException {
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiClass targetClass = getMethod().getContainingClass();
+    //Actually we should go into lambdas as this/super expressions inside them still refer to the outer class instance.
+    //Visiting returns inside lambdas is safe as they never have GENERATED_RETURN inside
+    //noinspection UnsafeReturnStatementVisitor
     body.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitReturnStatement(PsiReturnStatement statement) {
@@ -725,7 +728,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   private String uniqueFieldName(String[] candidates) {
-    String name = StreamEx.of(candidates).findFirst(myFieldNameGenerator::isUnique).orElse(null);
+    String name = ContainerUtil.find(candidates, myFieldNameGenerator::isUnique);
     if (name == null) {
       name = myFieldNameGenerator.generateUniqueName(candidates[0]);
     }

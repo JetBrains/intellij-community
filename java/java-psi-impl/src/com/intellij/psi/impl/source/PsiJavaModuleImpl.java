@@ -116,7 +116,7 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PsiJavaModuleReferenceElement newName = PsiElementFactory.SERVICE.getInstance(getProject()).createModuleReferenceFromText(name, null);
+    PsiJavaModuleReferenceElement newName = PsiElementFactory.getInstance(getProject()).createModuleReferenceFromText(name, null);
     getNameIdentifier().replace(newName);
     return this;
   }

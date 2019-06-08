@@ -51,7 +51,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
   }
 
   @Override
-  public boolean execute(CompileContext context) {
+  public boolean execute(@NotNull CompileContext context) {
     final Project project = context.getProject();
 
     final RunConfiguration configuration = CompileStepBeforeRun.getRunConfiguration(context);

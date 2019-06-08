@@ -19,11 +19,13 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoader
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubNotifications
 
 class GithubPullRequestsStateServiceImpl internal constructor(private val project: Project,
                                                               private val progressManager: ProgressManager,
+                                                              private val listLoader: GithubPullRequestsListLoader,
                                                               private val dataLoader: GithubPullRequestsDataLoader,
                                                               private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                               private val requestExecutor: GithubApiRequestExecutor,
@@ -35,7 +37,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun close(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
-    progressManager.run(object : Task.Backgroundable(project, "Closing Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Closing Pull Request...", true) {
       override fun run(indicator: ProgressIndicator) {
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
@@ -51,8 +53,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -61,7 +62,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun reopen(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
-    progressManager.run(object : Task.Backgroundable(project, "Reopening Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Reopening Pull Request...", true) {
       override fun run(indicator: ProgressIndicator) {
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
@@ -77,8 +78,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -88,7 +88,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     if (!busyStateTracker.acquire(pullRequest)) return
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
-    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
       private lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
@@ -120,8 +120,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -131,7 +130,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     if (!busyStateTracker.acquire(pullRequest)) return
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
-    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
       lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
@@ -153,8 +152,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
   }
@@ -164,7 +162,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     if (!busyStateTracker.acquire(pullRequest)) return
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
-    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
       lateinit var details: GithubPullRequestDetailed
       lateinit var commits: List<GithubCommit>
 
@@ -204,9 +202,14 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
       }
 
       override fun onFinished() {
-        busyStateTracker.release(pullRequest)
-        dataLoader.reloadDetails(pullRequest)
+        releaseAndRefreshData(pullRequest)
       }
     })
+  }
+
+  private fun releaseAndRefreshData(pullRequest: Long) {
+    busyStateTracker.release(pullRequest)
+    dataLoader.findDataProvider(pullRequest)?.reloadDetails()
+    listLoader.outdated = true
   }
 }

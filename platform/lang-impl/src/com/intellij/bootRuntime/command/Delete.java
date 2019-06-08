@@ -18,7 +18,6 @@ public class Delete extends RuntimeCommand {
   @Override
   public void actionPerformed(ActionEvent e) {
     runWithProgress("Deleting..." , indicator -> {
-      //FileUtil.delete(new File(BinTrayUtil.getJdkStoragePathFile(), BinTrayUtil.archveToDirectoryName(myRuntime.getFileName())));
       FileUtil.delete(myRuntime.getDownloadPath());
       FileUtil.delete(myRuntime.getInstallationPath());
     });

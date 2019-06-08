@@ -1,18 +1,4 @@
-/*
- * Copyright 2007 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -35,7 +21,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -57,8 +42,15 @@ public class HighlightUtils {
     highlightElements(Collections.singleton(element));
   }
 
-  public static void highlightElements(
-    @NotNull final Collection<? extends PsiElement> elementCollection) {
+  public static void highlightElement(@NotNull PsiElement element, String statusBarText) {
+    highlightElements(Collections.singleton(element), statusBarText);
+  }
+
+  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {
+    highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"));
+  }
+
+  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, String statusBarText) {
     if (elementCollection.isEmpty()) {
       return;
     }
@@ -67,39 +59,22 @@ public class HighlightUtils {
     }
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(() -> {
-      final PsiElement[] elements =
-        PsiUtilCore.toPsiElementArray(elementCollection);
-      final PsiElement firstElement = elements[0];
+      final PsiElement[] elements = PsiUtilCore.toPsiElementArray(elementCollection);
       if (ContainerUtil.exists(elements, element -> !element.isValid())) {
         return;
       }
+      final PsiElement firstElement = elements[0];
       final Project project = firstElement.getProject();
       if (project.isDisposed()) return;
-      final FileEditorManager editorManager =
-        FileEditorManager.getInstance(project);
-      final EditorColorsManager editorColorsManager =
-        EditorColorsManager.getInstance();
-      final Editor editor = editorManager.getSelectedTextEditor();
+      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       if (editor == null) {
         return;
       }
-      final EditorColorsScheme globalScheme =
-        editorColorsManager.getGlobalScheme();
-      final TextAttributes textattributes =
-        globalScheme.getAttributes(
-          EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      final HighlightManager highlightManager =
-        HighlightManager.getInstance(project);
-      highlightManager.addOccurrenceHighlights(
-        editor, elements, textattributes, true, null);
-      final WindowManager windowManager =
-        WindowManager.getInstance();
-      final StatusBar statusBar =
-        windowManager.getStatusBar(project);
-      statusBar.setInfo(InspectionGadgetsBundle.message(
-        "press.escape.to.remove.highlighting.message"));
-      final FindManager findmanager =
-        FindManager.getInstance(project);
+      final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      final TextAttributes textattributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, elements, textattributes, true, null);
+      WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
+      final FindManager findmanager = FindManager.getInstance(project);
       FindModel findmodel = findmanager.getFindNextModel();
       if (findmodel == null) {
         findmodel = findmanager.getFindInFileModel();

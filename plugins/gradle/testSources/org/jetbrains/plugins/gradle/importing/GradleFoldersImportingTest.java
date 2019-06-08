@@ -22,12 +22,11 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.gradle.GradleManager;
-import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -74,7 +73,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testBaseJavaProject() throws Exception {
-    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.NO);
+    getCurrentExternalProjectSettings().setDelegatedBuild(false);
     createDefaultDirs();
     importProject(
       "apply plugin: 'java'"
@@ -85,11 +84,11 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     importProject();
     assertNotDelegatedMergedBaseJavaProject();
 
-    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.YES);
+    getCurrentExternalProjectSettings().setDelegatedBuild(true);
     importProject();
     assertDelegatedMergedBaseJavaProject();
 
-    getCurrentExternalProjectSettings().setDelegatedBuild(ThreeState.NO);
+    getCurrentExternalProjectSettings().setDelegatedBuild(false);
     // subscribe to the GradleSettings changes topic
     ((GradleManager)getManager(GradleConstants.SYSTEM_ID)).runActivity(myProject);
     GradleSettings.getInstance(myProject).getPublisher().onBuildDelegationChange(false, getProjectPath());
@@ -213,6 +212,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createDefaultDirs();
     createProjectSubFile("settings.gradle", "include('processor')");
     createProjectSubFile("processor/build.gradle", "apply plugin:'java'");
+    createProjectSubFile("build/generated/sources/annotationProcessor/java/main/Generated.java");
     importProject("" +
                   "apply plugin: 'java'\n" +
                   "dependencies {\n" +
@@ -389,7 +389,12 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("src/main/java/A.java");
     createProjectSubFile("src/test/resources/res.properties");
     importProjectUsingSingeModulePerGradleProject(
-      "apply plugin: 'java'"
+      "apply plugin: 'java'\n" +
+      "apply plugin: 'idea'\n" +
+      "sourceSets.main.java.srcDirs file('src/generated/java')\n" +
+      "idea.module {\n" +
+      "  generatedSourceDirs += file('src/generated/java')\n" +
+      "}"
     );
 
     assertModules("project");
@@ -397,13 +402,19 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertSources("project", "src/main/java");
     assertResources("project");
     assertTestSources("project");
+    assertGeneratedSources("project");
     assertTestResources("project", "src/test/resources");
   }
 
   @Test
   public void testRootsAreAddedWhenAFolderCreated() throws Exception {
     createProjectSubFile("src/main/java/A.java");
-    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
+    importProjectUsingSingeModulePerGradleProject(      "apply plugin: 'java'\n" +
+                                                        "apply plugin: 'idea'\n" +
+                                                        "sourceSets.main.java.srcDirs file('src/generated/java')\n" +
+                                                        "idea.module {\n" +
+                                                        "  generatedSourceDirs += file('src/generated/java')\n" +
+                                                        "}");
 
     assertModules("project");
     assertSources("project", "src/main/java");
@@ -414,6 +425,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("src/main/resources/res.txt");
     assertResources("project", "src/main/resources");
+
+    createProjectSubFile("src/generated/java/Generated.java");
+    assertGeneratedSources("project","src/generated/java");
   }
 
   @Test
@@ -678,7 +692,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
-    boolean isDelegatedBuild = GradleSettingsService.getInstance(myProject).isDelegatedBuildEnabled(getProjectPath());
+    boolean isDelegatedBuild = GradleProjectSettings.isDelegatedBuildEnabled(myProject, getProjectPath());
     String[] excludes = isDelegatedBuild ? new String[]{".gradle", "build"} : new String[]{".gradle", "build", "out"};
     assertExcludes(mainModuleName, excludes);
     final String mainSourceSetModuleName = mainModuleName + ".main";
@@ -693,7 +707,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   protected void assertDefaultGradleJavaProjectFoldersForMergedModule(@NotNull String moduleName) {
     assertContentRoots(moduleName, getProjectPath());
-    boolean isDelegatedBuild = GradleSettingsService.getInstance(myProject).isDelegatedBuildEnabled(getProjectPath());
+    boolean isDelegatedBuild = GradleProjectSettings.isDelegatedBuildEnabled(myProject, getProjectPath());
     String[] excludes = isDelegatedBuild ? new String[]{".gradle", "build"} : new String[]{".gradle", "build", "out"};
     assertExcludes(moduleName, excludes);
     assertSources(moduleName, "src/main/java");

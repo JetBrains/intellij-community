@@ -27,9 +27,8 @@ public class StdArrangementSettings implements ArrangementSettings {
   public StdArrangementSettings() {
   }
 
-  @SuppressWarnings("unchecked")
   public StdArrangementSettings(@NotNull List<? extends ArrangementSectionRule> rules) {
-    this(Collections.EMPTY_LIST, rules);
+    this(Collections.emptyList(), rules);
   }
 
   public StdArrangementSettings(@NotNull List<? extends ArrangementGroupingRule> groupingRules,

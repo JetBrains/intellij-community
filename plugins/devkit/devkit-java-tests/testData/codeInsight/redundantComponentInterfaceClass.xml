@@ -4,5 +4,18 @@
       <warning descr="Redundant tag 'interfaceClass'"><interface-class>java.lang.String</interface-class></warning>
       <implementation-class>java.lang.String</implementation-class>
     </component>
+
+    <component>
+      <interface-class>java.lang.Number</interface-class>
+      <implementation-class>java.lang.Double</implementation-class>
+      <headless-implementation-class>java.lang.String</headless-implementation-class>
+    </component>
+
+    <component>
+      <warning descr="Redundant tag 'interfaceClass'"><interface-class>java.lang.String</interface-class></warning>
+      <implementation-class>java.lang.String</implementation-class>
+      <headless-implementation-class/>
+    </component>
+
   </project-components>
 </idea-plugin>

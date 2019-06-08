@@ -450,9 +450,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from the usages
+   * @param usages
    */
   @NotNull
-  String getUsageViewTreeTextRepresentation(@NotNull Collection<UsageInfo> usages);
+  String getUsageViewTreeTextRepresentation(@NotNull Collection<? extends UsageInfo> usages);
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of <code>to</code>

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.LogMessage;
@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Mike
@@ -44,7 +45,7 @@ public class IdeaLogger extends Log4jBasedLogger {
     String stamp = null;
     URL resource = Logger.class.getResource("/.compilation-timestamp");
     if (resource != null) {
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream()))) {
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
         String s = reader.readLine();
         if (s != null) {
           stamp = s.trim();
@@ -141,7 +142,7 @@ public class IdeaLogger extends Log4jBasedLogger {
                    "; VM: " + System.getProperties().getProperty("java.vm.name", "unknown") +
                    "; Vendor: " + System.getProperties().getProperty("java.vendor", "unknown"));
     myLogger.error("OS: " + System.getProperties().getProperty("os.name", "unknown"));
-    
+
     IdeaPluginDescriptor plugin = t == null ? null : PluginManager.findPluginIfInitialized(t);
     if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
       myLogger.error("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());

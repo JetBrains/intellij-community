@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.execution;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -25,6 +24,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HgRemoteCommandExecutor extends HgCommandExecutor {
@@ -90,7 +91,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
   }
 
   private List<String> prepareArguments(List<String> arguments, int port) {
-    List<String> cmdArguments = ContainerUtil.newArrayList();
+    List<String> cmdArguments = new ArrayList<>();
     cmdArguments.add("--config");
     cmdArguments.add("extensions.hg4ideapromptextension=" + myVcs.getPromptHooksExtensionFile().getAbsolutePath());
     cmdArguments.add("--config");
@@ -128,18 +129,18 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
       DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
       DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-      String command = new String(readDataBlock(dataInputStream));
+      String command = new String(readDataBlock(dataInputStream), StandardCharsets.UTF_8);
       assert "getpass".equals(command) : "Invalid command: " + command;
-      String uri = new String(readDataBlock(dataInputStream));
-      String path = new String(readDataBlock(dataInputStream));
-      String proposedLogin = new String(readDataBlock(dataInputStream));
+      String uri = new String(readDataBlock(dataInputStream), StandardCharsets.UTF_8);
+      String path = new String(readDataBlock(dataInputStream), StandardCharsets.UTF_8);
+      String proposedLogin = new String(readDataBlock(dataInputStream), StandardCharsets.UTF_8);
 
       HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myForceAuthorization, mySilentMode);
       boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path, myState);
       if (ok) {
         myAuthenticator = authenticator;
-        sendDataBlock(out, authenticator.getUserName().getBytes());
-        sendDataBlock(out, authenticator.getPassword().getBytes());
+        sendDataBlock(out, authenticator.getUserName().getBytes(StandardCharsets.UTF_8));
+        sendDataBlock(out, authenticator.getPassword().getBytes(StandardCharsets.UTF_8));
       }
       return true;
     }

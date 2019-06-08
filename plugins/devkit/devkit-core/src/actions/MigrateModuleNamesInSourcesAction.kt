@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.icons.AllIcons
@@ -24,10 +24,10 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainText
 import com.intellij.psi.search.*
+import com.intellij.serialization.SerializationException
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.*
 import com.intellij.util.Processor
-import com.intellij.util.xmlb.XmlSerializationException
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
@@ -62,7 +62,7 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
         XmlSerializer.deserialize(JDOMUtil.load(it.inputStream), ModuleRenamingHistoryState::class.java).oldToNewName
       }
     }
-    catch (e: XmlSerializationException) {
+    catch (e: SerializationException) {
       LOG.error(e)
       return
     }

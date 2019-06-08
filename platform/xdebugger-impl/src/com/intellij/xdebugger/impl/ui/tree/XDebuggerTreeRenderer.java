@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -18,18 +17,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicTreeUI;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Method;
+
+import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
 /**
  * @author nik
  */
 class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
-  private static final Logger LOG = Logger.getInstance(XDebuggerTreeRenderer.class);
-
   private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
   private boolean myHaveLink;
   private int myLinkOffset;
@@ -57,8 +53,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     setIcon(node.getIcon());
 
     Rectangle treeVisibleRect = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
-    TreePath path = tree.getPathForRow(row);
-    int rowX = path != null ? getRowX((BasicTreeUI)tree.getUI(), row, path.getPathCount() - 1) : 0;
+    int rowX = getNodeRowX(tree, row);
 
     if (myHaveLink) {
       setupLinkDimensions(treeVisibleRect, rowX);
@@ -84,29 +79,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
-  }
-
-  private static Method ourGetRowXMethod = null;
-
-  private static int getRowX(BasicTreeUI ui, int row, int depth) {
-    if (ourGetRowXMethod == null) {
-      try {
-        ourGetRowXMethod = BasicTreeUI.class.getDeclaredMethod("getRowX", int.class, int.class);
-        ourGetRowXMethod.setAccessible(true);
-      }
-      catch (NoSuchMethodException e) {
-        LOG.error(e);
-      }
-    }
-    if (ourGetRowXMethod != null) {
-      try {
-        return (Integer)ourGetRowXMethod.invoke(ui, row, depth);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    return 0;
   }
 
   private void setupLinkDimensions(Rectangle treeVisibleRect, int rowX) {

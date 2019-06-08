@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
+import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
@@ -31,6 +33,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
 
   private final ProjectLevelVcsManager myVcsManager;
+  private final VcsIgnoreManager myVcsIgnoreManager;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   protected static class MovedFileInfo {
@@ -64,26 +67,46 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
-  private final FilesProcessor myProjectConfigurationFilesProcessor;
-  protected final FilesProcessor myExternalFilesProcessor;
+  private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;
+  protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
-  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
-    myProject = project;
+  /**
+   * @see #installListeners()
+   */
+  protected VcsVFSListener(@NotNull AbstractVcs vcs) {
+    myProject = vcs.getProject();
     myVcs = vcs;
-    myChangeListManager = ChangeListManager.getInstance(project);
+    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myVcsIgnoreManager = VcsIgnoreManager.getInstance(myProject);
 
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
-    project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
 
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
+  }
+
+  /**
+   * @deprecated Use {@link #VcsVFSListener(AbstractVcs)} followed by {@link #installListeners()}
+   */
+  @Deprecated
+  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
+    this(vcs);
+    installListeners();
+  }
+
+  protected void installListeners() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
+    myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
+
+    myProjectConfigurationFilesProcessor.install();
+    myExternalFilesProcessor.install();
+    new IgnoreFilesProcessorImpl(myProject, this).install();
   }
 
   @Override
@@ -98,7 +121,7 @@ public abstract class VcsVFSListener implements Disposable {
   private boolean isUnderMyVcs(@NotNull VirtualFile file) {
     return myVcsManager.getVcsFor(file) == myVcs &&
            myVcsManager.isFileInContent(file) &&
-           !myChangeListManager.isIgnoredFile(file);
+           !myVcsIgnoreManager.isPotentiallyIgnoredFile(file);
   }
 
   protected void executeAdd() {
@@ -332,7 +355,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract boolean isDirectoryVersioningSupported();
 
   @SuppressWarnings("unchecked")
-  private FilesProcessor createExternalFilesProcessor() {
+  private ExternallyAddedFilesProcessorImpl createExternalFilesProcessor() {
     return new ExternallyAddedFilesProcessorImpl(myProject,
                                                  this,
                                                  myVcs,
@@ -343,7 +366,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   @SuppressWarnings("unchecked")
-  private FilesProcessor createProjectConfigurationFilesProcessor() {
+  private ProjectConfigurationFilesProcessorImpl createProjectConfigurationFilesProcessor() {
     return new ProjectConfigurationFilesProcessorImpl(myProject,
                                                       this,
                                                       myVcs.getDisplayName(),
@@ -378,17 +401,18 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     @Override
-    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-      final VirtualFile file = event.getFile();
+    public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+      VirtualFile file = event.getFile();
       if (isEventIgnored(event)) {
         return;
       }
-      if (!myChangeListManager.isIgnoredFile(file)) {
-        addFileToDelete(file);
-        return;
+      // files are checked for being ignored, directories are handled recursively
+      if (!file.isDirectory()) {
+        if (!myChangeListManager.isIgnoredFile(file)) {
+          addFileToDelete(file);
+        }
       }
-      // files are ignored, directories are handled recursively
-      if (event.getFile().isDirectory()) {
+      else {
         final List<VirtualFile> list = new LinkedList<>();
         VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
         for (VirtualFile child : list) {
@@ -424,18 +448,13 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
-      if (!isEventIgnored(event) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
+      if (!isEventIgnored(event) && event.isRename()) {
         LOG.debug("before file rename ", event);
-        String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
-        // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -
-        // such events needn't be handled by the VCS
-        if (!Comparing.equal(oldName, newName)) {
-          final VirtualFile file = event.getFile();
-          final VirtualFile parent = file.getParent();
-          if (parent != null) {
-            addFileToMove(file, parent.getPath(), newName);
-          }
+        VirtualFile file = event.getFile();
+        VirtualFile parent = file.getParent();
+        if (parent != null) {
+          addFileToMove(file, parent.getPath(), newName);
         }
       }
     }

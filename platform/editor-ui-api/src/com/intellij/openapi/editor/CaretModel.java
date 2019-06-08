@@ -236,7 +236,7 @@ public interface CaretModel {
    * @see #getCaretsAndSelections()
    * @see #setCaretsAndSelections(List, boolean)
    */
-  void setCaretsAndSelections(@NotNull List<CaretState> caretStates);
+  void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates);
 
   /**
    * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
@@ -251,7 +251,7 @@ public interface CaretModel {
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()
    */
-  void setCaretsAndSelections(@NotNull List<CaretState> caretStates, boolean updateSystemSelection);
+  void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates, boolean updateSystemSelection);
 
   /**
    * Returns the current positions of all carets and their selections. The order of entries in the returned list does not necessarily

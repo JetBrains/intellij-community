@@ -34,7 +34,7 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testXmlProperties() {
     myFixture.configureByFile("foo.xml");
-    List<PropertiesFile> files = PropertiesReferenceManager.getInstance(getProject()).findPropertiesFiles(myModule, "foo");
+    List<PropertiesFile> files = PropertiesReferenceManager.getInstance(getProject()).findPropertiesFiles(getModule(), "foo");
     assertEquals(1, files.size());
     PropertiesFile file = files.get(0);
     assertEquals(1, file.findPropertiesByKey("foo").size());

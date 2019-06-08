@@ -30,6 +30,7 @@ public class MethodNameTokenizerJava extends NamedElementTokenizer<PsiMethod> {
 
   @Override
   public void tokenize(@NotNull PsiMethod element, TokenConsumer consumer) {
+    if (element.isConstructor()) return;
     final PsiMethod[] methods = (element).findDeepestSuperMethods();
     boolean isInSource = true;
     for (PsiMethod psiMethod : methods) {

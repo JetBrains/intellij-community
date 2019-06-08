@@ -104,7 +104,7 @@ public class ColorUtil {
     return wrap(color, func);
   }
 
-  private static Color wrap(@NotNull Color color, NotNullProducer<Color> func) {
+  private static Color wrap(@NotNull Color color, NotNullProducer<? extends Color> func) {
     return color instanceof JBColor ? new JBColor(func) : func.produce();
   }
 

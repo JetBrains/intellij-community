@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -108,7 +108,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     myConfig = config;
     myTreeStructure = new AntExplorerTreeStructure(project);
     myTreeStructure.setFilteredTargets(AntConfigurationBase.getInstance(project).isFilterTargets());
-    final StructureTreeModel treeModel = new StructureTreeModel(myTreeStructure);
+    final StructureTreeModel treeModel = new StructureTreeModel<>(myTreeStructure, this);
     myTreeModel = treeModel;
     myTree = new Tree(new AsyncTreeModel(treeModel, this));
     myTree.setRootVisible(false);
@@ -167,7 +167,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
 
-    myTree.setLineStyleAngled();
     myAntBuildFilePropertiesAction = new AntBuildFilePropertiesAction(this);
     setToolbar(createToolbarPanel());
     setContent(ScrollPaneFactory.createScrollPane(myTree));
@@ -303,7 +302,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   public void setBuildFileProperties() {
     final AntBuildFileBase buildFile = getCurrentBuildFile();
-    if (buildFile != null && BuildFilePropertiesPanel.editBuildFile(buildFile, myProject)) {
+    if (buildFile != null && BuildFilePropertiesPanel.editBuildFile(buildFile)) {
       myConfig.updateBuildFile(buildFile);
     }
   }
@@ -532,7 +531,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     return super.getData(dataId);
   }
 
-  private <T> List<T> collectAntFiles(final Function<AntBuildFile, T> function) {
+  private <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function) {
     final TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) {
       return null;
@@ -663,7 +662,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      super.update(e);
 
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(myTree.getSelectionCount() == 1 && canRunSelection());

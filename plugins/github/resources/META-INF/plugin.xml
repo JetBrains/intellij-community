@@ -32,8 +32,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubImageResizer"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
-    <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
-                    serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager"/>
@@ -67,7 +66,6 @@
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
-      <add-to-group group-id="Git.LogContextMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
       <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>

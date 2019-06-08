@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class StdInvertibleArrangementSettingsToken extends StdArrangementSetting
   @NotNull
   public static StdInvertibleArrangementSettingsToken invertibleTokenById(@NonNls @NotNull String id,
                                                                           @NotNull StdArrangementTokenType tokenType) {
-    return new StdInvertibleArrangementSettingsToken(id, id.toLowerCase().replace("_", " "), tokenType);
+    return new StdInvertibleArrangementSettingsToken(id, StringUtil.toLowerCase(id).replace("_", " "), tokenType);
   }
 
   @NotNull

@@ -101,6 +101,8 @@ class NewTeamcityServiceMessages(_old_service_messages):
             return
 
         current, parent = _TREE_MANAGER_HOLDER.manager.get_node_ids(properties["name"])
+        if not current and not parent:
+            return
         # Shortcut for name
         try:
             properties["name"] = str(properties["name"]).split(".")[-1]
@@ -189,6 +191,8 @@ class NewTeamcityServiceMessages(_old_service_messages):
         def _write_finished_message():
             # testName, captureStandardOutput, flowId
             current, parent = _TREE_MANAGER_HOLDER.manager.get_node_ids(testName)
+            if not current and not parent:
+                return
             args = {"nodeId": current, "parentNodeId": parent, "name": testName}
 
             # TODO: Doc copy/paste with parent, extract

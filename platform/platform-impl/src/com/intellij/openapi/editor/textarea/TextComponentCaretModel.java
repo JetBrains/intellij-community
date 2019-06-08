@@ -204,7 +204,7 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates) {
+  public void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates) {
     if (caretStates.size() != 1) throw new IllegalArgumentException("Exactly one CaretState object must be passed");
     CaretState state = caretStates.get(0);
     if (state != null) {
@@ -217,7 +217,7 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull List<CaretState> caretStates, boolean updateSystemSelection) {
+  public void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates, boolean updateSystemSelection) {
     setCaretsAndSelections(caretStates);
   }
 

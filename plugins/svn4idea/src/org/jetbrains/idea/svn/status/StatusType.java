@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.bind.annotation.XmlEnumValue;
+import java.util.HashMap;
 import java.util.Map;
 
 public enum StatusType {
@@ -35,8 +35,8 @@ public enum StatusType {
 
   private static final String STATUS_PREFIX = "STATUS_";
 
-  @NotNull private static final Map<String, StatusType> ourOtherStatusTypes = ContainerUtil.newHashMap();
-  @NotNull private static final Map<String, StatusType> ourStatusTypesForStatusOperation = ContainerUtil.newHashMap();
+  @NotNull private static final Map<String, StatusType> ourOtherStatusTypes = new HashMap<>();
+  @NotNull private static final Map<String, StatusType> ourStatusTypesForStatusOperation = new HashMap<>();
 
   static {
     for (StatusType action : StatusType.values()) {

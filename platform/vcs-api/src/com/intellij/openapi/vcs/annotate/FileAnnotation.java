@@ -20,6 +20,7 @@ import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -64,7 +65,7 @@ public abstract class FileAnnotation {
    * @return annotated file
    * <p>
    * If annotations are called on a local file, it can be this file.
-   * If annotations are called on a specific revision, it can be corresponding {@link VcsVirtualFile}.
+   * If annotations are called on a specific revision, it can be corresponding {@link com.intellij.openapi.vcs.vfs.VcsVirtualFile}.
    * Note: file content might differ from content in annotated revision {@link #getAnnotatedContent}.
    */
   @Nullable
@@ -92,7 +93,7 @@ public abstract class FileAnnotation {
   public abstract VcsRevisionNumber getCurrentRevision();
 
   /**
-   * @param number current revision number {@link DiffProvider#getCurrentRevision}
+   * @param number current revision number {@link DiffProvider#getCurrentRevision(VirtualFile)}
    * @return whether annotations should be updated
    */
   public boolean isBaseRevisionChanged(@NotNull VcsRevisionNumber number) {

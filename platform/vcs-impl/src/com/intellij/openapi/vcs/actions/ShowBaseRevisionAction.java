@@ -57,7 +57,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
     private final VcsContext vcsContext;
 
     private MyTask(VirtualFile selectedFile, AbstractVcs vcs, VcsContext vcsContext) {
-      super(vcsContext.getProject(), "Loading current revision", true);
+      super(vcsContext.getProject(), "Loading Current Revision...", true);
       this.selectedFile = selectedFile;
       this.vcs = vcs;
       this.vcsContext = vcsContext;

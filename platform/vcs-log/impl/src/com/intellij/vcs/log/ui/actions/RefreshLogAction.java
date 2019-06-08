@@ -58,7 +58,7 @@ public class RefreshLogAction extends RefreshAction {
       }
     }
 
-    logManager.getDataManager().refreshSoftly(VcsLogUtil.getVisibleRoots(ui));
+    logManager.getDataManager().refresh(VcsLogUtil.getVisibleRoots(ui));
   }
 
   @Override

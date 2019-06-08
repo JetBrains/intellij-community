@@ -15,7 +15,7 @@ class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) :
   override fun matchesCase(): Boolean = (pattern.flags() and Pattern.CASE_INSENSITIVE) == 0
 
   override fun toString(): String {
-    return "matching $text ${caseSensitiveText()}"
+    return "matching '$text' ${caseSensitiveText()}"
   }
 }
 
@@ -30,7 +30,7 @@ class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<S
   override fun matches(message: String): Boolean = patterns.any { message.contains(it, !isMatchCase) }
 
   override fun toString(): String {
-    return "containing at least one of the ${patterns.joinToString(", ")} ${caseSensitiveText()}"
+    return "containing at least one of the ${patterns.joinToString(", ") { s -> "'$s'" }} ${caseSensitiveText()}"
   }
 
 }

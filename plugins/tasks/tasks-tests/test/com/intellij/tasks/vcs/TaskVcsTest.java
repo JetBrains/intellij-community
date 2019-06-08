@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.vcs;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,7 +12,8 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.openapi.vcs.changes.ui.SingleChangeListCommitter;
+import com.intellij.vcs.commit.ChangeListCommitState;
+import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
@@ -39,7 +26,6 @@ import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -49,10 +35,7 @@ import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private TestRepository myRepository;
@@ -330,17 +313,17 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
 
-    List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
+    List<CheckinHandler> handlers = Arrays.asList(checkinHandler);
+    ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(getProject(), changeList, changes, commitMessage, handlers, FunctionUtil.nullConstant(), null, "Commit",
-                                    false);
+      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), handlers, null, "Commit", false);
 
     committer.runCommit("Commit", true);
   }
 
   private LocalChangeList addChangeList(String title) {
     final LocalChangeList list = myChangeListManager.addChangeList(title, "");
-    new TaskChangelistSupport(getProject(), myTaskManager).addControls(new JPanel(), null).consume(list);
+    new TaskChangelistSupport(getProject()).addControls(new JPanel(), null).consume(list);
     return list;
   }
 
@@ -506,8 +489,10 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
     vcsManager.registerVcs(myVcs);
-    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", myVcs.getName())));
     vcsManager.waitForInitialized();
+
+    String tempDirPath = myFixture.getTempDirFixture().getTempDirPath();
+    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(tempDirPath, myVcs.getName())));
     assertTrue(vcsManager.hasActiveVcss());
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
@@ -517,7 +502,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     new RunAll()
       .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
       .append(() -> myTaskManager.setRepositories(Collections.emptyList()))

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.core.AbstractLayout;
 
 import java.io.File;
@@ -41,9 +42,7 @@ public class UiDesignerExternalBuildTest extends ArtifactCompilerTestCase {
     make(a);
     assertOutput(a, fs().file("A.class"));
 
-    File dir = PathManagerEx.findFileUnderCommunityHome("plugins/ui-designer/testData/build/copyFormsRuntimeToArtifact");
-    FileUtil.copyDir(dir, VfsUtilCore.virtualToIoFile(srcRoot));
-    srcRoot.refresh(false, false);
+    copyClassWithForm(srcRoot);
     make(a);
     File outputDir = VfsUtilCore.virtualToIoFile(getOutputDir(a));
     assertTrue(new File(outputDir, "A.class").exists());
@@ -52,4 +51,27 @@ public class UiDesignerExternalBuildTest extends ArtifactCompilerTestCase {
     assertTrue(new File(outputDir, AbstractLayout.class.getName().replace('.', '/') + ".class").exists());
   }
 
+  public void testRecompileFormOnFormFileRecompilation() throws IOException {
+    VirtualFile javaFileWithoutForm = createFile("src/A.java", "class A{}");
+    VirtualFile srcRoot = javaFileWithoutForm.getParent();
+    copyClassWithForm(srcRoot);
+    VirtualFile javaFile = srcRoot.findChild("B.java");
+    assertNotNull(javaFile);
+    VirtualFile formFile = srcRoot.findChild("B.form");
+    assertNotNull(formFile);
+
+    GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT = false;
+    Module module = addModule("a", srcRoot);
+    make(module);
+
+    compile(true, javaFileWithoutForm).assertGenerated("A.class");
+    compile(true, javaFile).assertGenerated("B.class");
+    compile(true, formFile).assertGenerated("B.class");
+  }
+
+  private static void copyClassWithForm(VirtualFile srcRoot) throws IOException {
+    File dir = PathManagerEx.findFileUnderCommunityHome("plugins/ui-designer/testData/build/copyFormsRuntimeToArtifact");
+    FileUtil.copyDir(dir, VfsUtilCore.virtualToIoFile(srcRoot));
+    srcRoot.refresh(false, false);
+  }
 }

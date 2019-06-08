@@ -33,7 +33,7 @@ public class TestNGExternalLibraryResolver extends ExternalLibraryResolver {
     "Test", "BeforeClass", "BeforeGroups", "BeforeMethod", "BeforeSuite", "BeforeTest", "AfterClass", "AfterGroups", "AfterMethod",
     "AfterSuite", "AfterTest", "Configuration"
   );
-  public static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng");
+  public static final ExternalLibraryDescriptor TESTNG_DESCRIPTOR = new ExternalLibraryDescriptor("org.testng", "testng", null, null, "6.14.3");
 
   @Nullable
   @Override

@@ -19,6 +19,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * @author max
  */
@@ -83,12 +86,7 @@ public class CommentFormatter {
 
   private static String stripSpaces(String text) {
     String[] lines = LineTokenizer.tokenize(text.toCharArray(), false);
-    StringBuilder buf = new StringBuilder(text.length());
-    for (int i = 0; i < lines.length; i++) {
-      if (i > 0) buf.append('\n');
-      buf.append(rTrim(lines[i]));
-    }
-    return buf.toString();
+    return Arrays.stream(lines).map(CommentFormatter::rTrim).collect(Collectors.joining("\n"));
   }
 
   private static String rTrim(String text) {

@@ -3,6 +3,7 @@ package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.lang.jvm.actions.ChangeParametersRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -26,17 +27,46 @@ internal class ChangeMethodParameters(target: PsiMethod, override val request: C
   override fun getFamilyName(): String = QuickFixBundle.message("change.method.parameters.family")
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    target.parameterList.parameters.forEach(PsiParameter::delete)
 
-    val factory = PsiElementFactory.SERVICE.getInstance(project)
+    val factory = PsiElementFactory.getInstance(project)
     val helper = JvmPsiConversionHelper.getInstance(target.project)
 
-    for (expectedParameter in request.expectedParameters) {
-      val name = expectedParameter.semanticNames.first()
-      val psiType = helper.convertType(expectedParameter.expectedTypes.first().theType)
-      target.parameterList.add(factory.createParameter(name, psiType))
+    tailrec fun updateParameters(currentParameters: List<PsiParameter>, expectedParameters: List<ExpectedParameter>) {
+
+      val currentHead = currentParameters.firstOrNull()
+      val expectedHead = expectedParameters.firstOrNull()
+
+      if (expectedHead == null) {
+        currentParameters.forEach(PsiParameter::delete)
+        return
+      }
+
+      if (expectedHead is ChangeParametersRequest.ExistingParameterWrapper) {
+        if (expectedHead.existingParameter == currentHead)
+          return updateParameters(currentParameters.subList(1, currentParameters.size),
+                                  expectedParameters.subList(1, expectedParameters.size))
+        else
+          throw UnsupportedOperationException("processing of existing params in different order is not implemented yet")
+      }
+
+      val name = expectedHead.semanticNames.first()
+      val psiType = helper.convertType(expectedHead.expectedTypes.first().theType)
+      val newParameter = factory.createParameter(name, psiType)
+
+      for (annotationRequest in expectedHead.expectedAnnotations) {
+        addAnnotationToModifierList(newParameter.modifierList!!, annotationRequest)
+      }
+
+      if (currentHead == null)
+        target.parameterList.add(newParameter)
+      else
+        target.parameterList.addBefore(newParameter, currentHead)
+
+      updateParameters(currentParameters, expectedParameters.subList(1, expectedParameters.size))
+
     }
 
+    updateParameters(target.parameterList.parameters.toList(), request.expectedParameters)
   }
 
 }

@@ -23,7 +23,7 @@ import java.util.List;
 public interface MutableErrorTreeView extends ErrorTreeView {
   void removeGroup(final String name);
   List<Object> getGroupChildrenData(final String groupName);
-  void addFixedHotfixGroup(final String text, final List<SimpleErrorData> children);
-  void addHotfixGroup(final HotfixData hotfixData, final List<SimpleErrorData> children);
+  void addFixedHotfixGroup(final String text, final List<? extends SimpleErrorData> children);
+  void addHotfixGroup(final HotfixData hotfixData, final List<? extends SimpleErrorData> children);
   void reload();
 }

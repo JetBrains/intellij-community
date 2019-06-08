@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +53,7 @@ public class UnscrambleDialog extends DialogWrapper {
   private final Project myProject;
   private JPanel myEditorPanel;
   private JPanel myLogFileChooserPanel;
-  private JComboBox myUnscrambleChooser;
+  private JComboBox<UnscrambleSupport> myUnscrambleChooser;
   private JPanel myPanel;
   private TextFieldWithHistory myLogFile;
   private JCheckBox myUseUnscrambler;
@@ -232,16 +232,10 @@ public class UnscrambleDialog extends DialogWrapper {
 
   private void populateRegisteredUnscramblerList() {
     for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensions()) {
-      //noinspection unchecked
       myUnscrambleChooser.addItem(unscrambleSupport);
     }
-    //noinspection unchecked
-    myUnscrambleChooser.setRenderer(new ListCellRendererWrapper<UnscrambleSupport>() {
-      @Override
-      public void customize(JList list, UnscrambleSupport unscrambleSupport, int index, boolean selected, boolean hasFocus) {
-        setText(unscrambleSupport == null ? IdeBundle.message("unscramble.no.unscrambler.item") : unscrambleSupport.getPresentableName());
-      }
-    });
+    myUnscrambleChooser.setRenderer(SimpleListCellRenderer.create(
+      IdeBundle.message("unscramble.no.unscrambler.item"), UnscrambleSupport::getPresentableName));
   }
 
   @Override

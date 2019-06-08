@@ -54,6 +54,7 @@ public class GitRepositoryFiles {
   private static final String REBASE_MERGE = "rebase-merge";
   private static final String PACKED_REFS = "packed-refs";
   private static final String REFS = "refs";
+  private static final String REVERT_HEAD = "REVERT_HEAD";
   private static final String HEADS = "heads";
   private static final String TAGS = "tags";
   private static final String REMOTES = "remotes";
@@ -72,6 +73,7 @@ public class GitRepositoryFiles {
   private final String myIndexFilePath;
   private final String myMergeHeadPath;
   private final String myCherryPickHeadPath;
+  private final String myRevertHeadPath;
   private final String myOrigHeadPath;
   private final String myRebaseApplyPath;
   private final String myRebaseMergePath;
@@ -108,6 +110,7 @@ public class GitRepositoryFiles {
     myIndexFilePath = worktreePath + slash(INDEX);
     myMergeHeadPath = worktreePath + slash(MERGE_HEAD);
     myCherryPickHeadPath = worktreePath + slash(CHERRY_PICK_HEAD);
+    myRevertHeadPath = worktreePath + slash(REVERT_HEAD);
     myOrigHeadPath = worktreePath + slash(ORIG_HEAD);
     myCommitMessagePath = worktreePath + slash(COMMIT_EDITMSG);
     myMergeMessagePath = worktreePath + slash(MERGE_MSG);
@@ -210,6 +213,11 @@ public class GitRepositoryFiles {
   @NotNull
   public File getCherryPickHead() {
     return file(myCherryPickHeadPath);
+  }
+
+  @NotNull
+  public File getRevertHead() {
+    return file(myRevertHeadPath);
   }
 
   @NotNull

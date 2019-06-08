@@ -1,7 +1,9 @@
 <idea-plugin>
-  <name>Ant Support</name>
+  <name>Ant</name>
   <id>AntSupport</id>
-  <description>Editing, maintaining and running Ant build scripts inside IntelliJ IDEA.</description>
+  <description><![CDATA[
+  Supports editing, maintaining and running <a href="http://ant.apache.org/">Ant</a> build scripts.
+  ]]></description>
   <vendor>JetBrains</vendor>
 
   <resource-bundle>com.intellij.lang.ant.resources.AntActionsBundle</resource-bundle>
@@ -19,7 +21,7 @@
     <statistics.counterUsagesCollector groupId="build.ant.actions" version="1"/>
 
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
-    <projectService serviceInterface="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
+    <projectService serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
 
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
@@ -69,7 +71,7 @@
     <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
 
-    <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant Build"
+    <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant"
                 factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
     <configurationType implementation="com.intellij.lang.ant.config.execution.AntRunConfigurationType"/>
     <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
@@ -91,7 +93,7 @@
     <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
     </group>
-    <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile">
+    <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile" icon="AntIcons.Build">
       <add-to-group group-id="ToolsXmlGroup" relative-to-action="GenerateDTD" anchor="before"/>
       <add-to-group group-id="EditorPopupMenu" relative-to-action="PackageFile" anchor="after"/>
       <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>

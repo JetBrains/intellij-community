@@ -19,7 +19,9 @@ package org.jetbrains.uast.java
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
@@ -39,7 +41,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     is JavaUDeclarationsExpression -> false
     is UnknownJavaExpression -> (element.uastParent as? UExpression)?.let { isExpressionValueUsed(it) } ?: false
     else -> {
-      val statement = element.psi as? PsiStatement
+      val statement = element.sourcePsi as? PsiStatement
       statement != null && statement.parent !is PsiExpressionStatement
     }
   }
@@ -107,6 +109,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     return convertElement(element, null, requiredTypes)
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>) = when (element) {
     is PsiMethodCallExpression ->
       JavaConverter.psiMethodCallConversionAlternatives(element,
@@ -119,6 +122,7 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
                                  givenParent: UElement?,
                                  requiredType: Array<out Class<out UElement>>): UElement? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UElement? {
         return ctor(element as P, givenParent)
       }
@@ -180,6 +184,7 @@ internal object JavaConverter {
                                  requiredType: Array<out Class<out UElement>> = DEFAULT_TYPES_LIST): UElement? {
 
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UElement): () -> UElement? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UElement? {
         return ctor(el as P, givenParent)
       }
@@ -199,8 +204,13 @@ internal object JavaConverter {
         is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))
         is PsiJavaCodeReferenceElement -> convertReference(el, givenParent, requiredType)
         is PsiAnnotation -> el.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let {
-            el<UExpression> { JavaUAnnotationCallExpression(it, givenParent) }
-          }
+          el<UExpression> { JavaUAnnotationCallExpression(it, givenParent) }
+        }
+        is PsiComment -> el<UComment>(build(::UComment))
+        is PsiDocToken -> el<USimpleNameReferenceExpression> { el.takeIf { it.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN }?.let {
+          val methodOrFieldRef = el.parent as? PsiDocMethodOrFieldRef ?: return@let null
+          JavaUSimpleNameReferenceExpression(el, el.text, givenParent, methodOrFieldRef.reference) }
+        }
         else -> null
       }
     }
@@ -226,6 +236,7 @@ internal object JavaConverter {
                                  givenParent: UElement?,
                                  requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
       }
@@ -249,7 +260,7 @@ internal object JavaConverter {
         is PsiParenthesizedExpression -> expr<UParenthesizedExpression>(build(::JavaUParenthesizedExpression))
         is PsiPrefixExpression -> expr<UPrefixExpression>(build(::JavaUPrefixExpression))
         is PsiPostfixExpression -> expr<UPostfixExpression>(build(::JavaUPostfixExpression))
-        is PsiLiteralExpressionImpl -> expr<ULiteralExpression>(build(::JavaULiteralExpression))
+        is PsiLiteralExpressionImpl -> expr<JavaULiteralExpression>(build(::JavaULiteralExpression))
         is PsiMethodReferenceExpression -> expr<UCallableReferenceExpression>(build(::JavaUCallableReferenceExpression))
         is PsiReferenceExpression -> convertReference(el, givenParent, requiredType)
         is PsiThisExpression -> expr<UThisExpression>(build(::JavaUThisExpression))
@@ -291,6 +302,7 @@ internal object JavaConverter {
                                 givenParent: UElement?,
                                 requiredType: Array<out Class<out UElement>> = DEFAULT_EXPRESSION_TYPES_LIST): UExpression? {
     fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
+      @Suppress("UNCHECKED_CAST")
       return fun(): UExpression? {
         return ctor(el as P, givenParent)
       }
@@ -299,10 +311,10 @@ internal object JavaConverter {
     return with(requiredType) {
       when (el) {
         is PsiDeclarationStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.declaredElements, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
+          convertDeclarations(el.declaredElements, givenParent ?: unwrapElements(el.parent).toUElement())
         }
         is PsiExpressionListStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.expressionList.expressions, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
+          convertDeclarations(el.expressionList.expressions, givenParent ?: unwrapElements(el.parent).toUElement())
         }
         is PsiBlockStatement -> expr<UBlockExpression>(build(::JavaUBlockExpression))
         is PsiLabeledStatement -> expr<ULabeledExpression>(build(::JavaULabeledExpression))

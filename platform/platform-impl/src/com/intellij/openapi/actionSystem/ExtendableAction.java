@@ -17,11 +17,9 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public class ExtendableAction extends AnAction {
   @NotNull private final ExtensionPointName<AnActionExtensionProvider> myExtensionPoint;
 

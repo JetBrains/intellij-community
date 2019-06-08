@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,15 +16,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-public class FileTypeIndexImpl extends ScalarIndexExtension<FileType>
+public final class FileTypeIndexImpl extends ScalarIndexExtension<FileType>
   implements FileBasedIndex.InputFilter, KeyDescriptor<FileType>, DataIndexer<FileType, Void, FileContent> {
   static final ID<FileType, Void> NAME = FileTypeIndex.NAME;
-
-  private final FileTypeRegistry myFileTypeManager;
-
-  public FileTypeIndexImpl(FileTypeRegistry fileTypeRegistry) {
-    myFileTypeManager = fileTypeRegistry;
-  }
 
   @NotNull
   @Override
@@ -57,7 +51,7 @@ public class FileTypeIndexImpl extends ScalarIndexExtension<FileType>
 
   @Override
   public int getVersion() {
-    FileType[] types = myFileTypeManager.getRegisteredFileTypes();
+    FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
     int version = 2;
     for (FileType type : types) {
       version += type.getName().hashCode();
@@ -83,7 +77,7 @@ public class FileTypeIndexImpl extends ScalarIndexExtension<FileType>
   @Override
   public FileType read(@NotNull DataInput in) throws IOException {
     String read = EnumeratorStringDescriptor.INSTANCE.read(in);
-    return myFileTypeManager.findFileTypeByName(read);
+    return FileTypeRegistry.getInstance().findFileTypeByName(read);
   }
 
   @Override

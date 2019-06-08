@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMirrorElement
 import com.intellij.psi.PsiParameter
+import org.jetbrains.plugins.groovy.editor.shouldHideInlayHints
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -22,8 +23,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
 
   override fun getParameterHints(element: PsiElement): List<InlayInfo> {
-    if (element.containingFile?.virtualFile?.extension == "gradle") return emptyList()
-    return (element as? GrCall)?.doGetParameterHints() ?: emptyList()
+    if (element !is GrCall) return emptyList()
+    if (shouldHideInlayHints(element)) return emptyList()
+    return element.doGetParameterHints() ?: emptyList()
   }
 
   override fun getHintInfo(element: PsiElement): MethodInfo? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
@@ -20,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Eugene Zhuravlev
- *
  * @see PathMacrosImpl#addMacroReplacements(ReplacePathToMacroMap)
  * @see com.intellij.openapi.components.PathMacroManager
  */
@@ -29,13 +27,15 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> myPathsIndex = null;
   private final Map<String, String> myMacroMap = new LinkedHashMap<>();
 
-  @NonNls public static final String[] PROTOCOLS;
+  @NonNls
+  public static final String[] PROTOCOLS;
+
   static {
     List<String> protocols = new ArrayList<>();
     protocols.add("file");
     protocols.add("jar");
     if (Extensions.getRootArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME)) {
-      for (PathMacroExpandableProtocolBean bean : PathMacroExpandableProtocolBean.EP_NAME.getExtensionList()) {
+      for (PathMacroExpandableProtocolBean bean : PathMacroExpandableProtocolBean.EP_NAME.getIterable(null)) {
         protocols.add(bean.protocol);
       }
     }

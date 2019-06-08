@@ -132,7 +132,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected fun initTree() {
     tree.isRootVisible = false
     tree.showsRootHandles = true
-    UIUtil.setLineStyleAngled(tree)
     TreeUtil.installActions(tree)
     TreeSpeedSearch(tree) { o ->
       val node = o.lastPathComponent as DefaultMutableTreeNode

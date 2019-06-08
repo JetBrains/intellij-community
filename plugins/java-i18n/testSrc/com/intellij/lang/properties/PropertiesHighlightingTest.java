@@ -46,10 +46,10 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
   public void testPropertyUsedInLibrary() throws IOException {
     myFixture.enableInspections(new UnusedPropertyInspection());
 
-    PsiTestUtil.removeAllRoots(myModule, ModuleRootManager.getInstance(myModule).getSdk());
+    PsiTestUtil.removeAllRoots(getModule(), ModuleRootManager.getInstance(getModule()).getSdk());
     String libDir = myFixture.getTempDirFixture().findOrCreateDir("lib").getPath();
-    PsiTestUtil.addLibrary(myModule, "someLib", libDir, new String[]{""}, new String[]{""});
-    PsiTestUtil.addSourceContentToRoots(myModule, myFixture.getTempDirFixture().findOrCreateDir("src"));
+    PsiTestUtil.addLibrary(getModule(), "someLib", libDir, new String[]{""}, new String[]{""});
+    PsiTestUtil.addSourceContentToRoots(getModule(), myFixture.getTempDirFixture().findOrCreateDir("src"));
 
     VirtualFile usage = myFixture.addFileToProject("lib/C.java", "class C { String s = \"used.prop\"; }").getVirtualFile();
     myFixture.addFileToProject("lib/original.properties", "used.prop=xxx");

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -128,7 +129,7 @@ public class GitRefUtil {
 
   @NotNull
   public static Map<String, Hash> getResolvedHashes(@NotNull Map<String, String> data) {
-    Map<String, Hash> resolved = ContainerUtil.newHashMap();
+    Map<String, Hash> resolved = new HashMap<>();
     for (Map.Entry<String, String> entry : data.entrySet()) {
       String refName = entry.getKey();
       Hash hash = parseHash(entry.getValue());

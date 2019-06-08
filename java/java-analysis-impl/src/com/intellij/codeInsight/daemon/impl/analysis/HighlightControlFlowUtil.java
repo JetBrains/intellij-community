@@ -60,6 +60,9 @@ public class HighlightControlFlowUtil {
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddReturnFix(method));
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true));
         }
+        if (parent instanceof PsiLambdaExpression) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddReturnFix((PsiLambdaExpression)parent));
+        }
         return info;
       }
     }

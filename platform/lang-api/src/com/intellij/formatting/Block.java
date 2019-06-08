@@ -39,6 +39,8 @@ public interface Block {
    * Returns the list of child blocks for the specified block. <b>Important</b>: The same list
    * of blocks must be returned when {@code getSubBlocks()} is repeatedly called on a particular
    * {@code Block} instance.
+   * <b>Even more Important</b>:
+   * If immutable list is returned (e.g. {@code Collections.singletonList(xxx)}, you must mark this {@link Block} class with {@link com.intellij.formatting.ReadOnlyBlockContainer} marker interface.
    *
    * @return the child block list.
    * @see #isLeaf()

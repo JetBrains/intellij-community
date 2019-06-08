@@ -92,7 +92,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private PsiImportStatementBase findImport(PsiMember member, List<PsiImportStatementBase> importStatements) {
+  private PsiImportStatementBase findImport(PsiMember member, List<? extends PsiImportStatementBase> importStatements) {
     final String qualifiedName;
     final String packageName;
     final PsiClass containingClass = member.getContainingClass();

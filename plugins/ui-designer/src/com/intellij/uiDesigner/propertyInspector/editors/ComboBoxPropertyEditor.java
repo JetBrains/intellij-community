@@ -14,10 +14,10 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public abstract class ComboBoxPropertyEditor<V> extends PropertyEditor<V> {
-  protected final ComboBox myCbx;
+  protected final ComboBox<V> myCbx;
 
   public ComboBoxPropertyEditor() {
-    myCbx = new ComboBox(-1);
+    myCbx = new ComboBox<>(-1);
     myCbx.setBorder(null);
     myCbx.addPopupMenuListener(new MyPopupMenuListener());
   }

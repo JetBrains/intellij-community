@@ -291,8 +291,8 @@ public class VfsUtilCore {
                                                                                                            VirtualFileVisitor.VisitorException {
     boolean pushed = false;
     try {
-      final boolean visited = visitor.allowVisitFile(file);
-      if (visited) {
+      final boolean allowVisitFile = visitor.allowVisitFile(file);
+      if (allowVisitFile) {
         VirtualFileVisitor.Result result = visitor.visitFileEx(file);
         if (result.skipChildren) return result;
       }
@@ -330,7 +330,7 @@ public class VfsUtilCore {
         }
       }
 
-      if (visited) {
+      if (allowVisitFile) {
         visitor.afterChildrenVisited(file);
       }
 
@@ -408,7 +408,12 @@ public class VfsUtilCore {
 
   @NotNull
   public static String pathToUrl(@NotNull String path) {
-    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
+    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, FileUtil.toSystemIndependentName(path));
+  }
+
+  @NotNull
+  public static String fileToUrl(@NotNull File file) {
+    return pathToUrl(file.getPath());
   }
 
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
@@ -727,6 +732,16 @@ public class VfsUtilCore {
     protected boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile virtualFile) {
       return VfsUtilCore.isAncestor(ancestor, virtualFile, false);
     }
+  }
+
+  @NotNull
+  public static VirtualFile getRootFile(@NotNull VirtualFile file) {
+    while (true) {
+      VirtualFile parent = file.getParent();
+      if (parent == null) break;
+      file = parent;
+    }
+    return file;
   }
 
   //<editor-fold desc="Deprecated stuff.">

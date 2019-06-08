@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -53,6 +54,10 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
   }
 
   public static void changeLafIfNecessary(EditorColorsScheme scheme) {
+    changeLafIfNecessary(scheme, null);
+  }
+
+  public static void changeLafIfNecessary(EditorColorsScheme scheme, @Nullable Runnable onDone) {
     final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
     final LafManager lafManager = LafManager.getInstance();
     boolean isDarkEditorTheme = ColorUtil.isDark(scheme.getDefaultBackground());
@@ -99,6 +104,11 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(DarculaInstaller::uninstall);
       }
+    }
+
+    if (onDone != null) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(onDone);
     }
   }
 

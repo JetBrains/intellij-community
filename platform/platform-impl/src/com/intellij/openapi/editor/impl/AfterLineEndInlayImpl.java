@@ -72,4 +72,9 @@ class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   public int getHeightInPixels() {
     return myEditor.getLineHeight();
   }
+
+  @Override
+  public String toString() {
+    return "[After-line-end inlay, offset=" + getOffset() + ", width=" + myWidthInPixels + ", renderer=" + myRenderer + "]";
+  }
 }

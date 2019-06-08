@@ -1,0 +1,4 @@
+package library
+
+interface RecentKotlinInterface {
+}

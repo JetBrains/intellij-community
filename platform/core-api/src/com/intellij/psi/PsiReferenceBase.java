@@ -222,6 +222,6 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   @Override
   public String toString() {
-    return myElement + ":" + myRangeInElement;
+    return getClass().getName() + "(" + myElement + ":" + myRangeInElement + ")";
   }
 }

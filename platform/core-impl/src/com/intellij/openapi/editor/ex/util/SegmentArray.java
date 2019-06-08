@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -78,10 +79,7 @@ public class SegmentArray {
   @NotNull
   private static int[] reallocateArray(@NotNull int[] array, int index) {
     if (index < array.length) return array;
-
-    int[] newArray = new int[calcCapacity(array.length, index)];
-    System.arraycopy(array, 0, newArray, 0, array.length);
-    return newArray;
+    return ArrayUtil.realloc(array, calcCapacity(array.length, index));
   }
 
   protected int noSegmentsAvailable(int offset) {

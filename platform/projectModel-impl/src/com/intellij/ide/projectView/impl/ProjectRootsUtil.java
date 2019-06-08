@@ -79,6 +79,7 @@ public class ProjectRootsUtil {
   }
 
   public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
+    if (project.isDefault()) return null;
     final DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(root);
     if (info.isExcluded(root) && root.equals(info.getContentRoot()) && info.getUnloadedModuleName() != null) {
       return info.getUnloadedModuleName();
@@ -87,6 +88,7 @@ public class ProjectRootsUtil {
   }
 
   public static String findUnloadedModuleByFile(@NotNull final VirtualFile file, @NotNull Project project) {
+    if (project.isDefault()) return null;
     DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(file);
     VirtualFile contentRoot = info.getContentRoot();
     if (info.isExcluded(file) && contentRoot != null) {

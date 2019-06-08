@@ -51,23 +51,26 @@
   </xi:include>
   <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <module value="com.intellij.modules.externalSystem"/>
+  <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <extensionPoints>
+    <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+  </extensions>
+  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <!-- Android Studio: enable reporting for highlighting stats. -->
   <application-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.HighlightingStats</implementation-class>
     </component>
   </application-components>
-
-  <!-- Android Studio: disable until we adapt our embedded JDK configurator to use this mechanism.
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.internal.statistic.updater.StatisticsJobsScheduler</implementation-class>
-    </component>
-  </application-components>
-  -->
-
-
   <extensions defaultExtensionNs="com.intellij">
+  <!-- Android Studio: disable until we adapt our embedded JDK configurator to use this mechanism.
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+  -->
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
@@ -104,8 +107,7 @@
     <!--
     <projectTemplatesFactory implementation="com.intellij.platform.templates.RemoteTemplatesFactory"/>
     -->
-    <applicationService serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"
-                        serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
+    <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
 
@@ -119,10 +121,8 @@
     <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory"/>
-    <applicationService serviceInterface="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"
-                        serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>
-    <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"
-                    serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>
+    <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
 
@@ -134,7 +134,6 @@
                         serviceImplementation="com.intellij.ide.java.IntelliJIdeaLanguageCustomization"
                         overrides="true"/>
 
-    <moduleType id="WEB_MODULE" implementationClass="com.intellij.openapi.module.WebModuleType"/>
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"

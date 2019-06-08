@@ -76,7 +76,6 @@ public class ValidateAction extends AnAction {
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    super.update(e);
     myOrigAction.update(e);
 
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);

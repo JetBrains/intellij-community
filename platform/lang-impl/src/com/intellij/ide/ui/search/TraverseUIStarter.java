@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationStarterEx;
+import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
@@ -38,18 +38,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
-
 /**
  * Used in installer's "build searchable options" step.
  *
  * In order to run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
  * and choose correct main module).
- * 
+ *
  * Pass {@code true} as the second parameter to have searchable options split by modules.
  */
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
-public class TraverseUIStarter extends ApplicationStarterEx {
+public class TraverseUIStarter implements ApplicationStarter {
   private static final String OPTIONS = "options";
   private static final String CONFIGURABLE = "configurable";
   private static final String ID = "id";
@@ -65,11 +63,6 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   private boolean SPLIT_BY_RESOURCE_PATH;
 
   @Override
-  public boolean isHeadless() {
-    return true;
-  }
-
-  @Override
   public String getCommandName() {
     return "traverseUI";
   }
@@ -77,7 +70,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   @Override
   public void premain(String[] args) {
     OUTPUT_PATH = args[1];
-    SPLIT_BY_RESOURCE_PATH = args.length > 2 && Boolean.valueOf(args[2]); 
+    SPLIT_BY_RESOURCE_PATH = args.length > 2 && Boolean.valueOf(args[2]);
   }
 
   @Override
@@ -97,15 +90,17 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   public static void startup(@NotNull final String outputPath, final boolean splitByResourcePath) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     try {
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeStart();
+      }
 
       SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
 
-      for (TraverseUIHelper extension1 : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension1 : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension1.afterTraversal(options);
+      }
 
-      final Map<String, Element> roots = newHashMap();
+      final Map<String, Element> roots = new HashMap<>();
       for (SearchableConfigurable option : options.keySet()) {
         SearchableConfigurable configurable = option;
 
@@ -155,8 +150,9 @@ public class TraverseUIStarter extends ApplicationStarterEx {
         JDOMUtil.writeDocument(new Document(entry.getValue()), output, "\n");
       }
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions())
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.afterResultsAreSaved();
+      }
 
       System.out.println("Searchable options index builder completed");
     }
@@ -182,7 +178,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
 
   private static Map<String, Set<OptionDescription>> processFileTemplates(final boolean splitByResourcePath) {
     SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Map<String, Set<OptionDescription>> options = newHashMap();
+    final Map<String, Set<OptionDescription>> options = new HashMap<>();
 
     FileTemplateManager fileTemplateManager = FileTemplateManager.getDefaultInstance();
     processTemplates(optionsRegistrar, options, fileTemplateManager.getAllTemplates(), splitByResourcePath);
@@ -239,7 +235,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   }
 
   private static Map<String, Set<OptionDescription>> processKeymap(final boolean splitByResourcePath) {
-    final Map<String, Set<OptionDescription>> map = newHashMap();
+    final Map<String, Set<OptionDescription>> map = new HashMap<>();
     final ActionManager actionManager = ActionManager.getInstance();
     final Map<String, PluginId> actionToPluginId = splitByResourcePath ? getActionToPluginId() : Collections.emptyMap();
     final String componentName = "ActionManager";
@@ -264,7 +260,7 @@ public class TraverseUIStarter extends ApplicationStarterEx {
   @NotNull
   private static Map<String, PluginId> getActionToPluginId() {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final Map<String, PluginId> actionToPluginId = newHashMap();
+    final Map<String, PluginId> actionToPluginId = new HashMap<>();
     for (final PluginId id : PluginId.getRegisteredIds().values()) {
       for (final String action : actionManager.getPluginActions(id)) {
         actionToPluginId.put(action, id);

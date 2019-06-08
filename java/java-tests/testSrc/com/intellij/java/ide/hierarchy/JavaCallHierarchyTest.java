@@ -58,6 +58,14 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     doJavaCallTypeHierarchyTest("B", "xyzzy", "B.java", "D.java", "A.java");
   }
 
+  public void testDirectRecursion() throws Exception {
+    doJavaCallTypeHierarchyTest("A", "recursive", "A.java");
+  }
+
+  public void testIndirectRecursion() throws Exception {
+    doJavaCallTypeHierarchyTest("A", "recursive2", "A.java");
+  }
+
   public void testIdeaDev41005_Inheritance() throws Exception {
     doJavaCallTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java");
   }

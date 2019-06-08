@@ -4,15 +4,15 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public class DefaultCustomComponentAction extends AnAction implements CustomComponentAction {
-  @NotNull private final Producer<? extends JComponent> myProducer;
+  @NotNull private final Supplier<? extends JComponent> myProducer;
 
-  public DefaultCustomComponentAction(@NotNull Producer<? extends JComponent> producer) {
+  public DefaultCustomComponentAction(@NotNull Supplier<? extends JComponent> producer) {
     myProducer = producer;
   }
 
@@ -24,6 +24,6 @@ public class DefaultCustomComponentAction extends AnAction implements CustomComp
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return myProducer.produce();
+    return myProducer.get();
   }
 }

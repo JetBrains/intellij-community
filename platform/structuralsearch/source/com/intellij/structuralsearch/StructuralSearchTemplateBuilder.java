@@ -4,11 +4,12 @@ package com.intellij.structuralsearch;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,13 +61,18 @@ public class StructuralSearchTemplateBuilder {
 
     MatchOptions matchOptions = new MatchOptions();
     String text = myPsiFile.getText();
+    int textOffset = 0;
+    while (textOffset < text.length() && StringUtil.isWhiteSpace(text.charAt(textOffset))) {
+      textOffset++;
+    }
+    myShift -= textOffset;
     matchOptions.setSearchPattern(text);
     PsiElement[] elements =
       MatcherImplUtil.createTreeFromText(text, PatternTreeContext.Block, myPsiFile.getFileType(), myPsiFile.getProject());
-    PsiElement psiElement = ContainerUtil.find(elements, element -> !(element instanceof PsiWhiteSpace));
-    if (psiElement != null) {
-      myShift = 2;
-      psiElement.accept(visitor);
+    if (elements.length > 0) {
+      PsiElement element = elements[0];
+      myShift += element.getTextRange().getStartOffset();
+      element.accept(visitor);
     }
     return myBuilder;
   }
@@ -75,39 +81,12 @@ public class StructuralSearchTemplateBuilder {
     if (element == null) {
       return;
     }
-    myBuilder.replaceRange(element.getTextRange().shiftLeft(myShift), new MyExpression(count.getPlaceholder(), element, preferOriginal));
-  }
-
-  private static class MyExpression extends Expression {
-
-    private final String myPlaceholder;
-    private final String myOriginalText;
-    private final boolean myPreferOriginal;
-
-    MyExpression(String placeholder, PsiElement original, boolean preferOriginal) {
-      myPlaceholder = placeholder;
-      myOriginalText = original.getText();
-      myPreferOriginal = preferOriginal;
-    }
-
-    @Nullable
-    @Override
-    public Result calculateResult(ExpressionContext context) {
-      return new TextResult(myPreferOriginal ? myOriginalText : myPlaceholder);
-    }
-
-    @Nullable
-    @Override
-    public Result calculateQuickResult(ExpressionContext context) {
-      return calculateResult(context);
-    }
-
-    @Nullable
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      LookupElement[] elements = {LookupElementBuilder.create(myPlaceholder), LookupElementBuilder.create(myOriginalText)};
-      return myPreferOriginal ? ArrayUtil.reverseArray(elements) : elements;
-    }
+    String placeholder = count.getPlaceholder();
+    String originalText = element.getText();
+    LookupElement[] elements = {LookupElementBuilder.create(placeholder), LookupElementBuilder.create(originalText)};
+    myBuilder.replaceRange(element.getTextRange().shiftLeft(myShift),
+                           new ConstantNode(preferOriginal ? originalText : placeholder)
+                             .withLookupItems(preferOriginal ? ArrayUtil.reverseArray(elements) : elements));
   }
 
   private static class PlaceholderCount {

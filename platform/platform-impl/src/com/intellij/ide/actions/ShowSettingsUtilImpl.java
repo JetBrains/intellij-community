@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -38,10 +40,8 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @NotNull
-  public static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
-    project = getProject(project);
-    final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
-    return SettingsDialogFactory.getInstance().create(project, filteredGroups, toSelect, null);
+  public static DialogWrapper getDialog(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable toSelect) {
+    return SettingsDialogFactory.getInstance().create(getProject(project), filterEmptyGroups(groups), toSelect, null);
   }
 
   /**
@@ -81,7 +81,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   @Override
   public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup... group) {
     try {
-      getDialog(project, group, null).show();
+      getDialog(project, Arrays.asList(group), null).show();
     }
     catch (Exception e) {
       LOG.error(e);
@@ -96,7 +96,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   @Override
   public <T extends Configurable> void showSettingsDialog(@Nullable Project project,
                                                           @NotNull Class<T> configurableClass,
-                                                          @Nullable Consumer<T> additionalConfiguration) {
+                                                          @Nullable Consumer<? super T> additionalConfiguration) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
     showSettingsDialog(project, it -> ConfigurableWrapper.cast(configurableClass, it) != null, it -> {
       if (additionalConfiguration != null) {
@@ -125,60 +125,58 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       additionalConfiguration.accept(config);
     }
 
-    getDialog(project, groups, config).show();
+    getDialog(project, Arrays.asList(groups), config).show();
   }
 
   @Override
-  public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
-    ConfigurableGroup[] groups = getConfigurableGroups(project, true);
-    Project actualProject = getProject(project);
-
-    groups = filterEmptyGroups(groups);
-    getDialog(actualProject, groups, findPreselectedByDisplayName(nameToSelect, groups)).show();
+  public void showSettingsDialog(@Nullable Project project, @NotNull String nameToSelect) {
+    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */ true);
+    List<ConfigurableGroup> groups = group.getConfigurables().length == 0 ? Collections.emptyList() : Collections.singletonList(group);
+    getDialog(project, groups, findPreselectedByDisplayName(nameToSelect, groups)).show();
   }
 
   @Nullable
-  private static Configurable findPreselectedByDisplayName(final String preselectedConfigurableDisplayName, ConfigurableGroup[] groups) {
-    final List<Configurable> all = SearchUtil.expand(groups);
-    for (Configurable each : all) {
-      if (preselectedConfigurableDisplayName.equals(each.getDisplayName())) return each;
+  private static Configurable findPreselectedByDisplayName(@NotNull String preselectedConfigurableDisplayName, @NotNull List<? extends ConfigurableGroup> groups) {
+    for (ConfigurableGroup eachGroup : groups) {
+      for (Configurable configurable : SearchUtil.expandGroup(eachGroup)) {
+        if (preselectedConfigurableDisplayName.equals(configurable.getDisplayName())) {
+          return configurable;
+        }
+      }
     }
     return null;
   }
 
-  public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {
-    ConfigurableGroup[] group = getConfigurableGroups(project, true);
+  public static void showSettingsDialog(@Nullable Project project, @Nullable String idToSelect, final String filter) {
+    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */ true);
+    if (group.getConfigurables().length == 0) {
+      group = null;
+    }
 
-    group = filterEmptyGroups(group);
-    final Configurable configurable2Select = id2Select == null ? null : new ConfigurableVisitor.ByID(id2Select).find(group);
-
-    SettingsDialogFactory.getInstance().create(getProject(project), group, configurable2Select, filter).show();
+    Configurable configurableToSelect = idToSelect == null ? null : new ConfigurableVisitor.ByID(idToSelect).find(group);
+    SettingsDialogFactory.getInstance().create(getProject(project), Collections.singletonList(group), configurableToSelect, filter).show();
   }
 
   @Override
-  public void showSettingsDialog(@NotNull final Project project, final Configurable toSelect) {
-    getDialog(project, getConfigurableGroups(project, true), toSelect).show();
+  public void showSettingsDialog(@NotNull Project project, @Nullable Configurable toSelect) {
+    List<ConfigurableGroup> groups = Collections.singletonList(ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */ true));
+    getDialog(project, groups, toSelect).show();
   }
 
   @NotNull
-  private static ConfigurableGroup[] filterEmptyGroups(@NotNull final ConfigurableGroup[] group) {
+  private static List<ConfigurableGroup> filterEmptyGroups(@NotNull List<? extends ConfigurableGroup> group) {
     List<ConfigurableGroup> groups = new ArrayList<>();
     for (ConfigurableGroup g : group) {
       if (g.getConfigurables().length > 0) {
         groups.add(g);
       }
     }
-    return groups.toArray(new ConfigurableGroup[0]);
+    return groups;
   }
 
   @Override
   public boolean editConfigurable(Project project, Configurable configurable) {
     return editConfigurable(project, createDimensionKey(configurable), configurable);
-  }
-
-  @Override
-  public <T extends Configurable> T findProjectConfigurable(final Project project, final Class<T> confClass) {
-    return ConfigurableExtensionPointUtil.findProjectConfigurable(project, confClass);
   }
 
   @Override

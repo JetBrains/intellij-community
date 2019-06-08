@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -509,18 +510,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(String text, String description, @Nullable Icon icon) {
+    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                               @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                               @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(String text, Icon icon) {
+    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(String text) {
+    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
       super(text);
     }
   }

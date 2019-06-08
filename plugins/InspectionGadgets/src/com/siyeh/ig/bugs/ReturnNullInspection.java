@@ -202,9 +202,17 @@ public class ReturnNullInspection extends BaseInspection {
       final Project project = method.getProject();
       final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(project);
       final PsiAnnotation annotation = nullableNotNullManager.getNullableAnnotation(method, false);
-      if (annotation != null && !InferredAnnotationsManager.getInstance(project).isInferredAnnotation(annotation)) {
+      final InferredAnnotationsManager inferredAnnotationsManager = InferredAnnotationsManager.getInstance(project);
+      if (annotation != null && !inferredAnnotationsManager.isInferredAnnotation(annotation)) {
         return;
       }
+      for (PsiAnnotation typeAnnotation : returnType.getAnnotations()) {
+        if (NullableNotNullManager.isNullabilityAnnotation(typeAnnotation) &&
+            !inferredAnnotationsManager.isInferredAnnotation(typeAnnotation)) {
+          return;
+        }
+      }
+
       if (CollectionUtils.isCollectionClassOrInterface(returnType)) {
         if (m_reportCollectionMethods) {
           registerError(value, value);

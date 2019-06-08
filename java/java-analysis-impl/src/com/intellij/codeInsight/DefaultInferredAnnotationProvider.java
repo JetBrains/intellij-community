@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
@@ -99,6 +99,10 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
 
   @Nullable
   private PsiAnnotation getHardcodedContractAnnotation(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass != null && aClass.getQualifiedName() != null && aClass.getQualifiedName().startsWith("org.assertj.core.api.")) {
+      return createContractAnnotation(Collections.emptyList(), true);
+    }
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, null);
     return contracts.isEmpty() ? null : createContractAnnotation(contracts, HardcodedContracts.isHardcodedPure(method));
   }
@@ -107,7 +111,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
    * There is a number of well-known methods where automatic inference fails (for example, {@link Objects#requireNonNull(Object)}.
    * For such methods, contracts are hardcoded, and for their parameters inferred @NotNull are suppressed.<p/>
    *
-   * {@link Contract} and {@link NotNull} annotations on methods are not necessarily applicable to the overridden implementations, so they're ignored, too.<p/>
+   * {@link org.jetbrains.annotations.Contract} and {@link NotNull} annotations on methods are not necessarily applicable to the overridden implementations, so they're ignored, too.<p/>
    *
    * @return whether inference is to be suppressed the given annotation on the given method or parameter
    */
@@ -171,10 +175,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   }
 
   private boolean hasExplicitNullability(PsiModifierListOwner owner) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    return findAnnotation(owner, manager.getNotNulls(), true) != null ||
-           findAnnotation(owner, manager.getNullables(), true) != null ||
-           manager.findNullityDefaultInHierarchy(owner) != null;
+    return NullableNotNullManager.getInstance(myProject).findExplicitNullability(owner) != null;
   }
 
   @Nullable
@@ -233,7 +234,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   @Override
   public List<PsiAnnotation> findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     listOwner = PsiUtil.preferCompiledElement(listOwner);
-    List<PsiAnnotation> result = ContainerUtil.newArrayList();
+    List<PsiAnnotation> result = new ArrayList<>();
     PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotations(listOwner);
     for (PsiAnnotation annotation : fromBytecode) {
       if (!ignoreInference(listOwner, annotation.getQualifiedName())) {

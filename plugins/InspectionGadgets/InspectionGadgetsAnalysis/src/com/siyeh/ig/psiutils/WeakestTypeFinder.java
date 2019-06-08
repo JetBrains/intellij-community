@@ -499,7 +499,7 @@ public class WeakestTypeFinder {
     return checked;
   }
 
-  private static boolean throwsIncompatibleException(PsiMethod method, Collection<PsiClassType> exceptionTypes) {
+  private static boolean throwsIncompatibleException(PsiMethod method, Collection<? extends PsiClassType> exceptionTypes) {
     final PsiReferenceList superThrowsList = method.getThrowsList();
     final PsiClassType[] superThrownTypes = superThrowsList.getReferencedTypes();
     outer:
@@ -535,7 +535,7 @@ public class WeakestTypeFinder {
     return true;
   }
 
-  private static Set<PsiClass> filterAccessibleClasses(Set<PsiClass> weakestTypeClasses, PsiClass upperBound, PsiElement context) {
+  private static Set<PsiClass> filterAccessibleClasses(Set<? extends PsiClass> weakestTypeClasses, PsiClass upperBound, PsiElement context) {
     final Set<PsiClass> result = new HashSet<>();
     for (PsiClass weakestTypeClass : weakestTypeClasses) {
       ProgressManager.checkCanceled();

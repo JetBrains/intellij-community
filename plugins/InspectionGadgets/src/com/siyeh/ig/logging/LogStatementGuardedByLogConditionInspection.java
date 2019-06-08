@@ -31,7 +31,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.LoggingUtils;
+import com.siyeh.ig.psiutils.JavaLoggingUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.TextField;
@@ -51,7 +51,7 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
   final List<String> logMethodNameList = new ArrayList<>();
   final List<String> logConditionMethodNameList = new ArrayList<>();
   @SuppressWarnings({"PublicField"})
-  public String loggerClassName = LoggingUtils.JAVA_LOGGING;
+  public String loggerClassName = JavaLoggingUtils.JAVA_LOGGING;
   @NonNls
   @SuppressWarnings({"PublicField"})
   public String loggerMethodAndconditionMethodNames =

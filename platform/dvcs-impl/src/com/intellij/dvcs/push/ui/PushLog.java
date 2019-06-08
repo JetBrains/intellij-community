@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -210,8 +210,6 @@ public class PushLog extends JPanel implements DataProvider {
       }
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
-    //override default tree behaviour.
-    myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "");
     MyShowCommitInfoAction showCommitInfoAction = new MyShowCommitInfoAction();
     showCommitInfoAction.registerCustomShortcutSet(quickDocAction.getShortcutSet(), myTree);
@@ -326,7 +324,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectAllChanges(@NotNull List<CommitNode> commitNodes) {
+  private static List<Change> collectAllChanges(@NotNull List<? extends CommitNode> commitNodes) {
     return CommittedChangesTreeBrowser.zipChanges(collectChanges(commitNodes));
   }
 
@@ -345,8 +343,8 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  private static List<Change> collectChanges(@NotNull List<CommitNode> commitNodes) {
-    List<Change> changes = ContainerUtil.newArrayList();
+  private static List<Change> collectChanges(@NotNull List<? extends CommitNode> commitNodes) {
+    List<Change> changes = new ArrayList<>();
     for (CommitNode node : commitNodes) {
       changes.addAll(node.getUserObject().getChanges());
     }
@@ -355,7 +353,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private static <T> List<T> getChildNodesByType(@NotNull DefaultMutableTreeNode node, Class<T> type, boolean reverseOrder) {
-    List<T> nodes = ContainerUtil.newArrayList();
+    List<T> nodes = new ArrayList<>();
     if (node.getChildCount() < 1) {
       return nodes;
     }
@@ -378,7 +376,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private static List<Integer> getSortedRows(@NotNull int[] rows) {
-    List<Integer> sorted = ContainerUtil.newArrayList();
+    List<Integer> sorted = new ArrayList<>();
     for (int row : rows) {
       sorted.add(row);
     }
@@ -433,7 +431,7 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private List<DefaultMutableTreeNode> getNodesForRows(@NotNull List<Integer> rows) {
-    List<DefaultMutableTreeNode> nodes = ContainerUtil.newArrayList();
+    List<DefaultMutableTreeNode> nodes = new ArrayList<>();
     for (Integer row : rows) {
       TreePath path = myTree.getPathForRow(row);
       Object pathComponent = path == null ? null : path.getLastPathComponent();
@@ -446,16 +444,8 @@ public class PushLog extends JPanel implements DataProvider {
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0 && pressed) {
-      if (myTree.isEditing()) {
-        myTree.stopEditing();
-      }
-      else {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null) {
-          myTree.startEditingAtPath(TreeUtil.getPathFromRoot(node));
-        }
-      }
+    if (e.getKeyCode() == KeyEvent.VK_ENTER && myTree.isEditing() && e.getModifiers() == 0 && pressed) {
+      myTree.stopEditing();
       return true;
     }
     if (myAllowSyncStrategy && e.getKeyCode() == KeyEvent.VK_F2 && e.getModifiers() == InputEvent.ALT_MASK && pressed) {

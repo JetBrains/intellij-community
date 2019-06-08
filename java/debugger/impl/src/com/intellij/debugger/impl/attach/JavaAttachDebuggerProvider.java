@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -29,6 +30,7 @@ import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.sa.SaJdwp;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +96,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @NotNull
     @Override
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-      LocalAttachInfo attachInfo = getAttachInfo(project, info, dataHolder.getUserData(ADDRESS_MAP_KEY));
+      LocalAttachInfo attachInfo = getAttachInfo(project, info.getPid(), info.getCommandLine(), dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
       String res;
       String executable = info.getExecutableDisplayName();
@@ -140,7 +142,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       });
     }
 
-    LocalAttachInfo info = getAttachInfo(project, processInfo, addressMap);
+    LocalAttachInfo info = getAttachInfo(project, processInfo.getPid(), processInfo.getCommandLine(), addressMap);
     if (info != null && isDebuggerAttach(info)) {
       return Collections.singletonList(new JavaLocalAttachDebugger(project, info));
     }
@@ -152,19 +154,23 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   @Nullable
-  private static LocalAttachInfo getAttachInfo(Project project,
-                                               ProcessInfo processInfo,
+  private static LocalAttachInfo getAttachInfo(@Nullable Project project,
+                                               int pid,
+                                               String commandLine,
                                                @Nullable Map<String, LocalAttachInfo> addressMap) {
     LocalAttachInfo res;
-    String pidString = String.valueOf(processInfo.getPid());
+    String pidString = String.valueOf(pid);
     if (addressMap != null) {
       res = addressMap.get(pidString);
+      if (res != null) {
+        return res;
+      }
     }
-    else {
-      res = getProcessAttachInfo(pidString, JavaDebuggerAttachUtil.getAttachedPids(project), true);
-    }
-    if (res == null) {
-      res = getProcessAttachInfo(ParametersListUtil.parse(processInfo.getCommandLine()), pidString);
+
+    res = getProcessAttachInfo(ParametersListUtil.parse(commandLine), pidString);
+    if (res == null && addressMap == null) {
+      res =
+        getProcessAttachInfo(pidString, project != null ? JavaDebuggerAttachUtil.getAttachedPids(project) : Collections.emptySet(), true);
     }
     return res;
   }
@@ -217,8 +223,8 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   @Nullable
-  static LocalAttachInfo getProcessAttachInfo(@NotNull String pid) {
-    return getProcessAttachInfo(pid, Collections.emptySet(), true);
+  static LocalAttachInfo getProcessAttachInfo(@NotNull BaseProcessHandler processHandler) {
+    return getAttachInfo(null, OSProcessUtil.getProcessID(processHandler.getProcess()), processHandler.getCommandLine(), null);
   }
 
   @Nullable
@@ -432,7 +438,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
   }
 
-  private static class ProcessAttachRunConfiguration extends RunConfigurationBase {
+  private static class ProcessAttachRunConfiguration extends RunConfigurationBase<Element> {
     private LocalAttachInfo myAttachInfo;
 
     protected ProcessAttachRunConfiguration(@NotNull Project project) {

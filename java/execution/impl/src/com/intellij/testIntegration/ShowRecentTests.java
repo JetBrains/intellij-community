@@ -58,7 +58,7 @@ public class ShowRecentTests extends AnAction {
     
     SelectTestStep selectStepTest = new SelectTestStep("Debug Recent Tests", entries, testRunner);
 
-    RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner, testLocator);
+    RecentTestsListPopup popup = new RecentTestsListPopup(project, selectStepTest, testRunner, testLocator);
     popup.showCenteredInCurrentWindow(project);
 
     cleanDeadTests(entries, testLocator, testStorage);

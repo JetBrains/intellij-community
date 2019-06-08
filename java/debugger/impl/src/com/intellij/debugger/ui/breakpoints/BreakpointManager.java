@@ -153,7 +153,7 @@ public class BreakpointManager {
   }
 
   public void setBreakpointDefaults(Key<? extends Breakpoint> category, BreakpointDefaults defaults) {
-    Class typeCls = null;
+    Class<? extends XBreakpointType> typeCls = null;
     if (LineBreakpoint.CATEGORY.toString().equals(category.toString())) {
       typeCls = JavaLineBreakpointType.class;
     }

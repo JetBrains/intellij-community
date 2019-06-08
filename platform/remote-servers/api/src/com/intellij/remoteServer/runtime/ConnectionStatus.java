@@ -9,6 +9,6 @@ public enum ConnectionStatus {
   DISCONNECTED, CONNECTED, CONNECTING;
 
   public String getPresentableText() {
-    return StringUtil.capitalize(name().toLowerCase());
+    return StringUtil.capitalize(StringUtil.toLowerCase(name()));
   }
 }

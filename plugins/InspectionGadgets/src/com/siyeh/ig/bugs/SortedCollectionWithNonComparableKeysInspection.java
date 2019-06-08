@@ -36,11 +36,8 @@ public class SortedCollectionWithNonComparableKeysInspection extends AbstractBas
     return new JavaElementVisitor() {
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
-        if (expression.getAnonymousClass() != null ||
-            expression.getArrayInitializer() != null ||
-            expression.getArrayDimensions().length > 0 ||
-            expression.getArgumentList() == null ||
-            !expression.getArgumentList().isEmpty()) {
+        if (expression.getAnonymousClass() != null || expression.isArrayCreation() ||
+            expression.getArgumentList() == null || !expression.getArgumentList().isEmpty()) {
           return;
         }
         PsiJavaCodeReferenceElement reference = expression.getClassReference();

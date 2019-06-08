@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -18,13 +18,11 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
@@ -63,10 +61,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
@@ -84,7 +80,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private static final Logger LOG = Logger.getInstance(RunAnythingPopupUI.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final String HELP_PLACEHOLDER = "?";
-  private static final int LIST_REBUILD_DELAY = 200;
+  private static final int LIST_REBUILD_DELAY = 100;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private final AnActionEvent myActionEvent;
   private boolean myIsUsedTrigger;
@@ -93,7 +89,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private boolean mySkipFocusGain = false;
-  private Editor myEditor;
   @Nullable
   private VirtualFile myVirtualFile;
   @NotNull private final DataContext myDataContext;
@@ -153,12 +148,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
           mySkipFocusGain = false;
           return;
         }
-        String text = RunAnythingUtil.getInitialTextForNavigation(myEditor);
-        text = text != null ? text.trim() : "";
-
-        mySearchField.setText(text);
         mySearchField.setForeground(UIUtil.getLabelForeground());
-        mySearchField.selectAll();
         mySearchField.setColumns(SEARCH_FIELD_COLUMNS);
         ApplicationManager.getApplication().invokeLater(() -> {
           final JComponent parent = (JComponent)mySearchField.getParent();
@@ -246,7 +236,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private DataContext createDataContext(@NotNull DataContext parentDataContext, boolean isAltPressed) {
-    Map<String, Object> map = ContainerUtil.newHashMap();
+    Map<String, Object> map = new HashMap<>();
     map.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory(getModule(), isAltPressed));
     map.put(EXECUTOR_KEY.getName(), getExecutor());
 
@@ -412,7 +402,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   public DataContext createDataContext(@NotNull AnActionEvent e) {
-    HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
+    HashMap<String, Object> dataMap = new HashMap<>();
     dataMap.put(CommonDataKeys.PROJECT.getName(), e.getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
     return createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
@@ -544,7 +534,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   private class MyListRenderer extends ColoredListCellRenderer<Object> {
     private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
-    private final JLabel myTitle = new JLabel();
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean hasFocus) {
@@ -555,7 +544,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, findIcon(index), isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -582,7 +571,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (model != null) {
         String title = model.getTitle(index);
         if (title != null) {
-          myTitle.setText(title);
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
         }
       }
@@ -597,6 +585,19 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
 
       return myMainPanel;
+    }
+
+    @Nullable
+    private Icon findIcon(int index) {
+      RunAnythingSearchListModel model = getSearchingModel(myResultsList);
+      Icon groupIcon = null;
+      if (model != null) {
+        RunAnythingGroup group = model.findItemGroup(index);
+        if (group != null) {
+          groupIcon = group.getIcon();
+        }
+      }
+      return groupIcon;
     }
 
     @Override
@@ -816,7 +817,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
         synchronized (lock) {
           myCurrentWorker = ActionCallback.DONE;
           myCalcThread = null;
-          myEditor = null;
           myVirtualFile = null;
           myProject = null;
           myModule = null;
@@ -832,10 +832,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myActionEvent = actionEvent;
 
     myCurrentWorker = ActionCallback.DONE;
-    myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myProject = ObjectUtils.notNull(CommonDataKeys.PROJECT.getData(myActionEvent.getDataContext()));
+    myProject = ObjectUtils.notNull(myActionEvent.getData(CommonDataKeys.PROJECT));
     myDataContext = createDataContext(actionEvent);
     myModule = myActionEvent.getData(LangDataKeys.MODULE);
 
@@ -926,7 +925,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     res.setOpaque(false);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.addAction(new RunAnythingShowFilterAction(this));
+    actionGroup.addAction(new RunAnythingShowFilterAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -963,8 +962,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private class RunAnythingShowFilterAction extends ShowFilterAction {
-    private RunAnythingShowFilterAction(@NotNull Disposable parentDisposable) {
-      super(parentDisposable, myProject);
+
+    @NotNull
+    @Override
+    public String getDimensionServiceKey() {
+      return "RunAnythingAction_Filter_Popup";
     }
 
     @Override
@@ -980,7 +982,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     @Override
     protected ElementsChooser<?> createChooser() {
       ElementsChooser<RunAnythingGroup> res =
-        new ElementsChooser<RunAnythingGroup>(ContainerUtil.newArrayList(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
+        new ElementsChooser<RunAnythingGroup>(new ArrayList<>(RunAnythingCompletionGroup.MAIN_GROUPS), false) {
           @Override
           protected String getItemText(@NotNull RunAnythingGroup value) {
             return value.getTitle();

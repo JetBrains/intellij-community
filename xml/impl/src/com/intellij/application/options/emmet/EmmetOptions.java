@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -8,11 +8,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @State(
@@ -24,7 +24,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
   private boolean myPreviewEnabled = false;
   @NotNull
-  private Set<String> myFiltersEnabledByDefault = ContainerUtil.newHashSet();
+  private Set<String> myFiltersEnabledByDefault = new HashSet<>();
   private boolean myHrefAutoDetectEnabled = true;
   private boolean myAddEditPointAtTheEndOfTemplate = false;
 

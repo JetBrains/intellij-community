@@ -15,6 +15,8 @@
  */
 package org.intellij.images.options.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -22,6 +24,7 @@ import org.intellij.images.options.EditorOptions;
 import org.intellij.images.options.ExternalEditorOptions;
 import org.intellij.images.options.Options;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -32,91 +35,73 @@ import java.beans.PropertyChangeSupport;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class OptionsImpl implements Options, JDOMExternalizable {
-    /**
-     * Property change support (from injection)
-     */
-    private final PropertyChangeSupport propertyChangeSupport;
+  /**
+   * Property change support (from injection)
+   */
+  private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
-    private final EditorOptions editorOptions;
-    private final ExternalEditorOptions externalEditorOptions;
+  private final EditorOptions editorOptions = new EditorOptionsImpl(propertyChangeSupport);
+  private final ExternalEditorOptions externalEditorOptions = new ExternalEditorOptionsImpl(propertyChangeSupport);
 
-    OptionsImpl() {
-        propertyChangeSupport = new PropertyChangeSupport(this);
-        editorOptions = new EditorOptionsImpl(propertyChangeSupport);
-        externalEditorOptions = new ExternalEditorOptionsImpl(propertyChangeSupport);
+  @NotNull
+  @Override
+  public EditorOptions getEditorOptions() {
+    return editorOptions;
+  }
+
+  @NotNull
+  @Override
+  public ExternalEditorOptions getExternalEditorOptions() {
+    return externalEditorOptions;
+  }
+
+  @Override
+  public void inject(@NotNull Options options) {
+    editorOptions.inject(options.getEditorOptions());
+    externalEditorOptions.inject(options.getExternalEditorOptions());
+  }
+
+  @Override
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parent) {
+    propertyChangeSupport.addPropertyChangeListener(listener);
+    Disposer.register(parent, () -> propertyChangeSupport.removePropertyChangeListener(listener));
+  }
+
+  @Override
+  public boolean setOption(@NotNull String name, Object value) {
+    return editorOptions.setOption(name, value) || externalEditorOptions.setOption(name, value);
+  }
+
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    ((JDOMExternalizable)editorOptions).readExternal(element);
+    ((JDOMExternalizable)externalEditorOptions).readExternal(element);
+  }
+
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    ((JDOMExternalizable)editorOptions).writeExternal(element);
+    ((JDOMExternalizable)externalEditorOptions).writeExternal(element);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
     }
-
-    @Override
-    public EditorOptions getEditorOptions() {
-        return editorOptions;
+    if (!(obj instanceof Options)) {
+      return false;
     }
+    Options otherOptions = (Options)obj;
+    EditorOptions editorOptions = otherOptions.getEditorOptions();
+    ExternalEditorOptions externalEditorOptions = otherOptions.getExternalEditorOptions();
+    return editorOptions.equals(getEditorOptions()) && externalEditorOptions.equals(getExternalEditorOptions());
+  }
 
-    @Override
-    public ExternalEditorOptions getExternalEditorOptions() {
-        return externalEditorOptions;
-    }
-
-    @Override
-    public void inject(Options options) {
-        editorOptions.inject(options.getEditorOptions());
-        externalEditorOptions.inject(options.getExternalEditorOptions());
-    }
-
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.addPropertyChangeListener(listener);
-    }
-
-    @Override
-    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.removePropertyChangeListener(listener);
-    }
-
-    @Override
-    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
-    }
-
-    @Override
-    public boolean setOption(String name, Object value) {
-        return editorOptions.setOption(name, value) || externalEditorOptions.setOption(name, value);
-    }
-
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-        ((JDOMExternalizable)editorOptions).readExternal(element);
-        ((JDOMExternalizable)externalEditorOptions).readExternal(element);
-    }
-
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
-        ((JDOMExternalizable)editorOptions).writeExternal(element);
-        ((JDOMExternalizable)externalEditorOptions).writeExternal(element);
-    }
-
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof Options)) {
-            return false;
-        }
-        Options otherOptions = (Options)obj;
-        EditorOptions editorOptions = otherOptions.getEditorOptions();
-        ExternalEditorOptions externalEditorOptions = otherOptions.getExternalEditorOptions();
-        return editorOptions != null && editorOptions.equals(getEditorOptions()) &&
-            externalEditorOptions != null && externalEditorOptions.equals(getExternalEditorOptions());
-    }
-
-    public int hashCode() {
-        int result;
-        result = (editorOptions != null ? editorOptions.hashCode() : 0);
-        result = 29 * result + (externalEditorOptions != null ? externalEditorOptions.hashCode() : 0);
-        return result;
-    }
+  @Override
+  public int hashCode() {
+    int result = editorOptions.hashCode();
+    result = 29 * result + externalEditorOptions.hashCode();
+    return result;
+  }
 }

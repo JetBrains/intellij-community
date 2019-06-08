@@ -23,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -622,7 +622,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected String extractRootPath(@NotNull String path) {
     if (path.isEmpty()) {
       try {
-        return extractRootPath(new File("").getCanonicalPath());
+        path = new File("").getCanonicalPath();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -636,7 +636,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (SystemInfo.isWindows) {
       if (path.length() >= 2 && path.charAt(1) == ':') {
         // Drive letter
-        return path.substring(0, 2).toUpperCase(Locale.US);
+        return StringUtil.toUpperCase(path.substring(0, 2));
       }
 
       if (path.startsWith("//") || path.startsWith("\\\\")) {
@@ -750,18 +750,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public boolean hasChildren(@NotNull VirtualFile file) {
-    return file.getParent() == null || hasChildren(Paths.get(file.getPath()));
-  }
-
-  /**
-   * @return {@code true} if {@code path} represents a directory with at least one child.
-   */
-  public static boolean hasChildren(@NotNull Path path) {
+    if (file.getParent() == null) {
+      // assume roots always have children
+      return true;
+    }
     // make sure to not load all children
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(file.getPath()))) {
       return stream.iterator().hasNext();
     }
-    catch (IOException | SecurityException e) {
+    catch (InvalidPathException | IOException | SecurityException e) {
       return true;
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -27,6 +13,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -36,53 +23,43 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Locale;
 import java.util.TreeSet;
 
 public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String MANAGE_REPOSITORIES = "Manage repositories...";
-  public static final String N_A = "N/A";
+  static final String N_A = "N/A";
 
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   private final PluginManagerMain installed;
   private final String myVendorFilter;
 
-  public AvailablePluginsManagerMain(PluginManagerMain installed, PluginManagerUISettings uiSettings, String vendorFilter) {
-    super(uiSettings);
+  AvailablePluginsManagerMain(PluginManagerMain installed, String vendorFilter) {
     this.installed = installed;
     myVendorFilter = vendorFilter;
     init();
     final JButton manageRepositoriesBtn = new JButton(MANAGE_REPOSITORIES);
     if (myVendorFilter == null) {
       manageRepositoriesBtn.setMnemonic('m');
-      manageRepositoriesBtn.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
-            final List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
-            if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
-              ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase(Locale.ENGLISH));
-            }
-            loadAvailablePlugins();
+      manageRepositoriesBtn.addActionListener(__ -> {
+        if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
+          final List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
+          if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
+            ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, StringUtil.toLowerCase(myFilter.getFilter()));
           }
+          loadAvailablePlugins();
         }
       });
       myActionsPanel.add(manageRepositoriesBtn, BorderLayout.EAST);
     }
 
     final JButton httpProxySettingsButton = new JButton(IdeBundle.message("button.http.proxy.settings"));
-    httpProxySettingsButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        if (HttpConfigurable.editConfigurable(getMainPanel())) {
-          loadAvailablePlugins();
-        }
+    httpProxySettingsButton.addActionListener(__ -> {
+      if (HttpConfigurable.editConfigurable(getMainPanel())) {
+        loadAvailablePlugins();
       }
     });
     myActionsPanel.add(httpProxySettingsButton, BorderLayout.WEST);
@@ -113,14 +90,9 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         return installSelected(pluginTable);
       }
     }.installOn(pluginTable);
-    
+
     pluginTable.registerKeyboardAction(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          installSelected(pluginTable);
-        }
-      },
+      __ -> installSelected(pluginTable),
       KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
       JComponent.WHEN_FOCUSED
     );
@@ -133,7 +105,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       for (IdeaPluginDescriptor descr : selection) {
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
-          if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
+          if (((PluginNode)descr).getStatus() == PluginNode.Status.INSTALLED) {
             enabled &= ourState.hasNewerVersion(descr.getPluginId());
           }
         }
@@ -166,6 +138,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     return installed;
   }
 
+  @NotNull
   @Override
   protected ActionGroup getActionGroup(boolean inToolbar) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -189,7 +162,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
-  protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
+  protected void propagateUpdates(List<? extends IdeaPluginDescriptor> list) {
     installed.modifyPluginsList(list); //propagate updates
   }
 
@@ -233,7 +206,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       return new DumbAwareAction(availableCategory) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
+          final String filter = StringUtil.toLowerCase(myFilter.getFilter());
           ((AvailablePluginsTableModel)pluginsModel).setCategory(availableCategory, filter);
         }
       };
@@ -276,7 +249,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       return new DumbAwareAction(host) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
+          final String filter = StringUtil.toLowerCase(myFilter.getFilter());
           ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
           TableUtil.ensureSelectionExists(getPluginTable());
         }

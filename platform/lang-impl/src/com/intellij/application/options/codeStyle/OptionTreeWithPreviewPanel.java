@@ -179,7 +179,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     new TreeSpeedSearch(optionsTree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(optionsTree);
     optionsTree.setRootVisible(false);
-    UIUtil.setLineStyleAngled(optionsTree);
     optionsTree.setShowsRootHandles(true);
 
 
@@ -214,7 +213,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return optionsTree;
   }
 
-  private List<BooleanOptionKey> orderByGroup(final List<BooleanOptionKey> options) {
+  private List<BooleanOptionKey> orderByGroup(final List<? extends BooleanOptionKey> options) {
     final List<String> groupOrder = getGroupOrder(options);
     List<BooleanOptionKey> result = new ArrayList<>(options.size());
     result.addAll(options);
@@ -235,7 +234,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return result;
   }
 
-  protected List<String> getGroupOrder(List<BooleanOptionKey> options) {
+  protected List<String> getGroupOrder(List<? extends BooleanOptionKey> options) {
     List<String> groupOrder = new ArrayList<>();
     for (BooleanOptionKey each : options) {
       if (each.groupName != null && !groupOrder.contains(each.groupName)) {

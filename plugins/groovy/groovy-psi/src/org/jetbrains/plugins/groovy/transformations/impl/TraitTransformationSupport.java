@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -18,10 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class TraitTransformationSupport implements AstTransformationSupport {
 
@@ -69,7 +66,7 @@ public class TraitTransformationSupport implements AstTransformationSupport {
       stack.push(Pair.create(superClass, result.getSubstitutor()));
     }
 
-    Set<PsiClass> visited = ContainerUtil.newHashSet();
+    Set<PsiClass> visited = new HashSet<>();
 
     while (!stack.isEmpty()) {
       Pair<PsiClass, PsiSubstitutor> current = stack.pop();

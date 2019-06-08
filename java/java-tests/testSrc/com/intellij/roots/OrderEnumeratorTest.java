@@ -4,9 +4,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 
@@ -138,7 +141,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   public void testCachingUrls() {
     String jdkUrl = getRtJarJdk17().getUrl();
+    List<String> computedUrls = ContainerUtil.map(orderEntries(myModule).classes().usingCache().getRoots(), VirtualFile::getUrl);
     final String[] urls = orderEntries(myModule).classes().usingCache().getUrls();
+    assertOrderedEquals(computedUrls, urls);
     assertOrderedEquals(urls, jdkUrl);
     assertSame(urls, orderEntries(myModule).classes().usingCache().getUrls());
 

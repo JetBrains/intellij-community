@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,11 +37,13 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
 
   @NotNull
   @Override
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInCommentsAndStrings) {
     if (!getSearchForReferences(element)) {
       return Collections.emptyList();
     }
-    return super.findReferences(element);
+    return super.findReferences(element, searchScope, searchInCommentsAndStrings);
   }
 
   public static class PsiFileRenameDialog extends RenameWithOptionalReferencesDialog {

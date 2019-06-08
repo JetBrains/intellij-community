@@ -44,7 +44,7 @@ public class PluginConflictDialog extends DialogWrapper {
   public static final int WIDTH = 450;
 
   @NotNull
-  private final List<PluginId> myConflictingPlugins;
+  private final List<? extends PluginId> myConflictingPlugins;
 
   private final boolean myIsConflictWithPlatform;
   @Nullable
@@ -56,7 +56,7 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private JPanel myConflictingPluginsListPanel;
 
-  public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins,
+  public PluginConflictDialog(@NotNull List<? extends PluginId> conflictingPlugins,
                               boolean isConflictWithPlatform) {
     super(false);
 
@@ -82,7 +82,7 @@ public class PluginConflictDialog extends DialogWrapper {
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
-  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  private static String getTopMessageText(@NotNull List<? extends PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);

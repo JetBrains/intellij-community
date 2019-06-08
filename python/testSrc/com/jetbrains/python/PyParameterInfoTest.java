@@ -1087,7 +1087,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
-    public void setEscapeFunction(@Nullable Function<String, String> escapeFunction) {
+    public void setEscapeFunction(@Nullable Function<? super String, String> escapeFunction) {
     }
 
     @Override

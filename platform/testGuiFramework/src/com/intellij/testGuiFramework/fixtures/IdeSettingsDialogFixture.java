@@ -81,7 +81,7 @@ public class IdeSettingsDialogFixture extends IdeaDialogFixture<SettingsDialog> 
     return result;
   }
 
-  private static void findComponentsOfType(@NotNull String typeName, @NotNull List<JComponent> result, @Nullable JComponent parent) {
+  private static void findComponentsOfType(@NotNull String typeName, @NotNull List<? super JComponent> result, @Nullable JComponent parent) {
     if (parent == null) {
       return;
     }

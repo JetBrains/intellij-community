@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.actions;
 
 import com.intellij.diff.DiffManager;
@@ -15,9 +15,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class MergeFilesAction extends AnAction implements DumbAware {
@@ -49,12 +49,10 @@ public class MergeFilesAction extends AnAction implements DumbAware {
       Project project = CommonDataKeys.PROJECT.getData(context);
 
       String title = DiffBundle.message("merge.files.dialog.title");
-      List<String> titles = ContainerUtil.list(files[0].getPresentableUrl(),
-                                               files[1].getPresentableUrl(),
-                                               files[2].getPresentableUrl());
+      List<String> titles = Arrays.asList(files[0].getPresentableUrl(), files[1].getPresentableUrl(), files[2].getPresentableUrl());
 
       VirtualFile outputFile = files[1];
-      List<VirtualFile> contents = ContainerUtil.list(files[0], files[1], files[2]);
+      List<VirtualFile> contents = Arrays.asList(files[0], files[1], files[2]);
 
       MergeRequest request = diffRequestFactory.createMergeRequestFromFiles(project, outputFile, contents, title, titles, null);
       request.putUserData(DiffUserDataKeys.HELP_ID, "cvs.merge");

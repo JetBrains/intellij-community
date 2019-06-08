@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.SmartList
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.isEmpty
 import com.intellij.util.lang.CompoundRuntimeException
@@ -86,7 +87,7 @@ private class DigestOutputStream(private val digest: MessageDigest) : OutputStre
   fun digest(): ByteArray = digest.digest()
 }
 
-private val sha1MessageDigestThreadLocal = ThreadLocal.withInitial { MessageDigest.getInstance("SHA-1", java.security.Security.getProvider("SUN")) }
+private val sha1MessageDigestThreadLocal = ThreadLocal.withInitial { DigestUtil.sha1() }
 
 // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
 fun createDataDigest(): MessageDigest {

@@ -36,7 +36,7 @@ public class RefactoringEventData extends UserDataHolderBase {
     putUserData(PSI_ELEMENT_KEY, element);
   }
 
-  public <T> void addMembers(T[] members, Function<T, PsiElement> converter) {
+  public <T> void addMembers(T[] members, Function<? super T, ? extends PsiElement> converter) {
     List<PsiElement> elements = new ArrayList<>();
     for (T info : members) {
       elements.add(converter.fun(info));

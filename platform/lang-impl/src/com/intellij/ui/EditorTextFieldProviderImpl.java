@@ -33,7 +33,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
   @NotNull
   @Override
   public EditorTextField getEditorField(@NotNull Language language, @NotNull Project project,
-                                        @NotNull final Iterable<EditorCustomization> features) {
+                                        @NotNull final Iterable<? extends EditorCustomization> features) {
     return new MyEditorTextField(language, project, features);
   }
 
@@ -66,11 +66,7 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
       for (EditorCustomization customization : myCustomizations) {
         customization.customize(editor);
       }
-    }
-
-    @Override
-    protected boolean isOneLineMode() {
-      return false;
+      updateBorder(editor);
     }
   }
 }

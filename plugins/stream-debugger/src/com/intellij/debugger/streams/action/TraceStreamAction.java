@@ -21,13 +21,16 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XSourcePosition;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,9 +82,10 @@ public class TraceStreamAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
     LibrarySupportProvider.EP_NAME.getExtensionList();
+    XSourcePosition position = session.getCurrentPosition();
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
 
-    if (element != null) {
+    if (element != null || position == null) {
       final List<StreamChainWithLibrary> chains = mySupportedLibraries.stream()
         .filter(library -> library.languageId.equals(element.getLanguage().getID()))
         .filter(library -> library.builder.isChainExists(element))
@@ -96,13 +100,12 @@ public class TraceStreamAction extends AnAction {
         runTrace(chains.get(0).chain, chains.get(0).library, session);
       }
       else {
-        final Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(element);
-        if (editor == null) {
-          throw new RuntimeException("editor not found");
-        }
-
-        new MyStreamChainChooser(editor).show(ContainerUtil.map(chains, StreamChainOption::new),
-                                              provider -> runTrace(provider.chain, provider.library, session));
+        Project project = session.getProject();
+        VirtualFile file = position.getFile();
+        final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
+        ApplicationManager.getApplication()
+          .invokeLater(() -> new MyStreamChainChooser(editor).show(ContainerUtil.map(chains, StreamChainOption::new),
+                                                                   provider -> runTrace(provider.chain, provider.library, session)));
       }
     }
     else {

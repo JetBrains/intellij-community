@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.plugins.intelliLang.inject;
 
@@ -25,8 +25,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Producer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
@@ -38,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,7 +79,7 @@ public class InjectorUtils {
       InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
 
     List<TextRange> ranges = injection.getInjectedArea(host);
-    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = ContainerUtil.newArrayListWithCapacity(ranges.size());
+    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<>(ranges.size());
 
     for (TextRange range : ranges) {
       list.add(Trinity.create(host, injectedLanguage, range));
@@ -304,9 +303,9 @@ public class InjectorUtils {
     }
     if (off2 - off1 > 2) {
       // ... there's no non-empty valid host in between comment and topmostElement
-      Producer<PsiElement> producer = prevWalker(topmostElement, commonParent);
+      Supplier<PsiElement> producer = prevWalker(topmostElement, commonParent);
       PsiElement e;
-      while ( (e = producer.produce()) != null && e != psiComment) {
+      while ( (e = producer.get()) != null && e != psiComment) {
         if (e instanceof PsiLanguageInjectionHost &&
             ((PsiLanguageInjectionHost)e).isValidHost() &&
             !StringUtil.isEmptyOrSpaces(e.getText())) {
@@ -383,13 +382,13 @@ public class InjectorUtils {
   }
 
   @NotNull
-  private static Producer<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
-    return new Producer<PsiElement>() {
+  private static Supplier<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
+    return new Supplier<PsiElement>() {
       PsiElement e = element;
 
       @Nullable
       @Override
-      public PsiElement produce() {
+      public PsiElement get() {
         if (e == null || e == scope) return null;
         PsiElement prev = e.getPrevSibling();
         if (prev != null) {

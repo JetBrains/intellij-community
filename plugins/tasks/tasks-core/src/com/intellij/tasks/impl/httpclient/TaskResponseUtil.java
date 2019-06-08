@@ -43,7 +43,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author Mikhail Golubev
@@ -215,7 +214,7 @@ public class TaskResponseUtil {
       try {
         String content = TaskResponseUtil.getResponseContentAsString(response);
         org.apache.commons.httpclient.Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        String contentType = header == null ? "text/plain" : StringUtil.toLowerCase(header.getElements()[0].getName());
         if (contentType.contains("xml")) {
           TaskUtil.prettyFormatXmlToLog(logger, content);
         }
@@ -237,7 +236,7 @@ public class TaskResponseUtil {
       try {
         String content = TaskResponseUtil.getResponseContentAsString(response);
         Header header = response.getEntity().getContentType();
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
+        String contentType = header == null ? "text/plain" : StringUtil.toLowerCase(header.getElements()[0].getName());
         if (contentType.contains("xml")) {
           TaskUtil.prettyFormatXmlToLog(logger, content);
         }

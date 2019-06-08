@@ -40,7 +40,8 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
       Object op = ((JComponent)c).getClientProperty("JComponent.outline");
       if (c.isEnabled() && op != null) {
         paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), Outline.valueOf(op.toString()));
-      } else {
+      }
+      else {
         if (isFocused(c)) {
           paintFocusBorder(g2, r.width, r.height, arc, true);
         }
@@ -53,7 +54,8 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
         g2.setColor(getOutlineColor(c.isEnabled(), isFocused(c)));
         g2.fill(border);
       }
-    } finally {
+    }
+    finally {
       g2.dispose();
     }
   }

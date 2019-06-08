@@ -2,7 +2,7 @@
 package git4idea.branch
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.EmptyIntHashSet
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.TroveUtil
@@ -23,8 +23,8 @@ fun IndexDataGetter.match(root: VirtualFile,
     val author = getAuthor(targetCommit)
 
     val commitsForAuthor = authorToSourceCommit[author] ?: TIntHashSet()
-    val sourceCandidates = TroveUtil.intersect(timeToSourceCommit[time] ?: TIntHashSet(), commitsForAuthor)
-    if (sourceCandidates.isNotEmpty()) {
+    val sourceCandidates = TroveUtil.intersect(timeToSourceCommit[time] ?: TIntHashSet(), commitsForAuthor) ?: continue
+    if (!sourceCandidates.isEmpty) {
       TroveUtil.addAll(result, selectSourceCommits(targetCommit, root, sourceCandidates, commitsForAuthor, reliable))
     }
   }
@@ -37,12 +37,12 @@ private val suffixPattern = Pattern.compile("$suffixStart.*\\)")
 
 private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
                                                 root: VirtualFile,
-                                                sourceCandidates: Set<Int>,
+                                                sourceCandidates: TIntHashSet,
                                                 sourceCandidatesExtended: TIntHashSet,
-                                                reliable: Boolean): Set<Int> {
-  val targetMessage = getFullMessage(targetCommit) ?: return emptySet()
+                                                reliable: Boolean): TIntHashSet {
+  val targetMessage = getFullMessage(targetCommit) ?: return EmptyIntHashSet.INSTANCE
 
-  val result = mutableSetOf<Int>()
+  val result = TIntHashSet()
   val matcher = suffixPattern.matcher(targetMessage)
   while (matcher.find()) {
     val match = targetMessage.subSequence(matcher.start(), matcher.end())
@@ -57,14 +57,14 @@ private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
         }
       }
     }
-    if (ContainerUtil.intersects(sourceCandidates, result)) return result // target time should match one of sources time
+    if (TroveUtil.intersects(sourceCandidates, result)) return result // target time should match one of sources time
   }
 
   if (!reliable) {
     val inexactMatches = mutableSetOf<Int>()
     val exactMatches = mutableSetOf<Int>()
     for (sourceCandidate in sourceCandidates) {
-      val sourceMessage = getFullMessage(sourceCandidate) ?: return emptySet()
+      val sourceMessage = getFullMessage(sourceCandidate) ?: return EmptyIntHashSet.INSTANCE
       if (targetMessage.contains(sourceMessage)) {
         if (targetMessage.length == sourceMessage.length) {
           exactMatches.add(sourceCandidate)
@@ -76,9 +76,9 @@ private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
     }
     val match = (if (exactMatches.isNotEmpty()) exactMatches else inexactMatches).singleOrNull()
     if (match != null) {
-      return setOf(match)
+      return TroveUtil.singleton(match)
     }
   }
 
-  return emptySet()
+  return EmptyIntHashSet.INSTANCE
 }

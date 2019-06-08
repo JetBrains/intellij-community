@@ -10,13 +10,13 @@ import com.intellij.bootRuntime.command.CommandFactory
 import com.intellij.bootRuntime.command.CommandFactory.Type.*
 import com.intellij.bootRuntime.command.CommandFactory.produce
 import com.intellij.bootRuntime.command.UseDefault
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBOptionButton
+import com.intellij.util.ui.UIUtil
 import java.awt.GridBagConstraints
 import java.awt.Insets
-import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.SwingUtilities
 
@@ -24,10 +24,6 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
 
   init {
     CommandFactory.initialize(project, this)
-  }
-
-  fun actionsForCurrentRuntime() : List<Action> {
-    return runtimeStateToActions(model.selectedBundle, model.currentState()).toList()
   }
 
   fun updateRuntime() {
@@ -61,7 +57,7 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
 
     actionPanel.rootPane?.defaultButton = job
 
-    actionPanel.add(job, constraint);
+    actionPanel.add(job, constraint)
     actionPanel.repaint()
     actionPanel.revalidate()
   }
@@ -81,10 +77,14 @@ class Controller(val project: Project, val actionPanel:ActionPanel, val model: M
     model.selectedBundle = local
   }
 
-  public fun restart() {
-    SwingUtilities.invokeLater({
-                                 SwingUtilities.getWindowAncestor(actionPanel).dispose()
-                                 ApplicationManagerEx.getApplicationEx().restart()
-                               })
+  fun restart() {
+    ApplicationManager.getApplication().invokeLater {
+      SwingUtilities.getWindowAncestor(actionPanel).dispose()
+      ApplicationManagerEx.getApplicationEx().restart(true)
+    }
+  }
+
+  fun noRuntimeSelected() {
+    UIUtil.uiTraverser(actionPanel).filter(JButton::class.java).forEach{b -> b.isEnabled = false}
   }
 }

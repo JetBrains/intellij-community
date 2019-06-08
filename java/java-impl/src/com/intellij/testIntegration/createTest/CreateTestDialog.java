@@ -176,7 +176,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private String getDefaultLibraryName() {
-    return getProperties().getValue(DEFAULT_LIBRARY_NAME_PROPERTY);
+    return getProperties().getValue(DEFAULT_LIBRARY_NAME_PROPERTY, "JUnit5");
   }
 
   private String getLastSelectedSuperClassName(TestFramework framework) {
@@ -346,15 +346,12 @@ public class CreateTestDialog extends DialogWrapper {
     constr.weighty = 1;
     panel.add(ScrollPaneFactory.createScrollPane(myMethodsTable), constr);
 
-    myLibrariesCombo.setRenderer(new ListCellRendererWrapper<TestFramework>() {
-      @Override
-      public void customize(JList list, TestFramework value, int index, boolean selected, boolean hasFocus) {
-        if (value != null) {
-          setText(value.getName());
-          setIcon(value.getIcon());
-        }
+    myLibrariesCombo.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      if (value != null) {
+        label.setText(value.getName());
+        label.setIcon(value.getIcon());
       }
-    });
+    }));
     final boolean hasTestRoots = !ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.TESTS).isEmpty();
     final List<TestFramework> attachedLibraries = new ArrayList<>();
     final String defaultLibrary = getDefaultLibraryName();
@@ -369,10 +366,6 @@ public class CreateTestDialog extends DialogWrapper {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {
         attachedLibraries.add(descriptor);
-
-        if (defaultLibrary == null) {
-          defaultDescriptor = descriptor;
-        }
       }
 
       if (Comparing.equal(defaultLibrary, descriptor.getName())) {

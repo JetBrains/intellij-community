@@ -74,7 +74,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
-    final List<PsiClass> result = ContainerUtil.newArrayList();
+    final List<PsiClass> result = new ArrayList<>();
 
     for (PsiElement psiClass : StubIndex.getElements(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
                                                      inSource ? new GrSourceFilterScope(scope) : scope, PsiClass.class)) {

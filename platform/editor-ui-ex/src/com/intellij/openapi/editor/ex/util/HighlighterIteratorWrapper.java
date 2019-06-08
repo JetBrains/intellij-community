@@ -19,14 +19,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author gregsh
  */
 public class HighlighterIteratorWrapper implements HighlighterIterator {
+  @NotNull
   private final HighlighterIterator myOriginal;
 
-  public HighlighterIteratorWrapper(HighlighterIterator original) {
+  public HighlighterIteratorWrapper(@NotNull HighlighterIterator original) {
     myOriginal = original;
   }
 

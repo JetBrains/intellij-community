@@ -5,7 +5,7 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.MessageEvent.Kind.*
 import com.intellij.build.events.impl.MessageEventImpl
-import com.intellij.build.output.BuildOutputInstantReaderImpl.getMaxLinesBufferSize
+import com.intellij.build.output.BuildOutputInstantReaderImpl.Companion.getMaxLinesBufferSize
 import com.intellij.openapi.util.text.StringUtil
 import org.junit.Assert
 import org.junit.Test
@@ -71,6 +71,10 @@ ${trashOut.prependIndent("        ")}
         [info] info1
         info2
         info3
+${""/* checks that duplicate messages are not sent */}
+        [info] info1
+        info2
+        info3
 
 ${trashOut.prependIndent("        ")}
         [warning] warn1
@@ -78,7 +82,7 @@ ${trashOut.prependIndent("        ")}
 
         """.trimIndent()
       )
-      .close()
+      .closeAndGetFuture().get()
 
     Assert.assertEquals(trashOut + '\n' + trashOut, unparsedLines.joinToString(separator = "\n"))
     Assert.assertEquals("""
@@ -100,7 +104,7 @@ ${trashOut.prependIndent("        ")}
           buf.append(nextLine).append('\n')
           nextLine = reader.readLine()
         }
-        messageConsumer.accept(MessageEventImpl(reader.buildId, kind, null, buf.toString().dropLast(1), null))
+        messageConsumer.accept(MessageEventImpl(reader.parentEventId, kind, null, buf.toString().dropLast(1), null))
         return@BuildOutputParser true
       }
       return@BuildOutputParser false

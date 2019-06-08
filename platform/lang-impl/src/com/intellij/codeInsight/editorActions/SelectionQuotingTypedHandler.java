@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     SelectionModel selectionModel = editor.getSelectionModel();
-    if(CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED && selectionModel.hasSelection() && isDelimiter(c)) {
+    if (CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED && selectionModel.hasSelection() && isDelimiter(c)) {
       String selectedText = selectionModel.getSelectedText();
       if (!StringUtil.isEmpty(selectedText)) {
         final int selectionStart = selectionModel.getSelectionStart();
@@ -48,9 +47,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         boolean restoreStickySelection = editor instanceof EditorEx && ((EditorEx)editor).isStickySelection();
         selectionModel.removeSelection();
         editor.getDocument().replaceString(selectionStart, selectionEnd, newText);
-        TextRange replacedTextRange = Registry.is("editor.smarterSelectionQuoting")
-                            ? new TextRange(caretOffset + 1, caretOffset + newText.length() - 1)
-                            : new TextRange(caretOffset, caretOffset + newText.length());
+        TextRange replacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
         // selection is removed here
         if (replacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
           if (restoreStickySelection) {
@@ -67,9 +64,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
             else {
               editor.getSelectionModel().setSelection(replacedTextRange.getEndOffset(), replacedTextRange.getStartOffset());
             }
-            if (Registry.is("editor.smarterSelectionQuoting")) {
-              editor.getCaretModel().moveToOffset(ltrSelection ? replacedTextRange.getEndOffset() : replacedTextRange.getStartOffset());
-            }
+            editor.getCaretModel().moveToOffset(ltrSelection ? replacedTextRange.getEndOffset() : replacedTextRange.getStartOffset());
           }
         }
         return Result.STOP;

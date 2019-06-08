@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
-import javax.tools.*;
+import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 import java.net.URI;
 import java.nio.CharBuffer;

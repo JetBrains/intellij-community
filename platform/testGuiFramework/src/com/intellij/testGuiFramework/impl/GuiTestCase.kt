@@ -17,9 +17,11 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.testGuiFramework.util.*
+import com.intellij.ui.components.JBPanel
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.AbstractComponentFixture
+import org.fest.swing.fixture.ContainerFixture
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.fixture.JTableFixture
 import org.fest.swing.timing.Condition
@@ -31,6 +33,8 @@ import org.junit.Rule
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import java.awt.Component
+import java.awt.Container
+import java.awt.Rectangle
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -64,15 +68,11 @@ import javax.swing.text.JTextComponent
  *
  */
 @RunWith(GuiTestLocalRunner::class)
-open class GuiTestCase {
+open class GuiTestCase(enableScreenshotsDuringTest: Boolean = true) {
 
   @Rule
   @JvmField
-  val screenshotsDuringTest = ScreenshotsDuringTest(500) // 0.5 sec
-
-  @Rule
-  @JvmField
-  val guiTestRule = GuiTestRule()
+  val guiTestRule = GuiTestRule(enableScreenshotsDuringTest)
 
   val projectsFolder: File = guiTestRule.projectsFolder
 
@@ -80,8 +80,6 @@ open class GuiTestCase {
   //  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
   val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
-
-  private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
 
   @Rule
   @JvmField
@@ -143,6 +141,15 @@ open class GuiTestCase {
     }
   }
 
+  fun templatesDialogPanel(title: String, func: ContainerFixtureImpl.() -> Unit) =
+    step("search for 'CreateWithTemplatesDialogPanel'") {
+      ContainerFixtureImpl(robot(), findComponentWithTimeout(null, JBPanel::class.java, Timeouts.seconds10) { component ->
+        component.javaClass.canonicalName == "com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel" &&
+        component.isShowing &&
+        robot().finder().findAll(component.parent) { it is JLabel && it.text.equals(title, true) }.size == 1
+      } as Container).apply(func)
+    }
+
   fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
     step("at dialog with text component") {
       val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
@@ -151,6 +158,16 @@ open class GuiTestCase {
       val dialogFixture = JDialogFixture(robot(), dialog)
       func(dialogFixture)
       dialogFixture.waitTillGone()
+    }
+  }
+
+  fun fileChooserDialog(title: String? = null,
+                        ignoreCaseTitle: Boolean = false,
+                        timeout: Timeout = Timeouts.defaultTimeout,
+                        func: FileChooserDialogFixture.() -> Unit) {
+    step("at '$title' file chooser") {
+      val dialog = findDialog(title, ignoreCaseTitle, timeout = timeout)
+      func(FileChooserDialogFixture(robot(), dialog))
     }
   }
 
@@ -368,25 +385,13 @@ open class GuiTestCase {
   fun invokeAction(actionId: String) = GuiTestUtil.invokeAction(actionId)
 
   /**
-   * Take a screenshot for a specific component. Screenshot remain scaling and represent it in name of file.
+   * Take a screenshot for a full screen and put a file with hierarchy nearby
+   * @param screenshotName name of create screenshot, added after timestamp
+   * if [screenshotName] is empty the screenshot is create with only timestamp as a name
    */
-  fun screenshot(component: Component, screenshotName: String) {
-
-    val extension = "${getScaleSuffix()}.jpg"
-    val pathWithTestFolder = testScreenshotDirPath.path + slash + this.guiTestRule.getTestName()
-    val fileWithTestFolder = File(pathWithTestFolder)
-    FileUtil.ensureExists(fileWithTestFolder)
-    var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
-    if (screenshotFilePath.isFile) {
-      val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
-      val now = format.format(GregorianCalendar().time)
-      screenshotFilePath = File(fileWithTestFolder, "$screenshotName.$now$extension")
-    }
-    screenshotTaker.safeTakeScreenshotAndSave(screenshotFilePath, component)
-    println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")
-
+  fun screenshot(screenshotName: String = "") {
+    ScreenshotTaker.takeScreenshotAndHierarchy(screenshotName)
   }
-
 
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
@@ -403,6 +408,7 @@ open class GuiTestCase {
       try {
         val dialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
+            it.isFocused &&
             if (ignoreCaseTitle) predicate(it.title.toLowerCase(), title.toLowerCase()) else predicate(it.title, title)
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
           if (allMatchedDialogs.size > 1) throw Exception(
@@ -420,9 +426,12 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one)
    */
-  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout): JDialog =
-    waitUntilFound(null, JDialog::class.java, timeout) {
-      title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
+  fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeout: Timeout, predicate: FinderPredicate = Predicate.equality): JDialog =
+    step("find dialog with title '$title'") {
+      waitUntilFound(null, JDialog::class.java, timeout) {
+        it.isShowing && it.isEnabled && it.isVisible
+        && if (title != null) predicate(it.title, title) else true
+      }
     }
 
   fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {

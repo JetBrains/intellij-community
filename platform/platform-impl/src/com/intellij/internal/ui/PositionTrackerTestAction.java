@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -19,7 +17,7 @@ import javax.swing.*;
 public class PositionTrackerTestAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) return;
     for (Balloon.Position position : Balloon.Position.values()) {
       JLabel popupContent = new JLabel("PositionTracker ["+position+"]", SwingConstants.CENTER);

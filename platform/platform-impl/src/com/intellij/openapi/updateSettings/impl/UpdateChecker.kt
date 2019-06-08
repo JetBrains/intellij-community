@@ -30,7 +30,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Url
 import com.intellij.util.Urls
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -110,7 +109,7 @@ object UpdateChecker {
    */
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =
-    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build)
+    checkPluginsUpdate(EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build)
 
   private fun doUpdateAndShowResult(project: Project?,
                                     fromSettings: Boolean,
@@ -141,7 +140,7 @@ object UpdateChecker {
     val updatedPlugins: Collection<PluginDownloader>?
     val externalUpdates: Collection<ExternalUpdate>?
     try {
-      updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
+      updatedPlugins = checkPluginsUpdate(indicator, incompatiblePlugins, buildNumber)
       externalUpdates = checkExternalUpdates(manualCheck, updateSettings, indicator)
     }
     catch (e: IOException) {
@@ -155,7 +154,7 @@ object UpdateChecker {
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
     ApplicationManager.getApplication().invokeLater({
-      showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
+      showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, !fromSettings, manualCheck)
       callback?.setDone()
     }, if (fromSettings) ModalityState.any() else ModalityState.NON_MODAL)
   }
@@ -170,7 +169,6 @@ object UpdateChecker {
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
       updateInfo = HttpRequests.request(updateUrl)
-        .forceHttps(settings.canUseSecureConnection())
         .connect {
           try {
             if (settings.isPlatformUpdateEnabled)
@@ -208,36 +206,29 @@ object UpdateChecker {
 
   @JvmStatic
   @Throws(IOException::class, JDOMException::class)
-  fun getUpdatesInfo(settings: UpdateSettings): UpdatesInfo? {
+  fun getUpdatesInfo(): UpdatesInfo? {
     val updateUrl = Urls.newFromEncoded(updateUrl)
-
-    return HttpRequests.request(updateUrl)
-      .forceHttps(settings.canUseSecureConnection())
-      .connect {
-        UpdatesInfo(JDOMUtil.load(it.reader))
-      }
+    return HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
   }
 
-  private fun checkPluginsUpdate(updateSettings: UpdateSettings,
-                                 indicator: ProgressIndicator?,
+  private fun checkPluginsUpdate(indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
                                  buildNumber: BuildNumber?): Collection<PluginDownloader>? {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
-    val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
+    val toUpdate = THashMap<PluginId, PluginDownloader>()
 
     val state = InstalledPluginsState.getInstance()
     outer@ for (host in RepositoryHelper.getPluginHosts()) {
       try {
-        val forceHttps = host == null && updateSettings.canUseSecureConnection()
-        val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)
+        val list = RepositoryHelper.loadPlugins(host, buildNumber, indicator)
         for (descriptor in list) {
           val id = descriptor.pluginId
           if (updateable.containsKey(id)) {
             updateable.remove(id)
             state.onDescriptorDownload(descriptor)
-            val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber, forceHttps)
+            val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
             checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator)
             if (updateable.isEmpty()) {
               break@outer
@@ -259,7 +250,7 @@ object UpdateChecker {
    * we're importing the settings.
    */
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
-    val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
+    val updateable = THashMap<PluginId, IdeaPluginDescriptor>()
 
     updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateBy { it.pluginId }
 
@@ -279,7 +270,7 @@ object UpdateChecker {
       onceInstalled.deleteOnExit()
     }
 
-    if (!excludedFromUpdateCheckPlugins.isEmpty()) {
+    if (excludedFromUpdateCheckPlugins.isNotEmpty()) {
       val required = ProjectManager.getInstance().openProjects
         .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
         .map { PluginId.getId(it.pluginId) }
@@ -309,7 +300,7 @@ object UpdateChecker {
         try {
           val siteResult = source.getAvailableVersions(indicator, updateSettings)
             .filter { it.isUpdateFor(manager.findExistingComponentMatching(it, source)) }
-          if (!siteResult.isEmpty()) {
+          if (siteResult.isNotEmpty()) {
             result += ExternalUpdate(siteResult, source)
           }
         }
@@ -333,7 +324,7 @@ object UpdateChecker {
     @Suppress("NAME_SHADOWING")
     var downloader = downloader
     val pluginId = downloader.pluginId
-    if (PluginManagerCore.getDisabledPlugins().contains(pluginId)) return
+    if (PluginManagerCore.isDisabled(pluginId)) return
 
     val pluginVersion = downloader.pluginVersion
     val installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId))
@@ -377,7 +368,6 @@ object UpdateChecker {
 
   private fun showUpdateResult(project: Project?,
                                checkForUpdateResult: CheckForUpdateResult,
-                               updateSettings: UpdateSettings,
                                updatedPlugins: Collection<PluginDownloader>?,
                                incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
                                externalUpdates: Collection<ExternalUpdate>?,
@@ -388,9 +378,7 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        val patches = checkForUpdateResult.patches
-        val forceHttps = updateSettings.canUseSecureConnection()
-        UpdateInfoDialog(updatedChannel, newBuild, patches, enableLink, forceHttps, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, enableLink, updatedPlugins, incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }

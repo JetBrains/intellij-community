@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PluginTroubleInfoCollector implements GeneralTroubleInfoCollector {
+final class PluginTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @NotNull
   @Override
   public String getTitle() {
@@ -20,7 +20,6 @@ public class PluginTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @NotNull
   @Override
   public String collectInfo(@NotNull Project project) {
-    PluginManagerCore.getDisabledPlugins();
     IdeaPluginDescriptor[] ourPlugins = PluginManagerCore.getPlugins();
     List<String> loadedCustom = new ArrayList<>();
     List<String> disabled = new ArrayList<>();

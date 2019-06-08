@@ -405,7 +405,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return isUndoOrRedoAvailable(refs, true) || isUndoOrRedoAvailable(refs, false);
   }
 
-  private boolean isUndoOrRedoAvailable(@NotNull Collection<DocumentReference> refs, boolean isUndo) {
+  private boolean isUndoOrRedoAvailable(@NotNull Collection<? extends DocumentReference> refs, boolean isUndo) {
     if (isUndo && myMerger.isUndoAvailable(refs)) return true;
     UndoRedoStacksHolder stackHolder = getStackHolder(isUndo);
     return stackHolder.canBeUndoneOrRedone(refs);
@@ -590,7 +590,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @TestOnly
   private void flushMergers() {
-    assert myProject == null || !myProject.isDisposed();
+    assert myProject == null || !myProject.isDisposed() : myProject;
     // Run dummy command in order to flush all mergers...
     CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }

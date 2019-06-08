@@ -15,10 +15,9 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import java.awt.*;
 import java.util.IdentityHashMap;
-import javax.swing.JComponent;
 
 /**
  * @author Sergey.Malenkov
@@ -30,7 +29,7 @@ abstract class SpotlightPainter extends AbstractPainter implements ComponentHigh
   private final JComponent myTarget;
   boolean myVisible;
 
-  SpotlightPainter(JComponent target, Disposable parent) {
+  SpotlightPainter(JComponent target, @NotNull Disposable parent) {
     myQueue = new MergingUpdateQueue("SettingsSpotlight", 200, false, target, parent, target);
     myGlassPanel = new GlassPanel(target);
     myTarget = target;

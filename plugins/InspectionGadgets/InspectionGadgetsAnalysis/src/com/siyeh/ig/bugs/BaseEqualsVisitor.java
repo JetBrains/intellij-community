@@ -56,7 +56,7 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     final PsiExpression expression1;
     final PsiExpression expression2;
     if (OBJECT_EQUALS.test(expression)) {
-      expression1 = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getQualifierOrThis(expression.getMethodExpression()));
+      expression1 = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression()));
       expression2 = PsiUtil.skipParenthesizedExprDown(arguments[0]);
     }
     else if (STATIC_EQUALS.test(expression)) {

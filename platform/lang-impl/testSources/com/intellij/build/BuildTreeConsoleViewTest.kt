@@ -8,7 +8,6 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.ui.tree.TreeVisitor
-import com.intellij.ui.tree.treeTable.TreeTableModelWithColumns
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
 import org.assertj.core.api.Assertions.assertThat
@@ -28,13 +27,15 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
 
   @Before
   override fun setUp() {
-    super.setUp();
+    super.setUp()
     buildDescriptor = DefaultBuildDescriptor(Object(),
                                                  "test descriptor",
                                                  "fake path",
                                                  1L)
-
-    treeConsoleView = BuildTreeConsoleView(getProject(), buildDescriptor)
+    treeConsoleView = BuildTreeConsoleView(getProject(), buildDescriptor, null, object : BuildViewSettingsProvider {
+      override fun isExecutionViewHidden(): Boolean = false
+      override fun isSideBySideView(): Boolean = true
+    })
   }
 
   @Test
@@ -42,8 +43,13 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
     val tree = treeConsoleView.tree
     val message = "build Started"
     treeConsoleView.onEvent(StartBuildEventImpl(buildDescriptor, message))
-    PlatformTestUtil.waitWhileBusy(tree);
-    assertThat(TreeUtil.collectExpandedUserObjects(tree))
+    PlatformTestUtil.waitWhileBusy(tree)
+
+    PlatformTestUtil.assertTreeEqual(tree, "-\n" +
+                                           " build Started")
+    val visitor = CollectingTreeVisitor()
+    TreeUtil.visitVisibleRows(tree, visitor)
+    assertThat(visitor.userObjects)
       .extracting("name")
       .containsExactly(message)
   }
@@ -51,6 +57,7 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
   @Test
   fun `test two levels of tree console view are auto-expanded`() {
     val tree = treeConsoleView.tree
+    treeConsoleView.addFilter { true }
     listOf(
       StartBuildEventImpl(buildDescriptor, "build started"),
       StartEventImpl("event_id", buildDescriptor.id, 1000, "build event"),
@@ -63,8 +70,12 @@ class BuildTreeConsoleViewTest: LightPlatformTestCase() {
     }
 
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-    PlatformTestUtil.waitWhileBusy(tree, (tree.model as TreeTableModelWithColumns).delegate)
+    PlatformTestUtil.waitWhileBusy(tree)
 
+    PlatformTestUtil.assertTreeEqual(tree, "-\n" +
+                                           " -build finished\n" +
+                                           "  -build event\n" +
+                                           "   build nested event")
     val visitor = CollectingTreeVisitor()
     TreeUtil.visitVisibleRows(tree, visitor)
     assertThat(visitor.userObjects)

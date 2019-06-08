@@ -207,7 +207,7 @@ public class JdkChooserPanel extends JPanel {
     }
   }
 
-  private void updateListModel(ArrayList<Sdk> allJdks, ArrayList<Sdk> knownJdks) {
+  private void updateListModel(ArrayList<? extends Sdk> allJdks, ArrayList<? extends Sdk> knownJdks) {
     Sdk oldSelection = myList.getSelectedValue();
 
     myListModel.clear();
@@ -237,7 +237,7 @@ public class JdkChooserPanel extends JPanel {
     }
   }
 
-  private List<Sdk> getCompatibleJdks(final @Nullable SdkType type, final Collection<Sdk> collection) {
+  private List<Sdk> getCompatibleJdks(final @Nullable SdkType type, final Collection<? extends Sdk> collection) {
     final Set<Sdk> compatibleJdks = new HashSet<>();
     for (Sdk projectJdk : collection) {
       if (isCompatibleJdk(projectJdk, type)) {
