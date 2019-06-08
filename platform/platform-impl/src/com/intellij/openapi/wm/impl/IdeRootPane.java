@@ -18,7 +18,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
@@ -44,7 +46,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeRootPane extends JRootPane implements UISettingsListener, Disposable {
+public final class IdeRootPane extends JRootPane implements UISettingsListener, Disposable {
   /**
    * Toolbar and status bar.
    */
@@ -68,7 +70,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   private boolean myFullScreen;
 
   private MainFrameHeader myCustomFrameTitlePane;
-  private boolean myDecoratedMenu = false;
+  private final boolean myDecoratedMenu;
 
   IdeRootPane(@NotNull IdeFrame frame) {
     if (SystemInfoRt.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
@@ -83,8 +85,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
+    // listen to mouse motion events for a11y
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
-    }); // listen to mouse motion events for a11y
+    });
 
     createStatusBar(frame);
 
@@ -261,49 +264,22 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     Disposer.register(this, myStatusBar);
     myStatusBar.install(frame);
 
-    myMemoryWidget = new MemoryUsagePanel();
-
-    for (final StatusBarCustomComponentFactory<JComponent> componentFactory : StatusBarCustomComponentFactory.EP_NAME.getExtensions()) {
-      final JComponent c = componentFactory.createComponent(myStatusBar);
-      myStatusBar.addWidget(new CustomStatusBarWidget() {
-        @Override
-        public JComponent getComponent() {
-          return c;
-        }
-
-        @Override
-        @NotNull
-        public String ID() {
-          return c.getClass().getSimpleName();
-        }
-
-        @Override
-        public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-          return null;
-        }
-
-        @Override
-        public void install(@NotNull StatusBar statusBar) {
-        }
-
-        @Override
-        public void dispose() {
-          componentFactory.disposeComponent(myStatusBar, c);
-        }
-      }, StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
-    }
-
-    myStatusBar.addWidget(myMemoryWidget);
-    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
-
     setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
+    myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
   }
 
-  private void setMemoryIndicatorVisible(final boolean visible) {
-    if (myMemoryWidget != null) {
-      myMemoryWidget.setShowing(visible);
-      myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, visible ? 0 : 6));
+  private void setMemoryIndicatorVisible(boolean visible) {
+    if (myMemoryWidget == null) {
+      if (!visible) {
+        return;
+      }
+
+      myMemoryWidget = new MemoryUsagePanel();
+      myStatusBar.addWidget(myMemoryWidget);
     }
+
+    myMemoryWidget.setShowing(visible);
+    myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, visible ? 0 : 6));
   }
 
   @Nullable
