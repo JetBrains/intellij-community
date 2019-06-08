@@ -72,8 +72,9 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
     myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar");
     myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
-    if (TouchBarsManager.isTouchBarAvailable())
+    if (TouchBarsManager.isTouchBarAvailable()) {
       myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
+    }
 
     ArrayList<Couple<String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =

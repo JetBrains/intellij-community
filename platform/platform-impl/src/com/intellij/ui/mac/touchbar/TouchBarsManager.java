@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionListener;
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.UIUtil;
@@ -48,11 +49,13 @@ public class TouchBarsManager {
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
   public static void onApplicationInitialized() {
-    ApplicationManager.getApplication().executeOnPooledThread(TouchBarsManager::_onApplicationInitialized);
+    AppExecutorUtil.getAppExecutorService().execute(TouchBarsManager::_onApplicationInitialized);
   }
+
   private static void _onApplicationInitialized() {
-    if (!isTouchBarAvailable())
+    if (!isTouchBarAvailable()) {
       return;
+    }
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
