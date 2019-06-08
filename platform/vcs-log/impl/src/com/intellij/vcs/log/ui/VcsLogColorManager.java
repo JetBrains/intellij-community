@@ -41,4 +41,12 @@ public interface VcsLogColorManager {
    */
   @NotNull
   Collection<FilePath> getPaths();
+
+  /**
+   * Returns long name for this file path (to be shown in the tooltip, etc.).
+   */
+  @NotNull
+  default String getLongName(@NotNull FilePath path) {
+    return path.getPresentableUrl();
+  }
 }

@@ -433,10 +433,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       return null;
     }
     if (column == ROOT_COLUMN) {
-      Object at = getValueAt(row, column);
-      if (at instanceof FilePath) {
+      Object path = getValueAt(row, column);
+      if (path instanceof FilePath) {
         return "<html><b>" +
-               ((FilePath)at).getPresentableUrl() +
+               myColorManager.getLongName((FilePath)path) +
                "</b><br/>Click to " +
                (isShowRootNames() ? "collapse" : "expand") +
                "</html>";

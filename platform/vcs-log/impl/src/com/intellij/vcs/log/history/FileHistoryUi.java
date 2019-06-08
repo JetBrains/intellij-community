@@ -64,7 +64,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull FilePath path,
                        @Nullable Hash revision,
                        @NotNull VirtualFile root) {
-    super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(path), refresher);
+    super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
 
     myPath = path;
     myRoot = root;
