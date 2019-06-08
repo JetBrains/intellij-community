@@ -50,14 +50,20 @@ public final class TouchBarsManager {
   private static final Map<Project, ProjectData> ourProjectData = new HashMap<>(); // NOTE: probably it is better to use api of UserDataHolder
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
+  private static volatile boolean isInitialized;
+
   public static void onApplicationInitialized() {
     if (!isTouchBarAvailable()) {
       return;
     }
 
+    LOG.assertTrue(!isInitialized);
+
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       registerEditor(editor);
     }
+
+    isInitialized = true;
 
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
       @Override
@@ -289,23 +295,25 @@ public final class TouchBarsManager {
   }
 
   public static void onUpdateEditorHeader(@NotNull Editor editor, JComponent header) {
-    if (!isTouchBarAvailable())
+    if (!isInitialized || !isTouchBarAvailable()) {
       return;
+    }
 
-    final Project proj = editor.getProject();
-    if (proj == null)
+    final Project project = editor.getProject();
+    if (project == null) {
       return;
+    }
 
     synchronized (ourProjectData) {
-      final ProjectData pd = ourProjectData.get(proj);
+      final ProjectData pd = ourProjectData.get(project);
       if (pd == null) {
-        LOG.error("can't find project data to update header of editor: " + editor + ", project: " + proj);
+        LOG.error("can't find project data to update header of editor: " + editor + ", project: " + project);
         return;
       }
 
       final ProjectData.EditorData ed = pd.getEditorData(editor);
       if (ed == null) {
-        LOG.error("can't find editor-data to update header of editor: " + editor + ", project: " + proj);
+        LOG.error("can't find editor-data to update header of editor: " + editor + ", project: " + project);
         return;
       }
 
