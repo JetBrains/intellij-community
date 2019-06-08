@@ -56,12 +56,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   public static JBColor getBackgroundColor(@NotNull final Color baseRootColor) {
     return new JBColor(() -> ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75));
   }
-
-  @Override
-  public boolean isMultipleRoots() {
-    return myPaths2Colors.size() > 1;
-  }
-
+  
   @NotNull
   @Override
   public Color getPathColor(@NotNull FilePath path) {

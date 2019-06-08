@@ -162,7 +162,7 @@ public class GraphTableController {
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
-        if (myColorManager.isMultipleRoots()) {
+        if (myColorManager.hasMultiplePaths()) {
           balloonText += " in " + commitId.getRoot().getName();
         }
       }
@@ -208,7 +208,7 @@ public class GraphTableController {
   }
 
   private void performRootColumnAction() {
-    if (myColorManager.isMultipleRoots() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
+    if (myColorManager.hasMultiplePaths() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
       VcsLogUsageTriggerCollector.triggerUsage("RootColumnClick");
       myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
     }

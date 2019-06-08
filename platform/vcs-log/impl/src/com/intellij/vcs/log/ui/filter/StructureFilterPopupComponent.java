@@ -176,7 +176,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
     Set<VirtualFile> roots = getAllRoots();
 
     List<AnAction> rootActions = new ArrayList<>();
-    if (myColorManager.isMultipleRoots()) {
+    if (myColorManager.hasMultiplePaths()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
       }

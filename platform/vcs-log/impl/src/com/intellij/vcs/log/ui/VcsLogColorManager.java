@@ -32,7 +32,9 @@ public interface VcsLogColorManager {
   /**
    * Tells if there are several paths currently shown in the log.
    */
-  boolean isMultipleRoots();
+  default boolean hasMultiplePaths() {
+    return getPaths().size() > 1;
+  }
 
   /**
    * Returns paths managed by this manager.

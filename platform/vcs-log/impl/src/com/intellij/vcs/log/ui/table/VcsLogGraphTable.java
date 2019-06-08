@@ -398,7 +398,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private void setRootColumnSize() {
     TableColumn column = getRootColumn();
     int rootWidth;
-    if (!myColorManager.isMultipleRoots()) {
+    if (!myColorManager.hasMultiplePaths()) {
       rootWidth = 0;
     }
     else if (!isShowRootNames()) {
@@ -669,7 +669,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (lastRow >= 0) {
       g.setColor(getStyle(lastRow, convertColumnIndexToView(COMMIT_COLUMN), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
-      if (myColorManager.isMultipleRoots()) {
+      if (myColorManager.hasMultiplePaths()) {
         g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(lastRow, ROOT_COLUMN), myColorManager));
 
         int rootWidth = getRootColumn().getWidth();
