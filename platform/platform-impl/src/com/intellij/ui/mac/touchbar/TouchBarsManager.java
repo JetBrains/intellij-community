@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +40,7 @@ import java.awt.event.MouseWheelEvent;
 import java.util.List;
 import java.util.*;
 
-public class TouchBarsManager {
+public final class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final StackTouchBars ourStack = new StackTouchBars();
 
@@ -196,7 +195,8 @@ public class TouchBarsManager {
           }
         }
       }
-    } else if (e.getID() == FocusEvent.FOCUS_LOST) {
+    }
+    else if (e.getID() == FocusEvent.FOCUS_LOST) {
       final BarContainer nonModalDialogParent = _findByParentComponent(src, ourTemporaryBars.values(), bc -> bc.isNonModalDialog());
       if (nonModalDialogParent != null) {
         // System.out.println("non-modal dialog window '" + nonModalDialogParent.getParentComponent() + "' lost focus: " + e);
@@ -223,16 +223,18 @@ public class TouchBarsManager {
   }
 
   public static void registerEditor(@NotNull Editor editor) {
-    if (!isTouchBarAvailable())
+    if (!isTouchBarAvailable()) {
       return;
+    }
 
-    final Project proj = editor.getProject();
-    if (proj == null || proj.isDisposed())
+    final Project project = editor.getProject();
+    if (project == null || project.isDisposed()) {
       return;
+    }
 
     final ProjectData pd;
     synchronized (ourProjectData) {
-      pd = ourProjectData.get(proj);
+      pd = ourProjectData.get(project);
       if (pd == null) {
         // System.out.println("can't find project data to register editor: " + editor + ", project: " + proj);
         return;
@@ -241,28 +243,28 @@ public class TouchBarsManager {
       pd.registerEditor(editor);
     }
 
-    if (editor instanceof EditorEx)
+    if (editor instanceof EditorEx) {
       ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
-      @Override
-      public void focusGained(@NotNull Editor editor) {
-        // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
-        pd.get(BarType.DEFAULT).setOptionalContextVisible(null);
+        @Override
+        public void focusGained(@NotNull Editor editor) {
+          // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
+          pd.get(BarType.DEFAULT).setOptionalContextVisible(null);
 
-        final boolean hasDebugSession = pd.getDbgSessions() > 0;
-        if (!hasDebugSession) {
-          // System.out.println("elevate default because editor window gained focus: " + editor);
-          // StackTouchBars.changeReason = "elevate default because editor gained focus";
-          ourStack.elevateContainer(pd.get(BarType.DEFAULT));
+          final boolean hasDebugSession = pd.getDbgSessions() > 0;
+          if (!hasDebugSession) {
+            // System.out.println("elevate default because editor window gained focus: " + editor);
+            // StackTouchBars.changeReason = "elevate default because editor gained focus";
+            ourStack.elevateContainer(pd.get(BarType.DEFAULT));
+          }
         }
-      }
-      @Override
-      public void focusLost(@NotNull Editor editor) {}
-    });
+      });
+    }
   }
 
   public static void releaseEditor(@NotNull Editor editor) {
-    if (!isTouchBarAvailable())
+    if (!isTouchBarAvailable()) {
       return;
+    }
 
     final Project proj = editor.getProject();
     if (proj == null)
