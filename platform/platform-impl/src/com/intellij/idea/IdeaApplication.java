@@ -12,9 +12,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
@@ -34,6 +36,7 @@ import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.MacOSApplicationProvider;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +80,12 @@ public final class IdeaApplication {
         // todo investigate why in test mode dummy icon manager is not suitable
         IconLoader.activate();
         IconLoader.setStrictGlobally(app.isInternal());
+
+        if (SystemInfoRt.isMac) {
+          Activity activity = initAppActivity.startChild("mac app init");
+          MacOSApplicationProvider.initApplication();
+          activity.end();
+        }
       }
 
       starter.premain(args);
@@ -283,7 +292,7 @@ public final class IdeaApplication {
         String filename = args[0];
         File file = new File(currentDirectory, filename);
 
-        if(file.exists()) {
+        if (file.exists()) {
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
           if (virtualFile != null) {
             int line = -1;
@@ -315,16 +324,6 @@ public final class IdeaApplication {
     @Override
     public void main(String[] args) {
       Activity frameInitActivity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
-      if (SystemInfoRt.isMac) {
-        Activity activity = frameInitActivity.startChild("mac app init");
-        // calls TouchBarsManager.onApplicationInitialized, that requires ActionManager, so, cannot be executed before app component creation
-        MacOSApplicationProvider.initApplication();
-        activity.end();
-      }
-
-      Activity updateSystemDockActivity = frameInitActivity.startChild("system dock menu");
-      SystemDock.updateMenu();
-      updateSystemDockActivity.end();
 
       GcPauseWatcher.Companion.getInstance();
 
@@ -368,6 +367,21 @@ public final class IdeaApplication {
 
         //noinspection SSBasedInspection
         EventQueue.invokeLater(PluginManager::reportPluginError);
+      });
+
+      if (SystemInfoRt.isMac) {
+        AppExecutorUtil.getAppExecutorService().execute(() -> {
+          TouchBarsManager.onApplicationInitialized();
+          CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
+          if (customActionSchema != null) {
+            customActionSchema.touchBarAvailable(TouchBarsManager.isTouchBarAvailable());
+          }
+        });
+      }
+      app.invokeLater(() -> {
+        Activity updateSystemDockActivity = StartUpMeasurer.start("system dock menu");
+        SystemDock.updateMenu();
+        updateSystemDockActivity.end();
       });
     }
   }

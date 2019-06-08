@@ -15,6 +15,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.Project;
@@ -48,13 +51,25 @@ public final class TouchBarsManager {
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
   public static void onApplicationInitialized() {
-    AppExecutorUtil.getAppExecutorService().execute(TouchBarsManager::_onApplicationInitialized);
-  }
-
-  private static void _onApplicationInitialized() {
     if (!isTouchBarAvailable()) {
       return;
     }
+
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      registerEditor(editor);
+    }
+
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
+      @Override
+      public void editorCreated(@NotNull EditorFactoryEvent event) {
+        registerEditor(event.getEditor());
+      }
+
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        releaseEditor(event.getEditor());
+      }
+    }, ApplicationManager.getApplication());
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
@@ -222,11 +237,7 @@ public final class TouchBarsManager {
     }
   }
 
-  public static void registerEditor(@NotNull Editor editor) {
-    if (!isTouchBarAvailable()) {
-      return;
-    }
-
+  private static void registerEditor(@NotNull Editor editor) {
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) {
       return;
@@ -261,18 +272,17 @@ public final class TouchBarsManager {
     }
   }
 
-  public static void releaseEditor(@NotNull Editor editor) {
-    if (!isTouchBarAvailable()) {
+  private static void releaseEditor(@NotNull Editor editor) {
+    final Project project = editor.getProject();
+    if (project == null) {
       return;
     }
 
-    final Project proj = editor.getProject();
-    if (proj == null)
-      return;
     synchronized (ourProjectData) {
-      final ProjectData pd = ourProjectData.get(proj);
-      if (pd == null)
+      final ProjectData pd = ourProjectData.get(project);
+      if (pd == null) {
         return;
+      }
 
       pd.removeEditor(editor);
     }
@@ -353,8 +363,8 @@ public final class TouchBarsManager {
 
     final ModalityState ms = Utils.getCurrentModalityState();
     final BarType btype = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
-    BarContainer bc = null;
-    TouchBar tb = null;
+    BarContainer bc;
+    TouchBar tb;
 
     final Map<TouchbarDataKeys.DlgButtonDesc, JButton> jbuttons = new HashMap<>();
     final Map<Component, ActionGroup> actions = new HashMap<>();
