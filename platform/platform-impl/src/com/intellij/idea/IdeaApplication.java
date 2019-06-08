@@ -4,10 +4,7 @@ package com.intellij.idea;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
-import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.CliResult;
-import com.intellij.ide.CommandLineProcessor;
-import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
@@ -39,6 +36,7 @@ import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -369,6 +367,12 @@ public final class IdeaApplication {
         EventQueue.invokeLater(PluginManager::reportPluginError);
       });
 
+      if (!app.isHeadlessEnvironment()) {
+        postOpenUiTasks(app);
+      }
+    }
+
+    private static void postOpenUiTasks(@NotNull Application app) {
       if (SystemInfoRt.isMac) {
         AppExecutorUtil.getAppExecutorService().execute(() -> {
           TouchBarsManager.onApplicationInitialized();
@@ -378,10 +382,17 @@ public final class IdeaApplication {
           }
         });
       }
+
       app.invokeLater(() -> {
         Activity updateSystemDockActivity = StartUpMeasurer.start("system dock menu");
         SystemDock.updateMenu();
         updateSystemDockActivity.end();
+      });
+      app.invokeLater(() -> {
+        GeneralSettings generalSettings = GeneralSettings.getInstance();
+        generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app,
+                                                  e -> ScreenReader.setActive((Boolean)e.getNewValue()));
+        ScreenReader.setActive(generalSettings.isSupportScreenReaders());
       });
     }
   }
