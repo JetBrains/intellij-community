@@ -47,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -266,8 +265,9 @@ public class GitUpdateProcess {
     return ContainerUtil.mapNotNull(updaters.keySet(), repo -> {
       GitUpdater updater = updaters.get(repo);
       if (updater instanceof GitRebaseUpdater) {
-        String currentRef = ((GitRebaseUpdater)updater).getSourceAndTarget().getSource().getFullName();
-        String baseRef = assertNotNull(((GitRebaseUpdater)updater).getSourceAndTarget().getTarget()).getFullName();
+        GitBranchPair sourceAndTarget = ((GitRebaseUpdater)updater).getSourceAndTarget();
+        String currentRef = sourceAndTarget.getSource().getFullName();
+        String baseRef = sourceAndTarget.getTarget().getFullName();
         return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo : null;
       }
       return null;

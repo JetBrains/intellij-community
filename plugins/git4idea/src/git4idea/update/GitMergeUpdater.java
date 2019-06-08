@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static java.util.Arrays.asList;
 
 /**
@@ -68,7 +67,7 @@ public class GitMergeUpdater extends GitUpdater {
     String originalText = myProgressIndicator.getText();
     myProgressIndicator.setText("Merging" + GitUtil.mention(myRepository) + "...");
     try {
-      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myBranchPair.getTarget()).getName(),
+      GitCommandResult result = myGit.merge(myRepository, myBranchPair.getTarget().getName(),
                                             asList("--no-stat", "-v"), mergeLineListener, untrackedFilesDetector,
                                             GitStandardProgressAnalyzer.createListener(myProgressIndicator));
       myProgressIndicator.setText(originalText);

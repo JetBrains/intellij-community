@@ -21,4 +21,4 @@ import git4idea.GitRemoteBranch
 /**
  * Holder for Git branch and the branch it is "connected" with. It is tracked branch or so called "matched" branch.
  */
-data class GitBranchPair(val source: GitLocalBranch, val target: GitRemoteBranch?)
+data class GitBranchPair(val source: GitLocalBranch, val target: GitRemoteBranch)
