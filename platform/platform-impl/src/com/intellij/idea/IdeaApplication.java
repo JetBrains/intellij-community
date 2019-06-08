@@ -366,6 +366,8 @@ public final class IdeaApplication {
 
       frameInitActivity.end();
 
+      AppExecutorUtil.getAppExecutorService().submit(() -> LifecycleUsageTriggerCollector.onIdeStart());
+
       IdeFrame finalFrame = frame;
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
@@ -374,8 +376,6 @@ public final class IdeaApplication {
 
         //noinspection SSBasedInspection
         EventQueue.invokeLater(PluginManager::reportPluginError);
-
-        LifecycleUsageTriggerCollector.onIdeStart();
       });
     }
   }
