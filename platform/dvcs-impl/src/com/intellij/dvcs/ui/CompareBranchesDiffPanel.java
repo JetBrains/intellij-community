@@ -40,9 +40,7 @@ import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -52,25 +50,27 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class CompareBranchesDiffPanel extends JPanel {
+/**
+ * @author Kirill Likhodedov
+ */
+class CompareBranchesDiffPanel extends JPanel {
+  private final CompareBranchesHelper myHelper;
   private final String myBranchName;
   private final Project myProject;
   private final String myCurrentBranchName;
+  private final CommitCompareInfo myCompareInfo;
   private final DvcsCompareSettings myVcsSettings;
-
-  @Nullable private CommitCompareInfo myCompareInfo;
 
   private final JEditorPane myLabel;
   private final MyChangesBrowser myChangesBrowser;
 
-  public CompareBranchesDiffPanel(@NotNull Project project,
-                                  @NotNull DvcsCompareSettings settings,
-                                  @NotNull String branchName,
-                                  @NotNull String currentBranchName) {
-    myProject = project;
+  CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
+    myHelper = helper;
+    myProject = helper.getProject();
     myCurrentBranchName = currentBranchName;
+    myCompareInfo = compareInfo;
     myBranchName = branchName;
-    myVcsSettings = settings;
+    myVcsSettings = helper.getDvcsCompareSettings();
 
     myLabel = new JEditorPane() {
       @Override
@@ -91,42 +91,28 @@ public class CompareBranchesDiffPanel extends JPanel {
         refreshView();
       }
     });
-    updateLabelText();
 
-    myChangesBrowser = new MyChangesBrowser(project, emptyList());
+    myChangesBrowser = new MyChangesBrowser(helper.getProject(), emptyList());
 
     setLayout(new BorderLayout());
     add(myLabel, BorderLayout.NORTH);
     add(myChangesBrowser, BorderLayout.CENTER);
-  }
 
-  @CalledInAwt
-  public void setCompareInfo(@NotNull CommitCompareInfo compareInfo) {
-    myCompareInfo = compareInfo;
     refreshView();
   }
 
   private void refreshView() {
-    if (myCompareInfo != null) {
-      boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
-      updateLabelText();
-      List<Change> diff = myCompareInfo.getTotalDiff();
-      if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
-      myChangesBrowser.setChangesToDisplay(diff);
-    }
-  }
-
-  private void updateLabelText() {
     boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+
     String currentBranchText = String.format("current working tree on <b><code>%s</code></b>", myCurrentBranchName);
     String otherBranchText = String.format("files in <b><code>%s</code></b>", myBranchName);
     myLabel.setText(String.format("<html>Difference between %s and %s:&emsp;<a href=\"\">Swap branches</a></html>",
                                   swapSides ? otherBranchText : currentBranchText,
                                   swapSides ? currentBranchText : otherBranchText));
-  }
 
-  public void setEmptyText(@NotNull String text) {
-    myChangesBrowser.getViewer().setEmptyText(text);
+    List<Change> diff = myCompareInfo.getTotalDiff();
+    if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
+    myChangesBrowser.setChangesToDisplay(diff);
   }
 
   private class MyChangesBrowser extends SimpleChangesBrowser {
@@ -191,9 +177,7 @@ public class CompareBranchesDiffPanel extends JPanel {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (myCompareInfo != null) {
-              ((LocalCommitCompareInfo)myCompareInfo).copyChangesFromBranch(changes, swapSides);
-            }
+            ((LocalCommitCompareInfo)myCompareInfo).copyChangesFromBranch(changes, swapSides);
           }
           catch (VcsException err) {
             ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myProject, err.getMessage(), "Can't Copy Changes"));

@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacDockDelegate;
 import com.intellij.ui.win.WinDockDelegate;
@@ -12,7 +12,7 @@ import com.intellij.ui.win.WinDockDelegate;
 /**
  * @author Denis Fokin
  */
-public final class SystemDock {
+public class SystemDock {
   private static final Delegate ourDelegate;
 
   static {
@@ -20,7 +20,7 @@ public final class SystemDock {
 
     Application app = ApplicationManager.getApplication();
     if (app != null && !app.isUnitTestMode()) {
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         delegate = MacDockDelegate.getInstance();
       }
       else if (SystemInfo.isWin7OrNewer && Registry.is("windows.jumplist")) {

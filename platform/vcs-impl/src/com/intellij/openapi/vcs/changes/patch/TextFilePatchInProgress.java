@@ -8,7 +8,6 @@ import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -62,7 +61,7 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       @Override
       public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
         throws DiffRequestProducerException, ProcessCanceledException {
-        if (myCurrentBase != null && FileTypeRegistry.getInstance().isFileOfType(myCurrentBase, UnknownFileType.INSTANCE)) {
+        if (myCurrentBase != null && myCurrentBase.getFileType() == UnknownFileType.INSTANCE) {
           return new UnknownFileTypeDiffRequest(myCurrentBase, getName());
         }
 

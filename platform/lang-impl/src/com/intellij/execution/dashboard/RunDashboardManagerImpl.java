@@ -384,7 +384,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public void updateDashboard(boolean withStructure) {
     myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC).handle(
-      ServiceEventListener.ServiceEvent.createResetEvent(RunConfigurationsServiceViewContributor.class));
+      new ServiceEventListener.ServiceEvent(
+        RunConfigurationsServiceViewContributor.class
+      ));
 
     if (Registry.is("ide.service.view")) return;
 

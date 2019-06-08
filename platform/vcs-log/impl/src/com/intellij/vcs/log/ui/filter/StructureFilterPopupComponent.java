@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -176,7 +176,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
     Set<VirtualFile> roots = getAllRoots();
 
     List<AnAction> rootActions = new ArrayList<>();
-    if (myColorManager.hasMultiplePaths()) {
+    if (myColorManager.isMultipleRoots()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
         rootActions.add(new SelectVisibleRootAction(root));
       }
@@ -287,7 +287,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsL
 
     @JdkConstants.InputEventMask
     private int getMask() {
-      return SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+      return SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
     }
 
     @Override

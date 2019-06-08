@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
@@ -387,7 +387,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   protected void processMouseEvent(MouseEvent e) {
     MouseEvent e2 = e;
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
@@ -746,9 +746,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
-  /**
-   * @deprecated no effect
-   */
   @Deprecated
   public final void setLineStyleAngled() {
   }

@@ -18,7 +18,6 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -279,7 +278,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.PATCH) || FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.PLAIN_TEXT);
+        return file.getFileType() == StdFileTypes.PATCH || file.getFileType() == FileTypes.PLAIN_TEXT;
       }
     };
   }

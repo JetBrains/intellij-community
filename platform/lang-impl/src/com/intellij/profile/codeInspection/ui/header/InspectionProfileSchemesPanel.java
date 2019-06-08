@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -127,7 +126,7 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
           public boolean isFileSelectable(VirtualFile file) {
-            return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+            return file.getFileType().equals(StdFileTypes.XML);
           }
         };
         descriptor.setDescription("Choose profile file");

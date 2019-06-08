@@ -562,10 +562,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return files;
   }
 
-  private static void processExcludedPaths(@NotNull Collection<? extends Change> changes,
+  private static void processExcludedPaths(@NotNull Collection<Change> changes,
                                            @NotNull Set<FilePath> added,
                                            @NotNull Set<FilePath> removed,
-                                           @NotNull PairConsumer<? super FilePath, ? super FilePath> function) {
+                                           @NotNull PairConsumer<FilePath, FilePath> function) {
     for (Change change : changes) {
       FilePath before = getBeforePath(change);
       FilePath after = getAfterPath(change);
@@ -946,7 +946,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
    */
   private static boolean updateIndex(final Project project,
                                      final VirtualFile root,
-                                     final Collection<? extends FilePath> added,
+                                     final Collection<FilePath> added,
                                      final Collection<? extends FilePath> removed,
                                      final List<? super VcsException> exceptions) {
     boolean rc = true;

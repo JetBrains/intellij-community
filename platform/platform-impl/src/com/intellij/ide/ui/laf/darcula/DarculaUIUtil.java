@@ -77,7 +77,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @deprecated use {@link #paintFocusBorder(Graphics2D, int, int, float, boolean)}
+   * Deprecated in favor of {@link #paintFocusBorder(Graphics2D, int, int, float, boolean)}
    */
   @Deprecated
   public static void paintFocusRing(Graphics g, Rectangle r) {
@@ -101,9 +101,6 @@ public class DarculaUIUtil {
     g.fill(shape);
   }
 
-  /**
-   * @deprecated use {@link #paintOutlineBorder(Graphics2D, int, int, float, boolean, boolean, DarculaUIUtil.Outline)}
-   */
   @Deprecated
   public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
     paintOutlineBorder(g, width, height, arc, symmetric, hasFocus, Outline.error);
@@ -442,7 +439,7 @@ public class DarculaUIUtil {
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
 
   /**
-   * @deprecated use {@code LW.get()} instead
+   * @deprecated use LW.get() instead
    */
   @SuppressWarnings("unused")
   @Deprecated
@@ -451,7 +448,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @deprecated use {@code BW.get()} instead
+   * @deprecated use BW.get() instead
    */
   @Deprecated
   public static float bw() {
@@ -459,7 +456,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @deprecated use {@code COMPONENT_ARC.getFloat()} instead
+   * @deprecated use COMPONENT_ARC.get() instead
    */
   @Deprecated
   public static float arc() {
@@ -467,7 +464,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @deprecated use {@code BUTTON_ARC.get()} instead
+   * @deprecated use BUTTON_ARC.get() instead
    */
   @Deprecated
   public static float buttonArc() {
@@ -485,17 +482,11 @@ public class DarculaUIUtil {
            JBColor.namedColor("Component.disabledBorderColor", JBColor.namedColor("Outline.disabledColor", Gray.xCF));
   }
 
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Arrow#backgroundColor(boolean, boolean)}
-   */
   @Deprecated
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
     return JBUI.CurrentTheme.Arrow.backgroundColor(enabled, editable);
   }
 
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Arrow#foregroundColor(boolean)}
-   */
   @Deprecated
   public static Color getArrowButtonForegroundColor(boolean enabled) {
     return JBUI.CurrentTheme.Arrow.foregroundColor(enabled);

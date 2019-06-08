@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public final class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
+public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
+  private final PsiManager myPsiManager;
   private final WolfTheProblemSolver myProblemSolver;
 
   /**
@@ -34,10 +36,14 @@ public final class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
    */
   private final FileEditorPsiTreeChangeListener myPsiTreeChangeListener;
 
-  public PsiAwareFileEditorManagerImpl(@NotNull Project project) {
-    super(project);
+  public PsiAwareFileEditorManagerImpl(final Project project,
+                                       final PsiManager psiManager,
+                                       final WolfTheProblemSolver problemSolver,
+                                       DockManager dockManager) {
+    super(project, dockManager);
 
-    myProblemSolver = WolfTheProblemSolver.getInstance(project);
+    myPsiManager = psiManager;
+    myProblemSolver = problemSolver;
     myPsiTreeChangeListener = new FileEditorPsiTreeChangeListener(this);
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
@@ -62,7 +68,7 @@ public final class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   protected void projectOpened(@NotNull MessageBusConnection connection) {
     super.projectOpened(connection);
 
-    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
+    myPsiManager.addPsiTreeChangeListener(myPsiTreeChangeListener);
   }
 
   @Override
@@ -96,7 +102,7 @@ public final class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
   }
 
-  private final class MyProblemListener implements ProblemListener {
+  private class MyProblemListener implements ProblemListener {
     @Override
     public void problemsAppeared(@NotNull final VirtualFile file) {
       updateFile(file);

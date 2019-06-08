@@ -44,10 +44,6 @@ public interface PlatformIcons {
   Icon PROPERTY_ICON = AllIcons.Nodes.Property;
   Icon NEW_PARAMETER = AllIcons.Hierarchy.Supertypes;
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
-
-  /**
-   * @deprecated {@link AllIcons.Nodes#Tag}
-   */
   @Deprecated
   Icon ADVICE_ICON = AllIcons.Nodes.Tag;
   Icon ERROR_INTRODUCTION_ICON = AllIcons.Nodes.ErrorIntroduction;
@@ -91,12 +87,7 @@ public interface PlatformIcons {
   Icon MODULES_TEST_SOURCE_FOLDER = AllIcons.Modules.TestRoot;
 
   Icon CONTENT_ROOT_ICON_CLOSED = AllIcons.Nodes.Module;
-
-  /**
-   * @deprecated use {@link #CONTENT_ROOT_ICON_CLOSED}
-   */
-  @Deprecated
-  Icon CONTENT_ROOT_ICON_OPEN = CONTENT_ROOT_ICON_CLOSED;
+  @Deprecated Icon CONTENT_ROOT_ICON_OPEN = CONTENT_ROOT_ICON_CLOSED;
 
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
 
@@ -105,15 +96,6 @@ public interface PlatformIcons {
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 
-  /**
-   * @use {@link #FOLDER_ICON}
-   */
-  @Deprecated
-  Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
-
-  /**
-   * @use {@link #FOLDER_ICON}
-   */
-  @Deprecated
-  Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
+  @Deprecated Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
+  @Deprecated Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

@@ -132,6 +132,47 @@ public class GitMergeUtil {
     branchChooser.addElementsMarkListener(listener);
   }
 
+  /**
+   * Show updates caused by git operation
+   *
+   * @param project     the context project
+   * @param exceptions  the exception list
+   * @param root        the git root
+   * @param currentRev  the revision before update
+   * @param beforeLabel the local history label before update
+   * @param actionName  the action name
+   * @param actionInfo  the information about the action
+   */
+  public static void showUpdates(final Project project,
+                                 final List<VcsException> exceptions,
+                                 final VirtualFile root,
+                                 final GitRevisionNumber currentRev,
+                                 final Label beforeLabel,
+                                 final String actionName,
+                                 final ActionInfo actionInfo) {
+    UpdatedFiles files = UpdatedFiles.create();
+    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
+    collector.collect(files, exceptions);
+    if (!exceptions.isEmpty()) return;
+
+    GuiUtils.invokeLaterIfNeeded(() -> {
+      ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
+      UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
+      if (tree != null) {
+        tree.setBefore(beforeLabel);
+        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+        ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
+      }
+    }, ModalityState.defaultModalityState());
+
+    Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
+    if (!unmergedNames.isEmpty()) {
+      List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
+      GuiUtils.invokeLaterIfNeeded(() -> AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider()), ModalityState.defaultModalityState());
+    }
+  }
+
+
   public static MergeData loadMergeData(@NotNull Project project,
                                         @NotNull VirtualFile root,
                                         @NotNull FilePath path,
@@ -411,7 +452,7 @@ public class GitMergeUtil {
 
   public static void acceptOneVersion(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<? extends GitConflict> conflicts,
+                                      @NotNull Collection<GitConflict> conflicts,
                                       @NotNull GitConflict.ConflictSide side) throws VcsException {
     boolean isCurrent = side == GitConflict.ConflictSide.OURS;
 
@@ -446,7 +487,7 @@ public class GitMergeUtil {
    */
   public static void markConflictResolved(@NotNull Project project,
                                           @NotNull VirtualFile root,
-                                          @NotNull Collection<? extends GitConflict> conflicts,
+                                          @NotNull Collection<GitConflict> conflicts,
                                           @Nullable GitConflict.ConflictSide side) throws VcsException {
     List<FilePath> toAdd = new ArrayList<>();
     List<FilePath> toDelete = new ArrayList<>();

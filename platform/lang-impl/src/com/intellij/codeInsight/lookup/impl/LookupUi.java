@@ -156,10 +156,11 @@ class LookupUi {
       if (calculating && myHintButton.isVisible()) {
         myHintButton.setVisible(false);
       }
-      myProcessIcon.setVisible(calculating);
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (!calculating && !myLookup.isLookupDisposed()) {
+        myProcessIcon.setVisible(calculating);
+
+        if (!calculating) {
           updateHint();
         }
       }, myModalityState);

@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +44,6 @@ public class FileTypeBasedRootFilter extends RootFilter {
   }
 
   protected boolean isFileAccepted(VirtualFile virtualFile) {
-    return FileTypeRegistry.getInstance().isFileOfType(virtualFile, myFileType);
+    return virtualFile.getFileType().equals(myFileType);
   }
 }

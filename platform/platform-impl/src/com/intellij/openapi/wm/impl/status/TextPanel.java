@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
@@ -32,7 +32,7 @@ public class TextPanel extends JComponent implements Accessible {
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
+    return SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBFont.label();
   }
 
   public void recomputeSize() {
@@ -41,9 +41,6 @@ public class TextPanel extends JComponent implements Accessible {
     myPrefHeight = label.getPreferredSize().height;
   }
 
-  /**
-   * @deprecated no effect
-   */
   @Deprecated
   public void resetColor() {
   }
@@ -180,9 +177,7 @@ public class TextPanel extends JComponent implements Accessible {
       }
     }
 
-    /**
-     * @deprecated arrows are not painted anymore
-     */
+    // arrows are not painted anymore
     @Deprecated
     protected boolean shouldPaintArrows() {
       return false;

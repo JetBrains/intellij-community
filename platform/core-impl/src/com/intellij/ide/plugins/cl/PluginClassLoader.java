@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -19,7 +20,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -37,8 +37,6 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   private final AtomicLong edtTime = new AtomicLong();
   private final AtomicLong backgroundTime = new AtomicLong();
-
-  private final AtomicInteger loadedClassCounter = new AtomicInteger();
 
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader[] parents,
@@ -62,10 +60,6 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   public long getBackgroundTime() {
     return backgroundTime.get();
-  }
-
-  public long getLoadedClassCount() {
-    return loadedClassCounter.get();
   }
 
   @Override
@@ -216,11 +210,11 @@ public final class PluginClassLoader extends UrlClassLoader {
       try {
         c = _findClass(name);
       }
-      catch (LinkageError e) {
+      catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
         throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
       }
       if (c != null) {
-        loadedClassCounter.incrementAndGet();
+        PluginManagerCore.addPluginClass(myPluginId);
       }
 
       return c;

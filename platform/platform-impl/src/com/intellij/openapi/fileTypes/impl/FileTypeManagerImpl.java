@@ -16,7 +16,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
@@ -61,7 +60,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
-import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -75,7 +73,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
-  private static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -219,10 +216,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }, ModalityState.NON_MODAL);
       }
     });
-
-    // this should be done BEFORE reading state
-    initStandardFileTypes();
-
     myMessageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -262,6 +255,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
+
+    // this should be done BEFORE reading state
+    initStandardFileTypes();
   }
 
   @VisibleForTesting
@@ -350,14 +346,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void loadFileTypeBeans() {
-    final List<FileTypeBean> fileTypeBeans = EP_NAME.getExtensionList();
+    final List<FileTypeBean> fileTypeBeans = FileTypeManager.EP_NAME.getExtensionList();
 
     for (FileTypeBean bean : fileTypeBeans) {
-      bean.addMatchers(ContainerUtil.concat(
-        parse(bean.extensions),
-        parse(bean.fileNames, (token) -> new ExactFileNameMatcher(token)),
-        parse(bean.fileNamesCaseInsensitive, (token) -> new ExactFileNameMatcher(token, true)),
-        parse(bean.patterns, (token) -> FileNameMatcherFactory.getInstance().createMatcher(token))));
+      bean.addMatchers(ContainerUtil.concat(parse(bean.extensions),
+                                            parse(bean.fileNames, (token) -> new ExactFileNameMatcher(token)),
+                                            parse(bean.fileNamesCaseInsensitive, (token) -> new ExactFileNameMatcher(token, true))));
     }
 
     for (FileTypeBean bean : fileTypeBeans) {
@@ -996,31 +990,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-    if (type.equals(PlainTextFileType.INSTANCE) || type.equals(UnknownFileType.INSTANCE)) {
-      // a file has unknown file type if none of file type detectors matched it
-      // for plain text file type, we run file type detection based on content
-
-      //noinspection SSBasedInspection
-      return file.getFileType().equals(type);
-    }
-
-    if (file instanceof LightVirtualFile) {
-      FileType assignedFileType = ((LightVirtualFile)file).getAssignedFileType();
-      if (assignedFileType != null) {
-        return type.equals(assignedFileType);
-      }
-    }
-
-    if (type instanceof FileTypeIdentifiableByVirtualFile &&
-        ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file)) {
-      return true;
+    if (type instanceof FileTypeIdentifiableByVirtualFile) {
+      return ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file);
     }
 
     return getFileTypeByFileName(file.getNameSequence()) == type;
   }
 
   @Override
-  public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {
+  public LanguageFileType findFileTypeByLanguage(Language language) {
     synchronized (PENDING_INIT_LOCK) {
       for (FileTypeBean bean : myPendingFileTypes.values()) {
         if (language.getID().equals(bean.language)) {

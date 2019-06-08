@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
@@ -33,6 +34,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -356,7 +358,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
             LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
                       " caseSensitive: " + caseSensitive +
                       " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
-                      " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
+                      " SystemInfo.OS: " + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
                       " wasChildrenLoaded: " + wasChildrenLoaded +
                       " in the dir: " + this + ";" +
                       " children: " + Arrays.toString(childrenIds));
@@ -451,8 +453,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(name, false, true, getFileSystem());
   }
 
-
-  public VirtualFileSystemEntry doFindChildById(int id) {
+  @SuppressWarnings("deprecation")
+  @Override
+  public VirtualFileSystemEntry findChildById(int id) {
     int i = ArrayUtil.indexOf(myData.myChildrenIds, id);
     if (i >= 0) {
       return mySegment.vfsData.getFileById(id, this);

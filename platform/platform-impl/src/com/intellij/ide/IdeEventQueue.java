@@ -70,7 +70,7 @@ public final class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
-  private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
+  private static final boolean JAVA11_ON_MAC = SystemInfoRt.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
 
@@ -465,7 +465,7 @@ public final class IdeEventQueue extends EventQueue {
 
     boolean metaIsPressed = e instanceof InputEvent && (((InputEvent)e).getModifiersEx() & InputEvent.META_DOWN_MASK) != 0;
     boolean typedKeyEvent = e.getID() == KeyEvent.KEY_TYPED;
-    return SystemInfo.isLinux && typedKeyEvent && metaIsPressed;
+    return SystemInfoRt.isLinux && typedKeyEvent && metaIsPressed;
   }
 
   private boolean skipTypedKeyEventsIfFocusReturnsToOwner(@NotNull AWTEvent e) {
@@ -677,16 +677,13 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof InputEvent && SystemInfo.isMac) {
+    if (e instanceof InputEvent)
       TouchBarsManager.onInputEvent((InputEvent)e);
-    }
 
-    if (dispatchByCustomDispatchers(e)) {
-      return;
-    }
+    if (dispatchByCustomDispatchers(e)) return;
 
     if (e instanceof InputMethodEvent) {
-      if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
+      if (SystemInfoRt.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         return;
       }
     }
@@ -966,7 +963,7 @@ public final class IdeEventQueue extends EventQueue {
         else {
           UISettings uiSettings = UISettings.getInstanceOrNull();
           if (uiSettings == null ||
-              !SystemInfo.isWindows ||
+              !SystemInfoRt.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
               !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
             return false;
@@ -1058,7 +1055,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public boolean isInputMethodEnabled() {
-    return !SystemInfo.isMac || myInputMethodLock == 0;
+    return !SystemInfoRt.isMac || myInputMethodLock == 0;
   }
 
   public void disableInputMethods(@NotNull Disposable parentDisposable) {
@@ -1138,7 +1135,7 @@ public final class IdeEventQueue extends EventQueue {
 
   private static boolean doesFocusGoIntoPopupFromWindowEvent(@NotNull AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
-        SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
+        SystemInfoRt.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
       if (UIUtil.isTypeAheadAware(((WindowEvent)e).getWindow())) {
         TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
         return true;

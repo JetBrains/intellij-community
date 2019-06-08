@@ -4,7 +4,7 @@ package com.intellij.sh.shellcheck;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
@@ -80,7 +80,7 @@ class ShShellcheckTestUtil {
   }
 
   private static String getShellcheckDistributionLink() {
-    String platform = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
+    String platform = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
     String shellcheckUrl = IS_UNDER_TEAMCITY ? CACHE_SHELLCHECK_URL : SHELLCHECK_URL;
     return shellcheckUrl + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }

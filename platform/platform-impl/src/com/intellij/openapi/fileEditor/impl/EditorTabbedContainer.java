@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -521,7 +521,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void mouseClicked(MouseEvent e) {
-      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || !SystemInfo.isMac && e.isControlDown())) {
+      if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || !SystemInfoRt.isMac && e.isControlDown())) {
         final TabInfo info = myTabs.findInfo(e);
         Object o = info == null ? null : info.getObject();
         if (o instanceof VirtualFile) {

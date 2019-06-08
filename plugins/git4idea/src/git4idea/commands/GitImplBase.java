@@ -48,7 +48,7 @@ abstract class GitImplBase implements Git {
 
   @Override
   @NotNull
-  public GitCommandResult runCommand(@NotNull Computable<? extends GitLineHandler> handlerConstructor) {
+  public GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor) {
     return run(handlerConstructor, GitImplBase::getCollectingCollector);
   }
 
@@ -90,8 +90,8 @@ abstract class GitImplBase implements Git {
    * Run handler with retry on authentication failure
    */
   @NotNull
-  private GitCommandResult run(@NotNull Computable<? extends GitLineHandler> handlerConstructor,
-                               @NotNull Computable<? extends OutputCollector> outputCollectorConstructor) {
+  private GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
+                               @NotNull Computable<OutputCollector> outputCollectorConstructor) {
     @NotNull GitCommandResult result;
 
     int authAttempt = 0;

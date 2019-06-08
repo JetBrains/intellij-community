@@ -84,7 +84,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void setFilterBase(List<? extends CommittedChangeList> changeLists) {
+  public void setFilterBase(List<CommittedChangeList> changeLists) {
     myPreferredSelection = null;
     appendFilterBase(changeLists);
   }
@@ -109,7 +109,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
+  public void appendFilterBase(List<CommittedChangeList> changeLists) {
     final Object[] oldSelection = myModel.isEmpty() ? myPreferredSelection : myValueList.getSelectedValues();
 
     myModel.addNext(changeLists, ourConvertorInstance);
@@ -134,10 +134,10 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
 
   @Override
   @NotNull
-  public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
+  public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
     final Object[] selection = myValueList.getSelectedValues();
     if (myValueList.getSelectedIndex() == 0 || selection.length == 0) {
-      return ContainerUtil.immutableList(changeLists);
+      return changeLists;
     }
     List<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList changeList : changeLists) {

@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
@@ -209,26 +209,18 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  /**
-   * @deprecated unused
-   */
   @Deprecated
-  @SuppressWarnings("unused")
   protected boolean isSearchControlUISupported() {
     return true;
   }
 
-  /**
-   * @deprecated unused
-   */
   @Deprecated
-  @SuppressWarnings("unused")
   protected boolean hasIconsOutsideOfTextField() {
     return false;
   }
 
   protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Class<?> uiClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI")
                                                        : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
@@ -502,9 +494,6 @@ public class SearchTextField extends JPanel {
     return false;
   }
 
-  /**
-   * @deprecated unused
-   */
   @Deprecated
   @SuppressWarnings("unused")
   public void setSearchIcon(final Icon icon) {

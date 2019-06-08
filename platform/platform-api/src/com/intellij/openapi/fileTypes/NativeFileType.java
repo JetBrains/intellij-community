@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,11 +71,11 @@ public class NativeFileType implements INativeFileType {
 
   public static boolean openAssociatedApplication(@NotNull final VirtualFile file) {
     final List<String> commands = new ArrayList<>();
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       commands.add("rundll32.exe");
       commands.add("url.dll,FileProtocolHandler");
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       commands.add("/usr/bin/open");
     }
     else if (SystemInfo.hasXdgOpen()) {

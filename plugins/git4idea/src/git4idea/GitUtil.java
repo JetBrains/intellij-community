@@ -1066,6 +1066,10 @@ public class GitUtil {
     VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project), ignoreFileRoot);
   }
 
+  public static void proposeUpdateGitignore(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+    VcsImplUtil.proposeUpdateIgnoreFile(project, GitVcs.getInstance(project), ignoreFileRoot);
+  }
+
   public static <T extends Throwable> void tryRunOrClose(@NotNull AutoCloseable closeable,
                                                          @NotNull ThrowableRunnable<T> runnable) throws T {
     try {
@@ -1083,7 +1087,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<? extends GitRepository> repositories) {
+  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<GitRepository> repositories) {
     Map<GitRepository, Hash> result = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       String currentRevision = repository.getCurrentRevision();

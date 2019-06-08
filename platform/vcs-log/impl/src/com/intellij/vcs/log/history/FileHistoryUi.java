@@ -23,6 +23,7 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
@@ -36,10 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.ui.JBColor.namedColor;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -59,12 +58,13 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final History myHistory;
 
   public FileHistoryUi(@NotNull VcsLogData logData,
+                       @NotNull VcsLogColorManager manager,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
                        @Nullable Hash revision,
                        @NotNull VirtualFile root) {
-    super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
+    super(getFileHistoryLogId(path, revision), logData, manager, refresher);
 
     myPath = path;
     myRoot = root;
@@ -214,9 +214,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Override
   protected void onVisiblePackUpdated(boolean permGraphChanged) {
-    ((FileHistoryColorManager)myColorManager).update(myVisiblePack);
     myFileHistoryPanel.updateDataPack(myVisiblePack, permGraphChanged);
-    myFileHistoryPanel.getGraphTable().rootColumnUpdated();
   }
 
   @NotNull
@@ -276,9 +274,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
       else if (CommonUiProperties.SHOW_DIFF_PREVIEW.equals(property)) {
         myFileHistoryPanel.showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
-      }
-      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-        myFileHistoryPanel.getGraphTable().rootColumnUpdated();
       }
     }
   }

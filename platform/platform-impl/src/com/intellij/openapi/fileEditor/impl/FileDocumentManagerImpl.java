@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
@@ -607,7 +606,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
 
       // when an empty unknown file is written into, re-run file type detection
       long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
-      if (lastRecordedLength == 0 && FileTypeRegistry.getInstance().isFileOfType(virtualFile, UnknownFileType.INSTANCE)) { // check file type last to avoid content detection running
+      if (lastRecordedLength == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) { // check file type last to avoid content detection running
         toRecompute.add(virtualFile);
       }
 

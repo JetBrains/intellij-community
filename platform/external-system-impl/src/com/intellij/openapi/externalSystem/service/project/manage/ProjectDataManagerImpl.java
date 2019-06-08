@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -38,6 +39,8 @@ import java.util.function.Supplier;
 public class ProjectDataManagerImpl implements ProjectDataManager {
 
   private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
+  private static final com.intellij.openapi.util.Key<Boolean> DATA_READY =
+    com.intellij.openapi.util.Key.create("externalSystem.data.ready");
 
   @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices;
 
@@ -48,12 +51,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
   public ProjectDataManagerImpl() {
     this(() -> ProjectDataService.EP_NAME.getExtensions());
-  }
-
-  @Override
-  @Nullable
-  public List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key) {
-    return myServices.getValue().get(key);
   }
 
   @TestOnly
@@ -346,14 +343,15 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
   @Override
   public void ensureTheDataIsReadyToUse(@Nullable DataNode startNode) {
-    if (startNode == null || startNode.isReady()) {
+    if (startNode == null || Boolean.TRUE.equals(startNode.getUserData(DATA_READY))) {
       return;
     }
 
     DeduplicateVisitorsSupplier supplier = new DeduplicateVisitorsSupplier();
     ((DataNode<?>)startNode).visit(dataNode -> {
-      if (dataNode.validateData()) {
+      if (prepareDataToUse(dataNode)) {
         dataNode.visitData(supplier.getVisitor(dataNode.getKey()));
+        dataNode.putUserData(DATA_READY, Boolean.TRUE);
       }
     });
   }
@@ -381,7 +379,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
-      ExceptionUtil.rethrow(t);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
   }
 
@@ -423,6 +421,29 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     for (DataNode<?> node : nodes) {
       ensureTheDataIsReadyToUse(node);
     }
+  }
+
+  private boolean prepareDataToUse(@NotNull DataNode dataNode) {
+    final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
+    List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
+    if (services != null) {
+      try {
+        Set<ClassLoader> classLoaders = new LinkedHashSet<>();
+        for (ProjectDataService<?, ?> dataService : services) {
+          classLoaders.add(dataService.getClass().getClassLoader());
+        }
+        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+          classLoaders.add(manager.getClass().getClassLoader());
+        }
+        dataNode.deserializeData(classLoaders);
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        dataNode.clear(true);
+        return false;
+      }
+    }
+    return true;
   }
 
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,

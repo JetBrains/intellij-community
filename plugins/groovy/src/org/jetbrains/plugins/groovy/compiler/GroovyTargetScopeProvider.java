@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.BuildTargetScopeProvider;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -79,7 +78,7 @@ public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
 
   private static boolean containsGroovyResources(Module module, VirtualFile root) {
     return !ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(root, file -> {
-      if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE)) {
+      if (!file.isDirectory() && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType()) {
         return false; // found
       }
       return true;

@@ -38,7 +38,10 @@ import java.util.function.Consumer;
 /**
  * @author Konstantin Bulenkov
  */
-public class ActionsCollectorImpl extends ActionsCollector {
+@State(name = "ActionsCollector", storages = @Storage(
+  value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true)
+)
+public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String GROUP = "actions";
   public static final String DEFAULT_ID = "third.party";
 
@@ -137,6 +140,18 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   private boolean canReportActionId(@NotNull String actionId) {
     return myXmlActionIds.contains(actionId);
+  }
+
+  private final State myState = new State();
+
+  @Nullable
+  @Override
+  public State getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(@NotNull State state) {
   }
 
   @Override

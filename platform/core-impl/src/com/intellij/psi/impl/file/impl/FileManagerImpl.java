@@ -271,12 +271,12 @@ public class FileManagerImpl implements FileManager {
     return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled, fileType) : viewProvider;
   }
 
-  /** @deprecated Left for plugin compatibility */
+  /** Left for plugin compatibility */
   @Deprecated
   public void markInitialized() {
   }
 
-  /** @deprecated Left for plugin compatibility */
+  /** Left for plugin compatibility */
   @Deprecated
   public boolean isInitialized() {
     return true;

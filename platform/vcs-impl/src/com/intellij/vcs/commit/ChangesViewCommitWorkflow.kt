@@ -4,7 +4,10 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -23,7 +26,12 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
   internal lateinit var commitState: CommitState
 
   init {
-    updateVcses(vcsManager.allActiveVcss.toSet())
+    val connection = project.messageBus.connect()
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+      Disposer.dispose(connection)
+
+      runInEdt { updateVcses(vcsManager.allActiveVcss.toSet()) }
+    })
   }
 
   internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =

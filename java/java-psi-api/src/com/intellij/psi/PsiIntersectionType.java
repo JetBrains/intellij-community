@@ -9,7 +9,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Intersection types arise in a process of computing least upper bound.
@@ -170,7 +169,12 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   @Override
   public String toString() {
-    return Arrays.stream(myConjuncts).map(PsiType::getPresentableText).collect(Collectors.joining(", ", "PsiIntersectionType: ", ""));
+    StringBuilder sb = new StringBuilder("PsiIntersectionType: ");
+    for (int i = 0; i < myConjuncts.length; i++) {
+      if (i > 0) sb.append(", ");
+      sb.append(myConjuncts[i].getPresentableText());
+    }
+    return sb.toString();
   }
 
   public String getConflictingConjunctsMessage() {

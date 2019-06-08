@@ -106,9 +106,6 @@ public class EditorHyperlinkSupport {
     myFilterRunner.waitForPendingFilters(timeoutMs);
   }
 
-  /**
-   * @deprecated left for API compatibility
-   */
   @Deprecated
   public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
     LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<>();
@@ -195,7 +192,8 @@ public class EditorHyperlinkSupport {
   }
 
   /**
-   * @deprecated left for API compatibility, use {@link #createHyperlink(int, int, TextAttributes, HyperlinkInfo)}
+   * @deprecated for binary compatibility with older plugins
+   * @see #createHyperlink(int, int, TextAttributes, HyperlinkInfo)
    */
   @Deprecated
   public void addHyperlink(final int highlightStartOffset,

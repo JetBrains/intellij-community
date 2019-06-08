@@ -20,7 +20,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
     <completion.contributor language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpCompletionContributor"/>
-    <fileType name="RegExp" implementationClass="org.intellij.lang.regexp.RegExpFileType" extensions="regexp" fieldName="INSTANCE" language="RegExp"/>
+    <fileTypeFactory implementation="org.intellij.lang.regexp.RegExpSupportLoader" />
     <annotator language="RegExp" implementationClass="org.intellij.lang.regexp.validation.RegExpAnnotator"/>
     <lang.parserDefinition language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpParserDefinition"/>
     <lang.syntaxHighlighterFactory language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpSyntaxHighlighterFactory"/>

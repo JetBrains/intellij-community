@@ -3,11 +3,10 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.testFramework.PlatformTestCase
 import org.junit.Assert
 import org.junit.Test
 
-class SystemRuntimeCollectorTest : PlatformTestCase() {
+class SystemRuntimeCollectorTest {
 
 
   @Test

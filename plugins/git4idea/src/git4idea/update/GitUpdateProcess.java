@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -169,7 +170,7 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOTHING_TO_UPDATE;
     }
 
-    GitUpdatedRanges updatedRanges = GitUpdatedRanges.calcInitialPositions(myProject, trackedBranches);
+    Map<GitRepository, Hash> previousPublishedTipPositions = calcPublishedTipPositions(trackedBranches);
 
     try {
       updaters = tryFastForwardMergeForRebaseUpdaters(updaters);
@@ -248,7 +249,15 @@ public class GitUpdateProcess {
       return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
     }
     finally {
-      myUpdatedRanges = updatedRanges.calcCurrentPositions();
+      Map<GitRepository, Hash> newPublishedTipPositions = calcPublishedTipPositions(trackedBranches);
+      myUpdatedRanges = new LinkedHashMap<>();
+      for (GitRepository repository : newPublishedTipPositions.keySet()) {
+        Hash before = previousPublishedTipPositions.get(repository);
+        if (before != null) {
+          Hash after = newPublishedTipPositions.get(repository);
+          myUpdatedRanges.put(repository, new HashRange(before, after));
+        }
+      }
     }
   }
 
@@ -257,9 +266,8 @@ public class GitUpdateProcess {
     return ContainerUtil.mapNotNull(updaters.keySet(), repo -> {
       GitUpdater updater = updaters.get(repo);
       if (updater instanceof GitRebaseUpdater) {
-        GitBranchPair sourceAndTarget = ((GitRebaseUpdater)updater).getSourceAndTarget();
-        String currentRef = sourceAndTarget.getSource().getFullName();
-        String baseRef = sourceAndTarget.getTarget().getFullName();
+        String currentRef = ((GitRebaseUpdater)updater).getSourceAndTarget().getBranch().getFullName();
+        String baseRef = assertNotNull(((GitRebaseUpdater)updater).getSourceAndTarget().getDest()).getFullName();
         return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo : null;
       }
       return null;
@@ -314,6 +322,36 @@ public class GitUpdateProcess {
   @NotNull
   Map<GitRepository, String> getSkippedRoots() {
     return mySkippedRoots;
+  }
+
+  @NotNull
+  private Map<GitRepository, Hash> calcPublishedTipPositions(@NotNull Map<GitRepository, GitBranchPair> trackedBranches) {
+    Map<GitRepository, Hash> result = new LinkedHashMap<>();
+    for (GitRepository repository : trackedBranches.keySet()) {
+      GitLocalBranch localBranch = trackedBranches.get(repository).getBranch();
+      GitRemoteBranch trackedBranch = trackedBranches.get(repository).getDest();
+      if (trackedBranch != null) {
+        Hash mergeBase = getMergeBase(repository.getRoot(), localBranch.getFullName(), trackedBranch.getFullName());
+        if (mergeBase != null) {
+          result.put(repository, mergeBase);
+        }
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private Hash getMergeBase(@NotNull VirtualFile root, @NotNull String firstRef, @NotNull String secondRef) {
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MERGE_BASE);
+    h.addParameters(firstRef, secondRef);
+    try {
+      String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
+      return HashImpl.build(output);
+    }
+    catch (Throwable t) {
+      LOG.warn("Couldn't find merge-base between " + firstRef + " and " + secondRef);
+      return null;
+    }
   }
 
   @Nullable

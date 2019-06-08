@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.WriteActionAware;
@@ -16,6 +16,8 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
   QuickFix[] EMPTY_ARRAY = new QuickFix[0];
 
   /**
+   * Returns the name of the quick fix.
+   *
    * @return the name of the quick fix.
    */
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -27,7 +29,7 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
   /**
    * @return text to appear in "Apply Fix" popup when multiple Quick Fixes exist (in the results of batch code inspection). For example,
    * if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
-   * If the name of the quickfix does not depend on a specific element, simply return {@link #getName()}.
+   * If the name of the quickfix does not depend on a specific element, simply return getName().
    */
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
@@ -35,8 +37,8 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
 
   /**
    * Called to apply the fix.
-   * <p>
-   * Please call {@link com.intellij.profile.codeInspection.ProjectInspectionProfileManager#fireProfileChanged()} if inspection profile is changed as result of fix.
+   *
+   * Please call <code>ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()</code> if inspection profile is changed as result of fix.
    *
    * @param project    {@link Project}
    * @param descriptor problem reported by the tool which provided this quick fix action

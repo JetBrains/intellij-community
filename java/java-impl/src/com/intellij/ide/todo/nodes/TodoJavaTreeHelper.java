@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -147,7 +146,7 @@ public class TodoJavaTreeHelper extends TodoTreeHelper {
   }
 
    @Nullable
-  public static PsiPackage findNonEmptyPackage(@NotNull PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
+  public static PsiPackage findNonEmptyPackage(PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
     if (!isPackageEmpty(new PackageElement(module, rootPackage, false), builder, project)){
       return rootPackage;
     }

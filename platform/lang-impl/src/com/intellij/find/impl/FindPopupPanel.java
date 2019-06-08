@@ -89,7 +89,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
 
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-  private static final KeyStroke ENTER_WITH_MODIFIERS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
+  private static final KeyStroke ENTER_WITH_MODIFIERS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfoRt.isMac
                                                                                                   ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
   private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_MASK);
 
@@ -289,7 +289,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
       root.setWindowDecorationStyle(JRootPane.NONE);
-      if (SystemInfo.isMac && UIUtil.isUnderDarcula()) {
+      if (SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
         root.setBorder(PopupBorder.Factory.createColored(OnePixelDivider.BACKGROUND));
       }
       else {
@@ -785,12 +785,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(myFileMaskField, "gapleft 4, gapright 16");
     if (Registry.is("ide.find.as.popup.allow.pin") || ApplicationManager.getApplication().isInternal()) {
       myIsPinned.set(UISettings.getInstance().getPinFindInPath());
-      JPanel twoButtons = new JPanel(new MigLayout("flowx, ins 0, gap 4, fillx, hidemode 3"));
+      JPanel twoButtons = new JPanel(new GridLayout(1, 2, 4, 0));
       twoButtons.add(myFilterContextButton);
-      JComponent separatorComponent = (JComponent)Box.createRigidArea(new JBDimension(1, 24));
-      separatorComponent.setOpaque(true);
-      separatorComponent.setBackground(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
-      twoButtons.add(separatorComponent);
       twoButtons.add(myPinButton);
       add(twoButtons, "wrap");
     }

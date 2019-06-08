@@ -152,7 +152,7 @@ public abstract class ActionManager {
                                               @Nullable String place, boolean now);
 
   /**
-   * @deprecated Use {@link AnActionListener#TOPIC}
+   * Use {@link AnActionListener#TOPIC}
    */
   @Deprecated
   public abstract void addAnActionListener(AnActionListener listener);
@@ -165,9 +165,6 @@ public abstract class ActionManager {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
 
-  /**
-   * @deprecated Use {@link AnActionListener#TOPIC}
-   */
   @Deprecated
   public abstract void removeAnActionListener(AnActionListener listener);
 

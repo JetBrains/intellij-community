@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
@@ -10,6 +11,7 @@ import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -61,7 +63,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
+public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
@@ -85,11 +87,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private boolean ready;
   private Image mySelfie;
 
-  public IdeFrameImpl() {
+  public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
     super();
     updateTitle();
 
-    myRootPane = new IdeRootPane(this);
+    myRootPane = createRootPane(actionManager, dataManager);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
@@ -108,7 +110,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
-    size.height = Math.min(1000, size.height - 40);
+    size.height= Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
     setMinimumSize(new Dimension(340, getMinimumSize().height));
@@ -152,9 +154,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfo.isMac) {
-      setIconImage(null);
-    }
+    if (SystemInfoRt.isMac) setIconImage(null);
 
     MouseGestureManager.getInstance().add(this);
 
@@ -259,9 +259,14 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   @NotNull
+  private IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
+    return new IdeRootPane(actionManager, dataManager, this);
+  }
+
+  @NotNull
   @Override
   public Insets getInsets() {
-    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
+    return SystemInfoRt.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
   }
 
   @Override
@@ -358,7 +363,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfoRt.isWindows ? "(Administrator)" : "(ROOT)";
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
@@ -379,7 +384,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
       }
-      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
+      else if (!SystemInfoRt.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       builder.append(getSuperUserSuffix(), " ");
@@ -550,7 +555,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   @Override
   public void dispose() {
-    if (SystemInfo.isMac && isInFullScreen()) {
+    if (SystemInfoRt.isMac && isInFullScreen()) {
       ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
     }
     if (isTemporaryDisposed()) {
@@ -675,7 +680,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   private boolean temporaryFixForIdea156004(final boolean state) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       try {
         Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
         modalBlockerField.setAccessible(true);

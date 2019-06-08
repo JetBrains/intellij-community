@@ -207,6 +207,7 @@
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
+    <statistics.projectUsagesCollector implementation="git4idea.GitProjectMigrationStatisticsCollector"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
@@ -283,6 +284,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
     <extensionPoint qualifiedName="Git4Idea.gitRepositoryHostingService" interface="git4idea.remote.GitRepositoryHostingService"/>
+    <extensionPoint qualifiedName="com.intellij.vcs.git.pushCustomizationFactory"
+                    interface="git4idea.push.GitPushProcessCustomizationFactory" />
     <extensionPoint qualifiedName="Git4Idea.GitCheckinExplicitMovementProvider" interface="git4idea.checkin.GitCheckinExplicitMovementProvider"/>
   </extensionPoints>
 </idea-plugin>

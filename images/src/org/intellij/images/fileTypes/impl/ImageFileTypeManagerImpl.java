@@ -15,7 +15,10 @@
  */
 package org.intellij.images.fileTypes.impl;
 
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.UserBinaryFileType;
+import com.intellij.openapi.fileTypes.UserFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
@@ -39,7 +42,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
 
   @Override
   public boolean isImage(@NotNull VirtualFile file) {
-    return FileTypeRegistry.getInstance().isFileOfType(file, IMAGE_FILE_TYPE) || file.getFileType() instanceof SvgFileType;
+    return file.getFileType() == IMAGE_FILE_TYPE || file.getFileType() instanceof SvgFileType;
   }
 
   @Override

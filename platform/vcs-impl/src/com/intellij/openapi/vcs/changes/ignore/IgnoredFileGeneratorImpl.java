@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ignore;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -48,14 +47,6 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
   private final Object myWriteLock = new Object();
 
-  private static final Object myNotificationLock = new Object();
-
-  @Nullable
-  private static Notification myNotification;
-
-  @Nullable
-  private static VirtualFile myIgnoreFileRootNotificationShowFor;
-
   protected IgnoredFileGeneratorImpl(@NotNull Project project) {
     myProject = project;
   }
@@ -87,8 +78,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       File ignoreFile = getIgnoreFile(ignoreFileRoot, ignoreFileName);
 
       if (notify && needAskToManageIgnoreFiles(myProject)) {
-        notifyVcsIgnoreFileManage(myProject, ignoreFileRoot, ignoredFileContentProvider,
-                                  () -> writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, true));
+        notifyVcsIgnoreFileManage(myProject, ignoredFileContentProvider, () -> writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, true));
       }
       else {
         writeToFile(ignoreFileRoot, ignoreFile, ignoreFileContent, false);
@@ -130,52 +120,32 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   }
 
   private static void notifyVcsIgnoreFileManage(@NotNull Project project,
-                                                @NotNull VirtualFile ignoreFileRoot,
                                                 @NotNull IgnoredFileContentProvider ignoredFileContentProvider,
                                                 @NotNull Runnable writeToIgnoreFile) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
     VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
 
-    synchronized (myNotificationLock) {
-      if (myNotification != null &&
-          myIgnoreFileRootNotificationShowFor != null &&
-          !myNotification.isExpired() &&
-          myIgnoreFileRootNotificationShowFor.equals(ignoreFileRoot)) {
-        return;
-      }
-
-      myIgnoreFileRootNotificationShowFor = ignoreFileRoot;
-      myNotification = VcsNotifier.getInstance(project).notifyMinorInfo(
-        true,
-        "",
-        VcsBundle.message("ignored.file.manage.message",
-                          ApplicationNamesInfo.getInstance().getFullProductName(), ignoredFileContentProvider.getFileName()),
-        NotificationAction.create(VcsBundle.message("ignored.file.manage.this.project"), (event, notification) -> {
-          writeToIgnoreFile.run();
-          propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true);
-          propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
-          synchronized (myNotificationLock) {
-            notification.expire();
-            myIgnoreFileRootNotificationShowFor = null;
-          }
-        }),
-        NotificationAction.create(VcsBundle.message("ignored.file.manage.all.project"), (event, notification) -> {
-          writeToIgnoreFile.run();
-          applicationSettings.MANAGE_IGNORE_FILES = true;
-          propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
-          synchronized (myNotificationLock) {
-            notification.expire();
-            myIgnoreFileRootNotificationShowFor = null;
-          }
-        }),
-        NotificationAction.create(VcsBundle.message("ignored.file.manage.notmanage"), (event, notification) -> {
-          propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
-          synchronized (myNotificationLock) {
-            notification.expire();
-            myIgnoreFileRootNotificationShowFor = null;
-          }
-        }));
-    }
+    VcsNotifier.getInstance(project).notifyMinorInfo(
+      true,
+      "",
+      VcsBundle.message("ignored.file.manage.message",
+                        ApplicationNamesInfo.getInstance().getFullProductName(), ignoredFileContentProvider.getFileName()),
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.this.project"), (event, notification) -> {
+        writeToIgnoreFile.run();
+        propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true);
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
+        notification.expire();
+      }),
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.all.project"), (event, notification) -> {
+        writeToIgnoreFile.run();
+        applicationSettings.MANAGE_IGNORE_FILES = true;
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
+        notification.expire();
+      }),
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.notmanage"), (event, notification) -> {
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
+        notification.expire();
+      }));
   }
 
 

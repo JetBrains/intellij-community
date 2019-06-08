@@ -1,0 +1,9 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.vcs.log.graph.PermanentGraphBuilder"
+                        serviceImplementation="com.intellij.vcs.log.graph.PermanentGraphBuilderImpl"/>
+  </extensions>
+
+</idea-plugin>
+

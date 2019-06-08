@@ -93,12 +93,12 @@ public class PathManager {
     else if (insideIde) {
       ourHomePath = getHomePathFor(PathManager.class);
       if (ourHomePath == null) {
-        String advice = SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
+        String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
         throw new RuntimeException("Could not find installation home path. Please " + advice);
       }
     }
 
-    if (ourHomePath != null && SystemInfo.isWindows) {
+    if (ourHomePath != null && SystemInfoRt.isWindows) {
       ourHomePath = canonicalPath(ourHomePath);
     }
 
@@ -135,7 +135,7 @@ public class PathManager {
     List<String> binDirs = new SmartList<>();
 
     String[] subDirs = {BIN_FOLDER, "community/bin", "ultimate/community/bin"};
-    String osSuffix = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux";
+    String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
 
     for (String subDir : subDirs) {
       File dir = new File(root, subDir);
@@ -266,7 +266,7 @@ public class PathManager {
     if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
-    else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
+    else if (SystemInfoRt.isMac && PATHS_SELECTOR != null) {
       ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", "");
     }
     else {
@@ -278,7 +278,7 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       return platformPath(selector, "Library/Application Support", "");
     }
     else {
@@ -336,7 +336,7 @@ public class PathManager {
     if (System.getProperty(PROPERTY_LOG_PATH) != null) {
       ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
     }
-    else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
+    else if (SystemInfoRt.isMac && PATHS_SELECTOR != null) {
       ourLogPath = SystemProperties.getUserHome() + "/Library/Logs/" + PATHS_SELECTOR;
     }
     else {
@@ -590,11 +590,11 @@ public class PathManager {
                                      @NotNull String fallback) {
     String userHome = SystemProperties.getUserHome();
 
-    if (macPart != null && SystemInfo.isMac) {
+    if (macPart != null && SystemInfoRt.isMac) {
       return userHome + "/" + macPart + "/" + selector;
     }
 
-    if (winVar != null && SystemInfo.isWindows) {
+    if (winVar != null && SystemInfoRt.isWindows) {
       String dir = System.getenv(winVar);
       if (dir != null) {
         return dir + "/" + selector;

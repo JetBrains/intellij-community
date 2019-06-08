@@ -5,7 +5,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
@@ -137,7 +136,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
-    if (FileTypeRegistry.getInstance().isFileOfType(vFile, JavaClassFileType.INSTANCE)) {
+    if (vFile.getFileType() == JavaClassFileType.INSTANCE) {
       // See IDEADEV-5626
       final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
       VirtualFile parent = vFile.getParent();

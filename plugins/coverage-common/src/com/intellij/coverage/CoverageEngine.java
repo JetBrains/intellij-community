@@ -220,6 +220,10 @@ public abstract class CoverageEngine {
   @Nullable
   public String getQualifiedName(@NotNull final File outputFile,
                                  @NotNull final PsiFile sourceFile) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
+    if (virtualFile != null) {
+      return null;
+    }
     return null;
   }
 
@@ -247,6 +251,10 @@ public abstract class CoverageEngine {
                                                 @NotNull final File outputFile,
                                                 @NotNull final PsiFile sourceFile,
                                                 @NotNull final CoverageSuitesBundle suite) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(outputFile);
+    if (virtualFile != null) {
+      return false;
+    }
     return false;
   }
 
@@ -259,6 +267,10 @@ public abstract class CoverageEngine {
   @Nullable
   public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile,
                                                        @NotNull final CoverageSuitesBundle suite) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(classFile);
+    if (virtualFile != null) {
+      return null;
+    }
     return null;
   }
 

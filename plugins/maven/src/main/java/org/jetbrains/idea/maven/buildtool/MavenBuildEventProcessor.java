@@ -57,9 +57,9 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
       Collections.singletonList(myParser));
   }
 
-  private static BuildProgressListener wrapListener(@NotNull Project project,
-                                                    @NotNull BuildProgressListener listener,
-                                                    @NotNull String workingDir) {
+  private BuildProgressListener wrapListener(@NotNull Project project,
+                                             @NotNull BuildProgressListener listener,
+                                             @NotNull String workingDir) {
     return new MavenProgressListener(project, listener, workingDir);
   }
 
@@ -71,7 +71,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
 
   public void start(@Nullable ExecutionEnvironment executionEnvironment, @Nullable ProcessHandler processHandler) {
 
-    StartBuildEventImpl startEvent = new StartBuildEventImpl(myDescriptor, "")
+    StartBuildEventImpl startEvent = new StartBuildEventImpl(myDescriptor, "Maven run")
       .withExecutionFilters(MavenConsoleImpl.getMavenConsoleFilters(myProject));
     if (executionEnvironment != null && processHandler != null) {
       startEvent

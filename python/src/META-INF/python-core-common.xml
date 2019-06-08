@@ -648,6 +648,10 @@
 
     <!-- Statistics -->
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterRemoteUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterVersionUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
   </extensions>
 

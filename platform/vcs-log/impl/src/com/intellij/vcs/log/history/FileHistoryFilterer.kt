@@ -69,8 +69,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       val start = System.currentTimeMillis()
 
       if (index.isIndexed(root) && dataPack.isFull) {
-        val visiblePack = filterWithIndex(dataPack, oldVisiblePack, sortType, filters,
-                                          commitCount == CommitCountStage.INITIAL)
+        val visiblePack = filterWithIndex(dataPack, oldVisiblePack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         if (checkNotEmpty(dataPack, visiblePack, true)) {
           return Pair(visiblePack, commitCount)
@@ -160,24 +159,10 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     private fun filterWithIndex(dataPack: DataPack,
                                 oldVisiblePack: VisiblePack,
                                 sortType: PermanentGraph.SortType,
-                                filters: VcsLogFilterCollection,
-                                isInitial: Boolean): VisiblePack {
-      val oldFileHistory = oldVisiblePack.fileHistory
-      if (isInitial) {
-        return filterWithIndex(dataPack, filters, sortType, oldFileHistory.commitToRename,
-                               FileHistory(emptyMap(), processedAdditionsDeletions = oldFileHistory.processedAdditionsDeletions))
-      }
-      val renames = collectRenamesFromProvider(oldFileHistory)
-      return filterWithIndex(dataPack, filters, sortType, renames.union(oldFileHistory.commitToRename), oldFileHistory)
-    }
-
-    private fun filterWithIndex(dataPack: DataPack,
-                                filters: VcsLogFilterCollection,
-                                sortType: PermanentGraph.SortType,
-                                oldRenames: MultiMap<UnorderedPair<Int>, Rename>,
-                                oldFileHistory: FileHistory): VisiblePack {
+                                filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
-      val data = indexDataGetter.createFileHistoryData(filePath).build(oldRenames)
+      val renames = collectRenamesFromProvider(oldVisiblePack.fileHistory)
+      val data = indexDataGetter.createFileHistoryData(filePath).build(renames.union(oldVisiblePack.fileHistory.commitToRename))
 
       val permanentGraph = dataPack.permanentGraph
       if (permanentGraph !is PermanentGraphImpl) {
@@ -190,7 +175,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
 
       val commit = (hash ?: getHead(dataPack))?.let { storage.getCommitIndex(it, root) }
-      val historyBuilder = FileHistoryBuilder(commit, filePath, data, oldFileHistory)
+      val historyBuilder = FileHistoryBuilder(commit, filePath, data, oldVisiblePack.fileHistory)
       val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.getCommits(), historyBuilder)
       val fileHistory = historyBuilder.fileHistory
 
@@ -226,6 +211,13 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
   }
 
+  private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
+
+  private fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
+    val filter = getStructureFilter(filters) ?: return null
+    return filter.files.singleOrNull()
+  }
+
   private fun getHash(filters: VcsLogFilterCollection): Hash? {
     val fileHistoryFilter = getStructureFilter(filters) as? VcsLogFileHistoryFilter
     if (fileHistoryFilter != null) {
@@ -235,16 +227,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
     return revisionFilter?.heads?.singleOrNull()?.hash
   }
-  
+
   companion object {
     private val LOG = Logger.getInstance(FileHistoryFilterer::class.java)
-
-    private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
-
-    fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
-      val filter = getStructureFilter(filters) ?: return null
-      return filter.files.singleOrNull()
-    }
 
     @JvmStatic
     fun createFilters(path: FilePath,

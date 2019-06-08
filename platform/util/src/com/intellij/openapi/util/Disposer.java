@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -148,6 +149,11 @@ public class Disposer {
     if (ourDebugMode) {
       ourTree.assertIsEmpty(throwError);
     }
+  }
+
+  @TestOnly
+  public static boolean isEmpty() {
+    return ourDebugMode && ourTree.isEmpty();
   }
 
   /**

@@ -24,10 +24,8 @@ public class ClassLoaderUtil {
   private ClassLoaderUtil() {
   }
 
-  public static <E extends Throwable> void runWithClassLoader(@Nullable ClassLoader classLoader,
-                                                              @NotNull ThrowableRunnable<E> runnable)
-    throws E {
-    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+  public static void runWithClassLoader(final ClassLoader classLoader, final Runnable runnable) {
+    final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
     try {
       Thread.currentThread().setContextClassLoader(classLoader);
       runnable.run();
@@ -37,9 +35,8 @@ public class ClassLoaderUtil {
     }
   }
 
-  public static <T, E extends Throwable> T computeWithClassLoader(@Nullable ClassLoader classLoader,
-                                                                  @NotNull ThrowableComputable<T, E> computable) throws E {
-    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+  public static <T> T runWithClassLoader(final ClassLoader classLoader, final Computable<T> computable) {
+    final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
     try {
       Thread.currentThread().setContextClassLoader(classLoader);
       return computable.compute();
@@ -49,10 +46,28 @@ public class ClassLoaderUtil {
     }
   }
 
-  /** @deprecated Use {@link ClassLoaderUtil#computeWithClassLoader(ClassLoader, ThrowableComputable)} instead. */
-  @Deprecated
-  public static <T> T runWithClassLoader(ClassLoader classLoader, Computable<T> computable) {
-    return computeWithClassLoader(classLoader, () -> computable.compute());
+  public static <E extends Throwable> void runWithClassLoader(final ClassLoader classLoader, final ThrowableRunnable<E> runnable)
+    throws E {
+    final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      Thread.currentThread().setContextClassLoader(classLoader);
+      runnable.run();
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    }
+  }
+
+  public static <T, E extends Throwable> T runWithClassLoader(final ClassLoader classLoader, final ThrowableComputable<T, E> computable)
+    throws E {
+    final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      Thread.currentThread().setContextClassLoader(classLoader);
+      return computable.compute();
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    }
   }
 
   @Nullable

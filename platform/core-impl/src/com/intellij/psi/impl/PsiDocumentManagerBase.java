@@ -38,7 +38,10 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -107,11 +110,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  // todo remove when plugins come to their senses and stopped using it
+  // todo remove when Database Navigator plugin doesn't need that anymore
   // todo to be removed in idea 17
   public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
-    DeprecatedMethodException.report("Unsupported method");
+    LOG.warn("Unsupported method", new Throwable());
   }
 
   public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
@@ -740,8 +742,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     assert document instanceof DocumentImpl : document;
     UncommittedInfo info = myUncommittedInfos.get(document);
     if (info != null) {
-      //noinspection unchecked
-      return (List<DocumentEvent>)info.myEvents.clone();
+      return new ArrayList<>(info.myEvents);
     }
     return Collections.emptyList();
 
@@ -1057,7 +1058,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private static class UncommittedInfo {
     private final FrozenDocument myFrozen;
-    private final ArrayList<DocumentEvent> myEvents = new ArrayList<>();
+    private final List<DocumentEvent> myEvents = new ArrayList<>();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = ContainerUtil.newConcurrentMap();
 
     private UncommittedInfo(@NotNull DocumentImpl original) {

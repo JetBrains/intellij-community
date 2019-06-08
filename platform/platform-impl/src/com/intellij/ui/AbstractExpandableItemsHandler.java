@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.border.CustomLineBorder;
@@ -285,7 +285,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (focus == owner.getOwner()) {
       focus = null; // do not check intersection with parent
     }
-    boolean focused = SystemInfo.isWindows || isFocused(owner);
+    boolean focused = SystemInfoRt.isWindows || isFocused(owner);
     for (Window other : owner.getOwnedWindows()) {
       if (!focused) {
         focused = other.isFocused();

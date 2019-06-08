@@ -160,14 +160,10 @@ public class PsiLiteralExpressionImpl
 
   private String getTextBlockText() {
     String rawText = getText();
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
-    int start = 3;
-    while (true) {
-      char c = rawText.charAt(start++);
-      if (c == '\n') break;
-      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
+    if (!(rawText.length() > 6 && rawText.charAt(3) == '\n' && rawText.endsWith("\"\"\""))) {
+      return null;  // malformed or incomplete
     }
-    String innerText = rawText.substring(start, rawText.length() - 3);
+    String innerText = rawText.substring(4, rawText.length() - 3);
     String[] lines = StringUtil.splitByLinesDontTrim(innerText);
 
     int prefix = Integer.MAX_VALUE;
@@ -224,7 +220,8 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isValidHost() {
-    return ElementType.TEXT_LITERALS.contains(getLiteralElementType());
+    IElementType type = getLiteralElementType();
+    return type == JavaTokenType.CHARACTER_LITERAL || ElementType.STRING_LITERALS.contains(type);
   }
 
   @Override

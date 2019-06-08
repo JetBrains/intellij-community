@@ -65,7 +65,7 @@ public class EditorConfigNavigationActionsFactory {
   @NotNull
   private static String getActionName(@NotNull VirtualFile file, boolean withFolder) {
     final String fileName = EditorConfigPresentationUtil.getFileName(file, withFolder);
-    return !withFolder ? EditorConfigBundle.message("action.open.file") : fileName;
+    return !withFolder ? EditorConfigBundle.message("action.open.file", fileName) : fileName;
   }
 
   @NotNull
@@ -84,7 +84,7 @@ public class EditorConfigNavigationActionsFactory {
     private final AnAction[] myChildActions;
 
     private NavigationActionGroup(AnAction[] actions) {
-      super(EditorConfigBundle.message("action.open.file"), true);
+      super("Open EditorConfig File", true);
       myChildActions = actions;
     }
 

@@ -38,8 +38,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final CardLayout myButtonWrapperLayout = new CardLayout();
   private final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
   private JPanel myContentPanel;
-  private boolean myHideSkipButton;
-
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     this(stepsProvider, null);
@@ -50,7 +48,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
     getPeer().setAppIcons();
 
-    myHideSkipButton = stepsProvider.hideSkipButton();
     stepsProvider.initSteps(this, mySteps);
 
     if (appStarter != null) {
@@ -108,10 +105,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     gbc.fill = GridBagConstraints.BOTH;
     gbc.gridx = 0;
     gbc.gridy = 0;
-
-    if (!myHideSkipButton)
-      buttonPanel.add(mySkipButton, gbc);
-
+    buttonPanel.add(mySkipButton, gbc);
     gbc.gridx++;
     buttonPanel.add(myBackButton, gbc);
     gbc.gridx++;

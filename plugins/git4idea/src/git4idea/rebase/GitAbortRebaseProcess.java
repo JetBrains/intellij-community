@@ -191,7 +191,7 @@ class GitAbortRebaseProcess {
     }).execute();
   }
 
-  private static void refresh(@NotNull List<? extends GitRepository> toRefresh) {
+  private static void refresh(@NotNull List<GitRepository> toRefresh) {
     for (GitRepository repository : toRefresh) {
       repository.update();
     }

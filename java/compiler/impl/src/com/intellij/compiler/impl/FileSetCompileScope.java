@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -76,7 +75,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
         addRecursively(files, file, fileType);
       }
       else {
-        if (fileType == null || FileTypeRegistry.getInstance().isFileOfType(file, fileType)) {
+        if (fileType == null || fileType.equals(file.getFileType())) {
           files.add(file);
         }
       }
@@ -122,7 +121,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     VfsUtilCore.visitChildrenRecursively(fromDirectory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
       @Override
       public boolean visitFile(@NotNull VirtualFile child) {
-        if (!child.isDirectory() && (fileType == null || FileTypeRegistry.getInstance().isFileOfType(child, fileType))) {
+        if (!child.isDirectory() && (fileType == null || fileType.equals(child.getFileType()))) {
           container.add(child);
         }
         return true;

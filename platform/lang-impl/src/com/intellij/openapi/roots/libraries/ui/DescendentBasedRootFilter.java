@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.libraries.ui;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -32,7 +31,7 @@ public class DescendentBasedRootFilter extends RootFilter {
    */
   public static DescendentBasedRootFilter createFileTypeBasedFilter(OrderRootType rootType, boolean jarDirectory,
                                                                     @NotNull FileType fileType, String presentableRootTypeName) {
-    return new DescendentBasedRootFilter(rootType, jarDirectory, presentableRootTypeName, file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
+    return new DescendentBasedRootFilter(rootType, jarDirectory, presentableRootTypeName, file -> fileType.equals(file.getFileType()));
   }
 
   @Override
@@ -42,7 +41,7 @@ public class DescendentBasedRootFilter extends RootFilter {
         return false;
       }
       for (VirtualFile child : rootCandidate.getChildren()) {
-        if (!child.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(child, ArchiveFileType.INSTANCE)) {
+        if (!child.isDirectory() && child.getFileType().equals(ArchiveFileType.INSTANCE)) {
           final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(child);
           if (jarRoot != null && containsFileOfType(jarRoot, progressIndicator)) {
             return true;

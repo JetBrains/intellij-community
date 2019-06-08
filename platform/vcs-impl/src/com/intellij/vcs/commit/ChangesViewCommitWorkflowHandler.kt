@@ -9,14 +9,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListChange
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
-import gnu.trove.THashSet
 
 class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
@@ -28,9 +22,6 @@ class ChangesViewCommitWorkflowHandler(
 
   private fun getCommitState() = CommitState(getIncludedChanges(), getCommitMessage())
 
-  private val changeListManager = ChangeListManager.getInstance(project)
-  private var knownActiveChanges: Collection<Change> = emptyList()
-
   init {
     Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
     Disposer.register(ui, this)
@@ -41,7 +32,7 @@ class ChangesViewCommitWorkflowHandler(
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
 
-    vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
+    updateDefaultCommitAction()
   }
 
   private fun ensureCommitOptions(): CommitOptions {
@@ -77,37 +68,10 @@ class ChangesViewCommitWorkflowHandler(
     return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
   }
 
-  fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<VirtualFile>) {
-    if (!ui.isInclusionEmpty()) {
-      val possibleInclusion = changeLists.flatMapTo(THashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
-      possibleInclusion.addAll(unversionedFiles)
-
-      ui.retainInclusion(possibleInclusion)
-    }
-
-    if (knownActiveChanges.isNotEmpty()) {
-      val activeChanges = changeListManager.defaultChangeList.changes
-      knownActiveChanges = knownActiveChanges.intersect(activeChanges)
-    }
-  }
-
-  fun setCommitState(items: Collection<Any>, force: Boolean) {
-    val activeChanges = changeListManager.defaultChangeList.changes
-
-    if (force || ui.isInclusionEmpty()) {
+  fun setCommitState(items: Collection<*>, forceIfNotEmpty: Boolean) {
+    if (forceIfNotEmpty || ui.isInclusionEmpty()) {
       ui.clearInclusion()
       ui.includeIntoCommit(items)
-
-      // update known active changes on "Commit File"
-      if (force) knownActiveChanges = activeChanges
-    }
-    else {
-      // skip if we have inclusion from other change lists
-      if ((ui.getInclusion() - activeChanges).filterIsInstance<Change>().isNotEmpty()) return
-
-      // we have inclusion in active change list and/or unversioned files => include new active changes if any
-      val newChanges = activeChanges - knownActiveChanges
-      ui.includeIntoCommit(newChanges)
     }
   }
 
@@ -117,15 +81,6 @@ class ChangesViewCommitWorkflowHandler(
     ui.showCommitOptions(ensureCommitOptions(), isFromToolbar, dataContext)
 
   override fun inclusionChanged() {
-    val inclusion = ui.getInclusion()
-    val activeChanges = changeListManager.defaultChangeList.changes
-    val includedActiveChanges = activeChanges.filter { it in inclusion }
-
-    // if something new is included => consider it as "user defined state for all active changes"
-    if (!knownActiveChanges.containsAll(includedActiveChanges)) {
-      knownActiveChanges = activeChanges
-    }
-
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
     super.inclusionChanged()
   }

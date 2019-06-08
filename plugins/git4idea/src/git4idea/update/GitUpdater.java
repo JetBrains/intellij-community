@@ -166,7 +166,9 @@ public abstract class GitUpdater {
    * @return true if update is needed, false otherwise.
    */
   public boolean isUpdateNeeded(@NotNull GitBranchPair branchPair) throws VcsException {
-    String remoteBranch = branchPair.getTarget().getName();
+    GitBranch dest = branchPair.getDest();
+    assert dest != null;
+    String remoteBranch = dest.getName();
     if (!hasRemoteChanges(remoteBranch)) {
       LOG.info("isUpdateNeeded: No remote changes, update is not needed");
       return false;

@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
@@ -40,10 +40,10 @@ public abstract class IdeFrameDecorator implements Disposable {
 
   @Nullable
   public static IdeFrameDecorator decorate(@NotNull IdeFrameImpl frame) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode());
     }
-    else if (SystemInfo.isWindows) {
+    else if (SystemInfoRt.isWindows) {
       return new WinMainFrameDecorator(frame);
     }
     else if (SystemInfo.isXWindow) {
@@ -172,7 +172,7 @@ public abstract class IdeFrameDecorator implements Disposable {
   }
 
   public static boolean isCustomDecoration() {
-    return SystemInfo.isWindows && isCustomDecorationActive() && JdkEx.isCustomDecorationSupported();
+    return SystemInfoRt.isWindows && isCustomDecorationActive() && JdkEx.isCustomDecorationSupported();
   }
 
   public static boolean isCustomDecorationActive() {

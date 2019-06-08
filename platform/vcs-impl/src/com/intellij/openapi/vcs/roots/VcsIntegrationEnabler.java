@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -54,6 +55,7 @@ public abstract class VcsIntegrationEnabler {
       boolean succeeded = initOrNotifyError(projectDir);
       if (succeeded) {
         addVcsRoots(Collections.singleton(projectDir));
+        VcsImplUtil.proposeUpdateIgnoreFile(myProject, myVcs, projectDir);
       }
     }
     else {

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
-import com.intellij.ide.ui.ScreenAreaTracker;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,12 +18,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -55,7 +54,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsumer {
+public class AbstractPopup implements JBPopup {
   public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
@@ -271,10 +270,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
       }
 
       if (pinCallback != null) {
-        Icon icon = ToolWindowManagerEx.getInstanceEx(myProject != null ? myProject : ProjectUtil.guessCurrentProject((JComponent)myOwner))
-          .getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Open as Tool Window", icon),
+          new IconButton("Open as Tool Window",
+                         AllIcons.General.Pin_tab, AllIcons.General.Pin_tab,
+                         IconLoader.getDisabledIcon(AllIcons.General.Pin_tab)),
           e -> pinCallback.process(this)
         ), JBUI.Borders.empty(4));
       }
@@ -871,7 +870,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
     myRequestorComponent = owner;
 
     boolean forcedDialog = myMayBeParent
-      || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
+      || SystemInfoRt.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
@@ -1032,9 +1031,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
 
     myPopup.show();
     Rectangle bounds = window.getBounds();
-
-    ScreenAreaTracker.register(this);
-
     if (bounds.width > screen.width || bounds.height > screen.height) {
       ScreenUtil.fitToScreen(bounds);
       window.setBounds(bounds);
@@ -1182,7 +1178,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(false);
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
   }
@@ -1487,9 +1483,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
   public static class MyContentPanel extends JPanel implements DataProvider {
     @Nullable private DataProvider myDataProvider;
 
-    /**
-     * @deprecated use {@link MyContentPanel#MyContentPanel(PopupBorder)}
-     */
     @Deprecated
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
       this(border);
@@ -1973,17 +1966,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
   @Override
   public boolean canShow() {
     return myState == State.INIT;
-  }
-
-  @NotNull
-  @Override
-  public Rectangle getConsumedScreenBounds() {
-    return myWindow.getBounds();
-  }
-
-  @Override
-  public Component getUnderlyingAreaOwner() {
-    return myWindow.getOwner();
   }
 
   /**

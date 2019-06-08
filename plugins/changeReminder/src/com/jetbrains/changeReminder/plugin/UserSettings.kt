@@ -11,7 +11,7 @@ import java.util.*
 @State(name = "ChangeReminderUserStorage", storages = [Storage(file = "changeReminder.user.storage.xml")])
 class UserSettings : PersistentStateComponent<UserSettings.Companion.State> {
   companion object {
-    data class State(var isPluginEnabled: Boolean = true)
+    data class State(var isPluginEnabled: Boolean = false)
   }
 
   interface PluginStatusListener : EventListener {

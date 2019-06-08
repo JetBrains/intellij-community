@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -94,10 +95,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-@State(name = "FileEditorManager", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(
+  name = "FileEditorManager",
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
+)
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
@@ -131,9 +132,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = ourOpenFilesSetModificationCount::get;
   private final List<EditorComposite> myOpenedEditors = new CopyOnWriteArrayList<>();
 
-  public FileEditorManagerImpl(@NotNull Project project) {
+  public FileEditorManagerImpl(@NotNull Project project, DockManager dockManager) {
+/*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
-    myDockManager = DockManager.getInstance(myProject);
+    myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
@@ -1511,6 +1513,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                 LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
                 LOG.info("Project opening took " + time + " ms");
+                PluginManagerCore.dumpPluginClassStatistics();
               }
             }, myProject.getDisposed());
             // group 1

@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 
 public class VcsShelveUtils {
   private static final Logger LOG = Logger.getInstance(VcsShelveUtils.class.getName());
@@ -43,18 +42,15 @@ public class VcsShelveUtils {
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
 
-    shelvedChangeList.loadChangesIfNeeded(project);
-    final List<ShelvedChange> changes = Objects.requireNonNull(shelvedChangeList.getChanges());
-    List<ShelvedBinaryFile> binaryFiles = shelvedChangeList.getBinaryFiles();
-
     LOG.info("refreshing files ");
     // The changes are temporary copied to the first local change list, the next operation will restore them back
     // Refresh files that might be affected by unshelve
-    refreshFilesBeforeUnshelve(projectPath, changes, binaryFiles);
+    refreshFilesBeforeUnshelve(project, shelvedChangeList, projectPath);
 
     LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
+    final List<ShelvedChange> changes = shelvedChangeList.getChanges(project);
     // we pass null as target change list for Patch Applier to do NOTHING with change lists
-    shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
+    shelveManager.unshelveChangeList(shelvedChangeList, changes, shelvedChangeList.getBinaryFiles(), targetChangeList, false, true,
                                      true, leftConflictTitle, rightConflictTitle, true);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
   }
@@ -76,26 +72,24 @@ public class VcsShelveUtils {
     }
   }
 
-  private static void refreshFilesBeforeUnshelve(String projectPath,
-                                                 @NotNull List<? extends ShelvedChange> shelvedChanges,
-                                                 @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
+  private static void refreshFilesBeforeUnshelve(final Project project, ShelvedChangeList shelvedChangeList, String projectPath) {
     HashSet<File> filesToRefresh = new HashSet<>();
-    shelvedChanges.forEach(c -> {
+    for (ShelvedChange c : shelvedChangeList.getChanges(project)) {
       if (c.getBeforePath() != null) {
         filesToRefresh.add(new File(projectPath + c.getBeforePath()));
       }
       if (c.getAfterPath() != null) {
         filesToRefresh.add(new File(projectPath + c.getAfterPath()));
       }
-    });
-    binaryFiles.forEach(f -> {
+    }
+    for (ShelvedBinaryFile f : shelvedChangeList.getBinaryFiles()) {
       if (f.BEFORE_PATH != null) {
         filesToRefresh.add(new File(projectPath + f.BEFORE_PATH));
       }
       if (f.AFTER_PATH != null) {
         filesToRefresh.add(new File(projectPath + f.AFTER_PATH));
       }
-    });
+    }
     LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
   }
 

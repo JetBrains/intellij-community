@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -133,14 +133,14 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     if (execPath != null) return new File(execPath);
 
     String[] names = null;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if ("win32-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier.exe"};
       else if ("win32-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64.exe", "fsnotifier.exe"};
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       names = new String[]{"fsnotifier"};
     }
-    else if (SystemInfo.isLinux) {
+    else if (SystemInfoRt.isLinux) {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier"};
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier64"};
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) names = new String[]{"fsnotifier-arm"};
@@ -256,7 +256,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private static final Charset CHARSET =
-    SystemInfo.isWindows || SystemInfo.isMac ? StandardCharsets.UTF_8 : CharsetToolkit.getPlatformCharset();
+    SystemInfoRt.isWindows || SystemInfoRt.isMac ? StandardCharsets.UTF_8 : CharsetToolkit.getPlatformCharset();
 
   private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
     @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
@@ -381,7 +381,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     private void processChange(@NotNull String path, @NotNull WatcherOp op) {
-      if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
+      if (SystemInfoRt.isWindows && op == WatcherOp.RECDIRTY) {
         myNotificationSink.notifyReset(path);
         return;
       }
@@ -391,7 +391,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         return;
       }
 
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         path = Normalizer.normalize(path, Normalizer.Form.NFC);
       }
 

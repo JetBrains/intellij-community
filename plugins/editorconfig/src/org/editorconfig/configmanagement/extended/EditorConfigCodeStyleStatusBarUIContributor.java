@@ -40,10 +40,4 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
   public String getStatusText(@NotNull PsiFile psiFile) {
     return EditorConfigBundle.message("config.title");
   }
-
-  @Nullable
-  @Override
-  public AnAction createShowAllAction(@NotNull Project project) {
-    return EditorConfigActionUtil.createShowEditorConfigFilesAction();
-  }
 }

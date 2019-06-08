@@ -104,8 +104,7 @@ public class FileReferenceSet {
   }
 
   /**
-   * This should be removed.
-   * @deprecated use {@link FileReference#getContexts()} instead.
+   * This should be removed. Please use {@link FileReference#getContexts()} instead.
    */
   @Deprecated
   protected Collection<PsiFileSystemItem> getExtraContexts() {

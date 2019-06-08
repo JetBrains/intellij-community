@@ -18,7 +18,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -242,7 +241,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return FileTypeRegistry.getInstance().isFileOfType(file, ScratchFileType.INSTANCE);
+      return file.getFileType() == ScratchFileType.INSTANCE;
     }
 
     @NotNull

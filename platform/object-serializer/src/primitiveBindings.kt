@@ -166,7 +166,7 @@ private class DoubleBinding : Binding {
   }
 }
 
-internal class StringBinding : Binding {
+private class StringBinding : Binding {
   override fun deserialize(context: ReadContext): Any {
     return context.reader.stringValue()
   }

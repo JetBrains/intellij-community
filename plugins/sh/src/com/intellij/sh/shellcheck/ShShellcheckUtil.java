@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
@@ -50,7 +50,7 @@ class ShShellcheckUtil {
       directory.mkdirs();
     }
 
-    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
+    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
     if (shellcheck.exists()) {
       try {
         String path = ShSettings.getShellcheckPath();
@@ -154,7 +154,7 @@ class ShShellcheckUtil {
     FileUtil.delete(tmpDir);
     FileUtil.delete(archive);
 
-    File shellcheck = new File(directory, SHELLCHECK + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
+    File shellcheck = new File(directory, SHELLCHECK + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
     return shellcheck.exists() ? shellcheck.getCanonicalPath() : "";
   }
 
@@ -167,9 +167,9 @@ class ShShellcheckUtil {
 
   @Nullable
   private static String getPlatform() {
-    if (SystemInfo.isMac) return "mac";
-    if (SystemInfo.isLinux) return "linux";
-    if (SystemInfo.isWindows) return "windows";
+    if (SystemInfoRt.isMac) return "mac";
+    if (SystemInfoRt.isLinux) return "linux";
+    if (SystemInfoRt.isWindows) return "windows";
     return null;
   }
 

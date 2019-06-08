@@ -308,7 +308,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     }
 
     @Override
-    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
+    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
       if(myProject.isDisposed()) return;
 
       myChangesViewI.scheduleRefresh();

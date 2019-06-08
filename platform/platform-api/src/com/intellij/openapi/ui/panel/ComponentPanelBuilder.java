@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -252,7 +252,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
     component.setForeground(UIUtil.getContextHelpForeground());
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       Font font = component.getFont();
       float size = font.getSize2D();
       Font smallFont = font.deriveFont(size - 2.0f);

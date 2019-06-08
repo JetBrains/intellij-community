@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsPreservingExecutor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
@@ -22,7 +23,7 @@ public class GitPreservingExecutor implements VcsPreservingExecutor {
 
   @Override
   public boolean execute(@NotNull Project project,
-                         @NotNull Collection<? extends VirtualFile> rootsToSave,
+                         @NotNull Collection<VirtualFile> rootsToSave,
                          @NotNull String operationTitle,
                          @NotNull ProgressIndicator indicator,
                          @NotNull Runnable operation) {
@@ -36,7 +37,7 @@ public class GitPreservingExecutor implements VcsPreservingExecutor {
     return true;
   }
 
-  private static boolean areRootsUnderGitWithInitialCommit(@NotNull Collection<? extends VirtualFile> roots,
+  private static boolean areRootsUnderGitWithInitialCommit(@NotNull Collection<VirtualFile> roots,
                                                            @NotNull GitRepositoryManager gitRepositoryManager) {
     return ContainerUtil.all(roots, root -> {
       GitRepository gitRepository = gitRepositoryManager.getRepositoryForRoot(root);

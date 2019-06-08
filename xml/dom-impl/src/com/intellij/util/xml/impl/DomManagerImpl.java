@@ -4,7 +4,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
@@ -62,7 +61,7 @@ public final class DomManagerImpl extends DomManager {
 
   static final Key<WeakReference<DomFileElementImpl>> CACHED_FILE_ELEMENT = Key.create("CACHED_FILE_ELEMENT");
   static final Key<DomFileDescription> MOCK_DESCRIPTION = Key.create("MockDescription");
-  static final SemKey<DomFileElementImpl> FILE_ELEMENT_KEY = SemKey.createKey("FILE_ELEMENT_KEY");
+  static final SemKey<FileDescriptionCachedValueProvider> FILE_DESCRIPTION_KEY = SemKey.createKey("FILE_DESCRIPTION_KEY");
   static final SemKey<DomInvocationHandler> DOM_HANDLER_KEY = SemKey.createKey("DOM_HANDLER_KEY");
   static final SemKey<IndexedElementInvocationHandler> DOM_INDEXED_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_INDEXED_HANDLER_KEY");
   static final SemKey<CollectionElementInvocationHandler> DOM_COLLECTION_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_COLLECTION_HANDLER_KEY");
@@ -161,7 +160,7 @@ public final class DomManagerImpl extends DomManager {
           return false;
         }
 
-        if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML)) {
+        if (!file.isDirectory() && StdFileTypes.XML == file.getFileType()) {
           final PsiFile psiFile = getCachedPsiFile(file);
           if (psiFile != null && StdFileTypes.XML.equals(psiFile.getFileType()) && psiFile instanceof XmlFile) {
             final DomFileElementImpl domElement = getCachedFileElement((XmlFile)psiFile);
@@ -272,6 +271,14 @@ public final class DomManagerImpl extends DomManager {
     return fileElement;
   }
 
+
+  @SuppressWarnings({"unchecked"})
+  @NotNull
+  final <T extends DomElement> FileDescriptionCachedValueProvider<T> getOrCreateCachedValueProvider(@NotNull XmlFile xmlFile) {
+    //noinspection ConstantConditions
+    return mySemService.getSemElement(FILE_DESCRIPTION_KEY, xmlFile);
+  }
+
   public final Set<DomFileDescription> getFileDescriptions(String rootTagName) {
     return myApplicationComponent.getFileDescriptions(rootTagName);
   }
@@ -308,9 +315,11 @@ public final class DomManagerImpl extends DomManager {
   @Override
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
-    if (file == null || !(file.getFileType() instanceof DomSupportEnabled)) return null;
-    //noinspection unchecked
-    return mySemService.getSemElement(FILE_ELEMENT_KEY, file);
+    if (file == null) return null;
+    if (!(file.getFileType() instanceof DomSupportEnabled)) return null;
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null && virtualFile.isDirectory()) return null;
+    return this.<T>getOrCreateCachedValueProvider(file).getFileElement();
   }
 
   @Nullable

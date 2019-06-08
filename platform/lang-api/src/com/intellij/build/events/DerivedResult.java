@@ -14,6 +14,6 @@ public interface DerivedResult extends EventResult {
   FailureResult createFailureResult();
 
   @NotNull
-  EventResult createDefaultResult();
+  EventResult createSuccessResult();
 }
 

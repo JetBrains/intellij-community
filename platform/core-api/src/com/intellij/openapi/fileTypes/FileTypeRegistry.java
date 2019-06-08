@@ -32,17 +32,9 @@ public abstract class FileTypeRegistry {
 
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
-  /**
-   * Checks if the given file has the given file type. This is faster than getting the file type
-   * and comparing it, because for file types that are identified by virtual file, it will only
-   * check if the given file type matches, and will not run other detectors. However, this can
-   * lead to inconsistent results if two file types report the same file as matching (which should
-   * generally be avoided).
-   */
   public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
 
-  @Nullable
-  public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {
+  public LanguageFileType findFileTypeByLanguage(Language language) {
     return language.findMyFileType(getRegisteredFileTypes());
   }
 

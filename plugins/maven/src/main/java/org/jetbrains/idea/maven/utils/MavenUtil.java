@@ -49,7 +49,6 @@ import com.intellij.util.xml.NanoXmlUtil;
 import gnu.trove.THashSet;
 import icons.MavenIcons;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +107,7 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
-
+  public static final Namespace SETTINGS_NAMESPACE = Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0");
 
 
 
@@ -537,7 +536,7 @@ public class MavenUtil {
       }
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       File home = fromBrew();
       if (home != null) {
         return home;
@@ -547,7 +546,7 @@ public class MavenUtil {
         return home;
       }
     }
-    else if (SystemInfo.isLinux) {
+    else if (SystemInfoRt.isLinux) {
       File home = new File("/usr/share/maven");
       if (isValidMavenHome(home)) {
         return home;
@@ -744,8 +743,7 @@ public class MavenUtil {
   @Nullable
   public static String getRepositoryFromSettings(final File file) {
     try {
-      Element repository = getRepositoryElement(file);
-
+      Element repository = JDOMUtil.load(file).getChild("localRepository", SETTINGS_NAMESPACE);
       if (repository == null) {
         return null;
       }
@@ -758,19 +756,6 @@ public class MavenUtil {
     catch (Exception e) {
       return null;
     }
-  }
-
-  private static Element getRepositoryElement(File file) throws JDOMException, IOException {
-    Element fileElement = JDOMUtil.load(file);
-
-    Element repository = fileElement.getChild("localRepository");
-    if (repository == null) {
-      repository = fileElement.getChild("localRepository", Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"));
-    }
-    if (repository == null) {
-      repository = fileElement.getChild("localRepository", Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
-    }
-    return repository;
   }
 
   public static String expandProperties(String text, Properties props) {

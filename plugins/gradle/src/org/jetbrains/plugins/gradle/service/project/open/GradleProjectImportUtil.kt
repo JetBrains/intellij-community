@@ -29,7 +29,6 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.DistributionType.DEFAULT_WRAPPED
@@ -53,7 +52,6 @@ fun canImportProjectFrom(file: VirtualFile): Boolean {
   return file.children.any(::isGradleProjectFile)
 }
 
-@ApiStatus.Experimental
 fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
   if (!canImportProjectFrom(projectFile)) return null
   val projectDirectory = findExternalProjectDirectory(projectFile)
@@ -68,7 +66,6 @@ fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInN
   return project
 }
 
-@ApiStatus.Experimental
 fun importProject(projectDirectory: String, project: Project) {
   LOG.info("Import project at $projectDirectory")
   val projectSdk = ProjectRootManager.getInstance(project).projectSdk
@@ -112,7 +109,7 @@ private fun openPlatformProject(projectDirectory: VirtualFile, projectToClose: P
   }
 }
 
-private fun attachGradleProjectAndRefresh(settings: ExternalProjectSettings, project: Project) {
+fun attachGradleProjectAndRefresh(settings: ExternalProjectSettings, project: Project) {
   val externalProjectPath = settings.externalProjectPath
   ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
     DumbService.getInstance(project).runWhenSmart {
@@ -156,7 +153,9 @@ private fun GradleSettings.setupGradleSettings() {
   gradleVmOptions = GRADLE_VM_OPTIONS ?: gradleVmOptions
   isOfflineWork = GRADLE_OFFLINE?.toBoolean() ?: isOfflineWork
   serviceDirectoryPath = GRADLE_SERVICE_DIRECTORY ?: serviceDirectoryPath
-  storeProjectFilesExternally = true
+  if (ExternalSystemUtil.isNewProject(project) && linkedProjectsSettings.isEmpty()) {
+    storeProjectFilesExternally = true
+  }
 }
 
 private fun GradleProjectSettings.setupGradleProjectSettings(projectDirectory: String, project: Project, projectSdk: Sdk? = null) {
@@ -178,17 +177,13 @@ private fun suggestGradleHome(): String? {
 
 private fun suggestGradleJvm(project: Project, projectSdk: Sdk?, gradleVersion: GradleVersion): String? {
   with(SettingsContext(project, projectSdk, gradleVersion)) {
-    return getGradleJdkReference()
-           ?: getProjectJdkReference()
-           ?: getMostRecentJdkReference()
-           ?: getJavaHomeJdkReference()
-           ?: getAndAddExternalJdkReference()
+    return getGradleJdk() ?: getProjectJdk() ?: getMostRecentJdk() ?: getJavaHomeJdk()
   }
 }
 
 private class SettingsContext(val project: Project, val projectSdk: Sdk?, val gradleVersion: GradleVersion)
 
-private fun SettingsContext.getGradleJdkReference(): String? {
+private fun SettingsContext.getGradleJdk(): String? {
   val settings = ExternalSystemApiUtil.getSettings(project, SYSTEM_ID)
   return settings.getLinkedProjectsSettings()
     .filterIsInstance<GradleProjectSettings>()
@@ -196,7 +191,7 @@ private fun SettingsContext.getGradleJdkReference(): String? {
     .firstOrNull()
 }
 
-private fun SettingsContext.getJavaHomeJdkReference(): String? {
+private fun SettingsContext.getJavaHomeJdk(): String? {
   val javaHome = EnvironmentUtil.getEnvironmentMap()["JAVA_HOME"] ?: return null
   val jdk = GradleJdk.valueOf(javaHome) ?: return null
   if (!jdk.isSupported(gradleVersion)) return null
@@ -206,14 +201,14 @@ private fun SettingsContext.getJavaHomeJdkReference(): String? {
   return ExternalSystemJdkUtil.USE_JAVA_HOME
 }
 
-private fun SettingsContext.getProjectJdkReference(): String? {
+private fun SettingsContext.getProjectJdk(): String? {
   val projectSdk = projectSdk ?: ProjectRootManager.getInstance(project).projectSdk
   val projectJdk = projectSdk?.let(GradleJdk.Companion::valueOf) ?: return null
   if (!projectJdk.isSupported(gradleVersion)) return null
   return ExternalSystemJdkUtil.USE_PROJECT_JDK
 }
 
-private fun SettingsContext.getMostRecentJdkReference(): String? {
+private fun SettingsContext.getMostRecentJdk(): String? {
   val projectJdkTable = ProjectJdkTable.getInstance()
   val javaSdkType = ExternalSystemJdkUtil.getJavaSdkType()
   val jdk = projectJdkTable.getSdksOfType(javaSdkType)
@@ -221,13 +216,4 @@ private fun SettingsContext.getMostRecentJdkReference(): String? {
     .filter { it.isSupported(gradleVersion) }
     .maxBy { it.version }
   return jdk?.name
-}
-
-private fun SettingsContext.getAndAddExternalJdkReference(): String? {
-  val jdk = ExternalSystemJdkUtil.suggestJdkHomePaths()
-    .mapNotNull { GradleJdk.valueOf(it) }
-    .filter { it.isSupported(gradleVersion) }
-    .maxBy { it.version }
-  if (jdk == null) return null
-  return ExternalSystemJdkUtil.addJdk(jdk.homePath).name
 }

@@ -14,8 +14,6 @@ import java.nio.file.Paths
 interface StatisticsEventLogWriter {
   fun log(message: String)
 
-  fun getActiveFile(): File?
-
   fun getFiles(): List<File>
 
   fun cleanup()
@@ -58,11 +56,6 @@ class StatisticsEventLogFileWriter(private val recorderId: String, private val m
 
   override fun log(message: String) {
     eventLogger.info(message)
-  }
-
-  override fun getActiveFile(): File? {
-    val activeLog = fileAppender?.activeLogName ?: return null
-    return File(File(getEventLogDir().toUri()), activeLog)
   }
 
   override fun getFiles(): List<File> {

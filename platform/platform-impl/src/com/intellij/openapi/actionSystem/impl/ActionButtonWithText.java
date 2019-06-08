@@ -7,7 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
@@ -70,7 +70,7 @@ public class ActionButtonWithText extends ActionButton {
     InputMap windowInputMap = SwingUtilities.getUIInputMap(
       this, JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    int mask = SystemInfo.isMac ? InputEvent.ALT_MASK | InputEvent.CTRL_MASK : InputEvent.ALT_MASK;
+    int mask = SystemInfoRt.isMac ? InputEvent.ALT_MASK | InputEvent.CTRL_MASK : InputEvent.ALT_MASK;
     if (lastMnemonic != 0 && windowInputMap != null) {
       windowInputMap.remove(KeyStroke.getKeyStroke(lastMnemonic, mask, false));
     }

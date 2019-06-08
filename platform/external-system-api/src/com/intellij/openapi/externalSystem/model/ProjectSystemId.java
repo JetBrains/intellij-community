@@ -81,8 +81,7 @@ public final class ProjectSystemId implements Serializable {
     ProjectSystemId cached = ourExistingIds.get(id);
     if (cached != null) {
       return cached;
-    }
-    else {
+    } else {
       return this;
     }
   }

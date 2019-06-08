@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -61,14 +61,15 @@ class WinExeInstallerBuilder {
     customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
-  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String suffix, boolean jre32BitVersionSupported) {
+  void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String secondJreSuffix = null, boolean jre32BitVersionSupported) {
 
-    if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
+    if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
     }
 
     String communityHome = buildContext.paths.communityHome
+    def suffix = secondJreSuffix != null ? secondJreSuffix : buildContext.bundledJreManager.jreSuffix()
     String outFileName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + suffix
     buildContext.messages.progress("Building Windows installer $outFileName")
 
@@ -90,7 +91,7 @@ class WinExeInstallerBuilder {
 
     generateInstallationConfigFileForSilentMode()
 
-    if (SystemInfo.isLinux) {
+    if (SystemInfoRt.isLinux) {
       File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
       ideaNsiPath.text = BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], "")
     }
@@ -107,8 +108,8 @@ class WinExeInstallerBuilder {
 
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
 
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        String jre32Dir = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x32)
+      if (buildContext.bundledJreManager.is32bitArchSupported()) {
+        String jre32Dir = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
         if (jre32Dir != null) {
           generator.addDirectory(jre32Dir)
         }
@@ -127,7 +128,7 @@ class WinExeInstallerBuilder {
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.progress("Running NSIS tool to build .exe installer for Windows")
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                         " /DCOMMUNITY_DIR=\"$communityHome\"" +
                         " /DIPR=\"${customizer.associateIpr}\"" +
@@ -135,7 +136,7 @@ class WinExeInstallerBuilder {
                         " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
                         " \"${box}/nsiconf/idea.nsi\"")
     }
-    else if (SystemInfo.isLinux) {
+    else if (SystemInfoRt.isLinux) {
       String installerToolsDir = "$box/installer"
       String installScriptPath = "$installerToolsDir/install_nsis3.sh"
       buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)

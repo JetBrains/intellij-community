@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -327,7 +327,7 @@ public class RefreshWorker {
 
     myHelper.checkWritableAttributeChange(child, persistence.isWritable(child), childAttributes.isWritable());
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       myHelper.checkHiddenAttributeChange(child, child.is(VFileProperty.HIDDEN), childAttributes.isHidden());
     }
 

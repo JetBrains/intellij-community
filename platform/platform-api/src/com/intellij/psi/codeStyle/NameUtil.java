@@ -266,7 +266,7 @@ public final class NameUtil {
   }
 
   /**
-   * @deprecated use {@link com.intellij.util.text.Matcher}
+   * @deprecated use com.intellij.util.text.Matcher
    */
   @Deprecated
   public interface Matcher {

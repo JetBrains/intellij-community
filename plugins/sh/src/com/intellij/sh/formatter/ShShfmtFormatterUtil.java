@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShLanguage;
+import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,15 +52,16 @@ public class ShShfmtFormatterUtil {
       directory.mkdirs();
     }
 
+    ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
     if (formatter.exists()) {
       try {
         String formatterPath = formatter.getCanonicalPath();
-        if (ShSettings.getShfmtPath().equals(formatterPath)) {
+        if (shSettings.SHFMT_PATH.equals(formatterPath)) {
           LOG.debug("Shfmt formatter already downloaded");
         }
         else {
-          ShSettings.setShfmtPath(formatterPath);
+          shSettings.SHFMT_PATH = formatterPath;
         }
         ApplicationManager.getApplication().invokeLater(onSuccess);
         return;
@@ -85,7 +87,7 @@ public class ShShfmtFormatterUtil {
           File file = first != null ? first.first : null;
           if (file != null) {
             FileUtil.setExecutable(file);
-            ShSettings.setShfmtPath(file.getCanonicalPath());
+            shSettings.SHFMT_PATH = file.getCanonicalPath();
             ApplicationManager.getApplication().invokeLater(onSuccess);
             ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
           }

@@ -51,6 +51,7 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -67,7 +68,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 public final class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static List<Image> ourIcons = null;
-  private static volatile boolean ourMacDocIconSet = false;
+  private static boolean ourMacDocIconSet = false;
 
   @NotNull
   private static Logger getLogger() {
@@ -87,7 +88,7 @@ public final class AppUIUtil {
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
-      if (SystemInfo.isUnix) {
+      if (SystemInfoRt.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
         ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
@@ -95,7 +96,7 @@ public final class AppUIUtil {
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
       ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
       }
 
@@ -108,10 +109,10 @@ public final class AppUIUtil {
     }
 
     if (!images.isEmpty()) {
-      if (!SystemInfo.isMac) {
+      if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (!ourMacDocIconSet && PluginManagerCore.isRunningFromSources()) {
+      else if (PluginManagerCore.isRunningFromSources() && !ourMacDocIconSet) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
@@ -119,12 +120,12 @@ public final class AppUIUtil {
   }
 
   public static boolean isWindowIconAlreadyExternallySet() {
-    if (SystemInfo.isMac) {
-      return ourMacDocIconSet || !PluginManagerCore.isRunningFromSources();
+    if (SystemInfoRt.isMac) {
+      return !PluginManagerCore.isRunningFromSources();
     }
 
     // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    return SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
+    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
   @NotNull
@@ -194,7 +195,7 @@ public final class AppUIUtil {
   }
 
   public static void updateFrameClass(@NotNull Toolkit toolkit) {
-    if (SystemInfo.isWindows || SystemInfo.isMac) {
+    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
       return;
     }
 

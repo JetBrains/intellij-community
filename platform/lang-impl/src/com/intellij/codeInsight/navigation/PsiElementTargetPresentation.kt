@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.icons.AllIcons
+import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.TargetPresentation
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
@@ -27,10 +29,15 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Color
 import java.awt.Font
 import java.io.File
+import java.util.regex.Pattern
 import javax.swing.Icon
 
 @Experimental
 class PsiElementTargetPresentation(private val myElement: PsiElement) : TargetPresentation {
+
+  companion object {
+    private val CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
+  }
 
   private val myProject: Project = myElement.project
   private val myVirtualFile: VirtualFile? = myElement.containingFile?.virtualFile
@@ -45,13 +52,19 @@ class PsiElementTargetPresentation(private val myElement: PsiElement) : TargetPr
            ?: myElement.text
   }
 
+  private fun getColoredAttributes(): TextAttributes? {
+    val coloredPresentation = myItemPresentation as? ColoredItemPresentation
+    val textAttributesKey = coloredPresentation?.textAttributesKey ?: return null
+    return EditorColorsManager.getInstance().schemeForCurrentUITheme.getAttributes(textAttributesKey)
+  }
+
   private fun getFileBackgroundColor(): Color? {
     val virtualFile = myVirtualFile ?: return null
     return EditorTabPresentationUtil.getFileBackgroundColor(myProject, virtualFile)
   }
 
   override fun getPresentableAttributes(): TextAttributes? {
-    val textAttributes = myItemPresentation?.getColoredAttributes()
+    val textAttributes = getColoredAttributes()
     if (textAttributes?.backgroundColor != null) {
       return textAttributes
     }
@@ -64,7 +77,11 @@ class PsiElementTargetPresentation(private val myElement: PsiElement) : TargetPr
     return result
   }
 
-  override fun getLocationText(): String? = myItemPresentation?.getLocationText()
+  override fun getLocationText(): String? {
+    val locationString = myItemPresentation?.locationString ?: return null
+    val matcher = CONTAINER_PATTERN.matcher(locationString)
+    return if (matcher.matches()) matcher.group(2) else locationString
+  }
 
   override fun getLocationAttributes(): TextAttributes? {
     val virtualFile = myVirtualFile ?: return null

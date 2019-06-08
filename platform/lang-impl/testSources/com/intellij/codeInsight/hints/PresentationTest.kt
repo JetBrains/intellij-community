@@ -126,7 +126,7 @@ class HeavyPresentationTest : LightPlatformCodeInsightFixtureTestCase() {
   }
 
   fun testFoldedStateIsNotUpdatedAndStatelessComponentIsUpdated() {
-    val factory = getFactory()
+    val factory = PresentationFactory(myFixture.editor as EditorImpl)
 
     val old = unwrapFolding(factory.folding(factory.smallText("outerPlaceholder")) {
       unwrapFolding(factory.folding(factory.smallText("innerPlaceholder")) {factory.smallText("text")})
@@ -142,7 +142,8 @@ class HeavyPresentationTest : LightPlatformCodeInsightFixtureTestCase() {
   }
 
   fun testFoldedBiState() {
-    with(getFactory()) {
+    val factory = PresentationFactory(myFixture.editor as EditorImpl)
+    with(factory) {
       val inner = collapsible(
         prefix = smallText("("),
         collapsed = smallText("???"),
@@ -177,18 +178,6 @@ class HeavyPresentationTest : LightPlatformCodeInsightFixtureTestCase() {
       assertTrue(presentation.state.currentFirst)
     }
   }
-
-  fun testSeqSmallTextChangesWidth() {
-    with(getFactory()) {
-      val initial = roundWithBackground(seq(smallText(": "), smallText("number")))
-      val final = roundWithBackground(seq(smallText(": "), smallText("void")))
-      val requiresUpdate = final.updateState(initial)
-      assertTrue(requiresUpdate)
-      assertTrue(initial.width != final.width)
-    }
-  }
-
-  private fun getFactory() = PresentationFactory(myFixture.editor as EditorImpl)
 
   private fun unwrapFolding(presentation: InlayPresentation): InlayPresentation {
     presentation as ChangeOnClickPresentation

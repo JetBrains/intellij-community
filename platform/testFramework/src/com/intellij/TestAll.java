@@ -14,7 +14,6 @@ import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
@@ -132,13 +131,18 @@ public class TestAll implements Test {
       return roots;
     }
     else {
-      ClassLoader loader = TestAll.class.getClassLoader();
+      final ClassLoader loader = TestAll.class.getClassLoader();
       if (loader instanceof URLClassLoader) {
         return getClassRoots(((URLClassLoader)loader).getURLs());
       }
-      if (loader instanceof UrlClassLoader) {
-        List<URL> urls = ((UrlClassLoader)loader).getBaseUrls();
-        return getClassRoots(urls.toArray(new URL[0]));
+      final Class<? extends ClassLoader> loaderClass = loader.getClass();
+      if (loaderClass.getName().equals("com.intellij.util.lang.UrlClassLoader")) {
+        try {
+          //noinspection unchecked
+          List<URL> urls = (List<URL>)loaderClass.getDeclaredMethod("getBaseUrls").invoke(loader);
+          return getClassRoots(urls.toArray(new URL[0]));
+        }
+        catch (Throwable ignore) {}
       }
       return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), File::new);
     }
@@ -391,8 +395,7 @@ public class TestAll implements Test {
     TeamCityLogger.info(message);
   }
 
-  @SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNonTrivialConstructors",
-    "UnconstructableJUnitTestCase"})
+  @SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNonTrivialConstructors"})
   private static class ExplodedBomb extends TestCase {
     private final Bombed myBombed;
 

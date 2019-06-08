@@ -46,8 +46,7 @@ open class FileBasedStorage(file: Path,
   var file = file
     private set
 
-  protected open val configuration: FileBasedStorageConfiguration
-    get() = defaultFileBasedStorageConfiguration
+  protected open val configuration: FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
 
   init {
     val app = ApplicationManager.getApplication()

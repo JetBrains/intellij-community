@@ -372,9 +372,6 @@ public abstract class EditorComposite implements Disposable {
   @NotNull
   public abstract FileEditorWithProvider getSelectedWithProvider();
 
-  /**
-   * @deprecated use {@link #getSelectedWithProvider()}
-   */
   @Deprecated
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
     FileEditorWithProvider info = getSelectedWithProvider();

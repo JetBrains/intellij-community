@@ -5,7 +5,7 @@ import java.awt.*;
 
 /**
  * @author Eugene Belyaev
- * @deprecated use {@link com.intellij.ui.Gray} instead
+ * @deprecated use com.intellij.ui.Gray
  */
 @Deprecated
 public class SameColor extends Color {

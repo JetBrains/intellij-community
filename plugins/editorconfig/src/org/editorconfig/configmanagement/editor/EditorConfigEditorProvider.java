@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return FileTypeRegistry.getInstance().isFileOfType(file, EditorConfigFileType.INSTANCE);
+    return EditorConfigFileType.INSTANCE.equals(file.getFileType());
   }
 
   @NotNull

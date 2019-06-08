@@ -20,9 +20,6 @@ import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-/**
- * @deprecated unused
- */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
 public class LafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookAndFeelInfo> {

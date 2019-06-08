@@ -210,10 +210,6 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
   }
   
-  public void testWhileConditionIncomplete() {
-    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "boolean"));
-  }
-
   public void testField() {
     doTest(new MockIntroduceVariableHandler("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }

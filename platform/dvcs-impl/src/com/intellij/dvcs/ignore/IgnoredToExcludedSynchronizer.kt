@@ -90,9 +90,8 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
 
   override fun needDoForCurrentProject() = VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED
 
-  override fun updateFinished(ignoredPaths: Collection<FilePath>, isFullRescan: Boolean) {
+  override fun updateFinished(ignoredPaths: Collection<FilePath>) {
     ProgressManager.checkCanceled()
-    if (!isFullRescan) return
     if (!Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)) return
     if (!VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED && wasAskedBefore()) return
 

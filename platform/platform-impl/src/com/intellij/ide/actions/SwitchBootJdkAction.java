@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +65,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   private static final String[] LINUX_JVM_LOCATIONS = {"/usr/lib/jvm", "/usr/java"};
 
   private static final String CONFIG_FILE_EXT =
-    (!SystemInfo.isWindows ? ".jdk" : SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk");
+    (!SystemInfoRt.isWindows ? ".jdk" : SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk");
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -120,14 +120,14 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
 
     String[] locations = ArrayUtilRt.EMPTY_STRING_ARRAY;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       String dir = SystemInfo.is32Bit ? WINDOWS_X86_JVM_LOCATION : WINDOWS_X64_JVM_LOCATION;
       locations = Stream.of(File.listRoots()).map(root -> new File(root, dir).getPath()).toArray(String[]::new);
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       locations = MAC_OS_JVM_LOCATIONS;
     }
-    else if (SystemInfo.isLinux) {
+    else if (SystemInfoRt.isLinux) {
       locations = LINUX_JVM_LOCATIONS;
     }
     for (String location : locations) {

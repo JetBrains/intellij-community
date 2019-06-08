@@ -3,7 +3,6 @@ package com.jetbrains.rest.editor;
 
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +15,7 @@ public class RestSplitEditorProvider implements FileEditorProvider, DumbAware {
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return FileTypeRegistry.getInstance().isFileOfType(file, RestFileType.INSTANCE);
+    return file.getFileType() == RestFileType.INSTANCE;
   }
 
   @NotNull

@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.visible;
 
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -24,8 +23,7 @@ import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +32,7 @@ import java.util.Map;
 public class VisiblePack implements VcsLogDataPack {
   @NotNull
   public static final VisiblePack EMPTY =
-    new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterObject.EMPTY_COLLECTION) {
+    new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterCollectionImpl.EMPTY) {
       @Override
       public String toString() {
         return "EmptyVisiblePack";
@@ -124,10 +122,5 @@ public class VisiblePack implements VcsLogDataPack {
            myFilters +
            ", canRequestMore=" +
            myCanRequestMore + "}";
-  }
-
-  @NotNull
-  public FilePath getFilePath(int index) {
-    return VcsUtil.getFilePath(getRoot(index));
   }
 }

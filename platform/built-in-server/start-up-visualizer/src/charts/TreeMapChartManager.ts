@@ -1,15 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import {BaseChartManager} from "@/charts/ChartManager"
 import * as am4charts from "@amcharts/amcharts4/charts"
+import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
 import {IconData, Item} from "@/state/data"
 import {getShortName} from "@/charts/ActivityChartDescriptor"
-import {BaseTreeMapChartManager} from "@/charts/BaseTreeMapChartManager"
 
-export class TreeMapChartManager extends BaseTreeMapChartManager {
+export class TreeMapChartManager extends BaseChartManager<am4charts.TreeMap> {
   constructor(container: HTMLElement) {
-    super(container)
-
-    // enableZoom is not called because for this chart it doesn't work correctly and not really required
+    super(am4core.create(container, am4charts.TreeMap))
 
     const chart = this.chart
     chart.dataFields.value = "duration"
@@ -34,6 +33,12 @@ export class TreeMapChartManager extends BaseTreeMapChartManager {
 
     chart.seriesTemplates.create("2").bullets.push(level2Bullet)
     chart.seriesTemplates.create("3").bullets.push(level2Bullet)
+  }
+
+  private configureLabelBullet(bullet: am4charts.LabelBullet) {
+    bullet.locationY = 0.5
+    bullet.locationX = 0.5
+    bullet.label.fill = am4core.color("#fff")
   }
 
   render(data: DataManager): void {
@@ -108,6 +113,10 @@ export class TreeMapChartManager extends BaseTreeMapChartManager {
         duration,
       })
     }
+  }
+
+  dispose(): void {
+    this.chart.dispose()
   }
 }
 

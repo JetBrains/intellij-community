@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -23,7 +22,6 @@ abstract class ServiceView extends JPanel implements Disposable {
   protected final Project myProject;
   private final ServiceViewModel myModel;
   protected final ServiceViewUi myUi;
-  private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   ServiceView(LayoutManager layout, @NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewUi ui) {
     super(layout);
@@ -75,14 +73,11 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract List<Object> getChildrenSafe(@NotNull Object value);
 
-  void setAutoScrollToSourceHandler(@NotNull AutoScrollToSourceHandler autoScrollToSourceHandler) {
-    myAutoScrollToSourceHandler = autoScrollToSourceHandler;
-  }
-
-  protected void onViewSelected(@NotNull ServiceViewDescriptor descriptor) {
+  protected void onNodeSelected(@NotNull ServiceViewDescriptor descriptor) {
     descriptor.onNodeSelected();
-    if (myAutoScrollToSourceHandler != null) {
-      myAutoScrollToSourceHandler.onMouseClicked(this);
+    Navigatable navigatable = descriptor.getNavigatable();
+    if (navigatable != null && ServiceViewSourceScrollHelper.isAutoScrollToSourceEnabled(myProject) && navigatable.canNavigate()) {
+        navigatable.navigate(false);
     }
   }
 
@@ -118,9 +113,6 @@ abstract class ServiceView extends JPanel implements Disposable {
       }
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new ServiceViewDeleteProvider(serviceView);
-      }
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return new ServiceViewCopyProvider(serviceView);
       }
       List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
       ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);

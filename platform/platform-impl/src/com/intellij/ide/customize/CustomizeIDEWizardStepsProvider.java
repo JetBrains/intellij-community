@@ -8,8 +8,4 @@ import java.util.List;
  */
 public interface CustomizeIDEWizardStepsProvider {
   void initSteps(CustomizeIDEWizardDialog wizardDialog, List<AbstractCustomizeWizardStep> steps);
-
-  default boolean hideSkipButton() {
-    return false;
-  }
 }

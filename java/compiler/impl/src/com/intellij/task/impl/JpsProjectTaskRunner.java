@@ -21,7 +21,6 @@ import com.intellij.compiler.impl.CompileScopeUtil;
 import com.intellij.compiler.impl.CompositeScope;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -35,7 +34,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings;
 import com.intellij.task.*;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -77,13 +75,11 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     };
 
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      runModulesResourcesBuildTasks(project, context, compileNotification, taskMap);
-      runModulesBuildTasks(project, context, compileNotification, taskMap);
-      runFilesBuildTasks(project, compileNotification, taskMap);
-      runEmptyBuildTask(project, context, compileNotification, taskMap);
-      runArtifactsBuildTasks(project, context, compileNotification, taskMap);
-    }, ModalityState.defaultModalityState(), project.getDisposed());
+    runModulesResourcesBuildTasks(project, context, compileNotification, taskMap);
+    runModulesBuildTasks(project, context, compileNotification, taskMap);
+    runFilesBuildTasks(project, compileNotification, taskMap);
+    runEmptyBuildTask(project, context, compileNotification, taskMap);
+    runArtifactsBuildTasks(project, context, compileNotification, taskMap);
   }
 
   @Override

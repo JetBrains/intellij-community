@@ -1,76 +1,63 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilationDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkageDetails;
 
 /**
  * @author Vladislav.Soroka
  */
 public class CppBinaryImpl implements CppBinary {
-  private final String name;
-  private final String baseName;
-  private final String variantName;
-  private CompilationDetailsImpl compilationDetails;
-  private LinkageDetailsImpl linkageDetails;
-
-  @PropertyMapping({"name", "baseName", "variantName", "compilationDetails", "linkageDetails"})
-  protected CppBinaryImpl(String name,
-                          String baseName,
-                          String variantName,
-                          CompilationDetails compilationDetails,
-                          LinkageDetails linkageDetails) {
-    this(name, baseName, variantName);
-    this.compilationDetails = new CompilationDetailsImpl(compilationDetails);
-    this.linkageDetails = new LinkageDetailsImpl(linkageDetails);
-  }
+  private final String myName;
+  private final String myBaseName;
+  private final String myVariantName;
+  private CompilationDetailsImpl myCompilationDetails;
+  private LinkageDetailsImpl myLinkageDetails;
 
   public CppBinaryImpl(String name, String baseName, String variantName) {
-    this.name = name;
-    this.baseName = baseName;
-    this.variantName = variantName;
-    compilationDetails = new CompilationDetailsImpl();
-    linkageDetails = new LinkageDetailsImpl();
+    myName = name;
+    myBaseName = baseName;
+    myVariantName = variantName;
+    myCompilationDetails = new CompilationDetailsImpl();
+    myLinkageDetails = new LinkageDetailsImpl();
   }
 
   public CppBinaryImpl(CppBinary binary) {
-    this(binary.getName(), binary.getBaseName(), binary.getVariantName(),
-         binary.getCompilationDetails(), binary.getLinkageDetails());
+    this(binary.getName(), binary.getBaseName(), binary.getVariantName());
+    myCompilationDetails = new CompilationDetailsImpl(binary.getCompilationDetails());
+    myLinkageDetails = new LinkageDetailsImpl(binary.getLinkageDetails());
   }
 
   @Override
   public String getName() {
-    return name;
+    return myName;
   }
 
   @Override
   public String getVariantName() {
-    return variantName;
+    return myVariantName;
   }
 
   @Override
   public String getBaseName() {
-    return baseName;
+    return myBaseName;
   }
 
   @Override
   public CompilationDetailsImpl getCompilationDetails() {
-    return compilationDetails;
+    return myCompilationDetails;
   }
 
   public void setCompilationDetails(@NotNull CompilationDetailsImpl compilationDetails) {
-    this.compilationDetails = compilationDetails;
+    myCompilationDetails = compilationDetails;
   }
 
   @Override
   public LinkageDetailsImpl getLinkageDetails() {
-    return linkageDetails;
+    return myLinkageDetails;
   }
 
   public void setLinkageDetails(@NotNull LinkageDetailsImpl linkageDetails) {
-    this.linkageDetails = linkageDetails;
+    myLinkageDetails = linkageDetails;
   }
 }

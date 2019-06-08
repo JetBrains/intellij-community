@@ -29,7 +29,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.content.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,7 +59,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   private ContentManager myContentManager;
   private Content myAllServicesContent;
-  private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   public ServiceViewManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -77,14 +75,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   void createToolWindowContent(@NotNull ToolWindow toolWindow) {
     myContentManager = toolWindow.getContentManager();
     myContentManager.addContentManagerListener(new MyContentMangerListener());
-
-    ToolWindowEx toolWindowEx = (ToolWindowEx)toolWindow;
-    myAutoScrollToSourceHandler = ServiceViewSourceScrollHelper.installAutoScrollSupport(myProject, toolWindowEx);
-
     createAllServicesView();
     loadViews();
     registerActivateByContributorActions();
 
+    ToolWindowEx toolWindowEx = (ToolWindowEx)toolWindow;
+    ServiceViewSourceScrollHelper.installAutoScrollSupport(myProject, toolWindowEx);
     ServiceViewDragHelper.installDnDSupport(myProject, toolWindowEx.getDecorator(), myContentManager);
   }
 
@@ -104,8 +100,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       myServiceViews.clear();
       myContentManager = null;
     });
-
-    setScrollToSourceHandler(myAllServicesView);
 
     myContentManager.addContent(myAllServicesContent);
 
@@ -368,8 +362,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       if (item != null && !viewModel.getChildren(item).isEmpty()) {
         AppUIUtil.invokeOnEdt(() -> {
           int index = myContentManager.getIndexOfContent(content);
-          if (index < 0) return;
-
           myContentManager.removeContent(content, true);
           ServiceListModel listModel = new ServiceListModel(myModel, myModelFilter, ContainerUtil.newSmartList(item),
                                                             viewModel.getFilter().getParent());
@@ -421,8 +413,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     Disposer.register(content, serviceView);
     Disposer.register(content, serviceView.getModel());
 
-    setScrollToSourceHandler(serviceView);
-
     myContentManager.addContent(content, index);
     if (select) {
       myContentManager.setSelectedContent(content);
@@ -441,13 +431,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     ContentManager contentManager = myContentManager;
     Content content = contentManager == null ? null : contentManager.getSelectedContent();
     return content == null ? null : getServiceView(content);
-  }
-
-  private void setScrollToSourceHandler(ServiceView serviceView) {
-    AutoScrollToSourceHandler toSourceHandler = myAutoScrollToSourceHandler;
-    if (toSourceHandler != null) {
-      serviceView.setAutoScrollToSourceHandler(toSourceHandler);
-    }
   }
 
   @Nullable

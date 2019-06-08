@@ -2,7 +2,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +35,7 @@ public abstract class FileAttributesReadingTest {
     @BeforeClass
     public static void setUpClass() {
       FileSystemUtil.resetMediator();
-      assertEquals(SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix", FileSystemUtil.getMediatorName());
+      assertEquals(SystemInfoRt.isWindows ? "IdeaWin32" : "JnaUnix", FileSystemUtil.getMediatorName());
     }
   }
 
@@ -84,7 +84,7 @@ public abstract class FileAttributesReadingTest {
   public void readOnlyFile() throws IOException {
     File file = tempDir.newFile("file.txt");
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       Files.getFileAttributeView(file.toPath(), DosFileAttributeView.class).setReadOnly(true);
     }
     else {
@@ -106,7 +106,7 @@ public abstract class FileAttributesReadingTest {
     assertEquals(file.length(), attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertDirectoriesEqual(file);
     }
 
@@ -118,7 +118,7 @@ public abstract class FileAttributesReadingTest {
   public void readOnlyDirectory() throws IOException {
     File dir = tempDir.newFolder("dir");
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       Files.getFileAttributeView(dir.toPath(), DosFileAttributeView.class).setReadOnly(true);
     }
     else {
@@ -127,17 +127,17 @@ public abstract class FileAttributesReadingTest {
 
     FileAttributes attributes = getAttributes(dir);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-    assertEquals(SystemInfo.isWindows, attributes.isWritable());
+    assertEquals(SystemInfoRt.isWindows, attributes.isWritable());
   }
 
   @Test
   public void root() {
-    File file = new File(SystemInfo.isWindows ? "C:\\" : "/");
+    File file = new File(SystemInfoRt.isWindows ? "C:\\" : "/");
 
     FileAttributes attributes = getAttributes(file);
     assertEquals(file + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.type);
     assertFalse(file + " " + attributes, attributes.isSymLink());
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertDirectoriesEqual(file);
     }
   }
@@ -153,7 +153,7 @@ public abstract class FileAttributesReadingTest {
     assertFileAttributes(
       new File(tempDir.getRoot(), File.separator + ".." + File.separator + tempDir.getRoot().getName() + File.separator + file.getName()));
 
-    if (SystemInfo.isUnix) {
+    if (SystemInfoRt.isUnix) {
       File backSlashFile = tempDir.newFile("file\\txt");
       Files.write(backSlashFile.toPath(), myTestData);
       assertFileAttributes(backSlashFile);
@@ -162,7 +162,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void special() {
-    assumeTrue("unix-only", SystemInfo.isUnix);
+    assumeTrue("unix-only", SystemInfoRt.isUnix);
     File file = new File("/dev/null");
 
     FileAttributes attributes = getAttributes(file);
@@ -226,17 +226,17 @@ public abstract class FileAttributesReadingTest {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File dir = tempDir.newFolder("dir");
-    if (SystemInfo.isUnix) assertTrue(dir.setWritable(false, false));
+    if (SystemInfoRt.isUnix) assertTrue(dir.setWritable(false, false));
     assertTrue(dir.setLastModified(dir.lastModified() - 5000));
     File link = new File(tempDir.getRoot(), "link");
     Files.createSymbolicLink(link.toPath(), dir.toPath());
 
     FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-    assertEquals(SystemInfo.isUnix ? FileAttributes.SYM_LINK | FileAttributes.READ_ONLY : FileAttributes.SYM_LINK, attributes.flags);
+    assertEquals(SystemInfoRt.isUnix ? FileAttributes.SYM_LINK | FileAttributes.READ_ONLY : FileAttributes.SYM_LINK, attributes.flags);
     assertEquals(dir.length(), attributes.length);
     assertTimestampsEqual(dir.lastModified(), attributes.lastModified);
-    if (SystemInfo.isUnix) assertFalse(attributes.isWritable());
+    if (SystemInfoRt.isUnix) assertFalse(attributes.isWritable());
 
     String target = FileSystemUtil.resolveSymLink(link);
     assertEquals(dir.getPath(), target);
@@ -331,7 +331,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenDir() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue("windows-only", SystemInfoRt.isWindows);
     File dir = tempDir.newFolder("dir");
     FileAttributes attributes = getAttributes(dir);
     assertFalse(attributes.isHidden());
@@ -342,7 +342,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenFile() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue("windows-only", SystemInfoRt.isWindows);
     File file = tempDir.newFile("file");
     FileAttributes attributes = getAttributes(file);
     assertFalse(attributes.isHidden());
@@ -353,7 +353,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void notSoHiddenRoot() {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       File absRoot = new File("C:\\");
       FileAttributes absAttributes = getAttributes(absRoot);
       assertFalse(absAttributes.isHidden());
@@ -371,7 +371,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void wellHiddenFile() {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue("windows-only", SystemInfoRt.isWindows);
     File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue(file +" is not there", file.exists());
 
@@ -389,14 +389,14 @@ public abstract class FileAttributesReadingTest {
     Files.write(file.toPath(), myTestData);
 
     assertFileAttributes(file);
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       assertDirectoriesEqual(file.getParentFile());
     }
 
     String target = FileSystemUtil.resolveSymLink(file);
     assertEquals(file.getPath(), target);
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       StringBuilder path = new StringBuilder(tempDir.getRoot().getPath());
       int length = 250 - path.length();
       for (int i = 0; i < length / 10; i++) {
@@ -425,7 +425,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void subst() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    assumeTrue("windows-only", SystemInfoRt.isWindows);
 
     tempDir.newFile("file.txt");  // just to populate a directory
     File substRoot = IoTestUtil.createSubst(tempDir.getRoot().getPath());
@@ -453,7 +453,7 @@ public abstract class FileAttributesReadingTest {
     File link = new File(tempDir.getRoot(), "link");
     Files.createLink(link.toPath(), target.toPath());
 
-    FileAttributes attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
+    FileAttributes attributes = getAttributes(link, SystemInfoRt.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
@@ -463,12 +463,12 @@ public abstract class FileAttributesReadingTest {
     assertTrue(target.length() > 0);
     assertTimestampsEqual(attributes.lastModified - 5000, target.lastModified());
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       byte[] bytes = Files.readAllBytes(link.toPath());
       assertEquals(myTestData.length, bytes.length);
     }
 
-    attributes = getAttributes(link, SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
+    attributes = getAttributes(link, SystemInfoRt.isUnix || SystemInfo.isWinVistaOrNewer);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
@@ -498,7 +498,7 @@ public abstract class FileAttributesReadingTest {
     attributes = getAttributes(file);
     assertThat(attributes.lastModified).isBetween(t1, t2);
 
-    ProcessBuilder cmd = SystemInfo.isWindows
+    ProcessBuilder cmd = SystemInfoRt.isWindows
                          ? new ProcessBuilder("attrib", "-A", file.getPath()) : new ProcessBuilder("chmod", "644", file.getPath());
     assertEquals(0, cmd.start().waitFor());
     attributes = getAttributes(file);
@@ -507,7 +507,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void notOwned() {
-    assumeTrue("unix-only", SystemInfo.isUnix);
+    assumeTrue("unix-only", SystemInfoRt.isUnix);
     File userHome = new File(SystemProperties.getUserHome());
 
     FileAttributes homeAttributes = getAttributes(userHome);
@@ -521,7 +521,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void permissionsCloning() throws IOException {
-    assumeTrue("unix-only", SystemInfo.isUnix);
+    assumeTrue("unix-only", SystemInfoRt.isUnix);
 
     File donor = tempDir.newFile("donor");
     File recipient = tempDir.newFile("recipient");
@@ -564,7 +564,7 @@ public abstract class FileAttributesReadingTest {
     FileAttributes attributes = FileSystemUtil.getAttributes(file);
     assertNotNull(file.getPath() + ", exists=" + file.exists(), attributes);
 
-    if (SystemInfo.isWindows && checkList) {
+    if (SystemInfoRt.isWindows && checkList) {
       String parent = file.getParent();
       if (parent != null) {
         FileInfo[] children = IdeaWin32.getInstance().listChildren(parent);

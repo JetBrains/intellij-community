@@ -35,11 +35,18 @@ class MacDmgBuilder {
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
 
-  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
-                              MacHostProperties macHostProperties, String macZipPath,
-                              String jreArchivePath, boolean isJreModular, String suffix, boolean notarize) {
+  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath, String secondJreArchive = null) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, isJreModular, suffix, notarize)
+    def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJreArchive() : secondJreArchive
+    if (jreArchivePath != null) {
+      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, secondJreArchive)
+    }
+    else {
+      buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
+    }
+    if (buildContext.options.buildDmgWithoutBundledJre) {
+      dmgBuilder.doSignAndBuildDmg(macZipPath, null)
+    }
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
@@ -98,11 +105,17 @@ class MacDmgBuilder {
     return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
   }
 
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, boolean isJreModular, String suffix, boolean notarize) {
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, String secondJreArchive = null) {
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
-    String javaExePath = null
-    if (jreArchivePath != null) {
-      javaExePath = getJavaExePath(jreArchivePath, isJreModular)
+    def jreManager = buildContext.bundledJreManager
+    String suffix = "-no-jdk", javaExePath = null
+    if (secondJreArchive != null) {
+      suffix = ""
+      javaExePath = getJavaExePath(secondJreArchive, jreManager.isSecondBundledJreModular())
+    }
+    else if (jreArchivePath != null) {
+      suffix = jreManager.jreSuffix()
+      javaExePath = getJavaExePath(jreArchivePath, jreManager.isBundledJreModular())
     }
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)
@@ -121,7 +134,7 @@ class MacDmgBuilder {
     }
 
     ftpAction("mkdir") {}
-    signMacZip(sitFile, jreArchivePath, notarize)
+    signMacZip(sitFile, jreArchivePath)
     buildDmg(targetName)
   }
 
@@ -169,7 +182,7 @@ class MacDmgBuilder {
     }
   }
 
-  private def signMacZip(File targetFile, String jreArchivePath, boolean notarize) {
+  private def signMacZip(File targetFile, String jreArchivePath) {
     buildContext.messages.block("Signing ${targetFile.name}") {
       buildContext.messages.progress("Uploading ${targetFile} to ${macHostProperties.host}")
       ftpAction("put") {
@@ -194,7 +207,7 @@ class MacDmgBuilder {
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
                            (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
-                           notarize ? "yes" : "no"
+                           "no" // set to 'yes' to enable notarization
       ]
       if (jreArchivePath != null) {
         args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'

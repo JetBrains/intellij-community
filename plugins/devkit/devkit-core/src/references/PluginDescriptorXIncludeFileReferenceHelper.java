@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHelper {
   @Override
   public boolean isMine(Project project, @NotNull VirtualFile file) {
-    return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) &&
+    return file.getFileType() == XmlFileType.INSTANCE &&
            PsiUtil.isPluginProject(project) &&
            DescriptorUtil.isPluginXml(PsiManager.getInstance(project).findFile(file));
   }

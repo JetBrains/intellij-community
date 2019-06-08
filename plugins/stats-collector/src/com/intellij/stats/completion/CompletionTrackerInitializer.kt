@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.settings.CompletionStatsCollectorSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
-import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
@@ -24,13 +23,7 @@ import kotlin.random.Random
 class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable {
   companion object {
     var isEnabledInTests: Boolean = false
-    private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
-      "python" to 0.5,
-      "scala" to 0.3,
-      "php" to 0.3,
-      "kotlin" to 0.2,
-      "java" to 0.1
-    )
+    private const val LOGGED_SESSIONS_RATIO: Double = 0.1
   }
 
   private val actionListener = LookupActionsListener()
@@ -48,7 +41,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
       val shownTimesTracker = PositionTrackingListener(lookup)
       lookup.setPrefixChangeListener(shownTimesTracker)
 
-      if (sessionShouldBeLogged(experimentHelper, lookup.language())) {
+      if (sessionShouldBeLogged(experimentHelper)) {
         val tracker = actionsTracker(lookup, experimentHelper)
         actionListener.listener = tracker
         lookup.addLookupListener(tracker)
@@ -72,17 +65,12 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
 
   private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
 
-  private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus, language: Language?): Boolean {
+  private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus): Boolean {
     val application = ApplicationManager.getApplication()
     if (!application.isEAP) return false
     if (application.isUnitTestMode || experimentHelper.isExperimentOnCurrentIDE()) return true
 
-    var logSessionChance = 0.0
-    if (language != null) {
-      logSessionChance = LOGGED_SESSIONS_RATIO.getOrDefault(language.displayName.toLowerCase(), 1.0)
-    }
-
-    return Random.nextDouble() < logSessionChance
+    return Random.nextDouble() < LOGGED_SESSIONS_RATIO
   }
 
   private fun processUserFactors(lookup: LookupImpl) {

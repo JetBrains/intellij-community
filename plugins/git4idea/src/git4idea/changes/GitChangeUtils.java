@@ -3,6 +3,7 @@ package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -21,6 +22,7 @@ import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,13 +65,35 @@ public class GitChangeUtils {
                                   @Nullable GitRevisionNumber thisRevision,
                                   GitRevisionNumber parentRevision,
                                   String s,
-                                  Collection<? super Change> changes,
+                                  Collection<Change> changes,
                                   final Set<String> ignoreNames) throws VcsException {
     StringScanner sc = new StringScanner(s);
     parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes, ignoreNames);
     if (sc.hasMoreData()) {
       throw new IllegalStateException("Unknown file status: " + sc.line());
     }
+  }
+
+  public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
+    final Collection<String> result = new ArrayList<>();
+
+    while (s.hasMoreData()) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      if ("CADUMR".indexOf(s.peek()) == -1) {
+        // exit if there is no next character
+        break;
+      }
+      assert 'M' != s.peek() : "Moves are not yet handled";
+      String[] tokens = s.line().split("\t");
+      String path = tokens[tokens.length - 1];
+      path = rootPath + File.separator + GitUtil.unescapePath(path);
+      path = FileUtil.toSystemDependentName(path);
+      result.add(path);
+    }
+    return result;
   }
 
   /**
@@ -89,7 +113,7 @@ public class GitChangeUtils {
                                    @Nullable GitRevisionNumber thisRevision,
                                    @Nullable GitRevisionNumber parentRevision,
                                    StringScanner s,
-                                   Collection<? super Change> changes,
+                                   Collection<Change> changes,
                                    final Set<String> ignoreNames) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
@@ -187,6 +211,17 @@ public class GitChangeUtils {
   }
 
   /**
+   * Check if the exception means that HEAD is missing for the current repository.
+   *
+   * @param e the exception to examine
+   * @return true if the head is missing
+   */
+  public static boolean isHeadMissing(final VcsException e) {
+    @NonNls final String errorText = "fatal: bad revision 'HEAD'\n";
+    return e.getMessage().equals(errorText);
+  }
+
+  /**
    * Get list of changes. Because native Git non-linear revision tree structure is not
    * supported by the current IDEA interfaces some simplifications are made in the case
    * of the merge, so changes are reported as difference with the first revision
@@ -220,7 +255,7 @@ public class GitChangeUtils {
 
   @Nullable
   public static Hash commitExists(final Project project, final VirtualFile root, final String anyReference,
-                                  List<? extends VirtualFile> paths, final String... parameters) {
+                                  List<VirtualFile> paths, final String... parameters) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters(parameters);
@@ -324,7 +359,7 @@ public class GitChangeUtils {
                                            @NotNull VirtualFile root,
                                            @Nullable String oldRevision,
                                            @Nullable String newRevision,
-                                           @Nullable Collection<? extends FilePath> dirtyPaths) throws VcsException {
+                                           @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
     return getDiff(project, root, oldRevision, newRevision, dirtyPaths, true);
   }
 
@@ -333,7 +368,7 @@ public class GitChangeUtils {
                                             @NotNull VirtualFile root,
                                             @Nullable String oldRevision,
                                             @Nullable String newRevision,
-                                            @Nullable Collection<? extends FilePath> dirtyPaths,
+                                            @Nullable Collection<FilePath> dirtyPaths,
                                             boolean detectRenames) throws VcsException {
     LOG.assertTrue(oldRevision != null || newRevision != null, "Both old and new revisions can't be null");
     String range;
@@ -419,7 +454,7 @@ public class GitChangeUtils {
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                          @NotNull VirtualFile root,
                                                          @NotNull String oldRevision,
-                                                         @Nullable Collection<? extends FilePath> dirtyPaths,
+                                                         @Nullable Collection<FilePath> dirtyPaths,
                                                          boolean reverse) throws VcsException {
     return getDiffWithWorkingDir(project, root, oldRevision, dirtyPaths, reverse, true);
   }
@@ -428,7 +463,7 @@ public class GitChangeUtils {
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                           @NotNull VirtualFile root,
                                                           @NotNull String oldRevision,
-                                                          @Nullable Collection<? extends FilePath> dirtyPaths,
+                                                          @Nullable Collection<FilePath> dirtyPaths,
                                                           boolean reverse,
                                                           boolean detectRenames) throws VcsException {
     String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse, detectRenames);
@@ -453,7 +488,7 @@ public class GitChangeUtils {
   private static String getDiffOutput(@NotNull Project project,
                                       @NotNull VirtualFile root,
                                       @NotNull String diffRange,
-                                      @Nullable Collection<? extends FilePath> dirtyPaths,
+                                      @Nullable Collection<FilePath> dirtyPaths,
                                       boolean reverse,
                                       boolean detectRenames)
     throws VcsException {
@@ -465,12 +500,18 @@ public class GitChangeUtils {
     return Git.getInstance().runCommand(handler).getOutputOrThrow();
   }
 
+  @NotNull
+  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    return getDiffOutput(project, root, diffRange, dirtyPaths, false, true);
+  }
+
 
   @NotNull
   private static GitLineHandler getDiffHandler(@NotNull Project project,
                                                  @NotNull VirtualFile root,
                                                  @NotNull String diffRange,
-                                                 @Nullable Collection<? extends FilePath> dirtyPaths,
+                                                 @Nullable Collection<FilePath> dirtyPaths,
                                                  boolean reverse,
                                                  boolean detectRenames) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.DIFF);

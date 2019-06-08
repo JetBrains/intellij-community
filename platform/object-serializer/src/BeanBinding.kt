@@ -130,16 +130,11 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       }
     }
 
-    var instance = try {
+    val instance = try {
       constructorInfo.constructor.newInstance(*initArgs)
     }
     catch (e: Exception) {
       throw SerializationException("Cannot create instance (beanClass=${beanClass.name}, initArgs=${initArgs.joinToString()})", e)
-    }
-
-    // must be called after creation because child properties can reference object
-    context.configuration.beanConstructed?.let {
-      instance = it(instance)
     }
 
     if (id != -1) {
@@ -152,7 +147,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
         readIntoObject(instance, context.createSubContext(reader), checkId = false /* already registered */) { !names.contains(it) }
       }
     }
-    return instance
+    return context.configuration.beanConstructed?.let { it(instance) } ?: instance
   }
 
   override fun deserialize(context: ReadContext): Any {
@@ -164,11 +159,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       return context.objectIdReader.getObject(reader.intValue())
     }
     else if (ionType != IonType.STRUCT) {
-      var stringValue = ""
-      if (ionType == IonType.SYMBOL || ionType == IonType.STRING) {
-        stringValue = reader.stringValue()
-      }
-      throw SerializationException("Expected STRUCT, but got $ionType (stringValue=$stringValue)")
+      throw SerializationException("Expected STRUCT, but got $ionType")
     }
 
     if (propertyMapping.isInitialized()) {
@@ -224,7 +215,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
         throw e
       }
       catch (e: Exception) {
-        throw SerializationException("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e)
+        context.errors.fields.add(ReadError("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e))
       }
     }
   }

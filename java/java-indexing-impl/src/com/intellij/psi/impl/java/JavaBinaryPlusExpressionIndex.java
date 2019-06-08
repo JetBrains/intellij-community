@@ -95,12 +95,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
 
   @Override
   public int getVersion() {
-    return 2;
-  }
-
-  @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+    return 1;
   }
 
   @NotNull

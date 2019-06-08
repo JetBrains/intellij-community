@@ -2,10 +2,9 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileChooserDescriptorFactory {
@@ -31,7 +30,7 @@ public class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
-        return super.isFileSelectable(file) || SystemInfo.isMac && file.isDirectory() && "app".equals(file.getExtension());
+        return super.isFileSelectable(file) || SystemInfoRt.isMac && file.isDirectory() && "app".equals(file.getExtension());
       }
     };
   }
@@ -45,7 +44,7 @@ public class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
-    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
+    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(file -> file.getFileType() == fileType);
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(final String extension) {
@@ -66,7 +65,7 @@ public class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileOrFolderDescriptor(final FileType fileType) {
-    return new FileChooserDescriptor(true, true, false, false, false, false).withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
+    return new FileChooserDescriptor(true, true, false, false, false, false).withFileFilter(file -> file.getFileType() == fileType);
   }
 
   /**

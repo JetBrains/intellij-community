@@ -352,7 +352,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     final LinkLabel<Object> label = new LinkLabel<>(myOriginals.size() + processWord + " running...", null,
                                                     (aSource, aLinkData) -> triggerPopupShowing());
 
-    if (SystemInfo.isMac) label.setFont(JBUI.Fonts.label(11));
+    if (SystemInfoRt.isMac) label.setFont(JBUI.Fonts.label(11));
 
     label.setOpaque(false);
 

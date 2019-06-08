@@ -75,7 +75,7 @@ public class CommitCompareInfo {
 
   @NotNull
   public Collection<Repository> getRepositories() {
-    return myTotalDiff.keySet();
+    return myInfo.keySet();
   }
 
   public boolean isEmpty() {

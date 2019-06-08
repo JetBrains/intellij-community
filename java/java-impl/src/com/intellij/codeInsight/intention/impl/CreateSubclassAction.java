@@ -39,7 +39,6 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -88,7 +87,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       return false;
     }
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiClass);
-    if (virtualFile == null || FileTypeRegistry.getInstance().isFileOfType(virtualFile, ScratchFileType.INSTANCE)) {
+    if (virtualFile == null || virtualFile.getFileType() == ScratchFileType.INSTANCE) {
       return false;
     }
     if (!isSupportedLanguage(psiClass)) return false;

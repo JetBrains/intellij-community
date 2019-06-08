@@ -3,7 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -218,7 +218,7 @@ public class OnePixelDivider extends Divider {
     if (e.getID() == MouseEvent.MOUSE_CLICKED) {
       if (mySwitchOrientationEnabled
           && e.getClickCount() == 1
-          && SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown())) {
+          && SwingUtilities.isLeftMouseButton(e) && (SystemInfoRt.isMac ? e.isMetaDown() : e.isControlDown())) {
         mySplitter.setOrientation(!mySplitter.getOrientation());
       }
       if (myResizeEnabled && e.getClickCount() == 2) {

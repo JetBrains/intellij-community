@@ -113,9 +113,6 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
-  /**
-   * @deprecated use {@link #refilter(Object, boolean, boolean)}
-   */
   @NotNull
   @Deprecated
   public ActionCallback refilter() {

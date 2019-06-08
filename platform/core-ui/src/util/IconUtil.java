@@ -321,7 +321,7 @@ public class IconUtil {
 
   @NotNull
   private static String getToolbarDecoratorIconsFolder() {
-    return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
+    return "/toolbarDecorator/" + (SystemInfoRt.isMac ? "mac/" : "");
   }
 
   /**

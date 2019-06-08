@@ -72,7 +72,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       if (myConfigurable != null) {
         ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
-        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(myConfigurable);
+        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(getConfigurableEventId(myConfigurable), myConfigurable.getClass());
       }
     }
   };
@@ -247,7 +247,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         updateCurrent(configurable, false);
         postUpdateCurrent(configurable);
         if (configurable != null) {
-          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable);
+          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(getConfigurableEventId(configurable), configurable.getClass());
         }
       });
     return Promises.toPromise(callback);
@@ -318,12 +318,18 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (configurable != null) {
       try {
         configurable.apply();
-        FeatureUsageUiEventsKt.getUiEventLogger().logApplyConfigurable(configurable);
+        final String key = getConfigurableEventId(configurable);
+        FeatureUsageUiEventsKt.getUiEventLogger().logApplyConfigurable(key, configurable.getClass());
       }
       catch (ConfigurationException exception) {
         return exception;
       }
     }
     return null;
+  }
+
+  @NotNull
+  private static String getConfigurableEventId(@NotNull Configurable configurable) {
+    return "ide.settings." + ConvertUsagesUtil.escapeDescriptorName(StringUtil.notNullize(configurable.getDisplayName()));
   }
 }

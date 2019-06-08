@@ -41,8 +41,9 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
   public void setUp() throws Exception {
     super.setUp();
 
-    myOldDockContainers = DockManager.getInstance(getProject()).getContainers();
-    myManager = new FileEditorManagerImpl(getProject());
+    DockManager dockManager = DockManager.getInstance(getProject());
+    myOldDockContainers = dockManager.getContainers();
+    myManager = new FileEditorManagerImpl(getProject(), dockManager);
     myOldManager = ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
   }

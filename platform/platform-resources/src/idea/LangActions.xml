@@ -1170,9 +1170,6 @@
               text="Remove Configuration" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
       <separator/>
-      <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
-              text="Clear Content" icon="AllIcons.Actions.Cancel"/>
-      <separator/>
       <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"
               text="Group Configurations" icon="AllIcons.Actions.GroupByPackage"/>
       <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
@@ -1312,11 +1309,20 @@
     </action>
     <group id="TodoMainGroup" text="TODO">
       <add-to-group group-id="Other.KeymapGroup"/>
-      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" popup="true">
+      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup">
         <separator text="Group By"/>
-        <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
-        <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>
-        <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules">
+          <keyboard-shortcut first-keystroke="control M" keymap="$default"/>
+        </action>
+
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages">
+          <keyboard-shortcut first-keystroke="control P" keymap="$default"/>
+        </action>
+
+        <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage">
+          <keyboard-shortcut first-keystroke="control F" keymap="$default"/>
+        </action>
+
       </group>
     </group>
   </actions>

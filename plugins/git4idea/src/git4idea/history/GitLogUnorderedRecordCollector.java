@@ -36,7 +36,7 @@ class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitCompressed
 
   protected GitLogUnorderedRecordCollector(@NotNull Project project,
                                            @NotNull VirtualFile root,
-                                           @NotNull Consumer<? super List<GitCompressedRecord>> consumer) {
+                                           @NotNull Consumer<List<GitCompressedRecord>> consumer) {
     super(project, root, consumer);
   }
 

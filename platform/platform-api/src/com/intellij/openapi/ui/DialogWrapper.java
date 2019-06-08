@@ -266,7 +266,7 @@ public abstract class DialogWrapper {
    * when we do not have a project to figure out which window
    * is more suitable as an owner for the dialog.
    * <p/>
-   * @deprecated use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
+   * Instead, use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
    */
   @Deprecated
   protected DialogWrapper(boolean canBeParent, boolean applicationModalIfPossible) {
@@ -484,7 +484,7 @@ public abstract class DialogWrapper {
       addHelpToLeftSide = true;
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
       if (macOtherAction != null) {
         leftSideActions.add(macOtherAction);
@@ -762,7 +762,7 @@ public abstract class DialogWrapper {
       button = new JButton(action);
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
@@ -827,7 +827,7 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
 
-  /** @deprecated Dialogs with no parents are discouraged. */
+  /** Dialogs with no parents are discouraged. */
   @Deprecated
   @NotNull
   protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
@@ -1174,7 +1174,7 @@ public abstract class DialogWrapper {
     if (myPreferredFocusedComponentFromPanel != null) {
       return myPreferredFocusedComponentFromPanel;
     }
-    return SystemInfo.isMac ? myPreferredFocusedComponent : null;
+    return SystemInfoRt.isMac ? myPreferredFocusedComponent : null;
   }
 
   /**
@@ -1339,7 +1339,7 @@ public abstract class DialogWrapper {
     if (!postponeValidation()) {
       startTrackingValidation();
     }
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);
@@ -1421,27 +1421,18 @@ public abstract class DialogWrapper {
     }
   }
 
-  /**
-   * @deprecated unused
-   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
-  /**
-   * @deprecated unused
-   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
-  /**
-   * @deprecated unused
-   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isSouthStrictedToPreferredSize() {
@@ -1762,7 +1753,7 @@ public abstract class DialogWrapper {
     return 0L;
   }
 
-  /** @deprecated unused (equals {@link #isOK}) */
+  /** deprecated pointless (equals {@link #isOK} */
   @Deprecated
   public boolean isToDispatchTypeAhead() {
     return isOK();

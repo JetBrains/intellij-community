@@ -40,7 +40,7 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   @NotNull
   private String externalSystemId;
   @NotNull
-  private Map<String, DefaultExternalPlugin> plugins;
+  private Map<String, ExternalPlugin> plugins;
   @NotNull
   private List<File> artifacts;
   @NotNull
@@ -50,7 +50,7 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     childProjects = new HashMap<String, DefaultExternalProject>();
     tasks = new HashMap<String, DefaultExternalTask>();
     sourceSets = new HashMap<String, DefaultExternalSourceSet>();
-    plugins = new HashMap<String, DefaultExternalPlugin>();
+    plugins = new HashMap<String, ExternalPlugin>();
     artifacts = new ArrayList<File>();
     artifactsByConfiguration = new HashMap<String, Set<File>>();
   }
@@ -85,9 +85,9 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
       sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
     }
 
-    Map<String, ? extends ExternalPlugin> externalProjectPlugins = externalProject.getPlugins();
-    plugins = new HashMap<String, DefaultExternalPlugin>(externalProjectPlugins.size());
-    for (Map.Entry<String, ? extends ExternalPlugin> entry : externalProjectPlugins.entrySet()) {
+    Map<String, ExternalPlugin> externalProjectPlugins = externalProject.getPlugins();
+    plugins = new HashMap<String, ExternalPlugin>(externalProjectPlugins.size());
+    for (Map.Entry<String, ExternalPlugin> entry : externalProjectPlugins.entrySet()) {
       this.plugins.put(entry.getKey(), new DefaultExternalPlugin(entry.getValue()));
     }
 
@@ -217,11 +217,11 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
 
   @NotNull
   @Override
-  public Map<String, ? extends ExternalPlugin> getPlugins() {
+  public Map<String, ExternalPlugin> getPlugins() {
     return plugins;
   }
 
-  public void setPlugins(@NotNull Map<String, DefaultExternalPlugin> plugins) {
+  public void setPlugins(@NotNull Map<String, ExternalPlugin> plugins) {
     this.plugins = plugins;
   }
 

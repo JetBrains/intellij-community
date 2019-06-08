@@ -35,9 +35,6 @@ public interface BuildTargetIndex extends BuildTargetRegistry {
    */
   boolean isDummy(@NotNull BuildTarget<?> target);
 
-  /**
-   * @deprecated use {@link #getDependencies(BuildTarget, CompileContext)}
-   */
   @Deprecated
   Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 

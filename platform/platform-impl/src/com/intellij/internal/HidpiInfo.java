@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -41,7 +41,7 @@ public final class HidpiInfo extends AnAction implements DumbAware {
     ", overridden by the debug property." :
      ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
      (ENABLED ? "pt" : "px") + "</code><br>" +
-     "<code>" + (SystemInfo.isMac ? "Preferences " : "Settings ") +
+     "<code>" + (SystemInfoRt.isMac ? "Preferences " : "Settings ") +
      "> Appearance & Behaviour > Appearance > Override default font") +
            "</code></span></html>";
   }
@@ -61,7 +61,7 @@ public final class HidpiInfo extends AnAction implements DumbAware {
     String[][] data = new String[][] {
       {JRE_HIDPI_MODE_TEXT, ENABLED ? "enabled" : "disabled",
         "<html><span style='font-size:x-small'>When enabled, the IDE UI scaling honors per-monitor DPI.<br>" +
-            (SystemInfo.isWindows ?
+            (SystemInfoRt.isWindows ?
         "To " + (ENABLED ? "disable" : "enable") + " set the JVM option <code>-Dsun.java2d.uiScale.enabled=" +
         (ENABLED ? "false" : "true") + "</code> and restart.</span></html>" :
          "The mode can not be changed on this platform.")},

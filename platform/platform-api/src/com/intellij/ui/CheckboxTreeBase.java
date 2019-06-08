@@ -248,9 +248,9 @@ public class CheckboxTreeBase extends Tree {
     }
 
     /**
-     * @deprecated use {@link CheckboxTreeCellRendererBase#customizeRenderer(JTree, Object, boolean, boolean, boolean, int, boolean)}
+     * @see CheckboxTreeCellRendererBase#customizeRenderer(JTree, Object, boolean, boolean, boolean, int, boolean)
+     * @deprecated
      */
-    @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
     @Deprecated
     public void customizeCellRenderer(JTree tree,
                                       Object value,
@@ -271,8 +271,9 @@ public class CheckboxTreeBase extends Tree {
   }
 
   /**
-   * @see State
-   * @deprecated Don't use this enum. Left for API compatibility.
+   * Don't use this enum. Left for API compatibility.
+   * @see ThreeStateCheckBox.State
+   * @deprecated
    */
   @Deprecated
   public enum NodeState {

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -212,7 +212,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void addHandlerPathToEnvironment(@NotNull String env,
                                            @NotNull GitXmlRpcHandlerService service) throws IOException {
-    boolean useBatchFile = SystemInfo.isWindows &&
+    boolean useBatchFile = SystemInfoRt.isWindows &&
                            (!Registry.is("git.use.shell.script.on.windows") ||
                             !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion));
     File scriptFile = service.getScriptPath(useBatchFile);

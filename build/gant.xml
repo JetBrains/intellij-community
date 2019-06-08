@@ -19,12 +19,7 @@
       </and>
     </condition>
     <condition property="gradle.args" value="${intellij.gradle.jdk.build.parameters}" else="--stacktrace">
-      <and>
-        <isset property="intellij.gradle.jdk.build.parameters"/>
-        <not>
-          <equals arg1="${intellij.gradle.jdk.build.parameters}" arg2=""/>
-        </not>
-      </and>
+      <isset property="intellij.gradle.jdk.build.parameters"/>
     </condition>
     <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>

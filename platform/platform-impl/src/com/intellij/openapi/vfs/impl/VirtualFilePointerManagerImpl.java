@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -217,59 +218,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
-  // convert \ -> /
-  // convert // -> /
-  // convert /. ->
-  // trim trailing / (except when it's !/)
   @NotNull
   private static String cleanupPath(@NotNull String path) {
-    path = FileUtilRt.toSystemIndependentName(path);
+    path = FileUtil.normalize(path);
     path = trimTrailingSeparators(path);
-    for (int i = 0; i < path.length(); ) {
-      int slash = path.indexOf('/', i);
-      if (slash == -1 || slash == path.length()-1) {
-        break;
-      }
-      char next = path.charAt(slash + 1);
-
-      if (next == '/' || next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
-        return cleanupTail(path, slash);
-      }
-      i = slash + 1;
-    }
     return path;
-  }
-
-  // removes // and //. when we know for sure they are there, starting from 'slashIndex'
-  @NotNull
-  private static String cleanupTail(@NotNull String path, int slashIndex) {
-    StringBuilder s = new StringBuilder(path.length());
-    s.append(path, 0, slashIndex);
-    for (int i = slashIndex; i < path.length(); i++) {
-      char c = path.charAt(i);
-      if (c == '/') {
-        char nextc = i == path.length()-1 ? 0 : path.charAt(i + 1);
-        if (nextc == '.') {
-          if (i == path.length() - 2) {
-            // ends with "/.", ignore
-            break;
-          }
-          char nextNextc = path.charAt(i + 2);
-          if (nextNextc == '/') {
-            i+=2;
-            // "/./" in the middle, ignore "/."
-            continue;
-          }
-          // "/.xxx", append
-        }
-        else if (nextc == '/') {
-          // ignore duplicate /
-          continue;
-        }
-      }
-      s.append(c);
-    }
-    return s.toString();
   }
 
   @NotNull

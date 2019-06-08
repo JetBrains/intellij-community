@@ -97,9 +97,6 @@ public class TipUIUtil {
     return tip;
   }
 
-  /**
-   * @deprecated use {@link #openTipInBrowser(TipAndTrickBean, Browser)}
-   */
   @Deprecated
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
     browser.setText(getTipText(tip, browser));
@@ -315,9 +312,6 @@ public class TipUIUtil {
     return null;
   }
 
-  /**
-   * @deprecated use {@link #createBrowser()}
-   */
   @Deprecated
   @NotNull
   public static JEditorPane createTipBrowser() {

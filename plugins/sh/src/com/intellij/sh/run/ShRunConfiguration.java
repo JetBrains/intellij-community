@@ -9,19 +9,16 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.sh.psi.ShFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 
@@ -31,10 +28,10 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
   private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
 
-  private String myScriptPath = "";
-  private String myScriptOptions = "";
-  private String myInterpreterPath = "";
-  private String myInterpreterOptions = "";
+  private String myScriptPath;
+  private String myScriptOptions;
+  private String myInterpreterPath;
+  private String myInterpreterOptions;
 
   ShRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull String name) {
     super(project, factory, name);
@@ -46,21 +43,10 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     return new ShRunConfigurationEditor(getProject());
   }
 
-  @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
-    if (!FileUtil.exists(myScriptPath)) {
-      throw new RuntimeConfigurationError("Shell script not found");
-    }
-    if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
-      if (!FileUtil.exists(myInterpreterPath)) throw new RuntimeConfigurationError("Interpreter not found");
-      if (!new File(myInterpreterPath).canExecute()) throw new RuntimeConfigurationError("Interpreter should be executable file");
-    }
-  }
-
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-    return new ShRunConfigurationProfileState(getProject(), this);
+    return new ShRunProfileState(getProject(), this);
   }
 
   @Override
@@ -105,7 +91,9 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
 
   @Nullable
   private static String getPathByElement(@NotNull PsiElement element) {
-    VirtualFile vfile = PsiUtilCore.getVirtualFile(element);
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    VirtualFile vfile = file.getVirtualFile();
     if (vfile == null) return null;
     return vfile.getPath();
   }

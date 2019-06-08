@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.ReportValue
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.OptionTag
 
@@ -25,7 +24,6 @@ class UpdateOptions : BaseState() {
   @get:OptionTag("CHECK_NEEDED")
   var isCheckNeeded by property(true)
 
-  @get:ReportValue
   @get:OptionTag("LAST_TIME_CHECKED")
   var lastTimeChecked by property(0L)
 

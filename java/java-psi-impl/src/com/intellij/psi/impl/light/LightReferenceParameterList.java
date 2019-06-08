@@ -20,8 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.StringJoiner;
-
 /**
  *  @author dsl
  */
@@ -37,10 +35,16 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
 
   private String calculateText() {
     if (myTypeElements.length == 0) return "";
-    final StringJoiner buffer = new StringJoiner(",", "<", ">");
-    for (PsiTypeElement type : myTypeElements) {
-      buffer.add(type.getText());
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("<");
+    for (int i = 0; i < myTypeElements.length; i++) {
+      PsiTypeElement type = myTypeElements[i];
+      if (i > 0) {
+        buffer.append(",");
+      }
+      buffer.append(type.getText());
     }
+    buffer.append(">");
     return buffer.toString();
   }
 

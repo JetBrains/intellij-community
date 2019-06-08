@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
 import icons.SvnIcons;
@@ -669,7 +668,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void setFilterBase(final List<? extends CommittedChangeList> changeLists) {
+    public void setFilterBase(final List<CommittedChangeList> changeLists) {
     }
 
     @Override
@@ -687,14 +686,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Override
-    public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
+    public void appendFilterBase(List<CommittedChangeList> changeLists) {
     }
 
     @Override
     @NotNull
-    public List<CommittedChangeList> filterChangeLists(final List<? extends CommittedChangeList> changeLists) {
+    public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
       if ((!myFilterAlien.mySelected) && (!myFilterNotMerged.mySelected) && (!myFilterMerged.mySelected)) {
-        return ContainerUtil.immutableList(changeLists);
+        return changeLists;
       }
 
       final List<CommittedChangeList> result = new ArrayList<>();

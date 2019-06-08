@@ -333,7 +333,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES;
 
-  /** @deprecated use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_NAMES_IN_JAVADOC} instead */
+  /** @deprecated use com.intellij.psi.codeStyle.JavaCodeStyleSettings.CLASS_NAMES_IN_JAVADOC */
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
 

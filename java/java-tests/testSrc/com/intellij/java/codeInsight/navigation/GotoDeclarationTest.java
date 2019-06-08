@@ -64,7 +64,7 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertEquals("java.lang", JavaDirectoryService.getInstance().getPackage(element).getQualifiedName());
   }
 
-  private void doTestMultipleConstructors() {
+  public void testMultipleConstructors() {
     String name = getTestName(false);
     configureByFile("/codeInsight/gotoDeclaration/" + name + ".java");
     final int offset = getEditor().getCaretModel().getOffset();
@@ -77,14 +77,6 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertNotNull(reference);
     final Collection<PsiElement> candidates = elementUtilBase.getTargetCandidates(reference);
     assertEquals(candidates.toString(), 2, candidates.size());
-  }
-
-  public void testMultipleConstructors() {
-    doTestMultipleConstructors();
-  }
-
-  public void testMultipleGenericConstructorsOnIncompleteCall() {
-    doTestMultipleConstructors();
   }
 
   public void testMultipleConstructorsButArrayCreation() {

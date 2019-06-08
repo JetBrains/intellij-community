@@ -28,9 +28,11 @@ import java.rmi.RemoteException;
 public class TransferListenerAdapter implements TransferListener {
 
   protected final MavenServerProgressIndicator myIndicator;
+  private final MavenServerProgressIndicator.ResolveType myResolveType;
 
-  public TransferListenerAdapter(MavenServerProgressIndicator indicator) {
+  public TransferListenerAdapter(MavenServerProgressIndicator indicator, MavenServerProgressIndicator.ResolveType resolveType) {
     myIndicator = indicator;
+    myResolveType = resolveType;
   }
 
   private void checkCanceled() {
@@ -53,6 +55,7 @@ public class TransferListenerAdapter implements TransferListener {
     checkCanceled();
     try {
       String eventString = formatResourceName(event);
+      myIndicator.startedDownload(myResolveType, eventString);
       myIndicator.setIndeterminate(true);
       myIndicator.setText2(eventString);
     }
@@ -101,6 +104,7 @@ public class TransferListenerAdapter implements TransferListener {
     try {
       myIndicator.setText2("Checksum failed: " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
+      myIndicator.failedDownload(myResolveType, formatResourceName(event), "Checksum failed", null);
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
@@ -112,6 +116,8 @@ public class TransferListenerAdapter implements TransferListener {
     try {
       myIndicator.setText2("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
+      myIndicator.completedDownload(myResolveType, formatResourceName(event));
+
       Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
     }
     catch (RemoteException e) {
@@ -124,6 +130,7 @@ public class TransferListenerAdapter implements TransferListener {
     try {
       if (myIndicator.isCanceled()) {
         myIndicator.setText2("Canceling...");
+        myIndicator.failedDownload(myResolveType, formatResourceName(event), "Cancelled", null);
         return; // Don't throw exception here.
       }
     }
@@ -134,6 +141,13 @@ public class TransferListenerAdapter implements TransferListener {
     try {
       myIndicator.setText2("Failed to download " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
+      if (event.getException() != null) {
+        String stackTrace = ExceptionUtilRt.getThrowableText(event.getException(), "com.intellij.");
+        myIndicator.failedDownload(myResolveType, formatResourceName(event), event.getException().getMessage(), stackTrace);
+      }
+      else {
+        myIndicator.failedDownload(myResolveType, formatResourceName(event), "Failed to download", null);
+      }
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);

@@ -92,7 +92,7 @@ public abstract class JobLauncher {
   /**
    * NEVER EVER submit runnable which can lock itself for indeterminate amount of time.
    * This will cause deadlock since this thread pool is an easily exhaustible resource.
-   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
+   * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(java.lang.Runnable)} instead
    */
   @NotNull
   public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);

@@ -1093,8 +1093,6 @@
         <action id="ShowSouthPanelTestDialogAction" internal="true"
                 class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction" text="Test DialogWrapper South Panel"/>
         <action id="TestTextFieldAction" internal="true" class="com.intellij.ui.components.TestTextFieldAction" text="Test Text Fields"/>
-        <action id="ShowNotificationIconsDialogAction" internal="true" class="com.intellij.notification.impl.ShowNotificationIconsDialogAction"
-                text="Test Notification Icons"/>
         <separator/>
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction"
                 text="UI DSL Debug Mode"/>

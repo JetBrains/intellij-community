@@ -78,11 +78,17 @@ public abstract class DebuggerUtils {
       }
       if (value instanceof ObjectReference) {
         if (value instanceof ArrayReference) {
-          final StringJoiner joiner = new StringJoiner(",", "[", "]");
-          for (final Value element : ((ArrayReference)value).getValues()) {
-            joiner.add(getValueAsString(evaluationContext, element));
+          final StringBuilder builder = new StringBuilder();
+          builder.append("[");
+          for (Iterator<Value> iterator = ((ArrayReference)value).getValues().iterator(); iterator.hasNext();) {
+            final Value element = iterator.next();
+            builder.append(getValueAsString(evaluationContext, element));
+            if (iterator.hasNext()) {
+              builder.append(",");
+            }
           }
-          return joiner.toString();
+          builder.append("]");
+          return builder.toString();
         }
 
         final ObjectReference objRef = (ObjectReference)value;

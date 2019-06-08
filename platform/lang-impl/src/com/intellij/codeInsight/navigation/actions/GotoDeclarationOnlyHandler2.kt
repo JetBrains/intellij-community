@@ -41,7 +41,7 @@ object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
       notifyCantGoAnywhere(project, editor, file)
     }
     else {
-      chooseTarget(editor, CodeInsightBundle.message("declaration.navigation.title"), targets.toList()) {
+      chooseTarget(project, editor, CodeInsightBundle.message("declaration.navigation.title"), targets.toList()) {
         gotoTarget(project, editor, file, it)
       }
     }

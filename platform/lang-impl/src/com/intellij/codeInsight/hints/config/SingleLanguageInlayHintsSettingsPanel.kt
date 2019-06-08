@@ -85,13 +85,7 @@ internal class SingleLanguageInlayHintsSettingsPanel(
 
   fun createEditor(): EditorTextField {
     val fileType: FileType = language.associatedFileType ?: FileTypes.PLAIN_TEXT
-    val editorField = object: EditorTextField(null, project, fileType, false, false) {
-      override fun addNotify() {
-        super.addNotify()
-        // only here the editor is finally initialized
-        updateHints()
-      }
-    }
+    val editorField = EditorTextField(null, project, fileType, false, false)
     editorField.addSettingsProvider { editor ->
       editor.setVerticalScrollbarVisible(true)
       editor.setHorizontalScrollbarVisible(true)
@@ -114,7 +108,6 @@ internal class SingleLanguageInlayHintsSettingsPanel(
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, false)
       }
     }
-    editorField.setCaretPosition(0)
     return editorField
   }
 

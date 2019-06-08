@@ -90,7 +90,6 @@ public final class ProjectDescriptor {
    * @deprecated not used after file traversal rewrite to NIO
    */
   @NotNull
-  @Deprecated
   public FSCache getFSCache() {
     return FSCache.NO_CACHE;
   }
@@ -98,7 +97,6 @@ public final class ProjectDescriptor {
   /**
    * @deprecated not used after file traversal rewrite to NIO
    */
-  @Deprecated
   public void setFSCache(FSCache cache) {
     myFSCache = cache == null? FSCache.NO_CACHE : cache;
   }

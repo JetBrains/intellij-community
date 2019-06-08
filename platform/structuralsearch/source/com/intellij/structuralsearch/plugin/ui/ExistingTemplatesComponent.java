@@ -56,10 +56,10 @@ public class ExistingTemplatesComponent {
     patternTreeModel = new DefaultTreeModel(root);
     patternTree = createTree(patternTreeModel);
 
-    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
     for (Configuration info : StructuralSearchUtil.getPredefinedTemplates()) {
       getOrCreateCategoryNode(root, SPLIT.split(info.getCategory())).add(new DefaultMutableTreeNode(info, false));
     }
+    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
 
     TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
@@ -113,6 +113,8 @@ public class ExistingTemplatesComponent {
       .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
       .createPanel();
+
+    new JPanel(new BorderLayout());
 
     configureSelectTemplateAction(patternTree);
 
@@ -271,8 +273,9 @@ public class ExistingTemplatesComponent {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Configuration value, int index, boolean selected, boolean focus) {
-      final Color background = UIUtil.getListBackground(selected, focus);
-      final Color foreground = UIUtil.getListForeground(selected, focus);
+      final Color background = (selected && !focus) ?
+                               UIUtil.getListUnfocusedSelectionBackground() : UIUtil.getListBackground(selected);
+      final Color foreground = UIUtil.getListForeground(selected);
       setPaintFocusBorder(false);
       SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.getName(), SimpleTextAttributes.STYLE_PLAIN,
                                  foreground, background, this);
@@ -305,8 +308,8 @@ public class ExistingTemplatesComponent {
       final Object userObject = treeNode.getUserObject();
       if (userObject == null) return;
 
-      final Color background = UIUtil.getTreeBackground(selected, hasFocus);
-      final Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+      Color background = UIUtil.getTreeBackground(selected, hasFocus);
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;

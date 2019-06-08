@@ -5,6 +5,7 @@ package com.intellij.psi.impl.cache.impl.todo;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Comparing;
@@ -23,7 +24,9 @@ import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -103,12 +106,12 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
   @Override
   public int getVersion() {
     int version = 11;
-    Map<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>> extensions = TodoIndexers.INSTANCE.getAllRegisteredExtensions();
-    List<FileType> types = new ArrayList<>(extensions.keySet());
-    types.sort((o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
+    FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
+    Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
 
     for (FileType fileType : types) {
-      DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = extensions.get(fileType);
+      DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = TodoIndexers.INSTANCE.forFileType(fileType);
+      if (indexer == null) continue;
 
       int versionFromIndexer = indexer instanceof VersionedTodoIndexer ? (((VersionedTodoIndexer)indexer).getVersion()) : 0xFF;
       version = version * 31 + (versionFromIndexer ^ indexer.getClass().getName().hashCode());

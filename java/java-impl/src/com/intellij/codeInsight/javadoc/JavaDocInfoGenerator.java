@@ -1031,15 +1031,15 @@ public class JavaDocInfoGenerator {
   }
 
   private static void generateMethodSignature(StringBuilder buffer, PsiMethod method, SignaturePlace place) {
-    boolean isTooltip = place == SignaturePlace.ToolTip;
+    boolean useShortNames = place == SignaturePlace.ToolTip;
     boolean generateLink = place == SignaturePlace.Javadoc;
 
     generateAnnotations(buffer, method, place, true);
 
-    int modLength = isTooltip ? 0 : generateModifiers(buffer, method, true);
+    int modLength = generateModifiers(buffer, method, true);
     int indent = modLength == 0 ? 0 : modLength + 1;
 
-    String typeParamsString = generateTypeParameters(method, isTooltip);
+    String typeParamsString = generateTypeParameters(method, useShortNames);
     indent += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(typeParamsString, true)).length();
     if (!typeParamsString.isEmpty()) {
       buffer.append(typeParamsString);
@@ -1048,7 +1048,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (method.getReturnType() != null) {
-      indent += generateType(buffer, method.getReturnType(), method, generateLink, isTooltip);
+      indent += generateType(buffer, method.getReturnType(), method, generateLink, useShortNames);
       buffer.append(NBSP);
       indent++;
     }
@@ -1063,9 +1063,9 @@ public class JavaDocInfoGenerator {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parm = parameters[i];
       generateAnnotations(buffer, parm, place, false);
-      generateType(buffer, parm.getType(), method, generateLink, isTooltip);
-      if (parm.getName() != null && !isTooltip) {
-        buffer.append(NBSP);
+      generateType(buffer, parm.getType(), method, generateLink, useShortNames);
+      buffer.append(NBSP);
+      if (parm.getName() != null) {
         buffer.append(parm.getName());
       }
       if (i < parameters.length - 1) {
@@ -1081,7 +1081,7 @@ public class JavaDocInfoGenerator {
       buffer.append(THROWS_KEYWORD);
       buffer.append(NBSP);
       for (int i = 0; i < refs.length; i++) {
-        generateLink(buffer, isTooltip ? refs[i].getPresentableText() : refs[i].getCanonicalText(), null, method, false);
+        generateLink(buffer, useShortNames ? refs[i].getPresentableText() : refs[i].getCanonicalText(), null, method, false);
         if (i < refs.length - 1) {
           buffer.append(',').append(NBSP);
         }

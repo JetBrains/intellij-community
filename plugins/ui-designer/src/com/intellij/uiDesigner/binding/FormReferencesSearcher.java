@@ -6,7 +6,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
@@ -208,7 +207,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
       CommonProcessors.CollectProcessor<VirtualFile> collector = new CommonProcessors.CollectProcessor<VirtualFile>() {
         @Override
         protected boolean accept(VirtualFile virtualFile) {
-          return FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.GUI_DESIGNER_FORM);
+          return virtualFile.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
         }
       };
       ((PsiSearchHelperImpl)PsiSearchHelper.getInstance(project)).processFilesWithText(

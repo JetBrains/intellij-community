@@ -225,11 +225,12 @@ private fun writeParallelActivities(activities: Map<String, MutableList<Activity
     val list = activities.getValue(name)
     StartUpPerformanceReporter.sortItems(list)
 
+    var measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
     if (name.endsWith("Component")) {
+      measureThreshold = 0
       computeOwnTime(list, ownDurations)
     }
 
-    val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
     writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap, measureThreshold = measureThreshold)
   }
 }
@@ -252,12 +253,14 @@ private fun writeActivities(activities: List<ActivityImpl>,
   }
 
   writer.array(fieldName) {
-    var skippedDuration = 0L
     for (item in activities) {
       val computedOwnDuration = ownDurations.get(item)
       val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
       if (duration <= measureThreshold) {
-        skippedDuration += duration
+        continue
+      }
+
+      if (measureThreshold == 0L && TimeUnit.NANOSECONDS.toMillis(duration) == 0L) {
         continue
       }
 
@@ -268,15 +271,6 @@ private fun writeActivities(activities: List<ActivityImpl>,
       writer.obj {
         writer.writeStringField("name", item.name)
         writeItemTimeInfo(item, duration, offset, writer)
-      }
-    }
-
-    if (skippedDuration > 0) {
-      writer.obj {
-        writer.writeStringField("name", "Other")
-        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(skippedDuration))
-        writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(activities.last().start - offset))
-        writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(activities.last().end - offset))
       }
     }
   }

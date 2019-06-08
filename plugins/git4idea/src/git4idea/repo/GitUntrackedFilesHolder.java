@@ -144,7 +144,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   /**
    * Adds several files to the list of untracked.
    */
-  public void add(@NotNull Collection<? extends VirtualFile> files) {
+  public void add(@NotNull Collection<VirtualFile> files) {
     synchronized (myDefinitelyUntrackedFiles) {
       myDefinitelyUntrackedFiles.addAll(files);
     }
@@ -306,6 +306,9 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
-    return myRoot.equals(myVcsManager.getVcsRootFor(file));
+    // this check should be quick
+    // we shouldn't create a full instance repository here because it may lead to SOE while many unversioned files will be processed
+    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(myVcsManager.getVcsRootFor(file));
+    return repository != null && repository.getRoot().equals(myRoot);
   }
 }

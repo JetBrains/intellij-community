@@ -699,8 +699,6 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="usageViewFactory"
                     interface="com.intellij.usages.impl.UsageViewFactory"/>
-    <extensionPoint name="usageViewElementsListener"
-                    interface="com.intellij.usages.impl.UsageViewElementsListener"/>
 
     <extensionPoint name="treeStructureProvider"
                     interface="com.intellij.ide.projectView.TreeStructureProvider"

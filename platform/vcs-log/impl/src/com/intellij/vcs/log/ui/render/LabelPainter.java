@@ -20,7 +20,6 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +41,7 @@ public class LabelPainter {
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
   public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
+  private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
   private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
@@ -279,10 +279,17 @@ public class LabelPainter {
         refName = TWO_DOTS + refName.substring(separatorIndex);
       }
 
+      if (fontMetrics.stringWidth(refName) <= availableWidth) return refName;
+
       if (availableWidth > 0) {
-        return VcsLogUiUtil.shortenTextToFit(refName, fontMetrics, availableWidth, MAX_LENGTH, StringUtil.ELLIPSIS);
+        for (int i = refName.length(); i > MAX_LENGTH; i--) {
+          String result = StringUtil.shortenTextWithEllipsis(refName, i, 0, THREE_DOTS);
+          if (fontMetrics.stringWidth(result) <= availableWidth) {
+            return result;
+          }
+        }
       }
-      return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, StringUtil.ELLIPSIS);
+      return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, THREE_DOTS);
     }
     return refName;
   }

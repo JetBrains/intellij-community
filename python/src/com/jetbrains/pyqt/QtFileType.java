@@ -9,7 +9,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -82,7 +82,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   }
 
   public static String findQtTool(Module module, String toolName) {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (module == null) {
         return null;
       }

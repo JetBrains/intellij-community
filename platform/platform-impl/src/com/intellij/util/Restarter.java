@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
@@ -42,7 +42,7 @@ public class Restarter {
     protected Boolean compute() {
       String problem;
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         if (!JnaLoader.isLoaded()) {
           problem = "JNA not loaded";
         }
@@ -50,7 +50,7 @@ public class Restarter {
           problem = checkRestarter("restarter.exe");
         }
       }
-      else if (SystemInfo.isMac) {
+      else if (SystemInfoRt.isMac) {
         if (getMacOsAppDir() == null) {
           problem = "not a bundle: " + PathManager.getHomePath();
         }
@@ -58,7 +58,7 @@ public class Restarter {
           problem = checkRestarter("restarter");
         }
       }
-      else if (SystemInfo.isUnix) {
+      else if (SystemInfoRt.isUnix) {
         if (UnixProcessManager.getCurrentProcessId() <= 0) {
           problem = "cannot detect process ID";
         }
@@ -73,7 +73,7 @@ public class Restarter {
         }
       }
       else {
-        problem = "unknown platform: " + SystemInfo.OS_NAME;
+        problem = "unknown platform: " + SystemInfoRt.OS_NAME;
       }
 
       if (problem == null) {
@@ -93,13 +93,13 @@ public class Restarter {
 
   public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       restartOnWindows(elevate, beforeRestart);
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       restartOnMac(beforeRestart);
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfoRt.isUnix) {
       restartOnUnix(beforeRestart);
     }
     else {
@@ -120,9 +120,14 @@ public class Restarter {
     // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
     // argv[0] as the program name is only a convention, i.e. there is no guarantee
     // the name is the full path to the executable.
-    final String binaryName = getCurrentProcessExecutableName();
-    if (binaryName != null) {
-      argv[0] = binaryName;
+    //
+    // See https://msdn.microsoft.com/en-us/library/windows/desktop/ms683197(v=vs.85).aspx
+    // To retrieve the full path to the executable, use "GetModuleFileName(NULL, ...)".
+    //
+    // Note: We use 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260).
+    char[] buffer = new char[32767];
+    if (kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue() > 0) {
+      argv[0] = Native.toString(buffer);
     }
 
     List<String> args = new ArrayList<>();
@@ -151,20 +156,6 @@ public class Restarter {
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
     // process which happened to have the same process ID.
     TimeoutUtil.sleep(500);
-  }
-
-  //
-  // See https://msdn.microsoft.com/en-us/library/windows/desktop/ms683197(v=vs.85).aspx
-  // To retrieve the full path to the executable, use "GetModuleFileName(NULL, ...)".
-  //
-  // Note: We use 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260).
-  public static String getCurrentProcessExecutableName() {
-    Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
-    char[] buffer = new char[32767];
-    if (kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue() > 0) {
-      return Native.toString(buffer);
-    }
-    return null;
   }
 
   private static String[] getRestartArgv(String[] argv) {

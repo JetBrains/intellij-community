@@ -54,7 +54,7 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   public void loadCommittedChanges(ChangeBrowserSettings settings,
                                    RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<? super CommittedChangeList> consumer) {
+                                   AsynchConsumer<CommittedChangeList> consumer) {
     ++ myRefreshCount;
     for (CommittedChangeListImpl changeList : myChangeLists) {
       consumer.consume(changeList);

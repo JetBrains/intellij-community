@@ -141,7 +141,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myList.setFocusable(false);
     myList.setFixedCellWidth(50);
-    myList.setBorder(null);
 
     // a new top level frame just got the focus. This is important to prevent screen readers
     // from announcing the title of the top level frame when the list is shown (or hidden),
@@ -488,8 +487,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  private void updateListHeight(ListModel<LookupElement> model) {
-    myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
+  private void updateListHeight(ListModel model) {
     myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().getMaxLookupListHeight()));
   }
 

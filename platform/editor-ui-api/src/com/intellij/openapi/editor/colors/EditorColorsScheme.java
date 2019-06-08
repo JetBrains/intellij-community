@@ -58,15 +58,9 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    */
   void setEditorFontSize(int fontSize);
 
-  /**
-   * @deprecated stored in application level property
-   */
   @Deprecated
   FontSize getQuickDocFontSize();
 
-  /**
-   * @deprecated stored in application level property
-   */
   @Deprecated
   void setQuickDocFontSize(@NotNull FontSize fontSize);
 

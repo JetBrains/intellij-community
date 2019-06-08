@@ -466,8 +466,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     for (FrameworkSupportNode node : nodes) {
       FrameworkSupportInModuleProvider provider = node.getUserObject();
       final FeatureUsageData data = original.copy();
-      data.addData("framework", provider.getId());
-      data.addPluginInfo(PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+      data.addData("framework", PluginInfoDetectorKt.getPluginInfo(provider.getClass()).isSafeToReport() ? provider.getId() : "third.party");
       FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId + ".add.framework", data);
     }
   }

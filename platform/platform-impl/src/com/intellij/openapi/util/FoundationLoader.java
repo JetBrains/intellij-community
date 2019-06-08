@@ -8,7 +8,7 @@ import com.intellij.ui.mac.foundation.Foundation;
 public class FoundationLoader implements BaseComponent {
   @Override
   public void initComponent() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       Foundation.init();
     }
   }

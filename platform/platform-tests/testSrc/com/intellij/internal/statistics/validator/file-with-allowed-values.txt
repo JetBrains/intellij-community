@@ -1,2 +1,0 @@
-allowed.value
-another.allowed.value

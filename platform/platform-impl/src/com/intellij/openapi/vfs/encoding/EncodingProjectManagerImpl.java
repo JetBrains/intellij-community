@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -20,7 +19,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -374,7 +373,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
   @Override
   public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
-    return FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.PROPERTIES) && myNative2AsciiForPropertiesFiles;
+    return virtualFile.getFileType() == StdFileTypes.PROPERTIES && myNative2AsciiForPropertiesFiles;
   }
 
   @Override
@@ -462,7 +461,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       case NEVER:
         return false;
       case WINDOWS_ONLY:
-        return SystemInfo.isWindows;
+        return SystemInfoRt.isWindows;
       default:
         throw new IllegalStateException(myBOMForNewUTF8Files.toString());
     }

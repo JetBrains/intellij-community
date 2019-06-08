@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
  * Identifiers for data items which can be returned from {@link DataContext#getData(String)} and
  * {@link DataProvider#getData(String)}.
  *
- * @deprecated use {@link DataKeys} and {@link DataKey#getData} instead
+ * @deprecated {@link DataKeys} and {@link DataKey#getData} should be used instead
  */
 @Deprecated
 public interface DataConstants {

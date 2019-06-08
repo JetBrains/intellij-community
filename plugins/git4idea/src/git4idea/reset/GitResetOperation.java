@@ -150,7 +150,7 @@ public class GitResetOperation {
   }
 
   @NotNull
-  private static String joinRepos(@NotNull Collection<? extends GitRepository> repositories) {
+  private static String joinRepos(@NotNull Collection<GitRepository> repositories) {
     return StringUtil.join(DvcsUtil.sortRepositories(repositories), ", ");
   }
 

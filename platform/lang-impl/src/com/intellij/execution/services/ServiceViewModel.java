@@ -91,12 +91,8 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier {
   }
 
   @Nullable
-  protected ServiceViewItem findItem(@NotNull ServiceViewItem item) {
-    ServiceViewItem updatedItem = findItem(item, myModel.getRoots());
-    if (updatedItem != null) {
-      return updatedItem;
-    }
-    return myModel.findItem(item.getValue(), item.getRootContributor().getClass());
+  ServiceViewItem findItem(@NotNull ServiceViewItem item) {
+    return findItem(item, myModel.getRoots());
   }
 
   void addModelListener(@NotNull ServiceViewModelListener listener) {
@@ -160,7 +156,6 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier {
       for (ServiceViewItem root : model.getRoots()) {
         if (contributor == root.getContributor()) {
           contributorRoot = root;
-          break;
         }
       }
       if (contributorRoot != null && contributorRoot.getChildren().equals(items)) {

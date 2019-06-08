@@ -10,8 +10,6 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.StringJoiner;
-
 public class PsiFormatUtil extends PsiFormatUtilBase {
   @MagicConstant(flags = {
     SHOW_MODIFIERS, SHOW_TYPE, TYPE_AFTER, SHOW_CONTAINING_CLASS, SHOW_FQ_NAME, SHOW_NAME, SHOW_MODIFIERS,
@@ -337,17 +335,19 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   }
 
   private static String formatReferenceList(PsiReferenceList list, int options) {
-    StringJoiner buffer = new StringJoiner(", ");
+    StringBuilder buffer = new StringBuilder();
     if (BitUtil.isSet(options, SHOW_RAW_TYPE)) {
       PsiClassType[] types = list.getReferencedTypes();
-      for (PsiClassType type : types) {
-        buffer.add(formatType(type, options, PsiSubstitutor.EMPTY));
+      for (int i = 0; i < types.length; i++) {
+        if (i > 0) buffer.append(", ");
+        buffer.append(formatType(types[i], options, PsiSubstitutor.EMPTY));
       }
     }
     else {
       PsiJavaCodeReferenceElement[] refs = list.getReferenceElements();
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        buffer.add(formatReference(ref, options));
+      for (int i = 0; i < refs.length; i++) {
+        if (i > 0) buffer.append(", ");
+        buffer.append(formatReference(refs[i], options));
       }
     }
     return buffer.toString();

@@ -1224,9 +1224,7 @@ public class PsiTreeUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /**
-   * @deprecated use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019)
-   */
+  /** use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019) */
   @Deprecated
   public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     return SyntaxTraverser.psiTraverser().children(element).filter(aClass).iterator();

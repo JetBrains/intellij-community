@@ -199,10 +199,8 @@ public class ActionUtil {
     return false;
   }
 
-  /**
-   * @deprecated use {@link #performDumbAwareUpdate(boolean, AnAction, AnActionEvent, boolean)} instead
-   */
   @Deprecated
+  // Use #performDumbAwareUpdate with isModalContext instead
   public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
   }

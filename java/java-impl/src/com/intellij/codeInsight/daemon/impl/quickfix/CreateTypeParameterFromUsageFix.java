@@ -84,15 +84,11 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
     }
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 
   private static void createTypeParameter(@NotNull PsiElement methodOrClass, @NotNull String name) {
     Project project = methodOrClass.getProject();
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodOrClass)) return;
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("create.type.parameter.from.usage.family"), null,  () -> {
+    WriteCommandAction.runWriteCommandAction(project, () -> {
       PsiTypeParameterListOwner typeParameterListOwner = tryCast(methodOrClass, PsiTypeParameterListOwner.class);
       if (typeParameterListOwner == null) {
         throw new IllegalStateException("Only methods and classes allowed here, but was: " + methodOrClass.getClass());

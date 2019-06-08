@@ -405,8 +405,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void registerSyncConsoleListener() {
     myProjectsTree.addListener(new MavenProjectsTree.Listener() {
-    });
-    myProjectsTree.addListener(new MavenProjectsTree.Listener() {
       @Override
       public void pluginsResolved(@NotNull MavenProject project) {
         getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).finish();
@@ -865,7 +863,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
    * if project is closed)
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
-
     AtomicBoolean disposed = new AtomicBoolean(false);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (myProject.isDisposed()) {
@@ -878,35 +875,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return Promises.cancelledPromise();
     }
 
-    MavenSyncConsole console = getSyncConsole();
-    AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> completeMavenSyncOnImportCompletion(console));
+    AsyncPromise<List<Module>> promise = scheduleResolve();// scheduleImport will be called after the scheduleResolve process has finished
     fireImportAndResolveScheduled();
-    return promise;
-  }
-
-  private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (myReadingProcessor != null) {
-        myReadingProcessor.waitForCompletion();
-      }
-      if (myArtifactsDownloadingProcessor != null) {
-        myArtifactsDownloadingProcessor.waitForCompletion();
-      }
-      if (myFoldersResolvingProcessor != null) {
-        myFoldersResolvingProcessor.waitForCompletion();
-      }
-      if (myPluginsResolvingProcessor != null) {
-        myPluginsResolvingProcessor.waitForCompletion();
-      }
-      if (myResolvingProcessor != null) {
-        myResolvingProcessor.waitForCompletion();
-      }
-      if(myPostProcessor!=null){
-        myPostProcessor.waitForCompletion();
-      }
-      console.finishImport();
-    });
+    return promise
+      .onError(t -> getSyncConsole().finishImportWithError(t))
+      .onProcessed(modules -> getSyncConsole().finishImport());
   }
 
   private AsyncPromise<List<Module>> scheduleResolve() {

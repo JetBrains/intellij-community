@@ -74,9 +74,7 @@ public class ComponentValidator {
     this.parentDisposable = parentDisposable;
   }
 
-  /**
-   * @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
-   */
+   // @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
   @Deprecated
   public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
     this.validator = () -> {

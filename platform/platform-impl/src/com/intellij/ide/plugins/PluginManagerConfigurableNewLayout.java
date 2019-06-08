@@ -968,13 +968,6 @@ public class PluginManagerConfigurableNewLayout
 
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
-          protected void setEmptyText() {
-            myPanel.getEmptyText().setText("Nothing found.");
-            myPanel.getEmptyText().appendSecondaryText("Search in marketplace", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                                       e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
-          }
-
-          @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
             myPluginModel.setInvalidFixCallback(null);
 
@@ -1347,12 +1340,6 @@ public class PluginManagerConfigurableNewLayout
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
     addGroup(groups, name, showAllQuery, descriptors -> PluginManagerConfigurableNew.loadPlugins(descriptors, allRepositoriesMap, query));
-  }
-
-  @Override
-  @NotNull
-  public String getHelpTopic() {
-    return PluginManagerConfigurable.ID;
   }
 
   @Override

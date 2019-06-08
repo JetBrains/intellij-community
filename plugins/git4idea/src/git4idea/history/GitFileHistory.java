@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -31,7 +32,6 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -87,8 +87,8 @@ public class GitFileHistory {
     myStartingRevision = revision;
   }
 
-  private void load(@NotNull Consumer<? super GitFileRevision> consumer,
-                    @NotNull Consumer<? super VcsException> exceptionConsumer,
+  private void load(@NotNull Consumer<GitFileRevision> consumer,
+                    @NotNull Consumer<VcsException> exceptionConsumer,
                     String... parameters) {
     GitLogParser<GitLogFullRecord> logParser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
                                                                                 HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL,
@@ -190,6 +190,7 @@ public class GitFileHistory {
    *
    * @param project           Context project.
    * @param path              FilePath which history is queried.
+   * @param root              Git root - optional: if this is null, then git root will be detected automatically.
    * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
    * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
@@ -197,18 +198,18 @@ public class GitFileHistory {
    */
   public static void loadHistory(@NotNull Project project,
                                  @NotNull FilePath path,
+                                 @Nullable VirtualFile root,
                                  @Nullable VcsRevisionNumber startingFrom,
-                                 @NotNull Consumer<? super GitFileRevision> consumer,
-                                 @NotNull Consumer<? super VcsException> exceptionConsumer,
+                                 @NotNull Consumer<GitFileRevision> consumer,
+                                 @NotNull Consumer<VcsException> exceptionConsumer,
                                  String... parameters) {
-    try {
-      VirtualFile repositoryRoot = GitUtil.getRepositoryForFile(project, path).getRoot();
-      VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
-      new GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, parameters);
+    VirtualFile repositoryRoot = root == null ? ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path) : root;
+    if (repositoryRoot == null) {
+      exceptionConsumer.consume(new VcsException("The file " + path + " is not under vcs."));
+      return;
     }
-    catch (VcsException e) {
-      exceptionConsumer.consume(e);
-    }
+    VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
+    new GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, parameters);
   }
 
   /**
@@ -229,7 +230,7 @@ public class GitFileHistory {
     List<VcsFileRevision> revisions = new ArrayList<>();
     List<VcsException> exceptions = new ArrayList<>();
 
-    loadHistory(project, path, startingFrom, revisions::add, exceptions::add, parameters);
+    loadHistory(project, path, null, startingFrom, revisions::add, exceptions::add, parameters);
 
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);
@@ -256,9 +257,9 @@ public class GitFileHistory {
     @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
     @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>();
     @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>();
-    @NotNull private final Consumer<? super GitFileRevision> myRevisionConsumer;
+    @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    GitLogRecordConsumer(@NotNull Consumer<? super GitFileRevision> revisionConsumer) {
+    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer) {
       myRevisionConsumer = revisionConsumer;
     }
 
@@ -276,7 +277,7 @@ public class GitFileHistory {
       myFirstCommit.set(record.getHash());
 
       myRevisionConsumer.consume(createGitFileRevision(record));
-      List<? extends VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
       if (statusInfos.isEmpty()) {
         // can safely be empty, for example, for simple merge commits that don't change anything.
         return;
@@ -293,7 +294,7 @@ public class GitFileHistory {
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
       Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
       Collection<String> parents = Arrays.asList(record.getParentsHashes());
-      List<? extends VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
       boolean deleted = !statusInfos.isEmpty() && statusInfos.get(0).getType() == Change.Type.DELETED;
       return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
                                  record.getFullMessage(),

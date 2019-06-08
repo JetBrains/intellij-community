@@ -30,7 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -447,7 +447,7 @@ public class StartupUtil {
     }
     catch (Exception e) {
       String title = "Invalid " + kind + " Directory";
-      String advice = SystemInfo.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
+      String advice = SystemInfoRt.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
                       ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
                         "Please use Finder to move it to another location."
                       : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
@@ -523,7 +523,7 @@ public class StartupUtil {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
 
-    if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
+    if (SystemInfoRt.isWindows && System.getProperty("winp.folder.preferred") == null) {
       System.setProperty("winp.folder.preferred", ideTempPath);
     }
 
@@ -559,7 +559,7 @@ public class StartupUtil {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
-    log.info("OS: " + SystemInfo.OS_NAME + " (" + SystemInfo.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
+    log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
 

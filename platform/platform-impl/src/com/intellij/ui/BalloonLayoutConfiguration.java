@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +52,11 @@ public class BalloonLayoutConfiguration {
   static {
     int width;
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       width = 360;
       RawStyleWidth = 240;
     }
-    else if (SystemInfo.isLinux) {
+    else if (SystemInfoRt.isLinux) {
       width = 410;
       RawStyleWidth = 270;
     }

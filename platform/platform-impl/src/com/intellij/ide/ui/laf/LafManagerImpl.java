@@ -101,7 +101,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
 
     List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       lafList.add(new UIManager.LookAndFeelInfo("Light", IntelliJLaf.class.getName()));
     }
     else {
@@ -130,7 +130,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
     myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
 
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       // do not sort LaFs on mac - the order is determined as Default, Darcula.
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
 
@@ -264,7 +264,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find wizard L&F: " + wizardLafName);
     }
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       String className = IntelliJLaf.class.getName();
       UIManager.LookAndFeelInfo laf = findLaf(className);
       if (laf != null) return laf;
@@ -441,7 +441,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
-    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF())) {
       return AllIcons.Mac.Tree_white_right_arrow;
     }
     return null;
@@ -613,7 +613,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfoRt.isMac && UIUtil.isUnderIntelliJLaF())) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
@@ -622,7 +622,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
-    } else if ((SystemInfo.isLinux || SystemInfo.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+    } else if ((SystemInfoRt.isLinux || SystemInfoRt.isWindows) && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
       uiDefaults.put("Menu.arrowIcon", new DefaultMenuArrowIcon(AllIcons.General.ArrowRight));
     }
 
@@ -668,7 +668,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
     else if (property == null) {
       // use defaults if popup weight isn't specified
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         popupWeight = OurPopupFactory.WEIGHT_HEAVY;
       }
     }
@@ -831,7 +831,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       defaults.put(fontResource, uiFont);
     }
 
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       defaults.put("PasswordField.font", monoFont);
     }
     defaults.put("TextArea.font", monoFont);

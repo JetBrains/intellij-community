@@ -17,7 +17,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.ConfigurationException;
@@ -209,12 +208,12 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
             return super.isFileVisible(file, showHiddenFiles) &&
-                   (file.isDirectory() || "xml".equals(file.getExtension()) || FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE));
+                   (file.isDirectory() || "xml".equals(file.getExtension()) || file.getFileType() == ArchiveFileType.INSTANCE);
           }
 
           @Override
           public boolean isFileSelectable(VirtualFile file) {
-            return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
+            return file.getFileType() == StdFileTypes.XML;
           }
         };
         descriptor.setDescription("Please select a file to import.");

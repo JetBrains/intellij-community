@@ -2262,9 +2262,9 @@ ejs@^2.6.1:
   integrity sha512-0xy4A/twfrRCnkhfk8ErDi5DqdAsAqeGxht4xkCUrsvhhbQNs7E+4jV0CN7+NKIY0aHE72+XvqtBIXzD31ZbXQ==
 
 electron-to-chromium@^1.3.150:
-  version "1.3.154"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.154.tgz#e5b73beecd4db9f024d807ba1faad93fe1fb98aa"
-  integrity sha512-r3jVJRWvQIKDdjAbtmvJ7NihBFNUpU4VJKsslAzruv9dnYde3v8U2T7J62Vap3c6l6Ku4J56kxlciIO/E93cQg==
+  version "1.3.152"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.152.tgz#8f1c08e101d58fe2ef72655481bbf8c83f9450fa"
+  integrity sha512-Ah10cGMWIXYD8aUTH2Y7lGRhaOFQLyWuxvXmCPCZCbUIGJ4swnNmT6P4aA8RTgUmNw9kmcDL6SoU8TZC4YuZGg==
 
 element-ui@^2.9.1:
   version "2.9.1"
@@ -4908,24 +4908,25 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-pdfkit@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/pdfkit/-/pdfkit-0.10.0.tgz#88f2aa8e3cf9e1cc2caff6447b68dd4e435cb284"
-  integrity sha512-mRJ6iuDzpIQ4ftKp5GvijLXNVRK86xjnyIPBraYSPrUPubNqWM5/oYmc7FZKUWz3wusRTj3PLR9HJ1X5ooqfsg==
+pdfkit@^0.9.1:
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/pdfkit/-/pdfkit-0.9.1.tgz#f07a66eebc64855f8345dccfd313f2d8f880f10f"
+  integrity sha512-45X/NjaynHVNd/866ETK9KmblL8Sqwmah1RPz04IzmZoEO+cvPid2UvkVfZQcS4Jeq/uWY+99qAq04NoigzWSA==
   dependencies:
     crypto-js "^3.1.9-1"
     fontkit "^1.0.0"
     linebreak "^0.3.0"
     png-js ">=0.1.0"
+    saslprep "1.0.1"
 
 pdfmake@^0.1.36:
-  version "0.1.57"
-  resolved "https://registry.yarnpkg.com/pdfmake/-/pdfmake-0.1.57.tgz#408e9853777fb851eeb700aaa221905e135917a0"
-  integrity sha512-s6Bs71Ylh06yNgJfP61xicHZSEvFrwo8lvI/BOU4+6eDddO8lwOZi5A42RA0V8zQr6hrI1XYxtLkk/7oJ+5w+w==
+  version "0.1.56"
+  resolved "https://registry.yarnpkg.com/pdfmake/-/pdfmake-0.1.56.tgz#a4fcabe25fa5f04c07cb6e861c0abbf9ca5b33e9"
+  integrity sha512-c5fSj16VTQCrmTw02Mc+Oj3boRG+PGJuu7cGXAXXljI3bMNDifwmUs+3opEwRZbTWu9WhFKYbrs2Iq136UN/NQ==
   dependencies:
     iconv-lite "^0.4.24"
     linebreak "^0.3.0"
-    pdfkit "^0.10.0"
+    pdfkit "^0.9.1"
 
 performance-now@^2.1.0:
   version "2.1.0"
@@ -5838,6 +5839,11 @@ safe-regex@^1.1.0:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
+
+saslprep@1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/saslprep/-/saslprep-1.0.1.tgz#b644e0ba25b156b652f3cb90df7542f896049ba6"
+  integrity sha512-ntN6SbE3hRqd45PKKadRPgA+xHPWg5lPSj2JWJdJvjTwXDDfkPVtXWvP8jJojvnm+rAsZ2b299C5NwZqq818EA==
 
 sax@^1.1.4, sax@^1.2.4, sax@~1.2.4:
   version "1.2.4"

@@ -2,7 +2,6 @@ package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -10,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
+import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
@@ -125,7 +125,7 @@ public class GraphTableModel extends AbstractTableModel {
     VcsShortCommitDetails data = getCommitMetadata(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
-        return myDataPack.getFilePath(rowIndex);
+        return getRoot(rowIndex);
       case COMMIT_COLUMN:
         return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
                                    myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
@@ -156,7 +156,7 @@ public class GraphTableModel extends AbstractTableModel {
   public Class<?> getColumnClass(int column) {
     switch (column) {
       case ROOT_COLUMN:
-        return FilePath.class;
+        return VirtualFile.class;
       case COMMIT_COLUMN:
         return GraphCommitCell.class;
       case AUTHOR_COLUMN:

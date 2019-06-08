@@ -117,7 +117,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
       PlatformTestUtil.saveProject(project, true);
       closeProject(project);
 
-      reloaded = ProjectManager.getInstance().loadAndOpenProject(foo);
+      reloaded = ProjectManager.getInstance().loadAndOpenProject(foo.getPath());
       assertNotNull(reloaded);
       manager = FileTemplateManager.getInstance(reloaded);
       assertThat(manager.getCurrentScheme()).isEqualTo(manager.getProjectScheme());

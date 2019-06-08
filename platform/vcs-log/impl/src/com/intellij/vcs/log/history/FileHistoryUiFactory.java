@@ -10,9 +10,12 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
   @NotNull private final FilePath myFilePath;
@@ -31,7 +34,7 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
 
     VcsLogFilterCollection filters =
       FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot, properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
-    return new FileHistoryUi(logData, properties,
+    return new FileHistoryUi(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), properties,
                              new VisiblePackRefresherImpl(project, logData,
                                                           filters,
                                                           PermanentGraph.SortType.Normal,

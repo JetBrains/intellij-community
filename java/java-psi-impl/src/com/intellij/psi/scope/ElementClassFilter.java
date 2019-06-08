@@ -66,7 +66,7 @@ public class ElementClassFilter implements ElementFilter {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@linkplain #PACKAGE} (to be removed in IDEA 2018) */
+  /** use {@linkplain #PACKAGE} (to be removed in IDEA 2018) */
   @Deprecated
   public static final ElementClassFilter PACKAGE_FILTER = PACKAGE;
   //</editor-fold>

@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,7 +45,7 @@ public class MarkdownCodeFencePluginCache implements Disposable {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        if (FileTypeRegistry.getInstance().isFileOfType(event.getFile(), MarkdownFileType.INSTANCE)) {
+        if (MarkdownFileType.INSTANCE == event.getFile().getFileType()) {
           myAdditionalCacheToDelete.addAll(processSourceFileToDelete(event.getFile(), ContainerUtil.emptyList()));
         }
       }

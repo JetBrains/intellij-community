@@ -31,7 +31,7 @@ import java.util.*
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
-  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"), false)
+  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
 
   fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     try {
@@ -54,14 +54,14 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
     val bytes = BufferExposingByteArrayOutputStream()
     serializationManager.serialize(stub, bytes)
 
-    val tree = SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
-    tree.indexTree()
-    return tree
+    val file = fileContent.file
+
+    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
     return PersistentHashMap(File("$stubsStorageFilePath.input"),
-                             HashCodeDescriptor.instance, FullStubExternalizer())
+                             HashCodeDescriptor.instance, StubTreeExternalizer())
   }
 
   open fun buildStubForFile(fileContent: FileContentImpl,
@@ -81,7 +81,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
   // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
   try {
-    val stubExternalizer = FullStubExternalizer()
+    val stubExternalizer = StubTreeExternalizer()
 
     val storageFile = File(stubsFilePath, "$stubsFileName.input")
     if (storageFile.exists()) {
@@ -96,7 +96,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       stringEnumeratorFile.delete()
     }
 
-    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile, false)
+    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile)
 
     val map = HashMap<HashCode, Int>()
 
@@ -109,21 +109,25 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
                                                                         HashCodeDescriptor.instance, stubExternalizer)
 
-      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"), true)
+      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"))
 
       try {
         fromStorage.processKeysWithExistingMapping { key ->
           count++
           val value = fromStorage.get(key)
 
+          val stub = value.getStub(false, serializationManager)
+
           // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-          val newStubTree = value.reSerialize(serializationManager, newSerializationManager)
+          val bytes = BufferExposingByteArrayOutputStream()
+          newSerializationManager.serialize(stub, bytes)
+
+          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
               storage.get(key).getStub(false, newSerializationManager)
 
-              val stub = value.getStub(false, serializationManager)
               val bytes2 = BufferExposingByteArrayOutputStream()
               newSerializationManager.serialize(stub, bytes2)
 

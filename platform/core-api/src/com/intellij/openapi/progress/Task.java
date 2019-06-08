@@ -230,7 +230,7 @@ public abstract class Task implements TaskInfo, Progressive {
     }
 
     /**
-     * @deprecated do not implement. to remove in IDEA 16
+     * to remove in IDEA 16
      */
     @Deprecated
     public DumbModeAction getDumbModeAction() {

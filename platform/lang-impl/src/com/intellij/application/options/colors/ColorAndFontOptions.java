@@ -35,6 +35,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -816,11 +817,26 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       super(name, group, colorKey.getExternalName(), scheme, null, null);
       myColorKey = colorKey;
       myKind = kind;
+      ColorKey fallbackKey = myColorKey.getFallbackColorKey();
+      Color fallbackColor = null;
+      if (fallbackKey != null) {
+        fallbackColor = scheme.getColor(fallbackKey);
+        myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getColorDescriptor(fallbackKey);
+        if (myBaseAttributeDescriptor == null) {
+          myBaseAttributeDescriptor = Pair.create(null, new ColorDescriptor(fallbackKey.getExternalName(), fallbackKey, myKind));
+        }
+        myFallbackAttributes = new TextAttributes(myKind == ColorDescriptor.Kind.FOREGROUND ? fallbackColor : null,
+                                                  myKind == ColorDescriptor.Kind.BACKGROUND ? fallbackColor : null,
+                                                  null, null, Font.PLAIN);
+      }
       myColor = scheme.getColor(myColorKey);
-      myInitialColor = myColor;
+      myInitialColor = ObjectUtils.chooseNotNull(fallbackColor, myColor);
 
-      myIsInheritedInitial = false;
+      myIsInheritedInitial = scheme.isInherited(myColorKey);
       setInherited(myIsInheritedInitial);
+      if (myIsInheritedInitial) {
+        //setInheritedAttributes(getTextAttributes());
+      }
       initCheckedStatus();
     }
 
@@ -1100,6 +1116,24 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         if (attributes != null) {
           TextAttributes fallbackAttributes = getAttributes(fallbackKey);
           return attributes == fallbackAttributes;
+        }
+      }
+      return false;
+    }
+
+    public boolean isInherited(ColorKey key) {
+      ColorKey fallbackKey = key.getFallbackColorKey();
+      if (fallbackKey != null) {
+        if (myParentScheme instanceof AbstractColorsScheme) {
+          Color ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key);
+          if (ownAttrs != null) {
+            return ownAttrs == AbstractColorsScheme.INHERITED_COLOR_MARKER;
+          }
+        }
+        Color attributes = getColor(key);
+        if (attributes != null) {
+          Color fallback = getColor(fallbackKey);
+          return attributes == fallback;
         }
       }
       return false;

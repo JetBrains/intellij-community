@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -54,6 +54,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     return new PyClassStubImpl(psi.getName(),
                                parentStub,
                                getSuperClassQNames(psi),
+                               ContainerUtil.map(getSubscriptedSuperClasses(psi), PsiElement::getText),
                                ContainerUtil.map(psi.getSuperClassExpressions(), PsiElement::getText),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
@@ -133,9 +134,13 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
       QualifiedName.serialize(entry.getValue(), dataStream);
     }
 
+    final List<String> subscriptedBaseClassesText = pyClassStub.getSubscriptedSuperClasses();
     final List<String> baseClassesText = pyClassStub.getSuperClassesText();
+
     dataStream.writeByte(baseClassesText.size());
     for (String text : baseClassesText) {
+      boolean isParametrized = subscriptedBaseClassesText.contains(text);
+      dataStream.writeBoolean(isParametrized);
       dataStream.writeName(text);
     }
 
@@ -161,9 +166,15 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     }
 
     final byte baseClassesCount = dataStream.readByte();
+    final ArrayList<String> parametrizedBaseClasses = new ArrayList<>();
     final ArrayList<String> baseClassesText = new ArrayList<>();
     for (int i = 0; i < baseClassesCount; i++) {
-      baseClassesText.add(dataStream.readNameString());
+      final boolean isParametrized = dataStream.readBoolean();
+      String ref = dataStream.readNameString();
+      baseClassesText.add(ref);
+      if (ref != null && isParametrized) {
+        parametrizedBaseClasses.add(ref);
+      }
     }
 
 
@@ -176,7 +187,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
     final PyCustomClassStub customStub = deserializeCustomStub(dataStream);
 
-    return new PyClassStubImpl(name, parentStub, superClasses, baseClassesText, metaClass, slots, docString,
+    return new PyClassStubImpl(name, parentStub, superClasses, parametrizedBaseClasses, baseClassesText, metaClass, slots, docString,
                                getStubElementType(), customStub);
   }
 
@@ -202,7 +213,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
   @NotNull
   protected IStubElementType getStubElementType() {
-    return PyStubElementTypes.CLASS_DECLARATION;
+    return PyElementTypes.CLASS_DECLARATION;
   }
 
   @NotNull

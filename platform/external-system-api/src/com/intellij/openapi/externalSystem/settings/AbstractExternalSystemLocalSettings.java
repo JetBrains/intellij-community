@@ -108,7 +108,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   /**
-   * @deprecated use {@link com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil#findProjectTasks(Project, ProjectSystemId, String)}
+   * @deprecated use com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil#findProjectTasks
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated

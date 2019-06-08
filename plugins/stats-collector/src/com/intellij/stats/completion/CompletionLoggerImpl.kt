@@ -17,7 +17,6 @@ package com.intellij.stats.completion
 
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.sorting.RankingSupport
 import com.intellij.completion.tracker.LookupElementPositionTracker
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.stats.completion.events.*
@@ -38,7 +37,7 @@ class CompletionFileLogger(private val installationUID: String,
 
         val ideVersion = PluginManager.BUILD_NUMBER ?: "ideVersion"
         val pluginVersion = calcPluginVersion() ?: "pluginVersion"
-        val mlRankingVersion = RankingSupport.getRanker(language)?.version() ?: "NONE"
+        val mlRankingVersion = "NONE"
 
         val userFactors = lookup.getUserData(UserFactorsManager.USER_FACTORS_KEY) ?: emptyMap()
 

@@ -18,7 +18,6 @@ import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,7 +203,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {
-    @NotNull private final TIntObjectHashMap<CommitId> myNotLoadedCommits = new TIntObjectHashMap<>();
+    @NotNull private final Map<Integer, CommitId> myNotLoadedCommits = new HashMap<>();
 
     @NotNull
     @Override
@@ -215,7 +214,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     }
 
     @NotNull
-    TIntObjectHashMap<CommitId> getNotLoadedCommits() {
+    public Map<Integer, CommitId> getNotLoadedCommits() {
       return myNotLoadedCommits;
     }
   }

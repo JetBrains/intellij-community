@@ -20,6 +20,7 @@ public interface GotoDeclarationHandler {
    *
    * @param sourceElement input PSI element
    * @param offset        offset in the file
+   * @param editor
    * @return all target declarations as an array of {@code PsiElement} or null if none were found
    */
   @Nullable

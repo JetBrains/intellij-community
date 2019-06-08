@@ -41,8 +41,10 @@ public abstract class DiffRequestFactory {
    * @param originalContent          The version of the content before changes.
    * @param file                     The file which is being merged.
    * @param project                  The project in the context of which the operation is executed.
-   * @param okButtonPresentation     Parameter ignored.
-   * @param cancelButtonPresentation Parameter ignored.
+   * @param okButtonPresentation     Specifies the text of the OK/Apply button in the dialog and possibly an additional action which is
+   *                                 executed when the button is pressed.
+   * @param cancelButtonPresentation Specifies the text of the Cancel button in the dialog and possibly an additional action which is
+   *                                 executed when the button is pressed.
    * @return The merge operation request.
    */
   public abstract MergeRequest createMergeRequest(@NotNull String leftText,

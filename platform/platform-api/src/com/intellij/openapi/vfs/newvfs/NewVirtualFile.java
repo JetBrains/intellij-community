@@ -76,7 +76,6 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract int getId();
 
   @Nullable @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public NewVirtualFile findChildById(int id) {return null;}
 
   @Override

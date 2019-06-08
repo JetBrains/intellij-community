@@ -339,7 +339,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       currentNode.setEndTime(event.getEventTime());
       EventResult result = ((FinishEvent)event).getResult();
       if (result instanceof DerivedResult) {
-        result = calculateDerivedResult((DerivedResult)result, currentNode);
+        result = calculateDerivedResult((DerivedResult)result, currentNode, new HashSet<>());
       }
       currentNode.setResult(result);
       SkippedResult skippedResult = new SkippedResultImpl();
@@ -365,20 +365,25 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     scheduleUpdate(currentNode);
   }
 
-  private static EventResult calculateDerivedResult(DerivedResult result, ExecutionNode node) {
+  private static EventResult calculateDerivedResult(DerivedResult result, ExecutionNode node, Set<ExecutionNode> recursionGuard) {
     if (node.getResult() != null) {
       return node.getResult(); // if another thread set result for child
     }
-    if(node.isFailed()) {
+    if (!recursionGuard.add(node)) {
+      LOG.warn("Ring in execution node graph!" + node);
       return result.createFailureResult();
     }
 
-    return result.createDefaultResult();
-  }
-
-  private static boolean isFailure(EventResult result) {
-    return result instanceof FailureResult ||
-           (result instanceof MessageEventResult && ((MessageEventResult)result).getKind() == MessageEvent.Kind.ERROR);
+    for (SimpleNode simpleNode : node.getChildren()) {
+      if (simpleNode instanceof ExecutionNode) {
+        ExecutionNode child = (ExecutionNode)simpleNode;
+        EventResult childResult = child.isRunning() ? calculateDerivedResult(result, child, recursionGuard) : child.getResult();
+        if (childResult instanceof FailureResult) {
+          return result.createFailureResult();
+        }
+      }
+    }
+    return result.createSuccessResult();
   }
 
   private void reportMessageKind(@NotNull MessageEvent messageEvent, @NotNull ExecutionNode parentNode) {

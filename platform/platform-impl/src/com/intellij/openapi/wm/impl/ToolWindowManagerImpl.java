@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
@@ -11,10 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -67,10 +63,11 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-@State(name = "ToolWindowManager", defaultStateAsResource = true, storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(
+  name = "ToolWindowManager",
+  defaultStateAsResource = true,
+  storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)
+)
 public class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
@@ -331,7 +328,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Keymap keymap = Objects.requireNonNull(KeymapManager.getInstance()).getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
-    int baseModifiers = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
+    int baseModifiers = SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
     for (Shortcut each : baseShortcut) {
       if (each instanceof KeyboardShortcut) {
         KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
@@ -797,36 +794,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   @NotNull
   public List<String> getIdsOn(@NotNull final ToolWindowAnchor anchor) {
     return myLayout.getVisibleIdsOn(anchor, this);
-  }
-
-  @NotNull
-  @Override
-  public Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon) {
-    ToolWindow window = getToolWindow(id);
-    WindowInfoImpl info = myLayout.getInfo(id, false);
-    if (window != null || info != null) {
-      ToolWindowType type = window != null ? window.getType() : info.getType();
-      if (type == ToolWindowType.FLOATING || type == ToolWindowType.WINDOWED) {
-        return AllIcons.Actions.MoveToWindow;
-      }
-
-      ToolWindowAnchor anchor = window != null ? window.getAnchor() : info.getAnchor();
-      boolean splitMode = window != null ? window.isSplitMode() : info.isSplit();
-
-      if (ToolWindowAnchor.BOTTOM.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToBottomRight : AllIcons.Actions.MoveToBottomLeft;
-      }
-      else if (ToolWindowAnchor.LEFT.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToLeftBottom : AllIcons.Actions.MoveToLeftTop;
-      }
-      else if (ToolWindowAnchor.RIGHT.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToRightBottom : AllIcons.Actions.MoveToRightTop;
-      }
-      else if (ToolWindowAnchor.TOP.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToTopRight : AllIcons.Actions.MoveToTopLeft;
-      }
-    }
-    return fallbackIcon;
   }
 
   @Override

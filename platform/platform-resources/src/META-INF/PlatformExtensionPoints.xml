@@ -40,7 +40,7 @@
     </extensionPoint>
 
     <extensionPoint name="fileType"
-                    beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean">
+                    beanClass="com.intellij.openapi.fileTypes.FileTypeBean">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.FileType"/>
     </extensionPoint>
 
@@ -197,6 +197,7 @@
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
 
+    <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
     <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider"/>
 
     <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>

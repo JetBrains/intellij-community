@@ -613,7 +613,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     }
   }
 
-  public static boolean showsCustomNotification(@NotNull Collection<? extends AbstractVcs> vcss) {
+  public static boolean showsCustomNotification(@NotNull Collection<AbstractVcs> vcss) {
     return ContainerUtil.all(vcss, vcs -> {
              UpdateEnvironment environment = vcs.getUpdateEnvironment();
              return environment != null && environment.hasCustomNotification();

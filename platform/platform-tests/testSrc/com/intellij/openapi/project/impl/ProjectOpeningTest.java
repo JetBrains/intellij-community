@@ -17,26 +17,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 
 import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * @author Dmitry Avdeev
  */
 public class ProjectOpeningTest extends PlatformTestCase {
   public void testOpenProjectCancelling() throws Exception {
+    File foo = createTempDir("foo");
     Project project = null;
     MyStartupActivity activity = new MyStartupActivity();
-    PlatformTestUtil.maskExtensions(POST_STARTUP_ACTIVITY, Collections.singletonList(activity), getTestRootDisposable());
+    POST_STARTUP_ACTIVITY.getPoint(null).registerExtension(activity, getTestRootDisposable());
+
     try {
       ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
-      File foo = createTempDir("foo");
       project = manager.createProject(null, foo.getPath());
-      assertThat(manager.openProject(project)).isFalse();
-      assertThat(project.isOpen()).isFalse();
-      assertThat(activity.passed).isTrue();
+      assertFalse(manager.openProject(project));
+      assertFalse(project.isOpen());
+      assertTrue(activity.passed);
     }
     finally {
       closeProject(project);
@@ -62,7 +61,7 @@ public class ProjectOpeningTest extends PlatformTestCase {
         }
       });
 
-      project = manager.loadAndOpenProject(foo);
+      project = manager.loadAndOpenProject(foo.getPath());
       assertFalse(project.isOpen());
       assertTrue(project.isDisposed());
     }

@@ -28,7 +28,9 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
@@ -623,14 +625,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   final void updateShouldCheckCanceled() {
+    boolean hasCanceledIndicator;
     synchronized (threadsUnderIndicator) {
-      CheckCanceledHook hook = createCheckCanceledHook();
-      boolean hasCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
-      ourCheckCanceledHook = hook;
-      ourCheckCanceledBehavior = hook == null && !hasCanceledIndicator ? CheckCanceledBehavior.NONE :
-                                 hasCanceledIndicator && ENABLED ? CheckCanceledBehavior.INDICATOR_PLUS_HOOKS :
-                                 CheckCanceledBehavior.ONLY_HOOKS;
+      hasCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
     }
+    CheckCanceledHook hook = createCheckCanceledHook();
+    ourCheckCanceledHook = hook;
+    ourCheckCanceledBehavior = hook == null && !hasCanceledIndicator ? CheckCanceledBehavior.NONE :
+                               hasCanceledIndicator && ENABLED ? CheckCanceledBehavior.INDICATOR_PLUS_HOOKS :
+                               CheckCanceledBehavior.ONLY_HOOKS;
   }
 
   @Nullable
@@ -681,7 +684,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Thread[] NO_THREADS = new Thread[0];
   private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
   private volatile Thread[] myEffectivePrioritizedThreads = NO_THREADS;
-  private int myDeprioritizations = 0;
+  private volatile int myDeprioritizations = 0;
   private final Object myPrioritizationLock = ObjectUtils.sentinel("myPrioritizationLock");
   private volatile long myPrioritizingStarted = 0;
 
@@ -733,7 +736,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @ApiStatus.Internal
   public void suppressPrioritizing() {
     synchronized (myPrioritizationLock) {
-      if (++myDeprioritizations == 100 + ForkJoinPool.getCommonPoolParallelism() * 2) {
+      if (++myDeprioritizations == 100) {
         Attachment attachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
         attachment.setIncluded(true);
         LOG.error("A suspiciously high nesting of suppressPrioritizing, forgot to call restorePrioritizing?", attachment);
@@ -806,18 +809,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private void checkLaterThreadsAreUnblocked() {
-    try {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-        if (isAnyPrioritizedThreadBlocked()) {
-          checkLaterThreadsAreUnblocked();
-        }
-        else {
-          restorePrioritizing();
-        }
-      }, 5, TimeUnit.MILLISECONDS);
-    }
-    catch (RejectedExecutionException ignore) {
-    }
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      if (isAnyPrioritizedThreadBlocked()) {
+        checkLaterThreadsAreUnblocked();
+      }
+      else {
+        restorePrioritizing();
+      }
+    }, 5, TimeUnit.MILLISECONDS);
   }
 
   private void stopAllPrioritization() {

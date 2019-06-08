@@ -298,7 +298,7 @@ public class CommitPanel extends JBPanel {
     }
 
     public void setRoot(@NotNull VirtualFile root) {
-      if (myColorManager.hasMultiplePaths()) {
+      if (myColorManager.isMultipleRoots()) {
         JBColor color = VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
         myIcon = JBUI.scale(new ColorIcon(ROOT_ICON_SIZE, color));
         myTooltipText = root.getPath();

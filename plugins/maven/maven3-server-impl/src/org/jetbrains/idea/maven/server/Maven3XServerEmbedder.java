@@ -129,8 +129,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull private final RepositorySystem myRepositorySystem;
 
-  @NotNull private final MavenImporterSpy myImporterSpy;
-
   public Maven3XServerEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
 
@@ -258,8 +256,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     myLocalRepository = createLocalRepository();
 
     myRepositorySystem = getComponent(RepositorySystem.class);
-
-    myImporterSpy = getComponent(MavenImporterSpy.class);
   }
 
   @NotNull
@@ -632,9 +628,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
           if (repositorySession instanceof DefaultRepositorySystemSession) {
             DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-            myImporterSpy.setIndicator(myCurrentIndicator);
             session
-              .setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+              .setTransferListener(new TransferListenerAdapter(myCurrentIndicator, MavenServerProgressIndicator.ResolveType.DEPENDENCY));
 
             if (myWorkspaceMap != null) {
               session.setWorkspaceReader(new Maven3WorkspaceReader(myWorkspaceMap));
@@ -1090,14 +1085,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         mavenPlugin.setDependencies(pluginFromProject.getDependencies());
       }
 
-
       final MavenExecutionRequest request =
         createRequest(null, null, null, null);
-      request.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
+      request.setTransferListener(new TransferListenerAdapter(myCurrentIndicator, MavenServerProgressIndicator.ResolveType.PLUGIN));
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
-      myImporterSpy.setIndicator(myCurrentIndicator);
+
       PluginDependenciesResolver pluginDependenciesResolver = getComponent(PluginDependenciesResolver.class);
 
       org.eclipse.aether.artifact.Artifact pluginArtifact =

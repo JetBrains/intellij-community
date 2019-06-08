@@ -75,7 +75,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
 
   @Override
   public VcsAbstractHistorySession createFromCachedData(Boolean aBoolean,
-                                                        @NotNull List<? extends VcsFileRevision> revisions,
+                                                        @NotNull List<VcsFileRevision> revisions,
                                                         @NotNull FilePath filePath,
                                                         VcsRevisionNumber currentRevision) {
     return createSession(filePath, revisions, currentRevision);
@@ -159,7 +159,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
                               new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} :
                               ArrayUtilRt.EMPTY_STRING_ARRAY;
 
-    GitFileHistory.loadHistory(myProject, path, startingRevision,
+    GitFileHistory.loadHistory(myProject, path, null, startingRevision,
                                fileRevision -> partner.acceptRevision(fileRevision),
                                exception -> partner.reportException(exception),
                                additionalArgs);

@@ -6,9 +6,12 @@ plugins {
 
 allprojects {
   repositories {
-    maven { url 'https://cache-redirector.jetbrains.com/maven-central' }
-    maven { url 'https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2' }
-    maven { url 'https://cache-redirector.jetbrains.com/intellij-third-party-dependencies' }
+    maven {
+      url = 'https://cache-redirector.jetbrains.com/maven-central'
+    }
+    maven {
+      url "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2"
+    }
   }
 }
 

@@ -4,14 +4,13 @@ package org.jetbrains.idea.maven.buildtool
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.EventResult
-import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -28,9 +27,6 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun startImport(syncView: BuildProgressListener) {
-    if (started) {
-      return
-    }
     started = true
     finished = false
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
@@ -63,6 +59,13 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
+  fun finishImportWithError(exception: Throwable) {
+    debugLog("Maven sync: finishImport with error", exception)
+    addText(mySyncId, ExceptionUtil.getThrowableText(exception, "com.intellij."), false)
+    doFinish(FailureResultImpl(exception))
+  }
+
+  @Synchronized
   fun notifyReadingProblems(file: VirtualFile) {
     debugLog("reading problems in $file")
   }
@@ -89,8 +92,9 @@ class MavenSyncConsole(private val myProject: Project) {
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
     val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
     startTask(mySyncId, umbrellaString)
-    mySyncView.onEvent(mySyncId, MessageEventImpl(umbrellaString, MessageEvent.Kind.ERROR, "Error", errorString, errorString))
-    addText(mySyncId, errorString, false)
+    startTask(umbrellaString, errorString)
+    addText(umbrellaString, umbrellaString, false)
+    completeTask(umbrellaString, errorString, FailureResultImpl())
   }
 
   @Synchronized
@@ -143,13 +147,13 @@ class MavenSyncConsole(private val myProject: Project) {
   private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) {
     val downloadString = SyncBundle.message("${keyPrefix}.download")
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
-    if (stackTrace != null && Registry.`is`("maven.spy.events.debug")) {
+    if (stackTrace != null) {
       addText(downloadArtifactString, stackTrace, false)
     }
     else {
       addText(downloadArtifactString, error, true)
     }
-    completeTask(downloadString, downloadArtifactString, FailureResultImpl(error))
+    completeTask(mySyncId, downloadString, FailureResultImpl(error))
   }
 
 

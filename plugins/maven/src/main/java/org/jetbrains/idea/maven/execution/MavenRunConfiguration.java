@@ -27,8 +27,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.BaseDataReader;
-import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +90,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-    return new JavaCommandLineStateImpl(env, getName());
+    JavaCommandLineState state = new JavaCommandLineStateImpl(env);
+    return state;
   }
 
   @NotNull
@@ -295,12 +294,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   private class JavaCommandLineStateImpl extends JavaCommandLineState implements RemoteConnectionCreator {
 
-    private final String myName;
     private RemoteConnectionCreator myRemoteConnectionCreator;
 
-    protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment, String name) {
+    protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment) {
       super(environment);
-      myName = name;
     }
 
     @Override
@@ -340,13 +337,13 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       else {
         ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, EXECUTE_TASK, getProject());
         DefaultBuildDescriptor descriptor =
-          new DefaultBuildDescriptor(taskId, myName, getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
+          new DefaultBuildDescriptor(taskId, "Run Maven task", getEnvironment().getProject().getBasePath(), System.currentTimeMillis());
 
         BuildView buildView = BuildViewMavenConsole.createBuildView(getProject(), console, descriptor);
 
         MavenBuildEventProcessor eventProcessor =
           new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
-        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
+        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
         buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
         return buildView;
       }
@@ -355,29 +352,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
-      OSProcessHandler result = new ColoredProcessHandler(createCommandLine()) {
-        @NotNull
-        @Override
-        protected BaseOutputReader.Options readerOptions() {
-          return new BaseOutputReader.Options() {
-            @Override
-            public BaseDataReader.SleepingPolicy policy() {
-              return BaseDataReader.SleepingPolicy.BLOCKING;
-            }
-
-            @Override
-            public boolean splitToLines() {
-              return true;
-            }
-
-            @Override
-            public boolean sendIncompleteLines() {
-              return false;
-            }
-          };
-        }
-      };
-
+      OSProcessHandler result = super.startProcess();
       result.setShouldDestroyProcessRecursively(true);
       result.addProcessListener(new ProcessAdapter() {
         @Override
@@ -413,10 +388,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
 
-  private static class MavenHandlerFilterSpyWrapper extends ProcessHandler {
+  private class MavenHandlerFilterSpyWrapper extends ProcessHandler {
     private final ProcessHandler myOriginalHandler;
 
-    MavenHandlerFilterSpyWrapper(ProcessHandler original) {
+    public MavenHandlerFilterSpyWrapper(ProcessHandler original) {
 
       myOriginalHandler = original;
     }

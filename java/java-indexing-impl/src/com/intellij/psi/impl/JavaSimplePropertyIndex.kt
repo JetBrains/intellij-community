@@ -197,7 +197,5 @@ class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>
 
   override fun dependsOnFileContent(): Boolean = true
 
-  override fun getVersion(): Int = 2
-
-  override fun hasSnapshotMapping(): Boolean = true
+  override fun getVersion(): Int = 1
 }

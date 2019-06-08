@@ -21,18 +21,13 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.DataPackBase
 import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.visible.VisiblePack
-import gnu.trove.THashSet
 
 class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, canRequestMore: Boolean,
-                             filters: VcsLogFilterCollection,
-                             fileHistory: FileHistory) : VisiblePack(dataPack, graph, canRequestMore, filters, fileHistory) {
+                                      filters: VcsLogFilterCollection,
+                                      fileHistory: FileHistory) : VisiblePack(dataPack, graph, canRequestMore, filters, fileHistory) {
 
   constructor(dataPack: DataPackBase, graph: VisibleGraph<Int>, canRequestMore: Boolean, filters: VcsLogFilterCollection,
               commitsToPaths: Map<Int, MaybeDeletedFilePath>) : this(dataPack, graph, canRequestMore, filters, FileHistory(commitsToPaths))
-
-  override fun getFilePath(rowIndex: Int): FilePath {
-    return filePath(visibleGraph.getRowInfo(rowIndex).commit) ?: FileHistoryFilterer.getFilePath(filters)!!
-  }
 
   companion object {
     val VcsLogDataPack.fileHistory: FileHistory
@@ -49,11 +44,6 @@ class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, c
 
     @JvmStatic
     fun VcsLogDataPack.isDeletedInCommit(commit: Int): Boolean = this.commitsToPathsMap[commit]?.deleted ?: false
-
-    @JvmStatic
-    fun VcsLogDataPack.filePaths(): Set<FilePath> {
-      return commitsToPathsMap.values.mapTo(THashSet(FILE_PATH_HASHING_STRATEGY)) { it.filePath }
-    }
   }
 }
 

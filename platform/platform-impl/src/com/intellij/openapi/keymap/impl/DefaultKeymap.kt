@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
@@ -84,7 +85,7 @@ open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymap
     return when (val name = keymap.name) {
       KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> "Default for macOS"
       KeymapManager.DEFAULT_IDEA_KEYMAP -> "Default for Windows"
-      KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfo.isMac) "" else " (macOS)")
+      KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
       "NetBeans 6.5" -> "NetBeans"
       else -> {
         val newName = name.removeSuffix(" (Mac OS X)").removeSuffix(" OSX")

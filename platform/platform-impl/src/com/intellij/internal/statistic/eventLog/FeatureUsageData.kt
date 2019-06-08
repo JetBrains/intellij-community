@@ -96,10 +96,8 @@ class FeatureUsageData {
     return if (SystemInfo.isLinux) "Linux" else "Other"
   }
 
-  fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
-    info?.let {
-      addPluginInfoTo(info, data)
-    }
+  fun addPluginInfo(info: PluginInfo): FeatureUsageData {
+    addPluginInfoTo(info, data)
     return this
   }
 

@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
+import com.intellij.internal.statistic.service.fus.collectors.LegacyApplicationUsageTriggers;
 import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -128,6 +129,7 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static void runLegacyDataCleanupService() {
     JobScheduler.getScheduler().schedule(() -> {
       FUStatisticsPersistence.clearLegacyStates();
+      LegacyApplicationUsageTriggers.cleanup();
     }, 1, TimeUnit.MINUTES);
   }
 

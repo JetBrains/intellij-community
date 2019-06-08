@@ -17,7 +17,6 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.projectWizard.ProjectCategory;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,7 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   private final String myId;
   private final ModuleBuilder myModuleBuilder;
   private ProjectCategory myProjectCategory;
-  private PluginInfo myPluginInfo = null;
+  private boolean mySafeToReport = false;
 
   public TemplatesGroup(String name, String description, Icon icon, int weight, String parentGroup, String id, ModuleBuilder moduleBuilder) {
     myName = name;
@@ -126,14 +125,14 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
     return myId;
   }
 
-  public PluginInfo getPluginInfo() {
+  public boolean isSafeToReport() {
     if (myModuleBuilder != null) {
-      return PluginInfoDetectorKt.getPluginInfo(myModuleBuilder.getClass());
+      return PluginInfoDetectorKt.getPluginInfo(myModuleBuilder.getClass()).isSafeToReport();
     }
-    return myPluginInfo;
+    return mySafeToReport;
   }
 
-  public void setPluginInfo(PluginInfo pluginInfo) {
-    myPluginInfo = pluginInfo;
+  public void setSafeToReport(boolean report) {
+    mySafeToReport = report;
   }
 }

@@ -6,14 +6,13 @@ import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -296,7 +295,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
               if (component instanceof MemoryUsagePanel) {
                 Rectangle r = component.getBounds();
                 r.y = 0;
-                r.width += SystemInfo.isMac ? 4 : 0;
+                r.width += SystemInfoRt.isMac ? 4 : 0;
                 r.height = target.getHeight();
                 component.setBounds(r);
               }
@@ -374,7 +373,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
 
     if (Position.LEFT == pos && panel.getComponentCount() == 0) {
-      c.setBorder(SystemInfo.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
+      c.setBorder(SystemInfoRt.isMac ? JBUI.Borders.empty(2, 0, 2, 4) : JBUI.Borders.empty());
     }
 
     panel.add(c);
@@ -487,7 +486,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       return component;
     }
     final StatusBarWidget.WidgetPresentation presentation =
-      widget.getPresentation(SystemInfo.isMac ? StatusBarWidget.PlatformType.MAC : StatusBarWidget.PlatformType.DEFAULT);
+      widget.getPresentation(SystemInfoRt.isMac ? StatusBarWidget.PlatformType.MAC : StatusBarWidget.PlatformType.DEFAULT);
     assert presentation != null : "Presentation should not be null!";
 
     JComponent wrapper;
@@ -523,9 +522,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof MouseEvent) {
-      if (myRightPanel == null) {
-        return false;
-      }
       Component component = ((MouseEvent)e).getComponent();
       if (component == null) {
         return false;
@@ -661,7 +657,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
     @Override
     public Font getFont() {
-      return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label();
+      return SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBFont.label();
     }
 
     @Override
@@ -735,12 +731,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public IdeFrame getFrame() {
     return myFrame;
-  }
-
-  @Nullable
-  @Override
-  public Project getProject() {
-    return myFrame == null ? null : myFrame.getProject();
   }
 
   @Override

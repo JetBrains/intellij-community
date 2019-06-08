@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.execution.testframework.HistoryTestRunnableState;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -22,7 +21,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.OutputStream;
 
-public class ImportedTestRunnableState implements RunProfileState, HistoryTestRunnableState {
+public class ImportedTestRunnableState implements RunProfileState {
   private final AbstractImportTestsAction.ImportRunProfile myRunProfile;
   private final File myFile;
 

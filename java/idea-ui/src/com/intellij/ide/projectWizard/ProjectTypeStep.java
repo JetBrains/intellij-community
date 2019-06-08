@@ -233,7 +233,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
           Icon icon = factory.getGroupIcon(group);
           String parentGroup = factory.getParentGroup(group);
           TemplatesGroup templatesGroup = new TemplatesGroup(group, null, icon, factory.getGroupWeight(group), parentGroup, group, null);
-          templatesGroup.setPluginInfo(PluginInfoDetectorKt.getPluginInfo(factory.getClass()));
+          templatesGroup.setSafeToReport(PluginInfoDetectorKt.getPluginInfo(factory.getClass()).isSafeToReport());
           groups.putValues(templatesGroup, values);
         }
       }
@@ -715,8 +715,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private void reportStatistics(String eventId) {
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
     FeatureUsageData data = new FeatureUsageData();
-    data.addData("projectType", group.getId());
-    data.addPluginInfo(group.getPluginInfo());
+    data.addData("projectType", group.isSafeToReport() ? group.getId() : "third.party");
     myFrameworksPanel.reportSelectedFrameworks(eventId, data);
     ModuleWizardStep step = getCustomStep();
     if (step instanceof StatisticsAwareModuleWizardStep) {

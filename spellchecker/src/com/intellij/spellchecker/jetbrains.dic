@@ -126,7 +126,6 @@ commonjs
 comonad
 comparision
 concat
-concatenable
 cond
 conda
 conf
@@ -421,7 +420,6 @@ lossy
 lucene
 lvalue
 lvalues
-LVTI
 macrodef
 mailto
 makefile

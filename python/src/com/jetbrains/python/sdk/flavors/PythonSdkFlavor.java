@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,6 +56,14 @@ public abstract class PythonSdkFlavor {
     PythonEnvUtil.addToPythonPath(envs, pythonPathList);
   }
 
+  /**
+   * @deprecated Use {@link #suggestHomePaths(Module)}. To be removed in 2019.2.
+   */
+  @Deprecated
+  public Collection<String> suggestHomePaths() {
+    return suggestHomePaths(null);
+  }
+
   public Collection<String> suggestHomePaths(@Nullable Module module) {
     return Collections.emptyList();
   }
@@ -67,13 +75,13 @@ public abstract class PythonSdkFlavor {
   public static List<PythonSdkFlavor> getApplicableFlavors(boolean addPlatformIndependent) {
     List<PythonSdkFlavor> result = new ArrayList<>();
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       result.add(ServiceManager.getService(WinPythonSdkFlavor.class));
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       result.add(MacPythonSdkFlavor.INSTANCE);
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfoRt.isUnix) {
       result.add(UnixPythonSdkFlavor.INSTANCE);
     }
 

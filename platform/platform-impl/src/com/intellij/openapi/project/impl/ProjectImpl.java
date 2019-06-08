@@ -27,6 +27,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -54,10 +56,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
-
-  /**
-   * @deprecated use {@link #getCreationTrace()}
-   */
   @Deprecated
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
   @TestOnly
@@ -83,6 +81,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
 
     getPicoContainer().registerComponentInstance(Project.class, this);
+
+    getStateStore().setPath(filePath);
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
@@ -153,7 +153,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // do not call for default project
   @NotNull
-  public final IProjectStore getStateStore() {
+  private IProjectStore getStateStore() {
     return (IProjectStore)getComponentStore();
   }
 
@@ -242,7 +242,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  public void registerComponents() {
+  @Override
+  public void init() {
+    Application application = ApplicationManager.getApplication();
+
+    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     String activityNamePrefix = activityNamePrefix();
     Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
@@ -251,19 +255,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       activity.end();
     }
 
-    Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) {
-      app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
-    }
-  }
+    init(progressIndicator, application.isUnitTestMode() ? () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this) : null);
 
-  public void init(@Nullable ProgressIndicator indicator) {
-    Application application = ApplicationManager.getApplication();
-    createComponents(indicator);
-    if (indicator != null && !application.isHeadlessEnvironment()) {
-      distributeProgress(indicator);
+    if (!application.isHeadlessEnvironment()) {
+      distributeProgress();
     }
-
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
@@ -275,7 +271,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     indicator.setFraction(getPercentageOfComponentsLoaded() / (ourClassesAreLoaded ? 10 : 2));
   }
 
-  private void distributeProgress(@NotNull ProgressIndicator indicator) {
+  private void distributeProgress() {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null) return;
+
     ModuleManager moduleManager = ModuleManager.getInstance(this);
     if (!(moduleManager instanceof ModuleManagerImpl)) {
       return;
@@ -363,7 +362,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + (myComponentStore.isComputed() ? getPresentableUrl() : "<no component store>") + "'") +
+                         : " '" + getPresentableUrl() + "'") +
            " " + myName;
   }
 

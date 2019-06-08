@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.sun.jna.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +62,7 @@ public class RunnerMediator {
   }
 
   public ProcessHandler createProcess(@NotNull final GeneralCommandLine commandLine, final boolean useSoftKill) throws ExecutionException {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       injectRunnerCommand(commandLine, false);
     }
 
@@ -71,7 +71,7 @@ public class RunnerMediator {
 
   @Nullable
   private static String getRunnerPath() {
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfoRt.isWindows) {
       throw new IllegalStateException("There is no need of runner under unix based OS");
     }
 
@@ -121,11 +121,11 @@ public class RunnerMediator {
    */
   static boolean destroyProcess(@NotNull final Process process, final boolean softKill) {
     try {
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         sendCtrlEventThroughStream(process, softKill ? C : BRK);
         return true;
       }
-      else if (SystemInfo.isUnix) {
+      else if (SystemInfoRt.isUnix) {
         if (softKill) {
           return UnixProcessManager.sendSigIntToProcessTree(process);
         }

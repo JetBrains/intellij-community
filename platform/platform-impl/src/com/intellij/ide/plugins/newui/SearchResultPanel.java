@@ -73,7 +73,7 @@ public abstract class SearchResultPanel {
     return pane;
   }
 
-  protected void setEmptyText() {
+  private void setEmptyText() {
     myPanel.getEmptyText().setText("Nothing found");
   }
 

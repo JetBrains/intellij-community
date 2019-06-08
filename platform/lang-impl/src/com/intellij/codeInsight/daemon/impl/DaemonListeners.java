@@ -312,7 +312,7 @@ public class DaemonListeners implements Disposable {
       if (!highlighter.isValid()) return;
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
       if (info != null) {
-        GotoNextErrorHandler.navigateToError(myProject, e.getEditor(), info, null);
+        GotoNextErrorHandler.navigateToError(myProject, e.getEditor(), info);
       }
     }, this);
 

@@ -7,11 +7,10 @@
   import {Component} from "vue-property-decorator"
   import {TimelineChartManager} from "./TimeLineChartManager"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
-  import {ChartManager} from "@/charts/ChartManager"
 
   @Component
-  export default class TimelineChart extends BaseChartComponent<ChartManager> {
-    async createChartManager() {
+  export default class TimelineChart extends BaseChartComponent<TimelineChartManager> {
+    createChartManager(): TimelineChartManager {
       return new TimelineChartManager(this.$refs.chartContainer as HTMLElement)
     }
   }

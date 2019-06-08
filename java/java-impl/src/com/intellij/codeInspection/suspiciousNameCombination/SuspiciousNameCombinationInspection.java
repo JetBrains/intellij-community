@@ -197,7 +197,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     protected String findItemToAdd() {
       return Messages.showInputDialog(this,
                                       InspectionsBundle.message("suspicious.name.combination.options.prompt"),
-                                      InspectionsBundle.message("suspicious.name.combination.add.title"),
+                                      InspectionsBundle.message("suspicious.name.combination.add.titile"),
                                       Messages.getQuestionIcon(), "", null);
     }
 

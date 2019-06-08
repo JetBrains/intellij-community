@@ -22,7 +22,7 @@ fun testThreadLocalPooledBlockAllocatorProvider() {
 
   allocated += PooledBlockAllocatorProvider.POOL_THRESHOLD
   provider.vendAllocator(PooledBlockAllocatorProvider.POOL_THRESHOLD).use { it.allocateBlock() }
-  assertThat(provider.byteSize).isLessThanOrEqualTo(2049)
+  assertThat(provider.byteSize).isEqualTo(allocated)
 
   provider.vendAllocator(PooledBlockAllocatorProvider.POOL_THRESHOLD + 1).use { it.allocateBlock() }
   assertThat(provider.byteSize).isLessThanOrEqualTo(allocated + 1)

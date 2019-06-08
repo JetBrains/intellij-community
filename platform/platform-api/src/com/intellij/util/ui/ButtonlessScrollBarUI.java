@@ -5,7 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -244,7 +244,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   public static boolean isMacOverlayScrollbarSupported() {
-    return SystemInfo.isMac && !Registry.is("ide.mac.disableMacScrollbars");
+    return SystemInfoRt.isMac && !Registry.is("ide.mac.disableMacScrollbars");
   }
 
   private void updateMacScrollbarStyle() {
@@ -701,7 +701,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           }
         }
       }
-      else if (SystemInfo.isMac) {
+      else if (SystemInfoRt.isMac) {
         boolean vertical = scrollbar == null || Adjustable.VERTICAL == scrollbar.getOrientation();
         bounds.x += vertical ? 1 : 0;
         bounds.y += vertical ? 0 : 1;
@@ -714,7 +714,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         bounds.width -= 2;
         bounds.height -= 2;
       }
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         int max = JBUIScale.scale(12);
         if (max < bounds.width && bounds.width < bounds.height) {
           bounds.x += (bounds.width - max) / 2;

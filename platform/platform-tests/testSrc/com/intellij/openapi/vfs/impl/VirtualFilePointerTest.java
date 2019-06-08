@@ -80,29 +80,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals(pointersBefore, pointersAfter);
   }
 
-  private VirtualFile getVirtualTempRoot() {
-    return getVirtualFile(tempDir.getRoot());
-  }
-
-  private static VirtualFile getVirtualFile(File file) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-  }
-
-  private VirtualFilePointer createPointerByFile(File file, VirtualFilePointerListener fileListener) {
-    String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()));
-    VirtualFile vFile = getVirtualFile(file);
-    return vFile == null
-           ? myVirtualFilePointerManager.create(url, disposable, fileListener)
-           : myVirtualFilePointerManager.create(vFile, disposable, fileListener);
-  }
-
-  private static void verifyPointersInCorrectState(VirtualFilePointer[] pointers) {
-    for (VirtualFilePointer pointer : pointers) {
-      VirtualFile file = pointer.getFile();
-      assertTrue(file == null || file.isValid());
-    }
-  }
-
   private static class LoggingListener implements VirtualFilePointerListener {
     final List<String> log = new ArrayList<>();
 
@@ -765,12 +742,27 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertFalse(subPtr.isValid());
   }
 
-  @Test
-  public void testCreatePointerWithCrazyUrlContainingSlashDotMustNotLeadToException() {
-    File dirToCreate = new File(tempDir.getRoot(), "ToCreate");
-
-    VirtualFilePointer dirPointer = createPointerByFile(dirToCreate, null);
-    VirtualFilePointer dirDotPointer = createPointerByFile(new File(dirToCreate, "."), null);
-    assertSame(dirDotPointer, dirPointer);
+  //<editor-fold desc="Helpers.">
+  private VirtualFile getVirtualTempRoot() {
+    return getVirtualFile(tempDir.getRoot());
   }
+
+  private static VirtualFile getVirtualFile(File file) {
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+  }
+
+  private VirtualFilePointer createPointerByFile(File file, VirtualFilePointerListener fileListener) {
+    String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(file.getPath()));
+    VirtualFile vFile = getVirtualFile(file);
+    return vFile != null ? myVirtualFilePointerManager.create(vFile, disposable, fileListener)
+                         : myVirtualFilePointerManager.create(url, disposable, fileListener);
+  }
+
+  private static void verifyPointersInCorrectState(VirtualFilePointer[] pointers) {
+    for (VirtualFilePointer pointer : pointers) {
+      VirtualFile file = pointer.getFile();
+      assertTrue(file == null || file.isValid());
+    }
+  }
+  //</editor-fold>
 }

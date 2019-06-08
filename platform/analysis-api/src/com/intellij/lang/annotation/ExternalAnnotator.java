@@ -8,24 +8,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Implemented by a custom language plugin to process the files in a language by an
+ * <p>Implemented by a custom language plugin to process the files in a language by an
  * external annotation tool ("linter"). External annotators are expected to be (relatively) slow and are started
  * after regular annotators have completed their work.</p>
  *
- * <p>Annotators work in three steps:
- * <ol>
- * <li>{@link #collectInformation(PsiFile, Editor, boolean)} is called for the annotator to collect some data about a file needed for launching a tool</li>
- * <li>collected data is passed to {@link #doAnnotate} which executes a tool and collect highlighting data</li>
- * <li>highlighting data is applied to a file by {@link #apply}</li>
- * </ol>
+ * <p>Annotators work in three steps: first, {@link #collectInformation(PsiFile, Editor, boolean)} is called
+ * for the annotator to collect some data about a file needed for launching a tool; then collected data
+ * is passed to {@link #doAnnotate} which executes a tool and collect highlighting data; finally, highlighting data
+ * is applied to a file by {@link #apply}.</p>
  *
  * @author ven
  * @see com.intellij.lang.ExternalLanguageAnnotators
  */
 public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
-  /**
-   * @see ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)
-   */
+  /** @see ExternalAnnotator#collectInformation(PsiFile, Editor, boolean) */
   @Nullable
   public InitialInfoType collectInformation(@NotNull PsiFile file) {
     return null;

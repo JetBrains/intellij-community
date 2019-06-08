@@ -366,7 +366,7 @@ public abstract class DumbService {
   public abstract boolean isAlternativeResolveEnabled();
 
   /**
-   * @deprecated Obsolete, does nothing, just executes the passed runnable.
+   * Obsolete, does nothing, just executes the passed runnable.
    *
    * @see #completeJustSubmittedTasks()
    */

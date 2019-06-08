@@ -238,9 +238,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
           String text = c.getToolTipText(myCurrentEvent);
           if (text == null || text.trim().isEmpty()) return false;
 
-          Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() :
-                                  c.getClass().getName().equals("y.view.Graph2DCanvas") ? c.getBounds() :
-                                  c.getVisibleRect();
+          Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() : c.getVisibleRect();
           if (!visibleRect.contains(getPoint())) return false;
 
           JLayeredPane layeredPane = ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class, (Component)c);

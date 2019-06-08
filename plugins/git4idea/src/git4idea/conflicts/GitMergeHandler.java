@@ -66,8 +66,8 @@ public class GitMergeHandler {
                         windowTitle, Arrays.asList(leftTitle, centerTitle, rightTitle));
   }
 
-  public void acceptOneVersion(@NotNull Collection<? extends GitConflict> conflicts,
-                               @NotNull Collection<? extends VirtualFile> reversedRoots,
+  public void acceptOneVersion(@NotNull Collection<GitConflict> conflicts,
+                               @NotNull Collection<VirtualFile> reversedRoots,
                                boolean takeTheirs) throws VcsException {
     try {
       MultiMap<VirtualFile, GitConflict> byRoot = groupConflictsByRoot(conflicts);
@@ -87,7 +87,7 @@ public class GitMergeHandler {
   }
 
   @NotNull
-  public static MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<? extends GitConflict> conflicts) {
+  public static MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<GitConflict> conflicts) {
     MultiMap<VirtualFile, GitConflict> byRoot = MultiMap.create();
     for (GitConflict conflict : conflicts) {
       byRoot.putValue(conflict.getRoot(), conflict);

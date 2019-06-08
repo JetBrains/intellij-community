@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
@@ -120,7 +120,7 @@ public final class Splash extends Window {
 
   private void setLocationInTheCenterOfScreen() {
     Rectangle bounds = getGraphicsConfiguration().getBounds();
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       JBInsets.removeFrom(bounds, ScreenUtil.getScreenInsets(getGraphicsConfiguration()));
     }
     setLocation(StartupUiUtil.getCenterPoint(bounds, getSize()));
@@ -168,11 +168,7 @@ public final class Splash extends Window {
   private void paintSlides(@NotNull Graphics g) {
     for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
       if (progressSlide.slide.getProgressRation() <= myProgress) {
-        if(progressSlide.isDrawn)
-          continue;
-
         StartupUiUtil.drawImage(g, progressSlide.image, 0, 0, null);
-        progressSlide.isDrawn = true;
       }
     }
   }
@@ -232,6 +228,4 @@ final class ProgressSlideAndImage {
     this.slide = slide;
     this.image = image;
   }
-
-  boolean isDrawn = false;
 }

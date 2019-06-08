@@ -27,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTreeUtilKt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
@@ -132,7 +131,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
    * identifiers around, or the {@code offset} is already in one.
    *
    * @param file language source for the {@link #isIdentifierPart(com.intellij.psi.PsiFile, java.lang.CharSequence, int)}
-   * @see PsiTreeUtilKt#elementsAroundOffsetUp(PsiFile, int)
    */
   public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
     CharSequence text = document.getCharsSequence();

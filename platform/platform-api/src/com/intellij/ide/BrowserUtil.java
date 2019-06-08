@@ -8,7 +8,7 @@ import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,14 +88,14 @@ public class BrowserUtil {
     if (new File(browserPathOrName).isFile()) {
       return Collections.singletonList(browserPathOrName);
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       List<String> command = newArrayList(ExecUtil.getOpenCommandPath(), "-a", browserPathOrName);
       if (newWindowIfPossible) {
         command.add("-n");
       }
       return command;
     }
-    else if (SystemInfo.isWindows) {
+    else if (SystemInfoRt.isWindows) {
       return Arrays.asList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName);
     }
     else {
@@ -109,13 +109,13 @@ public class BrowserUtil {
 
   @NotNull
   public static String getDefaultAlternativeBrowserPath() {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       return "C:\\Program Files\\Internet Explorer\\IExplore.exe";
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       return "open";
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfoRt.isUnix) {
       return "/usr/bin/firefox";
     }
     else {

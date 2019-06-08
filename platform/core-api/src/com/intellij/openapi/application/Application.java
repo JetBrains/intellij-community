@@ -421,7 +421,11 @@ public interface Application extends ComponentManager {
   AccessToken acquireReadActionLock();
 
   /**
-   * @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
+   * Returns lock used for write operations, should be closed in finally block
+   *
+   * @see #runWriteAction
+   * @see WriteAction#run(ThrowableRunnable)
+   * @see WriteAction#compute(ThrowableComputable)
    */
   @NotNull
   @Deprecated

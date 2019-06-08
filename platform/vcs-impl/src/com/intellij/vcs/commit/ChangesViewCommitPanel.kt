@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
@@ -33,7 +32,6 @@ import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupSh
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.ContainerUtil.canonicalStrategy
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -70,9 +68,7 @@ private fun JBPopup.showAbove(component: JComponent) {
   show(northWest)
 }
 
-class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
-  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
-
+class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
   private val project get() = changesView.project
 
   private val dataProviders = mutableListOf<DataProvider>()
@@ -93,15 +89,13 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     override fun actionPerformed(e: ActionEvent) = fireDefaultExecutorCalled()
   }
   private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
-    private val focusManager = IdeFocusManager.getInstance(project)
-
     init {
       background = BACKGROUND_COLOR
       optionTooltipText = getDefaultTooltip()
       isOkToProcessDefaultMnemonics = false
     }
 
-    override fun isDefaultButton(): Boolean = focusManager.getFocusedDescendantFor(rootComponent) != null
+    override fun isDefaultButton() = true
   }
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
@@ -111,17 +105,11 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
     buildLayout()
 
-    with(changesView) {
-      setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY)
-      setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
-      isShowCheckboxes = true
-    }
+    changesView.setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
 
     addInclusionListener(object : InclusionListener {
       override fun inclusionChanged() = this@ChangesViewCommitPanel.inclusionChanged()
     }, this)
-
-    setupShortcuts(rootComponent)
   }
 
   private fun buildLayout() {
@@ -132,7 +120,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     }.withBackground(BACKGROUND_COLOR)
     val centerPanel = simplePanel(commitMessage).addToBottom(buttonPanel)
 
-    addToCenter(centerPanel).addToLeft(toolbar.component)
+    addToCenter(centerPanel).addToLeft(toolbar.component).withBorder(createBorder(JBColor.border(), SideBorder.TOP))
     withPreferredHeight(85)
   }
 
@@ -149,11 +137,11 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
-  private fun setupShortcuts(component: JComponent) {
-    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, this)
+  fun setupShortcuts(component: JComponent) {
+    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component)
     DumbAwareAction.create {
       if (commitButton.isEnabled) commitButton.showPopup()
-    }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
+    }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component)
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
@@ -225,9 +213,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
 
   override fun isInclusionEmpty(): Boolean = changesView.isInclusionEmpty
-  override fun getInclusion(): Set<Any> = changesView.includedSet
   override fun clearInclusion() = changesView.clearInclusion()
-  override fun retainInclusion(items: Collection<*>) = changesView.retainInclusion(items)
   override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
 
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
@@ -243,14 +229,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   override fun startBeforeCommitChecks() = Unit
   override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
 
-  override fun dispose() {
-    with(changesView) {
-      isShowCheckboxes = false
-      setInclusionListener(null)
-      clearInclusion()
-      setInclusionHashingStrategy(canonicalStrategy())
-    }
-  }
+  override fun dispose() = Unit
 
   inner class DefaultCommitAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {

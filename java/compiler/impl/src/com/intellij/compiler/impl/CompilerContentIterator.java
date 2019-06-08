@@ -17,7 +17,6 @@ package com.intellij.compiler.impl;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +43,7 @@ public class CompilerContentIterator implements ContentIterator {
     if (fileOrDir.isDirectory()) return true;
     if (!fileOrDir.isInLocalFileSystem()) return true;
     if (myInSourceOnly && !myFileIndex.isInSourceContent(fileOrDir)) return true;
-    if (myFileType == null || FileTypeRegistry.getInstance().isFileOfType(fileOrDir, myFileType)) {
+    if (myFileType == null || myFileType == fileOrDir.getFileType()) {
       myFiles.add(fileOrDir);
     }
     return true;

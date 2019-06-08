@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -76,7 +75,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
 
     List<VirtualFile> modulesFiles = new ArrayList<>();
     for (VirtualFile file : files) {
-      if (!FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.IDEA_MODULE)) {
+      if (!file.getFileType().equals(StdFileTypes.IDEA_MODULE)) {
         return Collections.emptyList();
       }
 

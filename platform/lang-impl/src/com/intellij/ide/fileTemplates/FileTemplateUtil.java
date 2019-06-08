@@ -328,7 +328,7 @@ public class FileTemplateUtil {
 
     Map<String, Object> props_ = propsMap;
     String fileName_ = fileName;
-    String mergedText = ClassLoaderUtil.computeWithClassLoader(
+    String mergedText = ClassLoaderUtil.runWithClassLoader(
       classLoader != null ? classLoader : FileTemplateUtil.class.getClassLoader(),
       (ThrowableComputable<String, IOException>)() -> template.getText(props_));
     String templateText = StringUtil.convertLineSeparators(mergedText);

@@ -21,7 +21,6 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
 
   @NotNull
   abstract Project compute();
-
   abstract void init(Project project);
 
   @NotNull

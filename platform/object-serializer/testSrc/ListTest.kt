@@ -109,7 +109,7 @@ class ListTest {
     assertThat(file.file.readChars().trim()).isEqualToIgnoringNewLines("""
       {
         version:42,
-        formatVersion:2,
+        formatVersion:1,
         data:[
           foo,
           bar

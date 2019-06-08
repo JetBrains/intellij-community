@@ -3,7 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.ide.customize.*;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 
 import javax.swing.*;
 import java.util.List;
@@ -22,7 +22,7 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
       }
     };
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       steps.add(new CustomizeMacKeyboardLayoutStep());
     }
 

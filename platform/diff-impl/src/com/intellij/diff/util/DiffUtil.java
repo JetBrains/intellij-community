@@ -51,8 +51,10 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -159,7 +161,7 @@ public class DiffUtil {
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
     if (file != null && file.isValid()) {
-      if ((type == null || type == PlainTextFileType.INSTANCE) || FileTypeRegistry.getInstance().isFileOfType(file, type) || file instanceof LightVirtualFile) {
+      if ((type == null || type == PlainTextFileType.INSTANCE) || file.getFileType() == type || file instanceof LightVirtualFile) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
     }
@@ -188,11 +190,6 @@ public class DiffUtil {
       editor.getSettings().setTabSize(indentOptions.TAB_SIZE);
       editor.getSettings().setUseTabCharacter(indentOptions.USE_TAB_CHARACTER);
     }
-
-    Language language = content != null ? content.getUserData(DiffUserDataKeys.LANGUAGE) : null;
-    if (language == null && editor.getProject() != null) language = TextEditorImpl.getDocumentLanguage(editor);
-    editor.getSettings().setLanguage(language);
-
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
   }
@@ -427,7 +424,7 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       return "Preferences | Tools | Diff & Merge";
     }
     return "Settings | Tools | Diff & Merge";
@@ -1512,7 +1509,7 @@ public class DiffUtil {
 
   private static boolean canBeHiddenBehind(@NotNull Window window) {
     if (!(window instanceof Frame)) return false;
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       if (window instanceof IdeFrame) {
         // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
         Project project = ((IdeFrame)window).getProject();

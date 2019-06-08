@@ -85,7 +85,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
                                         @NotNull PatternTreeContext context,
                                         @NotNull LanguageFileType fileType,
                                         @NotNull Language language,
-                                        String contextId,
+                                        String contextName,
                                         @NotNull Project project,
                                         boolean physical) {
     text = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";

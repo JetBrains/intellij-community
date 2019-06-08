@@ -16,7 +16,6 @@ fun main(args: Array<String>) {
 }
 
 internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer(::println)) {
-  // required to load com.intellij.ide.plugins.newui.PluginLogo
   System.setProperty("java.awt.headless", "true")
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
@@ -34,52 +33,30 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
     }
   }
   syncDevRepo(context)
-  when {
-    !context.devIconsSyncAll && !context.iconsSyncRequired() && !context.devSyncRequired() -> log("No changes are found")
-    isUnderTeamCity() -> {
-      findCommitsToSync(context)
-      if (context.devCommitsToSync.isNotEmpty()) try {
-        push(context)
-      }
-      catch (e: Throwable) {
-        val investigator = Investigator(DEFAULT_INVESTIGATOR)
-        assignInvestigation(investigator)
-        if (context.notifySlack) callSafely {
-          notifySlackChannel(investigator, context)
-        }
-        throw e
-      }
-      if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
-        createReviewForDev(context)?.also {
-          context.createdReviews = listOf(it)
-        }
-      }
+  if (!context.devIconsSyncAll && !context.iconsSyncRequired() && !context.devSyncRequired()) {
+    if (isUnderTeamCity() && isPreviousBuildFailed()) {
+      context.doFail("No changes are found")
     }
-    else -> syncIconsRepo(context)
+    else log("No changes are found")
   }
+  else if (isUnderTeamCity()) {
+    findCommitsToSync(context)
+    createReviews(context)
+    val investigator = if (context.isFail() && context.assignInvestigation) {
+      assignInvestigation(context)
+    }
+    else null
+    if (context.notifySlack) sendNotification(investigator, context)
+  }
+  syncIconsRepo(context)
   val report = report(context, skippedDirs.size)
   if (isUnderTeamCity() &&
       (context.isFail() ||
+       // partial sync shouldn't make build successful
+       context.devIconsCommitHashesToSync.isNotEmpty() && isPreviousBuildFailed() ||
        // reviews should be created
        context.iconsCommitHashesToSync.isNotEmpty() && context.devReviews().isEmpty())) context.doFail(report)
   else log(report)
-}
-
-private fun push(context: Context) {
-  val pushedCommits = pushToIconsRepo(context)
-  if (pushedCommits.isNotEmpty() && context.notifySlack) {
-    notifySlackChannel(
-      pushedCommits.joinToString("\n") { pushedCommit ->
-        val devCommitsLinks = context.devCommitsToSync
-          .values.asSequence().flatten()
-          .filter { it.committer == pushedCommit.committer }
-          .map { slackLink("'${it.subject}'", commitUrl(UPSOURCE_DEV_PROJECT_ID, it)) }
-          .joinToString()
-        val commitUrl = commitUrl(UPSOURCE_ICONS_PROJECT_ID, pushedCommit)
-        "Icons from $devCommitsLinks are ${slackLink("synced", commitUrl)}"
-      }, context, success = true
-    )
-  }
 }
 
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
@@ -170,7 +147,7 @@ private fun searchForChangedIconsByDev(context: Context, devRepoVcsRoots: List<F
   }.sortedBy { it.timestamp }.forEach {
     val commit = it.hash
     val before = context.devChanges().size
-    changesFromCommit(it.repo, commit).forEach { (type, files) ->
+    changesFromCommit(it.repo, commit).forEach { type, files ->
       context.byDev.register(type, asIcons(files, it.repo))
     }
     if (context.devChanges().size == before) {

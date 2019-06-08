@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -31,9 +31,6 @@ public class IdTableBuilding {
 
   private static final Map<FileType, IdIndexer> ourIdIndexers = new HashMap<>();
 
-  /**
-   * @deprecated use EP {@code com.intellij.idIndexer}
-   */
   @Deprecated
   public static void registerIdIndexer(@NotNull FileType fileType, FileTypeIdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);

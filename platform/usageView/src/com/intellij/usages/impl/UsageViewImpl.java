@@ -100,7 +100,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this, getUsageViewSettings());
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
+  private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
   public static final UsageNode NULL_NODE = new UsageNode(null, NullUsage.INSTANCE);
   private final ButtonPanel myButtonPanel;
@@ -289,7 +289,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       });
     }
-    myExclusionHandler = new ExclusionHandlerEx<DefaultMutableTreeNode>() {
+    myExclusionHandler = new ExclusionHandler<DefaultMutableTreeNode>() {
       @Override
       public boolean isNodeExclusionAvailable(@NotNull DefaultMutableTreeNode node) {
         return node instanceof UsageNode;
@@ -305,15 +305,7 @@ public class UsageViewImpl implements UsageViewEx {
         Set<Node> nodes = new HashSet<>();
         collectAllChildNodes(node, nodes);
         collectParentNodes(node, true, nodes);
-        setExcludeNodes(nodes, true, true);
-      }
-
-      @Override
-      public void excludeNodeSilently(@NotNull DefaultMutableTreeNode node) {
-        Set<Node> nodes = new HashSet<>();
-        collectAllChildNodes(node, nodes);
-        collectParentNodes(node, true, nodes);
-        setExcludeNodes(nodes, true, false);
+        setExcludeNodes(nodes, true);
       }
 
       // include the parent if its all children (except the "node" itself) excluded flags are "almostAllChildrenExcluded"
@@ -333,7 +325,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
 
-      private void setExcludeNodes(@NotNull Set<? extends Node> nodes, boolean excluded, boolean updateImmediately) {
+      private void setExcludeNodes(@NotNull Set<? extends Node> nodes, boolean excluded) {
         Set<Usage> affectedUsages = new LinkedHashSet<>();
         for (Node node : nodes) {
           Object userObject = node.getUserObject();
@@ -342,13 +334,10 @@ public class UsageViewImpl implements UsageViewEx {
           }
           node.setExcluded(excluded, edtNodeChangedQueue);
         }
+        updateImmediatelyNodesUpToRoot(nodes);
 
-        if (updateImmediately) {
-          updateImmediatelyNodesUpToRoot(nodes);
-
-          for (ExcludeListener listener : myExcludeListeners) {
-            listener.fireExcluded(affectedUsages, excluded);
-          }
+        for (ExcludeListener listener : myExcludeListeners) {
+          listener.fireExcluded(affectedUsages, excluded);
         }
       }
 
@@ -357,7 +346,7 @@ public class UsageViewImpl implements UsageViewEx {
         Set<Node> nodes = new HashSet<>();
         collectAllChildNodes(node, nodes);
         collectParentNodes(node, false, nodes);
-        setExcludeNodes(nodes, false, true);
+        setExcludeNodes(nodes, false);
       }
 
       @Override
@@ -1188,20 +1177,8 @@ public class UsageViewImpl implements UsageViewEx {
       return null;
     }
 
-    for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
-      listener.beforeUsageAdded(usage);
-    }
-
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeInsertedUnderQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
-
-    if (child != null && getPresentation().isExcludeAvailable()) {
-      for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
-        if (listener.isExcludedByDefault(this, usage)) {
-          myExclusionHandler.excludeNodeSilently(child);
-        }
-      }
-    }
 
     for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
       node.update(this, edtNodeChangedQueue);
@@ -1521,7 +1498,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void addButtonToLowerPane(@NotNull Action action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int index = myButtonPanel.getComponentCount();
-    if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
+    if (!SystemInfoRt.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonAction(index, action);
     Object o = action.getValue(Action.ACCELERATOR_KEY);
     if (o instanceof KeyStroke) {
@@ -2193,9 +2170,5 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
     return toSelect;
-  }
-
-  private interface ExclusionHandlerEx<Node> extends ExclusionHandler<Node> {
-    void excludeNodeSilently(@NotNull Node node);
   }
 }

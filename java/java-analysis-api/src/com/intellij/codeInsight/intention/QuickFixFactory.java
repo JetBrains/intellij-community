@@ -508,12 +508,9 @@ public abstract class QuickFixFactory {
     throw new AbstractMethodError();
   }
 
-  @NotNull
   public abstract IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases);
 
-  @NotNull
   public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @Nullable String message);
 
-  @Nullable
-  public abstract IntentionAction createCollapseAnnotationsFix(@NotNull PsiAnnotation annotation);
+  public abstract IntentionAction createCollapseAnnotationsFix(PsiAnnotation annotation);
 }

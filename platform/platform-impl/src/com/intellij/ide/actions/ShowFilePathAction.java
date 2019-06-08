@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
@@ -88,8 +89,8 @@ public class ShowFilePathAction extends DumbAwareAction {
     @NotNull
     @Override
     protected String compute() {
-      if (SystemInfo.isMac) return "Finder";
-      if (SystemInfo.isWindows) return "Explorer";
+      if (SystemInfoRt.isMac) return "Finder";
+      if (SystemInfoRt.isWindows) return "Explorer";
       return readDesktopEntryKey("Name").orElse("File Manager");
     }
   };
@@ -129,7 +130,7 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean visible = !SystemInfo.isMac && isSupported();
+    boolean visible = !SystemInfoRt.isMac && isSupported();
     e.getPresentation().setVisible(visible);
     if (visible) {
       VirtualFile file = getFile(e);
@@ -194,7 +195,7 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   private static String getPresentableUrl(VirtualFile file) {
     String url = file.getPresentableUrl();
-    if (file.getParent() == null && SystemInfo.isWindows) url += "\\";
+    if (file.getParent() == null && SystemInfoRt.isWindows) url += "\\";
     return url;
   }
 
@@ -220,7 +221,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.hasXdgOpen() ||
+    return SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfo.hasXdgOpen() ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
@@ -268,10 +269,10 @@ public class ShowFilePathAction extends DumbAwareAction {
     String dir = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_dir.getPath()));
     String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       spawn(toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"');
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       if (toSelect != null) {
         spawn("open", "-R", toSelect);
       }
@@ -287,7 +288,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       LOG.debug("opening " + dir + " via Desktop API");
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      AppExecutorUtil.getAppExecutorService().submit(() -> {
         try {
           Desktop.getDesktop().open(new File(dir));
         }
@@ -318,10 +319,10 @@ public class ShowFilePathAction extends DumbAwareAction {
   private static void spawn(String... command) {
     LOG.debug(Arrays.toString(command));
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    AppExecutorUtil.getAppExecutorService().submit(() -> {
       try {
         CapturingProcessHandler handler;
-        if (SystemInfo.isWindows) {
+        if (SystemInfoRt.isWindows) {
           Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
           handler = new CapturingProcessHandler(process, null, command[0]);
         }

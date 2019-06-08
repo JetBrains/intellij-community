@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.obj
 import java.util.concurrent.TimeUnit
@@ -76,21 +75,12 @@ internal fun writeServiceStats(writer: JsonGenerator) {
 
   writer.obj("stats") {
     writer.writeNumberField("plugin", plugins.size)
+
     for (statItem in listOf(component, service)) {
       writer.obj(statItem.name) {
         writer.writeNumberField("app", statItem.app)
         writer.writeNumberField("project", statItem.project)
         writer.writeNumberField("module", statItem.module)
-      }
-    }
-
-    writer.obj("loadedClasses") {
-      for (plugin in plugins) {
-        val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginClassLoader ?: continue
-        val classCount = classLoader.loadedClassCount
-        if (classCount > 0) {
-          writer.writeNumberField(plugin.pluginId.idString, classCount)
-        }
       }
     }
   }

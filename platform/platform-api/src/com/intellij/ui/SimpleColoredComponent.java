@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
@@ -930,7 +930,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     if (attributes.isBoldDottedLine()) {
-      final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
+      final int dottedAt = SystemInfoRt.isMac ? textBaseline : textBaseline + 1;
       final Color lineColor = attributes.getWaveColor();
       UIUtil.drawBoldDottedLine(g, offset, offset + fragmentWidth, dottedAt, attributes.getBgColor(), lineColor, isOpaque());
     }

@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -34,7 +33,6 @@ public class MixinMemberContributor {
 
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     if (aClass == null) return true;
-    if (aClass.getLanguage() != GroovyLanguage.INSTANCE) return true;
 
     final PsiModifierList modifierList = aClass.getModifierList();
     if (modifierList == null) return true;

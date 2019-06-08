@@ -21,15 +21,19 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.CompressionUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DigestUtil;
+import com.intellij.util.io.PersistentHashMapValueStorage;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.Map;
 
@@ -78,16 +82,6 @@ public class SerializedStubTree {
     }
   }
 
-  @NotNull
-  public SerializedStubTree reSerialize(@NotNull SerializationManagerImpl currentSerializationManager,
-                                        @NotNull SerializationManagerImpl newSerializationManager) throws IOException {
-    BufferExposingByteArrayOutputStream outStub = new BufferExposingByteArrayOutputStream();
-    currentSerializationManager.reSerialize(new ByteArrayInputStream(myBytes, 0, myLength), outStub, newSerializationManager);
-    SerializedStubTree reSerialized = new SerializedStubTree(outStub.getInternalBuffer(), outStub.size(), null);
-    reSerialized.setIndexedStubs(getIndexedStubs());
-    return reSerialized;
-  }
-
   // willIndexStub is one time optimization hint, once can safely pass false
   @NotNull
   public Stub getStub(boolean willIndexStub) throws SerializerNotFoundException {
@@ -106,18 +100,28 @@ public class SerializedStubTree {
     return serializationManager.deserialize(new UnsyncByteArrayInputStream(myBytes));
   }
 
-  public void indexTree() throws SerializerNotFoundException {
+  void indexTree() throws SerializerNotFoundException {
     ObjectStubBase root = (ObjectStubBase)getStub(true);
-    myIndexedStubs = new IndexedStubs(calculateHash(myBytes, myLength), indexTree(root));
+    ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
+                                    new ObjectStubTree(root, false);
+    Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
+
+    // xxx:fix refs inplace
+    for (StubIndexKey key : map.keySet()) {
+      Map<Object, int[]> value = map.get(key);
+      for (Object k : value.keySet()) {
+        int[] ints = value.get(k);
+        StubIdList stubList = ints.length == 1 ? new StubIdList(ints[0]) : new StubIdList(ints, ints.length);
+        ((Map<Object, StubIdList>)(Map)value).put(k, stubList);
+      }
+    }
+
+    myIndexedStubs = new IndexedStubs(calculateHash(myBytes), (Map)map);
   }
 
   @NotNull
   IndexedStubs getIndexedStubs() {
     return myIndexedStubs;
-  }
-
-  void setIndexedStubs(@NotNull IndexedStubs indexedStubs) {
-    myIndexedStubs = indexedStubs;
   }
 
   public boolean equals(final Object that) {
@@ -172,27 +176,9 @@ public class SerializedStubTree {
   }
 
   @NotNull
-  static Map<StubIndexKey, Map<Object, StubIdList>> indexTree(@NotNull Stub root) {
-    ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
-                                    new ObjectStubTree((ObjectStubBase)root, false);
-    Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
-
-    // xxx:fix refs inplace
-    for (StubIndexKey key : map.keySet()) {
-      Map<Object, int[]> value = map.get(key);
-      for (Object k : value.keySet()) {
-        int[] ints = value.get(k);
-        StubIdList stubList = ints.length == 1 ? new StubIdList(ints[0]) : new StubIdList(ints, ints.length);
-        ((Map<Object, StubIdList>)(Map)value).put(k, stubList);
-      }
-    }
-    return (Map<StubIndexKey, Map<Object, StubIdList>>)(Map)map;
-  }
-
-  @NotNull
-  private static byte[] calculateHash(@NotNull byte[] content, int length) {
+  private static byte[] calculateHash(@NotNull byte[] content) {
     MessageDigest digest = HASHER.getValue();
-    digest.update(content, 0, length);
+    digest.update(content);
     return digest.digest();
   }
 
