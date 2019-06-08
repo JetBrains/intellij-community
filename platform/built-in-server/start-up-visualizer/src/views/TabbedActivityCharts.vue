@@ -17,7 +17,7 @@
 <script lang="ts">
   import {Component, Vue, Watch} from "vue-property-decorator"
   import {Location} from "vue-router"
-  import TimelineChart from "@/views/TimelineChart.vue"
+  import TimelineChart from "@/timeline/TimelineChart.vue"
   import StatsChart from "@/views/StatsChart.vue"
 
   const DEFAULT_ACTIVE_TAB = "timeline"

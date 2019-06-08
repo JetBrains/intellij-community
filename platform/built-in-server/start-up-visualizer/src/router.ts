@@ -5,7 +5,7 @@ import {Notification} from "element-ui"
 import Main from "@/views/Main.vue"
 import ItemChart from "@/charts/ActivityChart.vue"
 import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
-import TimelineChart from "@/views/TimelineChart.vue"
+import TimelineChart from "@/timeline/TimelineChart.vue"
 
 Vue.use(Router)
 

@@ -5,7 +5,7 @@
 
 <script lang="ts">
   import {Component} from "vue-property-decorator"
-  import {TimelineChartManager} from "@/charts/TimeLineChartManager"
+  import {TimelineChartManager} from "./TimeLineChartManager"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
 
   @Component

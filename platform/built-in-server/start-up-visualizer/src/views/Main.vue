@@ -12,7 +12,7 @@
       </el-col>
     </el-row>
 
-    <TabbedInfoCharts/>
+    <TabbedActivityCharts/>
     <TabbedCharts/>
 
     <el-row>
@@ -34,9 +34,9 @@
   import {Component, Vue} from "vue-property-decorator"
   import InputForm from "@/views/InputForm.vue"
   import TabbedCharts from "@/views/TabbedCharts.vue"
-  import TabbedInfoCharts from "@/views/TabbedInfoCharts.vue"
+  import TabbedActivityCharts from "@/views/TabbedActivityCharts.vue"
 
-  @Component({components: {TabbedInfoCharts, InputForm, TabbedCharts}})
+  @Component({components: {TabbedActivityCharts, InputForm, TabbedCharts}})
   export default class Main extends Vue {
   }
 </script>
