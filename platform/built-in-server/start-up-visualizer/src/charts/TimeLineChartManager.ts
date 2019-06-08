@@ -4,7 +4,7 @@ import * as am4core from "@amcharts/amcharts4/core"
 import {disableGridButKeepBorderLines, TimeLineItem, transformToTimeLineItems} from "./timeLineChartHelper"
 import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
-import {Item} from "@/state/data"
+import {InputData, Item} from "@/state/data"
 
 export class TimelineChartManager extends XYChartManager {
   private maxRowIndex = 0
@@ -109,6 +109,31 @@ export class TimelineChartManager extends XYChartManager {
 
     const durationAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     durationAxis.max = Math.max(data.data.totalDurationComputed, data.data.totalDurationActual)
+
+    this.computeRangeMarkers(data.data)
+  }
+
+  private computeRangeMarkers(data: InputData) {
+    const nameAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
+    nameAxis.axisRanges.clear()
+
+    const guides: Array<TimeLineGuide> = []
+    for (const item of data.prepareAppInitActivities) {
+      if (item.name === "splash initialization") {
+        guides.push({label: "splash initialization", value: item.start})
+      }
+    }
+
+    if (guides.length === 0) {
+      return
+    }
+
+
+    for (const guide of guides) {
+      const range = nameAxis.axisRanges.create()
+      this.configureRangeMarker(range, guide.label)
+      range.value = guide.value
+    }
   }
 
   private setStatsLabel(data: DataManager) {
@@ -159,4 +184,9 @@ export class TimelineChartManager extends XYChartManager {
     items.sort((a, b) => a.rowIndex - b.rowIndex)
     return items
   }
+}
+
+interface TimeLineGuide {
+  readonly value: number
+  readonly label: string
 }

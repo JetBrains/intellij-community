@@ -55,4 +55,22 @@ export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart>
   }
 
   abstract render(data: DataManager): void
+
+  protected configureRangeMarker(range: am4charts.AxisDataItem, label: string): void {
+    range.label.inside = true
+    range.label.horizontalCenter = "middle"
+    range.label.valign = "bottom"
+    range.label.text = label
+    range.grid.stroke = am4core.color("#000000")
+    range.grid.strokeDasharray = "2,2"
+    range.grid.strokeOpacity = 1
+
+    range.label.adapter.add("dy", (_y, _target) => {
+      return -this.chart.yAxes.getIndex(0)!!.pixelHeight
+    })
+    range.label.adapter.add("x", (x, _target) => {
+      const rangePoint = range.point
+      return rangePoint == null ? x : rangePoint.x
+    })
+  }
 }

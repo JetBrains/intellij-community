@@ -228,30 +228,12 @@ export class ActivityChartManager extends XYChartManager {
     for (const guideLineDescriptor of data.computeGuides(items)) {
       // do not add range marker if equals to first item - it means that all items beyond of phase (e.g. project post-startup activities)
       if (guideLineDescriptor.item !== items[0]) {
-        this.createRangeMarker(nameAxis, guideLineDescriptor.item as ClassItem, guideLineDescriptor.label)
+        const range = nameAxis.axisRanges.create()
+        this.configureRangeMarker(range, guideLineDescriptor.label)
+        range.category = (guideLineDescriptor.item as ClassItem).shortName
+        range.label.rotation = 0
       }
     }
-  }
-
-  private createRangeMarker(axis: am4charts.CategoryAxis, item: ClassItem, label: string): void {
-    const range = axis.axisRanges.create()
-    range.category = item.shortName
-    range.label.inside = true
-    range.label.horizontalCenter = "middle"
-    range.label.valign = "bottom"
-    range.label.text = label
-    range.label.rotation = 0
-    range.grid.stroke = am4core.color("#000000")
-    range.grid.strokeDasharray = "2,2"
-    range.grid.strokeOpacity = 1
-
-    range.label.adapter.add("dy", (_y, _target) => {
-      return -this.chart.yAxes.getIndex(0)!!.pixelHeight
-    })
-    range.label.adapter.add("x", (x, _target) => {
-      const rangePoint = range.point
-      return rangePoint == null ? x : rangePoint.x
-    })
   }
 }
 
