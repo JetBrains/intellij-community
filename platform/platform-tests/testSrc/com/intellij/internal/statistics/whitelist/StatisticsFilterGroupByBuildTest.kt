@@ -1,19 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistics.whitelist
 
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
-import com.intellij.openapi.util.BuildNumber
+import org.junit.Assert
 import org.junit.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class FeatureStatisticsWhitelistTest {
+class StatisticsFilterGroupByBuildTest {
 
-  private fun doTest(content: String, build: String, vararg expected: String) {
-    val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content, BuildNumber.fromString(build))
-    assertEquals(expected.size, actual.size)
+  private fun doTestAccepted(content: String, build: String, vararg expected: String) {
+    val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content)
     for (e in expected) {
-      assertTrue(actual.accepts(e, 4))
+      Assert.assertTrue(actual.accepts(e, "4", build))
+    }
+  }
+
+  private fun doTestRejected(content: String, build: String, vararg expected: String) {
+    val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content)
+    for (e in expected) {
+      Assert.assertFalse(actual.accepts(e, "4", build))
     }
   }
 
@@ -38,7 +44,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4284.118", "test.group.id")
+    doTestAccepted(content, "IU-173.4284.118", "test.group.id")
   }
 
   @Test
@@ -61,7 +67,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4284.118", "test.group.id")
+    doTestAccepted(content, "IU-173.4284.118", "test.group.id")
   }
 
   @Test
@@ -81,7 +87,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4284.118", "test.group.id")
+    doTestAccepted(content, "IU-173.4284.118", "test.group.id")
   }
 
   @Test
@@ -101,7 +107,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4284.128", "test.group.id")
+    doTestAccepted(content, "IU-173.4284.128", "test.group.id")
   }
 
   @Test
@@ -121,7 +127,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4285.118", "test.group.id")
+    doTestAccepted(content, "IU-173.4285.118", "test.group.id")
   }
 
   @Test
@@ -141,7 +147,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4285", "test.group.id")
+    doTestAccepted(content, "IU-173.4285", "test.group.id")
   }
 
   @Test
@@ -161,7 +167,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-182.4280.118", "test.group.id")
+    doTestAccepted(content, "IU-182.4280.118", "test.group.id")
   }
 
   @Test
@@ -181,7 +187,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-182.4280", "test.group.id")
+    doTestAccepted(content, "IU-182.4280", "test.group.id")
   }
 
   @Test
@@ -201,7 +207,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-182", "test.group.id")
+    doTestAccepted(content, "IU-182", "test.group.id")
   }
 
   @Test
@@ -221,7 +227,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4284.10")
+    doTestRejected(content, "IU-173.4284.10", "test.group.id")
   }
 
   @Test
@@ -241,7 +247,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.428.118")
+    doTestRejected(content, "IU-173.428.118", "test.group.id")
   }
 
   @Test
@@ -261,7 +267,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.428")
+    doTestRejected(content, "IU-173.428", "test.group.id")
   }
 
   @Test
@@ -281,7 +287,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-172.4284.118")
+    doTestRejected(content, "IU-172.4284.118", "test.group.id")
   }
 
   @Test
@@ -301,7 +307,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-172.4284")
+    doTestRejected(content, "IU-172.4284", "test.group.id")
   }
 
   @Test
@@ -321,7 +327,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-172")
+    doTestRejected(content, "IU-172", "test.group.id")
   }
 
   @Test
@@ -342,7 +348,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4495.123")
+    doTestRejected(content, "IU-173.4495.123", "test.group.id")
   }
 
   @Test
@@ -363,7 +369,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4495.128")
+    doTestRejected(content, "IU-173.4495.128", "test.group.id")
   }
 
   @Test
@@ -384,7 +390,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4595.123")
+    doTestRejected(content, "IU-173.4595.123", "test.group.id")
   }
 
   @Test
@@ -405,7 +411,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4595")
+    doTestRejected(content, "IU-173.4595", "test.group.id")
   }
 
   @Test
@@ -426,7 +432,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-182.4495.123")
+    doTestRejected(content, "IU-182.4495.123", "test.group.id")
   }
 
   @Test
@@ -447,7 +453,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-182.4495")
+    doTestRejected(content, "IU-182.4495", "test.group.id")
   }
 
   @Test
@@ -468,7 +474,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-182")
+    doTestRejected(content, "IU-182", "test.group.id")
   }
 
   @Test
@@ -489,7 +495,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4495.11", "test.group.id")
+    doTestAccepted(content, "IU-173.4495.11", "test.group.id")
   }
 
   @Test
@@ -510,7 +516,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4384.123", "test.group.id")
+    doTestAccepted(content, "IU-173.4384.123", "test.group.id")
   }
 
   @Test
@@ -531,7 +537,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.4384", "test.group.id")
+    doTestAccepted(content, "IU-173.4384", "test.group.id")
   }
 
   @Test
@@ -552,7 +558,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-181.4284.118", "test.group.id")
+    doTestAccepted(content, "IU-181.4284.118", "test.group.id")
   }
 
   @Test
@@ -573,7 +579,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-181.4284", "test.group.id")
+    doTestAccepted(content, "IU-181.4284", "test.group.id")
   }
 
   @Test
@@ -594,7 +600,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-181", "test.group.id")
+    doTestAccepted(content, "IU-181", "test.group.id")
   }
 
   @Test
@@ -615,7 +621,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.1428.118", "test.group.id")
+    doTestAccepted(content, "IU-173.1428.118", "test.group.id")
   }
 
   @Test
@@ -635,7 +641,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-173.1428.118", "test.group.id")
+    doTestAccepted(content, "IU-173.1428.118", "test.group.id")
   }
 
   @Test
@@ -656,7 +662,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-183.495.123", "test.group.id")
+    doTestAccepted(content, "IU-183.495.123", "test.group.id")
   }
 
   @Test
@@ -676,7 +682,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IU-183.495.123", "test.group.id")
+    doTestAccepted(content, "IU-183.495.123", "test.group.id")
   }
 
   @Test
@@ -696,7 +702,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "PS-183.2495", "test.group.id")
+    doTestAccepted(content, "PS-183.2495", "test.group.id")
   }
 
   @Test
@@ -716,7 +722,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.2495", "test.group.id")
+    doTestAccepted(content, "183.2495", "test.group.id")
   }
 
   @Test
@@ -736,7 +742,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1495", "test.group.id")
+    doTestAccepted(content, "183.1495", "test.group.id")
   }
 
   @Test
@@ -756,7 +762,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1495.245", "test.group.id")
+    doTestAccepted(content, "183.1495.245", "test.group.id")
   }
 
   @Test
@@ -776,7 +782,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1495")
+    doTestRejected(content, "183.1495", "test.group.id")
   }
 
   @Test
@@ -796,7 +802,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1495", "test.group.id")
+    doTestAccepted(content, "183.1495", "test.group.id")
   }
 
   @Test
@@ -816,7 +822,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1495.0", "test.group.id")
+    doTestAccepted(content, "183.1495.0", "test.group.id")
   }
 
   @Test
@@ -836,7 +842,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1495.12", "test.group.id")
+    doTestAccepted(content, "183.1495.12", "test.group.id")
   }
 
   @Test
@@ -856,7 +862,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1495")
+    doTestRejected(content, "183.1495", "test.group.id")
   }
 
   @Test
@@ -877,7 +883,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.4885")
+    doTestRejected(content, "183.4885", "test.group.id")
   }
 
   @Test
@@ -898,7 +904,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.4885.35")
+    doTestRejected(content, "183.4885.35", "test.group.id")
   }
 
   @Test
@@ -919,7 +925,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.4884.35", "test.group.id")
+    doTestAccepted(content, "183.4884.35", "test.group.id")
   }
 
   @Test
@@ -940,7 +946,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.4884", "test.group.id")
+    doTestAccepted(content, "183.4884", "test.group.id")
   }
 
   @Test
@@ -960,7 +966,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IC-191.SNAPSHOT", "test.group.id")
+    doTestAccepted(content, "IC-191.SNAPSHOT", "test.group.id")
   }
 
   @Test
@@ -980,7 +986,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IC-183.0")
+    doTestRejected(content, "IC-183.0", "test.group.id")
   }
 
   @Test
@@ -1000,7 +1006,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "IC-181.0")
+    doTestRejected(content, "IC-181.0", "test.group.id")
   }
 
   @Test
@@ -1020,7 +1026,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "PY-191.0", "test.group.id")
+    doTestAccepted(content, "PY-191.0", "test.group.id")
   }
 
   @Test
@@ -1041,7 +1047,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "PY-191.0")
+    doTestRejected(content, "PY-191.0", "test.group.id")
   }
 
   @Test
@@ -1062,7 +1068,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "PY-191.0", "test.group.id")
+    doTestAccepted(content, "PY-191.0", "test.group.id")
   }
 
   @Test
@@ -1083,7 +1089,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "PY-191.0")
+    doTestRejected(content, "PY-191.0", "test.group.id")
   }
 
   @Test
@@ -1104,7 +1110,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "PY-183.0")
+    doTestRejected(content, "PY-183.0", "test.group.id")
   }
 
   @Test
@@ -1128,7 +1134,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "PY-182.2435", "test.group.id")
+    doTestAccepted(content, "PY-182.2435", "test.group.id")
   }
 
   @Test
@@ -1155,7 +1161,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.200", "test.group.id")
+    doTestAccepted(content, "183.200", "test.group.id")
   }
 
   @Test
@@ -1182,7 +1188,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.2200", "test.group.id")
+    doTestAccepted(content, "183.2200", "test.group.id")
   }
 
   @Test
@@ -1209,7 +1215,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.3421")
+    doTestRejected(content, "183.3421", "test.group.id")
   }
 
   @Test
@@ -1236,7 +1242,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "182.421.123")
+    doTestRejected(content, "182.421.123", "test.group.id")
   }
 
   @Test
@@ -1263,7 +1269,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.45.12")
+    doTestRejected(content, "183.45.12", "test.group.id")
   }
 
   @Test
@@ -1289,7 +1295,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.2145", "test.group.id")
+    doTestAccepted(content, "183.2145", "test.group.id")
   }
 
   @Test
@@ -1314,7 +1320,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "182.2145", "test.group.id")
+    doTestAccepted(content, "182.2145", "test.group.id")
   }
 
   @Test
@@ -1335,7 +1341,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1145")
+    doTestRejected(content, "183.1145", "test.group.id")
   }
 
   @Test
@@ -1367,7 +1373,8 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1456.23", "test.group.id")
+    doTestAccepted(content, "183.1456.23", "test.group.id")
+    doTestRejected(content, "183.1456.23", "second.test.group.id")
   }
 
   @Test
@@ -1399,7 +1406,8 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "182.1056", "second.test.group.id")
+    doTestAccepted(content, "182.1056", "second.test.group.id")
+    doTestRejected(content, "182.1056", "test.group.id")
   }
 
   @Test
@@ -1431,7 +1439,7 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "183.1056", "test.group.id", "second.test.group.id")
+    doTestAccepted(content, "183.1056", "test.group.id", "second.test.group.id")
   }
 
   @Test
@@ -1463,6 +1471,6 @@ class FeatureStatisticsWhitelistTest {
   }]
 }
     """
-    doTest(content, "182.56")
+    doTestRejected(content, "182.56", "test.group.id", "second.test.group.id")
   }
 }

@@ -1,25 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics
+package com.intellij.internal.statistics.whitelist
 
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistics.WhitelistBuilder
 import com.intellij.openapi.util.BuildNumber
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class FeatureStatisticsWhitelistWithVersionTest {
+class StatisticsParseWhitelistWithVersionTest {
 
   private fun doTest(content: String, expected: FUSWhitelist) {
-    val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content, BuildNumber.fromString("191.0"))
+    val actual = FUStatisticsWhiteListGroupsService.parseApprovedGroups(content)
     assertEquals(expected.size, actual.size)
     assertEquals(expected, actual)
   }
 
-  private fun newVersion(from: Int, to: Int): FUSWhitelist.VersionRange {
-    val range = FUSWhitelist.VersionRange()
-    range.from = from
-    range.to = to
-    return range
+  private fun newBuild(vararg args: Int): BuildNumber {
+    return BuildNumber("", *args)
   }
 
   @Test
@@ -43,7 +41,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(3, 5)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 3, 5).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -66,7 +67,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(3, Int.MAX_VALUE)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 3, Int.MAX_VALUE).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -89,7 +93,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(0, 13)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 0, 13).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -111,7 +118,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(0, Int.MAX_VALUE)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 0, Int.MAX_VALUE).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -132,7 +142,9 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id").build())
+    val whitelist = WhitelistBuilder().
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -159,7 +171,11 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(1, 5), newVersion(6, 7)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 1, 5).
+      addVersion("test.group.id", 6, 7).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -186,7 +202,11 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(1, 8), newVersion(6, 7)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 1, 8).
+      addVersion("test.group.id", 6, 7).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -211,7 +231,11 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(0, 8), newVersion(8, Int.MAX_VALUE)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 0, 8).
+      addVersion("test.group.id", 8, Int.MAX_VALUE).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -235,7 +259,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(13, 8)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 13, 8).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -257,7 +284,9 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(3, 8)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 3, 8)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -297,7 +326,9 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(3, 8)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 3, 8)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -338,7 +369,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(Int.MAX_VALUE, 5)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", Int.MAX_VALUE, 5).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -362,7 +396,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(3, 0)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 3, 0).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -386,7 +423,10 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(Int.MAX_VALUE, 5)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", Int.MAX_VALUE, 5).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 
   @Test
@@ -410,6 +450,9 @@ class FeatureStatisticsWhitelistWithVersionTest {
   }]
 }
     """
-    doTest(content, WhitelistBuilder().add("test.group.id", newVersion(3, 0)).build())
+    val whitelist = WhitelistBuilder().
+      addVersion("test.group.id", 3, 0).
+      addBuild("test.group.id", newBuild(173, 4284, 118), null)
+    doTest(content, whitelist.build())
   }
 }
