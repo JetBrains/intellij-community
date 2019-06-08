@@ -421,9 +421,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDialog.getWindow().setAutoRequestFocus(!Registry.is("suppress.focus.stealing"));
 
-    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
-    if (tb != null)
-      myDisposeActions.add(() -> Disposer.dispose(tb));
+    if (SystemInfoRt.isMac) {
+      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
+      if (tb != null) {
+        myDisposeActions.add(() -> Disposer.dispose(tb));
+      }
+    }
 
     try {
       myDialog.show();
@@ -433,7 +436,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         commandProcessor.leaveModal();
         if (perProjectModality) {
           LaterInvocator.leaveModal(project, myDialog.getWindow());
-        } else {
+        }
+        else {
           LaterInvocator.leaveModal(myDialog);
         }
       }

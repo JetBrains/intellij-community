@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -63,6 +64,10 @@ public final class TouchBarsManager {
       registerEditor(editor);
     }
 
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      registerProject(project);
+    }
+
     isInitialized = true;
 
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
@@ -80,42 +85,7 @@ public final class TouchBarsManager {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        // System.out.println("opened project " + project + ", set default touchbar");
-
-        final ProjectData pd = new ProjectData(project);
-        synchronized (ourProjectData) {
-          final ProjectData prev = ourProjectData.put(project, pd);
-          if (prev != null) {
-            LOG.error("previous project data wasn't removed: " + project);
-            prev.releaseAll();
-          }
-        }
-
-        StartupManager.getInstance(project).registerPostStartupActivity(() -> pd.get(BarType.DEFAULT).show());
-
-        project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
-          @Override
-          public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-            ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
-          }
-          @Override
-          public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-            // TODO: probably, need to remove debugger-panel from stack completely
-            final String twid = env.getExecutor().getToolWindowId();
-            ourStack.pop(topContainer -> {
-              if (topContainer.getType() != BarType.DEBUGGER)
-                return false;
-
-              if (!ToolWindowId.DEBUG.equals(twid) && !ToolWindowId.RUN_DASHBOARD.equals(twid) && !ToolWindowId.SERVICES.equals(twid))
-                return false;
-
-              // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
-              return !_hasAnyActiveSession(project, handler) || pd.getDbgSessions() <= 0;
-            });
-            ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
-          }
-        });
+        registerProject(project);
       }
 
       @Override
@@ -140,11 +110,59 @@ public final class TouchBarsManager {
     _initExecutorsGroup();
   }
 
-  public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
+  private static void registerProject(@NotNull Project project) {
+    if (project.isDisposed()) {
+      return;
+    }
+
+    // System.out.println("opened project " + project + ", set default touchbar");
+
+    final ProjectData projectData = new ProjectData(project);
+    synchronized (ourProjectData) {
+      final ProjectData prev = ourProjectData.put(project, projectData);
+      if (prev != null) {
+        LOG.error("previous project data wasn't removed: " + project);
+        prev.releaseAll();
+      }
+    }
+
+    StartupManager.getInstance(project).registerPostStartupActivity(() -> projectData.get(BarType.DEFAULT).show());
+
+    project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+      @Override
+      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+        ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
+      }
+
+      @Override
+      public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+        // TODO: probably, need to remove debugger-panel from stack completely
+        final String twid = env.getExecutor().getToolWindowId();
+        ourStack.pop(topContainer -> {
+          if (topContainer.getType() != BarType.DEBUGGER) {
+            return false;
+          }
+
+          if (!ToolWindowId.DEBUG.equals(twid) && !ToolWindowId.RUN_DASHBOARD.equals(twid) && !ToolWindowId.SERVICES.equals(twid)) {
+            return false;
+          }
+
+          // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
+          return !_hasAnyActiveSession(project, handler) || projectData.getDbgSessions() <= 0;
+        });
+        ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
+      }
+    });
+  }
+
+  public static boolean isTouchBarAvailable() {
+    return SystemInfoRt.isMac && NST.isAvailable();
+  }
 
   public static void reloadAll() {
-    if (!isTouchBarAvailable())
+    if (!isInitialized || !isTouchBarAvailable()) {
       return;
+    }
 
     synchronized (ourProjectData) {
       ourProjectData.forEach((p, pd)->pd.reloadAll());
@@ -153,13 +171,15 @@ public final class TouchBarsManager {
   }
 
   public static void onInputEvent(InputEvent e) {
-    if (!isTouchBarAvailable())
+    if (!isInitialized || !isTouchBarAvailable()) {
       return;
+    }
 
     // NOTE: skip wheel-events, because scrolling by touchpad produces mouse-wheel events with pressed modifier, example:
     // MouseWheelEvent[MOUSE_WHEEL,(890,571),absolute(0,0),button=0,modifiers=SHIFT,extModifiers=SHIFT,clickCount=0,scrollType=WHEEL_UNIT_SCROLL,scrollAmount=1,wheelRotation=0,preciseWheelRotation=0.1] on frame0
-    if (e instanceof MouseWheelEvent)
+    if (e instanceof MouseWheelEvent) {
       return;
+    }
 
     ourStack.updateKeyMask(e.getModifiersEx() & ProjectData.getUsedKeyMask());
   }
@@ -366,8 +386,9 @@ public final class TouchBarsManager {
   }
 
   public static @Nullable Disposable showDialogWrapperButtons(@NotNull Container contentPane) {
-    if (!isTouchBarAvailable())
+    if (!isTouchBarAvailable()) {
       return null;
+    }
 
     final ModalityState ms = Utils.getCurrentModalityState();
     final BarType btype = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
