@@ -263,8 +263,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
     myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
 
-    myContentPane.add(myStatusBar, BorderLayout.SOUTH);
     updateStatusBarVisibility();
+    myContentPane.add(myStatusBar, BorderLayout.SOUTH);
   }
 
   private void setMemoryIndicatorVisible(boolean visible) {
