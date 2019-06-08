@@ -70,7 +70,9 @@ private fun JBPopup.showAbove(component: JComponent) {
   show(northWest)
 }
 
-class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
+class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
+  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
+
   private val project get() = changesView.project
 
   private val dataProviders = mutableListOf<DataProvider>()
@@ -91,13 +93,15 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     override fun actionPerformed(e: ActionEvent) = fireDefaultExecutorCalled()
   }
   private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
+    private val focusManager = IdeFocusManager.getInstance(project)
+
     init {
       background = BACKGROUND_COLOR
       optionTooltipText = getDefaultTooltip()
       isOkToProcessDefaultMnemonics = false
     }
 
-    override fun isDefaultButton() = true
+    override fun isDefaultButton(): Boolean = focusManager.getFocusedDescendantFor(rootComponent) != null
   }
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
@@ -116,6 +120,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
     addInclusionListener(object : InclusionListener {
       override fun inclusionChanged() = this@ChangesViewCommitPanel.inclusionChanged()
     }, this)
+
+    setupShortcuts(rootComponent)
   }
 
   private fun buildLayout() {
@@ -143,7 +149,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView) : BorderL
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
-  fun setupShortcuts(component: JComponent) {
+  private fun setupShortcuts(component: JComponent) {
     DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, this)
     DumbAwareAction.create {
       if (commitButton.isEnabled) commitButton.showPopup()

@@ -199,12 +199,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void updateCommitWorkflow(boolean isNonModal) {
     if (isNonModal) {
       if (myCommitPanel == null) {
-        myCommitPanel = new ChangesViewCommitPanel(myView);
+        myCommitPanel = new ChangesViewCommitPanel(myView, myToolWindowPanel);
         myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
         Disposer.register(myContent, myCommitPanel);
 
         myCommitPanelSplitter.setSecondComponent(myCommitPanel);
-        myCommitPanel.setupShortcuts(myToolWindowPanel);
       }
     }
     else if (myCommitPanel != null) {
