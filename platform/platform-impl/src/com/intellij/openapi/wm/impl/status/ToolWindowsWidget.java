@@ -113,7 +113,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     }
     if (myAlarm.getActiveRequestCount() == 0) {
       myAlarm.addRequest(() -> {
-        final IdeFrameImpl frame = ComponentUtil.getParentOfType((Class<? extends IdeFrameImpl>)IdeFrameImpl.class, (Component)this);
+        final IdeFrameImpl frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
         if (frame == null) return;
 
         List<ToolWindow> toolWindows = new ArrayList<>();
@@ -229,8 +229,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   }
 
   private boolean isActive() {
-    return myStatusBar != null && myStatusBar.getFrame() != null && myStatusBar.getFrame().getProject() != null && Registry
-      .is("ide.windowSystem.showTooWindowButtonsSwitcher");
+    return myStatusBar != null && myStatusBar.getProject() != null && Registry.is("ide.windowSystem.showTooWindowButtonsSwitcher");
   }
 
   @Override

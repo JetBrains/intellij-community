@@ -91,10 +91,6 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
 
     createStatusBar(frame);
 
-    updateStatusBarVisibility();
-
-    myContentPane.add(myStatusBar, BorderLayout.SOUTH);
-
     IdeMenuBar menu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
     myDecoratedMenu = IdeFrameDecorator.isCustomDecoration() && frame instanceof IdeFrameEx;
 
@@ -266,11 +262,15 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
 
     setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
     myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
+
+    myContentPane.add(myStatusBar, BorderLayout.SOUTH);
+    updateStatusBarVisibility();
   }
 
   private void setMemoryIndicatorVisible(boolean visible) {
     if (myMemoryWidget == null) {
       if (!visible) {
+        myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
         return;
       }
 
