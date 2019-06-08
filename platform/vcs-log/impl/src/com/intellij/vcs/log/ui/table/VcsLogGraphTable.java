@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -121,7 +122,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     initColumns();
 
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myProperties, myColorManager));
+    setDefaultRenderer(FilePath.class, new RootCellRenderer(myProperties, myColorManager));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
     setDefaultRenderer(String.class, myStringCellRenderer);
 
@@ -405,7 +406,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
     else {
       int width = 0;
-      for (VirtualFile file : myLogData.getRoots()) {
+      for (FilePath file : myColorManager.getPaths()) {
         Font tableFont = getTableFont();
         width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
       }
@@ -433,9 +434,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
     if (column == ROOT_COLUMN) {
       Object at = getValueAt(row, column);
-      if (at instanceof VirtualFile) {
+      if (at instanceof FilePath) {
         return "<html><b>" +
-               ((VirtualFile)at).getPresentableUrl() +
+               ((FilePath)at).getPresentableUrl() +
                "</b><br/>Click to " +
                (isShowRootNames() ? "collapse" : "expand") +
                "</html>";
@@ -602,6 +603,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
   }
 
+  public static JBColor getPathBackgroundColor(@NotNull FilePath filePath, @NotNull VcsLogColorManager colorManager) {
+    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getPathColor(filePath));
+  }
+
   @Override
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
@@ -665,7 +670,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       g.setColor(getStyle(lastRow, convertColumnIndexToView(COMMIT_COLUMN), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
       if (myColorManager.isMultipleRoots()) {
-        g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myColorManager));
+        g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(lastRow, ROOT_COLUMN), myColorManager));
 
         int rootWidth = getRootColumn().getWidth();
         if (!isShowRootNames()) rootWidth -= JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH);

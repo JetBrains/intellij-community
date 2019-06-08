@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
@@ -51,16 +51,16 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     clear();
 
-    VirtualFile root = (VirtualFile)value;
+    FilePath path = (FilePath)value;
 
-    myColor = root == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
-              VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
+    myColor = path == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
+              VcsLogGraphTable.getPathBackgroundColor(path, myColorManager);
     myBorderColor = ObjectUtils.assertNotNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground());
     setForeground(UIUtil.getTableForeground(false, hasFocus));
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
       if (isTextShown(table, value, row, column)) {
-        append(root == null ? "" : root.getName());
+        append(path == null ? "" : path.getName());
       }
       isNarrow = false;
     }

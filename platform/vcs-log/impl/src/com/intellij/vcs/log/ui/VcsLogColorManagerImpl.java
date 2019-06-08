@@ -2,11 +2,13 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -22,14 +24,16 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Color[] ROOT_COLORS =
     {JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK};
 
-  @NotNull private final Map<VirtualFile, Color> myRoots2Colors;
+  @NotNull private final Map<String, Color> myPaths2Colors;
+  @NotNull private final List<FilePath> mySortedPaths;
 
   public VcsLogColorManagerImpl(@NotNull Collection<VirtualFile> roots) {
-    List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName));
+    mySortedPaths = ContainerUtil.map(ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getName)),
+                                      file -> VcsUtil.getFilePath(file));
 
-    myRoots2Colors = new HashMap<>();
-    for (int i = 0; i < sortedRoots.size(); i++) {
-      myRoots2Colors.put(sortedRoots.get(i), getColor(i, sortedRoots.size()));
+    myPaths2Colors = new HashMap<>();
+    for (int i = 0; i < mySortedPaths.size(); i++) {
+      myPaths2Colors.put(mySortedPaths.get(i).getPath(), getColor(i, mySortedPaths.size()));
     }
   }
 
@@ -55,21 +59,39 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
 
   @Override
   public boolean isMultipleRoots() {
-    return myRoots2Colors.size() > 1;
+    return myPaths2Colors.size() > 1;
+  }
+
+  @NotNull
+  @Override
+  public Color getPathColor(@NotNull FilePath path) {
+    return getColor(path.getPath());
   }
 
   @NotNull
   @Override
   public Color getRootColor(@NotNull VirtualFile root) {
-    Color color = myRoots2Colors.get(root);
+    return getColor(root.getPath());
+  }
+
+  @NotNull
+  private Color getColor(@NotNull String path) {
+    Color color = myPaths2Colors.get(path);
     if (color == null) {
-      LOG.error("No color record for root " + root + ". All roots: " + myRoots2Colors);
+      LOG.error("No color record for path " + path + ". All paths: " + myPaths2Colors);
       color = getDefaultRootColor();
     }
     return color;
   }
 
+  @NotNull
   private static Color getDefaultRootColor() {
     return UIUtil.getTableBackground();
+  }
+
+  @NotNull
+  @Override
+  public Collection<FilePath> getPaths() {
+    return mySortedPaths;
   }
 }
