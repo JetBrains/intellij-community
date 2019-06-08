@@ -5,6 +5,7 @@ import {Notification} from "element-ui"
 import Main from "@/views/Main.vue"
 import ItemChart from "@/charts/ActivityChart.vue"
 import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
+import TimelineChart from "@/views/TimelineChart.vue"
 
 Vue.use(Router)
 
@@ -22,6 +23,11 @@ const routes: Array<RouteConfig> = [
   {
     path: "/",
     component: Main,
+  },
+  {
+    path: `/timeline`,
+    name: "Timeline",
+    component: TimelineChart,
   },
   {
     path: "*",

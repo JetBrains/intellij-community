@@ -77,18 +77,15 @@ export class TimelineChartManager extends XYChartManager {
 
     series.columns.template.propertyFields.fill = "color"
     series.columns.template.propertyFields.stroke = "color"
-    // series.columns.template.strokeOpacity = 1
 
     const valueLabel = series.bullets.push(new am4charts.LabelBullet())
     valueLabel.label.text = "{name}"
     valueLabel.label.truncate = false
     valueLabel.label.hideOversized = false
     valueLabel.label.horizontalCenter = "left"
-    // valueLabel.label.fill = am4core.color("#fff")
     valueLabel.locationX = 1
     // https://github.com/amcharts/amcharts4/issues/668#issuecomment-446655416
     valueLabel.interactionsEnabled = false
-    // valueLabel.label.fontSize = 12
   }
 
   private addHeightAdjuster(levelAxis: am4charts.Axis) {
@@ -120,7 +117,7 @@ export class TimelineChartManager extends XYChartManager {
     const guides: Array<TimeLineGuide> = []
     for (const item of data.prepareAppInitActivities) {
       if (item.name === "splash initialization") {
-        guides.push({label: "splash initialization", value: item.start})
+        guides.push({label: "splash", value: item.start})
       }
     }
 
@@ -128,10 +125,9 @@ export class TimelineChartManager extends XYChartManager {
       return
     }
 
-
     for (const guide of guides) {
       const range = nameAxis.axisRanges.create()
-      this.configureRangeMarker(range, guide.label)
+      this.configureRangeMarker(range, guide.label, 10 /* empirical value, not clear for now how to compute programmatically */)
       range.value = guide.value
     }
   }
