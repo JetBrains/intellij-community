@@ -63,80 +63,7 @@ public final class IdeaApplication {
   public static void initApplication(@NotNull String[] rawArgs) {
     Activity initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP);
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
-    EventQueue.invokeLater(() -> {
-      String[] args = processProgramArguments(rawArgs);
-
-      ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
-
-      Activity createAppActivity = initAppActivity.startChild("create app");
-      boolean headless = Main.isHeadless();
-      ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless,
-                                                Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION);
-      createAppActivity.end();
-
-      if (!headless) {
-        // todo investigate why in test mode dummy icon manager is not suitable
-        IconLoader.activate();
-        IconLoader.setStrictGlobally(app.isInternal());
-
-        if (SystemInfoRt.isMac) {
-          Activity activity = initAppActivity.startChild("mac app init");
-          MacOSApplicationProvider.initApplication();
-          activity.end();
-        }
-      }
-
-      starter.premain(args);
-
-      CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
-        .thenCompose(pluginDescriptors -> {
-          CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
-            RegistryKeyBean.addKeysFromPlugins();
-            activity.end();
-
-            Activity busActivity = ParallelActivity.PREPARE_APP_INIT.start("add message bus listeners");
-            ApplicationImpl.registerMessageBusListeners(app, pluginDescriptors, false);
-            busActivity.end();
-          }, AppExecutorUtil.getAppExecutorService());
-
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
-          ((ApplicationImpl)ApplicationManager.getApplication()).registerComponents(pluginDescriptors);
-          activity.end();
-
-          return future;
-        });
-
-      if (!headless) {
-        SplashManager.showLicenseeInfoOnSplash(LOG);
-      }
-
-      // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
-      Activity placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
-      EventQueue.invokeLater(() -> {
-        placeOnEventQueueActivity.end();
-        StartupUtil.installExceptionHandler();
-        initAppActivity.end();
-        try {
-          Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
-          registerComponentsFuture.get();
-          activity.end();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new CompletionException(e);
-        }
-
-        app.load(null, SplashManager.getProgressIndicator());
-        if (!headless) {
-          addActivateAndWindowsCliListeners(app);
-        }
-        ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
-
-        if (PluginManagerCore.isRunningFromSources()) {
-          AppExecutorUtil.getAppExecutorService().execute(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
-        }
-      });
-    });
+    EventQueue.invokeLater(() -> executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture));
 
     List<IdeaPluginDescriptor> plugins;
     try {
@@ -147,6 +74,100 @@ public final class IdeaApplication {
       return;
     }
     pluginDescriptorsFuture.complete(plugins);
+  }
+
+  private static void executeInitAppInEdt(@NotNull String[] rawArgs, @NotNull Activity initAppActivity,
+                                          @NotNull CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture) {
+    String[] args = processProgramArguments(rawArgs);
+
+    ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
+
+    Activity createAppActivity = initAppActivity.startChild("create app");
+    boolean headless = Main.isHeadless();
+    ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless,
+                                              Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION);
+    createAppActivity.end();
+
+    if (!headless) {
+      // todo investigate why in test mode dummy icon manager is not suitable
+      IconLoader.activate();
+      IconLoader.setStrictGlobally(app.isInternal());
+
+      if (SystemInfoRt.isMac) {
+        Activity activity = initAppActivity.startChild("mac app init");
+        MacOSApplicationProvider.initApplication();
+        activity.end();
+      }
+    }
+
+    starter.premain(args);
+
+    List<Future<?>> futures = new ArrayList<>();
+    futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app));
+
+    if (!headless) {
+      if (SystemInfoRt.isMac) {
+        // ensure that TouchBarsManager is loaded before WelcomeFrame/project
+        futures.add(AppExecutorUtil.getAppExecutorService().submit(() -> {
+          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("mac touchbar");
+          //noinspection ResultOfMethodCallIgnored
+          TouchBarsManager.isTouchBarAvailable();
+          activity.end();
+        }));
+      }
+      SplashManager.showLicenseeInfoOnSplash(LOG);
+    }
+
+    // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    Activity placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
+    EventQueue.invokeLater(() -> {
+      placeOnEventQueueActivity.end();
+      StartupUtil.installExceptionHandler();
+      initAppActivity.end();
+      try {
+        Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
+        for (Future<?> future : futures) {
+          future.get();
+        }
+        activity.end();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new CompletionException(e);
+      }
+
+      app.load(null, SplashManager.getProgressIndicator());
+      if (!headless) {
+        addActivateAndWindowsCliListeners(app);
+      }
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
+
+      if (PluginManagerCore.isRunningFromSources()) {
+        AppExecutorUtil.getAppExecutorService().execute(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
+      }
+    });
+  }
+
+  @NotNull
+  private static CompletableFuture<Void> registerRegistryAndMessageBusAndComponent(@NotNull CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture,
+                                                                                   @NotNull ApplicationImpl app) {
+    return pluginDescriptorsFuture
+      .thenCompose(pluginDescriptors -> {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
+          RegistryKeyBean.addKeysFromPlugins();
+          activity.end();
+
+          Activity busActivity = ParallelActivity.PREPARE_APP_INIT.start("add message bus listeners");
+          ApplicationImpl.registerMessageBusListeners(app, pluginDescriptors, false);
+          busActivity.end();
+        }, AppExecutorUtil.getAppExecutorService());
+
+        Activity activity = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
+        ((ApplicationImpl)ApplicationManager.getApplication()).registerComponents(pluginDescriptors);
+        activity.end();
+
+        return future;
+      });
   }
 
   private static void addActivateAndWindowsCliListeners(@NotNull ApplicationImpl app) {
