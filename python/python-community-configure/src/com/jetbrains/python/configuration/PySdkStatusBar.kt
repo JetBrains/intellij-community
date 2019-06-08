@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -28,7 +29,7 @@ class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
   override fun getWidget(project: Project): StatusBarWidget? = if (PlatformUtils.isPyCharm()) PySdkStatusBar(project) else null
 }
 
-class PySwitchSdkAction : AnAction("Switch Project Interpreter", null, null) {
+class PySwitchSdkAction : DumbAwareAction("Switch Project Interpreter", null, null) {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.getData(CommonDataKeys.VIRTUAL_FILE) != null && e.project != null
@@ -129,7 +130,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
     module.pythonSdk = sdk
   }
 
-  private inner class SwitchToSdkAction(val sdk: Sdk) : AnAction() {
+  private inner class SwitchToSdkAction(val sdk: Sdk) : DumbAwareAction() {
 
     init {
       val presentation = templatePresentation
@@ -141,11 +142,11 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
     override fun actionPerformed(e: AnActionEvent) = switchToSdk(sdk)
   }
 
-  private inner class InterpreterSettingsAction : AnAction("Interpreter Settings...") {
+  private inner class InterpreterSettingsAction : DumbAwareAction("Interpreter Settings...") {
     override fun actionPerformed(e: AnActionEvent) = PyInterpreterInspection.ConfigureInterpreterFix.showProjectInterpreterDialog(project)
   }
 
-  private inner class AddInterpreterAction : AnAction("Add Interpreter...") {
+  private inner class AddInterpreterAction : DumbAwareAction("Add Interpreter...") {
 
     override fun actionPerformed(e: AnActionEvent) {
       val model = PyConfigurableInterpreterList.getInstance(project).model
