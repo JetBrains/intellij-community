@@ -501,12 +501,11 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
   @Nullable
   public Project doOpenProject(@NotNull @SystemIndependent String projectPath,
-                               Project projectToClose,
+                               @Nullable Project projectToClose,
                                boolean forceOpenInNewFrame,
                                @Nullable IdeFrame frame) {
-    VirtualFile dotIdea = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
-      new File(projectPath, Project.DIRECTORY_STORE_FOLDER));
-
+    VirtualFile dotIdea = LocalFileSystem.getInstance()
+      .refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(projectPath) + "/" + Project.DIRECTORY_STORE_FOLDER);
     if (dotIdea != null) {
       EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
       if (forceOpenInNewFrame) options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
@@ -610,12 +609,11 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
   }
 
   protected boolean willReopenProjectOnStart() {
-    return GeneralSettings.getInstance().isReopenLastProject() && getLastProjectPath() != null;
+    return getLastProjectPath() != null && GeneralSettings.getInstance().isReopenLastProject();
   }
 
   protected void doReopenLastProject(@Nullable IdeFrame frame) {
-    GeneralSettings generalSettings = GeneralSettings.getInstance();
-    if (!generalSettings.isReopenLastProject()) {
+    if (!GeneralSettings.getInstance().isReopenLastProject()) {
       return;
     }
 
@@ -629,7 +627,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
       }
     }
 
-    if (frame == null) {
+    if (!openPaths.isEmpty() && frame == null) {
       Activity activity = StartUpMeasurer.start("showFrame");
       frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame(SplashManager.getHideTask());
       activity.end();
