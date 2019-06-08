@@ -75,7 +75,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     return DescindingFilesFilter.filterDescindingFiles(roots, project)
   }
 
-  protected open fun isForceUpdateNotEmptyCommitState(): Boolean = false
+  protected open fun isForceUpdateCommitStateFromContext(): Boolean = false
 
   protected open fun performCheckIn(context: VcsContext, project: Project, roots: Array<FilePath>) {
     LOG.debug("invoking commit dialog after update")
@@ -84,7 +84,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     val selectedUnversioned = context.selectedUnversionedFiles
     val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
-    val included: Collection<*>
+    val included: Collection<Any>
 
     if (selectedChanges.isNullOrEmpty() && selectedUnversioned.isEmpty()) {
       changesToCommit = getChangesIn(project, roots)
@@ -99,7 +99,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
       workflowHandler.run {
-        setCommitState(included, isForceUpdateNotEmptyCommitState())
+        setCommitState(included, isForceUpdateCommitStateFromContext())
         activate()
       }
     }
