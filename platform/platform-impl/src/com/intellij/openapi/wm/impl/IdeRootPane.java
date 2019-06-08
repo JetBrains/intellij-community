@@ -60,7 +60,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
    */
   private ToolWindowsPane myToolWindowsPane;
   private JBPanel myContentPane;
-  private final ActionManager myActionManager;
 
   private final boolean myGlassPaneInitialized;
 
@@ -71,7 +70,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
   private MainFrameHeader myCustomFrameTitlePane;
   private boolean myDecoratedMenu = false;
 
-  IdeRootPane(ActionManagerEx actionManager, DataManager dataManager, final IdeFrame frame) {
+  IdeRootPane(@NotNull IdeFrame frame) {
     if (SystemInfoRt.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
       //setUI(DarculaRootPaneUI.createUI(this));
       try {
@@ -81,7 +80,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
         Logger.getInstance(IdeRootPane.class).error(e);
       }
     }
-    myActionManager = actionManager;
 
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
@@ -94,7 +92,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
-    IdeMenuBar menu = new IdeMenuBar(actionManager, dataManager);
+    IdeMenuBar menu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
     myDecoratedMenu = IdeFrameDecorator.isCustomDecoration() && frame instanceof IdeFrameEx;
 
     if (!isDecoratedMenu() && !WindowManagerImpl.isFloatingMenuBarSupported()) {
@@ -240,9 +238,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     menuBar.repaint();
   }
 
-  private JComponent createToolbar() {
+  private static JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
-    final ActionToolbar toolBar = myActionManager.createActionToolbar(
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    final ActionToolbar toolBar = actionManager.createActionToolbar(
       ActionPlaces.MAIN_TOOLBAR,
       group,
       true
@@ -252,12 +251,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener, Dispos
     DefaultActionGroup menuGroup = new DefaultActionGroup();
     menuGroup.add(new ViewToolbarAction());
     menuGroup.add(new CustomizeUIAction());
-    PopupHandler.installUnknownPopupHandler(toolBar.getComponent(), menuGroup, myActionManager);
+    PopupHandler.installUnknownPopupHandler(toolBar.getComponent(), menuGroup, actionManager);
 
     return toolBar.getComponent();
   }
 
-  private void createStatusBar(IdeFrame frame) {
+  private void createStatusBar(@NotNull IdeFrame frame) {
     myStatusBar = new IdeStatusBarImpl();
     Disposer.register(this, myStatusBar);
     myStatusBar.install(frame);

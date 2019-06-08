@@ -51,7 +51,6 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -68,7 +67,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 public final class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static List<Image> ourIcons = null;
-  private static boolean ourMacDocIconSet = false;
+  private static volatile boolean ourMacDocIconSet = false;
 
   @NotNull
   private static Logger getLogger() {
@@ -112,7 +111,7 @@ public final class AppUIUtil {
       if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (PluginManagerCore.isRunningFromSources() && !ourMacDocIconSet) {
+      else if (!ourMacDocIconSet && PluginManagerCore.isRunningFromSources()) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
@@ -121,7 +120,7 @@ public final class AppUIUtil {
 
   public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfoRt.isMac) {
-      return !PluginManagerCore.isRunningFromSources();
+      return ourMacDocIconSet || !PluginManagerCore.isRunningFromSources();
     }
 
     // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well

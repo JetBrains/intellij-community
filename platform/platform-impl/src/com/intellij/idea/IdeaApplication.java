@@ -314,31 +314,35 @@ public final class IdeaApplication {
 
     @Override
     public void main(String[] args) {
-      Activity activity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
+      Activity frameInitActivity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
       if (SystemInfoRt.isMac) {
-        Activity activity2 = StartUpMeasurer.start("mac app init");
+        Activity activity = frameInitActivity.startChild("mac app init");
         MacOSApplicationProvider.initApplication();
-        activity2.end();
+        activity.end();
       }
 
-      Activity activity2 = StartUpMeasurer.start("system dock menu");
+      Activity updateSystemDockActivity = frameInitActivity.startChild("system dock menu");
       SystemDock.updateMenu();
-      activity2.end();
+      updateSystemDockActivity.end();
 
       GcPauseWatcher.Companion.getInstance();
 
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
+      Activity setWindowManagerActivity = frameInitActivity.startChild("set window manager");
       Application app = ApplicationManager.getApplication();
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
+      setWindowManagerActivity.end();
 
       List<String> commandLineArgs = args == null || args.length == 0 ? Collections.emptyList() : Arrays.asList(args);
 
       Ref<Boolean> willOpenProject = new Ref<>(Boolean.FALSE);
+      Activity appFrameCreatedActivity = frameInitActivity.startChild("call appFrameCreated");
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(commandLineArgs, willOpenProject);
+      appFrameCreatedActivity.end();
 
       // Temporary check until the jre implementation has been checked and bundled
       if (Registry.is("ide.popup.enablePopupType")) {
@@ -355,10 +359,12 @@ public final class IdeaApplication {
         lifecyclePublisher.welcomeScreenDisplayed();
       }
       else {
+        Activity activity = frameInitActivity.startChild("showFrame");
         frame = windowManager.showFrame(beforeSetVisible);
+        activity.end();
       }
 
-      activity.end();
+      frameInitActivity.end();
 
       IdeFrame finalFrame = frame;
       TransactionGuard.submitTransaction(app, () -> {
@@ -367,7 +373,7 @@ public final class IdeaApplication {
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine, finalFrame);
 
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(PluginManager::reportPluginError);
+        EventQueue.invokeLater(PluginManager::reportPluginError);
 
         LifecycleUsageTriggerCollector.onIdeStart();
       });
