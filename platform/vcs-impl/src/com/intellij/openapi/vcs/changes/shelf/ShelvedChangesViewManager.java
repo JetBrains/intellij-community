@@ -57,7 +57,10 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -98,6 +101,8 @@ public class ShelvedChangesViewManager implements Disposable {
   final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private final MergingUpdateQueue myUpdateQueue;
   private final VcsConfiguration myVcsConfiguration;
+  private volatile List<ShelvedChangeList> myLoadedLists = emptyList();
+  private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
 
   public static final DataKey<List<ShelvedChangeList>> SHELVED_CHANGELIST_KEY =
     DataKey.create("ShelveChangesManager.ShelvedChangeListData");
@@ -151,7 +156,6 @@ public class ShelvedChangesViewManager implements Disposable {
           String editorValue = ((TreeCellEditor)e.getSource()).getCellEditorValue().toString();
           ShelvedChangeList shelvedChangeList = ((ShelvedListNode)node).getList();
           ShelveChangesManager.getInstance(project).renameChangeList(shelvedChangeList, editorValue);
-          myTree.getModel().valueForPathChanged(TreeUtil.getPathFromRoot(node), shelvedChangeList);
         }
       }
 
@@ -179,7 +183,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   @CalledInAwt
-  private void updateChangesContent() {
+  void updateViewContent() {
     if (myShelveChangesManager.getAllLists().isEmpty()) {
       if (myContent != null) {
         myContentManager.removeContent(myContent);
@@ -247,11 +251,9 @@ public class ShelvedChangesViewManager implements Disposable {
       createShelvedListsWithChangesNode(shelvedLists, createTagNode("Recently Deleted"));
     }
 
-    @CalledInBackground
     private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
       shelvedLists.forEach(changeList -> {
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
-        changeList.loadChangesIfNeeded(myProject);
         requireNonNull(changeList.getChanges()).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
         changeList.getBinaryFiles().stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
 
@@ -265,6 +267,22 @@ public class ShelvedChangesViewManager implements Disposable {
         }
       });
     }
+  }
+
+  @CalledInAwt
+  private void updateTreeModel() {
+    myTree.setPaintBusy(true);
+    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+      List<ShelvedChangeList> lists = myShelveChangesManager.getAllLists();
+      lists.forEach(l -> l.loadChangesIfNeeded(myProject));
+      myLoadedLists = sorted(lists, ChangelistComparator.getInstance());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myTree.setPaintBusy(false);
+        updateViewContent();
+        myPostUpdateEdtActivity.forEach(Runnable::run);
+        myPostUpdateEdtActivity.clear();
+      }, ModalityState.NON_MODAL);
+    });
   }
 
   @CalledInAwt
@@ -306,8 +324,8 @@ public class ShelvedChangesViewManager implements Disposable {
   private void runAfterUpdate(@NotNull Runnable postUpdateRunnable) {
     GuiUtils.invokeLaterIfNeeded(() -> {
       myUpdateQueue.cancelAllUpdates();
-      updateChangesContent();
-      postUpdateRunnable.run();
+      myPostUpdateEdtActivity.add(postUpdateRunnable);
+      updateTreeModel();
     }, ModalityState.NON_MODAL);
   }
 
@@ -372,28 +390,12 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void rebuildTree() {
-      myTree.setPaintBusy(true);
-      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
-        final DefaultTreeModel newModel = buildTreeModel();
-        ApplicationManager.getApplication().invokeLater(() -> {
-          updateTreeModel(newModel);
-          myTree.setPaintBusy(false);
-        });
-      });
-    }
-
-    @CalledInBackground
-    private DefaultTreeModel buildTreeModel() {
       MyShelvedTreeModelBuilder modelBuilder = new MyShelvedTreeModelBuilder();
-      final List<ShelvedChangeList> changeLists = new ArrayList<>(myShelveChangesManager.getShelvedChangeLists());
-      if (myShelveChangesManager.isShowRecycled()) {
-        changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
-      }
-      changeLists.sort(ChangelistComparator.getInstance());
-
-      modelBuilder.setShelvedLists(changeLists);
-      modelBuilder.setDeletedShelvedLists(sorted(myShelveChangesManager.getDeletedLists(), ChangelistComparator.getInstance()));
-      return modelBuilder.build();
+      List<ShelvedChangeList> changeLists = new ArrayList<>(myLoadedLists);
+      modelBuilder
+        .setShelvedLists(filter(changeLists, l -> !l.isDeleted() && (myShelveChangesManager.isShowRecycled() || !l.isRecycled())));
+      modelBuilder.setDeletedShelvedLists(filter(changeLists, ShelvedChangeList::isDeleted));
+      updateTreeModel(modelBuilder.build());
     }
 
     @Nullable
@@ -814,7 +816,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void run() {
-      updateChangesContent();
+      updateTreeModel();
     }
 
     @Override

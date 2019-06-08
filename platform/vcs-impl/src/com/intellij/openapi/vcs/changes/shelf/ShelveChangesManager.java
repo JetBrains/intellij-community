@@ -1237,6 +1237,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   public void renameChangeList(final ShelvedChangeList changeList, final String newName) {
     changeList.DESCRIPTION = newName;
+    notifyStateChanged();
   }
 
   @NotNull
@@ -1270,7 +1271,6 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
   public void setShowRecycled(final boolean showRecycled) {
     myState.myShowRecycled = showRecycled;
-    notifyStateChanged();
   }
 
   @NotNull
