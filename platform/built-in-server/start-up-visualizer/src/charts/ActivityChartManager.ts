@@ -113,7 +113,11 @@ export class ActivityChartManager extends XYChartManager {
 
     let getItemListBySourceName: (name: string) => Array<Item> | null | undefined = name => {
       // @ts-ignore
-      return data.data[name]
+      const result: Array<Item> | null = data.data[name]
+      if (result != null) {
+        return result.filter(it => it.duration >= 10)
+      }
+      return result
     }
 
     let sourceNameToLegendName: (sourceName: string, itemCount: number) => string = this.sourceNameToLegendName.bind(this)
@@ -160,7 +164,6 @@ export class ActivityChartManager extends XYChartManager {
 
       // generate color before - even if no data for this type of items, still color should be the same regardless of current data set
       // so, if currently no data for project, but there is data for modules, color for modules should use index 3 and not 2
-      // @ts-ignore
       const items = getItemListBySourceName(sourceName)
       if (items == null || items.length === 0) {
         continue

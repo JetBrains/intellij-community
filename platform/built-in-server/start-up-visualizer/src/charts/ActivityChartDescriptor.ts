@@ -14,7 +14,7 @@ export interface ActivityChartDescriptor {
   readonly shortNameProducer?: (item: Item) => string
 }
 
-function getShortName(item: Item): string {
+export function getShortName(item: Item): string {
   const lastDotIndex = item.name.lastIndexOf(".")
   return lastDotIndex < 0 ? item.name : item.name.substring(lastDotIndex + 1)
 }
@@ -61,10 +61,6 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     label: "Reopening Editors",
     id: "reopeningEditors",
     sourceHasPluginInformation: false,
-  },
-  {
-    label: "Icons",
-    id: "icons",
   },
   {
     label: "GCs",

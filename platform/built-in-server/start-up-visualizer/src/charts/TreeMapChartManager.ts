@@ -3,7 +3,8 @@ import {BaseChartManager} from "@/charts/ChartManager"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
-import {IconData} from "@/state/data"
+import {IconData, Item} from "@/state/data"
+import {getShortName} from "@/charts/ActivityChartDescriptor"
 
 export class TreeMapChartManager extends BaseChartManager<am4charts.TreeMap> {
   constructor(container: HTMLElement) {
@@ -14,40 +15,113 @@ export class TreeMapChartManager extends BaseChartManager<am4charts.TreeMap> {
     chart.dataFields.name = "name"
     chart.dataFields.children = "children"
 
+    chart.legend = new am4charts.Legend()
+
+    chart.homeText = "home"
+    chart.navigationBar = new am4charts.NavigationBar()
+    chart.maxLevels = 1
+
     const level1 = chart.seriesTemplates.create("0")
     const level1Bullet = level1.bullets.push(new am4charts.LabelBullet())
-    level1Bullet.locationY = 0.5
-    level1Bullet.locationX = 0.5
+    this.configureLabelBullet(level1Bullet)
     level1Bullet.label.text = "{name} ({duration} ms, count={count})"
-    level1Bullet.label.fill = am4core.color("#fff")
+
+    const level2 = chart.seriesTemplates.create("1")
+    const level2Bullet = level2.bullets.push(new am4charts.LabelBullet())
+    this.configureLabelBullet(level2Bullet)
+    level2Bullet.label.text = "{name}"
+
+    chart.seriesTemplates.create("2").bullets.push(level2Bullet)
+    chart.seriesTemplates.create("3").bullets.push(level2Bullet)
+  }
+
+  private configureLabelBullet(bullet: am4charts.LabelBullet) {
+    bullet.locationY = 0.5
+    bullet.locationX = 0.5
+    bullet.label.fill = am4core.color("#fff")
   }
 
   render(data: DataManager): void {
-    const icons = data.data.icons
-    if (icons == null) {
-      this.chart.data = []
-      return
-    }
-
     const items: Array<any> = []
-    for (const [key, value] of Object.entries(icons)) {
-      // @ts-ignore
-      const info = value as IconData
-      items.push({
-        name: key,
-        duration: info.loading,
-        ...info,
-        children: [
-          {name: "searching", duration: info.loading - info.decoding},
-          {name: "decoding", duration: info.decoding},
-        ],
-      })
-    }
+
+    this.addServicesOrComponents(data, items, "component", "appComponents", "projectComponents")
+    this.addServicesOrComponents(data, items, "service", "appServices", "projectServices")
+    this.addIcons(data, items)
 
     this.chart.data = items
+  }
+
+  private addServicesOrComponents(data: DataManager, items: Array<any>, statName: "component" | "service", appFieldName: "appServices" | "appComponents", projectFieldName: "projectComponents" | "projectServices") {
+    const components: Array<any> = []
+    components.push({
+      name: "app",
+      children: toTreeMapItem(data.data[appFieldName]),
+    })
+    components.push({
+      name: "project",
+      children: toTreeMapItem(data.data[projectFieldName]),
+    })
+
+    let duration = 0
+    const durationComputer = (it: Item) => duration += it.duration
+    const v = data.data[appFieldName]
+    if (v != null) {
+      v.forEach(durationComputer)
+    }
+
+    const p = data.data[projectFieldName]
+    if (p != null) {
+      p.forEach(durationComputer)
+    }
+
+    const stats = data.data.stats[statName]
+    items.push({
+      name: statName + "s",
+      children: components,
+      count: stats.app + stats.project + stats.module,
+      duration,
+    })
+  }
+
+  private addIcons(data: DataManager, items: Array<any>) {
+    const icons = data.data.icons
+    if (icons != null) {
+      const iconList: Array<any> = []
+
+      let count = 0
+      let duration = 0
+      for (const [key, value] of Object.entries(icons)) {
+        // @ts-ignore
+        const info = value as IconData
+        count += info.count
+        duration += info.loading
+        iconList.push({
+          name: key,
+          duration: info.loading,
+          ...info,
+          children: [
+            {name: "searching", duration: info.loading - info.decoding},
+            {name: "decoding", duration: info.decoding},
+          ],
+        })
+      }
+
+      items.push({
+        name: "icons",
+        children: iconList,
+        count,
+        duration,
+      })
+    }
   }
 
   dispose(): void {
     this.chart.dispose()
   }
+}
+
+function toTreeMapItem(items: Array<Item> | null | undefined) {
+  return items == null ? [] : items.map(it => {
+    return {...it, name: getShortName(it)}
+  })
 }

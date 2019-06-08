@@ -9,8 +9,7 @@
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
   import {ComponentChartManager} from "@/charts/ComponentChartManager"
-  import {TreeMapChartManager} from "@/charts/TreeMapChartManager";
-  import {ChartManager} from "@/charts/ChartManager";
+  import {ChartManager} from "@/charts/ChartManager"
 
   @Component
   export default class ActivityChart extends BaseChartComponent<ChartManager> {
@@ -41,9 +40,6 @@
       const sourceNames = descriptor.sourceNames
       if (type === "components") {
         return new ComponentChartManager(chartContainer, sourceNames!!, descriptor)
-      }
-      else if (type === "icons") {
-        return new TreeMapChartManager(chartContainer)
       }
       else {
         return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames, descriptor)

@@ -6,6 +6,11 @@
         <TimelineChart/>
       </keep-alive>
     </el-tab-pane>
+    <el-tab-pane label="Time Distribution" name="treeMap" lazy>
+      <keep-alive>
+        <TreeMapChart/>
+      </keep-alive>
+    </el-tab-pane>
     <el-tab-pane label="Stats" name="stats" lazy>
       <keep-alive>
         <StatsChart/>
@@ -19,10 +24,11 @@
   import {Location} from "vue-router"
   import TimelineChart from "@/timeline/TimelineChart.vue"
   import StatsChart from "@/views/StatsChart.vue"
+  import TreeMapChart from "@/views/TreeMapChart.vue"
 
   const DEFAULT_ACTIVE_TAB = "timeline"
 
-  @Component({components: {TimelineChart, StatsChart}})
+  @Component({components: {TimelineChart, TreeMapChart, StatsChart}})
   export default class TabbedInfoCharts extends Vue {
     activeName: string = DEFAULT_ACTIVE_TAB
 
