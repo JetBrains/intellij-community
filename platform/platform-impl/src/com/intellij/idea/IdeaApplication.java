@@ -4,7 +4,10 @@ package com.intellij.idea;
 import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
-import com.intellij.ide.*;
+import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.CliResult;
+import com.intellij.ide.CommandLineProcessor;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
@@ -313,12 +316,15 @@ public final class IdeaApplication {
     public void main(String[] args) {
       Activity activity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
       if (SystemInfoRt.isMac) {
+        Activity activity2 = StartUpMeasurer.start("mac app init");
         MacOSApplicationProvider.initApplication();
+        activity2.end();
       }
 
+      Activity activity2 = StartUpMeasurer.start("system dock menu");
       SystemDock.updateMenu();
+      activity2.end();
 
-      RecentProjectsManager.getInstance();  // ensures that RecentProjectsManager app listener is added
       GcPauseWatcher.Companion.getInstance();
 
       // Event queue should not be changed during initialization of application components.
