@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.html.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -77,7 +78,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    final XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(attributeName.toLowerCase(), context);
+    final XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(StringUtil.toLowerCase(attributeName), context);
     if (descriptor != null) return descriptor;
 
     return getAttributeDescriptorFromFacelets(attributeName, context);

@@ -18,6 +18,7 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
@@ -39,6 +40,8 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
+
+  public static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
 
   @NotNull
   public static final Topic<FileTypeListener> TOPIC = new Topic<>("File types change", FileTypeListener.class);

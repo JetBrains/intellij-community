@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +67,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     assertUrl(target1);
     assertUrl(target2);
 
-    List<String> parameters = ContainerUtil.newArrayList();
+    List<String> parameters = new ArrayList<>();
     CommandUtil.put(parameters, target1);
     CommandUtil.put(parameters, target2);
 
@@ -87,7 +86,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     throws SvnBindException {
     try {
       DiffInfo diffInfo = CommandUtil.parse(executor.getOutput(), DiffInfo.class);
-      List<Change> result = ContainerUtil.newArrayList();
+      List<Change> result = new ArrayList<>();
 
       if (diffInfo != null) {
         for (DiffPath path : diffInfo.diffPaths) {

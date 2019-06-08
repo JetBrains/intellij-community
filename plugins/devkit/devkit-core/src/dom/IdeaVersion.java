@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,24 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.Required;
+import com.intellij.openapi.util.BuildNumber;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 public interface IdeaVersion extends DomElement {
 
   @NotNull
   @Required
-  GenericAttributeValue<String> getSinceBuild();
+  @Stubbed
+  @Convert(BuildNumberConverter.class)
+  GenericAttributeValue<BuildNumber> getSinceBuild();
 
   @NotNull
-  GenericAttributeValue<String> getUntilBuild();
+  @Stubbed
+  @Convert(BuildNumberConverter.class)
+  GenericAttributeValue<BuildNumber> getUntilBuild();
 
 
   /**
@@ -44,4 +49,26 @@ public interface IdeaVersion extends DomElement {
   @NotNull
   @Deprecated
   GenericAttributeValue<String> getMax();
+
+
+  class BuildNumberConverter extends Converter<BuildNumber> {
+
+    @Nullable
+    @Override
+    public BuildNumber fromString(@Nullable String s, ConvertContext context) {
+      return s == null ? null : BuildNumber.fromStringOrNull(s);
+    }
+
+    @Nullable
+    @Override
+    public String toString(@Nullable BuildNumber number, ConvertContext context) {
+      return number == null ? null : number.asString();
+    }
+
+    @Nullable
+    @Override
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return DevKitBundle.message("inspections.plugin.xml.invalid.build.number", s);
+    }
+  }
 }

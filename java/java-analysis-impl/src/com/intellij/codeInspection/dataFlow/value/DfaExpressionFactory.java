@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -20,17 +6,11 @@ import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.LongStreamEx;
@@ -38,34 +18,18 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 /**
  * @author peter
  */
 public class DfaExpressionFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory");
-  private static final Condition<String> FALSE_GETTERS = parseFalseGetters();
-
-  private static Condition<String> parseFalseGetters() {
-    try {
-      String regex = Registry.stringValue("ide.dfa.getters.with.side.effects").trim();
-      if (!StringUtil.isEmpty(regex)) {
-        final Pattern pattern = Pattern.compile(regex);
-        return s -> pattern.matcher(s).matches();
-      }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return Conditions.alwaysFalse();
-  }
 
   private final DfaValueFactory myFactory;
-  private final Map<Integer, ArrayElementDescriptor> myArrayIndices = ContainerUtil.newHashMap();
+  private final Map<Integer, ArrayElementDescriptor> myArrayIndices = new HashMap<>();
 
   DfaExpressionFactory(DfaValueFactory factory) {
     myFactory = factory;
@@ -226,17 +190,10 @@ public class DfaExpressionFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
-      if (PropertyUtilBase.isSimplePropertyGetter(method) && isContractAllowedForGetter(method)) {
-        String qName = PsiUtil.getMemberQualifiedName(method);
-        if (qName == null || !FALSE_GETTERS.value(qName)) {
-          return new GetterDescriptor(method);
-        }
-      }
-      if (method.getParameterList().isEmpty()) {
-        if ((JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
-            isContractAllowedForGetter(method)) {
-          return new GetterDescriptor(method);
-        }
+      if (method.getParameterList().isEmpty() &&
+          (PropertyUtilBase.isSimplePropertyGetter(method) || JavaMethodContractUtil.isPure(method) || isClassAnnotatedImmutable(method)) &&
+          isContractAllowedForGetter(method)) {
+        return new GetterDescriptor(method);
       }
     }
     return null;

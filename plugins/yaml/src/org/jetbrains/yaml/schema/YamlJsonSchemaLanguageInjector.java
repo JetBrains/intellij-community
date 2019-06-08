@@ -6,11 +6,11 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
+import java.util.Collections;
 import java.util.List;
 
 public class YamlJsonSchemaLanguageInjector implements MultiHostInjector {
@@ -30,6 +30,6 @@ public class YamlJsonSchemaLanguageInjector implements MultiHostInjector {
   @NotNull
   @Override
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return ContainerUtil.list(YAMLScalar.class);
+    return Collections.singletonList(YAMLScalar.class);
   }
 }

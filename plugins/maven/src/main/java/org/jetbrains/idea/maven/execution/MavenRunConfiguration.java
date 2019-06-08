@@ -1,28 +1,27 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.build.BuildTreeFilters;
 import com.intellij.build.BuildView;
 import com.intellij.build.DefaultBuildDescriptor;
-import com.intellij.build.ShowExecutionErrorsOnlyAction;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,6 +37,7 @@ import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
@@ -46,6 +46,7 @@ import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -313,7 +314,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       final ConsoleView console = createConsoleViewAndAttachToProcess(executor, processHandler);
 
       AnAction[] actions = console instanceof BuildView ?
-                           new AnAction[]{new ShowExecutionErrorsOnlyAction((BuildView)console)} : AnAction.EMPTY_ARRAY;
+                           new AnAction[]{BuildTreeFilters.createFilteringActionsGroup((BuildView)console)} : AnAction.EMPTY_ARRAY;
       DefaultExecutionResult res = new DefaultExecutionResult(console, processHandler, actions);
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
         MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment());
@@ -343,7 +344,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenBuildEventProcessor eventProcessor =
           new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
         processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
-        buildView.attachToProcess(processHandler);
+        buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
         return buildView;
       }
     }
@@ -383,6 +384,73 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Override
     public boolean isPollConnection() {
       return getRemoteConnectionCreator().isPollConnection();
+    }
+  }
+
+
+  private class MavenHandlerFilterSpyWrapper extends ProcessHandler {
+    private final ProcessHandler myOriginalHandler;
+
+    public MavenHandlerFilterSpyWrapper(ProcessHandler original) {
+
+      myOriginalHandler = original;
+    }
+
+    @Override
+    protected void destroyProcessImpl() {
+      myOriginalHandler.destroyProcess();
+    }
+
+    @Override
+    protected void detachProcessImpl() {
+      myOriginalHandler.detachProcess();
+    }
+
+    @Override
+    public boolean detachIsDefault() {
+      return myOriginalHandler.detachIsDefault();
+    }
+
+    @Nullable
+    @Override
+    public OutputStream getProcessInput() {
+      return myOriginalHandler.getProcessInput();
+    }
+
+    @Override
+    public void addProcessListener(ProcessListener listener) {
+      myOriginalHandler.addProcessListener(filtered(listener));
+    }
+
+    @Override
+    public void addProcessListener(@NotNull final ProcessListener listener, @NotNull Disposable parentDisposable) {
+      myOriginalHandler.addProcessListener(filtered(listener), parentDisposable);
+    }
+
+    private ProcessListener filtered(ProcessListener listener) {
+      return new ProcessListener() {
+        @Override
+        public void startNotified(@NotNull ProcessEvent event) {
+          listener.startNotified(event);
+        }
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          listener.processTerminated(event);
+        }
+
+        @Override
+        public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+          listener.processWillTerminate(event, willBeDestroyed);
+        }
+
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          if (!MavenSpyOutputParser.isSpyLog(event.getText()) || Registry.is("maven.spy.events.debug")) {
+            listener.onTextAvailable(event, outputType);
+          }
+        }
+      };
     }
   }
 }

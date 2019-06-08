@@ -44,24 +44,6 @@ public class StringUtilRt {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static CharSequence toUpperCase(@NotNull CharSequence s) {
-    StringBuilder answer = null;
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      char upCased = toUpperCase(c);
-      if (answer == null && upCased != c) {
-        answer = new StringBuilder(s.length());
-        answer.append(s.subSequence(0, i));
-      }
-      if (answer != null) {
-        answer.append(upCased);
-      }
-    }
-    return answer == null ? s : answer;
-  }
-
   @Contract(pure = true)
   public static char toUpperCase(char a) {
     if (a < 'a') return a;

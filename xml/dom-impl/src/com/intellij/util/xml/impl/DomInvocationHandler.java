@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -212,7 +198,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       }
       SmartPsiElementPointer<XmlTag> pointer =
         SmartPointerManager.getInstance(myManager.getProject()).createSmartPsiElementPointer(tag);
-      return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
+      return myManager.createStableValue(new StableCopyFactory<>(pointer, myType, getClass()));
     }
     return (T)createPathStableCopy();
   }
@@ -834,6 +820,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
+    return getCollectionChildren(description, true);
+  }
+
+  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
@@ -843,7 +833,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
           if (stub instanceof DomStub && ((DomStub)stub).matches(xmlName)) {
             result.add(((DomStub)stub).getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy());
           }
-          else if (stub instanceof XIncludeStub) {
+          else if (processIncludes && stub instanceof XIncludeStub) {
             ((XIncludeStub)stub).resolve(this, result, xmlName);
           }
         }
@@ -863,7 +853,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    final List<XmlTag> subTags = getCollectionSubTags(description, tag);
+    final List<XmlTag> subTags = getCollectionSubTags(description, tag, processIncludes);
     if (subTags.isEmpty()) return Collections.emptyList();
 
     List<DomElement> elements = new ArrayList<>(subTags.size());
@@ -885,9 +875,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return Collections.unmodifiableList(elements);
   }
 
-  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag) {
+  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag, boolean processIncludes) {
     if (description instanceof CollectionChildDescriptionImpl) {
-      return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag);
+      return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag, processIncludes);
     }
     return DomImplUtil.getCustomSubTags(this, tag.getSubTags(), getFile());
   }

@@ -1,13 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.openapi.util;
 
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,20 +10,23 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @author max
+ */
 public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
-  public ClassExtension(@NonNls final String epName) {
+  public ClassExtension(@NotNull String epName) {
     super(epName);
   }
 
   @NotNull
   @Override
-  protected String keyToString(@NotNull final Class key) {
+  protected String keyToString(@NotNull Class key) {
     return key.getName();
   }
 
   @NotNull
   @Override
-  protected List<T> buildExtensions(@NotNull final String key, @NotNull final Class classKey) {
+  protected List<T> buildExtensions(@NotNull String key, @NotNull Class classKey) {
     final Set<String> allSupers = new LinkedHashSet<>();
     collectSupers(classKey, allSupers);
     return buildExtensionsWithInheritance(allSupers);
@@ -36,7 +34,7 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
 
   private List<T> buildExtensionsWithInheritance(Set<String> supers) {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
-    synchronized (lock) {
+    synchronized (myLock) {
       List<T> result = null;
       for (String aSuper : supers) {
         result = buildExtensionsFromExplicitRegistration(result, key -> aSuper.equals(key));

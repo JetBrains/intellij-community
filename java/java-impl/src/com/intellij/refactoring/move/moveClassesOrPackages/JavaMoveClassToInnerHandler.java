@@ -68,7 +68,7 @@ public class JavaMoveClassToInnerHandler implements MoveClassToInnerHandler {
     return importStatements;
   }
 
-  private static void filterUsagesInImportStatements(final List<UsageInfo> usages, final List<PsiElement> importStatements) {
+  private static void filterUsagesInImportStatements(final List<UsageInfo> usages, final List<? super PsiElement> importStatements) {
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext(); ) {
       UsageInfo usage = iterator.next();
       PsiElement element = usage.getElement();

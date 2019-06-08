@@ -84,26 +84,17 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
       e.setComponent(getComponentImplementation());
       throw e;
     }
-    ComponentMonitor componentMonitor = currentMonitor();
     try {
-      Object[] parameters = getConstructorArguments(guardedContainer, constructor);
-      componentMonitor.instantiating(constructor);
-      long startTime = System.currentTimeMillis();
-      Object inst = newInstance(constructor, parameters);
-      componentMonitor.instantiated(constructor, System.currentTimeMillis() - startTime);
-      return inst;
+      return newInstance(constructor, getConstructorArguments(guardedContainer, constructor));
     }
     catch (InvocationTargetException e) {
-      componentMonitor.instantiationFailed(constructor, e);
       ExceptionUtil.rethrowUnchecked(e.getTargetException());
       throw new PicoInvocationTargetInitializationException(e.getTargetException());
     }
     catch (InstantiationException e) {
-      componentMonitor.instantiationFailed(constructor, e);
       throw new PicoInitializationException("Should never get here");
     }
     catch (IllegalAccessException e) {
-      componentMonitor.instantiationFailed(constructor, e);
       throw new PicoInitializationException(e);
     }
   }

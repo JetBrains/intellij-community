@@ -26,7 +26,8 @@ internal class DefaultGitLogRecordBuilder : GitLogRecordBuilder<GitLogRecord> {
 }
 
 internal open class DefaultGitLogFullRecordBuilder : GitLogRecordBuilder<GitLogFullRecord> {
-  private var statuses: MutableList<VcsFileStatusInfo> = mutableListOf()
+  internal var statuses: MutableList<VcsFileStatusInfo> = mutableListOf()
+    private set
 
   override fun build(options: MutableMap<GitLogOption, String>, supportsRawBody: Boolean): GitLogFullRecord {
     return GitLogFullRecord(options, statuses, supportsRawBody)

@@ -15,42 +15,35 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
-import java.io.File;
-
 public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      addJavaFxJarAsLibrary(module, model);
+      addJavaFxJarAsLibrary(model);
       ArtifactManager.getInstance(model.getProject()).addArtifact("fake-javafx", JavaFxApplicationArtifactType.getInstance(), null);
       super.configureModule(module, model, contentEntry);
     }
   };
 
   public static void addJavaFxJarAsLibrary(@NotNull Module module) {
-    addJavaFxJarAsLibrary(module, null);
+    ModuleRootModificationUtil.updateModel(module, m -> addJavaFxJarAsLibrary(m));
   }
 
-  public static void addJavaFxJarAsLibrary(@NotNull Module module, @Nullable ModifiableRootModel model) {
-    final String libPath = System.getProperty("java.home") + File.separator + "lib" + File.separator + "ext";
-    if (model != null) {
-      PsiTestUtil.addLibrary(model, "javafx", libPath, "jfxrt.jar");
-    }
-    else {
-      PsiTestUtil.addLibrary(module, "javafx", libPath, "jfxrt.jar");
-    }
+  public static void addJavaFxJarAsLibrary(@Nullable ModifiableRootModel model) {
+    MavenDependencyUtil.addFromMaven(model, "org.openjfx:javafx-fxml:11.0.1");
   }
 
   @NotNull

@@ -93,6 +93,12 @@ public abstract class ContractReturnValue {
     return FAIL_VALUE;
   }
 
+  public boolean isSuperValueOf(ContractReturnValue value) {
+    if (value == this || this == ANY_VALUE) return true;
+    if (this == NOT_NULL_VALUE && value.isNotNull()) return true;
+    return false;
+  }
+
   static DfaValue merge(DfaValue defaultValue, DfaValue newValue, DfaMemoryState memState) {
     if (defaultValue == null || defaultValue == DfaUnknownValue.getInstance()) return newValue;
     if (newValue == null || newValue == DfaUnknownValue.getInstance()) return defaultValue;

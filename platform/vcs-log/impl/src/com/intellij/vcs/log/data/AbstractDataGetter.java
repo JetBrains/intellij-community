@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -119,7 +120,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
                                @NotNull Consumer<? super List<T>> consumer,
                                @NotNull Consumer<? super Throwable> errorConsumer,
                                @Nullable ProgressIndicator indicator) {
-    final List<T> result = ContainerUtil.newArrayList();
+    final List<T> result = new ArrayList<>();
     final TIntHashSet toLoad = new TIntHashSet();
 
     long taskNumber = myCurrentTaskIndex++;
@@ -269,7 +270,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     for (Map.Entry<VirtualFile, Collection<String>> entry : rootsAndHashes.entrySet()) {
       VcsLogProvider logProvider = myLogProviders.get(entry.getKey());
       if (logProvider != null) {
-        List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
+        List<? extends T> details = readDetails(logProvider, entry.getKey(), new ArrayList<>(entry.getValue()));
         for (T data : details) {
           int index = myStorage.getCommitIndex(data.getId(), data.getRoot());
           result.put(index, data);
@@ -289,6 +290,10 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       myCache.put(key, value);
       return true;
     }));
+  }
+
+  protected void clear() {
+    UIUtil.invokeLaterIfNeeded(() -> myCache.removeByCondition(t -> !(t instanceof LoadingDetails)));
   }
 
   @NotNull

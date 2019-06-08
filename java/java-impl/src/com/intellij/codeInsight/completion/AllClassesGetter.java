@@ -119,7 +119,7 @@ public class AllClassesGetter {
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
 
-    processJavaClasses(prefixMatcher, project, scope, new LimitedAccessibleClassPreprocessor(parameters, filterByScope, consumer));
+    processJavaClasses(prefixMatcher, project, scope, new LimitedAccessibleClassPreprocessor(parameters, filterByScope, c->{consumer.consume(c); return true;}));
   }
 
   public static void processJavaClasses(@NotNull final PrefixMatcher prefixMatcher,
@@ -131,6 +131,7 @@ public class AllClassesGetter {
       if (prefixMatcher.prefixMatches(s)) {
         names.add(s);
       }
+      return true;
     });
     LinkedHashSet<String> sorted = CompletionUtil.sortMatching(prefixMatcher, names);
     AllClassesSearchExecutor.processClassesByNames(project, scope, sorted, processor);

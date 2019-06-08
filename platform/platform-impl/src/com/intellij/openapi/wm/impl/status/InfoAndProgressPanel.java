@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -36,6 +36,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -87,7 +88,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     public void run() {
       List<InlineProgressIndicator> indicators;
       synchronized (myDirtyIndicators) {
-        indicators = ContainerUtil.newArrayList(myDirtyIndicators);
+        indicators = new ArrayList<>(myDirtyIndicators);
         myDirtyIndicators.clear();
       }
       for (InlineProgressIndicator indicator : indicators) {
@@ -99,6 +100,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   InfoAndProgressPanel() {
 
     setOpaque(false);
+    setBorder(JBUI.Borders.empty());
 
     myRefreshIcon.setVisible(false);
 
@@ -350,7 +352,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     final LinkLabel<Object> label = new LinkLabel<>(myOriginals.size() + processWord + " running...", null,
                                                     (aSource, aLinkData) -> triggerPopupShowing());
 
-    if (SystemInfo.isMac) label.setFont(JBUI.Fonts.label(11));
+    if (SystemInfoRt.isMac) label.setFont(JBUI.Fonts.label(11));
 
     label.setOpaque(false);
 
@@ -443,15 +445,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
         Component c = getAnchor(pane);
-        int y = c.getHeight() - JBUI.scale(45);
+        int y = c.getHeight() - JBUIScale.scale(45);
         if (balloonLayout != null && !isBottomSideToolWindowsVisible(pane)) {
           Component component = balloonLayout.getTopBalloonComponent();
           if (component != null) {
-            y = SwingUtilities.convertPoint(component, 0, -JBUI.scale(45), c).y;
+            y = SwingUtilities.convertPoint(component, 0, -JBUIScale.scale(45), c).y;
           }
         }
 
-        return new RelativePoint(c, new Point(c.getWidth() - JBUI.scale(150), y));
+        return new RelativePoint(c, new Point(c.getWidth() - JBUIScale.scale(150), y));
       }
     }, Balloon.Position.above);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.codeStyle;
 
@@ -18,11 +18,11 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @State(
@@ -37,7 +37,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   private volatile boolean myIsLoaded;
   private static final Object LEGACY_SETTINGS_IMPORT_LOCK = new Object();
-  private final Map<String,CodeStyleSettings> mySettingsMap = ContainerUtil.newHashMap();
+  private final Map<String,CodeStyleSettings> mySettingsMap = new HashMap<>();
 
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true);

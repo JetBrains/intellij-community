@@ -18,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Nikolay Matveev
@@ -175,9 +172,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   private static void matchStructures(@NotNull List<ConfigurableEP<Configurable>> configurableEPs,
                                       @Nullable ConfigurableFilter filter,
                                       @NotNull List<Node> expectedTopLevelNodes) {
-    //noinspection unchecked
-    ConfigurableEP<Configurable>[] extensions = configurableEPs.toArray(new ConfigurableEP[0]);
-    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, filter);
+    List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(configurableEPs, filter);
     assertEquals(expectedTopLevelNodes.size(), list.size());
     for (int i = 0; i < list.size(); i++) {
       matchNodesDeeply(list.get(i), expectedTopLevelNodes.get(i));
@@ -481,8 +476,8 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
 
   private static List<Node> build(Configurable... configurables) {
     Map<String, List<Configurable>> map = ConfigurableExtensionPointUtil.groupConfigurables(Arrays.asList(configurables));
-    List<Node> children = ContainerUtil.newArrayList();
-    for (Map.Entry<String, List<Configurable>> entry : ContainerUtil.newTreeMap(map).entrySet()) {
+    List<Node> children = new ArrayList<>();
+    for (Map.Entry<String, List<Configurable>> entry : new TreeMap<>(map).entrySet()) {
       children.add(node(entry.getKey(), entry.getValue()));
     }
     return children;
@@ -508,7 +503,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static Node node(String id, List<Configurable> configurables) {
-    List<Node> children = ContainerUtil.newArrayList();
+    List<Node> children = new ArrayList<>();
     for (Configurable configurable : configurables) {
       children.add(node(configurable));
     }

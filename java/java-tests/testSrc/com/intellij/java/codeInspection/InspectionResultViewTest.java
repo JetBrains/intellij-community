@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -18,6 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Set;
 
 public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtureTestCase {
@@ -91,7 +92,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
     PlatformTestUtil.assertTreeEqual(view.getTree(), ("-InspectionViewTree\n" +
                                                              " -Groovy\n" +
                                                              "  -Data flow\n" +
-                                                             "   -Unused Assignment\n" +
+                                                             "   -Unused assignment\n" +
                                                              "    -light_idea_test_case_m2\n" +
                                                              "     -src_m2/xxx/yyy\n" +
                                                              "      -ZZZ.groovy\n" +
@@ -106,7 +107,7 @@ public class InspectionResultViewTest extends LightJava9ModulesCodeInsightFixtur
   private InspectionResultsView runInspections() {
     AnalysisScope scope = new AnalysisScope(getProject());
     GlobalInspectionContextForTests context =
-      InspectionsKt.createGlobalContextForTool(scope, getProject(), ContainerUtil.list(createTestInspectionProfile()));
+      InspectionsKt.createGlobalContextForTool(scope, getProject(), Arrays.asList(createTestInspectionProfile()));
 
     context.getCurrentProfile().initInspectionTools(getProject());
     context.doInspections(scope);

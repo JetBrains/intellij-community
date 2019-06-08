@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl;
 
@@ -23,15 +9,11 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileIndex {
   @NotNull
@@ -137,7 +119,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     if (entries.size() == 1) {
       OrderEntry entry = entries.get(0);
       return entry.getOwnerModule() == ownerModule ?
-             ContainerUtil.newArrayList(entries) : Collections.emptyList();
+             new ArrayList<>(entries) : Collections.emptyList();
     }
     int index = Collections.binarySearch(entries, new FakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
     if (index < 0) {
@@ -151,7 +133,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     while (lastIndex < entries.size() && entries.get(lastIndex).getOwnerModule() == ownerModule) {
       lastIndex++;
     }
-    return ContainerUtil.newArrayList(entries.subList(firstIndex, lastIndex));
+    return new ArrayList<>(entries.subList(firstIndex, lastIndex));
   }
 
   private static class FakeOrderEntry implements OrderEntry {

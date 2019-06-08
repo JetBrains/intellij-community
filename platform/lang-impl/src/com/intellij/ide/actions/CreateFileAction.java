@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -28,7 +14,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -36,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +37,9 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     super(ActionsBundle.message("action.NewFile.text"), IdeBundle.message("action.create.new.file.description"), AllIcons.FileTypes.Text);
   }
 
-  public CreateFileAction(final String text, final String description, final Icon icon) {
+  public CreateFileAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                          final Icon icon) {
     super(text, description, icon);
   }
 
@@ -95,7 +84,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     public final PsiDirectory directory;
 
     public MkDirs(@NotNull String newName, @NotNull PsiDirectory directory) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         newName = newName.replace('\\', '/');
       }
       if (newName.contains("/")) {

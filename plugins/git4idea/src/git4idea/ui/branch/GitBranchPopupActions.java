@@ -318,14 +318,12 @@ class GitBranchPopupActions {
 
     @Override
     public boolean hasIncomingCommits() {
-      return myGitVcsSettings.shouldUpdateBranchInfo() &&
-             myIncomingOutgoingManager.hasIncomingFor(chooseRepo(), myBranchName);
+      return myIncomingOutgoingManager.hasIncomingFor(chooseRepo(), myBranchName);
     }
 
     @Override
     public boolean hasOutgoingCommits() {
-      return myGitVcsSettings.shouldUpdateBranchInfo() &&
-             myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
+      return myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
     }
 
     private static class CheckoutAction extends DumbAwareAction {

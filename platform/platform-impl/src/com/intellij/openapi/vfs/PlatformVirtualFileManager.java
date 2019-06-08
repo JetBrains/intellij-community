@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -9,13 +11,29 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @NotNull private final ManagingFS myManagingFS;
 
-  public PlatformVirtualFileManager(@NotNull VirtualFileSystem[] fileSystems) {
-    super(fileSystems);
+  public PlatformVirtualFileManager() {
+    super(getVirtualFileSystems());
 
     myManagingFS = ManagingFS.getInstance();
+  }
+
+  @NotNull
+  private static List<VirtualFileSystem> getVirtualFileSystems() {
+    Application app = ApplicationManager.getApplication();
+    List<VirtualFileSystem> result = app instanceof ComponentManagerImpl
+                                     ? ((ComponentManagerImpl)app).getComponentInstancesOfType(VirtualFileSystem.class, true)
+                                     : Collections.emptyList();
+    if (!result.isEmpty()) {
+      LOG.warn("Do not register file system as application component, instead, register as extension, for example:\n" +
+               "<virtualFileSystem implementationClass=\"com.example.MyFileSystem\" key=\"myProtocol\" physical=\"true\"/>\n\n" + result);
+    }
+    return result;
   }
 
   @Override

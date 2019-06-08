@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -14,7 +15,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
+ * Works in two stages. On the first run, it collects available updates and writes an update script. The second run needs
+ * {@code idea.force.plugin.updates = "true"} system property to apply the updates.
+ *
  * @author Konstantin Bulenkov
+ * @see StartupUtil#FORCE_PLUGIN_UPDATES
+ * @see StartupUtil#installPluginUpdates()
  */
 public class UpdatePluginsApp implements ApplicationStarter {
   @Override
@@ -29,6 +35,11 @@ public class UpdatePluginsApp implements ApplicationStarter {
 
   @Override
   public void main(String[] args) {
+    if (Boolean.getBoolean(StartupUtil.FORCE_PLUGIN_UPDATES)) {
+      log("Updates applied.");
+      System.exit(0);
+    }
+
     Collection<PluginDownloader> availableUpdates = UpdateChecker.getPluginUpdates();
     if (availableUpdates == null) {
       log("All plugins up to date.");

@@ -3,6 +3,8 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -62,7 +64,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
       else {
         Object node = myBinding.serialize(value, targetElement, filter);
         if (node != null && targetElement != node) {
-          addContent(targetElement, node);
+          Binding.addContent(targetElement, node);
         }
       }
     }
@@ -93,7 +95,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
           assert myBinding != null;
           Object oldValue = myAccessor.read(context);
           Object newValue = Binding.deserializeList(myBinding, oldValue, children);
-          if (myAccessor.isFinal()) {
+          if (!myAccessor.isWritable()) {
             LOG.assertTrue(oldValue == newValue);
           }
           else {
@@ -106,7 +108,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
       String value = valueAttribute.getValue();
       if (myConverter == null) {
         try {
-          XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+          XmlSerializerImpl.doSet(context, value, myAccessor, ClassUtil.typeToClass(myAccessor.getGenericType()));
         }
         catch (Exception e) {
           throw new RuntimeException("Cannot set value for field " + myName, e);

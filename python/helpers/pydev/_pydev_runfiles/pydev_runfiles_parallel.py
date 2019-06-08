@@ -4,10 +4,11 @@ try:
     import Queue
 except:
     import queue as Queue #@UnresolvedImport
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
 from _pydev_runfiles import pydev_runfiles_xml_rpc
 import time
 import os
+import threading
+import sys
 
 #=======================================================================================================================
 # flatten_test_suite

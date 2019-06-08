@@ -12,7 +12,7 @@ public class ShowTipsAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    TipsOfTheDayUsagesCollector.trigger( "shown.manually");
+    TipsOfTheDayUsagesCollector.triggerShow("manually");
     TipDialog.showForProject(e.getProject());
   }
 }

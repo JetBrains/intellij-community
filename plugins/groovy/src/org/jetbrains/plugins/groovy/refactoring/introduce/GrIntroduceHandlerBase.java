@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -38,7 +38,6 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -158,7 +157,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
                                                                          @NotNull OccurrencesChooser.ReplaceChoice choice);
 
   public static Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
-    HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = ContainerUtil.newLinkedHashMap();
+    HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = new LinkedHashMap<>();
 
     if (context.getExpression() != null) {
       map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(context.getExpression()));
@@ -423,7 +422,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   public static PsiElement[] collectVariableUsages(GrVariable variable, PsiElement scope) {
-    final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
+    final List<PsiElement> list = Collections.synchronizedList(new ArrayList<>());
     if (scope instanceof GroovyScriptClass) {
       scope = scope.getContainingFile();
     }

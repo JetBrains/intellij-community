@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="pycharm-ce-b" x1="60.958%" x2="33.882%" y1="100%" y2="57.698%">
+      <stop offset="0%" stop-color="#2773E7"/>
+      <stop offset="100%" stop-color="#FC801D"/>
+    </linearGradient>
+    <polygon id="pycharm-ce-a" points="0 52 14.5 49 23 24.5 0 18.5"/>
+    <linearGradient id="pycharm-ce-c" x1="56.288%" x2="26.808%" y1="30.518%" y2="106.868%">
+      <stop offset="0%" stop-color="#FE2857"/>
+      <stop offset="100%" stop-color="#9039D0"/>
+    </linearGradient>
+    <linearGradient id="pycharm-ce-d" x1="50%" x2="50%" y1="0%" y2="75.199%">
+      <stop offset="0%" stop-color="#2773E7"/>
+      <stop offset="100%" stop-color="#9039D0"/>
+    </linearGradient>
+    <linearGradient id="pycharm-ce-f" x1="32.339%" x2="62.824%" y1="11.236%" y2="54.987%">
+      <stop offset="0%" stop-color="#21D789"/>
+      <stop offset="100%" stop-color="#07C3F2"/>
+    </linearGradient>
+    <polygon id="pycharm-ce-e" points="31.8 32.2 41.6 32.2 56 39.5 56 0 40.5 0"/>
+    <linearGradient id="pycharm-ce-h" x1="50%" x2="105.347%" y1="26.504%" y2="58.411%">
+      <stop offset="0%" stop-color="#21D789"/>
+      <stop offset="100%" stop-color="#07C3F2"/>
+    </linearGradient>
+    <polygon id="pycharm-ce-g" points="0 0 0 44 0 48.5 8.9 45.8 18.099 41.9 18.401 35.299 22 16.2 40.5 0"/>
+    <linearGradient id="pycharm-ce-j" x1="16.751%" x2="127.338%" y1="86.95%" y2="16.01%">
+      <stop offset="0%" stop-color="#21D789"/>
+      <stop offset="100%" stop-color="#FCF84A"/>
+    </linearGradient>
+    <polygon id="pycharm-ce-i" points="0 42 0 56 28 56 28.5 46 9.5 31.5"/>
+    <linearGradient id="pycharm-ce-l" x1="17.087%" x2="109.484%" y1="100.104%" y2="7.363%">
+      <stop offset="0%" stop-color="#21D789"/>
+      <stop offset="100%" stop-color="#FCF84A"/>
+    </linearGradient>
+    <polygon id="pycharm-ce-k" points="42 0 37 0 22 16 45 12"/>
+    <linearGradient id="pycharm-ce-n" x1="-18.927%" x2="60.127%" y1="25.401%" y2="77.245%">
+      <stop offset="0%" stop-color="#21D789"/>
+      <stop offset="100%" stop-color="#FCF84A"/>
+    </linearGradient>
+    <polygon id="pycharm-ce-m" points="25 13.5 22 16.2 13.5 50 27 56 56 56 56 40.5 44 21.5 40.9 12"/>
+    <linearGradient id="pycharm-ce-p" x1="50%" x2="50%" y1="-11.618%" y2="60.589%">
+      <stop offset="0%" stop-color="#A6A5A5"/>
+      <stop offset="0%" stop-color="#989898" stop-opacity=".568"/>
+      <stop offset="100%"/>
+    </linearGradient>
+    <polygon id="pycharm-ce-o" points="0 40 40 40 40 0 0 0"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <g transform="translate(4 4)">
+      <use fill="#F97A12" xlink:href="#pycharm-ce-a"/>
+      <use fill="url(#pycharm-ce-b)" xlink:href="#pycharm-ce-a"/>
+      <polygon fill="#2773E7" points="9.5 56 56 56 56 43 56 0 24.5 0"/>
+      <polygon fill="url(#pycharm-ce-c)" points="0 0 0 21 10.5 27.5 0 48.5 0 56 12.5 56 46.5 24 25.5 0"/>
+      <polygon fill="url(#pycharm-ce-d)" points="40.5 29.5 56 15 56 0 25 0"/>
+    </g>
+    <g transform="translate(4 4)">
+      <use fill="#07C3F2" xlink:href="#pycharm-ce-e"/>
+      <use fill="url(#pycharm-ce-f)" xlink:href="#pycharm-ce-e"/>
+      <use fill="#21D789" xlink:href="#pycharm-ce-g"/>
+      <use fill="url(#pycharm-ce-h)" xlink:href="#pycharm-ce-g"/>
+      <use fill="#FCF84A" xlink:href="#pycharm-ce-i"/>
+      <use fill="url(#pycharm-ce-j)" xlink:href="#pycharm-ce-i"/>
+      <use fill="#21D789" xlink:href="#pycharm-ce-k"/>
+      <use fill="url(#pycharm-ce-l)" xlink:href="#pycharm-ce-k"/>
+      <use fill="#FCF84A" xlink:href="#pycharm-ce-m"/>
+      <use fill="url(#pycharm-ce-n)" xlink:href="#pycharm-ce-m"/>
+    </g>
+    <g transform="translate(12 12)">
+      <use fill="#000" xlink:href="#pycharm-ce-o"/>
+      <use fill="url(#pycharm-ce-p)" xlink:href="#pycharm-ce-o"/>
+      <polygon fill="#FFF" points="4 35 19 35 19 32.5 4 32.5"/>
+      <path fill="#FFF" d="M6.478 9.5732C8.285 9.5732 9.341 8.4562 9.341 6.9982L9.341 6.9502C9.341 5.2742 8.215 4.3762 6.407 4.3762L3.614 4.3762 3.614 9.5732 6.478 9.5732zM0 1.0002L6.713 1.0002C10.632 1.0002 13.002 3.4042 13.002 6.8772L13.002 6.9262C13.002 10.8592 10.045 12.9002 6.36 12.9002L3.614 12.9002 3.614 18.0002 0 18.0002 0 1.0002zM14.1938 9.5615L14.1938 9.5135C14.1938 4.8025 17.7448.9435 22.8358.9435 25.9608.9435 27.8318 1.9845 29.3698 3.4995L27.0498 6.1755C25.7718 5.0155 24.4698 4.3055 22.8118 4.3055 20.0188 4.3055 18.0058 6.6255 18.0058 9.4665L18.0058 9.5135C18.0058 12.3555 19.9708 14.7225 22.8118 14.7225 24.7058 14.7225 25.8658 13.9645 27.1678 12.7815L29.4888 15.1255C27.7838 16.9485 25.8898 18.0855 22.6938 18.0855 17.8168 18.0855 14.1938 14.3215 14.1938 9.5615" transform="translate(4 4)"/>
+    </g>
+  </g>
+</svg>

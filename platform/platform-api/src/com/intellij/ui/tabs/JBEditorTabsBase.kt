@@ -9,5 +9,5 @@ import java.util.function.Supplier
  */
 interface JBEditorTabsBase : JBTabs {
   @Deprecated("Used only by the old tabs implementation")
-  fun setEmptySpaceColorCallback(callback: Supplier<Color>);
+  fun setEmptySpaceColorCallback(callback: Supplier<out Color>);
 }

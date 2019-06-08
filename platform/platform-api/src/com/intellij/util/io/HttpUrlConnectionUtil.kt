@@ -15,7 +15,7 @@ import java.util.regex.Pattern
 private const val BLOCK_SIZE = 16 * 1024
 private val CHARSET_PATTERN = Pattern.compile("charset=([^;]+)")
 
-internal object HttpUrlConnectionUtil {
+object HttpUrlConnectionUtil {
   @JvmStatic
   @Throws(IOException::class, ProcessCanceledException::class)
   fun readBytes(inputStream: InputStream, connection: URLConnection, progressIndicator: ProgressIndicator?): BufferExposingByteArrayOutputStream {

@@ -50,7 +50,7 @@ public class KeyStrokeMap {
 
     assert s.length() > 0;
 
-    final String lowerCaseS = s.toLowerCase();
+    final String lowerCaseS = StringUtil.toLowerCase(s);
     boolean hasModifiers = lowerCaseS.contains("shift") || lowerCaseS.contains("control") || lowerCaseS.contains("alt") || lowerCaseS.contains("meta");
 
     String symbol = null;

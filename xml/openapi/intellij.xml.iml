@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.xml.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.xml.structureView" exported="" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
   <component name="copyright">
     <Base>

@@ -1,0 +1,1 @@
+echo `cat `cat $0``

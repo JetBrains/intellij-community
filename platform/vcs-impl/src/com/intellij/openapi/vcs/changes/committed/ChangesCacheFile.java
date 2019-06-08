@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.base.Stopwatch;
@@ -818,8 +818,8 @@ public class ChangesCacheFile {
       // the incoming changelist pointers are actually sorted in reverse chronological order,
       // so we process file delete changes before changes made to deleted files before they were deleted
 
-      Map<Pair<IncomingChangeListData, Change>, VirtualFile> revisionDependentFiles = ContainerUtil.newHashMap();
-      Map<Pair<IncomingChangeListData, Change>, ProcessingResult> results = ContainerUtil.newHashMap();
+      Map<Pair<IncomingChangeListData, Change>, VirtualFile> revisionDependentFiles = new HashMap<>();
+      Map<Pair<IncomingChangeListData, Change>, ProcessingResult> results = new HashMap<>();
 
       myIndexStreamCachedLength = myChangesCacheFile.myIndexStream.length();
       // try to process changelists in a light way, remember which files need revisions

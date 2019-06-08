@@ -3,6 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -18,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -31,11 +31,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class IoTestUtil {
-  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && holdsEnoughPrivilegesToCreateSymlinks();
+  public static final boolean isSymLinkCreationSupported = SystemInfoRt.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
 
   private IoTestUtil() { }
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
+  private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
 
   @Nullable
   public static String getUnicodeName() {
@@ -59,7 +59,7 @@ public class IoTestUtil {
   }
 
   private static File expandWindowsPath(File file) {
-    if (SystemInfo.isWindows && file.getPath().indexOf('~') > 0) {
+    if (SystemInfoRt.isWindows && file.getPath().indexOf('~') > 0) {
       try {
         return file.getCanonicalFile();
       }
@@ -92,7 +92,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createJunction(@NotNull String target, @NotNull String junction) {
-    assertTrue(SystemInfo.isWindows);
+    assertTrue(SystemInfoRt.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
     File junctionFile = getFullLinkPath(junction);
@@ -102,13 +102,13 @@ public class IoTestUtil {
   }
 
   public static void deleteJunction(@NotNull String junction) {
-    assertTrue(SystemInfo.isWindows);
+    assertTrue(SystemInfoRt.isWindows);
     assertTrue(new File(junction).delete());
   }
 
   @NotNull
   public static File createSubst(@NotNull String target) {
-    assertTrue(SystemInfo.isWindows);
+    assertTrue(SystemInfoRt.isWindows);
     File targetFile = new File(target);
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
     String substRoot = getFirstFreeDriveLetter() + ":";
@@ -123,7 +123,7 @@ public class IoTestUtil {
   }
 
   private static char getFirstFreeDriveLetter() {
-    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> root.getPath().toUpperCase(Locale.US).charAt(0));
+    Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), root -> StringUtil.toUpperCase(root.getPath()).charAt(0));
     for (char c = 'E'; c <= 'Z'; c++) {
       if (!roots.contains(c)) {
         return c;
@@ -151,7 +151,7 @@ public class IoTestUtil {
       Process process = builder.start();
       StringBuilder output = new StringBuilder();
       Thread thread = new Thread(() -> {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
           String line;
           while ((line = reader.readLine()) != null) {
             output.append(line).append('\n');
@@ -322,24 +322,21 @@ public class IoTestUtil {
     }
   }
 
-  private static boolean holdsEnoughPrivilegesToCreateSymlinks() {
+  @SuppressWarnings({"SSBasedInspection", "ResultOfMethodCallIgnored"})
+  private static boolean canCreateSymlinks() {
+    File target = null, link = null;
     try {
-      File src = File.createTempFile("tempSrc", ".txt");
-      src.delete();
-      File dest = File.createTempFile("tempDst", ".txt");
-      try {
-        Files.createSymbolicLink(src.toPath(), dest.toPath());
-      }
-      catch (IOException e) {
-        return false;
-      }
-      finally {
-        dest.delete();
-      }
+      target = File.createTempFile("IOTestUtil_link_target.", ".txt");
+      link = new File(target.getParent(), target.getName().replace("IOTestUtil_link_target", "IOTestUtil_link"));
+      Files.createSymbolicLink(link.toPath(), target.toPath());
+      return true;
     }
     catch (IOException e) {
       return false;
     }
-    return true;
+    finally {
+      if (link != null) link.delete();
+      if (target != null) target.delete();
+    }
   }
 }

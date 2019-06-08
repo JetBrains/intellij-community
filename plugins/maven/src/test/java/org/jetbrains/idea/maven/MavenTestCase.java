@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +11,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +46,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   // should not be static
   protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS =
-    new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL));
+    new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL), null);
 
   private File ourTempDir;
 
@@ -227,15 +225,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static String getRoot() {
-    if (SystemInfo.isWindows) return "c:";
+    if (SystemInfoRt.isWindows) return "c:";
     return "";
   }
 
   protected static String getEnvVar() {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       return "TEMP";
     }
-    else if (SystemInfo.isLinux) return "HOME";
+    else if (SystemInfoRt.isLinux) return "HOME";
     return "TMPDIR";
   }
 

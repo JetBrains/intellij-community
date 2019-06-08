@@ -19,7 +19,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
+public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCase {
   private FrameworkSupportModelBase myFrameworkSupportModel;
   private Map<FrameworkType, FrameworkSupportInModuleConfigurable> myConfigurables;
   private Map<FrameworkType, FrameworkSupportNode> myNodes;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.keyGestures;
 
 import com.intellij.openapi.actionSystem.*;
@@ -6,6 +6,7 @@ import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
 public class KeyboardGestureProcessor {
-
   IdeKeyEventDispatcher myDispatcher;
 
   StateContext myContext = new StateContext();
@@ -30,13 +30,9 @@ public class KeyboardGestureProcessor {
   KeyGestureState myState = myWaitForStart;
 
 
-  final Timer myHoldTimer = UIUtil.createNamedTimer("Keyboard hold",1200, new ActionListener() {
-    @Override
-    public void actionPerformed(final ActionEvent e) {
-    }
-  });
+  final Timer myHoldTimer = UIUtil.createNamedTimer("Keyboard hold", 1200, e -> { });
 
-  final Timer myDblClickTimer = UIUtil.createNamedTimer("Double click",Registry.intValue("actionSystem.keyGestureDblClickTime"), new ActionListener() {
+  final Timer myDblClickTimer = UIUtil.createNamedTimer("Double click", SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650), new ActionListener() {
     @Override
     public void actionPerformed(final ActionEvent e) {
       myState.processDblClickTimer();

@@ -20,6 +20,7 @@ import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,6 +30,7 @@ public abstract class EmptyModuleFixtureBuilderImpl<T extends ModuleFixture> ext
     super(ModuleType.EMPTY, fixtureBuilder);
   }
 
+  @NotNull
   @Override
   protected T instantiateFixture() {
     throw new UnsupportedOperationException();

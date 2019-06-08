@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -91,43 +90,34 @@ public class JarRepositoryManager {
       return null;
     }
 
-    final String coord = dialog.getCoordinateText();
     final boolean attachSources = dialog.getAttachSources();
     final boolean attachJavaDoc = dialog.getAttachJavaDoc();
     final boolean attachAnnotations = dialog.getAttachExternalAnnotations();
-    boolean includeTransitiveDependencies = dialog.getIncludeTransitiveDependencies();
     final String copyTo = dialog.getDirectoryPath();
+    JpsMavenRepositoryLibraryDescriptor libraryDescriptor = dialog.getSelectedLibraryDescriptor();
 
-    final EnumSet<ArtifactKind> artifactKinds = kindsOf(attachSources, attachJavaDoc, dialog.getPackaging());
+    final EnumSet<ArtifactKind> artifactKinds = ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging());
     if (attachAnnotations) {
       artifactKinds.add(ArtifactKind.ANNOTATIONS);
     }
 
     final NewLibraryConfiguration config = resolveAndDownload(
-      project, coord, artifactKinds, includeTransitiveDependencies, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
+      project, artifactKinds, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories(), libraryDescriptor
     );
     if (config == null) {
-      Messages.showErrorDialog(parentComponent, "No files were downloaded for " + coord, CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(parentComponent, "No files were downloaded for " + libraryDescriptor.getMavenId(), CommonBundle.getErrorTitle());
     }
     return config;
   }
 
   private static NewLibraryConfiguration resolveAndDownload(Project project,
-                                                            String coord,
                                                             EnumSet<ArtifactKind> kinds,
-                                                            boolean includeTransitiveDependencies,
                                                             String copyTo,
-                                                            Collection<RemoteRepositoryDescription> repositories) {
-    String packaging = JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING;
-    for (ArtifactKind kind : kinds) {
-      if (kind.getClassifier().isEmpty()) {
-        packaging = kind.getExtension(); // correct packaging according to the requested artifact kind
-        break;
-      }
-    }
-    RepositoryLibraryProperties props = new RepositoryLibraryProperties(coord, packaging, includeTransitiveDependencies);
+                                                            Collection<RemoteRepositoryDescription> repositories,
+                                                            JpsMavenRepositoryLibraryDescriptor libraryDescriptor) {
+    RepositoryLibraryProperties props = new RepositoryLibraryProperties(libraryDescriptor);
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = props.getRepositoryLibraryDescriptor();
-    final Collection<OrderRoot> roots = ContainerUtil.newArrayList();
+    final Collection<OrderRoot> roots = new ArrayList<>();
     if (libDescriptor.getMavenId() != null) {
       roots.addAll(loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo));
     }
@@ -141,26 +131,15 @@ public class JarRepositoryManager {
 
   @Nullable
   public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
-                                                            String coord,
-                                                            boolean attachSources,
-                                                            boolean attachJavaDoc,
-                                                            boolean includeTransitiveDependencies,
-                                                            String copyTo,
-                                                            Collection<RemoteRepositoryDescription> repositories) {
-    return resolveAndDownload(project, coord, attachSources, attachJavaDoc, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING,
-                              includeTransitiveDependencies, copyTo, repositories);
-  }
-
-  @Nullable
-  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
-                                                            String coord,
-                                                            boolean attachSources,
-                                                            boolean attachJavaDoc,
-                                                            String packaging,
-                                                            boolean includeTransitiveDependencies,
-                                                            String copyTo,
-                                                            Collection<RemoteRepositoryDescription> repositories) {
-    return resolveAndDownload(project, coord, kindsOf(attachSources, attachJavaDoc, packaging), includeTransitiveDependencies, copyTo, repositories);
+                                                           String coord,
+                                                           boolean attachSources,
+                                                           boolean attachJavaDoc,
+                                                           boolean includeTransitiveDependencies,
+                                                           String copyTo,
+                                                           Collection<RemoteRepositoryDescription> repositories) {
+    JpsMavenRepositoryLibraryDescriptor libraryDescriptor = new JpsMavenRepositoryLibraryDescriptor(coord, includeTransitiveDependencies, Collections.emptyList());
+    return resolveAndDownload(project, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()),
+                              copyTo, repositories, libraryDescriptor);
   }
 
   @NotNull
@@ -216,7 +195,7 @@ public class JarRepositoryManager {
                                                             @Nullable Collection<RemoteRepositoryDescription> repositories) {
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = libraryProps.getRepositoryLibraryDescriptor();
     if (libDescriptor.getMavenId() != null) {
-      EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
+      EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
       return loadDependenciesModal(project, libDescriptor, kinds, repositories, copyTo);
     }
     return Collections.emptyList();
@@ -240,7 +219,7 @@ public class JarRepositoryManager {
                                                                boolean loadJavadoc,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
-    EnumSet<ArtifactKind> kinds = kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
+    EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
     return loadDependenciesAsync(
       project,
       libraryProps.getRepositoryLibraryDescriptor(),
@@ -274,22 +253,6 @@ public class JarRepositoryManager {
       repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     }
     return repositories;
-  }
-
-  public static EnumSet<ArtifactKind> kindsOf(boolean loadSources, boolean loadJavadoc, String... artifactPackaging) {
-    final EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc);
-    if (artifactPackaging.length == 0 || artifactPackaging.length == 1 && artifactPackaging[0] == null) {
-      kinds.add(ArtifactKind.ARTIFACT);
-    }
-    else {
-      for (String packaging : artifactPackaging) {
-        final ArtifactKind artifact = ArtifactKind.find(ArtifactKind.ARTIFACT.getClassifier(), packaging);
-        if (artifact != null) {
-          kinds.add(artifact);
-        }
-      }
-    }
-    return kinds;
   }
 
   @NotNull

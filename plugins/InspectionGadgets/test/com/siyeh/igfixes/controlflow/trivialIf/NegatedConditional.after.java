@@ -9,7 +9,6 @@ class NegatedConditional {
     final NegatedConditional that = (NegatedConditional)object;
 
       return text != null ? text.equals(that.text) : that.text == null; //comment
-
   }
 
   public int hashCode() {

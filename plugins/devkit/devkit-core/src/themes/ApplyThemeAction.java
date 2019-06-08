@@ -14,16 +14,21 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -65,7 +70,7 @@ public class ApplyThemeAction extends DumbAwareAction {
   private static boolean applyTempTheme(@NotNull VirtualFile json, Project project) {
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
-      UITheme theme = UITheme.loadFromJson(json.getInputStream(), "Temp theme", null);
+      UITheme theme = UITheme.loadFromJson(json.getInputStream(), "Temp theme", null, createIconsMapper(json, project));
       String pathToScheme = theme.getEditorScheme();
       VirtualFile editorScheme = null;
       if (pathToScheme != null) {
@@ -81,11 +86,34 @@ public class ApplyThemeAction extends DumbAwareAction {
       }
 
       LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme, editorScheme));
+      IconLoader.clearCache();
       LafManager.getInstance().updateUI();
       return true;
     }
     catch (IOException ignore) {}
     return false;
+  }
+
+  private static Function<String, String> createIconsMapper(VirtualFile json, Project project) {
+    Module module = ModuleUtilCore.findModuleForFile(json, project);
+    if (module != null) {
+      return s -> findAbsoluteFilePathByRelativePath(module, s, s);
+    }
+    return s -> s;
+  }
+
+  @Nullable
+  private static String findAbsoluteFilePathByRelativePath(Module module, String relativePath, String defaultResult) {
+    String filename = new File(relativePath).getName();
+    GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
+    Collection<VirtualFile> filesByName = FilenameIndex.getVirtualFilesByName(module.getProject(), filename, moduleScope);
+    for (VirtualFile file : filesByName) {
+      String path = file.getPath();
+      if (path.endsWith(relativePath) || path.endsWith(relativePath.replaceAll("/", "\\"))) {
+        return "file:/" + path;
+      }
+    }
+    return defaultResult;
   }
 
   @Override

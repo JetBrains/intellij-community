@@ -847,14 +847,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        final List<Trinity<String, String, String>> variants = ContainerUtil.list(
-          Trinity.create("yes", "barkling", "dog"),
-          Trinity.create("yes", "meowing", "cat"),
-          Trinity.create("yes", "crowling", "mouse"),
-          Trinity.create("not", "apparel", "schrank"),
-          Trinity.create("not", "dinner", "tisch"),
-          Trinity.create("not", "rest", "sessel")
-        );
+        final List<Trinity<String, String, String>> variants = Arrays.asList(
+          (Trinity<String, String, String>[])new Trinity[]{Trinity.create("yes", "barkling", "dog"),
+            Trinity.create("yes", "meowing", "cat"), Trinity.create("yes", "crowling", "mouse"),
+            Trinity.create("not", "apparel", "schrank"), Trinity.create("not", "dinner", "tisch"),
+            Trinity.create("not", "rest", "sessel")});
         variants.forEach(
           t -> {
             final PsiFile file = configureByText(JsonFileType.INSTANCE, String.format("{\"alive\":\"%s\",\n" +

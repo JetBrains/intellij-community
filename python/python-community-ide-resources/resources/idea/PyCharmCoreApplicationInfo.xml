@@ -7,17 +7,17 @@
   <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="114" progressY="278" progressHeight="3"/>
   <about url="/pycharm_core_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="cccccc"
          copyrightForeground="cccccc" linkColor="ffffff"/>
-  <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico" svg="/PyCharmCore.svg"/>
-  <icon-eap svg="/PyCharmCore-eap.svg"/>
+  <icon ico="PyCharmCore.ico" svg="/pycharm-ce.svg" svg-small="/pycharm-ce_16.svg"/>
+  <icon-eap svg="/pycharm-ce-eap.svg" svg-small="/pycharm-ce-eap_16.svg"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" edition="Community Edition" script="pycharm" default-launcher-name="charm" motto="Python IDE for Professional Developers"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
   <customize-ide-wizard provider="com.jetbrains.python.PyCharmCustomizeIDEWizardStepsProvider"/>
 
-  <plugins url="http://plugins.jetbrains.com/"/>
-  <update-urls check="http://www.jetbrains.com/updates/updates.xml"
-               patches="http://download.jetbrains.com/python/"/>
+  <plugins url="https://plugins.jetbrains.com/"/>
+  <update-urls check="https://www.jetbrains.com/updates/updates.xml"
+               patches="https://download.jetbrains.com/python/"/>
 
   <help webhelp-url="https://www.jetbrains.com/pycharm/webhelp"/>
   <documentation url="https://www.jetbrains.com/pycharm/documentation"/>

@@ -69,7 +69,7 @@ public class ApproximateResolver {
 
   @Nullable
   private static Set<PsiClass> getNewType(PsiNewExpression expression) {
-    if (expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0) return null;
+    if (expression.isArrayCreation()) return null;
     PsiAnonymousClass aClass = expression.getAnonymousClass();
     if (aClass != null) return Collections.singleton(aClass);
     PsiJavaCodeReferenceElement reference = expression.getClassReference();
@@ -134,7 +134,7 @@ public class ApproximateResolver {
   }
 
   @Nullable
-  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<PsiClass> qualifierType) {
+  public static Set<PsiClass> getDefiniteSymbolTypes(@NotNull List<? extends PsiMember> candidates, @NotNull Set<? extends PsiClass> qualifierType) {
     Set<PsiClass> possibleTypes = new HashSet<>();
     for (PsiMember candidate : candidates) {
       if (candidate instanceof PsiClass) {

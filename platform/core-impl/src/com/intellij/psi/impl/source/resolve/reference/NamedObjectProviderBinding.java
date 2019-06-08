@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
@@ -48,7 +49,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     final Map<String, List<ProviderInfo<ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (final String attributeName : names) {
-      String key = caseSensitive ? attributeName : attributeName.toLowerCase();
+      String key = caseSensitive ? attributeName : StringUtil.toLowerCase(attributeName);
       List<ProviderInfo<ElementPattern>> psiReferenceProviders = map.get(key);
 
       if (psiReferenceProviders == null) {
@@ -66,7 +67,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     String name = getName(position);
     if (name != null) {
       addMatchingProviders(position, myNamesToProvidersMap.get(name), list, hints);
-      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(name.toLowerCase()), list, hints);
+      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(StringUtil.toLowerCase(name)), list, hints);
     }
   }
 

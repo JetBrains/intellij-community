@@ -26,18 +26,18 @@ import java.util.LinkedHashSet;
  */
 public abstract class CompletionResultSet implements Consumer<LookupElement> {
   private final PrefixMatcher myPrefixMatcher;
-  private final Consumer<CompletionResult> myConsumer;
+  private final Consumer<? super CompletionResult> myConsumer;
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
   protected final CompletionContributor myContributor;
   private boolean myStopped;
 
-  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<CompletionResult> consumer, CompletionContributor contributor) {
+  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<? super CompletionResult> consumer, CompletionContributor contributor) {
     myPrefixMatcher = prefixMatcher;
     myConsumer = consumer;
     myContributor = contributor;
   }
 
-  protected Consumer<CompletionResult> getConsumer() {
+  protected Consumer<? super CompletionResult> getConsumer() {
     return myConsumer;
   }
 
@@ -137,8 +137,8 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     return elements;
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer) {
-    runRemainingContributors(parameters, consumer, true);
+  public void runRemainingContributors(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
+    runRemainingContributors(parameters, (Consumer)consumer, true);
   }
 
   public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer, final boolean stop) {

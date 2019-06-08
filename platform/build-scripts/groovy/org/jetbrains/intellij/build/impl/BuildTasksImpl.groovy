@@ -180,6 +180,9 @@ idea.fatal.error.notification=disabled
     def builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
       builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
+      if (!builtinPluginsRepoUrl.startsWith("https:")) {
+        buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
+      }
     }
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
@@ -361,6 +364,10 @@ idea.fatal.error.notification=disabled
         if (buildContext.buildNumber == null) {
           buildContext.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
         }
+        else if (buildContext.options.targetOS != BuildOptions.OS_ALL) {
+          buildContext.messages.
+            warning("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
+        }
         else {
           buildContext.executeStep("Building Toolbox Lite-Gen Links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
             String toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
@@ -428,6 +435,15 @@ idea.fatal.error.notification=disabled
     ]
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
+    }
+    [
+      'intellij.build.bundle.second.jre',
+      'intellij.build.bundled.second.jre.build',
+      'intellij.build.bundled.second.jre.version'
+    ].each { prop ->
+      System.getProperty(prop)?.with {
+        args += "-D$prop=$it"
+      }
     }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")

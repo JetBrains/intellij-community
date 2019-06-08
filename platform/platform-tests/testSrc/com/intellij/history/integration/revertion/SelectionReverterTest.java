@@ -94,7 +94,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
     final List<VirtualFile> files = new ArrayList<>();
     myGateway = new IdeaGateway() {
       @Override
-      public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<VirtualFile> ff) {
+      public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<? extends VirtualFile> ff) {
         files.addAll(ff);
         return true;
       }

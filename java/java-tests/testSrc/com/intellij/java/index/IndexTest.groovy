@@ -227,10 +227,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     final VirtualFile vFile = psiFile.getVirtualFile()
 
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject())
+
     CodeStyleManager.getInstance(project).reformat(psiFile)
 
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     PsiManager.getInstance(project).reloadFromDisk(psiFile)
+
+    assertEquals(stamp, ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject()))
 
     FileContentUtilCore.reparseFiles(vFile)
 
@@ -839,7 +843,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def facade = JavaPsiFacade.getInstance(project)
 
     def srcFile = myFixture.addFileToProject('foo/bar/A.java', 'class A {}')
-    assert facade.findClass('A', GlobalSearchScope.moduleScope(myModule)) != null
+    assert facade.findClass('A', GlobalSearchScope.moduleScope(module)) != null
 
     def anotherDir = myFixture.tempDirFixture.findOrCreateDir('another')
     def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', anotherDir)
@@ -923,7 +927,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addFileToProject('foo/bar/' + filename, 'class A {}')
 
     PlatformTestUtil.startPerformanceTest("Vfs Event Processing By Index", 1000, {
-      def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
+      def files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
       assert files?.length == 1
 
       VirtualFile file = files[0].virtualFile
@@ -944,7 +948,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       indexedFilesListener.before(eventList)
       indexedFilesListener.after(eventList)
 
-      files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
+      files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
       assert files?.length == 1
     }).assertTiming()
   }
@@ -1087,5 +1091,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
       assert !findClass('Foo')
     }
+  }
+
+  void "test stub updating index stamp"() {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
+    VfsUtil.saveText(vFile, "class Foo { void m() {} }")
+    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
+    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
+    VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
+    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
 }

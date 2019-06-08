@@ -16,6 +16,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -73,7 +74,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          String actionPlace) {
     presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
-      String name = Executor.shortenNameIfNeed(settings.getName());
+      String name = Executor.shortenNameIfNeeded(settings.getName());
       if (target != DefaultExecutionTarget.INSTANCE) {
         name += " | " + target.getDisplayName();
       } else {
@@ -131,7 +132,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
-        d.width = Math.max(d.width, JBUI.scale(75));
+        d.width = Math.max(d.width, JBUIScale.scale(75));
         return d;
       }
 
@@ -240,7 +241,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeed(settings.getName())));
+        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
       }
@@ -301,7 +302,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
-      String name = Executor.shortenNameIfNeed(configuration.getName());
+      String name = Executor.shortenNameIfNeeded(configuration.getName());
       if (name.isEmpty()) {
         name = " ";
       }

@@ -19,6 +19,7 @@ import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -59,7 +60,7 @@ public final class ConnectionStreams
 
 	@Override
         public Reader createReader(InputStream inputStream) {
-		return new InputStreamReader(inputStream);
+		return new InputStreamReader(inputStream, StandardCharsets.UTF_8);
 	}
 
 	@Override

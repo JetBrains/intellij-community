@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
@@ -131,7 +132,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   private void initTree() {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    UIUtil.setLineStyleAngled(myTree);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
@@ -278,7 +278,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       if (userObject instanceof PsiDirectoryNode) {
         String str = getElementText(element);
         if (str == null) return false;
-        str = str.toLowerCase();
+        str = StringUtil.toLowerCase(str);
         if (pattern.indexOf('.') >= 0) {
           return compare(str, pattern);
         }

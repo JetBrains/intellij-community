@@ -220,7 +220,7 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void executeStep(String stepMessage, String stepId, Closure step) {
+  boolean executeStep(String stepMessage, String stepId, Closure step) {
     if (options.buildStepsToSkip.contains(stepId)) {
       messages.info("Skipping '$stepMessage'")
     }

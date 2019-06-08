@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 /**
  * @author swr
@@ -79,7 +80,7 @@ public enum ActionType {
 
   public void patchPluginXml(XmlFile pluginXml, PsiClass klass, ActionData dialog) throws IncorrectOperationException {
     final XmlTag rootTag = pluginXml.getDocument().getRootTag();
-    if (rootTag != null && "idea-plugin".equals(rootTag.getName())) {
+    if (rootTag != null && IdeaPlugin.TAG_NAME.equals(rootTag.getName())) {
       XmlTag actions = rootTag.findFirstSubTag("actions");
       if (actions == null || !actions.isPhysical()) {
         actions = (XmlTag)rootTag.add(rootTag.createChildTag("actions", rootTag.getNamespace(), null, false));

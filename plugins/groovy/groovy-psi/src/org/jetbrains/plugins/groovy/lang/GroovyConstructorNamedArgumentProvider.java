@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.openapi.util.Key;
@@ -8,7 +8,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -68,7 +67,7 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
                                   @Nullable String argumentName,
                                   final Map<String, NamedArgumentDescriptor> result) {
     if (argumentName == null) {
-      final HashMap<String, Trinity<PsiType, PsiElement, PsiSubstitutor>> map = ContainerUtil.newHashMap();
+      final HashMap<String, Trinity<PsiType, PsiElement, PsiSubstitutor>> map = new HashMap<>();
 
       MyPsiScopeProcessor processor = new MyPsiScopeProcessor() {
         @Override

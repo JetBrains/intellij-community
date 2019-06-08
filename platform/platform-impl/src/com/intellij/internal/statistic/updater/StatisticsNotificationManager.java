@@ -13,7 +13,7 @@ final class StatisticsNotificationManager {
   }
 
   public static void showNotification(@NotNull StatisticsService statisticsService) {
-    if (AppUIUtil.showConsentsAgreementIfNeed(Logger.getInstance(StatisticsNotificationManager.class))) {
+    if (AppUIUtil.showConsentsAgreementIfNeeded(Logger.getInstance(StatisticsNotificationManager.class))) {
       ApplicationManager.getApplication().executeOnPooledThread((Runnable)statisticsService::send);
       UsageStatisticsPersistenceComponent.getInstance().setShowNotification(false);
     }

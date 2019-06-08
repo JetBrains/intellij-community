@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -56,10 +42,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 public class GitShowExternalLogAction extends DumbAwareAction {
   private static final String EXTERNAL = "EXTERNAL";
@@ -114,17 +98,18 @@ public class GitShowExternalLogAction extends DumbAwareAction {
                                                             @NotNull final GitVcs vcs,
                                                             @NotNull final List<VirtualFile> roots,
                                                             boolean isToolWindowTab) {
+    Disposable disposable = Disposer.newDisposable();
     final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (VirtualFile root : roots) {
-      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
+      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, disposable, true));
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, GitExternalLogTabsProperties.class),
                                               ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
-    Disposable disposable = () -> manager.dispose(() -> {
+    Disposer.register(disposable, () -> manager.dispose(() -> {
       for (VirtualFile root : roots) {
         repositoryManager.removeExternalRepository(root);
       }
-    });
+    }));
     AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab);
     Disposer.register(disposable, ui);
     return new MyContentComponent(new VcsLogPanel(manager, ui), roots, disposable);
@@ -164,7 +149,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
       return Collections.emptyList();
     }
 
-    List<VirtualFile> correctRoots = ContainerUtil.newArrayList();
+    List<VirtualFile> correctRoots = new ArrayList<>();
     for (VirtualFile vf : virtualFiles) {
       if (GitUtil.isGitRoot(new File(vf.getPath()))) {
         correctRoots.add(vf);

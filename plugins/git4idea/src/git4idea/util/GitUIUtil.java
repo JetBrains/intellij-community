@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
-import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,31 +109,6 @@ public class GitUIUtil {
     notifyMessage(project, title, description, true, null);
   }
 
-  public static void notifyGitErrors(Project project, String title, String description, Collection<? extends VcsException> gitErrors) {
-    StringBuilder content = new StringBuilder();
-    if (!StringUtil.isEmptyOrSpaces(description)) {
-      content.append(description);
-    }
-    if (!gitErrors.isEmpty()) {
-      content.append("<br/>");
-    }
-    for (VcsException e : gitErrors) {
-      content.append(e.getLocalizedMessage()).append("<br/>");
-    }
-    notifyMessage(project, title, content.toString(), false, null);
-  }
-
-  /**
-   * @return a list cell renderer for virtual files (it renders presentable URL)
-   */
-  public static ListCellRenderer<VirtualFile> getVirtualFileListCellRenderer() {
-    return SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl);
-  }
-
-  public static ListCellRenderer<GitRepository> getRepositoryListCellRenderer() {
-    return SimpleListCellRenderer.create("(invalid)", Repository::getPresentableUrl);
-  }
-
   /**
    * Get text field from combobox
    *
@@ -163,7 +136,7 @@ public class GitUIUtil {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
-    gitRootChooser.setRenderer(getVirtualFileListCellRenderer());
+    gitRootChooser.setRenderer(SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl));
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {
@@ -230,17 +203,6 @@ public class GitUIUtil {
    */
   public static void showOperationError(final Project project, final String operation, final String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
-  }
-
-  /**
-   * Show errors on the tab
-   *
-   * @param project the context project
-   * @param title   the operation title
-   * @param errors  the errors to display
-   */
-  public static void showTabErrors(Project project, String title, List<VcsException> errors) {
-    AbstractVcsHelper.getInstance(project).showErrors(errors, title);
   }
 
   /**

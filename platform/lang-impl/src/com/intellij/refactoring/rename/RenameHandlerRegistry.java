@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.rename;
 
@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,10 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 
 /**
@@ -35,7 +38,7 @@ import java.util.function.Function;
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
-  private Function<Collection<RenameHandler>, RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
+  private Function<? super Collection<RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
 
   public static RenameHandlerRegistry getInstance() {
     return ServiceManager.getService(RenameHandlerRegistry.class);
@@ -72,7 +75,7 @@ public class RenameHandlerRegistry {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return myRenameHandlerSelectorInTests.apply(availableHandlers.values());
       }
-      final String[] strings = ArrayUtil.toStringArray(availableHandlers.keySet());
+      final String[] strings = ArrayUtilRt.toStringArray(availableHandlers.keySet());
       final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
       if (chooser.showAndGet()) {
         return availableHandlers.get(chooser.getSelection());
@@ -89,7 +92,7 @@ public class RenameHandlerRegistry {
   }
 
   @TestOnly
-  public void setRenameHandlerSelectorInTests(Function<Collection<RenameHandler>, RenameHandler> selector, Disposable parentDisposable) {
+  public void setRenameHandlerSelectorInTests(Function<? super Collection<RenameHandler>, ? extends RenameHandler> selector, Disposable parentDisposable) {
     myRenameHandlerSelectorInTests = selector;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -100,7 +103,7 @@ public class RenameHandlerRegistry {
   }
 
   private static String getHandlerTitle(RenameHandler renameHandler) {
-    return renameHandler instanceof TitledHandler ? StringUtil.capitalize(((TitledHandler)renameHandler).getActionTitle().toLowerCase()) : renameHandler.toString();
+    return renameHandler instanceof TitledHandler ? StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle())) : renameHandler.toString();
   }
 
   private static class HandlersChooser extends DialogWrapper {

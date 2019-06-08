@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
@@ -425,7 +425,7 @@ public class DvcsUtil {
   @NotNull
   public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
                                                                                               @NotNull List<? extends VcsFullCommitDetails> commits) {
-    Map<R, List<VcsFullCommitDetails>> groupedCommits = ContainerUtil.newHashMap();
+    Map<R, List<VcsFullCommitDetails>> groupedCommits = new HashMap<>();
     for (VcsFullCommitDetails commit : commits) {
       R repository = repoManager.getRepositoryForRoot(commit.getRoot());
       if (repository == null) {
@@ -434,7 +434,7 @@ public class DvcsUtil {
       }
       List<VcsFullCommitDetails> commitsInRoot = groupedCommits.get(repository);
       if (commitsInRoot == null) {
-        commitsInRoot = ContainerUtil.newArrayList();
+        commitsInRoot = new ArrayList<>();
         groupedCommits.put(repository, commitsInRoot);
       }
       commitsInRoot.add(commit);

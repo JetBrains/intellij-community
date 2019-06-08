@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.LineSeparatorPanel;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.LineSeparator;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
@@ -24,7 +23,6 @@ import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author Dennis.Ushakov
@@ -73,7 +71,7 @@ public class LineEndingsManager implements FileDocumentManagerListener {
     final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
     if (!lineEndings.isEmpty()) {
       try {
-        LineSeparator separator = LineSeparator.valueOf(lineEndings.toUpperCase(Locale.US));
+        LineSeparator separator = LineSeparator.valueOf(StringUtil.toUpperCase(lineEndings));
         String oldSeparator = file.getDetectedLineSeparator();
         String newSeparator = separator.getSeparatorString();
         if (!StringUtil.equals(oldSeparator, newSeparator)) {

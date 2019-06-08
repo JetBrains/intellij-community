@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.run.docutils;
 
 import com.intellij.execution.Location;
@@ -6,7 +6,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -40,7 +40,7 @@ public class DocutilsConfigurationProducer extends RuntimeConfigurationProducer 
     if (script == null || script.getFileType() != RestFileType.INSTANCE) {
       return null;
     }
-    Module module = ModuleUtil.findModuleForPsiElement(script);
+    Module module = ModuleUtilCore.findModuleForPsiElement(script);
     storeSourceElement(script);
 
     final Project project = script.getProject();
@@ -78,7 +78,7 @@ public class DocutilsConfigurationProducer extends RuntimeConfigurationProducer 
   @Nullable
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
+                                                                 @NotNull List<? extends RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     PsiFile script = location.getPsiElement().getContainingFile();
     if (script == null) {

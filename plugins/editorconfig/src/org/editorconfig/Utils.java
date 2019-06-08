@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -20,7 +21,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
@@ -40,6 +40,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class Utils {
+
+  public static final String EDITOR_CONFIG_FILE_NAME = ".editorconfig";
 
   public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";
 
@@ -160,7 +162,7 @@ public class Utils {
   public static String getLineSeparatorString(@NotNull String separator) {
     for (LineSeparator s : LineSeparator.values()) {
       if (separator.equals(s.getSeparatorString())) {
-        return s.name().toLowerCase(Locale.US);
+        return StringUtil.toLowerCase(s.name());
       }
     }
     return null;
@@ -253,7 +255,7 @@ public class Utils {
 
   @NotNull
   public static List<VirtualFile> pathsToFiles(@NotNull List<String> paths) {
-    List<VirtualFile> files = ContainerUtil.newArrayList();
+    List<VirtualFile> files = new ArrayList<>();
     for (String path : paths) {
       VirtualFile file = VfsUtil.findFile(Paths.get(path), true);
       if (file != null) {

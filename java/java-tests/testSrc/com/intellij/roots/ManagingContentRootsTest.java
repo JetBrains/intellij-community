@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -32,7 +32,7 @@ import java.io.IOException;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-public class ManagingContentRootsTest extends IdeaTestCase {
+public class ManagingContentRootsTest extends JavaProjectTestCase {
   private VirtualFile dir;
 
   @Override

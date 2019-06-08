@@ -218,7 +218,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     }
   }
 
-  private void findUsagesInExtendsList(@NotNull List<FixableUsageInfo> usages, PsiReferenceList extendsList) {
+  private void findUsagesInExtendsList(@NotNull List<? super FixableUsageInfo> usages, PsiReferenceList extendsList) {
     final PsiJavaCodeReferenceElement[] referenceExtendsElements = extendsList != null ? extendsList.getReferenceElements() : null;
     if (referenceExtendsElements != null) {
       for (PsiJavaCodeReferenceElement element : referenceExtendsElements) {

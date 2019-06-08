@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -34,9 +34,18 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   @NotNull
   public abstract DebuggerStateManager getContextManager();
 
-  public abstract void addDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
+  /**
+   * @deprecated Use {@link DebuggerManagerListener#TOPIC}
+   */
+  @Deprecated
+  public abstract void addDebuggerManagerListener(@NotNull DebuggerManagerListener debuggerManagerListener);
 
-  public abstract void removeDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
+
+  /**
+   * @deprecated Use {@link DebuggerManagerListener#TOPIC}
+   */
+  @Deprecated
+  public abstract void removeDebuggerManagerListener(@NotNull DebuggerManagerListener debuggerManagerListener);
 
   @Nullable
   public abstract DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException;

@@ -79,7 +79,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
         return Promises.rejectedPromise();
       }
 
-      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(dialog.getCoordinateText(), true);
+      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(dialog.getSelectedLibraryDescriptor());
       Collection<OrderRoot> roots =
         JarRepositoryManager.loadDependenciesModal(myProject, libraryProperties, dialog.getAttachSources(), dialog.getAttachJavaDoc(), dialog.getDirectoryPath(), null);
       if (roots.isEmpty()) {

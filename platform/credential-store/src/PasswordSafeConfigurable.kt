@@ -144,7 +144,7 @@ internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSe
     // not in createAndSaveKeePassDatabaseWithNewOptions (as logically should be) because we want to force users to set custom master passwords even if some another setting (not path) was changed
     // (e.g. PGP key)
     if (providerType == ProviderType.KEEPASS) {
-      createKeePassFileManager()?.setCustomMasterPasswordIfNeed(getDefaultKeePassDbFile())
+      createKeePassFileManager()?.setCustomMasterPasswordIfNeeded(getDefaultKeePassDbFile())
     }
 
     settings.providerType = providerType

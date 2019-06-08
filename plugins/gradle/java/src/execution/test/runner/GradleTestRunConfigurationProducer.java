@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
-import org.jetbrains.plugins.gradle.service.settings.GradleSettingsService;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
@@ -47,7 +47,7 @@ import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
  * @author Vladislav.Soroka
  */
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
-  private static final List<String> TEST_SOURCE_SET_TASKS = ContainerUtil.list("cleanTest", "test");
+  private static final List<String> TEST_SOURCE_SET_TASKS = Arrays.asList("cleanTest", "test");
 
   protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
 
@@ -77,9 +77,9 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull ExternalSystemRunConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
 
     if (sourceElement.isNull()) return false;
@@ -97,8 +97,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
                                                              Ref<PsiElement> sourceElement);
 
   @Override
-  public boolean isConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    if (configuration == null) return false;
+  public boolean isConfigurationFromContext(@NotNull ExternalSystemRunConfiguration configuration, @NotNull ConfigurationContext context) {
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
 
     String projectPath = configuration.getSettings().getExternalProjectPath();
@@ -235,17 +234,17 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
     if (taskNode == null) return ContainerUtil.emptyList();
     String taskName = StringUtil.trimStart(taskNode.getData().getName(), taskPrefix);
-    tasks = ContainerUtil.list("clean" + StringUtil.capitalize(taskName), taskName);
+    tasks = Arrays.asList("clean" + StringUtil.capitalize(taskName), taskName);
     return ContainerUtil.map(tasks, task -> taskPrefix + task);
   }
 
   private static TestRunner getTestRunner(@NotNull Project project, @NotNull String projectPath) {
-    return GradleSettingsService.getInstance(project).getTestRunner(projectPath);
+    return GradleProjectSettings.getTestRunner(project, projectPath);
   }
 
   private static TestRunner getTestRunner(@NotNull PsiElement sourceElement) {
     Module module = ModuleUtilCore.findModuleForPsiElement(sourceElement);
     if (module == null) return PLATFORM;
-    return GradleSettingsService.getTestRunner(module);
+    return GradleProjectSettings.getTestRunner(module);
   }
 }

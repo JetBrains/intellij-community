@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -16,7 +17,6 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -52,7 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
+  private static final Key<Boolean> ANNOTATIONS_BEING_ATTACHED = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
 
   private static final CallMapper<AllowedValues> SPECIAL_CASES = new CallMapper<AllowedValues>()
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
@@ -103,7 +103,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     return new JavaElementVisitor() {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
-        checkAnnotationsJarAttached(file, holder);
+        if (!(file.getViewProvider() instanceof InjectedFileViewProvider)) {
+          Runnable fix = getAttachAnnotationsJarFix(file.getProject());
+          if (fix != null) {
+            fix.run(); // try to attach automatically
+          }
+        }
       }
 
       @Override
@@ -178,55 +183,35 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   @Override
   public void cleanup(@NotNull Project project) {
     super.cleanup(project);
-    project.putUserData(NO_ANNOTATIONS_FOUND, null);
+    project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
   }
 
-  private static void checkAnnotationsJarAttached(@NotNull PsiFile file, @NotNull ProblemsHolder holder) {
-    if (file.getViewProvider() instanceof InjectedFileViewProvider) return;
+  // returns fix to apply if our own JB "jdkAnnotations" are not attached to the current jdk
+  public static Runnable getAttachAnnotationsJarFix(Project project) {
+    final Boolean found = project.getUserData(ANNOTATIONS_BEING_ATTACHED);
+    if (found != null) return null;
 
-    final Project project = file.getProject();
-    if (!holder.isOnTheFly()) {
-      final Boolean found = project.getUserData(NO_ANNOTATIONS_FOUND);
-      if (found != null) return;
-    }
-
-    PsiClass event = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
-    if (event == null) return; // no jdk to attach
-    PsiMethod[] methods = event.findMethodsByName("getModifiers", false);
-    if (methods.length != 1) return; // no jdk to attach
+    PsiClass awtInputEvent = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
+    if (awtInputEvent == null) return null;
+    PsiMethod[] methods = awtInputEvent.findMethodsByName("getModifiers", false);
+    if (methods.length != 1) return null;
     PsiMethod getModifiers = methods[0];
-    PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
-    if (annotation != null) return;
     Sdk jdk = JdkUtils.getJdkForElement(getModifiers);
-    if (jdk == null) return; // no jdk to attach
+    if (jdk == null) return null;
+    PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
+    return annotation == null ? () -> attachAnnotationsLaterTo(project, jdk) : null;
+  }
 
-    if (!holder.isOnTheFly()) {
-      project.putUserData(NO_ANNOTATIONS_FOUND, Boolean.TRUE);
-    }
-
-    final Sdk finalJdk = jdk;
-
-    String path = finalJdk.getHomePath();
-    String text = "No IDEA annotations attached to the JDK " + finalJdk.getName() + (path == null ? "" : " (" + FileUtil.toSystemDependentName(path) + ")")
-                  +", some issues will not be found";
-    holder.registerProblem(file, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new LocalQuickFix() {
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return "Attach annotations";
-      }
-
-      @Nullable
-      @Override
-      public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-        return null;
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        SdkModificator modificator = finalJdk.getSdkModificator();
-        JavaSdkImpl.attachJdkAnnotations(modificator);
-        modificator.commitChanges();
+  private static void attachAnnotationsLaterTo(@NotNull Project project, @NotNull Sdk sdk) {
+    project.putUserData(ANNOTATIONS_BEING_ATTACHED, Boolean.TRUE);
+    TransactionGuard.submitTransaction(project, () -> {
+      SdkModificator modificator = sdk.getSdkModificator();
+      boolean success = JavaSdkImpl.attachIDEAAnnotationsToJdk(modificator);
+      // daemon will restart automatically
+      modificator.commitChanges();
+      // avoid endless loop on JDK misconfigration
+      if (success) {
+        project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
       }
     });
   }
@@ -416,7 +401,6 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @Nullable
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<? super PsiClass> visited) {
-    
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util;
 
@@ -157,7 +157,7 @@ public class Assertion extends Assert {
 
   public void empty(Object[] array) {
     try {
-      compareAll(ArrayUtil.EMPTY_OBJECT_ARRAY, array);
+      compareAll(ArrayUtilRt.EMPTY_OBJECT_ARRAY, array);
     } catch(AssertionFailedError e) {
       System.err.println("Size: " + array.length);
       throw e;
@@ -233,7 +233,7 @@ public class Assertion extends Assert {
     }
   }
 
-  public <T> void singleOccurence(Collection<T> collection, T item) {
+  public <T> void singleOccurence(Collection<? extends T> collection, T item) {
     int number = countOccurences(collection, item);
     if (number != 1) {
       enumerate(collection);
@@ -241,7 +241,7 @@ public class Assertion extends Assert {
     }
   }
 
-  public static <T> int countOccurences(Collection<T> collection, T item) {
+  public static <T> int countOccurences(Collection<? extends T> collection, T item) {
     int counter = 0;
     for (T obj : collection) {
       if (Comparing.equal(item, obj)) counter++;

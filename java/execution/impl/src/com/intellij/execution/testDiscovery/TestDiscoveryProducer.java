@@ -28,7 +28,7 @@ public interface TestDiscoveryProducer {
 
   @NotNull
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                              @NotNull List<Couple<String>> classesAndMethods,
+                                              @NotNull List<? extends Couple<String>> classesAndMethods,
                                               byte frameworkId);
 
   @NotNull
@@ -67,16 +67,16 @@ public interface TestDiscoveryProducer {
   }
 
   @NotNull
-  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, byte frameworkId) throws IOException;
+  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, byte frameworkId);
 
   @NotNull
-  List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassNames, byte frameworkId) throws IOException;
+  List<String> getAffectedFilePathsByClassName(@NotNull Project project, @NotNull String testClassNames, byte frameworkId);
 
   @NotNull
   List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) throws IOException;
 
   // testFqn - (className, methodName)
-  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<Couple<String>> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<? extends Couple<String>> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) {
     for (TestDiscoveryProducer extension : EP.getExtensionList()) {
       for (String path : extension.getAffectedFilePaths(project, testFqns, frameworkId)) {
         pathsConsumer.consume(path);
@@ -84,7 +84,7 @@ public interface TestDiscoveryProducer {
     }
   }
 
-  static void consumeAffectedPaths(@NotNull Project project, @NotNull String testClassName, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull String testClassName, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) {
     for (TestDiscoveryProducer extension : EP.getExtensionList()) {
       for (String path : extension.getAffectedFilePathsByClassName(project, testClassName, frameworkId)) {
         pathsConsumer.consume(path);

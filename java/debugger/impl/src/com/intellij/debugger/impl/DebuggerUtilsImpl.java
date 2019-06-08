@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
@@ -10,18 +11,15 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -32,8 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.NetUtils;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.sun.jdi.*;
@@ -58,16 +54,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public PsiExpression substituteThis(PsiExpression expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue, StackFrameContext context)
     throws EvaluateException {
     return DebuggerTreeNodeExpression.substituteThis(expressionWithThis, howToEvaluateThis, howToEvaluateThisValue);
-  }
-
-  @Override
-  public EvaluatorBuilder getEvaluatorBuilder() {
-    return EvaluatorBuilderImpl.getInstance();
-  }
-
-  @Override
-  public DebuggerTreeNode getSelectedNode(DataContext context) {
-    return DebuggerAction.getSelectedNode(context);
   }
 
   @Override
@@ -107,7 +93,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       Element element = JDOMExternalizerUtil.writeOption(root, name);
       XExpression expression = TextWithImportsImpl.toXExpression(value);
       if (expression != null) {
-        XmlSerializer.serializeInto(new XExpressionState(expression), element, new SkipDefaultValuesSerializationFilters());
+        XmlSerializer.serializeObjectInto(new XExpressionState(expression), element);
       }
     }
   }
@@ -122,7 +108,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       Element option = JDOMExternalizerUtil.readOption(root, name);
       if (option != null) {
         XExpressionState state = new XExpressionState();
-        XmlSerializer.deserializeInto(state, option);
+        XmlSerializer.deserializeInto(option, state);
         return TextWithImportsImpl.fromXExpression(state.toXExpression());
       }
     }
@@ -249,7 +235,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public static <T> T runInReadActionWithWriteActionPriorityWithRetries(@NotNull Computable<T> action) {
-    if (ApplicationManagerEx.getApplicationEx().holdsReadLock()) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       return action.compute();
     }
     Ref<T> res = Ref.create();

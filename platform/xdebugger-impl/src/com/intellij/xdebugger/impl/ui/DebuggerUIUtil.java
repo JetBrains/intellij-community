@@ -114,7 +114,7 @@ public class DebuggerUIUtil {
       popup.addListener(new JBPopupAdapter() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
-          Window window = UIUtil.getWindow(popup.getContent());
+          Window window = popup.isDisposed()  ? null : UIUtil.getWindow(popup.getContent());
           if (window != null) {
             Point expected = point.getScreenPoint();
             Rectangle screen = ScreenUtil.getScreenRectangle(expected);

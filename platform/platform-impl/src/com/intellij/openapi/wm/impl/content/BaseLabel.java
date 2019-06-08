@@ -122,10 +122,7 @@ public class BaseLabel extends JLabel {
         if(componentOrientation != null) {
           setComponentOrientation(componentOrientation);
         }
-        Icon icon = content.getIcon();
-        if (icon instanceof OffsetIcon) {
-          icon = ((OffsetIcon)icon).getIcon();
-        }
+        Icon icon = OffsetIcon.getOriginalIcon(content.getIcon());
         if (isSelected) {
           setIcon(icon);
         }

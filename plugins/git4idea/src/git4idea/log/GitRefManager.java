@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -97,8 +98,8 @@ public class GitRefManager implements VcsLogRefManager {
   @NotNull
   @Override
   public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
-    List<RefGroup> simpleGroups = ContainerUtil.newArrayList();
-    List<VcsRef> localBranches = ContainerUtil.newArrayList();
+    List<RefGroup> simpleGroups = new ArrayList<>();
+    List<VcsRef> localBranches = new ArrayList<>();
     MultiMap<GitRemote, VcsRef> remoteRefGroups = MultiMap.create();
 
     MultiMap<VirtualFile, VcsRef> refsByRoot = groupRefsByRoot(refs);
@@ -134,7 +135,7 @@ public class GitRefManager implements VcsLogRefManager {
       }
     }
 
-    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<RefGroup> result = new ArrayList<>();
     result.addAll(simpleGroups);
     if (!localBranches.isEmpty()) result.add(new SimpleRefGroup("Local", localBranches, false));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
@@ -149,7 +150,7 @@ public class GitRefManager implements VcsLogRefManager {
     List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
     MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType);
 
-    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<RefGroup> result = new ArrayList<>();
     if (groupedRefs.isEmpty()) return result;
 
     VcsRef head = null;
@@ -191,7 +192,7 @@ public class GitRefManager implements VcsLogRefManager {
   @NotNull
   private static List<RefGroup> getTrackedRefs(@NotNull MultiMap<VcsRefType, VcsRef> groupedRefs,
                                                @NotNull GitRepository repository) {
-    List<RefGroup> result = ContainerUtil.newArrayList();
+    List<RefGroup> result = new ArrayList<>();
 
     Collection<VcsRef> locals = groupedRefs.get(LOCAL_BRANCH);
     Collection<VcsRef> remotes = groupedRefs.get(REMOTE_BRANCH);
@@ -291,7 +292,7 @@ public class GitRefManager implements VcsLogRefManager {
   @NotNull
   private static Map<String, GitRemote> getAllRemoteBranches(@NotNull GitRepository repository) {
     Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
-    Map<String, GitRemote> allRemote = ContainerUtil.newHashMap();
+    Map<String, GitRemote> allRemote = new HashMap<>();
     for (GitRemoteBranch remoteBranch : all) {
       allRemote.put(remoteBranch.getName(), remoteBranch.getRemote());
     }

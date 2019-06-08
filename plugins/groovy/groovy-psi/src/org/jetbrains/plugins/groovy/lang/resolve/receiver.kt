@@ -26,7 +26,7 @@ private fun PsiType.doProcessReceiverType(processor: PsiScopeProcessor, state: R
     is PsiPrimitiveType -> getBoxedType(place)?.processReceiverType(processor, state, place) ?: true
     is PsiDisjunctionType -> leastUpperBound.processReceiverType(processor, state, place)
     is PsiIntersectionType -> conjuncts.all { it.processReceiverType(processor, state, place) }
-    is PsiCapturedWildcardType -> wildcard.processReceiverType(processor, state, place)
+    is PsiCapturedWildcardType -> upperBound.processReceiverType(processor, state, place)
     is PsiWildcardType -> !isExtends || extendsBound.processReceiverType(processor, state, place)
     is GrTraitType -> conjuncts.reversed().all {
       // Process trait type conjuncts in reversed order because last applied trait matters

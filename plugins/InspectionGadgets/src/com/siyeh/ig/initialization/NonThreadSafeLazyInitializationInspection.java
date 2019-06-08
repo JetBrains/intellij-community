@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -23,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,6 +19,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -146,7 +134,9 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
         return;
       }
       final PsiField field = (PsiField)resolved;
-      @NonNls final String holderName = StringUtil.capitalize(field.getName()) + "Holder";
+      final String fieldName = field.getName();
+      assert fieldName != null;
+      @NonNls final String holderName = StringUtil.capitalize(fieldName) + "Holder";
       final PsiElement expressionParent = expression.getParent();
       if (!(expressionParent instanceof PsiAssignmentExpression)) {
         return;
@@ -156,9 +146,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      @NonNls final String text = "private static class " + holderName + " {" +
-                                  "private static final " + field.getType().getCanonicalText() + " " +
-                                  field.getName() + " = " + rhs.getText() + ";}";
+      @NonNls final String text = "private static final class " + holderName + " {}";
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(field.getProject());
       final PsiClass holder = elementFactory.createClassFromText(text, field).getInnerClasses()[0];
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
@@ -166,13 +154,22 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
         return;
       }
       final PsiClass holderClass = (PsiClass)method.getParent().addBefore(holder, method);
+      final PsiField newField = (PsiField)holderClass.add(field);
+      final PsiModifierList modifierList = newField.getModifierList();
+      assert modifierList != null;
+      modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      if (!PsiUtil.isLanguageLevel11OrHigher(holderClass)) {
+        modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+      }
+      newField.setInitializer(rhs);
+      CodeStyleManager.getInstance(project).reformat(holderClass);
 
       final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
       if (ifStatement != null) {
-        ifStatement.delete();
+        new CommentTracker().deleteAndRestoreComments(ifStatement);
       }
 
-      final PsiExpression holderReference = elementFactory.createExpressionFromText(holderName + "." + field.getName(), field);
+      final PsiExpression holderReference = elementFactory.createExpressionFromText(holderName + "." + fieldName, field);
       for (PsiReference reference : ReferencesSearch.search(field).findAll()) {
         reference.getElement().replace(holderReference);
       }
@@ -226,12 +223,10 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
     }
   }
 
-  private static class UnsafeSafeLazyInitializationVisitor
-    extends BaseInspectionVisitor {
+  private static class UnsafeSafeLazyInitializationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
@@ -253,8 +248,7 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
         return;
       }
       final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
-      final PsiElement parent =
-        PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiBlockStatement.class);
+      final PsiElement parent = PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiBlockStatement.class);
       if (!(parent instanceof PsiIfStatement)) {
         return;
       }

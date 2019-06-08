@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
@@ -12,9 +12,9 @@ import com.intellij.ui.DottedBorder;
 import com.intellij.ui.EditorSettingsProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -106,7 +106,7 @@ public abstract class JBListTable {
     };
 
     Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-    font = new Font(font.getFontName(), font.getStyle(), JBUI.scaleFontSize(12));
+    font = new Font(font.getFontName(), font.getStyle(), JBUIScale.scaleFontSize((float)12));
     field.setFont(font);
     field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);
 

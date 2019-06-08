@@ -25,7 +25,6 @@ import org.intellij.lang.annotations.Language
 class JavaNullMethodArgumentIndexTest : LightPlatformCodeInsightFixtureTestCase() {
 
   fun testIndex() {
-    @Language("JAVA")
     val file = myFixture.configureByText(StdFileTypes.JAVA, """
             package org.some;
 
@@ -42,9 +41,13 @@ class JavaNullMethodArgumentIndexTest : LightPlatformCodeInsightFixtureTestCase(
                 }
 
                 public static void main(String[] args) {
-                    staticMethod(null, "", "");
-                    org.some.Main111.staticMethod("", "", null);
-                    new Main111(null).someMethod("", "", null);
+                    staticMethod(null
+, "", "");
+                    org.some.Main111.staticMethod("", "", null""" + '\t' +  """);
+                    new Main111(null).someMethod("", "", null  );
+
+                    String s = null;
+
                     Main111 m = new Main111(null);
                     m.someMethod(null, "", "");
                 }

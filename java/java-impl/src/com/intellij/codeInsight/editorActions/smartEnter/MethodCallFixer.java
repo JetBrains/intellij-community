@@ -68,7 +68,7 @@ public class MethodCallFixer implements Fixer {
       }
 
       if (!DumbService.isDumb(args.getProject())) {
-        Integer argCount = getUnambiguousParameterCount(innermostCall);
+        Integer argCount = getMinimalParameterCount(innermostCall);
         if (argCount != null && argCount > 0 && argCount < params.length) {
           endOffset = Math.min(endOffset, params[argCount - 1].getTextRange().getEndOffset());
         }
@@ -85,21 +85,15 @@ public class MethodCallFixer implements Fixer {
   }
 
   @Nullable
-  private static Integer getUnambiguousParameterCount(PsiCallExpression call) {
-    int argCount = -1;
+  private static Integer getMinimalParameterCount(PsiCallExpression call) {
+    int paramCount = Integer.MAX_VALUE;
     for (CandidateInfo candidate : PsiResolveHelper.SERVICE.getInstance(call.getProject()).getReferencedMethodCandidates(call, false)) {
       PsiElement element = candidate.getElement();
-      if (!(element instanceof PsiMethod)) return null;
-      if (((PsiMethod)element).isVarArgs()) return null;
-
-      int count = ((PsiMethod)element).getParameterList().getParametersCount();
-      if (argCount == -1) {
-        argCount = count;
-      } else if (argCount != count) {
-        return null;
+      if (element instanceof PsiMethod) {
+        paramCount = Math.min(paramCount, ((PsiMethod)element).getParameterList().getParametersCount());
       }
     }
-    return argCount;
+    return paramCount == Integer.MAX_VALUE ? null : paramCount;
   }
 
   private static int startLine(Editor editor, PsiElement psiElement) {

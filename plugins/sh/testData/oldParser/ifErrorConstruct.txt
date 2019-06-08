@@ -1,0 +1,43 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        FUNCTION_DEFINITION
+          PsiElement(function)('function')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('a')
+          PsiWhiteSpace(' ')
+          BLOCK
+            PsiElement({)('{')
+            PsiWhiteSpace(' ')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  IF_COMMAND
+                    PsiElement(if)('if')
+                    PsiWhiteSpace(' ')
+                    COMPOUND_LIST
+                      PIPELINE_COMMAND
+                        PIPELINE
+                          GENERIC_COMMAND_DIRECTIVE
+                            LITERAL
+                              PsiElement(word)('k')
+                      PsiElement(;)(';')
+                    PsiWhiteSpace(' ')
+                    THEN_CLAUSE
+                      PsiElement(then)('then')
+                      PsiWhiteSpace(' ')
+                      PsiErrorElement:<compound list> expected, got ';'
+                        PsiElement(;)(';')
+                      PsiWhiteSpace(' ')
+                      PsiElement(done)('done')
+                      PsiWhiteSpace(' ')
+                      PsiElement(})('}')
+                      PsiElement(\n)('\n')
+                      PsiElement(word)('echo')
+                      PsiWhiteSpace(' ')
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('abc')
+                      PsiElement(CLOSE_QUOTE)('"')
+              PsiErrorElement:'&', '&&', ';', '\n' or '||' expected
+                <empty list>

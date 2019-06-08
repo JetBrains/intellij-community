@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -25,14 +11,11 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -43,15 +26,11 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getSourceSetName;
 
@@ -104,7 +83,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       notificationManager.removeNotificationListener(listener);
     }
 
-    List<String> ideClasspath = ContainerUtil.newArrayList();
+    List<String> ideClasspath = new ArrayList<>();
     ModuleRootManager.getInstance(module).orderEntries().withoutSdk().withoutModuleSourceEntries().compileOnly().productionOnly().forEach(
       entry -> {
         if (entry instanceof ModuleOrderEntry) {
@@ -703,16 +682,16 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.impl", "project.impl.main", "project.impl.test");
 
     assertModuleModuleDepScope("project.test", "project.main", DependencyScope.COMPILE);
-    assertProductionOnTestDependencies("project.test", EMPTY_STRING_ARRAY);
+    assertProductionOnTestDependencies("project.test", ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     assertModuleModuleDepScope("project.api.test", "project.api.main", DependencyScope.COMPILE);
-    assertProductionOnTestDependencies("project.api.test", EMPTY_STRING_ARRAY);
+    assertProductionOnTestDependencies("project.api.test", ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     assertModuleModuleDepScope("project.impl.test", "project.impl.main", DependencyScope.COMPILE);
     assertModuleModuleDepScope("project.impl.test", "project.api.test", DependencyScope.COMPILE);
     assertProductionOnTestDependencies("project.impl.test", "project.api.test");
 
-    assertModuleModuleDeps("project.impl.main", EMPTY_STRING_ARRAY);
+    assertModuleModuleDeps("project.impl.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project", "project.api", "project.impl");
@@ -879,13 +858,13 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleModuleDeps("project.project1.main", EMPTY_STRING_ARRAY);
-    assertModuleLibDeps("project.project1.main", EMPTY_STRING_ARRAY);
+    assertModuleModuleDeps("project.project1.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
+    assertModuleLibDeps("project.project1.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleLibDepScope("project.project1.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project.project1.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
 
-    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
-    assertModuleLibDeps("project.project2.main", EMPTY_STRING_ARRAY);
+    assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
+    assertModuleLibDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleLibDepScope("project.project2.test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
     assertModuleLibDepScope("project.project2.test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
 
@@ -974,7 +953,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project1", "project.project1.main", "project.project1.test",
                   "project.project2", "project.project2.main", "project.project2.test");
 
-    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
+    assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
     assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
@@ -1020,7 +999,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "project.project2", "project.project2.main", "project.project2.test");
 
     assertModuleModuleDeps("project.project2.main", "project.project1.main");
-    assertProductionOnTestDependencies("project.project2.main", EMPTY_STRING_ARRAY);
+    assertProductionOnTestDependencies("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.main", "project.project1.test");
     assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
@@ -1081,7 +1060,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleOutput("project.project2.main", getProjectPath() + "/project2/buildIdea/main", "");
     assertModuleOutput("project.project2.test", "", getProjectPath() + "/project2/buildIdea/test");
 
-    assertModuleModuleDeps("project.project2.main", EMPTY_STRING_ARRAY);
+    assertModuleModuleDeps("project.project2.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
     assertModuleModuleDeps("project.project2.test", "project.project2.main", "project.project1.test");
     assertProductionOnTestDependencies("project.project2.test", "project.project1.test");
 
@@ -1540,7 +1519,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     }
     assertMergedModuleCompileLibDepScope("project", depName);
   }
-  
+
   @Test
   @TargetVersions("4.6+")
   public void testAnnotationProcessorDependencies() throws Exception {

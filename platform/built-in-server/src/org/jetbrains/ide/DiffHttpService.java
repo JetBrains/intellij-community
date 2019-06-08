@@ -128,7 +128,7 @@ final class DiffHttpService extends RestService {
   }
 
   @Nullable
-  private static String readContent(@NotNull JsonReader reader, @NotNull List<DiffContent> contents, @NotNull List<String> titles, @Nullable String defaultFileTypeName) throws IOException {
+  private static String readContent(@NotNull JsonReader reader, @NotNull List<? super DiffContent> contents, @NotNull List<? super String> titles, @Nullable String defaultFileTypeName) throws IOException {
     FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
 
     FileType defaultFileType = defaultFileTypeName == null ? null : fileTypeRegistry.findFileTypeByName(defaultFileTypeName);

@@ -74,11 +74,8 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public void init(@Nullable Runnable beforeComponentCreation) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    init(PluginManagerCore.getLoadedPlugins(null), null, () -> {
-      if (beforeComponentCreation != null) {
-        beforeComponentCreation.run();
-      }
-    });
+    registerComponents(PluginManagerCore.getLoadedPlugins());
+    init(null, beforeComponentCreation);
   }
 
   @Nullable
@@ -107,7 +104,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     }
 
     for (String optionName : options.keySet()) {
-      if ("workspace".equals(optionName)) {
+      if ("workspace".equals(optionName) || "overrides".equals(optionName)) {
         continue;
       }
 

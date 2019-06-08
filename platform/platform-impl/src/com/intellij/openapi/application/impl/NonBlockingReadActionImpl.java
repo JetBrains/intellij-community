@@ -3,10 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.NonBlockingReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -147,7 +144,13 @@ public class NonBlockingReadActionImpl<T>
         }
 
         if (Promises.isPending(promise)) {
-          doScheduleWithinConstraints(attempt -> dispatchLaterUnconstrained(() -> transferToBgThread(attempt)), previousAttempt);
+          // using a blocking read action here for simplicity
+          // but nothing expensive should happen inside, just constraint checks that need read action
+          ReadAction.run(() -> {
+            if (!checkObsolete()) {
+              doScheduleWithinConstraints(attempt -> dispatchLaterUnconstrained(() -> transferToBgThread(attempt)), previousAttempt);
+            }
+          });
         }
       });
     }

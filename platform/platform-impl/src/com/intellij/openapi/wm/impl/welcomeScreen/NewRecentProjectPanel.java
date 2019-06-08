@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.*;
@@ -10,10 +10,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
@@ -96,7 +98,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
             }
           } else {
-            FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
+            FlatWelcomeFrame frame = ComponentUtil.getParentOfType((Class<? extends FlatWelcomeFrame>)FlatWelcomeFrame.class, list);
             if (frame != null) {
               FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
               if (policy != null) {
@@ -196,7 +198,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       final JComponent spacer = new NonOpaquePanel() {
         @Override
         public Dimension getPreferredSize() {
-          return new Dimension(JBUI.scale(22), super.getPreferredSize().height);
+          return new Dimension(JBUIScale.scale(22), super.getPreferredSize().height);
         }
       };
 
@@ -236,14 +238,16 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             if (isGroup) {
               final ProjectGroup group = ((ProjectGroupActionGroup)value).getGroup();
               name.setText(" " + group.getName());
-              name.setIcon(IconUtil.toSize(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon(), JBUI.scale(16), JBUI.scale(16)));
+              name.setIcon(IconUtil.toSize(group.isExpanded() ? UIUtil.getTreeExpandedIcon() : UIUtil.getTreeCollapsedIcon(),
+                                           JBUIScale.scale(16), JBUIScale.scale(16)));
               name.setFont(name.getFont().deriveFont(Font.BOLD));
               add(name);
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
               name.setText(((ReopenProjectAction)value).getProjectName());
               final String realPath = PathUtil.toSystemDependentName(((ReopenProjectAction)value).getProjectPath());
-              path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
+              int i = isInsideGroup ? 80 : 60;
+              path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUIScale.scale(i)));
               if (!realPath.equals(path.getText())) {
                 projectsWithLongPathes.add((ReopenProjectAction)value);
               }
@@ -286,7 +290,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
 
           @Override
           public Dimension getPreferredSize() {
-            return new Dimension(super.getPreferredSize().width, JBUI.scale(44));
+            return new Dimension(super.getPreferredSize().width, JBUIScale.scale(44));
           }
         };
       }

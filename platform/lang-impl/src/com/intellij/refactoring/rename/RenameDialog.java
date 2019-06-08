@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -17,6 +17,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
@@ -28,7 +30,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -172,7 +174,7 @@ public class RenameDialog extends RefactoringDialog {
         if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) break;
       }
     }
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   @NotNull
@@ -292,10 +294,14 @@ public class RenameDialog extends RefactoringDialog {
 
   @Nullable
   protected JComponent createSearchScopePanel() {
-    JPanel optionsPanel = new JPanel(new BorderLayout());
-    String scope = "Project Files";
-    myScopeCombo = new ScopeChooserCombo(myProject, false, true, scope);
+    myScopeCombo = new ScopeChooserCombo(myProject, false, true, "Project Files");
     Disposer.register(myDisposable, myScopeCombo);
+
+    // do not show scope chooser for local variables
+    SearchScope useScope = PsiSearchHelper.getInstance(myProject).getUseScope(myPsiElement);
+    if (useScope instanceof LocalSearchScope) return null;
+
+    JPanel optionsPanel = new JPanel(new BorderLayout());
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
     JComponent separator = SeparatorFactory.createSeparator(FindBundle.message("find.scope.label"), myScopeCombo.getComboBox());
     optionsPanel.add(separator, BorderLayout.NORTH);

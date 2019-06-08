@@ -89,8 +89,8 @@ public class ShowFilePathAction extends DumbAwareAction {
     @NotNull
     @Override
     protected String compute() {
-      if (SystemInfo.isMac) return "Finder";
-      if (SystemInfo.isWindows) return "Explorer";
+      if (SystemInfoRt.isMac) return "Finder";
+      if (SystemInfoRt.isWindows) return "Explorer";
       return readDesktopEntryKey("Name").orElse("File Manager");
     }
   };
@@ -130,7 +130,7 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean visible = !SystemInfo.isMac && isSupported();
+    boolean visible = !SystemInfoRt.isMac && isSupported();
     e.getPresentation().setVisible(visible);
     if (visible) {
       VirtualFile file = getFile(e);
@@ -195,11 +195,11 @@ public class ShowFilePathAction extends DumbAwareAction {
 
   private static String getPresentableUrl(VirtualFile file) {
     String url = file.getPresentableUrl();
-    if (file.getParent() == null && SystemInfo.isWindows) url += "\\";
+    if (file.getParent() == null && SystemInfoRt.isWindows) url += "\\";
     return url;
   }
 
-  private static ListPopup createPopup(List<? extends VirtualFile> files, List<Icon> icons) {
+  private static ListPopup createPopup(List<? extends VirtualFile> files, List<? extends Icon> icons) {
     BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>(RevealFileAction.getActionName(), files, icons) {
       @NotNull
       @Override
@@ -221,7 +221,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.hasXdgOpen() ||
+    return SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfo.hasXdgOpen() ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
@@ -269,10 +269,10 @@ public class ShowFilePathAction extends DumbAwareAction {
     String dir = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_dir.getPath()));
     String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       spawn(toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"');
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       if (toSelect != null) {
         spawn("open", "-R", toSelect);
       }
@@ -322,7 +322,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     AppExecutorUtil.getAppExecutorService().submit(() -> {
       try {
         CapturingProcessHandler handler;
-        if (SystemInfo.isWindows) {
+        if (SystemInfoRt.isWindows) {
           Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
           handler = new CapturingProcessHandler(process, null, command[0]);
         }

@@ -15,10 +15,10 @@ import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.DumbService;
@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +46,15 @@ import java.util.List;
 /**
  * @author anna
  */
-public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
+public abstract class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
-  private Getter<TestFrameworkRunningModel> myModelProvider;
+  private Getter<? extends TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
-    copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
+    ActionUtil.copyFrom(this, "RerunFailedTests");
     registerCustomShortcutSet(getShortcutSet(), componentContainer.getComponent());
   }
 
@@ -67,7 +66,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     myModel = model;
   }
 
-  public void setModelProvider(Getter<TestFrameworkRunningModel> modelProvider) {
+  public void setModelProvider(Getter<? extends TestFrameworkRunningModel> modelProvider) {
     myModelProvider = modelProvider;
   }
 
@@ -170,7 +169,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       performAction(environmentBuilder.runner(availableRunners.get(environment.getExecutor())));
     }
     else {
-      ArrayList<Executor> model = ContainerUtil.newArrayList(availableRunners.keySet());
+      ArrayList<Executor> model = new ArrayList<>(availableRunners.keySet());
       JBPopupFactory.getInstance().createPopupChooserBuilder(model)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(environment.getExecutor(), true)

@@ -300,7 +300,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   private void printMapping(@NotNull List<TraceElement> values,
-                            @NotNull Function<TraceElement, List<TraceElement>> mapper,
+                            @NotNull Function<? super TraceElement, ? extends List<TraceElement>> mapper,
                             @NotNull Direction direction) {
     if (values.isEmpty()) {
       println("    empty", ProcessOutputTypes.SYSTEM);
@@ -376,8 +376,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   private static void checkThatMappingsIsCorrect(@NotNull Set<TraceElement> prev,
                                                  @NotNull Set<TraceElement> next,
-                                                 @NotNull Function<TraceElement, List<TraceElement>> toNext,
-                                                 @NotNull Function<TraceElement, List<TraceElement>> toPrev) {
+                                                 @NotNull Function<? super TraceElement, ? extends List<TraceElement>> toNext,
+                                                 @NotNull Function<? super TraceElement, ? extends List<TraceElement>> toPrev) {
     for (final TraceElement leftElement : prev) {
       final List<TraceElement> mapToRight = toNext.apply(leftElement);
       for (final TraceElement rightElement : mapToRight) {

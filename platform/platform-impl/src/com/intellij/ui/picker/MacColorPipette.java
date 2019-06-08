@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.picker;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +11,7 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +121,7 @@ public class MacColorPipette extends ColorPipetteBase {
       pickerDialog.add(label);
       pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
       pickerDialog.setBackground(myTransparentColor);
-      
+
       BufferedImage emptyImage = UIUtil.createImage(pickerDialog, 1, 1, Transparency.TRANSLUCENT);
       pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(emptyImage, new Point(0, 0), "ColorPicker"));
     }
@@ -158,7 +144,7 @@ public class MacColorPipette extends ColorPipetteBase {
     int width = SIZE / 2;
     int height = SIZE / 8;
     graphics.fillRoundRect(x, y, width, height, 10, 10);
-    
+
     graphics.setColor(Gray._255);
     String colorString = currentColor.getRed() + " " + currentColor.getGreen() + " " + currentColor.getBlue();
     FontMetrics metrics = graphics.getFontMetrics();
@@ -211,7 +197,7 @@ public class MacColorPipette extends ColorPipetteBase {
       ID data = Foundation.invoke(nsImage, "TIFFRepresentation");
       ID bytes = Foundation.invoke(data, "bytes");
       ID length = Foundation.invoke(data, "length");
-      ByteBuffer byteBuffer = Native.getDirectByteBuffer(bytes.longValue(), length.longValue());
+      ByteBuffer byteBuffer = new Pointer(bytes.longValue()).getByteBuffer(0, length.longValue());
       Foundation.invoke(nsImage, "release");
       byte[] b = new byte[byteBuffer.remaining()];
       byteBuffer.get(b);

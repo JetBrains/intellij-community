@@ -18,6 +18,7 @@ interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
   fun getLogFiles(): List<File>
   fun cleanup()
+  fun rollOver()
 }
 
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
@@ -40,7 +41,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
     val config = EventLogConfiguration
     val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize)
-    val logger = StatisticsFileEventLogger(config.sessionId, config.build, config.bucket.toString(), version.toString(), writer)
+    val logger = StatisticsFileEventLogger(recorderId, config.sessionId, config.build, config.bucket.toString(), version.toString(), writer)
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
   }
@@ -62,6 +63,7 @@ class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
   override fun getLogFiles(): List<File> = emptyList()
   override fun cleanup() = Unit
+  override fun rollOver() = Unit
 }
 
 fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {

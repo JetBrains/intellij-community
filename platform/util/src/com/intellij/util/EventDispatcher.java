@@ -122,7 +122,7 @@ public class EventDispatcher<T extends EventListener> {
     return multicaster;
   }
 
-  private static <T> void dispatchVoidMethod(@NotNull Iterable<T> listeners, @NotNull Method method, Object[] args) {
+  private static <T> void dispatchVoidMethod(@NotNull Iterable<? extends T> listeners, @NotNull Method method, Object[] args) {
     method.setAccessible(true);
 
     for (T listener : listeners) {

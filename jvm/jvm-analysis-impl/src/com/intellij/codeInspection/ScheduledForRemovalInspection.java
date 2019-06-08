@@ -32,7 +32,7 @@ public class ScheduledForRemovalInspection extends AnnotatedElementInspectionBas
       @Override
       public void processAnnotatedTarget(@NotNull UElement sourceNode,
                                          @NotNull PsiModifierListOwner annotatedTarget,
-                                         @NotNull List<PsiAnnotation> annotations) {
+                                         @NotNull List<? extends PsiAnnotation> annotations) {
         if (!AnnotatedElementInspectionBase.isLibraryElement(annotatedTarget)) {
           return;
         }

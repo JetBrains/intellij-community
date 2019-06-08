@@ -110,7 +110,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   @NotNull
   @Override
   public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    final List<PsiClass> result = ContainerUtil.newArrayList();
+    final List<PsiClass> result = new ArrayList<>();
     processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       for (final VirtualFile file : dir.getChildren()) {
         if (!file.isDirectory() && ArrayUtil.contains(file.getExtension(), myFileExtensions)) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -309,7 +295,7 @@ public class InlineUtil {
   }
 
   public static boolean allUsagesAreTailCalls(final PsiMethod method) {
-    final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<PsiReference>());
+    final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<>());
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       (Runnable)() -> ReferencesSearch.search(method).forEach(psiReference -> {
         ProgressManager.checkCanceled();
@@ -327,9 +313,15 @@ public class InlineUtil {
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    PsiElement callParent = methodCall.getParent();
+    PsiElement callParent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
     if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
       return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)callParent)) {
+      PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
+      if (negationParent instanceof PsiReturnStatement || negationParent instanceof PsiLambdaExpression) {
+        return TailCallType.Invert;
+      }
     }
     if (callParent instanceof PsiExpressionStatement) {
       PsiStatement curElement = (PsiStatement)callParent;
@@ -516,7 +508,7 @@ public class InlineUtil {
   /**
    * Extracts side effects from return statements, replacing them with simple {@code return;} or {@code continue;}
    * while preserving semantics.
-   * 
+   *
    * @param method method to process
    * @param replaceWithContinue if true, returns will be replaced with {@code continue}.
    */
@@ -547,17 +539,27 @@ public class InlineUtil {
   }
 
   public enum TailCallType {
-    None(null), 
+    None(null),
     Simple((methodCopy, callSite, returnType) -> {
       extractReturnValues(methodCopy, false);
       return null;
-    }), 
+    }),
     Continue((methodCopy, callSite, returnType) -> {
       extractReturnValues(methodCopy, true);
       return null;
-    }), 
+    }),
+    Invert((methodCopy, callSite, returnType) -> {
+      for (PsiReturnStatement statement : PsiUtil.findReturnStatements(methodCopy)) {
+        PsiExpression value = statement.getReturnValue();
+        if (value != null) {
+          CommentTracker ct = new CommentTracker();
+          ct.replaceAndRestoreComments(value, BoolUtils.getNegatedExpressionText(value, ct));
+        }
+      }
+      return null;
+    }),
     Return((methodCopy, callSite, returnType) -> null);
-    
+
     @Nullable
     private final InlineTransformer myTransformer;
 

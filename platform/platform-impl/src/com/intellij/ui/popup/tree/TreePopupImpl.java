@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
@@ -18,9 +18,9 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.Range;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -47,13 +47,12 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   private TreePath myPendingChildPath;
   private FilteringTreeBuilder myBuilder;
 
-  public TreePopupImpl(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
-    super(parent, aStep);
+  public TreePopupImpl(@Nullable Project project,
+                       @Nullable JBPopup parent,
+                       @NotNull TreePopupStep<Object> aStep,
+                       @Nullable Object parentValue) {
+    super(project, parent, aStep);
     setParentValue(parentValue);
-  }
-
-  public TreePopupImpl(@NotNull TreePopupStep aStep) {
-    this(null, aStep, null);
   }
 
   @Override
@@ -440,10 +439,6 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
   }
 
-  private Project getProject() {
-    return getTreeStep().getProject();
-  }
-
   @Override
   protected void onAutoSelectionTimer() {
     handleSelect(false, null);
@@ -456,7 +451,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
-    myBuilder.refilter();
+    myBuilder.refilterAsync();
   }
 
   @Override

@@ -57,6 +57,7 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
 
     comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       label.setIcon(value instanceof Iconable ? ((Iconable)value).getIcon(Iconable.ICON_FLAG_VISIBILITY) : null);
+      label.setText(value == null ? "" : value.toString());
     }));
   }
 

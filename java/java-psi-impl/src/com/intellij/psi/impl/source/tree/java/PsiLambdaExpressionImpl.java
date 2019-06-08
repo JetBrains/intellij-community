@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 
 public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiLambdaExpression>>
   implements PsiLambdaExpression {
@@ -167,7 +166,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   }
 
   @Override
-  public boolean isAcceptable(PsiType leftType) {
+  public boolean isAcceptable(PsiType leftType, @Nullable PsiMethod method) {
     if (leftType instanceof PsiIntersectionType) {
       for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {
         if (isAcceptable(conjunctType)) return true;
@@ -176,17 +175,13 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     }
     final PsiExpressionList argsList = PsiTreeUtil.getParentOfType(this, PsiExpressionList.class);
 
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argsList);
-      if (candidateProperties != null) {
-        final PsiMethod method = candidateProperties.getMethod();
-        if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
-          return true;
-        }
+    if (MethodCandidateInfo.isOverloadCheck(argsList) && method != null) {
+      if (hasFormalParameterTypes() && !InferenceSession.isPertinentToApplicability(this, method)) {
+        return true;
+      }
 
-        if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
-          return true;
-        }
+      if (LambdaUtil.isPotentiallyCompatibleWithTypeParameter(this, argsList, method)) {
+        return true;
       }
     }
 
@@ -195,7 +190,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
       return false;
     }
 
-    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList) && !hasFormalParameterTypes()) {
+    if (MethodCandidateInfo.isOverloadCheck(argsList) && !hasFormalParameterTypes()) {
       return true;
     }
 
@@ -225,16 +220,8 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
     if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) {
-      Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
-      try {
-        if (map.put(this, leftType) != null) {
-          return false;
-        }
-        return LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null;
-      }
-      finally {
-        map.remove(this);
-      }
+      return LambdaUtil.performWithTargetType(this, leftType, () ->
+               LambdaUtil.checkReturnTypeCompatible(this, substitutor.substitute(methodReturnType)) == null);
     }
     return true;
   }
@@ -277,6 +264,6 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   @Nullable
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Nodes.Function;
+    return AllIcons.Nodes.Lambda;
   }
 }

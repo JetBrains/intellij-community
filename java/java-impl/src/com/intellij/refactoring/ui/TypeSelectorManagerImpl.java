@@ -159,7 +159,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return new ExpectedTypeUtil.ExpectedClassesFromSetProvider(occurrenceClasses);
   }
 
-  private static void collectOccurrenceClasses(Set<PsiClass> occurrenceClasses, PsiType occurrenceType) {
+  private static void collectOccurrenceClasses(Set<? super PsiClass> occurrenceClasses, PsiType occurrenceType) {
     if (occurrenceType instanceof PsiIntersectionType) {
       for (PsiType type : ((PsiIntersectionType)occurrenceType).getConjuncts()) {
         collectOccurrenceClasses(occurrenceClasses, type);
@@ -212,7 +212,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result.toArray(PsiType.createArray(result.size()));
   }
 
-  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
+  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<? super PsiType> allowedTypes) {
     for (ExpectedTypeInfo info : expectedTypes) {
       if (info.getKind() == ExpectedTypeInfo.TYPE_SAME_SHAPED) {
         allowedTypes.add(info.getDefaultType());
@@ -268,7 +268,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return false;
   }
 
-  private ArrayList<PsiType> normalizeTypeList(final ArrayList<PsiType> typeList) {
+  private ArrayList<PsiType> normalizeTypeList(final ArrayList<? extends PsiType> typeList) {
     ArrayList<PsiType> result = new ArrayList<>();
     TypeListCreatingVisitor visitor = new TypeListCreatingVisitor(result, myFactory);
     for (PsiType psiType : typeList) {

@@ -4,6 +4,6 @@ package com.intellij.refactoring.extractMethodObject.reflect;
 /**
  * @author Vitaliy.Bibaev
  */
-public enum FieldAccessType {
+enum FieldAccessType {
   GET, SET
 }

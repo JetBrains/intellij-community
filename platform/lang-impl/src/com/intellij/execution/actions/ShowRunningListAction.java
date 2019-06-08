@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +120,7 @@ public class ShowRunningListAction extends AnAction {
 
   private static final Object KEY = new Object();
 
-  private static Pair<? extends JComponent, String> getCurrentState(@NotNull List<Project> projects) {
+  private static Pair<? extends JComponent, String> getCurrentState(@NotNull List<? extends Project> projects) {
     NonOpaquePanel panel = new NonOpaquePanel(new GridLayout(0, 1, 10, 10));
     StringBuilder state = new StringBuilder();
     for (int i = 0; i < projects.size(); i++) {
@@ -143,7 +144,7 @@ public class ShowRunningListAction extends AnAction {
                       : executor.getIcon();
                     HyperlinkLabel label = new HyperlinkLabel(descriptor.getDisplayName());
           label.setIcon(icon);
-          label.setIconTextGap(JBUI.scale(2));
+          label.setIconTextGap(JBUIScale.scale(2));
           label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           label.putClientProperty(KEY, Trinity.create(project, executor, descriptor));
           panel.add(label);

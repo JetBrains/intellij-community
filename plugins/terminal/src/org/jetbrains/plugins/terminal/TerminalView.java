@@ -130,7 +130,7 @@ public class TerminalView {
   void restoreTabs(@Nullable TerminalArrangementState arrangementState) {
     if (arrangementState != null) {
       for (TerminalTabState tabState : arrangementState.myTabStates) {
-        createNewSession(myTerminalRunner, tabState);
+        createNewSession(myTerminalRunner, tabState, false);
       }
       ContentManager contentManager = myToolWindow.getContentManager();
       Content content = contentManager.getContent(arrangementState.mySelectedTabIndex);
@@ -148,29 +148,35 @@ public class TerminalView {
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState) {
+    createNewSession(terminalRunner, tabState, true);
+  }
+
+  private void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window != null && window.isAvailable()) {
       // ensure TerminalToolWindowFactory.createToolWindowContent gets called
       ((ToolWindowImpl)window).ensureContentInitialized();
-      createNewTab(null, terminalRunner, myToolWindow, tabState);
+      createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
       window.activate(null);
     }
   }
 
+  @NotNull
   private Content newTab(@Nullable JBTerminalWidget terminalWidget) {
-    return createNewTab(terminalWidget, myTerminalRunner, myToolWindow, null);
+    return createNewTab(terminalWidget, myTerminalRunner, myToolWindow, null, true);
   }
 
   @NotNull
   private Content createNewTab(@Nullable JBTerminalWidget terminalWidget,
                                @NotNull AbstractTerminalRunner terminalRunner,
                                @NotNull ToolWindow toolWindow,
-                               @Nullable TerminalTabState tabState) {
+                               @Nullable TerminalTabState tabState,
+                               boolean requestFocus) {
     final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     new TerminalTabCloseListener(content, myProject);
-    contentManager.setSelectedContent(content);
+    contentManager.setSelectedContent(content, requestFocus);
     return content;
   }
 
@@ -255,12 +261,12 @@ public class TerminalView {
 
       @Override
       public void moveTabRight() {
-        moveTabRightAction.move(toolWindow.getContentManager().getSelectedContent());
+        moveTabRightAction.move(toolWindow.getContentManager().getSelectedContent(), myProject);
       }
 
       @Override
       public void moveTabLeft() {
-        moveTabLeftAction.move(toolWindow.getContentManager().getSelectedContent());
+        moveTabLeftAction.move(toolWindow.getContentManager().getSelectedContent(), myProject);
       }
 
       @Override

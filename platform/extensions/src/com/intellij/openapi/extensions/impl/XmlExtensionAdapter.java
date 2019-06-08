@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -114,8 +118,10 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
+
     SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
-                                      @Nullable PluginDescriptor pluginDescriptor,
+                                      @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
                                       @NotNull LoadingOrder order, @Nullable Element extensionElement) {
       super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
@@ -124,6 +130,32 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     @NotNull
     @Override
     protected Object instantiateClass(@NotNull Class<?> clazz, @Nullable PicoContainer container) {
+      if (container != null && container.getParent() == null) {
+        // for app try without pico container
+        try {
+          return ReflectionUtil.newInstance(clazz, false);
+        }
+        catch (ProcessCanceledException | ExtensionNotApplicableException e) {
+          throw e;
+        }
+        catch (RuntimeException e) {
+          if (!(e.getCause() instanceof NoSuchMethodException)) {
+            throw e;
+          }
+
+          String message = "Cannot create app level extension without pico container (class: " +
+                           clazz.getName() +
+                           "), please remove constructor parameters";
+          PluginDescriptor pluginDescriptor = Objects.requireNonNull(getPluginDescriptor());
+          if (pluginDescriptor.isBundled() && !pluginDescriptor.getPluginId().getIdString().equals("org.jetbrains.kotlin")) {
+            LOG.error(message, e);
+          }
+          else {
+            LOG.warn(message, e);
+          }
+        }
+      }
+
       return new CachingConstructorInjectionComponentAdapter(this, clazz, null, true)
         .getComponentInstance(Objects.requireNonNull(container));
     }

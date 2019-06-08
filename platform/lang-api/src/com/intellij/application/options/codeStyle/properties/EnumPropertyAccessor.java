@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class EnumPropertyAccessor extends ExternalStringAccessor<Enum> implements CodeStyleChoiceList{
 
@@ -25,7 +25,7 @@ public class EnumPropertyAccessor extends ExternalStringAccessor<Enum> implement
     final Object[] enumConstants = myEnumClass.getEnumConstants();
     if (enumConstants != null) {
       for (Object enumConstant : enumConstants) {
-        myEnumMap.put(enumConstant.toString().toLowerCase(Locale.ENGLISH), (Enum)enumConstant);
+        myEnumMap.put(StringUtil.toLowerCase(enumConstant.toString()), (Enum)enumConstant);
       }
     }
   }

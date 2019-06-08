@@ -21,7 +21,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class SearchPopupController {
-  private final PluginSearchTextField myTextField;
+  protected final PluginSearchTextField myTextField;
+  private final boolean myHandleSpace;
   protected SearchPopup myPopup;
   private final JBPopupListener mySearchPopupListener = new JBPopupAdapter() {
     @Override
@@ -31,7 +32,12 @@ public abstract class SearchPopupController {
   };
 
   public SearchPopupController(@NotNull PluginSearchTextField searchTextField) {
+    this(searchTextField, true);
+  }
+
+  public SearchPopupController(@NotNull PluginSearchTextField searchTextField, boolean handleSpace) {
     myTextField = searchTextField;
+    myHandleSpace = handleSpace;
   }
 
   public void handleShowPopup() {
@@ -42,7 +48,9 @@ public abstract class SearchPopupController {
     if (position < length) {
       if (query.charAt(position) == ' ') {
         if (position == 0 || query.charAt(position - 1) == ' ') {
-          showAttributesPopup(null, position);
+          if (myHandleSpace) {
+            showAttributesPopup(null, position);
+          }
           return;
         }
       }
@@ -53,7 +61,9 @@ public abstract class SearchPopupController {
       }
     }
     else if (query.charAt(position - 1) == ' ') {
-      showAttributesPopup(null, position);
+      if (myHandleSpace) {
+        showAttributesPopup(null, position);
+      }
       return;
     }
 
@@ -72,7 +82,7 @@ public abstract class SearchPopupController {
   }
 
   @NotNull
-  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<Integer> startPosition) {
+  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<? super Integer> startPosition) {
     int index = end - 1;
     String value = null;
 
@@ -148,10 +158,7 @@ public abstract class SearchPopupController {
     createAndShow(true, new SearchPopupCallback(valuePrefix) {
       @Override
       public void consume(String value) {
-        if (StringUtil.containsAnyChar(value, " ,:")) {
-          value = "\"" + value + "\"";
-        }
-        appendSearchText(value, prefix);
+        appendSearchText(SearchQueryParser.wrapAttribute(value), prefix);
         handleAppendAttributeValue();
       }
     });

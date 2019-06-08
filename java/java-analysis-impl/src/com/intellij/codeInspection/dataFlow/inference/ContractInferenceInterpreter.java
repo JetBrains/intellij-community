@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
@@ -242,7 +242,7 @@ class ContractInferenceInterpreter {
 
     int paramIndex = resolveParameter(expr);
     if (paramIndex >= 0) {
-      List<StandardMethodContract> result = ContainerUtil.newArrayList();
+      List<StandardMethodContract> result = new ArrayList<>();
       for (ValueConstraint[] state : states) {
         if (state[paramIndex] == TRUE_VALUE || state[paramIndex] == FALSE_VALUE || state[paramIndex] == NULL_VALUE) {
           // like "if(x == null) return x": no need to refer to parameter
@@ -305,7 +305,7 @@ class ContractInferenceInterpreter {
       constraint = getLiteralConstraint(op1);
     }
     if (parameter >= 0 && constraint != null) {
-      List<StandardMethodContract> result = ContainerUtil.newArrayList();
+      List<StandardMethodContract> result = new ArrayList<>();
       for (ValueConstraint[] state : states) {
         if (constraint == NOT_NULL_VALUE) {
           if (getPrimitiveParameterType(parameter) == null) {
@@ -334,7 +334,7 @@ class ContractInferenceInterpreter {
 
   private List<StandardMethodContract> visitLogicalOperation(List<LighterASTNode> operands, boolean conjunction, List<ValueConstraint[]> states) {
     BooleanReturnValue breakValue = returnBoolean(!conjunction);
-    List<StandardMethodContract> finalStates = ContainerUtil.newArrayList();
+    List<StandardMethodContract> finalStates = new ArrayList<>();
     for (LighterASTNode operand : operands) {
       List<PreContract> opResults = visitExpression(states, operand);
       finalStates.addAll(ContainerUtil.filter(knownContracts(opResults), contract -> contract.getReturnValue() == breakValue));

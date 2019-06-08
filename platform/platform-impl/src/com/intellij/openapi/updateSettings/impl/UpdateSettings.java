@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,14 +67,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     return myState.getExternalUpdateChannels();
   }
 
-  public boolean isSecureConnection() {
-    return myState.isUseSecureConnection();
-  }
-
-  public void setSecureConnection(boolean value) {
-    myState.setUseSecureConnection(value);
-  }
-
   public long getLastTimeChecked() {
     return myState.getLastTimeChecked();
   }
@@ -131,10 +122,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public void saveLastCheckedInfo() {
     myState.setLastTimeChecked(System.currentTimeMillis());
     myState.setLastBuildChecked(ApplicationInfo.getInstance().getBuild().asString());
-  }
-
-  public boolean canUseSecureConnection() {
-    return myState.isUseSecureConnection() && NetUtils.isSniEnabled();
   }
 
   public boolean isThirdPartyPluginsAllowed() {

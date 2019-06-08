@@ -43,7 +43,7 @@ public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDa
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, List<T> nodes) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, @NotNull AnActionEvent e, List<? extends T> nodes) {
     super.doActionPerformed(content, e, nodes);
   }
 

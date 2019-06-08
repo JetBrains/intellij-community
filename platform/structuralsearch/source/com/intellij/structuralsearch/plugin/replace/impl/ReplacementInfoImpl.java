@@ -123,7 +123,7 @@ class ReplacementInfoImpl implements ReplacementInfo {
     if (name != null) {
       variableMap.putIfAbsent(name, r);
 
-      final PsiElement element = StructuralSearchUtil.getParentIfIdentifier(r.getMatch());
+      final PsiElement element = StructuralSearchUtil.getPresentableElement(r.getMatch());
       if (element instanceof PsiNamedElement) {
         sourceNameToSearchPatternNameMap.put(((PsiNamedElement)element).getName(), name);
       }

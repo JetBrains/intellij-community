@@ -141,7 +141,7 @@ public class ConfigurationModuleSelector {
     return configurationModule;
   }
 
-  private void setModules(final Collection<Module> modules) {
+  private void setModules(final Collection<? extends Module> modules) {
     if (myModulesDescriptionsComboBox != null) {
       myModulesDescriptionsComboBox.setModules(modules);
     }

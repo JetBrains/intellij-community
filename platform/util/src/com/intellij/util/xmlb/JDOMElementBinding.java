@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -10,15 +11,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
+final class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding, NestedBinding {
   private final String myTagName;
+  private final MutableAccessor myAccessor;
 
   JDOMElementBinding(@NotNull MutableAccessor accessor) {
-    super(accessor);
+    myAccessor = accessor;
 
     Tag tag = myAccessor.getAnnotation(Tag.class);
     String tagName = tag == null ? null : tag.value();
     myTagName = StringUtil.isEmpty(tagName) ? myAccessor.getName() : tagName;
+  }
+
+  @NotNull
+  @Override
+  public MutableAccessor getAccessor() {
+    return myAccessor;
   }
 
   @Override
@@ -44,7 +52,7 @@ class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeB
     throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (myAccessor.getValueClass().isArray()) {

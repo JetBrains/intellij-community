@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
@@ -11,7 +12,7 @@ public class MessageWriter<T extends Message> extends Endpoint {
   private final BufferedWriter myOut;
 
   public MessageWriter(OutputStream output) {
-    myOut = new BufferedWriter(new OutputStreamWriter(output));
+    myOut = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8));
   }
 
   public void send(T message) throws IOException {

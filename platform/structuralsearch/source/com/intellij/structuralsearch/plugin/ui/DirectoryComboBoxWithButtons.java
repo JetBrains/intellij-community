@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,8 +38,9 @@ import java.util.List;
 public class DirectoryComboBoxWithButtons extends JPanel {
   @NotNull private final ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
     new ComponentWithBrowseButton<>(new ComboBox<>(200), null);
+  private volatile boolean myUpdating = false;
+
   boolean myRecursive = true;
-  volatile boolean myUpdating = false;
   Runnable myCallback;
 
   public DirectoryComboBoxWithButtons(@NotNull Project project) {
@@ -88,7 +89,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     });
 
     final RecursiveAction recursiveDirectoryAction = new RecursiveAction();
-    final int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    final int mnemonicModifiers = SystemInfoRt.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myDirectoryComboBox);
 
     add(myDirectoryComboBox, BorderLayout.CENTER);
@@ -117,8 +118,8 @@ public class DirectoryComboBoxWithButtons extends JPanel {
   }
 
   public void setDirectory(@NotNull VirtualFile directory) {
-    String url = directory.getPresentableUrl();
-    ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
+    final String url = directory.getPresentableUrl();
+    final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     comboBox.getEditor().setItem(url);
     setDirectory(url);
   }

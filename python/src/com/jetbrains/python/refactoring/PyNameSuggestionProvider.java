@@ -36,7 +36,7 @@ public class PyNameSuggestionProvider implements NameSuggestionProvider {
       result.add(toUnderscores(name));
       final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
       if (assignmentStatement != null) return null;
-      result.add(name.toUpperCase());
+      result.add(StringUtil.toUpperCase(name));
       result.add(toCamelCase(name, false));
     }
     return SuggestedNameInfo.NULL_INFO;
@@ -67,11 +67,11 @@ public class PyNameSuggestionProvider implements NameSuggestionProvider {
     final List<String> strings = StringUtil.split(name, "_");
     if (strings.size() > 0) {
       final StringBuilder buf = new StringBuilder();
-      String str = strings.get(0).toLowerCase();
+      String str = StringUtil.toLowerCase(strings.get(0));
       if (uppercaseFirstLetter) str = StringUtil.capitalize(str);
       buf.append(str);
       for (int i = 1; i < strings.size(); i++) {
-        buf.append(StringUtil.capitalize(strings.get(i).toLowerCase()));
+        buf.append(StringUtil.capitalize(StringUtil.toLowerCase(strings.get(i))));
       }
       return buf.toString();
     }

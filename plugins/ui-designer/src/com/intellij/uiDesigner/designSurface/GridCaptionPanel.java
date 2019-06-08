@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -22,7 +22,7 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -289,7 +289,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     ArrayList<Integer> selection = new ArrayList<>();
     RadContainer container = getSelectedGridContainer();
     if (container == null) {
-      return ArrayUtil.EMPTY_INT_ARRAY;
+      return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
     int size = getCellCount();
     for(int i=0; i<size; i++) {

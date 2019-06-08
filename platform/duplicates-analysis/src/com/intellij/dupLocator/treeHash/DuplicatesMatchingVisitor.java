@@ -1,6 +1,9 @@
 package com.intellij.dupLocator.treeHash;
 
-import com.intellij.dupLocator.*;
+import com.intellij.dupLocator.AbstractMatchingVisitor;
+import com.intellij.dupLocator.ExternalizableDuplocatorState;
+import com.intellij.dupLocator.NodeSpecificHasher;
+import com.intellij.dupLocator.PsiElementRole;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -12,7 +15,6 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
-import java.util.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +50,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   @Override
-  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
+  public boolean matchSequentially(@NotNull NodeIterator nodes, @NotNull NodeIterator nodes2) {
     while (true) {
       if (!nodes.hasNext() || !nodes2.hasNext()) {
         return !nodes.hasNext() && !nodes2.hasNext();
@@ -150,7 +152,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   @Override
-  protected boolean doMatchInAnyOrder(NodeIterator it1, NodeIterator it2) {
+  protected boolean doMatchInAnyOrder(@NotNull NodeIterator it1, @NotNull NodeIterator it2) {
     final List<PsiElement> elements1 = new ArrayList<>();
     final List<PsiElement> elements2 = new ArrayList<>();
 

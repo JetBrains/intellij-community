@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -32,7 +31,6 @@ import java.util.Arrays;
 public class AddManagedFilesAction extends MavenAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
     if(manager == null) return;
     FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, false, false, false, false, true) {

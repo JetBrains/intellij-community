@@ -31,7 +31,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.BidirectionalMap;
@@ -115,8 +115,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             }
         });
         myComboBox = new EditorComboBox(myDocument, project, XPathFileType.XPATH);
-        myComboBox.setRenderer(SimpleListCellRenderer.<HistoryElement>create("", value -> value.expression));
         myComboBox.setModel(myModel);
+        myComboBox.setRenderer(SimpleListCellRenderer.<HistoryElement>create("", value -> value.expression));
 
         myComboBox.setEditable(true);
 
@@ -413,7 +413,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             if (selectedItem != null) {
                 return Variable.asSet(selectedItem.variables).toArray(new String[selectedItem.variables.size()]);
             } else {
-                return ArrayUtil.EMPTY_STRING_ARRAY;
+                return ArrayUtilRt.EMPTY_STRING_ARRAY;
             }
         }
     }

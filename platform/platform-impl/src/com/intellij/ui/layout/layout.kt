@@ -5,7 +5,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.DialogPanel
 
 /**
- * See [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout).
+ * See [docs](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
  *
  * Claims all available space in the container for the columns ([LCFlags.fillX], if `constraints` is passed, `fillX` will be not applied - add it explicitly if need).
  * At least one component need to have a [Row.grow] constraint for it to fill the container.

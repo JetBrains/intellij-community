@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ReadAction;
@@ -15,8 +14,10 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -35,8 +36,10 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 class TextPainter extends BasePainter {
   private final DocumentEx myDocument;
@@ -58,12 +61,14 @@ class TextPainter extends BasePainter {
   private int myPageIndex = -1;
   private int myNumberOfPages = -1;
   private int mySegmentEnd;
-  private final LineMarkerInfo[] myMethodSeparators;
+  private Project myProject;
+  private LineMarkerInfo[] myMethodSeparators = new LineMarkerInfo[0];
   private int myCurrentMethodSeparator;
   private final CodeStyleSettings myCodeStyleSettings;
   private final FileType myFileType;
   private final Color myMethodSeparatorColor;
   private boolean myPerformActualDrawing;
+  private long myDocumentStamp = -1;
   
   private final String myPrintDate;
   private final String myPrintTime;
@@ -85,18 +90,8 @@ class TextPainter extends BasePainter {
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,
-                     @NotNull PsiFile psiFile,
-                     FileType fileType) {
-    this(editorDocument, highlighter, fullFileName, shortFileName, fileType,
-         FileSeparatorProvider.getFileSeparators(psiFile, editorDocument), CodeStyle.getSettings(psiFile));
-  }
-
-  TextPainter(@NotNull DocumentEx editorDocument,
-                     EditorHighlighter highlighter,
-                     String fullFileName,
-                     String shortFileName,
                      FileType fileType,
-                     List<LineMarkerInfo<PsiElement>> separators,
+                     Project project,
                      @NotNull CodeStyleSettings codeStyleSettings) {
     myCodeStyleSettings = codeStyleSettings;
     myDocument = editorDocument;
@@ -117,8 +112,7 @@ class TextPainter extends BasePainter {
     myShortFileName = shortFileName;
     myRangeToPrint = editorDocument.createRangeMarker(0, myDocument.getTextLength());
     myFileType = fileType;
-    myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[0]) : new LineMarkerInfo[0];
-    myCurrentMethodSeparator = 0;
+    myProject = project;
     Date date = new Date();
     myPrintDate = new SimpleDateFormat(DATE_FORMAT).format(date);
     myPrintTime = new SimpleDateFormat(TIME_FORMAT).format(date);
@@ -136,7 +130,7 @@ class TextPainter extends BasePainter {
 
   private void setSegment(RangeMarker marker) {
     if (myRangeToPrint != null) {
-      myRangeToPrint.dispose();
+      ReadAction.run(() -> myRangeToPrint.dispose());
     }
     myRangeToPrint = marker;
   }
@@ -271,10 +265,25 @@ class TextPainter extends BasePainter {
     myLineNumber = myDocument.getLineNumber(myOffset) + 1;
     Rectangle2D.Double clip = new Rectangle2D.Double(pageFormat.getImageableX(), pageFormat.getImageableY(),
                                                      pageFormat.getImageableWidth(), pageFormat.getImageableHeight());
-    
+    updateHighlightingInfoIfNeeded();
     draw(g2d, clip);
 
     return myOffset > startOffset && myOffset < endOffset ? myDocument.createRangeMarker(myOffset, endOffset) : null;
+  }
+
+  private void updateHighlightingInfoIfNeeded() {
+    long documentStamp = myDocument.getModificationStamp();
+    if (documentStamp == myDocumentStamp) return;
+    myDocumentStamp = documentStamp;
+
+    myHighlighter.setText(myDocument.getImmutableCharSequence());
+    myCurrentMethodSeparator = 0;
+    if (myProject != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+      List<LineMarkerInfo<PsiElement>> separators = psiFile == null ? Collections.emptyList()
+                                                                    : FileSeparatorProvider.getFileSeparators(psiFile, myDocument);
+      myMethodSeparators = separators.toArray(new LineMarkerInfo[0]);
+    }
   }
 
   private void draw(Graphics2D g2D, Rectangle2D.Double clip) {
@@ -338,7 +347,7 @@ class TextPainter extends BasePainter {
 
   private void drawText(Graphics2D g, Rectangle2D clip) {
     float lineHeight = getLineHeight(g);
-    HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
+    HighlightingAttributesIterator hIterator = new HighlightingAttributesIterator(myHighlighter.createIterator(myOffset));
     if (hIterator.atEnd()) {
       myOffset = mySegmentEnd;
       return;
@@ -373,10 +382,10 @@ class TextPainter extends BasePainter {
       if (hEnd >= lEnd) {
         if (!drawString(g, text, lEnd - lIterator.getSeparatorLength(), myOffset == lStart, position, clip, backColor,
                         underscoredColor)) {
-          drawLineNumber(g, 0, lineY);
+          drawLineNumber(g, lineY);
           break;
         }
-        drawLineNumber(g, 0, lineY);
+        drawLineNumber(g, lineY);
         lIterator.advance();
         myLineNumber++;
         position.setLocation(0, position.getY() + lineHeight);
@@ -400,12 +409,12 @@ class TextPainter extends BasePainter {
         if (hEnd > lEnd - lIterator.getSeparatorLength()) {
           if (!drawString(g, text, lEnd - lIterator.getSeparatorLength(), myOffset == lStart, position, clip, backColor,
                           underscoredColor)) {
-            drawLineNumber(g, 0, lineY);
+            drawLineNumber(g, lineY);
             break;
           }
         } else {
           if (!drawString(g, text, hEnd, myOffset == lStart, position, clip, backColor, underscoredColor)) {
-            drawLineNumber(g, 0, lineY);
+            drawLineNumber(g, lineY);
             break;
           }
         }
@@ -579,7 +588,7 @@ class TextPainter extends BasePainter {
     return numbersStripWidth;
   }
 
-  private void drawLineNumber(Graphics2D g, double x, double y) {
+  private void drawLineNumber(Graphics2D g, double y) {
     if (!myPrintSettings.PRINT_LINE_NUMBERS || !myPerformActualDrawing) {
       return;
     }
@@ -589,7 +598,7 @@ class TextPainter extends BasePainter {
     Font savedFont = g.getFont();
     g.setColor(Color.black);
     g.setFont(myPlainFont);
-    drawStringToGraphics(g, String.valueOf(myLineNumber), x - width, getLineHeight(g) - getDescent(g) + y);
+    drawStringToGraphics(g, String.valueOf(myLineNumber), -width, getLineHeight(g) - getDescent(g) + y);
     g.setColor(savedColor);
     g.setFont(savedFont);
   }
@@ -731,5 +740,44 @@ class TextPainter extends BasePainter {
   @Override
   void dispose() {
     setSegment(null);
+    myProject = null;
+  }
+
+  // Wraps HighlighterIterator, joining adjacent regions with identical attributes
+  private static class HighlightingAttributesIterator {
+    @NotNull private final HighlighterIterator myDelegate;
+    private int myEnd;
+    private TextAttributes myAttributes;
+
+    private HighlightingAttributesIterator(@NotNull HighlighterIterator delegate) {
+      myDelegate = delegate;
+      advance();
+    }
+
+    public void advance() {
+      if (myDelegate.atEnd()) {
+        myEnd = -1;
+      }
+      else {
+        myAttributes = myDelegate.getTextAttributes();
+        do {
+          myEnd = myDelegate.getEnd();
+          myDelegate.advance();
+        }
+        while (!myDelegate.atEnd() && Objects.equals(myAttributes, myDelegate.getTextAttributes()));
+      }
+    }
+
+    public boolean atEnd() {
+      return myEnd == -1;
+    }
+
+    public int getEnd() {
+      return myEnd;
+    }
+
+    public TextAttributes getTextAttributes() {
+      return myAttributes;
+    }
   }
 }

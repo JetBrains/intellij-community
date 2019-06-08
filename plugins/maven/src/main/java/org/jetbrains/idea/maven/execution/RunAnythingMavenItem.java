@@ -24,9 +24,9 @@ public class RunAnythingMavenItem extends RunAnythingItemBase {
 
   @NotNull
   @Override
-  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+  public Component createComponent(@Nullable String pattern, @Nullable Icon groupIcon, boolean isSelected, boolean hasFocus) {
     String command = getCommand();
-    JPanel component = (JPanel)super.createComponent(pattern, isSelected, hasFocus);
+    JPanel component = (JPanel)super.createComponent(pattern, groupIcon, isSelected, hasFocus);
 
     String toComplete = notNullize(substringAfterLast(command, " "));
     if (toComplete.startsWith("-")) {
@@ -36,6 +36,7 @@ public class RunAnythingMavenItem extends RunAnythingItemBase {
         if (description != null) {
           SimpleColoredComponent descriptionComponent = new SimpleColoredComponent();
           descriptionComponent.append(" " + shortenTextWithEllipsis(description, 200, 0), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          component.add(descriptionComponent, BorderLayout.EAST);
         }
       }
     }

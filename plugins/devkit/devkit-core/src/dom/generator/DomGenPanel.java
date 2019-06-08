@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.generator;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -33,7 +19,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -62,14 +48,14 @@ public class DomGenPanel {
 
   private void createUIComponents() {
     mySchemaLocation = new TextFieldWithBrowseButton();
-    final String title = "Choose XSD or DTD schema";
+    final String title = "Choose XSD or DTD Schema";
     mySchemaLocation.addBrowseFolderListener(title, "Make sure there are only necessary schemes in directory where your XSD or DTD schema is located", myProject, new FileTypeDescriptor(title, "xsd", "dtd"));
     mySchemaLocation.getTextField().setEditable(false);
     mySchemaLocation.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final File file = new File(mySchemaLocation.getText());
-        if (file.exists() && file.getName().toLowerCase().endsWith(".xsd")) {
+        if (file.exists() && StringUtil.toLowerCase(file.getName()).endsWith(".xsd")) {
           final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
           if (vf != null) {
             final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vf);
@@ -93,7 +79,7 @@ public class DomGenPanel {
                   if (target != null) {
                     myNamespace.setText(target);
                   }
-                  mySkipSchemas.setText(StringUtil.join(ArrayUtil.toStringArray(ns), "\n"));
+                  mySkipSchemas.setText(StringUtil.join(ArrayUtilRt.toStringArray(ns), "\n"));
                 }
               }
             }
@@ -174,7 +160,7 @@ public class DomGenPanel {
     if (schemes.length() > 0) {
       return schemes.split("\n");
     }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   public String getAuthor() {

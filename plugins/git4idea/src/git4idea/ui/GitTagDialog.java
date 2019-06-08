@@ -183,7 +183,8 @@ public class GitTagDialog extends DialogWrapper {
         h.addParameters("-f");
       }
       if (hasMessage) {
-        h.addParameters("-F", messageFile.getAbsolutePath());
+        h.addParameters("-F");
+        h.addAbsoluteFile(messageFile);
       }
       h.addParameters(myTagNameTextField.getText());
       String object = myCommitTextField.getText().trim();

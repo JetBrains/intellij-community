@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.DiffUtil;
@@ -23,15 +9,15 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -42,7 +28,7 @@ public class DiffSplitter extends Splitter {
   @Nullable private AnAction myBottomAction;
 
   public DiffSplitter() {
-    setDividerWidth(JBUI.scale(Registry.intValue("diff.divider.width")));
+    setDividerWidth(JBUIScale.scale(Registry.intValue("diff.divider.width")));
   }
 
   @Override
@@ -53,8 +39,7 @@ public class DiffSplitter extends Splitter {
         removeAll();
         setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
 
-        List<JComponent> actionComponents = ContainerUtil.list(createActionComponent(myTopAction),
-                                                               createActionComponent(myBottomAction));
+        List<JComponent> actionComponents = Arrays.asList(createActionComponent(myTopAction), createActionComponent(myBottomAction));
         List<JComponent> syncComponents = DiffUtil.createSyncHeightComponents(actionComponents);
 
 
@@ -76,7 +61,7 @@ public class DiffSplitter extends Splitter {
           add(button1, bag.nextLine());
         }
         if (button1 != null && button2 != null) {
-          add(Box.createVerticalStrut(JBUI.scale(20)), bag.nextLine());
+          add(Box.createVerticalStrut(JBUIScale.scale(20)), bag.nextLine());
         }
         if (button2 != null) {
           add(button2, bag.nextLine());

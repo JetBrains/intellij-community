@@ -36,6 +36,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
@@ -45,6 +46,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.FileNotFoundException;
@@ -80,6 +82,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   private Set<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
   private final Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
+  private boolean myModulesLoaded;
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -126,7 +129,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   private static class ModuleGroupInterner {
-    private final StringInterner groups = new StringInterner();
+    private final Interner<String> groups = new StringInterner();
     private final Map<String[], String[]> paths = new THashMap<>(new TObjectHashingStrategy<String[]>() {
       @Override
       public int computeHashCode(String[] object) {
@@ -264,6 +267,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     myFailedModulePaths.clear();
 
     if (myModulePathsToLoad == null || myModulePathsToLoad.isEmpty()) {
+      myModulesLoaded = true;
       return;
     }
 
@@ -347,6 +351,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     progressIndicator.checkCanceled();
 
+    myModulesLoaded = true;
+
     Application app = ApplicationManager.getApplication();
     if (app.isInternal() || app.isEAP() || ApplicationInfo.getInstance().getBuild().isSnapshot()) {
       Map<String, Module> track = new THashMap<>();
@@ -372,6 +378,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   public int getModulePathsCount() { return myModulePathsToLoad == null ? 0 : myModulePathsToLoad.size(); }
+
+  public boolean areModulesLoaded() {
+    return myModulesLoaded;
+  }
 
   private double myProgressStep;
 
@@ -788,7 +798,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     @Nullable
-    private ModuleEx getModuleByFilePath(@NotNull String filePath) {
+    private ModuleEx getModuleByFilePath(@NotNull @SystemIndependent String filePath) {
       for (Module module : getModules()) {
         if (SystemInfo.isFileSystemCaseSensitive ? module.getModuleFilePath().equals(filePath) : module.getModuleFilePath().equalsIgnoreCase(filePath)) {
           return (ModuleEx)module;
@@ -799,7 +809,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     @NotNull
-    public Module loadModule(@NotNull String filePath) throws IOException {
+    public Module loadModule(@NotNull @SystemIndependent String filePath) throws IOException {
       assertWritable();
       String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
@@ -1002,7 +1012,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
 
       List<Module> modules = new ArrayList<>();
-      Map<Module, String> oldNames = ContainerUtil.newHashMap();
+      Map<Module, String> oldNames = new HashMap<>();
       for (final Module module : modulesToBeRenamed) {
         oldNames.put(module, module.getName());
         moduleModel.myModules.remove(module.getName());

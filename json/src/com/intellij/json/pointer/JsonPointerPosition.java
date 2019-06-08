@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.pointer;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,7 +14,7 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 public class JsonPointerPosition {
 
   public JsonPointerPosition() {
-    this.steps = ContainerUtil.newArrayList();
+    this.steps = new ArrayList<>();
   }
 
   private JsonPointerPosition(List<Step> steps) {
@@ -26,7 +27,7 @@ public class JsonPointerPosition {
 
   public static JsonPointerPosition parsePointer(@NotNull String pointer) {
     final List<String> chain = split(normalizeSlashes(normalizeId(pointer)));
-    List<JsonPointerPosition.Step> steps = ContainerUtil.newArrayListWithCapacity(chain.size());
+    List<JsonPointerPosition.Step> steps = new ArrayList<>(chain.size());
     for (String s: chain) {
       try {
         steps.add(JsonPointerPosition.Step.createArrayElementStep(Integer.parseInt(s)));

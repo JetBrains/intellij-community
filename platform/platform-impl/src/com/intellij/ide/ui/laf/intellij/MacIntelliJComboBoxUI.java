@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
@@ -149,8 +150,11 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
-      Color background = comboBox.isEditable() ? comboBox.getEditor().getEditorComponent().getBackground() :
-                         UIManager.getColor(comboBox.isEnabled() ? "ComboBox.background" : "ComboBox.disabledBackground");
+      boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
+      Color background0 = comboBox.getBackground();
+      Color background = editable ? editor.getBackground() :
+                         comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
+                         comboBox.isEnabled() ? UIManager.getColor("ComboBox.background") : UIManager.getColor("ComboBox.disabledBackground");
       g2.setColor(background);
 
       float arc = comboBox.isEditable() ? 0 : ARC.getFloat();

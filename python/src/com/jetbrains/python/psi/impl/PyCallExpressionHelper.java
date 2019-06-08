@@ -859,6 +859,7 @@ public class PyCallExpressionHelper {
   @NotNull
   private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments,
                                                          @NotNull List<PyCallableParameter> parameters) {
+    boolean positionalOnlyMode = ContainerUtil.exists(parameters, p -> p.getParameter() instanceof PySlashParameter);
     boolean seenSingleStar = false;
     boolean mappedVariadicArgumentsToParameters = false;
     final Map<PyExpression, PyCallableParameter> mappedParameters = new LinkedHashMap<>();
@@ -920,7 +921,17 @@ public class PyCallExpressionHelper {
           }
         }
         else {
-          if (allPositionalArguments.isEmpty()) {
+          if (positionalOnlyMode) {
+            final PyExpression positionalArgument = next(allPositionalArguments);
+
+            if (positionalArgument != null) {
+              mappedParameters.put(positionalArgument, parameter);
+            }
+            else if (!parameter.hasDefaultValue()) {
+              unmappedParameters.add(parameter);
+            }
+          }
+          else if (allPositionalArguments.isEmpty()) {
             final PyKeywordArgument keywordArgument = removeKeywordArgument(keywordArguments, parameterName);
             if (keywordArgument != null) {
               mappedParameters.put(keywordArgument, parameter);
@@ -969,6 +980,9 @@ public class PyCallExpressionHelper {
         else {
           mappedVariadicArgumentsToParameters = true;
         }
+      }
+      else if (psi instanceof PySlashParameter) {
+        positionalOnlyMode = false;
       }
       else if (psi instanceof PySingleStarParameter) {
         seenSingleStar = true;
@@ -1283,15 +1297,6 @@ public class PyCallExpressionHelper {
   @Nullable
   private static <T> T next(@NotNull List<T> list) {
     return list.isEmpty() ? null : list.remove(0);
-  }
-
-  @NotNull
-  private static List<PyCallableParameter> dropImplicitParameters(@NotNull List<PyCallableParameter> parameters, int offset) {
-    final ArrayList<PyCallableParameter> results = new ArrayList<>(parameters);
-    for (int i = 0; i < offset && !results.isEmpty(); i++) {
-      results.remove(0);
-    }
-    return results;
   }
 
   @NotNull

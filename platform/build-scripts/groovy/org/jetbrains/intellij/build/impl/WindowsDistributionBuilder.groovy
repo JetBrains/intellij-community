@@ -97,7 +97,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.buildZipArchive) {
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, !buildContext.bundledJreManager.is32bitArchSupported() ? excludeList : [])
       if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}.win", winDistPath, excludeList)
+        buildWinZip([secondJreDirectoryPath], ".win", winDistPath, excludeList)
       }
     }
 
@@ -120,7 +120,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       if (secondJreDirectoryPath != null) {
         generateProductJson(productJsonDir, secondJreDirectoryPath != null)
         new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "-jbr${buildContext.bundledJreManager.getSecondJreVersion()}", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
+        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
       }
     }
   }
@@ -282,7 +282,7 @@ IDS_VM_OPTIONS=$vmOptions
   private void generateProductJson(String targetDir, boolean isJreIncluded) {
     def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
-    def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
+    def javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }

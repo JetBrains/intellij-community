@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.shelf;
 
@@ -26,6 +12,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -38,15 +25,16 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     myProject = project;
   }
 
+  @NotNull
   @Override
   @Nls
   public String getActionText() {
     return VcsBundle.message("shelve.changes.action");
   }
 
-  @Override
   @NotNull
-  public CommitSession createCommitSession() {
+  @Override
+  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
     return new ShelveChangesCommitSession();
   }
 
@@ -60,18 +48,14 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     return true;
   }
 
-  private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
-    @Override
-    public void setContext(CommitContext context) {
-    }
-
+  private class ShelveChangesCommitSession implements CommitSession {
     @Override
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
       return changes.size() > 0;
     }
 
     @Override
-    public void execute(Collection<Change> changes, String commitMessage) {
+    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
       if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
           .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action")), null, myProject);

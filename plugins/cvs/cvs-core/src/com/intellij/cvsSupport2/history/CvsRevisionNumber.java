@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.history;
 
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.LongRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
   private final int[] mySubRevisions;
   private final DateOrRevisionSettings myDateOrRevision;
 
-  public static CvsRevisionNumber EMPTY = new CvsRevisionNumber("", ArrayUtil.EMPTY_INT_ARRAY) {
+  public static CvsRevisionNumber EMPTY = new CvsRevisionNumber("", ArrayUtilRt.EMPTY_INT_ARRAY) {
     @Override
     protected int compareToCvsRevisionNumber(CvsRevisionNumber other) {
       return -1;
@@ -128,6 +128,7 @@ public class CvsRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
     return myStringRepresentation;
   }
 
+  @NotNull
   @Override
   public String asString() {
     return myStringRepresentation;

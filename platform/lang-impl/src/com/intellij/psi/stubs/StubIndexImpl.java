@@ -23,13 +23,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
   @Storage(value = StoragePathMacros.CACHE_FILE),
   @Storage(value = "stubIndex.xml", deprecated = true, roamingType = RoamingType.DISABLED)
 })
-public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState>, BaseComponent {
+public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
 
@@ -374,14 +374,14 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   @Override
   @NotNull
   public <K> Collection<K> getAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
-    Set<K> allKeys = ContainerUtil.newTroveSet();
+    Set<K> allKeys = new THashSet<>();
     processAllKeys(indexKey, project, Processors.cancelableCollectProcessor(allKeys));
     return allKeys;
   }
 
   @Override
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey,
-                                    @NotNull Processor<K> processor,
+                                    @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
@@ -440,7 +440,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   @Override
-  public void initComponent() {
+  public void initializeComponent() {
     myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
 
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
@@ -603,7 +603,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
     @Override
     protected void prepare() {
-      Iterator<StubIndexExtension<?, ?>> extensionsIterator = 
+      Iterator<StubIndexExtension<?, ?>> extensionsIterator =
         IndexInfrastructure.hasIndices() ?
           ((ExtensionPointImpl<StubIndexExtension<?, ?>>)StubIndexExtension.EP_NAME.getPoint(null)).iterator() :
           Collections.emptyIterator();
@@ -612,8 +612,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       while(extensionsIterator.hasNext()) {
         StubIndexExtension extension = extensionsIterator.next();
         if (extension == null) break;
-        extension.getKey(); // initialize stub index keys 
-        
+        extension.getKey(); // initialize stub index keys
+
         addNestedInitializationTask(() -> {
           @SuppressWarnings("unchecked") boolean rebuildRequested = registerIndexer(extension, forceClean, state);
           if (rebuildRequested) {

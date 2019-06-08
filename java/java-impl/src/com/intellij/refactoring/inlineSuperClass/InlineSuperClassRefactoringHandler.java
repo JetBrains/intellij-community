@@ -27,6 +27,7 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.refactoring.inline.JavaInlineActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -60,17 +61,21 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
       final PsiElement resolve = reference.resolve();
       if (resolve == superClass) {
         final PsiElement referenceElement = reference.getElement();
-        if (referenceElement != null) {
-          final PsiElement parent = referenceElement.getParent();
-          if (parent instanceof PsiReferenceList) {
-            final PsiElement gParent = parent.getParent();
-            if (gParent instanceof PsiClass) {
-              chosen = (PsiClass)gParent;
-            }
+        final PsiElement parent = referenceElement.getParent();
+        if (parent instanceof PsiReferenceList) {
+          final PsiElement gParent = parent.getParent();
+          if (gParent instanceof PsiClass) {
+            chosen = (PsiClass)gParent;
           }
         }
       }
     }
     new InlineSuperClassRefactoringDialog(project, superClass, chosen).show();
+  }
+
+  @Nullable
+  @Override
+  public String getActionName(PsiElement element) {
+    return REFACTORING_NAME + "...";
   }
 }

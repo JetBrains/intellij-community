@@ -31,7 +31,7 @@ import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -164,7 +164,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       for (ClasspathStorageProvider provider : providers) {
         formatIdToDescription.put(provider.getID(), provider.getDescription());
       }
-      comboBoxClasspathFormat = new ComboBox<>(ArrayUtil.toStringArray(formatIdToDescription.keySet()));
+      comboBoxClasspathFormat = new ComboBox<>(ArrayUtilRt.toStringArray(formatIdToDescription.keySet()));
       comboBoxClasspathFormat.setRenderer(SimpleListCellRenderer.create("", formatIdToDescription::get));
       comboBoxClasspathFormat.setSelectedItem(getModuleClasspathFormat());
       add(comboBoxClasspathFormat,

@@ -71,7 +71,7 @@
     <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
 
-    <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant Build"
+    <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant"
                 factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
     <configurationType implementation="com.intellij.lang.ant.config.execution.AntRunConfigurationType"/>
     <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
@@ -93,7 +93,7 @@
     <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
     </group>
-    <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile">
+    <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile" icon="AntIcons.Build">
       <add-to-group group-id="ToolsXmlGroup" relative-to-action="GenerateDTD" anchor="before"/>
       <add-to-group group-id="EditorPopupMenu" relative-to-action="PackageFile" anchor="after"/>
       <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>

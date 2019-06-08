@@ -33,7 +33,6 @@ import java.util.concurrent.TimeoutException;
  * @author Dmitry Avdeev
  */
 public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsightFixtureTestCase {
-
   protected FileEditorManagerImpl myManager;
   private FileEditorManager myOldManager;
   private Set<DockContainer> myOldDockContainers;
@@ -41,6 +40,7 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
     DockManager dockManager = DockManager.getInstance(getProject());
     myOldDockContainers = dockManager.getContainers();
     myManager = new FileEditorManagerImpl(getProject(), dockManager);
@@ -50,26 +50,26 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
-        if (!myOldDockContainers.contains(container)) {
-          Disposer.dispose(container);
+    new RunAll(
+      () -> {
+        for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
+          if (!myOldDockContainers.contains(container)) {
+            Disposer.dispose(container);
+          }
         }
-      }
-      myOldDockContainers = null;
-      ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
-      myManager.closeAllFiles();
-      EditorHistoryManager.getInstance(getProject()).removeAllFiles();
-      ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
+
+        myOldDockContainers = null;
+        ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
+        myManager.closeAllFiles();
+        EditorHistoryManager.getInstance(getProject()).removeAllFiles();
+        ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
+      },
+      () -> Disposer.dispose(myManager), () -> {
       myManager = null;
       myOldManager = null;
-      super.tearDown();
-    }
+    },
+      () -> super.tearDown()
+    ).run();
   }
 
   protected VirtualFile getFile(String path) {

@@ -28,6 +28,24 @@ public class ResourceUtil {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
 
+  public static InputStream getResourceAsStream(@NotNull Class loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
+    return getResourceAsStream(loaderClass.getClassLoader(), basePath, fileName);
+  }
+
+  public static InputStream getResourceAsStream(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
+    String fixedPath = StringUtil.trimStart(StringUtil.trimEnd(basePath, "/"), "/");
+
+    List<String> bundles = calculateBundleNames(fixedPath, Locale.getDefault());
+    for (String bundle : bundles) {
+      InputStream stream = loader.getResourceAsStream(bundle + "/" + fileName);
+      if (stream == null) continue;
+
+      return stream;
+    }
+
+    return loader.getResourceAsStream(fixedPath + "/" + fileName);
+  }
+
   public static URL getResource(@NotNull ClassLoader loader, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     String fixedPath = StringUtil.trimStart(StringUtil.trimEnd(basePath, "/"), "/");
 
@@ -98,7 +116,12 @@ public class ResourceUtil {
 
   @NotNull
   public static String loadText(@NotNull URL url) throws IOException {
-    InputStream inputStream = new BufferedInputStream(URLUtil.openStream(url));
+    return loadText(URLUtil.openStream(url));
+  }
+
+  @NotNull
+  public static String loadText(@NotNull InputStream in) throws IOException {
+    InputStream inputStream = in instanceof BufferedInputStream ? in : new BufferedInputStream(in);
 
     try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
       StringBuilder text = new StringBuilder();

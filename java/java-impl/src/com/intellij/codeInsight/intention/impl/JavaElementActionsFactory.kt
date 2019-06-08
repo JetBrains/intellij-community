@@ -5,10 +5,11 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmMethod
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.*
-import com.intellij.lang.jvm.types.JvmType
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -16,20 +17,11 @@ import com.intellij.psi.util.PsiUtil
 import java.util.*
 
 class JavaElementActionsFactory : JvmElementActionsFactory() {
-  private val renderer = JavaElementRenderer.getInstance()
-
-  override fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
-    return with(request) {
-      val declaration = target as PsiModifierListOwner
-      if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
-      listOf(ModifierFix(declaration, renderer.render(modifier), shouldPresent, false))
-    }
-  }
 
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
-    val fix = object : ModifierFix(declaration, renderer.render(request.modifier), request.shouldBePresent(), true) {
+    val fix = object : ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true) {
       override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
 
       override fun isAvailable(project: Project,
@@ -104,27 +96,4 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
 
     return listOf(ChangeMethodParameters(psiMethod, request))
   }
-}
-
-class JavaElementRenderer {
-  companion object {
-    @JvmStatic
-    fun getInstance(): JavaElementRenderer {
-      return ServiceManager.getService(JavaElementRenderer::class.java)
-    }
-  }
-
-
-  fun render(visibilityModifiers: List<JvmModifier>): String =
-    visibilityModifiers.joinToString(" ") { render(it) }
-
-  fun render(jvmType: JvmType): String =
-    (jvmType as PsiType).canonicalText
-
-  fun render(jvmAnnotation: JvmAnnotation): String =
-    "@" + (jvmAnnotation as PsiAnnotation).qualifiedName!!
-
-  @PsiModifier.ModifierConstant
-  fun render(modifier: JvmModifier): String = modifier.toPsiModifier()
-
 }

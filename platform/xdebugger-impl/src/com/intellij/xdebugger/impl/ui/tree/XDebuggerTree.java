@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -113,7 +113,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       // remove the last newline
       plainBuf.setLength(plainBuf.length() - 1);
       htmlBuf.append("</ul>\n</body>\n</html>");
-      return new TextTransferable(htmlBuf.toString(), plainBuf.toString());
+      return new TextTransferable(htmlBuf, plainBuf);
     }
 
     @Override
@@ -339,7 +339,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   public void childrenLoaded(final @NotNull XDebuggerTreeNode node,
-                             final @NotNull List<XValueContainerNode<?>> children,
+                             final @NotNull List<? extends XValueContainerNode<?>> children,
                              final boolean last) {
     for (XDebuggerTreeListener listener : myListeners) {
       listener.childrenLoaded(node, children, last);
@@ -401,7 +401,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     EdtExecutorService.getInstance().execute(runnable);
   }
 
-  public void selectNodeOnLoad(Condition<TreeNode> nodeFilter, Condition<TreeNode> obsoleteChecker) {
+  public void selectNodeOnLoad(Condition<? super TreeNode> nodeFilter, Condition<? super TreeNode> obsoleteChecker) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
@@ -416,7 +416,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     });
   }
 
-  public void expandNodesOnLoad(final Condition<TreeNode> nodeFilter) {
+  public void expandNodesOnLoad(final Condition<? super TreeNode> nodeFilter) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
@@ -427,7 +427,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       }
 
       @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<? extends XValueContainerNode<?>> children, boolean last) {
         if (nodeFilter.value(node)) {
           expandPath(node.getPath());
         }

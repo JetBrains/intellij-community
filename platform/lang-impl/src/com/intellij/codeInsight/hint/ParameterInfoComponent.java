@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -11,12 +11,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -30,8 +32,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,7 +94,7 @@ public class ParameterInfoComponent extends JPanel {
     this(objects, editor, handler, false, false);
   }
 
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, 
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler,
                          boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
@@ -157,7 +159,7 @@ public class ParameterInfoComponent extends JPanel {
         : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
       myShortcutLabel.setForeground(CONTEXT_HELP_FOREGROUND);
       Font labelFont = UIUtil.getLabelFont();
-      myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+      myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfoRt.isWindows ? 1 : 2)));
       myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
       add(myShortcutLabel, BorderLayout.SOUTH);
     }
@@ -200,9 +202,9 @@ public class ParameterInfoComponent extends JPanel {
   class MyParameterContext implements ParameterInfoUIContextEx {
     private final boolean mySingleParameterInfo;
     private int i;
-    private Function<String, String> myEscapeFunction;
+    private Function<? super String, String> myEscapeFunction;
     private final ParameterInfoController.Model result = new ParameterInfoController.Model();
-    
+
     MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
     }
@@ -263,7 +265,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
-    public void setEscapeFunction(@Nullable Function<String, String> escapeFunction) {
+    public void setEscapeFunction(@Nullable Function<? super String, String> escapeFunction) {
       myEscapeFunction = escapeFunction;
     }
 
@@ -408,7 +410,7 @@ public class ParameterInfoComponent extends JPanel {
                          boolean strikeout,
                          boolean isDisabledBeforeHighlight,
                          Color background) {
-      StringBuilder buf = new StringBuilder();
+      StringBuilder buf = new StringBuilder(text.length());
       removeAll();
       setBackground(background);
 
@@ -547,12 +549,15 @@ public class ParameterInfoComponent extends JPanel {
                          boolean isStrikeout,
                          Color background, @Nullable TextRange range) {
       Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<>(TEXT_RANGE_COMPARATOR);
-      if (range != null)
+      if (range != null) {
         flagsMap.put(range, ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-      if (isDisabled)
+      }
+      if (isDisabled) {
         flagsMap.put(TextRange.create(0, text.length()), ParameterInfoUIContextEx.Flag.DISABLE);
-      if (isStrikeout)
+      }
+      if (isStrikeout) {
         flagsMap.put(TextRange.create(0, text.length()), ParameterInfoUIContextEx.Flag.STRIKEOUT);
+      }
       return setup(text, flagsMap, background);
     }
 

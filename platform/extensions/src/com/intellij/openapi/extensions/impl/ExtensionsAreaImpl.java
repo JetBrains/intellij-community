@@ -12,6 +12,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +50,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @TestOnly
   public final void notifyAreaReplaced(@NotNull ExtensionsAreaImpl newArea) {
-    Set<String> processedEPs = ContainerUtil.newTroveSet();
+    Set<String> processedEPs = new THashSet<>();
     for (final ExtensionPointImpl point : myExtensionPoints.values()) {
       point.notifyAreaReplaced(this);
       processedEPs.add(point.getName());
@@ -334,6 +335,13 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       throw new IllegalArgumentException("Missing extension point: " + extensionPointName + " in area " + myAreaInstance);
     }
     return extensionPoint;
+  }
+
+  @Nullable
+  @Override
+  public <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
+    //noinspection unchecked
+    return myExtensionPoints.get(extensionPointName);
   }
 
   @NotNull

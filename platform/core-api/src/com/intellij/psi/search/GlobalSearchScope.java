@@ -750,7 +750,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       myDisplayName = displayName;
       final FileIndexFacade facade = FileIndexFacade.getInstance(project);
       myModule = virtualFile == null || project.isDefault() ? null : facade.getModuleForFile(virtualFile);
-      mySearchOutsideContent = virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
+      mySearchOutsideContent = project.isDefault() || virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
     }
 
     @Override
@@ -793,7 +793,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o.getClass() != getClass()) return false;
+      if (o == null || o.getClass() != getClass()) return false;
       FileScope files = (FileScope)o;
       return mySearchOutsideContent == files.mySearchOutsideContent &&
              Objects.equals(myVirtualFile, files.myVirtualFile) &&

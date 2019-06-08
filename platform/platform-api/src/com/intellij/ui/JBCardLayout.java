@@ -59,7 +59,7 @@ public class JBCardLayout extends CardLayout {
 
   @Override
   public void removeLayoutComponent(Component comp) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.removeLayoutComponent(comp);
     for (Iterator<Map.Entry<String, Component>> iterator = myMap.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, Component> entry = iterator.next();
@@ -83,7 +83,7 @@ public class JBCardLayout extends CardLayout {
 
   public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction,
                     final @Nullable Runnable onDone) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     mySwipeFrom = findVisible(parent);
     mySwipeTo = myMap.get(name);
     if (mySwipeTo == null) return;
@@ -147,7 +147,7 @@ public class JBCardLayout extends CardLayout {
     myTimer.start();
   }
 
-  private void stopSwipeIfNeed() {
+  private void stopSwipeIfNeeded() {
     if (myTimer.isRunning()) {
       myTimer.stop();
       mySwipeFrom = null;
@@ -169,31 +169,31 @@ public class JBCardLayout extends CardLayout {
 
   @Override
   public void first(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.first(parent);
   }
 
   @Override
   public void next(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.next(parent);
   }
 
   @Override
   public void previous(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.previous(parent);
   }
 
   @Override
   public void last(Container parent) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.last(parent);
   }
 
   @Override
   public void show(Container parent, String name) {
-    stopSwipeIfNeed();
+    stopSwipeIfNeeded();
     super.show(parent, name);
   }
 

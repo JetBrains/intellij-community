@@ -221,7 +221,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static void addInheritorUsages(PsiClass aClass, final GlobalSearchScope searchScope, final List<UsageInfo> usages) {
+  private static void addInheritorUsages(PsiClass aClass, final GlobalSearchScope searchScope, final List<? super UsageInfo> usages) {
     for (PsiClass inheritor : ClassInheritorsSearch.search(aClass, searchScope, false).findAll()) {
       if (!inheritor.isInterface()) {
         usages.add(new InheritorUsageInfo(inheritor));

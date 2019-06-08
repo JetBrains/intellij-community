@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.google.gson.reflect.TypeToken
+import com.fasterxml.jackson.databind.JavaType
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
@@ -38,9 +38,9 @@ sealed class GithubApiRequest<T>(val url: String) {
       open class Json<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
         : Optional<T>(url, acceptMimeType) {
 
-        private val typeToken = TypeToken.get(clazz)
+        private val type = constructType(clazz)
 
-        override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+        override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
       }
     }
 
@@ -58,26 +58,26 @@ sealed class GithubApiRequest<T>(val url: String) {
     open class Json<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<T>(url, acceptMimeType) {
 
-      private val typeToken = TypeToken.get(clazz)
+      private val type = constructType(clazz)
 
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
     }
 
     open class JsonList<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<List<T>>(url, acceptMimeType) {
 
-      private val typeToken = TypeToken.getParameterized(List::class.java, clazz) as TypeToken<List<T>>
+      private val type = constructListType(clazz)
 
-      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonResponse(response, type)
     }
 
     open class JsonPage<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
-      private val typeToken = TypeToken.getParameterized(List::class.java, clazz) as TypeToken<List<T>>
+      private val type = constructListType(clazz)
 
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
-        return GithubResponsePage.parseFromHeader(parseJsonResponse(response, typeToken),
+        return GithubResponsePage.parseFromHeader(parseJsonResponse(response, type),
                                                   response.findHeader(GithubResponsePage.HEADER_NAME))
       }
     }
@@ -85,10 +85,10 @@ sealed class GithubApiRequest<T>(val url: String) {
     open class JsonSearchPage<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
-      private val typeToken = TypeToken.getParameterized(GithubSearchResult::class.java, clazz) as TypeToken<GithubSearchResult<T>>
+      private val type = constructSearchResultType(clazz)
 
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
-        return GithubResponsePage.parseFromHeader(parseJsonResponse(response, typeToken).items,
+        return GithubResponsePage.parseFromHeader(parseJsonResponse<GithubSearchResult<T>>(response, type).items,
                                                   response.findHeader(GithubResponsePage.HEADER_NAME))
       }
     }
@@ -114,9 +114,9 @@ sealed class GithubApiRequest<T>(val url: String) {
                                                                           GithubApiContentHelper.JSON_MIME_TYPE,
                                                                           url,
                                                                           GithubApiContentHelper.V3_JSON_MIME_TYPE) {
-      private val typeToken = TypeToken.get(clazz)
+      private val type = constructType(clazz)
 
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
     }
   }
 
@@ -138,9 +138,9 @@ sealed class GithubApiRequest<T>(val url: String) {
                                                                           GithubApiContentHelper.JSON_MIME_TYPE,
                                                                           url,
                                                                           GithubApiContentHelper.V3_JSON_MIME_TYPE) {
-      private val typeToken = TypeToken.get(clazz)
+      private val type = constructType(clazz)
 
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
     }
 
     open class JsonList<T>(url: String, clazz: Class<T>, body: Any?)
@@ -149,9 +149,9 @@ sealed class GithubApiRequest<T>(val url: String) {
                      url,
                      GithubApiContentHelper.V3_JSON_MIME_TYPE) {
 
-      private val typeToken = TypeToken.getParameterized(List::class.java, clazz) as TypeToken<List<T>>
+      private val type = constructListType(clazz)
 
-      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonResponse(response, type)
     }
   }
 
@@ -167,9 +167,9 @@ sealed class GithubApiRequest<T>(val url: String) {
                                                                           GithubApiContentHelper.JSON_MIME_TYPE,
                                                                           url,
                                                                           GithubApiContentHelper.V3_JSON_MIME_TYPE) {
-      private val typeToken = TypeToken.get(clazz)
+      private val type = constructType(clazz)
 
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
     }
   }
 
@@ -186,15 +186,25 @@ sealed class GithubApiRequest<T>(val url: String) {
                                                                                     GithubApiContentHelper.JSON_MIME_TYPE,
                                                                                     url,
                                                                                     GithubApiContentHelper.V3_JSON_MIME_TYPE) {
-      private val typeToken = TypeToken.get(clazz)
+      private val type = constructType(clazz)
 
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
     }
   }
 
   companion object {
-    private fun <T> parseJsonResponse(response: GithubApiResponse, typeToken: TypeToken<T>): T {
-      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJson(it, typeToken) })
+    private fun constructSearchResultType(clazz: Class<*>): JavaType = GithubApiContentHelper.jackson.typeFactory
+      .constructParametricType(GithubSearchResult::class.java, clazz)
+
+    private fun constructListType(clazz: Class<*>): JavaType = GithubApiContentHelper.jackson.typeFactory
+      .constructCollectionType(List::class.java, clazz)
+
+    private fun constructType(clazz: Class<*>): JavaType {
+      return GithubApiContentHelper.jackson.typeFactory.constructSimpleType(clazz, emptyArray())
+    }
+
+    private fun <T> parseJsonResponse(response: GithubApiResponse, type: JavaType): T {
+      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJson<T>(it, type) })
     }
   }
 }

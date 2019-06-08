@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.conflict;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,12 +15,12 @@ public enum ConflictOperation {
 
   @NotNull
   public static ConflictOperation from(@NotNull @NonNls String operationName) {
-    return valueOf(ConflictOperation.class, operationName.toUpperCase());
+    return valueOf(ConflictOperation.class, StringUtil.toUpperCase(operationName));
   }
 
   @Override
   @NonNls
   public String toString() {
-    return super.toString().toLowerCase();
+    return StringUtil.toLowerCase(super.toString());
   }
 }

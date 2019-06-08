@@ -42,7 +42,7 @@ class AsyncFilterRunner {
     myEditor = editor;
   }
 
-  void highlightHyperlinks(final Filter customFilter, final int startLine, final int endLine) {
+  void highlightHyperlinks(@NotNull Filter customFilter, final int startLine, final int endLine) {
     if (endLine < 0) return;
 
     myQueue.offer(new HighlighterJob(customFilter, startLine, endLine, myEditor.getDocument()));
@@ -182,10 +182,12 @@ class AsyncFilterRunner {
     private final AtomicInteger startLine;
     private final int endLine;
     private final DeltaTracker delta;
+    @NotNull
     private final Filter filter;
+    @NotNull
     private final Document snapshot;
 
-    HighlighterJob(Filter filter, int startLine, int endLine, Document document) {
+    HighlighterJob(@NotNull Filter filter, int startLine, int endLine, @NotNull Document document) {
       this.startLine = new AtomicInteger(startLine);
       this.endLine = endLine;
       this.filter = filter;

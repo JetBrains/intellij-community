@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -13,20 +13,20 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
@@ -60,7 +60,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private static final int IS_ENABLED_COLUMN = 2;
 
   public static int getAdditionalPadding() {
-    return SystemInfo.isMac ? 16 : 0;
+    return SystemInfoRt.isMac ? 16 : 0;
   }
 
   public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
@@ -87,10 +87,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return value;
       }
     });
-    severitiesColumn.setMaxWidth(JBUI.scale(20));
+    severitiesColumn.setMaxWidth(JBUIScale.scale(20));
 
     TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(JBUI.scale(22 + getAdditionalPadding()));
+    isEnabledColumn.setMaxWidth(JBUIScale.scale(22 + getAdditionalPadding()));
     ThreeStateCheckBoxRenderer boxRenderer = new ThreeStateCheckBoxRenderer();
     boxRenderer.setOpaque(true);
     isEnabledColumn.setCellRenderer(boxRenderer);

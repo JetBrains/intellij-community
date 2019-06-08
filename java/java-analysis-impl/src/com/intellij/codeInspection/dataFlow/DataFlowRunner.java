@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
@@ -159,10 +158,8 @@ public class DataFlowRunner {
       flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       stats.endFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
-      
-      if (Registry.is("idea.dfa.live.variables.analysis")) {
-        new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
-      }
+
+      new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
       stats.endLVA();
 
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
@@ -201,6 +198,9 @@ public class DataFlowRunner {
           LOG.trace("Too complex because too many different possible states");
           return RunnerResult.TOO_COMPLEX;
         }
+        assert !states.isEmpty();
+        Instruction instruction = states.get(0).getInstruction();
+        beforeInstruction(instruction);
         for (DfaInstructionState instructionState : states) {
           lastInstructionState = instructionState;
           if (count++ > stateLimit) {
@@ -214,8 +214,6 @@ public class DataFlowRunner {
           }
           // useful for quick debugging by uncommenting and hot-swapping
           //System.out.println(instructionState.toString());
-
-          Instruction instruction = instructionState.getInstruction();
 
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
@@ -272,6 +270,7 @@ public class DataFlowRunner {
             queue.offer(state);
           }
         }
+        afterInstruction(instruction);
         if (myCancelled) {
           return RunnerResult.CANCELLED;
         }
@@ -296,6 +295,14 @@ public class DataFlowRunner {
     }
   }
 
+  protected void beforeInstruction(Instruction instruction) {
+    
+  }
+
+  protected void afterInstruction(Instruction instruction) {
+    
+  }
+
   @NotNull
   private DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
     DfaMemoryStateImpl curState = (DfaMemoryStateImpl)instructionState.getMemoryState();
@@ -317,7 +324,7 @@ public class DataFlowRunner {
 
   @NotNull
   private Set<Instruction> getJoinInstructions() {
-    Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
+    Set<Instruction> joinInstructions = new HashSet<>();
     for (int index = 0; index < myInstructions.length; index++) {
       Instruction instruction = myInstructions[index];
       if (instruction instanceof GotoInstruction) {
@@ -371,7 +378,7 @@ public class DataFlowRunner {
 
   public RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
                                               Collection<? extends DfaMemoryState> states,
-                                              StandardInstructionVisitor visitor, 
+                                              StandardInstructionVisitor visitor,
                                               boolean ignoreAssertions) {
     RunnerResult result = analyzeMethod(block, visitor, ignoreAssertions, states);
     if (result != RunnerResult.OK) return result;
@@ -520,7 +527,7 @@ public class DataFlowRunner {
       createClosureState(field, state);
     }
   }
-  
+
   private void registerNestedClosures(@NotNull DfaInstructionState instructionState, @NotNull PsiLambdaExpression expr) {
     DfaMemoryState state = instructionState.getMemoryState();
     PsiElement body = expr.getBody();
@@ -603,7 +610,7 @@ public class DataFlowRunner {
 
     return Pair.create(trueSet, falseSet);
   }
-  
+
   private static class TimeStats {
     private static final long DFA_EXECUTION_TIME_TO_REPORT_NANOS = TimeUnit.SECONDS.toNanos(30);
     private final @Nullable ThreadMXBean myMxBean;
@@ -620,39 +627,39 @@ public class DataFlowRunner {
         myStart = 0;
       }
     }
-    
+
     void endFlow() {
       if (myMxBean != null) {
         myFlowTime = myMxBean.getCurrentThreadCpuTime() - myStart;
       }
     }
-    
+
     void endLVA() {
       if (myMxBean != null) {
         myLVATime = myMxBean.getCurrentThreadCpuTime() - myStart - myFlowTime;
       }
     }
-    
+
     void startMerge() {
       if (myMxBean != null) {
         myMergeStart = System.nanoTime();
       }
     }
-    
+
     void endMerge() {
       if (myMxBean != null) {
         myMergeTime += System.nanoTime() - myMergeStart;
       }
     }
-    
+
     void endProcess() {
       if (myMxBean != null) {
         myProcessTime = myMxBean.getCurrentThreadCpuTime() - myStart;
       }
     }
-    
+
     boolean isTooSlow() {
-      return myProcessTime > DFA_EXECUTION_TIME_TO_REPORT_NANOS; 
+      return myProcessTime > DFA_EXECUTION_TIME_TO_REPORT_NANOS;
     }
 
     @Override

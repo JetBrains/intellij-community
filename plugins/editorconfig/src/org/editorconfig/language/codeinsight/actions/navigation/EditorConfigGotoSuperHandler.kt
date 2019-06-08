@@ -22,9 +22,9 @@ class EditorConfigGotoSuperHandler : GotoTargetHandler() {
   }
 
   override fun getChooserTitle(sourceElement: PsiElement, name: String?, length: Int, finished: Boolean) = when (sourceElement) {
-    is EditorConfigHeader -> "Please, select supercase header"
-    is EditorConfigFlatOptionKey -> "Please, select overridden option"
-    else -> "Please, select parent"
+    is EditorConfigHeader -> "Select supercase header"
+    is EditorConfigFlatOptionKey -> "Select overridden option"
+    else -> "Select parent"
   }
 
   override fun getNotFoundMessage(project: Project, editor: Editor, file: PsiFile) = when (findSource(editor, file)) {

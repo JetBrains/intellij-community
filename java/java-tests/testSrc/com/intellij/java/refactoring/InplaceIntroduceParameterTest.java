@@ -5,123 +5,71 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceTest {
+import java.util.function.Consumer;
 
+public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceTest {
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceParameter/";
 
   public void testReplaceAll() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
+    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
   public void testChainMethodCall() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
+    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
-
   public void testReplaceAll1() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
+    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
   public void testReplaceOneLeaveParamToDelete() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-      }
-    });
+    doTest(null);
   }
 
   public void testReplaceAllBrokenIdentifier() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        type("ONE TWO");
-        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
+    doTest(introducer -> {
+     type("ONE TWO");
+     introducer.setReplaceAllOccurrences(true);
+   });
   }
 
   public void testReplaceAll2() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
+    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
   public void testReplaceAll3() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
-      }
-    });
+    doTest(introducer -> introducer.setReplaceAllOccurrences(true));
   }
 
   public void testReplaceAllMethodCalls() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
-        inplaceIntroducePopup.setReplaceAllOccurrences(true);
-        type("string");
-      }
-    });
+    doTest(introducer -> {
+     introducer.setReplaceAllOccurrences(true);
+     type("string");
+   });
   }
 
   public void testParamNameEqMethodName() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
-      }
-    });
+    doTest(null);
   }
 
   public void testLocalInsideAnonymous() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
-      }
-    });
+    doTest(null);
   }
 
   public void testNoConflictingVariableDueToReparse() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
-      }
-    });
+    doTest(null);
   }
 
   public void testLocalInsideAnonymous1() {
-    final Pass<AbstractInplaceIntroducer> pass = new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
-      }
-    };
+    final Consumer<AbstractInplaceIntroducer> pass = introducer -> {
+   };
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
@@ -131,9 +79,9 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
 
       //ensure extract local var
       final MyIntroduceHandler introduceHandler = createIntroduceHandler();
-      introduceHandler.invokeImpl(LightPlatformTestCase.getProject(), getLocalVariableFromEditor(), getEditor());
+      introduceHandler.invokeImpl(getProject(), getLocalVariableFromEditor(), getEditor());
       final AbstractInplaceIntroducer introducer = introduceHandler.getInplaceIntroducer();
-      pass.pass(introducer);
+      pass.accept(introducer);
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
       assert state != null;
       state.gotoEnd(false);
@@ -163,21 +111,12 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
   }
 
   public void testExtractParamOverLocal() {
-    doTest(new Pass<AbstractInplaceIntroducer>() {
-      @Override
-      public void pass(AbstractInplaceIntroducer abstractInplaceIntroducer) {
-      }
-    });
+    doTest(null);
   }
 
   public void testExtractConflictingParamOverLocal() {
     try {
-      doTest(new Pass<AbstractInplaceIntroducer>() {
-        @Override
-        public void pass(AbstractInplaceIntroducer abstractInplaceIntroducer) {
-          type("p");
-        }
-      });
+      doTest(introducer -> type("p"));
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals("There is already a parameter <b><code>p</code></b>. It will conflict with the introduced parameter", e.getMessage());

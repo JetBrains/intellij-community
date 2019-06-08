@@ -170,7 +170,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   public void method(Map<Object, Object> args) {
     if (args == null) return;
 
-    args = ContainerUtil.newLinkedHashMap(args);
+    args = new LinkedHashMap<>(args);
     parseMethod(args);
     args.put("declarationType", DeclarationType.METHOD);
     myDeclarations = myDeclarations.prepend(args);
@@ -251,7 +251,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   public void closureInMethod(Map<Object, Object> args) {
     if (args == null) return;
 
-    args = ContainerUtil.newLinkedHashMap(args);
+    args = new LinkedHashMap<>(args);
     parseMethod(args);
     final Object method = args.get("method");
     if (method instanceof Map) {
@@ -264,7 +264,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   public void variable(Map<Object, Object> args) {
     if (args == null) return;
 
-    args = ContainerUtil.newLinkedHashMap(args);
+    args = new LinkedHashMap<>(args);
     parseVariable(args);
     myDeclarations = myDeclarations.prepend(args);
   }
@@ -336,7 +336,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     }
 
   }
-  
+
   public static class GdslNamedParameter extends FakePsiElement {
     private final String myName;
     public final String docString;

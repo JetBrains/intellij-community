@@ -24,6 +24,7 @@ import java.util.Map;
  * Represents a <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward index data structure</>:
  * an index intended to hold a mappings of inputId-s to contained keys.
  */
+@Deprecated
 @ApiStatus.Experimental
 public interface ForwardIndex<Key, Value> {
   /**

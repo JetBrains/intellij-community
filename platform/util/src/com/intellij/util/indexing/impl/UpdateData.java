@@ -43,9 +43,9 @@ public class UpdateData<Key, Value> {
     myForwardIndexUpdate = forwardIndexUpdate;
   }
 
-  boolean iterateKeys(@NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
-                      @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
-                      @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
+  boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                      @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                      @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
     final InputDataDiffBuilder<Key, Value> currentData;
     try {
       currentData = getCurrentDataEvaluator().compute();

@@ -55,6 +55,6 @@ public class FileStub extends ElementStub {
 
   @Override
   public ObjectStubSerializer getStubType() {
-    return FileStubSerializer.INSTANCE;
+    return DomElementTypeHolder.FileStubSerializer;
   }
 }

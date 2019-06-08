@@ -74,7 +74,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @NotNull
   public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
-    final List<PsiClass> result = ContainerUtil.newArrayList();
+    final List<PsiClass> result = new ArrayList<>();
 
     for (PsiElement psiClass : StubIndex.getElements(GrFullClassNameIndex.KEY, name.hashCode(), myProject,
                                                      inSource ? new GrSourceFilterScope(scope) : scope, PsiClass.class)) {
@@ -90,7 +90,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllClassNames() {
-    return ArrayUtil.toStringArray(StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY, myProject));
+    return ArrayUtilRt.toStringArray(StubIndex.getInstance().getAllKeys(GrScriptClassNameIndex.KEY, myProject));
   }
 
   @Override
@@ -140,7 +140,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   public String[] getAllMethodNames() {
     Collection<String> keys = StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, myProject);
     keys.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, myProject));
-    return ArrayUtil.toStringArray(keys);
+    return ArrayUtilRt.toStringArray(keys);
   }
 
   @Override
@@ -156,7 +156,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   @NotNull
   public String[] getAllFieldNames() {
     Collection<String> fields = StubIndex.getInstance().getAllKeys(GrFieldNameIndex.KEY, myProject);
-    return ArrayUtil.toStringArray(fields);
+    return ArrayUtilRt.toStringArray(fields);
   }
 
   @Override

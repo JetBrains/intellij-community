@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -46,7 +46,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
   static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
-  private final TempFileSystem TEMP_FILE_SYSTEM;
   private static final VirtualFilePointerListener NULL_LISTENER = new VirtualFilePointerListener() {};
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = ContainerUtil.newIdentityTroveMap(); // guarded by this
   // compare by identity because VirtualFilePointerContainer has too smart equals
@@ -55,15 +54,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @NotNull private final MessageBus myBus;
   @NotNull private final FileTypeManager myFileTypeManager;
 
-  VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
-                                @NotNull MessageBus bus,
-                                @NotNull TempFileSystem tempFileSystem,
-                                @NotNull FileTypeManager fileTypeManager) {
-    myVirtualFileManager = virtualFileManager;
-    myBus = bus;
-    myFileTypeManager = fileTypeManager;
-    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
-    TEMP_FILE_SYSTEM = tempFileSystem;
+  VirtualFilePointerManagerImpl() {
+    myVirtualFileManager = VirtualFileManager.getInstance();
+    myBus = ApplicationManager.getApplication().getMessageBus();
+    myFileTypeManager = FileTypeManager.getInstance();
+    myBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
 
   @Override
@@ -158,7 +153,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       url = VirtualFileManager.constructUrl(protocol, path);
     }
 
-    if (fileSystem == TEMP_FILE_SYSTEM && listener == null) {
+    if (fileSystem instanceof TempFileSystem && listener == null) {
       // Since VFS events work correctly in temp FS as well, ideally, this branch shouldn't exist and normal VFPointer should be used in all tests
       // but we have so many tests that create pointers, not dispose and leak them,
       // so for now we create normal pointers only when there are listeners.

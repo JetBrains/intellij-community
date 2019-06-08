@@ -24,7 +24,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +76,7 @@ public class GroovyNamesUtil {
     Matcher matcher = PATTERN.matcher(str);
     
     while (matcher.find()) {
-      res.add(matcher.group().toLowerCase());
+      res.add(StringUtil.toLowerCase(matcher.group()));
       sb.append(matcher.group());
     }
 
@@ -93,7 +92,7 @@ public class GroovyNamesUtil {
 
   public static String fromLowerLetter(String str) {
     if (str.isEmpty()) return "";
-    if (str.length() == 1) return str.toLowerCase();
+    if (str.length() == 1) return StringUtil.toLowerCase(str);
     char c = Character.toLowerCase(str.charAt(0));
     if (c == str.charAt(0)) return str;
     return c + str.substring(1);

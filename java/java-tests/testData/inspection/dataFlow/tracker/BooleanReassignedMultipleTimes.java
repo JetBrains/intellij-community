@@ -1,10 +1,10 @@
 /*
-Value is always false (b4)
-  'b4' was assigned (b3)
-    'b3' was assigned (b2)
-      'b2' was assigned (b1)
-        'b1' was assigned (b)
-          'b == false' was established from condition (b)
+Value is always false (b4; line#18)
+  'b4' was assigned (=; line#17)
+    'b3' was assigned (=; line#16)
+      'b2' was assigned (=; line#15)
+        'b1' was assigned (=; line#14)
+          'b == false' was established from condition (b; line#13)
  */
 import org.jetbrains.annotations.NotNull;
 

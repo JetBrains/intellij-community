@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
@@ -19,6 +21,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,11 +32,14 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,19 +50,23 @@ import java.util.Set;
 
 public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
-    boolean[] foundLeaksBeforeTest = new boolean[1];
+    // sick and tired of hunting tests leaking documents
+    ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
+
+    Set<Object> alreadyLeaking = new THashSet<>(TObjectHashingStrategy.IDENTITY);
     Condition<Object> isReallyLeak = file -> {
-      if (file instanceof PsiFile && !((PsiFile)file).isPhysical()) return false;
-      System.err.println("DON'T BLAME ME, IT'S NOT MY FAULT! SOME SNEAKY TEST BEFORE ME HAS LEAKED PsiFiles/Documents!");
-      foundLeaksBeforeTest[0] = true;
-      return true;
+      if (file instanceof PsiFile) {
+        if (!((PsiFile)file).isPhysical()) {
+          return false;
+        }
+        Project project = ((PsiFile)file).getProject();
+        System.err.println(project + " already leaking; its creation trace: " + PlatformTestCase.getCreationPlace(project));
+      }
+      alreadyLeaking.add(file);
+      return false;
     };
     LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, isReallyLeak);
     LeakHunter.checkLeak(ApplicationManager.getApplication(), Document.class, isReallyLeak);
-
-    if (foundLeaksBeforeTest[0]) {
-      fail("Can't start the test: leaking PsiFiles found");
-    }
 
     @Language("JAVA")
     String text = "public class X{} //iuggjhfg";
@@ -72,8 +82,8 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
 
-    LeakHunter.checkLeak(usageView, PsiFileImpl.class, PsiFileImpl::isPhysical);
-    LeakHunter.checkLeak(usageView, Document.class);
+    LeakHunter.checkLeak(usageView, PsiFileImpl.class, file -> !alreadyLeaking.contains(file) && file.isPhysical());
+    LeakHunter.checkLeak(usageView, Document.class, document -> !alreadyLeaking.contains(document));
   }
 
   public void testUsageViewHandlesDocumentChange() {
@@ -293,9 +303,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     BinaryFileDecompiler decompiler = file -> {
       throw new IllegalStateException("oh no");
     };
-    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler);
-    Disposer.register(getTestRootDisposable(),
-                      () -> BinaryFileTypeDecompilers.INSTANCE.removeExplicitExtension(ArchiveFileType.INSTANCE, decompiler));
+    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler, getTestRootDisposable());
 
     PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
     assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());

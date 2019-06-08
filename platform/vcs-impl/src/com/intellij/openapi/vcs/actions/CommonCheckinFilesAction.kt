@@ -65,4 +65,6 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
     status != FileStatus.UNKNOWN && status != FileStatus.IGNORED
 
   override fun getRoots(dataContext: VcsContext): Array<FilePath> = dataContext.selectedFilePaths
+
+  override fun isForceUpdateNotEmptyCommitState(): Boolean = true
 }

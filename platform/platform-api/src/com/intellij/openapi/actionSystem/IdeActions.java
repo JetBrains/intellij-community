@@ -135,6 +135,7 @@ public interface IdeActions {
   @NonNls String ACTION_FIND = "Find";
   @NonNls String ACTION_FIND_NEXT = "FindNext";
   @NonNls String ACTION_FIND_PREVIOUS = "FindPrevious";
+  @NonNls String ACTION_FIND_WORD_AT_CARET = "FindWordAtCaret";
   @NonNls String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
   @NonNls String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
   @NonNls String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
@@ -173,6 +174,7 @@ public interface IdeActions {
   @NonNls String ACTION_EXPORT_TO_TEXT_FILE = "ExportToTextFile";
 
   @NonNls String ACTION_COLLAPSE_REGION = "CollapseRegion";
+  @NonNls String ACTION_EXPAND_REGION = "ExpandRegion";
   @NonNls String ACTION_EXPAND_ALL_REGIONS = "ExpandAllRegions";
   @NonNls String ACTION_COLLAPSE_ALL_REGIONS = "CollapseAllRegions";
   @NonNls String ACTION_EXPAND_REGION_RECURSIVELY = "ExpandRegionRecursively";
@@ -294,6 +296,8 @@ public interface IdeActions {
 
   @NonNls String ACTION_EDITOR_DUPLICATE = "EditorDuplicate";
   @NonNls String ACTION_EDITOR_DUPLICATE_LINES = "EditorDuplicateLines";
+
+  @NonNls String ACTION_EDIT_PROPERTY_VALUE = "EditPropertyValue";
 
   @NonNls String GROUP_EDITOR_GUTTER = "EditorGutterPopupMenu";
 

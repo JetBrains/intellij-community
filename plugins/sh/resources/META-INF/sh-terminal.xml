@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
+
+    <projectService serviceInterface="com.intellij.sh.run.ShRunner"
+                    serviceImplementation="com.intellij.sh.run.ShTerminalRunner"/>
+  </extensions>
+</idea-plugin>

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonBundle
@@ -18,6 +16,8 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class ServiceLineMarkerTest : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+
+  override fun isIconRequired() = true
 
   override fun setUp() {
     super.setUp()

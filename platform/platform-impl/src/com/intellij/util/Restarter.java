@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
@@ -42,7 +42,7 @@ public class Restarter {
     protected Boolean compute() {
       String problem;
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         if (!JnaLoader.isLoaded()) {
           problem = "JNA not loaded";
         }
@@ -50,7 +50,7 @@ public class Restarter {
           problem = checkRestarter("restarter.exe");
         }
       }
-      else if (SystemInfo.isMac) {
+      else if (SystemInfoRt.isMac) {
         if (getMacOsAppDir() == null) {
           problem = "not a bundle: " + PathManager.getHomePath();
         }
@@ -58,7 +58,7 @@ public class Restarter {
           problem = checkRestarter("restarter");
         }
       }
-      else if (SystemInfo.isUnix) {
+      else if (SystemInfoRt.isUnix) {
         if (UnixProcessManager.getCurrentProcessId() <= 0) {
           problem = "cannot detect process ID";
         }
@@ -73,7 +73,7 @@ public class Restarter {
         }
       }
       else {
-        problem = "unknown platform: " + SystemInfo.OS_NAME;
+        problem = "unknown platform: " + SystemInfoRt.OS_NAME;
       }
 
       if (problem == null) {
@@ -93,13 +93,13 @@ public class Restarter {
 
   public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       restartOnWindows(elevate, beforeRestart);
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       restartOnMac(beforeRestart);
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfoRt.isUnix) {
       restartOnUnix(beforeRestart);
     }
     else {
@@ -108,8 +108,8 @@ public class Restarter {
   }
 
   private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
-    Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
-    Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
+    Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
+    Shell32 shell32 = Native.load("shell32", Shell32.class);
 
     int pid = WinProcessManager.getCurrentProcessId();
     IntByReference argc = new IntByReference();
@@ -224,7 +224,7 @@ public class Restarter {
     boolean isUpdate = restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS);
     File restarter = isUpdate ? createTempExecutable(restarterFile) : restarterFile;
     restarterArgs.add(0, restarter.getPath());
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
+    Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(restarterArgs));
   }
 
   @NotNull

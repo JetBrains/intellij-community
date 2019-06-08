@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.notification.NotificationAction
@@ -76,7 +76,8 @@ class GitRewordOperation(private val repository: GitRepository,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
 
-    val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true)
+    val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true,
+                                             GitRebaseParams.AutoSquashOption.DISABLE)
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
     val rewordProcess = RewordProcess(spec)
@@ -95,7 +96,8 @@ class GitRewordOperation(private val repository: GitRepository,
       return false
     }
     handler.addParameters("--amend")
-    handler.addParameters("-F", messageFile.absolutePath)
+    handler.addParameters("-F")
+    handler.addAbsoluteFile(messageFile)
     handler.addParameters("--only") // without any files: to amend only the message
 
     val result = Git.getInstance().runCommand(handler)
@@ -203,7 +205,7 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun undoInBackground() {
-    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword") {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword...") {
       override fun run(indicator: ProgressIndicator) {
         undo()
       }

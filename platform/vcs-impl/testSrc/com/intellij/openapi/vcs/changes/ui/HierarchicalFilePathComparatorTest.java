@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -255,109 +241,23 @@ public class HierarchicalFilePathComparatorTest extends TestCase {
   }
 
   public void testTransitive() {
-    List<String> paths = ContainerUtil.list(
-      "",
-      "/",
-      "~",
-      "/~",
-      "/~/",
-      "~/project/A.java",
-      "~/project/B.java",
-      "~/project/Z.java",
-      "~/project/a.java",
-      "~/project/b.java",
-      "~/project/z.java",
-      "/aaa/",
-      "/aaa-qwe/",
-      "/ZZ.java",
-      "A.java",
-      "~/project/zzz/",
-      "~/project/zzz",
-      "~/project/zzz-qwe.java",
-      "~/project/zzz-qwe.java/",
-      "~/project/zzz-qwe.java/test",
-      "~/project/aaa/",
-      "~/project/aaa",
-      "~/project/aaa",
-      "~/project/aaa a",
-      "~/project/aaa a/",
-      "~/project/aaa a/bb",
-      "~/project/aaa-qwe/",
-      "~/project/aaa-qwe",
-      "~/project/aaa-qwE",
-      "~/project/aaa-qWe",
-      "~/project/aaa-qwE/",
-      "~/project/aaa-qWe/",
-      "~/project/aaa-qwe/A.java",
-      "~/project/dir/subdir/A.java",
-      "~/project/dir/B.java",
-      "~/project/dir/A.java",
-      "~/project/B.java",
-      "/folder/abd",
-      "/folder/abd/",
-      "/folder/abx/",
-      "/folder/abx",
-      "/folder/aaa",
-      "/folder/AAA",
-      "/folder/aaa/",
-      "/folder/aaa/",
-      "/folder/aaa/.gitignore",
-      "/folder/aaa-qwerty/",
-      "/folder/aaa-qwerty/qwerty",
-      "/folder/aaa/qwerty/",
-      "/folder/aAa/",
-      "/folder/aAa",
-      "/folder/aaA/.gitignore",
-      "/folder/Aaa-qwerty/",
-      "/folder/aAa-qwerty/qwerty",
-      "/folder/aAa/qwerty/",
-      "/Test1",
-      "/TEST1",
-      "/Test1.txt",
-      "/Test1.TXT_1",
-      "/Test1.txt_2",
-      "/Test1.txt_12",
-      "/Test1.TXT_22",
-      "/Test1.TXT 1",
-      "/Test1.txt 2",
-      "/Test1.txt 12",
-      "/Test1.TXT 22",
-      "/Test1.txt-1",
-      "/Test1.TXT-2",
-      "/Test1.txt-12",
-      "/Test1.TXT-22",
-      "/Test1_1.txt",
-      "/Test1_2.txt",
-      "/Test1_12.txt",
-      "/TEST1 1.txt",
-      "/TEST1 2.txt",
-      "/Test1 12.txt",
-      "/Test1.1.txt",
-      "/Test1-2.txt",
-      "/Test1-12.txt",
-      "/a/Test1.txt",
-      "/a/Test1.txt_1",
-      "/a/Test1.txt_12",
-      "/A/Test1.txt",
-      "/A/Test1.txt_1",
-      "/A/Test1.txt_12",
-      "/B/Test1.txt_2",
-      "/b/Test1.txt_22",
-      "/b/Test1.txt_2",
-      "/B/Test1.txt_22",
-      "/Test1 12.txt/a/",
-      "/Test1.1.txt/a/",
-      "/Test1-2.txt/a/",
-      "/Test1-12.txt/a/",
-      "/Test1 12.txt/A/",
-      "/Test1.1.txt/A/",
-      "/Test1-2.txt/A/",
-      "/Test1-12.txt/A/",
-      "/Test1 12.txt/b/",
-      "/Test1.1.txt/B/",
-      "/Test1-2.txt/b/",
-      "/Test1-12.txt/B/"
-    );
+    List<String> paths = Arrays
+      .asList("", "/", "~", "/~", "/~/", "~/project/A.java", "~/project/B.java", "~/project/Z.java", "~/project/a.java", "~/project/b.java",
+              "~/project/z.java", "/aaa/", "/aaa-qwe/", "/ZZ.java", "A.java", "~/project/zzz/", "~/project/zzz", "~/project/zzz-qwe.java",
+              "~/project/zzz-qwe.java/", "~/project/zzz-qwe.java/test", "~/project/aaa/", "~/project/aaa", "~/project/aaa",
+              "~/project/aaa a", "~/project/aaa a/", "~/project/aaa a/bb", "~/project/aaa-qwe/", "~/project/aaa-qwe", "~/project/aaa-qwE",
+              "~/project/aaa-qWe", "~/project/aaa-qwE/", "~/project/aaa-qWe/", "~/project/aaa-qwe/A.java", "~/project/dir/subdir/A.java",
+              "~/project/dir/B.java", "~/project/dir/A.java", "~/project/B.java", "/folder/abd", "/folder/abd/", "/folder/abx/",
+              "/folder/abx", "/folder/aaa", "/folder/AAA", "/folder/aaa/", "/folder/aaa/", "/folder/aaa/.gitignore", "/folder/aaa-qwerty/",
+              "/folder/aaa-qwerty/qwerty", "/folder/aaa/qwerty/", "/folder/aAa/", "/folder/aAa", "/folder/aaA/.gitignore",
+              "/folder/Aaa-qwerty/", "/folder/aAa-qwerty/qwerty", "/folder/aAa/qwerty/", "/Test1", "/TEST1", "/Test1.txt", "/Test1.TXT_1",
+              "/Test1.txt_2", "/Test1.txt_12", "/Test1.TXT_22", "/Test1.TXT 1", "/Test1.txt 2", "/Test1.txt 12", "/Test1.TXT 22",
+              "/Test1.txt-1", "/Test1.TXT-2", "/Test1.txt-12", "/Test1.TXT-22", "/Test1_1.txt", "/Test1_2.txt", "/Test1_12.txt",
+              "/TEST1 1.txt", "/TEST1 2.txt", "/Test1 12.txt", "/Test1.1.txt", "/Test1-2.txt", "/Test1-12.txt", "/a/Test1.txt",
+              "/a/Test1.txt_1", "/a/Test1.txt_12", "/A/Test1.txt", "/A/Test1.txt_1", "/A/Test1.txt_12", "/B/Test1.txt_2", "/b/Test1.txt_22",
+              "/b/Test1.txt_2", "/B/Test1.txt_22", "/Test1 12.txt/a/", "/Test1.1.txt/a/", "/Test1-2.txt/a/", "/Test1-12.txt/a/",
+              "/Test1 12.txt/A/", "/Test1.1.txt/A/", "/Test1-2.txt/A/", "/Test1-12.txt/A/", "/Test1 12.txt/b/", "/Test1.1.txt/B/",
+              "/Test1-2.txt/b/", "/Test1-12.txt/B/");
     List<FilePath> filePaths = ContainerUtil.map(paths, it -> filePath(it));
 
     assertComparisonContractNotViolated(filePaths, HierarchicalFilePathComparator.NATURAL);

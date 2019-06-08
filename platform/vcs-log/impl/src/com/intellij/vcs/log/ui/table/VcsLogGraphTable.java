@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -29,10 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -109,7 +93,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Nullable private Selection mySelection = null;
 
-  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
+  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new ArrayList<>();
 
   // BasicTableUI.viewIndexForColumn uses reference equality, so we should not change TableColumn during DnD.
   private final List<TableColumn> myTableColumns = new ArrayList<>();
@@ -174,8 +158,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     setRootColumnSize();
 
-    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
-      TableColumn column = getColumnModel().getColumn(i);
+    for (TableColumn column : myTableColumns) {
       column.setResizable(column.getModelIndex() != ROOT_COLUMN);
     }
   }
@@ -212,7 +195,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     List<Integer> columnOrder = getColumnOrderFromProperties();
     if (columnOrder != null) {
-      int columnCount = columnModel.getColumnCount();
+      int columnCount = getVisibleColumnCount();
       for (int i = columnCount - 1; i >= 0; i--) {
         columnModel.removeColumn(columnModel.getColumn(i));
       }
@@ -238,7 +221,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private boolean isValidColumnOrder(@NotNull List<Integer> columnOrder) {
-    int columnCount = getModel().getColumnCount();
+    int columnCount = getTotalColumnCount();
     if (!columnOrder.contains(ROOT_COLUMN)) return false;
     if (!columnOrder.contains(COMMIT_COLUMN)) return false;
     for (Integer index : columnOrder) {
@@ -255,12 +238,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull
   private List<Integer> getVisibleColumns() {
-    List<Integer> columnOrder = ContainerUtil.newArrayList();
+    List<Integer> columnOrder = new ArrayList<>();
 
-    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+    for (int i = 0; i < getVisibleColumnCount(); i++) {
       columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
     }
     return columnOrder;
+  }
+
+  private int getTotalColumnCount() {
+    return getModel().getColumnCount();
+  }
+
+  private int getVisibleColumnCount() {
+    return getColumnModel().getColumnCount();
   }
 
   public void reLayout() {
@@ -347,7 +338,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
       }
 
-      int width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+      int width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(),
+                           JBUIScale.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
       if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
       return width;
     }
@@ -393,7 +385,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void updateCommitColumnWidth() {
     int size = getWidth();
-    for (int i = 0; i < getColumnCount(); i++) {
+    for (int i = 0; i < getTotalColumnCount(); i++) {
       if (i == COMMIT_COLUMN) continue;
       TableColumn column = getColumnByModelIndex(i);
       if (column != null) size -= column.getPreferredWidth();
@@ -409,7 +401,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       rootWidth = 0;
     }
     else if (!isShowRootNames()) {
-      rootWidth = JBUI.scale(ROOT_INDICATOR_WIDTH);
+      rootWidth = JBUIScale.scale(ROOT_INDICATOR_WIDTH);
     }
     else {
       int width = 0;
@@ -417,7 +409,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         Font tableFont = getTableFont();
         width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
       }
-      rootWidth = Math.min(width, JBUI.scale(ROOT_NAME_MAX_WIDTH));
+      rootWidth = Math.min(width, JBUIScale.scale(ROOT_NAME_MAX_WIDTH));
     }
 
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
@@ -601,7 +593,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     viewport.addChangeListener(e -> {
       AbstractTableModel model = getModel();
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
-      model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, ROOT_COLUMN));
+      if (visibleRows.first >= 0) model.fireTableChanged(new TableModelEvent(model, visibleRows.first, visibleRows.second, ROOT_COLUMN));
       mySelection = null;
     });
   }
@@ -613,7 +605,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
-    Component layeredPane = UIUtil.findParentByCondition(this, component -> component instanceof LoadingDecorator.CursorAware);
+    Component layeredPane = ComponentUtil.findParentByCondition(this, component -> component instanceof LoadingDecorator.CursorAware);
     if (layeredPane != null) {
       layeredPane.setCursor(cursor);
     }
@@ -676,7 +668,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myColorManager));
 
         int rootWidth = getRootColumn().getWidth();
-        if (!isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
+        if (!isShowRootNames()) rootWidth -= JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH);
 
         g.fillRect(x, y, rootWidth, height);
       }

@@ -14,6 +14,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
 import org.junit.After;
@@ -62,6 +63,7 @@ public class CreateClassFixTest extends UsefulTestCase {
     }
   }
 
+  @NotNull
   private static String getSourceRoot() {
     return "codeInsight";
   }

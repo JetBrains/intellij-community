@@ -136,19 +136,13 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected <T> void addExplicitExtension(LanguageExtension<T> instance, Language language, T object) {
-    instance.addExplicitExtension(language, object);
-    Disposer.register(getTestRootDisposable(), () -> instance.removeExplicitExtension(language, object));
+    instance.addExplicitExtension(language, object, myProject);
   }
 
   @Override
   protected <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
     super.registerExtensionPoint(extensionPointName, aClass);
     Disposer.register(getTestRootDisposable(), () -> Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName()));
-  }
-
-  protected <T> void registerApplicationService(Class<T> aClass, T object) {
-    getApplication().registerService(aClass, object);
-    Disposer.register(getTestRootDisposable(), () -> getApplication().getPicoContainer().unregisterComponent(aClass.getName()));
   }
 
   @NotNull

@@ -11,6 +11,7 @@ public class FlipCommutativeMethodCallIntentionTest extends IPPTestCase {
     public void testNoQualifierStatic() { assertIntentionNotAvailable(); }
     public void testNoQualifier2() { assertIntentionNotAvailable(); }
     public void testSameQualifierArgument() { assertIntentionNotAvailable(); }
+    public void testArgumentCastNoQualifier() { doTest(); }
 
     @Override
     protected String getIntentionName() {

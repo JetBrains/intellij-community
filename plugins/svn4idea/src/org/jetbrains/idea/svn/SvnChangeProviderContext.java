@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +26,8 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,14 +40,14 @@ class SvnChangeProviderContext implements StatusReceiver {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnChangeProviderContext");
 
   @NotNull private final ChangelistBuilder myChangelistBuilder;
-  @NotNull private final List<SvnChangedFile> myCopiedFiles = ContainerUtil.newArrayList();
-  @NotNull private final List<SvnChangedFile> myDeletedFiles = ContainerUtil.newArrayList();
+  @NotNull private final List<SvnChangedFile> myCopiedFiles = new ArrayList<>();
+  @NotNull private final List<SvnChangedFile> myDeletedFiles = new ArrayList<>();
   // for files moved in a subtree, which were the targets of merge (for instance).
-  @NotNull private final Map<String, Status> myTreeConflicted = ContainerUtil.newHashMap();
-  @NotNull private final Map<FilePath, Url> myCopyFromURLs = ContainerUtil.newHashMap();
+  @NotNull private final Map<String, Status> myTreeConflicted = new HashMap<>();
+  @NotNull private final Map<FilePath, Url> myCopyFromURLs = new HashMap<>();
   @NotNull private final SvnVcs myVcs;
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
-  @NotNull private final List<File> filesToRefresh = ContainerUtil.newArrayList();
+  @NotNull private final List<File> filesToRefresh = new ArrayList<>();
 
   @Nullable private final ProgressIndicator myProgress;
 

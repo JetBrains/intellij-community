@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 
+@SuppressWarnings("BoundedWildcard")
 public abstract class RequestBuilder {
   public abstract RequestBuilder connectTimeout(int value);
   public abstract RequestBuilder readTimeout(int value);
@@ -25,7 +26,6 @@ public abstract class RequestBuilder {
   public abstract RequestBuilder gzip(boolean value);
 
   public abstract RequestBuilder forceHttps(boolean forceHttps);
-  @NotNull
   public abstract RequestBuilder useProxy(boolean useProxy);
   public abstract RequestBuilder hostNameVerifier(@Nullable HostnameVerifier hostnameVerifier);
   public abstract RequestBuilder userAgent(@Nullable String userAgent);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -8,6 +8,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,9 +108,16 @@ abstract class ContentLayout {
 
   public abstract Component getComponentFor(Content content);
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getCloseActionName();
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getCloseAllButThisActionName();
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getPreviousContentActionName();
+
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getNextContentActionName();
 
   protected boolean shouldShowId() {

@@ -32,14 +32,14 @@ public class DiffTaskQueue {
   }
 
   @CalledInAwt
-  public void executeAndTryWait(@NotNull Function<ProgressIndicator, Runnable> backgroundTask,
+  public void executeAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends Runnable> backgroundTask,
                                 @Nullable Runnable onSlowAction,
                                 long waitMillis) {
     executeAndTryWait(backgroundTask, onSlowAction, waitMillis, false);
   }
 
   @CalledInAwt
-  public void executeAndTryWait(@NotNull Function<ProgressIndicator, Runnable> backgroundTask,
+  public void executeAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends Runnable> backgroundTask,
                                 @Nullable Runnable onSlowAction,
                                 long waitMillis,
                                 boolean forceEDT) {

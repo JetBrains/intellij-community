@@ -244,6 +244,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     }
     fail("Should not be able to perform refactoring");
   }
+  
+  public void testTernaryBothBranches() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
 
   public void testIfConditionAndChain() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
@@ -669,6 +673,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testCapturedWildcardUpperBoundSuggestedAsType() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I"));
+  }
+  
+  public void testArrayOfCapturedWildcardUpperBoundSuggestedAsType() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "I[]"));
   }
 
   public void testReturnNonExportedArray() {

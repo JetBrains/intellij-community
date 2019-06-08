@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
@@ -13,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -51,6 +53,7 @@ import java.util.concurrent.locks.LockSupport;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
+  private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
@@ -204,6 +207,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public boolean isDumb() {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed() &&
+        Registry.is("ide.check.is.dumb.contract") &&
+        REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
+      LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.");
+    }
     return myState.get() != State.SMART;
   }
 
@@ -252,15 +260,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) indicator = new EmptyProgressIndicator();
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-    }
-
     indicator.pushState();
+    ((CoreProgressManager)ProgressManager.getInstance()).suppressPrioritizing();
     try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task")) {
       task.performInDumbMode(indicator);
     }
     finally {
+      ((CoreProgressManager)ProgressManager.getInstance()).restorePrioritizing();
       indicator.popState();
       Disposer.dispose(task);
     }
@@ -343,6 +349,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return false;
       }
     }
+
+    LoadingPhase.compareAndSet(LoadingPhase.PROJECT_OPENED, LoadingPhase.INDEXING_FINISHED);
+
     myDumbEnterTrace = null;
     myDumbStart = null;
     myModificationCount++;
@@ -392,8 +401,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     UIUtil.invokeLaterIfNeeded(() -> {
       final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
       if (ideFrame != null) {
-        StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-        statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+        ((StatusBarEx)ideFrame.getStatusBar()).notifyProgressByBalloon(MessageType.WARNING, message);
       }
     });
   }
@@ -405,7 +413,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
 
-    while (isDumb() && !myProject.isDisposed()) {
+    while (myState.get() != State.SMART && !myProject.isDisposed()) {
       LockSupport.parkNanos(50_000_000);
       ProgressManager.checkCanceled();
     }
@@ -679,7 +687,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     /**
      * A state between entering dumb mode ({@link #queueTaskOnEdt}) and actually starting the background progress later ({@link #runBackgroundProcess}).
-     * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all submitted the tasks modally.
+     * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all submitted the tasks modality.
      * This state can happen after {@link #SMART} or {@link #WAITING_FOR_FINISH}. Followed by {@link #RUNNING_DUMB_TASKS}.
      */
     SCHEDULED_TASKS,

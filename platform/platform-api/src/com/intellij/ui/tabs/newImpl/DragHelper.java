@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.newImpl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.InplaceButton;
@@ -32,7 +33,7 @@ class DragHelper extends MouseDragHelper {
   private TabInfo myDragOutSource;
   private Reference<TabLabel> myPressedTabLabel;
 
-  DragHelper(JBTabsImpl tabs) {
+  DragHelper(@NotNull JBTabsImpl tabs) {
     super(tabs, tabs);
     myTabs = tabs;
   }
@@ -75,7 +76,7 @@ class DragHelper extends MouseDragHelper {
   }
 
   @Override
-  protected void processMousePressed(MouseEvent event) {
+  protected void processMousePressed(@NotNull MouseEvent event) {
     // since selection change can cause tabs to be reordered, we need to remember the tab on which the mouse was pressed, otherwise
     // we'll end up dragging the wrong tab (IDEA-65073)
     TabLabel label = findLabel(new RelativePoint(event).getPoint(myTabs));
@@ -219,7 +220,7 @@ class DragHelper extends MouseDragHelper {
 
 
   @Override
-  protected boolean canStartDragging(JComponent dragComponent, Point dragComponentPoint) {
+  protected boolean canStartDragging(@NotNull JComponent dragComponent, @NotNull Point dragComponentPoint) {
     return findLabel(dragComponentPoint) != null;
   }
 
@@ -240,7 +241,7 @@ class DragHelper extends MouseDragHelper {
                                                        IdeBundle.message("title.warning"),
                                                        Messages.getQuestionIcon());
         if (answer == Messages.OK) {
-          JBEditorTabs.setEditorTabsAlphabeticalMode(false);
+          UISettings.getInstance().setSortTabsAlphabetically(false);
           myTabs.relayout(true, false);
           myTabs.revalidate();
         }

@@ -9,7 +9,6 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.map
-import com.jetbrains.rdclient.util.idea.createNestedDisposable
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.Location;
@@ -33,9 +33,9 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(PythonRunConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull PythonRunConfiguration configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
 
     final Location location = context.getLocation();
     if (location == null) return false;
@@ -59,7 +59,7 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
   }
 
   @Override
-  public boolean isConfigurationFromContext(PythonRunConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull PythonRunConfiguration configuration, @NotNull ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null) return false;
     final PsiFile script = location.getPsiElement().getContainingFile();

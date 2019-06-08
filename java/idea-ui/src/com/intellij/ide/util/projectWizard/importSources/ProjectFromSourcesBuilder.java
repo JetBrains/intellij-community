@@ -45,5 +45,5 @@ public interface ProjectFromSourcesBuilder {
 
   boolean hasRootsFromOtherDetectors(ProjectStructureDetector thisDetector);
 
-  void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<DetectedProjectRoot> roots);
+  void setupModulesByContentRoots(ProjectDescriptor projectDescriptor, Collection<? extends DetectedProjectRoot> roots);
 }

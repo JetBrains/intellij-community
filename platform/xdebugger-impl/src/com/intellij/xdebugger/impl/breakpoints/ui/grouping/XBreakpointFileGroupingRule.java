@@ -42,7 +42,7 @@ public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, X
   }
 
   @Override
-  public XBreakpointFileGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<XBreakpointFileGroup> groups) {
+  public XBreakpointFileGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<? extends XBreakpointFileGroup> groups) {
     if (!(breakpoint instanceof XLineBreakpoint)) {
       return null;
     }

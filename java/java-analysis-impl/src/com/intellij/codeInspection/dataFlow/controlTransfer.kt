@@ -43,7 +43,7 @@ interface TransferTarget {
   /** @return next instruction states assuming no traps */
   fun dispatch(state: DfaMemoryState, runner: DataFlowRunner) : List<DfaInstructionState> = emptyList()
 }
-data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget {
+data class ExceptionTransfer(val throwable: DfaPsiType) : TransferTarget {
   override fun toString(): String = "Exception($throwable)"
 }
 data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val toFlush: List<DfaVariableValue>) : TransferTarget {

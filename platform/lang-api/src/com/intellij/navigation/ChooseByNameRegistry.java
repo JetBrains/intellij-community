@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -9,8 +10,8 @@ import java.util.List;
 /**
  * Registry of components which contribute items to "Goto Class" and "Goto Symbol" lists.
  */
-
-public class ChooseByNameRegistry {
+@Service
+public final class ChooseByNameRegistry {
   private final List<ChooseByNameContributor> myGotoSymbolContributors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**

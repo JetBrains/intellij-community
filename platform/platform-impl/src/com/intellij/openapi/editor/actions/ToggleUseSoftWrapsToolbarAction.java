@@ -15,7 +15,8 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +29,6 @@ public class ToggleUseSoftWrapsToolbarAction extends AbstractToggleUseSoftWrapsA
 
   public ToggleUseSoftWrapsToolbarAction(@NotNull SoftWrapAppliancePlaces place) {
     super(place, true);
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS));
+    ActionUtil.copyFrom(this, IdeActions.ACTION_EDITOR_USE_SOFT_WRAPS);
   }
 }

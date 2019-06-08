@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -18,6 +18,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
   @NotNull
   @Override
   protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
-    return ArrayUtil.toStringArray(mySuggestedNames);
+    return ArrayUtilRt.toStringArray(mySuggestedNames);
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);
     }
-    if (myWizardContext.isCreatingNewProject()) {
+    if (myWizardContext.isCreatingNewProject() && Registry.is("new.project.load.remote.templates")) {
       projectTypeStep.loadRemoteTemplates(chooseTemplateStep);
     }
     super.init();

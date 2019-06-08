@@ -67,7 +67,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
                             @NotNull final Set<? super Module> processedModules,
                             @NotNull final Set<? super Library> processedLibraries,
                             @NotNull final Set<? super Sdk> processedSdk,
-                            @NotNull Condition<OrderEntry> condition) {
+                            @NotNull Condition<? super OrderEntry> condition) {
     if (!processedModules.add(module)) return;
 
     ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<ObjectIntHashMap<VirtualFile>>() {

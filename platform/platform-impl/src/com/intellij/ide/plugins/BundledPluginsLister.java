@@ -23,9 +23,6 @@ public class BundledPluginsLister implements ApplicationStarter {
   }
 
   @Override
-  public void premain(String[] args) { }
-
-  @Override
   public void main(String[] args) {
     try {
       OutputStream out;

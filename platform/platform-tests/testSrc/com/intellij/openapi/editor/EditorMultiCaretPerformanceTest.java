@@ -18,6 +18,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestFileType;
 
 public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
   public void testTyping() {
@@ -49,5 +50,19 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
       }
     }).attempts(1).assertTiming();
     checkResultByText(StringUtil.repeat(' ' + StringUtil.repeat("a", charactersToType) + "<caret> \n", caretCount));
+  }
+
+  public void testTypingInXml() {
+    int caretCount = 1000;
+    int charactersToType = 100;
+    String initialText = "<root>\n" + StringUtil.repeat("  <node><caret></node>\n", caretCount) + "</root>";
+    init(initialText, TestFileType.XML);
+    PlatformTestUtil.startPerformanceTest("Typing in XML with large number of carets", 100_000, () -> {
+      for (int i = 0; i < charactersToType; i++) {
+        type('a');
+      }
+    }).attempts(1).assertTiming();
+    checkResultByText("<root>\n" + StringUtil.repeat("  <node>" + StringUtil.repeat("a", charactersToType) + "<caret></node>\n", caretCount)
+                      + "</root>");
   }
 }

@@ -17,6 +17,7 @@
 package org.intellij.plugins.relaxNG.compact;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import gnu.trove.TIntObjectHashMap;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
 
 import java.lang.reflect.Field;
-import java.util.Locale;
 
 public class RncTokenTypes {
   private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<>();
@@ -47,7 +47,7 @@ public class RncTokenTypes {
       for (int i = 0; i < tokens.length; i++) {
         String token = tokens[i];
         if (token.matches("\"\\w*\"")) {
-          token = "KEYWORD_" + token.substring(1, token.length() - 1).toUpperCase(Locale.US);
+          token = "KEYWORD_" + StringUtil.toUpperCase(token.substring(1, token.length() - 1));
         } else if (token.matches("\".*\"")) {
           token = token.substring(1, token.length() - 1);
         }

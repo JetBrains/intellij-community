@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
@@ -41,11 +27,19 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
       myFixture.configureByText(RegExpFileType.INSTANCE, "\\N{SMILE<caret>}");
       final LookupElement[] elements = myFixture.completeBasic();
       final List<String> strings = ContainerUtil.map(elements, LookupElement::getLookupString);
-      assertEquals(Arrays.asList("SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
-                                 "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
-                                 "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
-                                 "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
-                                 "KISSING FACE WITH SMILING EYES"), strings);
+      List<String> alwaysPresent = Arrays.asList("SMILE", "SMILING FACE WITH SMILING EYES", "SMILING FACE WITH HEART-SHAPED EYES",
+                                                 "SMILING CAT FACE WITH HEART-SHAPED EYES", "SMILING FACE WITH OPEN MOUTH AND SMILING EYES",
+                                                 "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES", "CAT FACE WITH WRY SMILE",
+                                                 "GRINNING CAT FACE WITH SMILING EYES", "GRINNING FACE WITH SMILING EYES",
+                                                 "KISSING FACE WITH SMILING EYES");
+      String message = strings.toString();
+      assertTrue(message, strings.containsAll(alwaysPresent));
+      List<String> other = new ArrayList<>(strings);
+      other.removeAll(alwaysPresent);
+      // Unicode 10.0
+      List<String> maybePresent = Arrays.asList("SMILING FACE WITH SMILING EYES AND HAND COVERING MOUTH", "SIGNWRITING MOUTH SMILE",
+                                                "SIGNWRITING MOUTH SMILE OPEN", "SIGNWRITING MOUTH SMILE WRINKLED");
+      assertTrue(message, maybePresent.containsAll(other));
     }
 
     public void testBackSlashVariants() {
@@ -55,7 +49,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
             nameList.add("p{" + stringArray[0] + "}");
         }
-        myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
+      myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtilRt.toStringArray(nameList));
     }
 
     public void testPropertyVariants() {
@@ -63,7 +57,7 @@ public class RegExpCompletionTest extends CodeInsightFixtureTestCase {
         for (String[] stringArray : DefaultRegExpPropertiesProvider.getInstance().getAllKnownProperties()) {
             nameList.add("{" + stringArray[0] + "}");
         }
-        myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtil.toStringArray(nameList));
+      myFixture.testCompletionVariants(getInputDataFileName(getTestName(true)), ArrayUtilRt.toStringArray(nameList));
     }
 
     public void testPropertyAlpha() {

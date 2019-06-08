@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Preconditions;
@@ -456,7 +456,7 @@ public class PyPsiUtils {
   }
 
   public static List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
-    List<PyExpression> result = ContainerUtil.newArrayList();
+    List<PyExpression> result = new ArrayList<>();
     final PyTargetExpression attr = file.findTopLevelAttribute(name);
     if (attr != null) {
       sequenceToList(result, attr.findAssignedValue());
@@ -475,7 +475,7 @@ public class PyPsiUtils {
   }
 
   public static List<String> getStringValues(PyExpression[] elements) {
-    List<String> results = ContainerUtil.newArrayList();
+    List<String> results = new ArrayList<>();
     for (PyExpression element : elements) {
       if (element instanceof PyStringLiteralExpression) {
         results.add(((PyStringLiteralExpression)element).getStringValue());

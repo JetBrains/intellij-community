@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.devkit.util;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author swr

@@ -74,7 +74,7 @@ public interface CommonClassNames {
   String JAVA_LANG_DOUBLE = "java.lang.Double";
   String JAVA_LANG_CHARACTER = "java.lang.Character";
 
-  String JAVA_LANG_CHARSEQUENCE = "java.lang.CharSequence";
+  String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
   String JAVA_LANG_STRING_BUFFER = "java.lang.StringBuffer";
   String JAVA_LANG_STRING_BUILDER = "java.lang.StringBuilder";
   String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";

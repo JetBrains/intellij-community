@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.diff.chains.DiffRequestProducer
@@ -10,13 +10,12 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 
 internal class FileHistoryDiffPreview(project: Project, private val changeGetter: () -> Change?, isInEditor: Boolean,
                                       disposable: Disposable) :
   ChangeViewDiffRequestProcessor(project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW) {
-  
+
   init {
     myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
     Disposer.register(disposable, this)
@@ -46,7 +45,7 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
     }
 
     override fun createProducer(project: Project?): DiffRequestProducer? {
-      return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, ContainerUtil.newHashMap(), true)
+      return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, HashMap(), true)
     }
   }
 }

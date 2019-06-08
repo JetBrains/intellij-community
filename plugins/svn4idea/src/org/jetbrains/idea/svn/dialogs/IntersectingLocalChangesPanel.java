@@ -36,10 +36,10 @@ import static com.intellij.util.containers.UtilKt.stream;
 public class IntersectingLocalChangesPanel {
 
   @NotNull private final BorderLayoutPanel myPanel;
-  @NotNull private final List<FilePath> myFiles;
+  @NotNull private final List<? extends FilePath> myFiles;
   @NotNull private final Project myProject;
 
-  public IntersectingLocalChangesPanel(@NotNull Project project, @NotNull List<FilePath> files, @NotNull String text) {
+  public IntersectingLocalChangesPanel(@NotNull Project project, @NotNull List<? extends FilePath> files, @NotNull String text) {
     myProject = project;
     myFiles = files;
     myPanel = createPanel(createLabel(text), createTree());
@@ -106,7 +106,7 @@ public class IntersectingLocalChangesPanel {
   @SuppressWarnings("SameParameterValue")
   public static void showInVersionControlToolWindow(@NotNull Project project,
                                                     @NotNull String title,
-                                                    @NotNull List<FilePath> files,
+                                                    @NotNull List<? extends FilePath> files,
                                                     @NotNull String prompt) {
     IntersectingLocalChangesPanel intersectingPanel = new IntersectingLocalChangesPanel(project, files, prompt);
     Content content = ContentFactory.SERVICE.getInstance().createContent(intersectingPanel.myPanel, title, true);

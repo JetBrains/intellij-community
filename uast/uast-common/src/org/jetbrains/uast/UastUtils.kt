@@ -206,29 +206,11 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
   val psiMethod = resolve() ?: return null
   val parameters = psiMethod.parameterList.parameters
 
-  if (this is UCallExpressionEx)
-    return parameters.withIndex().find { (i, p) ->
-      val argumentForParameter = getArgumentForParameter(i) ?: return@find false
-      if (argumentForParameter == arg) return@find true
-      if (arg is ULambdaExpression && arg.sourcePsi?.parent == argumentForParameter.sourcePsi) return@find true // workaround for KT-25297
-      if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
-      return@find false
-    }?.value
-
-  // not everyone implements UCallExpressionEx, lets try to guess
-  val indexInArguments = valueArguments.indexOf(arg)
-  if (parameters.size == valueArguments.count()) {
-    return parameters.getOrNull(indexInArguments)
-  }
-  // probably it is a kotlin extension method
-  if (parameters.size - 1 == valueArguments.count()) {
-    val parameter = parameters.firstOrNull() ?: return null
-    val receiverType = receiverType ?: return null
-    if (!parameter.type.isAssignableFrom(receiverType)) return null
-    if (!parameters.drop(1).zip(valueArguments)
-        .all { (param, arg) -> arg.getExpressionType()?.let { param.type.isAssignableFrom(it) } == true }) return null
-    return parameters.getOrNull(indexInArguments + 1)
-  }
-  //named parameters are not processed
-  return null
+  return parameters.withIndex().find { (i, p) ->
+    val argumentForParameter = getArgumentForParameter(i) ?: return@find false
+    if (wrapULiteral(argumentForParameter) == wrapULiteral(arg)) return@find true
+    if (arg is ULambdaExpression && arg.sourcePsi?.parent == argumentForParameter.sourcePsi) return@find true // workaround for KT-25297
+    if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
+    return@find false
+  }?.value
 }

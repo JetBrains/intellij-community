@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,15 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class EditorModificationUtil {
-  private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
+  private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_HINT_KEY");
+
+  /**
+   * @deprecated Use {@link #setReadOnlyHint(Editor, String)}
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  public static final Key<String> READ_ONLY_VIEW_MESSAGE_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
 
   private EditorModificationUtil() { }
 
@@ -392,7 +400,7 @@ public class EditorModificationUtil {
     if (!editor.isViewer()) return true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
 
-    ReadOnlyHint hint = ObjectUtils.chooseNotNull(READ_ONLY_VIEW_HINT_KEY.get(editor), ReadOnlyHint.DEFAULT);
+    ReadOnlyHint hint = getReadOnlyHint(editor);
     HintManager.getInstance().showInformationHint(editor, hint.message, hint.linkListener);
     return false;
   }
@@ -412,6 +420,17 @@ public class EditorModificationUtil {
    */
   public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message, @Nullable HyperlinkListener linkListener) {
     editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
+  }
+
+  @NotNull
+  private static ReadOnlyHint getReadOnlyHint(@NotNull Editor editor) {
+    ReadOnlyHint hint = READ_ONLY_VIEW_HINT_KEY.get(editor);
+    if (hint != null) return hint;
+
+    String message = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
+    if (message != null) return new ReadOnlyHint(message, null);
+
+    return ReadOnlyHint.DEFAULT;
   }
 
   private static class ReadOnlyHint {

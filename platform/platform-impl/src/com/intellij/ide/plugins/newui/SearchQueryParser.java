@@ -94,7 +94,7 @@ public abstract class SearchQueryParser {
       return;
     }
     if (size == 1) {
-      setSearchQuery(words.get(0));
+      addToSearchQuery(words.get(0));
       return;
     }
 
@@ -108,22 +108,23 @@ public abstract class SearchQueryParser {
           handleAttribute(name, words.get(index++), invert);
         }
         else {
-          searchQuery = query;
+          addToSearchQuery(query);
           return;
         }
       }
-      else if (searchQuery == null) {
-        setSearchQuery(name);
-      }
       else {
-        setSearchQuery(query);
-        return;
+        addToSearchQuery(name);
       }
     }
   }
 
-  protected void setSearchQuery(@NotNull String query) {
-    searchQuery = query;
+  protected void addToSearchQuery(@NotNull String query) {
+    if (searchQuery == null) {
+      searchQuery = query;
+    }
+    else {
+      searchQuery += " " + query;
+    }
   }
 
   protected abstract void handleAttribute(@NotNull String name, @NotNull String value, boolean invert);
@@ -212,12 +213,6 @@ public abstract class SearchQueryParser {
         super.handleAttribute(name.substring(1), value, invert);
       }
     }
-
-    @NotNull
-    @Override
-    public String getUrlQuery() {
-      return super.getUrlQuery();    // TODO: Auto-generated method stub
-    }
   }
 
   public static class Installed extends SearchQueryParser {
@@ -233,9 +228,6 @@ public abstract class SearchQueryParser {
       localParse(query);
     }
 
-    protected Installed() {
-    }
-
     private void localParse(@NotNull String query) {
       for (String word : splitQuery(query)) {
         if (word.startsWith("#")) {
@@ -244,18 +236,11 @@ public abstract class SearchQueryParser {
         else if (word.startsWith("-#")) {
           handleAttribute(word.substring(2), "", true);
         }
-        else if (searchQuery == null) {
-          searchQuery = word;
-        }
         else {
-          searchQuery = query;
-          break;
+          addToSearchQuery(word);
         }
       }
-      parseEnd();
-    }
 
-    protected void parseEnd() {
       attributes = enabled != null || bundled != null || invalid != null || needUpdate != null || deleted != null || needRestart != null;
     }
 
@@ -295,8 +280,15 @@ public abstract class SearchQueryParser {
     }
   }
 
-  public static class InstalledWithVendor extends Installed {
+  public static class InstalledWithVendor extends SearchQueryParser {
     public final Set<String> vendors = new HashSet<>();
+    public boolean enabled;
+    public boolean disabled;
+    public boolean bundled;
+    public boolean downloaded;
+    public boolean invalid;
+    public boolean needUpdate;
+    public boolean attributes;
 
     public InstalledWithVendor(@NotNull String query) {
       localParse(query);
@@ -316,10 +308,10 @@ public abstract class SearchQueryParser {
         if (name.startsWith("/")) {
           if (name.equals("/vendor:")) {
             if (index < size) {
-              vendors.add(words.get(index++));
+              handleAttribute("vendor", words.get(index++), false);
             }
             else {
-              searchQuery = query;
+              addToSearchQuery(query);
               break;
             }
           }
@@ -327,16 +319,48 @@ public abstract class SearchQueryParser {
             handleAttribute(name.substring(1), "", false);
           }
         }
-        else if (searchQuery == null) {
-          searchQuery = name;
-        }
         else {
-          searchQuery = query;
-          break;
+          addToSearchQuery(name);
         }
       }
 
-      parseEnd();
+      attributes = enabled || disabled || bundled || downloaded || invalid || needUpdate;
     }
+
+    @Override
+    protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
+      switch (name) {
+        case "enabled":
+          enabled = true;
+          break;
+        case "disabled":
+          disabled = true;
+          break;
+
+        case "bundled":
+          bundled = true;
+          break;
+        case "downloaded":
+          downloaded = true;
+          break;
+
+        case "invalid":
+          invalid = true;
+          break;
+
+        case "outdated":
+          needUpdate = true;
+          break;
+
+        case "vendor":
+          vendors.add(value);
+          break;
+      }
+    }
+  }
+
+  @NotNull
+  public static String wrapAttribute(@NotNull String value) {
+    return StringUtil.containsAnyChar(value, " ,:") ? StringUtil.wrapWithDoubleQuote(value) : value;
   }
 }

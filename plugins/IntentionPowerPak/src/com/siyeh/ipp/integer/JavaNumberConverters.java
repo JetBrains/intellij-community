@@ -132,6 +132,14 @@ public class JavaNumberConverters {
       if (!text.contains("e") && !text.contains("E")) return null;
       String result = new BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
       if (number instanceof Float) result += "f";
+      else if (!result.contains(".")) {
+        try {
+          Integer.parseInt(result);
+        }
+        catch (NumberFormatException e) {
+          return result + ".0";
+        }
+      }
       return result;
     }
 

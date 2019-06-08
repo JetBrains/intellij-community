@@ -109,7 +109,7 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
           final byte[] warManifestData = Base64.getDecoder().decode(warConfiguration.manifest);
           Manifest warManifest = new Manifest(new ByteArrayInputStream(warManifestData));
 
-          List<String> skinnyWarClasspath = ContainerUtil.newArrayList();
+          List<String> skinnyWarClasspath = new ArrayList<>();
           for (String entry : StringUtil.split(warConfiguration.classpath, " ")) {
             final int idx = entry.lastIndexOf("/");
             final String entryName = entry.substring(idx == -1 ? 0 : idx + 1);

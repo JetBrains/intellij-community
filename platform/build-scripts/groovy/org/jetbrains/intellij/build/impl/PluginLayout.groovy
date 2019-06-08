@@ -76,7 +76,11 @@ class PluginLayout extends BaseLayout {
     return layout
   }
 
-  /**
+  @Override
+  String toString() {
+    return "Plugin '$mainModule'"
+  }
+/**
    * @return map from a JAR name to list of modules
    */
   MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {
@@ -209,7 +213,7 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
-     * By default version of a plugin is equal to the version of the IDE it's built with. This method allows to specify custom version evaluator.
+     * By default version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
      * <strong>Don't use this for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
      */
     void withCustomVersion(Function<BuildContext, String> versionEvaluator) {

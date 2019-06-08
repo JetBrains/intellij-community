@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -18,16 +18,14 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.IconManager;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
-public class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
+final class JavaDirectoryIconProvider extends IconProvider implements DumbAware {
   @Override
   @Nullable
   public Icon getIcon(@NotNull PsiElement element, int flags) {
@@ -64,7 +62,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
         symbolIcon = PlatformIcons.FOLDER_ICON;
       }
 
-      return ElementBase.createLayeredIcon(element, symbolIcon, 0);
+      return IconManager.getInstance().createLayeredIcon(element, symbolIcon, 0);
     }
 
     return null;

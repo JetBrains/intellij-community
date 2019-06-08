@@ -18,7 +18,7 @@ class DataFrameTableCellRenderer extends DefaultTableCellRenderer implements Col
   private boolean myColored = true;
 
   DataFrameTableCellRenderer() {
-    setHorizontalAlignment(CENTER);
+    setHorizontalAlignment(LEFT);
     setHorizontalTextPosition(LEFT);
     setVerticalAlignment(CENTER);
   }

@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
@@ -63,10 +63,10 @@ public class SceneBuilderInfo {
 
     File sceneBuilderLibsFile;
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       sceneBuilderLibsFile = new File(new File(pathToSceneBuilder, "Contents"), "Java");
     }
-    else if (SystemInfo.isWindows) {
+    else if (SystemInfoRt.isWindows) {
       File sceneBuilderRoot = new File(pathToSceneBuilder);
       File sceneBuilderRootDir = sceneBuilderRoot.getParentFile();
       if (sceneBuilderRootDir == null) {
@@ -104,7 +104,7 @@ public class SceneBuilderInfo {
   @Nullable
   private static VirtualFile getPredefinedPath() {
     String path = null;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       List<String> suspiciousPaths = new ArrayList<>();
       String programFiles = "C:\\Program Files";
 
@@ -115,14 +115,14 @@ public class SceneBuilderInfo {
       fillPaths(programFiles, suspiciousPaths, sb20, sb11, sb10);
       fillPaths(programFiles + " (x86)", suspiciousPaths, sb20, sb11, sb10);
 
-      path = findFirstThatExist(ArrayUtil.toStringArray(suspiciousPaths));
+      path = findFirstThatExist(ArrayUtilRt.toStringArray(suspiciousPaths));
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfoRt.isMac) {
       path = findFirstThatExist("/Applications/JavaFX Scene Builder 2.0.app",
                                 "/Applications/JavaFX Scene Builder 1.1.app",
                                 "/Applications/JavaFX Scene Builder 1.0.app");
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfoRt.isUnix) {
       path = findFirstThatExist("/opt/JavaFXSceneBuilder2.0/JavaFXSceneBuilder2.0", "/opt/JavaFXSceneBuilder1.1/JavaFXSceneBuilder1.1");
     }
 

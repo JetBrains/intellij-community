@@ -4,6 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/lib" />
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -11,6 +12,7 @@
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" />
+    <orderEntry type="module" module-name="intellij.maven.server.m3.impl" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-compat:3.6.0" type="repository">
         <properties maven-id="org.apache.maven:maven-compat:3.6.0" />

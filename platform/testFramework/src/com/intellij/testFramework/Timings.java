@@ -16,9 +16,11 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author peter
@@ -37,9 +39,15 @@ public class Timings {
   public static final long REFERENCE_IO_TIMING = 100;
 
   static {
-    CPU_TIMING = CpuTimings.calcStableCpuTiming();
+    long cpuTiming = CpuTimings.calcStableCpuTiming();
+    if (SystemInfo.isJavaVersionAtLeast(11, 0, 0)) {
+      // on JBR 11, the code for CPU timings executes much faster, while most tests take roughly the same time
+      // so we correct for the difference until we have a more robust timing calculation
+      cpuTiming = cpuTiming * 54 / 31;
+    }
+    CPU_TIMING = cpuTiming;
 
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     for (int i = 0; i < IO_PROBES; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
@@ -70,7 +78,7 @@ public class Timings {
         throw new RuntimeException(e);
       }
     }
-    IO_TIMING = System.currentTimeMillis() - start;
+    IO_TIMING = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
   }
 
   /**

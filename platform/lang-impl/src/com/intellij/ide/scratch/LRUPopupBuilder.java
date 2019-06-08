@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -156,8 +156,8 @@ public abstract class LRUPopupBuilder<T> {
     if (mySelection != null) {
       ids.add(getStorageId(mySelection));
     }
-    List<T> lru = ContainerUtil.newArrayListWithCapacity(LRU_ITEMS);
-    List<T> items = ContainerUtil.newArrayListWithCapacity(MAX_VISIBLE_SIZE);
+    List<T> lru = new ArrayList<>(LRU_ITEMS);
+    List<T> items = new ArrayList<>(MAX_VISIBLE_SIZE);
     List<T> extra = myExtraItems.toList();
     if (myItemsIterable != null) {
       for (T t : myItemsIterable) {
@@ -242,12 +242,12 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   private String[] restoreLRUItems() {
-    return ObjectUtils.notNull(myPropertiesComponent.getValues(getLRUKey()), ArrayUtil.EMPTY_STRING_ARRAY);
+    return ObjectUtils.notNull(myPropertiesComponent.getValues(getLRUKey()), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   private void storeLRUItems(@NotNull T t) {
     String[] values = myPropertiesComponent.getValues(getLRUKey());
-    List<String> lastUsed = ContainerUtil.newArrayListWithCapacity(LRU_ITEMS);
+    List<String> lastUsed = new ArrayList<>(LRU_ITEMS);
     lastUsed.add(getStorageId(t));
     if (values != null) {
       for (String value : values) {
@@ -255,7 +255,7 @@ public abstract class LRUPopupBuilder<T> {
         if (lastUsed.size() == LRU_ITEMS) break;
       }
     }
-    myPropertiesComponent.setValues(getLRUKey(), ArrayUtil.toStringArray(lastUsed));
+    myPropertiesComponent.setValues(getLRUKey(), ArrayUtilRt.toStringArray(lastUsed));
   }
 
 
@@ -272,8 +272,8 @@ public abstract class LRUPopupBuilder<T> {
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Arrays.asList(sortedFiles));
     if (status.hasReadonlyFiles()) return;
 
-    final Set<VirtualFile> matchedExtensions = ContainerUtil.newLinkedHashSet();
-    final Map<VirtualFile, Language> oldMapping = ContainerUtil.newHashMap();
+    final Set<VirtualFile> matchedExtensions = new LinkedHashSet<>();
+    final Map<VirtualFile, Language> oldMapping = new HashMap<>();
     for (VirtualFile file : sortedFiles) {
       oldMapping.put(file, mappings.getMapping(file));
       if (ScratchUtil.hasMatchingExtension(project, file)) {

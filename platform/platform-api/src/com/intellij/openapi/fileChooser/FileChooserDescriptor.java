@@ -40,7 +40,7 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myShowFileSystemRoots = true;
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
-  private Condition<VirtualFile> myFileFilter = null;
+  private Condition<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
 
   private final Map<String, Object> myUserData = new THashMap<>();
@@ -151,7 +151,7 @@ public class FileChooserDescriptor implements Cloneable {
     withRoots(roots);
   }
 
-  public void setRoots(@NotNull List<VirtualFile> roots) {
+  public void setRoots(@NotNull List<? extends VirtualFile> roots) {
     withRoots(roots);
   }
 
@@ -200,7 +200,7 @@ public class FileChooserDescriptor implements Cloneable {
   /**
    * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
    */
-  public FileChooserDescriptor withFileFilter(@Nullable Condition<VirtualFile> filter) {
+  public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
     myFileFilter = filter;
     return this;
   }

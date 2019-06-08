@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,9 +78,7 @@ public class PsiUtilEx {
       final PsiElement child = place.getFirstChild();
       if (child instanceof PsiJavaToken) {
         final IElementType tokenType = ((PsiJavaToken)child).getTokenType();
-        if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.RAW_STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
-          return true;
-        }
+        return tokenType == JavaTokenType.CHARACTER_LITERAL || ElementType.STRING_LITERALS.contains(tokenType);
       }
     }
     return false;

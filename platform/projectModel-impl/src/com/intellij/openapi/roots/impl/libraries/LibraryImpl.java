@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,34 +22,28 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.*;
 
-/**
- * @author dsl
- */
 public class LibraryImpl extends TraceableDisposable implements LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
   @NonNls public static final String LIBRARY_NAME_ATTR = "name";
-  @NonNls private static final String LIBRARY_TYPE_ATTR = "type";
-  @NonNls private static final String ROOT_PATH_ELEMENT = "root";
+  @NonNls public static final String LIBRARY_TYPE_ATTR = "type";
+  @NonNls public static final String ROOT_PATH_ELEMENT = "root";
   @NonNls public static final String ELEMENT = "library";
-  @NonNls private static final String PROPERTIES_ELEMENT = "properties";
-  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
-  private static final String EXCLUDED_ROOTS_TAG = "excluded";
+  @NonNls public static final String PROPERTIES_ELEMENT = "properties";
+  public static final String EXCLUDED_ROOTS_TAG = "excluded";
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new HashMap<>(2);
@@ -269,7 +264,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     readJarDirectories(element);
   }
 
-  @NonNls private static final String ROOT_TYPE_ATTR = "type";
+  @NonNls public static final String ROOT_TYPE_ATTR = "type";
   private static final OrderRootType DEFAULT_JAR_DIRECTORY_TYPE = OrderRootType.CLASSES;
 
   @NotNull
@@ -317,7 +312,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     if (myKind == null) return;
 
     myProperties = myKind.createDefaultProperties();
-    final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
+    final Element propertiesElement = element.getChild(JpsLibraryTableSerializer.PROPERTIES_TAG);
     if (propertiesElement != null) {
       ComponentSerializationUtil.loadComponentState(myProperties, propertiesElement);
     }
@@ -333,14 +328,14 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       if (rootChild == null) {
         continue;
       }
-      if (!rootChild.getChildren(ROOT_PATH_ELEMENT).isEmpty()) {
+      if (!rootChild.getChildren(JpsLibraryTableSerializer.ROOT_TAG).isEmpty()) {
         VirtualFilePointerContainer roots = getOrCreateContainer(rootType);
-        roots.readExternal(rootChild, ROOT_PATH_ELEMENT, false);
+        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, false);
       }
     }
     Element excludedRoot = element.getChild(EXCLUDED_ROOTS_TAG);
-    if (excludedRoot != null && !excludedRoot.getChildren(ROOT_PATH_ELEMENT).isEmpty()) {
-      getOrCreateExcludedRoots().readExternal(excludedRoot, ROOT_PATH_ELEMENT, false);
+    if (excludedRoot != null && !excludedRoot.getChildren(JpsLibraryTableSerializer.ROOT_TAG).isEmpty()) {
+      getOrCreateExcludedRoots().readExternal(excludedRoot, JpsLibraryTableSerializer.ROOT_TAG, false);
     }
   }
 
@@ -355,7 +350,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
   //
   @NotNull
-  private static List<OrderRootType> sortRootTypes(@NotNull Collection<OrderRootType> rootTypes) {
+  private static List<OrderRootType> sortRootTypes(@NotNull Collection<? extends OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<>(rootTypes);
     Collections.sort(allTypes, (o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;
@@ -374,9 +369,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       LOG.assertTrue(myProperties != null, "Properties is 'null' in library with kind " + myKind);
       final Object state = myProperties.getState();
       if (state != null) {
-        final Element propertiesElement = XmlSerializer.serializeIfNotDefault(state, SERIALIZATION_FILTERS);
-        if (!JDOMUtil.isEmpty(propertiesElement)) {
-          element.addContent(propertiesElement.setName(PROPERTIES_ELEMENT));
+        final Element propertiesElement = XmlSerializer.serialize(state);
+        if (propertiesElement != null) {
+          element.addContent(propertiesElement.setName(JpsLibraryTableSerializer.PROPERTIES_TAG));
         }
       }
     }
@@ -409,13 +404,13 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
       final Element rootTypeElement = new Element(rootType.name());
       if (roots != null) {
-        roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT, false);
+        roots.writeExternal(rootTypeElement, JpsLibraryTableSerializer.ROOT_TAG, false);
       }
       element.addContent(rootTypeElement);
     }
     if (myExcludedRoots != null && myExcludedRoots.size() > 0) {
       Element excluded = new Element(EXCLUDED_ROOTS_TAG);
-      myExcludedRoots.writeExternal(excluded, ROOT_PATH_ELEMENT, false);
+      myExcludedRoots.writeExternal(excluded, JpsLibraryTableSerializer.ROOT_TAG, false);
       element.addContent(excluded);
     }
     writeJarDirectories(element);
@@ -478,7 +473,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @NotNull
   @Override
   public String[] getExcludedRootUrls() {
-    return myExcludedRoots != null ? myExcludedRoots.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
+    return myExcludedRoots != null ? myExcludedRoots.getUrls() : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
@@ -665,7 +660,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void copyRootsFrom(@NotNull LibraryImpl fromModel) {
-    Map<OrderRootType, VirtualFilePointerContainer> clonedRoots = ContainerUtil.newHashMap();
+    Map<OrderRootType, VirtualFilePointerContainer> clonedRoots = new HashMap<>();
     for (Map.Entry<OrderRootType, VirtualFilePointerContainer> entry : fromModel.myRoots.entrySet()) {
       OrderRootType rootType = entry.getKey();
       VirtualFilePointerContainer container = entry.getValue();

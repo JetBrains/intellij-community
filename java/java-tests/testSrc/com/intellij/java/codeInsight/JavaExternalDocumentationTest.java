@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +21,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.EditorTestUtil;
@@ -35,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
+import java.awt.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
@@ -53,7 +52,8 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     }
   };
 
-  public static final Pattern BASE_URL_PATTERN = Pattern.compile("(<base href=\")([^\"]*)");
+  public static final Pattern BASE_URL_PATTERN = Pattern.compile("<base href=\"([^\"]*)");
+  public static final Pattern LOCALHOST_URL_PATTERN = Pattern.compile("https?://localhost:\\d+/([^\"']*)");
   public static final Pattern IMG_URL_PATTERN = Pattern.compile("<img src=\"([^\"]*)");
 
   @Override
@@ -73,7 +73,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     String text = getDocumentationText("class Foo { com.jetbrains.<caret>Test field; }");
     Matcher baseUrlMatcher = BASE_URL_PATTERN.matcher(text);
     assertTrue(baseUrlMatcher.find());
-    String baseUrl = baseUrlMatcher.group(2);
+    String baseUrl = baseUrlMatcher.group(1);
     Matcher imgMatcher = IMG_URL_PATTERN.matcher(text);
     assertTrue(imgMatcher.find());
     String relativeUrl = imgMatcher.group(1);
@@ -104,14 +104,18 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     doTest("class Foo {{ new com.jetbrains.LinkBetweenMethods().<caret>m1(); }}");
   }
 
+  public void testEscapingLink() throws Exception {
+    doTest("class Foo {{ new com.jetbrains.GenericClass().<caret>genericMethod(null); }}");
+  }
+
   private void doTest(String text) throws Exception {
     String actualText = getDocumentationText(text);
     String expectedText = StringUtil.convertLineSeparators(FileUtil.loadFile(getDataFile(getTestName(false) + ".html")));
-    assertEquals(expectedText, replaceBaseUrlWithPlaceholder(actualText));
+    assertEquals(expectedText, replaceLocalHostUrlsWithPlaceholder(actualText));
   }
 
-  private static String replaceBaseUrlWithPlaceholder(String actualText) {
-    return BASE_URL_PATTERN.matcher(actualText).replaceAll("$1placeholder");
+  private static String replaceLocalHostUrlsWithPlaceholder(String actualText) {
+    return LOCALHOST_URL_PATTERN.matcher(actualText).replaceAll("placeholder");
   }
 
   private static void waitTillDone(ActionCallback actionCallback) throws InterruptedException {
@@ -183,7 +187,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
       catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
-      return documentationComponent.getText();
+      return documentationComponent.getDecoratedText();
     }
     finally {
       JBPopup hint = documentationComponent.getHint();
@@ -193,24 +197,11 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
   }
 
   private static class MockDocumentationComponent extends DocumentationComponent {
-    private String myText;
-
     MockDocumentationComponent(DocumentationManager manager) {
       super(manager);
     }
 
     @Override
-    public void setData(@Nullable PsiElement element,
-                        @NotNull String text,
-                        @Nullable String effectiveExternalUrl,
-                        @Nullable String ref,
-                        @Nullable DocumentationProvider provider) {
-      myText = text;
-    }
-
-    @Override
-    public String getText() {
-      return myText;
-    }
+    protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {}
   }
 }

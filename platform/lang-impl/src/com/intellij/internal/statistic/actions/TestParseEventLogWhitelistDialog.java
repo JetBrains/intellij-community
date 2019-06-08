@@ -37,7 +37,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +44,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
@@ -64,7 +64,7 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
   private final Project myProject;
   private final EditorEx myWhitelistEditor;
   private final EditorEx myResultEditor;
-  private final List<PsiFile> myTempFiles = ContainerUtil.newArrayList();
+  private final List<PsiFile> myTempFiles = new ArrayList<>();
 
   protected TestParseEventLogWhitelistDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
     super(project);
@@ -186,8 +186,7 @@ public class TestParseEventLogWhitelistDialog extends DialogWrapper {
     myResultEditor.getSelectionModel().removeSelection();
     updateResultRequest("{}");
 
-    final BuildNumber build = BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
-    final FUSWhitelist whitelist = FUStatisticsWhiteListGroupsService.parseApprovedGroups(myWhitelistEditor.getDocument().getText(), build);
+    final FUSWhitelist whitelist = FUStatisticsWhiteListGroupsService.parseApprovedGroups(myWhitelistEditor.getDocument().getText());
     try {
       final String parsed = parseLogAndFilter(new LogEventWhitelistFilter(whitelist), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());

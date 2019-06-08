@@ -26,6 +26,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 
+import static com.intellij.openapi.util.registry.Registry.intValue;
+
 public class IdeBorderFactory {
   public static final int BORDER_ROUNDNESS = 5;
   public static final int TITLED_BORDER_TOP_INSET = TitledSeparator.TOP_INSET;
@@ -104,12 +106,17 @@ public class IdeBorderFactory {
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent) {
-    Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
+    int top = Math.max(0, intValue("ide.titled.border.top", TITLED_BORDER_TOP_INSET));
+    int left = Math.max(0, intValue("ide.titled.border.left", TITLED_BORDER_LEFT_INSET));
+    int right = Math.max(0, intValue("ide.titled.border.right", TITLED_BORDER_RIGHT_INSET));
+    int bottom = Math.max(0, intValue("ide.titled.border.bottom", TITLED_BORDER_BOTTOM_INSET));
+    @SuppressWarnings("UseDPIAwareInsets")
+    Insets insets = new Insets(top, left, bottom, right);
     return createTitledBorder(title, hasIndent, insets);
   }
 
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent, Insets insets) {
-    int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
+    int indent = hasIndent ? Math.max(0, intValue("ide.titled.border.indent", TITLED_BORDER_INDENT)) : 0;
     return new IdeaTitledBorder(title, indent, insets);
   }
 
@@ -128,7 +135,7 @@ public class IdeBorderFactory {
                                                   int titlePosition,
                                                   Font titleFont,
                                                   Color titleColor) {
-      return IdeBorderFactory.createTitledBorder(title, true);
+      return IdeBorderFactory.createTitledBorder(title);
     }
   }
 

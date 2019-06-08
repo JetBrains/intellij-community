@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -163,7 +163,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
       if (!selectionModel.hasSelection()) {
         final List<PsiExpression> expressions = ContainerUtil
-          .filter(collectExpressions(file, editor, offset), expression -> 
+          .filter(collectExpressions(file, editor, offset), expression ->
             RefactoringUtil.getParentStatement(expression, false) != null ||
             PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiStatement.class) != null);
         if (expressions.isEmpty()) {
@@ -1052,7 +1052,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final String variableName = suggestedName.names.length > 0 ? suggestedName.names[0] : "";
     final boolean declareFinal = replaceAll && declareFinalIfAll || !anyAssignmentLHS && createFinals(anchor.getContainingFile()) ||
                                  anchor instanceof PsiSwitchLabelStatementBase;
-    final boolean declareVarType = canBeExtractedWithoutExplicitType(expr) && createVarType();
+    final boolean declareVarType = canBeExtractedWithoutExplicitType(expr) && createVarType() && !replaceChoice.isChain();
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice.isAll();
     return new IntroduceVariableSettings() {
       @Override
@@ -1202,7 +1202,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     @NotNull
     LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> buildOccurrencesMap(PsiExpression expr) {
-      final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
+      final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = new LinkedHashMap<>();
       if (myChainMethodName != null) {
         if (myOccurrences.size() > 1 && !myCantReplaceAll) {
           occurrencesMap.put(JavaReplaceChoice.NO, Collections.singletonList(expr));

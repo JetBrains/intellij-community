@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
+import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -17,11 +18,13 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -62,12 +65,13 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -269,7 +273,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myEditorPane.getCaret().setVisible(true);
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    HTMLEditorKit editorKit = new UIUtil.JBHtmlEditorKit(true) {
+    HTMLEditorKit editorKit = new JBHtmlEditorKit(true) {
       @Override
       public ViewFactory getViewFactory() {
         return new HTMLFactory() {
@@ -341,17 +345,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
               return new ImageView(elem) {
                 @Override
                 public float getMaximumSpan(int axis) {
-                  return super.getMaximumSpan(axis) / JBUI.sysScale(myEditorPane);
+                  return super.getMaximumSpan(axis) / JBUIScale.sysScale(myEditorPane);
                 }
 
                 @Override
                 public float getMinimumSpan(int axis) {
-                  return super.getMinimumSpan(axis) / JBUI.sysScale(myEditorPane);
+                  return super.getMinimumSpan(axis) / JBUIScale.sysScale(myEditorPane);
                 }
 
                 @Override
                 public float getPreferredSpan(int axis) {
-                  return super.getPreferredSpan(axis) / JBUI.sysScale(myEditorPane);
+                  return super.getPreferredSpan(axis) / JBUIScale.sysScale(myEditorPane);
                 }
 
                 @Override
@@ -809,6 +813,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = false;
     if (myManager == null) return;
 
+    myText = text;
+    myDecoratedText = decorate(text);
+    setElement(element);
+
+    showHint(viewRect, ref);
+  }
+
+  protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
     String refToUse;
     Rectangle viewRectToUse;
     if (DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF.equals(ref)) {
@@ -822,17 +834,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     updateControlState();
 
-    setElement(element);
-
     highlightLink(-1);
 
-    myDecoratedText = decorate(text);
     myEditorPane.setText(myDecoratedText);
     applyFontProps();
 
     showHint();
-
-    myText = text;
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
@@ -879,10 +886,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void setHintSize() {
     Dimension hintSize;
     if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
-      int minWidth = JBUI.scale(300);
-      int maxWidth = getPopupAnchor() != null ? JBUI.scale(435) : MAX_DEFAULT.width;
+      int minWidth = JBUIScale.scale(300);
+      int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : MAX_DEFAULT.width;
 
-      int width = Math.max(definitionPreferredWidth(), myEditorPane.getMinimumSize().width);
+      int width = definitionPreferredWidth();
+      if (width < 0) { // no definition found
+        width = myEditorPane.getPreferredSize().width;
+      }
+      else {
+        width = Math.max(width, myEditorPane.getMinimumSize().width);
+      }
       width = Math.min(maxWidth, Math.max(minWidth, width));
 
       myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
@@ -917,7 +930,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
-    if (popup != null && popup != myHint) {
+    if (popup != null && popup != myHint && !popup.isDisposed()) {
       return popup.getContent();
     }
     return null;
@@ -927,13 +940,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     AbstractPopup hint = myHint;
     if (hint == null || mySizeTrackerRegistered) return;
     mySizeTrackerRegistered = true;
-    hint.addResizeListener(() -> {
-      myManuallyResized = true;
-      if (myStoreSize) {
-        hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
-        hint.storeDimensionSize();
+    hint.addResizeListener(this::onManualResizing, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+      @Override
+      public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+        if (action instanceof WindowAction) onManualResizing();
       }
-    }, this);
+    });
+  }
+
+  private void onManualResizing() {
+    myManuallyResized = true;
+    if (myStoreSize && myHint != null) {
+      myHint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+      myHint.storeDimensionSize();
+    }
   }
 
   private int definitionPreferredWidth() {
@@ -957,6 +978,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private String decorate(String text) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
+    text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.SECTIONS_START + DocumentationMarkup.SECTIONS_END, "");
+    text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.SECTIONS_START + "<p>" + DocumentationMarkup.SECTIONS_END, "");
     boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
     if (!hasContent) {
       if (!text.contains(DocumentationMarkup.DEFINITION_START)) {
@@ -1001,7 +1024,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return null;
     }
 
-    String title = manager.getTitle(element);
+    String title = StringUtil.escapeXmlEntities(manager.getTitle(element));
     if (externalUrl == null) {
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
@@ -1131,7 +1154,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                       myEditorPane.getFont().getFontName();
 
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
-    myEditorPane.setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUI.scale(getQuickDocFontSize().getSize())));
+    myEditorPane.setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(getQuickDocFontSize().getSize())));
   }
 
   @Nullable
@@ -1166,7 +1189,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       public Object getProperty(String name) { return null; }
 
       @Override
-      public String[] getPropertyNames() { return ArrayUtil.EMPTY_STRING_ARRAY; }
+      public String[] getPropertyNames() { return ArrayUtilRt.EMPTY_STRING_ARRAY; }
 
       @Override
       public boolean isDynamic() { return false; }
@@ -1474,8 +1497,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myText;
   }
 
+  public String getDecoratedText() {
+    return myDecoratedText;
+  }
+
   @Override
   public void dispose() {
+    myEditorPane.getCaret().setVisible(false); // Caret, if blinking, has to be deactivated.
     myBackStack.clear();
     myForwardStack.clear();
     myKeyboardActions.clear();

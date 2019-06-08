@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -43,6 +43,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.utils.EncodingManagerUtilKt;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,13 +74,13 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
   private static final String UTF8_XML_PROLOG = prolog(StandardCharsets.UTF_8);
-  private static final byte[] NO_BOM = ArrayUtil.EMPTY_BYTE_ARRAY;
+  private static final byte[] NO_BOM = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   private static final String XML_TEST_BODY = "<web-app>\n" + "<!--\u043f\u0430\u043f\u0430-->\n" + "</web-app>";
   private static final String THREE_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
   private TestDialog myOldTestDialogValue;
 
   @Override
-  public int show(String message) {
+  public int show(@NotNull String message) {
     return 0;
   }
 
@@ -895,7 +896,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.WINDOWS_ONLY);
       VirtualFile file3 = createFile("x3.txt", "xx").getVirtualFile();
-      byte[] expected = SystemInfo.isWindows ? CharsetToolkit.UTF8_BOM : null;
+      byte[] expected = SystemInfoRt.isWindows ? CharsetToolkit.UTF8_BOM : null;
       assertArrayEquals(expected, file3.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);

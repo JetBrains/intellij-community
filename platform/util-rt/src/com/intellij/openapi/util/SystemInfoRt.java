@@ -23,9 +23,9 @@ import java.util.Locale;
  */
 public class SystemInfoRt {
   public static final String OS_NAME = System.getProperty("os.name");
-  public static final String OS_VERSION = System.getProperty("os.version").toLowerCase(Locale.US);
+  public static final String OS_VERSION = System.getProperty("os.version").toLowerCase(Locale.ENGLISH);
 
-  private static final String _OS_NAME = OS_NAME.toLowerCase(Locale.US);
+  private static final String _OS_NAME = OS_NAME.toLowerCase(Locale.ENGLISH);
   public static final boolean isWindows = _OS_NAME.startsWith("windows");
   public static final boolean isMac = _OS_NAME.startsWith("mac");
   public static final boolean isLinux = _OS_NAME.startsWith("linux");

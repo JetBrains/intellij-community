@@ -1,21 +1,24 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,13 +162,14 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
             return;
           }
           if (isDeclared && field.getContainingClass() != ownerClass.getPsiClass()) {
+            LocalQuickFix fix = field.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getField") : null;
             holder.registerProblem(nameExpression, InspectionsBundle.message(
-              "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()));
+              "inspection.reflection.member.access.field.not.in.class", fieldName, ownerClass.getPsiClass().getQualifiedName()), fix);
             return;
           }
           if (!isDeclared && !field.hasModifierProperty(PsiModifier.PUBLIC)) {
             holder.registerProblem(nameExpression, InspectionsBundle.message(
-              "inspection.reflection.member.access.field.not.public", fieldName));
+              "inspection.reflection.member.access.field.not.public", fieldName), new UseAppropriateMethodFix("getDeclaredField"));
           }
         }
       }
@@ -197,13 +201,14 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
             return;
           }
           if (isDeclared && matchingMethod.getContainingClass() != ownerClass.getPsiClass()) {
+            LocalQuickFix fix = matchingMethod.hasModifierProperty(PsiModifier.PUBLIC) ? new UseAppropriateMethodFix("getMethod") : null;
             holder.registerProblem(nameExpression, InspectionsBundle.message(
-              "inspection.reflection.member.access.method.not.in.class", methodName, ownerClass.getPsiClass().getQualifiedName()));
+              "inspection.reflection.member.access.method.not.in.class", methodName, ownerClass.getPsiClass().getQualifiedName()), fix);
             return;
           }
           if (!isDeclared && !matchingMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
             holder.registerProblem(nameExpression, InspectionsBundle.message(
-              "inspection.reflection.member.access.method.not.public", methodName));
+              "inspection.reflection.member.access.method.not.public", methodName), new UseAppropriateMethodFix("getDeclaredMethod"));
           }
         }
       }
@@ -234,7 +239,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
       }
       if (!isDeclared && !constructorOrClass.hasModifierProperty(PsiModifier.PUBLIC)) {
         holder.registerProblem(callExpression.getArgumentList(), InspectionsBundle.message(
-          "inspection.reflection.member.access.constructor.not.public"));
+          "inspection.reflection.member.access.constructor.not.public"), new UseAppropriateMethodFix("getDeclaredConstructor"));
       }
     }
   }
@@ -266,5 +271,37 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
       ContainerUtil.map(methodArguments.expressions, JavaReflectionReferenceUtil::getReflectiveType);
 
     return JavaLangClassMemberReference.matchMethod(methods, argumentTypes);
+  }
+
+  static final class UseAppropriateMethodFix implements LocalQuickFix {
+    private final String myProperMethod;
+
+    UseAppropriateMethodFix(String method) {
+      myProperMethod = method;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.use", myProperMethod + "()");
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.reflection.member.access.fix.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getStartElement();
+      PsiExpressionList expressionList = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpressionList.class);
+      if (expressionList == null) return;
+      PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);
+      if (call == null) return;
+      ExpressionUtils.bindCallTo(call, myProperMethod);
+    }
   }
 }

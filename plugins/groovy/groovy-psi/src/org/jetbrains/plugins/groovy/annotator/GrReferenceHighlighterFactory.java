@@ -3,8 +3,10 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -13,8 +15,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-public class GrReferenceHighlighterFactory implements TextEditorHighlightingPassFactory {
-  public GrReferenceHighlighterFactory(TextEditorHighlightingPassRegistrar registrar) {
+final class GrReferenceHighlighterFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+  @Override
+  public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
   }
 

@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author irengrig
- */
 public class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
     super("Import Patches...", "Copies a patch file to the shelf", null);
@@ -58,7 +55,7 @@ public class ImportIntoShelfAction extends DumbAwareAction {
 
       final List<VirtualFile> patchTypeFiles = new ArrayList<>();
       final boolean filesFound = pm.runProcessWithProgressSynchronously(
-        (Runnable)() -> patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files)), "Looking for patch files...", true, project);
+        (Runnable)() -> patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files)), "Looking for Patch Files...", true, project);
       if (!filesFound || patchTypeFiles.isEmpty()) return;
       if (!patchTypeFiles.equals(files)) {
         final String message = "Found " + (patchTypeFiles.size() == 1 ?
@@ -81,7 +78,7 @@ public class ImportIntoShelfAction extends DumbAwareAction {
         if (lists.isEmpty() && exceptions.isEmpty()) {
           VcsBalloonProblemNotifier.showOverChangesView(project, "No patches found", MessageType.WARNING);
         }
-      }, "Import patches into shelf", true, project);
+      }, "Import Patches into Shelf...", true, project);
     });
   }
 }

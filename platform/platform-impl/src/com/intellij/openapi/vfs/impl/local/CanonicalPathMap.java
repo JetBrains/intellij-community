@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,10 +11,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 class CanonicalPathMap {
@@ -32,8 +29,8 @@ class CanonicalPathMap {
   }
 
   CanonicalPathMap(@NotNull List<String> recursive, @NotNull List<String> flat) {
-    myRecursiveWatchRoots = ContainerUtil.newArrayList(recursive);
-    myFlatWatchRoots = ContainerUtil.newArrayList(flat);
+    myRecursiveWatchRoots = new ArrayList<>(recursive);
+    myFlatWatchRoots = new ArrayList<>(flat);
 
     List<Pair<String, String>> mapping = ContainerUtil.newSmartList();
     Map<String, String> resolvedPaths = resolvePaths(recursive, flat);
@@ -55,7 +52,7 @@ class CanonicalPathMap {
 
   @NotNull
   private static List<String> mapPaths(@NotNull Map<String, String> resolvedPaths, @NotNull List<String> paths, @NotNull Collection<? super Pair<String, String>> mapping) {
-    List<String> canonicalPaths = ContainerUtil.newArrayList(paths);
+    List<String> canonicalPaths = new ArrayList<>(paths);
     for (int i = 0; i < paths.size(); i++) {
       String path = paths.get(i);
       String canonicalPath = resolvedPaths.get(path);

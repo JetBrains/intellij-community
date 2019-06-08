@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.actions.InvertBooleanAction;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
@@ -46,9 +34,14 @@ public class PyInvertBooleanTest extends PyTestCase {
 
   private void doTest(List<String> files) {
     files.add(0, "refactoring/invertBoolean/" + getTestName(true) + ".before.py");
-    myFixture.configureByFiles(ArrayUtil.toStringArray(files));
+    myFixture.configureByFiles(ArrayUtilRt.toStringArray(files));
     final PsiElement element = myFixture.getElementAtCaret();
     assertTrue(element instanceof PsiNamedElement);
+
+    final InvertBooleanAction action = new InvertBooleanAction();
+    final TestActionEvent event = new TestActionEvent(action);
+    action.beforeActionPerformedUpdate(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
 
     final PsiNamedElement target = (PsiNamedElement)element;
     final String name = target.getName();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -19,10 +18,12 @@ import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
 import java.beans.PropertyChangeListener
+import kotlin.random.Random
 
-class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable, BaseComponent {
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable {
   companion object {
     var isEnabledInTests: Boolean = false
+    private const val LOGGED_SESSIONS_RATIO: Double = 0.1
   }
 
   private val actionListener = LookupActionsListener()
@@ -40,11 +41,17 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
       val shownTimesTracker = PositionTrackingListener(lookup)
       lookup.setPrefixChangeListener(shownTimesTracker)
 
-      val tracker = actionsTracker(lookup, experimentHelper)
-      actionListener.listener = tracker
-      lookup.addLookupListener(tracker)
-      lookup.setPrefixChangeListener(tracker)
+      if (sessionShouldBeLogged(experimentHelper)) {
+        val tracker = actionsTracker(lookup, experimentHelper)
+        actionListener.listener = tracker
+        lookup.addLookupListener(tracker)
+        lookup.setPrefixChangeListener(tracker)
+      }
     }
+  }
+
+  init {
+    initComponent()
   }
 
   private fun actionsTracker(lookup: LookupImpl, experimentHelper: WebServiceStatus): CompletionActionsTracker {
@@ -57,6 +64,14 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
   private fun shouldTrackSession() = CompletionStatsCollectorSettings.getInstance().isCompletionLogsSendAllowed || isUnitTestMode()
 
   private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
+
+  private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus): Boolean {
+    val application = ApplicationManager.getApplication()
+    if (!application.isEAP) return false
+    if (application.isUnitTestMode || experimentHelper.isExperimentOnCurrentIDE()) return true
+
+    return Random.nextDouble() < LOGGED_SESSIONS_RATIO
+  }
 
   private fun processUserFactors(lookup: LookupImpl) {
     if (!shouldUseUserFactors()) return
@@ -81,7 +96,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     lookup.addLookupListener(LookupStartedTracker())
   }
 
-  override fun initComponent() {
+  private fun initComponent() {
     if (!shouldInitialize()) return
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)

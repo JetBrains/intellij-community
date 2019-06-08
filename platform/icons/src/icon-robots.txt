@@ -1,1 +1,7 @@
 skip: diff_frame*
+deprecated: icon.png; use ProductIcons.getInstance().getProductIcon() instead
+deprecated: icon_small.png; use ProductIcons.getInstance().getProductIcon() instead
+deprecated: icon_CEsmall.png; use ProductIcons.getInstance().getProductIcon() instead
+deprecated: icon_128.png
+deprecated: icon_CE.png
+deprecated: icon_CE_*.png

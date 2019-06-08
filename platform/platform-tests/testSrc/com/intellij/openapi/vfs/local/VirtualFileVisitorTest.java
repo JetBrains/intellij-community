@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
+import static org.junit.Assert.assertEquals;
 
 public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -369,12 +370,12 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     visited.sort(Comparator.comparing(o -> o.first.getName()));
     for (Pair<VirtualFile, String> pair : visited) {
       String log = pair.second;
-      out.append(StringUtil.repeat("  ", level) + log);
+      out.append(StringUtil.repeat("  ", level)).append(log);
       VirtualFile child = pair.first;
       toLog(child, visitLog, backLog, level+1, out);
       String back = backLog.get(child);
       if (back != null) {
-        out.append(StringUtil.repeat("  ", level) + back);
+        out.append(StringUtil.repeat("  ", level)).append(back);
       }
     }
   }

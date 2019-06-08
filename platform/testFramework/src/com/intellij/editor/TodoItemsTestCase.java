@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.Pass;
@@ -17,7 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +39,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
     toIgnoreList.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
 
-    int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : toIgnoreList.toNativeArray();
+    int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : toIgnoreList.toNativeArray();
     Editor editor = getEditor();
     PsiFile file = getFile();
     if (editor instanceof EditorWindow) {
@@ -82,7 +82,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     return result;
   }
 
-  private static List<TextRange> getActualTodoRanges(List<HighlightInfo> highlightInfos) {
+  private static List<TextRange> getActualTodoRanges(List<? extends HighlightInfo> highlightInfos) {
     return highlightInfos.stream()
       .filter(info -> info.type == HighlightInfoType.TODO)
       .map(info -> TextRange.create(info.getHighlighter()))
@@ -90,11 +90,11 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
       .collect(Collectors.toList());
   }
 
-  private static void assertTodoRanges(List<TextRange> expectedTodoRanges, List<TextRange> actualTodoRanges) {
+  private static void assertTodoRanges(List<? extends TextRange> expectedTodoRanges, List<? extends TextRange> actualTodoRanges) {
     assertEquals("Unexpected todos highlighting", generatePresentation(expectedTodoRanges), generatePresentation(actualTodoRanges));
   }
 
-  private static String generatePresentation(List<TextRange> ranges) {
+  private static String generatePresentation(List<? extends TextRange> ranges) {
     StringBuilder b = new StringBuilder(myEditor.getDocument().getText());
     int prevStart = Integer.MAX_VALUE;
     for (int i = ranges.size() - 1; i >= 0; i--) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -364,7 +365,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = enabled;
   }
 
-  private static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
+  private static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<? super UsageInfo> result) {
     if (field.getContainingClass() == null) return;
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
     final PsiClass containingClass = field.getContainingClass();
@@ -389,7 +390,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  private static void findLocalHidesFieldCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames, final List<UsageInfo> result) {
+  private static void findLocalHidesFieldCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames, final List<? super UsageInfo> result) {
     if (!(element instanceof PsiLocalVariable) && !(element instanceof PsiParameter)) return;
 
     PsiClass toplevel = PsiUtil.getTopLevelClass(element);
@@ -419,5 +420,21 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
         }
       }
     });
+  }
+  
+  @Override
+  public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
+    if (nonJava && element instanceof PsiField) {
+      final PsiField field = (PsiField)element;
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null) {
+        String qualifiedName = containingClass.getQualifiedName();
+        if (qualifiedName != null) {
+          return StringUtil.getQualifiedName(qualifiedName, newName);
+        }
+      }
+    }
+    
+    return null;
   }
 }

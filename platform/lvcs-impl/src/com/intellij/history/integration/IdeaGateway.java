@@ -65,18 +65,31 @@ public class IdeaGateway {
 
     VersionedFilterData versionedFilterData = getVersionedFilterData();
 
-    boolean isInContent = false;
     int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
+
+    // optimisation: FileTypeManager.isFileIgnored(f) will be checked inside ProjectFileIndex.isUnderIgnored()
+    if (numberOfOpenProjects == 0) {
+      if (shouldBeInContent) return false; // there is no project, so the file can't be in content
+      if (FileTypeManager.getInstance().isFileIgnored(f)) return false;
+
+      return true;
+    }
+
+    boolean isExcludedFromAll = true;
+    boolean isInContent = false;
+
     for (int i = 0; i < numberOfOpenProjects; ++i) {
       ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
 
-      if (index.isExcluded(f)) return false;
+      if (index.isUnderIgnored(f)) return false;
       isInContent |= index.isInContent(f);
+      isExcludedFromAll &= index.isExcluded(f);
     }
+
+    if (isExcludedFromAll) return false;
     if (shouldBeInContent && !isInContent) return false;
 
-    // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
-    return numberOfOpenProjects != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+    return true;
   }
 
   @NotNull
@@ -152,7 +165,7 @@ public class IdeaGateway {
     return !FileTypeManager.getInstance().getFileTypeByFileName(fileName).isBinary();
   }
 
-  public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<VirtualFile> ff) {
+  public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<? extends VirtualFile> ff) {
     ReadonlyStatusHandler h = ReadonlyStatusHandler.getInstance(p);
     return !h.ensureFilesWritable(ff).hasReadonlyFiles();
   }
@@ -253,7 +266,7 @@ public class IdeaGateway {
 
   private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
                                            @NotNull String path,
-                                           @NotNull Iterable<VirtualFile> children) {
+                                           @NotNull Iterable<? extends VirtualFile> children) {
     for (VirtualFile child : children) {
       String name = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
       if (!path.startsWith(name)) continue;
@@ -336,7 +349,7 @@ public class IdeaGateway {
     return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
   }
 
-  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {
+  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<? extends VirtualFile> children, final boolean forDeletion) {
     List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> doCreateEntry(each, forDeletion));
     parent.addChildren(entries);
   }

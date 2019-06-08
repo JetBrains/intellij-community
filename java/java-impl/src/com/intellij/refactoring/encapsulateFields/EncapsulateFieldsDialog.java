@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.icons.AllIcons;
@@ -16,6 +16,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -297,7 +298,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     leftBox.add(myCbUseAccessorsWhenAccessible);
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title"), true));
+      RefactoringBundle.message("encapsulate.fields.encapsulate.border.title")));
     leftPanel.add(leftBox, BorderLayout.CENTER);
     leftPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -321,7 +322,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     fieldsBox.add(myRbFieldAsIs);
     JPanel fieldsVisibilityPanel = new JPanel(new BorderLayout());
     fieldsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title"), true));
+      RefactoringBundle.message("encapsulate.fields..encapsulated.fields.visibility.border.title")));
     fieldsVisibilityPanel.add(fieldsBox, BorderLayout.CENTER);
     fieldsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -332,7 +333,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     methodsBox.add(myRbAccessorPrivate);
     JPanel methodsVisibilityPanel = new JPanel(new BorderLayout());
     methodsVisibilityPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title"), true));
+      RefactoringBundle.message("encapsulate.fields.accessors.visibility.border.title")));
     methodsVisibilityPanel.add(methodsBox, BorderLayout.CENTER);
     methodsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
@@ -652,7 +653,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
               setForeground(JBColor.RED);
             }
 
-            RowIcon icon = new RowIcon(methodIcon, overrideIcon);
+            RowIcon icon = IconManager.getInstance().createRowIcon(methodIcon, overrideIcon);
             setIcon(icon);
             setDisabledIcon(icon);
             break;

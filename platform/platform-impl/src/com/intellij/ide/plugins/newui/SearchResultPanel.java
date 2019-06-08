@@ -22,10 +22,12 @@ public abstract class SearchResultPanel {
 
   protected final PluginsGroupComponent myPanel;
   private JScrollBar myVerticalScrollBar;
-  private final PluginsGroup myGroup = new PluginsGroup("Search Results");
+  private PluginsGroup myGroup = new PluginsGroup("Search Results");
   private String myQuery;
   private AtomicBoolean myRunQuery;
   private boolean myEmpty = true;
+
+  protected Runnable myPostFillGroupCallback;
 
   public SearchResultPanel(@Nullable SearchPopupController controller,
                            @NotNull PluginsGroupComponent panel,
@@ -49,6 +51,11 @@ public abstract class SearchResultPanel {
   }
 
   @NotNull
+  public PluginsGroup getGroup() {
+    return myGroup;
+  }
+
+  @NotNull
   public JComponent createScrollPane() {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
@@ -67,7 +74,7 @@ public abstract class SearchResultPanel {
   }
 
   private void setEmptyText() {
-    myPanel.getEmptyText().setText("Nothing to show");
+    myPanel.getEmptyText().setText("Nothing found");
   }
 
   public boolean isEmpty() {
@@ -84,6 +91,8 @@ public abstract class SearchResultPanel {
   }
 
   public void setQuery(@NotNull String query) {
+    assert SwingUtilities.isEventDispatchThread();
+
     setEmptyText();
 
     if (query.equals(myQuery)) {
@@ -106,17 +115,18 @@ public abstract class SearchResultPanel {
   }
 
   private void handleQuery(@NotNull String query) {
-    myGroup.clear();
-
     if (isProgressMode()) {
       loading(true);
 
       AtomicBoolean runQuery = myRunQuery = new AtomicBoolean(true);
+      PluginsGroup group = myGroup;
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        handleQuery(myQuery, myGroup);
+        handleQuery(query, group);
 
         ApplicationManager.getApplication().invokeLater(() -> {
+          assert SwingUtilities.isEventDispatchThread();
+
           if (!runQuery.get()) {
             return;
           }
@@ -132,6 +142,7 @@ public abstract class SearchResultPanel {
           }
 
           myPanel.initialSelection(false);
+          runPostFillGroupCallback();
           fullRepaint();
         }, ModalityState.any());
       });
@@ -145,11 +156,19 @@ public abstract class SearchResultPanel {
         myPanel.initialSelection(false);
       }
 
+      runPostFillGroupCallback();
       fullRepaint();
     }
   }
 
   protected abstract void handleQuery(@NotNull String query, @NotNull PluginsGroup result);
+
+  private void runPostFillGroupCallback() {
+    if (myPostFillGroupCallback != null) {
+      myPostFillGroupCallback.run();
+      myPostFillGroupCallback = null;
+    }
+  }
 
   private void loading(boolean start) {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;
@@ -176,9 +195,10 @@ public abstract class SearchResultPanel {
       myPanel.removeGroup(myGroup);
       fullRepaint();
     }
+    myGroup = new PluginsGroup("Search Results");
   }
 
-  private void fullRepaint() {
+  public void fullRepaint() {
     myPanel.doLayout();
     myPanel.revalidate();
     myPanel.repaint();

@@ -16,8 +16,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -93,8 +93,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   private String myTempDir;
 
-  static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
-
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
   static {
@@ -168,13 +166,25 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = FileUtil.createTempDirectory(TEMP_DIR_MARKER + testName, "", false).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
+
     boolean isStressTest = isStressTest();
     ApplicationInfoImpl.setInStressTest(isStressTest);
     if (isPerformanceTest()) {
       Timings.getStatistics();
     }
+
     // turn off Disposer debugging for performance tests
     Disposer.setDebugMode(!isStressTest);
+
+    if (isIconRequired()) {
+      // ensure that IconLoader will use dummy empty icon
+      IconLoader.deactivate();
+      //IconManager.activate();
+    }
+  }
+
+  protected boolean isIconRequired() {
+    return false;
   }
 
   @Override
@@ -182,6 +192,11 @@ public abstract class UsefulTestCase extends TestCase {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
+      () -> {
+        if (isIconRequired()) {
+          //IconManager.deactivate();
+        }
+      },
       () -> disposeRootDisposable(),
       () -> cleanupSwingDataStructures(),
       () -> cleanupDeleteOnExitHookList(),
@@ -355,15 +370,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-    if (policy != null && !policy.runInDispatchThread()) {
-      runnable.run();
-    }
-    else {
+    if (runInDispatchThread()) {
       EdtTestUtilKt.runInEdtAndWait(() -> {
         runnable.run();
         return null;
       });
+    }
+    else {
+      runnable.run();
     }
   }
 
@@ -899,8 +913,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings,
-                                                    @NotNull CodeInsightSettings settings) {
+  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings, @NotNull CodeInsightSettings settings) {
     if (!oldSettings.equals(settings)) {
       Element newS = new Element("temp");
       settings.writeExternal(newS);
@@ -1026,15 +1039,20 @@ public abstract class UsefulTestCase extends TestCase {
       exceptionCase.tryClosure();
     }
     catch (Throwable e) {
+      Throwable cause = e;
+      while (cause instanceof LoggedErrorProcessor.TestLoggerAssertionError && cause.getCause() != null) {
+        cause = cause.getCause();
+      }
+
       if (shouldOccur) {
         wasThrown = true;
         final String errorMessage = exceptionCase.getAssertionErrorMessage();
-        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), e.getClass());
+        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
         if (expectedErrorMsg != null) {
-          assertEquals("Compare error messages", expectedErrorMsg, e.getMessage());
+          assertEquals("Compare error messages", expectedErrorMsg, cause.getMessage());
         }
       }
-      else if (exceptionCase.getExpectedExceptionClass().equals(e.getClass())) {
+      else if (exceptionCase.getExpectedExceptionClass().equals(cause.getClass())) {
         wasThrown = true;
 
         //noinspection UseOfSystemOutOrSystemErr
@@ -1042,7 +1060,7 @@ public abstract class UsefulTestCase extends TestCase {
         //noinspection UseOfSystemOutOrSystemErr
         e.printStackTrace(System.out);
 
-        fail("Exception isn't expected here. Exception message: " + e.getMessage());
+        fail("Exception isn't expected here. Exception message: " + cause.getMessage());
       }
       else {
         throw e;

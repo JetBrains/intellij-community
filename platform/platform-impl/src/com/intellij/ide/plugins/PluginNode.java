@@ -16,10 +16,9 @@ import java.util.List;
  * @author stathik
  */
 public class PluginNode implements IdeaPluginDescriptor {
-  public static final int STATUS_UNKNOWN = 0;
-  public static final int STATUS_INSTALLED = 1;
-  public static final int STATUS_DOWNLOADED = 5;
-  public static final int STATUS_DELETED = 6;
+  public enum Status {
+    UNKNOWN, INSTALLED, DOWNLOADED, DELETED
+  }
 
   private PluginId id;
   private String name;
@@ -41,7 +40,7 @@ public class PluginNode implements IdeaPluginDescriptor {
   private long date = Long.MAX_VALUE;
   private List<PluginId> myDependencies;
   private PluginId[] myOptionalDependencies;
-  private int myStatus = STATUS_UNKNOWN;
+  private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
   private String myDownloadUrl;
   private String myRepositoryName;
@@ -168,11 +167,11 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.sinceBuild = sinceBuild;
   }
 
-  public int getStatus() {
+  public Status getStatus() {
     return myStatus;
   }
 
-  public void setStatus(int status) {
+  public void setStatus(Status status) {
     myStatus = status;
   }
 
@@ -321,12 +320,6 @@ public class PluginNode implements IdeaPluginDescriptor {
   @Override
   @NotNull
   public List<ComponentConfig> getModuleComponents() {
-    throw new IllegalStateException();
-  }
-
-  @Override
-  @NotNull
-  public HelpSetPath[] getHelpSets() {
     throw new IllegalStateException();
   }
 

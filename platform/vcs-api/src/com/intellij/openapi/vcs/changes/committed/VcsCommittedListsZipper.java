@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import java.util.List;
 
 public interface VcsCommittedListsZipper {
-  Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in);
+  Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<? extends RepositoryLocation> in);
   CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists);
   long getNumber(final CommittedChangeList list);
 }

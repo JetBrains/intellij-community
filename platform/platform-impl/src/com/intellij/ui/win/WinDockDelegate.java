@@ -21,10 +21,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.SystemDock;
 
 import java.io.File;
-import java.util.Locale;
 
 /**
  * @author Denis Fokin
@@ -45,7 +45,7 @@ public class WinDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu () {
     final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
     RecentTasks.clear();
-    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    String name = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
     String launcher = RecentTasks.getShortenPath(PathManager.getBinPath() + File.separator + name + (SystemInfo.is64Bit ? "64" : "") + ".exe");
     Task[] tasks = new Task[recentProjectActions.length];
     for (int i = 0; i < recentProjectActions.length; i ++) {

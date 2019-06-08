@@ -212,7 +212,7 @@ public class GitRebaser {
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitConflictResolver(myProject, myGit, Collections.singleton(root), makeParamsForRebaseConflict()) {
+      return new GitConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
         @Override protected boolean proceedIfNothingToMerge() {
           return continueRebase(root, "--continue");
         }
@@ -316,7 +316,7 @@ public class GitRebaser {
     @NotNull private final VirtualFile myRoot;
 
     public ConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
-      super(project, git, Collections.singleton(root), makeParams(project));
+      super(project, Collections.singleton(root), makeParams(project));
       myRebaser = rebaser;
       myRoot = root;
     }

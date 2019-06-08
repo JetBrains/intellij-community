@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -437,7 +437,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     final TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return VirtualFile.EMPTY_ARRAY;
 
-    final List<VirtualFile> files = ContainerUtil.newArrayList();
+    final List<VirtualFile> files = new ArrayList<>();
     for (TreePath path : paths) {
       VirtualFile file = getVirtualFile(path);
       if (file != null && file.isValid()) {
@@ -504,7 +504,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     });
   }
 
-  private void fireSelection(@NotNull List<VirtualFile> selection) {
+  private void fireSelection(@NotNull List<? extends VirtualFile> selection) {
     for (Listener each : myListeners) {
       each.selectionChanged(selection);
     }

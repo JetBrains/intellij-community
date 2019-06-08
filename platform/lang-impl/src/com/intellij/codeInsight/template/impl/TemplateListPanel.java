@@ -124,7 +124,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   public void apply() throws ConfigurationException {
     List<TemplateGroup> templateGroups = getTemplateGroups();
     for (TemplateGroup templateGroup : templateGroups) {
-      Set<String> names = ContainerUtil.newHashSet();
+      Set<String> names = new HashSet<>();
 
       List<TemplateImpl> templates = templateGroup.getElements();
       for (TemplateImpl template : templates) {
@@ -180,7 +180,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     if (templateSettings.getDefaultShortcutChar() != myExpandByDefaultPanel.getSelectedChar()) {
       if (isTest) {
         //noinspection UseOfSystemOutOrSystemErr
-        System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar() 
+        System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar()
                            + "; myExpandByDefaultComponent.getSelectedChar()="+ myExpandByDefaultPanel.getSelectedChar());
       }
       return true;
@@ -219,7 +219,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return null;
   }
 
-  private static List<TemplateImpl> collectTemplates(@NotNull List<TemplateGroup> groups) {
+  private static List<TemplateImpl> collectTemplates(@NotNull List<? extends TemplateGroup> groups) {
     List<TemplateImpl> result = new ArrayList<>();
     for (TemplateGroup group : groups) {
       result.addAll(group.getElements());
@@ -234,7 +234,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return result;
   }
 
-  private String checkAreEqual(@NotNull  List<TemplateImpl> originalGroup, @NotNull List<TemplateImpl> newGroup) {
+  private String checkAreEqual(@NotNull List<? extends TemplateImpl> originalGroup, @NotNull List<? extends TemplateImpl> newGroup) {
     if (originalGroup.size() != newGroup.size()) return "different sizes";
 
     for (int i = 0; i < newGroup.size(); i++) {
@@ -335,9 +335,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
       template.setGroupName(newGroupName);
 
-      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldTemplateNode.getParent();
       removeNodeFromParent(oldTemplateNode);
-      if (parent.getChildCount() == 0) removeNodeFromParent(parent);
 
       toSelect.add(new TreePath(registerTemplate(template).getPath()));
     }
@@ -765,7 +763,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     });
   }
 
-  @Nullable 
+  @Nullable
   TemplateGroup getSingleSelectedGroup() {
     return getGroup(getSingleSelectedIndex());
   }
@@ -821,7 +819,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         if (myCurrentTemplateEditor != null) {
           myCurrentTemplateEditor.dispose();
         }
-        createTemplateEditor(newTemplate, myExpandByDefaultPanel.getSelectedString(), getTemplateOptions(newTemplate), 
+        createTemplateEditor(newTemplate, myExpandByDefaultPanel.getSelectedString(), getTemplateOptions(newTemplate),
                              getTemplateContext(newTemplate));
         myCurrentTemplateEditor.resetUi();
         if (focusKey) {
@@ -898,7 +896,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     ((DefaultTreeModel)myTree.getModel()).nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{node});
   }
 
-  private void initTemplates(List<TemplateGroup> groups, String lastSelectedGroup, String lastSelectedKey) {
+  private void initTemplates(List<? extends TemplateGroup> groups, String lastSelectedGroup, String lastSelectedKey) {
     myTreeRoot.removeAllChildren();
     myTemplateGroups.clear();
     mutatorHelper.clear();

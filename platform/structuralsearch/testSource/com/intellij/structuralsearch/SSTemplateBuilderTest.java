@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.Template;
@@ -12,7 +12,8 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 public class SSTemplateBuilderTest extends LightCodeInsightFixtureTestCase {
 
   public void testClassTemplate() {
-    doTest("class foo extends bar, next implements xxx", "class foo extends $Class2$, $Class3$ implements $Class4$");
+    doTest("class foo extends bar, next implements xxx",
+           "class foo extends $Class2$, $Class3$ implements $Class4$");
   }
 
   public void testStatement() {
@@ -30,8 +31,13 @@ public class SSTemplateBuilderTest extends LightCodeInsightFixtureTestCase {
 
   public void testInnerWhiteSpace() {
     doTest("try {\n" +
-           "    List<Integer> list = null;} finally {}", "try {\n" +
-                                                         "    $Class1$<$Class2$> list = null;} finally {}");
+           "    List<Integer> list = null;} finally {}",
+           "try {\n" +
+           "    $Class1$<$Class2$> list = null;} finally {}");
+  }
+
+  public void testEmpty() {
+    doTest("", "");
   }
 
   private Template doTest(String text, String expected) {

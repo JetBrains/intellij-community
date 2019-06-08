@@ -28,7 +28,7 @@ public class ManuallySetupExternalResourcesFixTest extends LightQuickFixParamete
 
   // just check for action availability
   @Override
-  protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) {
+  protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
     findActionAndCheck(actionHint, testFullPath);
   }
 

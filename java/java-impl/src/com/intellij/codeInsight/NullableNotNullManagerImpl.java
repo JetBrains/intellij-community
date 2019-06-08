@@ -5,8 +5,11 @@ import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -205,7 +208,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return result;
   }
 
-  @Override
+  @Nullable
   protected NullabilityAnnotationInfo isJsr305Default(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType[] placeTargetTypes) {
     PsiClass declaration = resolveAnnotationType(annotation);
     PsiModifierList modList = declaration == null ? null : declaration.getModifierList();
@@ -224,6 +227,39 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       }
     }
     return null;
+  }
+
+  @Override
+  @Nullable
+  NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
+                                              @NotNull PsiAnnotation.TargetType[] placeTargetTypes,
+                                              PsiModifierListOwner owner, boolean superPackage) {
+    PsiModifierList modifierList = container.getModifierList();
+    if (modifierList == null) return null;
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (container instanceof PsiPackage) {
+        PsiFile file = annotation.getContainingFile();
+        ProjectFileIndex index = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
+        VirtualFile annotationFile = file.getVirtualFile();
+        VirtualFile annotationRoot = annotationFile == null ? null : index.getClassRootForFile(annotationFile);
+        VirtualFile ownerFile = owner.getContainingFile().getVirtualFile();
+        VirtualFile ownerRoot = ownerFile == null ? null : index.getClassRootForFile(ownerFile);
+        if (ownerRoot != null && !ownerRoot.equals(annotationRoot)) {
+          continue;
+        }
+      }
+      NullabilityAnnotationInfo result = checkNullityDefault(annotation, placeTargetTypes, superPackage);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private NullabilityAnnotationInfo checkNullityDefault(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType[] placeTargetTypes, boolean superPackage) {
+    NullabilityAnnotationInfo jsr = superPackage ? null : isJsr305Default(annotation, placeTargetTypes);
+    return jsr != null ? jsr : CheckerFrameworkNullityUtil.isCheckerDefault(annotation, placeTargetTypes);
   }
 
   @Nullable

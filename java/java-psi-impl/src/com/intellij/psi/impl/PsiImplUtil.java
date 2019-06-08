@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
@@ -779,8 +778,7 @@ public class PsiImplUtil {
     }
     if (element instanceof PsiMethodReferenceExpression) {
       // method refs: do not cache results during parent conflict resolving, acceptable checks, etc
-      final Map<PsiElement, PsiType> map = LambdaUtil.ourFunctionTypes.get();
-      if (map != null && map.containsKey(element)) {
+      if (ThreadLocalTypes.hasBindingFor(element)) {
         return (JavaResolveResult[])resolver.resolve(element, psiFile, incompleteCode);
       }
     }

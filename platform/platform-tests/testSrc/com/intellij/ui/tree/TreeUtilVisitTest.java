@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.TreeUtil;
@@ -11,6 +9,7 @@ import org.junit.Test;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -648,7 +647,7 @@ public final class TreeUtilVisitTest {
 
   @Test
   public void testCollectExpandedUserObjectsWithCollapsedPath33Under33() {
-    testCollectExpandedUserObjects(set(), test -> {
+    testCollectExpandedUserObjects(new HashSet<>(), test -> {
       test.getTree().collapseRow(15); // 33
       TreePath root = test.getTree().getPathForRow(15); // 33
       return TreeUtil.collectExpandedUserObjects(test.getTree(), root);
@@ -831,6 +830,60 @@ public final class TreeUtilVisitTest {
     TreeTest.test(root, test -> {
       test.getTree().setRootVisible(visible);
       TreeUtil.promiseSelectFirst(test.getTree()).onProcessed(path -> test.invokeSafely(() -> {
+        if (expected.isEmpty()) {
+          Assert.assertNull(path);
+        }
+        else {
+          Assert.assertNotNull(path);
+          Assert.assertTrue(test.getTree().isVisible(path));
+        }
+        test.assertTree(expected, true, test::done);
+      }));
+    });
+  }
+
+  @Test
+  public void testSelectFirstLeafEmpty() {
+    testSelectFirstLeaf(() -> null, true, "");
+  }
+
+  @Test
+  public void testSelectFirstLeafWithRoot() {
+    testSelectFirstLeaf(TreeUtilVisitTest::rootDeep, true, "-Root\n" +
+                                                           " -1\n" +
+                                                           "  -11\n" +
+                                                           "   -111\n" +
+                                                           "    [1111]\n" +
+                                                           "    1112\n" +
+                                                           "    1113\n" +
+                                                           "   +112\n" +
+                                                           "   +113\n" +
+                                                           "  +12\n" +
+                                                           "  +13\n" +
+                                                           " +2\n" +
+                                                           " +3\n");
+  }
+
+  @Test
+  public void testSelectFirstLeafWithoutRoot() {
+    testSelectFirstLeaf(TreeUtilVisitTest::rootDeep, false, " -1\n" +
+                                                            "  -11\n" +
+                                                            "   -111\n" +
+                                                            "    [1111]\n" +
+                                                            "    1112\n" +
+                                                            "    1113\n" +
+                                                            "   +112\n" +
+                                                            "   +113\n" +
+                                                            "  +12\n" +
+                                                            "  +13\n" +
+                                                            " +2\n" +
+                                                            " +3\n");
+  }
+
+  private static void testSelectFirstLeaf(@NotNull Supplier<TreeNode> root, boolean visible, @NotNull String expected) {
+    TreeTest.test(root, test -> {
+      test.getTree().setRootVisible(visible);
+      TreeUtil.promiseSelectFirstLeaf(test.getTree()).onProcessed(path -> test.invokeSafely(() -> {
         if (expected.isEmpty()) {
           Assert.assertNull(path);
         }

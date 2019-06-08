@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -666,6 +666,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @NotNull
   public XmlTag[] getSubTags() {
     boolean processIncludes = shouldProcessIncludesNow();
+    return getSubTags(processIncludes);
+  }
+
+  public XmlTag[] getSubTags(boolean processIncludes) {
     Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
     XmlTag[] cached = CachedValuesManager.getCachedValue(this, key, () ->
       Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));
@@ -854,7 +858,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         }
       }
     }
-    return ArrayUtil.toStringArray(known);
+    return ArrayUtilRt.toStringArray(known);
   }
 
   @Nullable

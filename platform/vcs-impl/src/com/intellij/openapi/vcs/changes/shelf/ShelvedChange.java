@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,18 +50,23 @@ public class ShelvedChange {
   private final String myBeforePath;
   private final String myAfterPath;
   private final FileStatus myFileStatus;
-  private Change myChange;
+  @NotNull private final Change myChange;
 
-  public ShelvedChange(final String patchPath, final String beforePath, final String afterPath, final FileStatus fileStatus) {
+  public ShelvedChange(@NotNull Project project,
+                       final String patchPath,
+                       final String beforePath,
+                       final String afterPath,
+                       final FileStatus fileStatus) {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
     // optimisation: memory
     myAfterPath = Comparing.equal(beforePath, afterPath) ? beforePath : afterPath;
     myFileStatus = fileStatus;
+    myChange = createChange(project);
   }
 
-  public boolean isConflictingChange(final Project project) {
-    ContentRevision afterRevision = getChange(project).getAfterRevision();
+  public boolean isConflictingChange() {
+    ContentRevision afterRevision = getChange().getAfterRevision();
     if (afterRevision == null) return false;
     try {
       afterRevision.getContent();
@@ -86,31 +92,37 @@ public class ShelvedChange {
   }
 
   @NotNull
-  public Change getChange(@NotNull Project project) {
-    // todo unify with
-    if (myChange == null) {
-      File baseDir = new File(project.getBaseDir().getPath());
-
-      File file = getAbsolutePath(baseDir, myBeforePath);
-      FilePath beforePath = VcsUtil.getFilePath(file, false);
-      ContentRevision beforeRevision = null;
-      if (myFileStatus != FileStatus.ADDED) {
-        beforeRevision = new CurrentContentRevision(beforePath) {
-          @Override
-          @NotNull
-          public VcsRevisionNumber getRevisionNumber() {
-            return new TextRevisionNumber(VcsBundle.message("local.version.title"));
-          }
-        };
-      }
-      ContentRevision afterRevision = null;
-      if (myFileStatus != FileStatus.DELETED) {
-        FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
-        afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
-      }
-      myChange = new Change(beforeRevision, afterRevision, myFileStatus);
-    }
+  public Change getChange() {
     return myChange;
+  }
+
+  @NotNull
+  @Deprecated
+  public Change getChange(@NotNull Project project) {
+    return myChange;
+  }
+
+  private Change createChange(@NotNull Project project) {
+    File baseDir = new File(Objects.requireNonNull(project.getBasePath()));
+
+    File file = getAbsolutePath(baseDir, myBeforePath);
+    FilePath beforePath = VcsUtil.getFilePath(file, false);
+    ContentRevision beforeRevision = null;
+    if (myFileStatus != FileStatus.ADDED) {
+      beforeRevision = new CurrentContentRevision(beforePath) {
+        @Override
+        @NotNull
+        public VcsRevisionNumber getRevisionNumber() {
+          return new TextRevisionNumber(VcsBundle.message("local.version.title"));
+        }
+      };
+    }
+    ContentRevision afterRevision = null;
+    if (myFileStatus != FileStatus.DELETED) {
+      FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
+      afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
+    }
+    return new Change(beforeRevision, afterRevision, myFileStatus);
   }
 
   private static File getAbsolutePath(final File baseDir, final String relativePath) {
@@ -128,12 +140,7 @@ public class ShelvedChange {
   @Nullable
   public TextFilePatch loadFilePatch(final Project project, CommitContext commitContext) throws IOException, PatchSyntaxException {
     List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, myPatchPath, commitContext);
-    for(TextFilePatch patch: filePatches) {
-      if (myBeforePath.equals(patch.getBeforeName())) {
-        return patch;
-      }
-    }
-    return null;
+    return ContainerUtil.find(filePatches, patch -> myBeforePath.equals(patch.getBeforeName()));
   }
 
   @Override

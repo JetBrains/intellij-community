@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -37,7 +22,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +38,6 @@ import java.util.function.Supplier;
 public class ProjectDataManagerImpl implements ProjectDataManager {
 
   private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
-  private static final com.intellij.openapi.util.Key<Boolean> DATA_READY =
-    com.intellij.openapi.util.Key.create("externalSystem.data.ready");
 
   @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices;
 
@@ -68,6 +50,12 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     this(() -> ProjectDataService.EP_NAME.getExtensions());
   }
 
+  @Override
+  @Nullable
+  public List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key) {
+    return myServices.getValue().get(key);
+  }
+
   @TestOnly
   ProjectDataManagerImpl(ProjectDataService... dataServices) {
     this(() -> dataServices);
@@ -78,11 +66,11 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       @NotNull
       @Override
       protected Map<Key<?>, List<ProjectDataService<?, ?>>> compute() {
-        Map<Key<?>, List<ProjectDataService<?, ?>>> result = ContainerUtilRt.newHashMap();
+        Map<Key<?>, List<ProjectDataService<?, ?>>> result = new HashMap<>();
         for (ProjectDataService<?, ?> service : supplier.get()) {
           List<ProjectDataService<?, ?>> services = result.get(service.getTargetDataKey());
           if (services == null) {
-            result.put(service.getTargetDataKey(), services = ContainerUtilRt.newArrayList());
+            result.put(service.getTargetDataKey(), services = new ArrayList<>());
           }
           services.add(service);
         }
@@ -358,13 +346,14 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
   @Override
   public void ensureTheDataIsReadyToUse(@Nullable DataNode startNode) {
-    if (startNode == null) return;
-    if (Boolean.TRUE.equals(startNode.getUserData(DATA_READY))) return;
-    final DeduplicateVisitorsSupplier supplier = new DeduplicateVisitorsSupplier();
-    ExternalSystemApiUtil.visit(startNode, dataNode -> {
-      if (prepareDataToUse(dataNode)) {
+    if (startNode == null || startNode.isReady()) {
+      return;
+    }
+
+    DeduplicateVisitorsSupplier supplier = new DeduplicateVisitorsSupplier();
+    ((DataNode<?>)startNode).visit(dataNode -> {
+      if (dataNode.validateData()) {
         dataNode.visitData(supplier.getVisitor(dataNode.getKey()));
-        dataNode.putUserData(DATA_READY, Boolean.TRUE);
       }
     });
   }
@@ -392,7 +381,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
-      ExceptionUtil.rethrowAllAsUnchecked(t);
+      ExceptionUtil.rethrow(t);
     }
   }
 
@@ -434,29 +423,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     for (DataNode<?> node : nodes) {
       ensureTheDataIsReadyToUse(node);
     }
-  }
-
-  private boolean prepareDataToUse(@NotNull DataNode dataNode) {
-    final Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
-    List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
-    if (services != null) {
-      try {
-        Set<ClassLoader> classLoaders = ContainerUtil.newLinkedHashSet();
-        for (ProjectDataService<?, ?> dataService : services) {
-          classLoaders.add(dataService.getClass().getClassLoader());
-        }
-        for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
-          classLoaders.add(manager.getClass().getClassLoader());
-        }
-        dataNode.prepareData(ContainerUtil.toArray(classLoaders, ClassLoader[]::new));
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-        dataNode.clear(true);
-        return false;
-      }
-    }
-    return true;
   }
 
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,

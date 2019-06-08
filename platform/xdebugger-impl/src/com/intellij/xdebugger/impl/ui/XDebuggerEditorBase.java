@@ -187,7 +187,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected JComponent addChooser(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setBackground(component.getBackground());
+    panel.setBackground(new JBColor(() -> component.getBackground()));
     panel.addToRight(myLanguageChooser);
     return panel;
   }

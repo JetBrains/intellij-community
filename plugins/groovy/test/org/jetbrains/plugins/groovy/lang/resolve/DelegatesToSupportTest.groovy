@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -25,7 +11,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 @CompileStatic
 class DelegatesToSupportTest extends LightGroovyTestCase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   @Override
   void setUp() throws Exception {
@@ -63,6 +49,34 @@ class MyDelegate {
         assert contains("prop")
         assert contains("bar")
       }
+    }
+  }
+
+  void 'test extension method generic type'() {
+    fixture.with {
+      addClass '''\
+package test;
+
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+public class TestExtension {
+    public static <T> T letIf(T obj, boolean cond, @DelegatesTo(type = "T", strategy = Closure.DELEGATE_FIRST) Closure<T> closure) {}
+}
+'''
+      addFileToProject 'META-INF/services/org.codehaus.groovy.runtime.ExtensionModule', 'extensionClasses=test.TestExtension'
+      configureByText 'a.groovy', '''\
+@groovy.transform.CompileStatic
+def foo(String s) {
+    s.letIf(true) {
+        concat ""
+    }
+    s.letIf(false) {
+        delegate.concat ""
+    }
+}
+'''
+      checkHighlighting()
     }
   }
 }

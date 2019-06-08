@@ -28,7 +28,7 @@ class AddImportActionHeavyTest extends JavaCodeInsightFixtureTestCase {
   void "test prefer junit in tests"() {
     myFixture.addClass 'package org.junit; public @interface Before {}'
     myFixture.addClass 'package org.aspectj.lang.annotation; public @interface Before {}'
-    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir('tests'), true)
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir('tests'), true)
     myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject('tests/a.java', '@Befor<caret>e class MyTest {}').virtualFile)
     myFixture.launchAction(myFixture.findSingleIntention("Import class"))
     myFixture.checkResult '''import org.junit.Before;

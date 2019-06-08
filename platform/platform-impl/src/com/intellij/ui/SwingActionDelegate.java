@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -9,9 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.ActionMap;
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
 import java.util.function.Function;
@@ -31,7 +30,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
   }
 
   protected JComponent getComponent(AnActionEvent event) {
-    JComponent component = UIUtil.getParentOfType(JComponent.class, event.getData(CONTEXT_COMPONENT));
+    JComponent component = ComponentUtil.getParentOfType((Class<? extends JComponent>)JComponent.class, event.getData(CONTEXT_COMPONENT));
     Function<String, JComponent> function = UIUtil.getClientProperty(component, FUNCTION);
     return function == null ? component : function.apply(mySwingActionId);
   }
@@ -71,7 +70,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
    */
   @ApiStatus.Experimental
   public static void configureMapping(@NotNull JComponent base, @NotNull JComponent dependant, @NotNull String... actions) {
-    HashMap<String, JComponent> map = new HashMap<String, JComponent>();
+    HashMap<String, JComponent> map = new HashMap<>();
     for (String action : actions) map.put(action, dependant);
     configureMapping(base, map::get);
   }

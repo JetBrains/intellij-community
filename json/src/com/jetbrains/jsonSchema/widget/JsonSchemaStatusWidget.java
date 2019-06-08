@@ -25,15 +25,16 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
+import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -118,7 +119,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     if (schemaFiles.size() != 1) {
-      final List<VirtualFile> userSchemas = ContainerUtil.newArrayList();
+      final List<VirtualFile> userSchemas = new ArrayList<>();
       if (hasConflicts(userSchemas, file)) {
         MyWidgetState state = new MyWidgetState(createMessage(schemaFiles, myService,
                                                                                                      "<br/>", "There are several JSON Schemas mapped to this file:<br/>",
@@ -168,11 +169,13 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (provider != null) {
       final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas();
       final String remoteSource = provider.getRemoteSource();
-      String providerName = preferRemoteSchemas && remoteSource != null && !remoteSource.endsWith("!") ? remoteSource : provider.getPresentableName();
+      boolean useRemoteSource = preferRemoteSchemas && remoteSource != null
+                  && !JsonFileResolver.isSchemaUrl(remoteSource)
+                  && !remoteSource.endsWith("!");
+      String providerName = useRemoteSource ? remoteSource : provider.getPresentableName();
       String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-      String name = preferRemoteSchemas && remoteSource != null && !remoteSource.endsWith("!") ? bar + new JsonSchemaInfo(remoteSource).getDescription()
-          : (shortName.startsWith("JSON schema") ? shortName : (bar + shortName));
-      String kind = !preferRemoteSchemas && (provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema)
+      String name = useRemoteSource ? bar + new JsonSchemaInfo(remoteSource).getDescription() : (shortName.startsWith("JSON schema") ? shortName : (bar + shortName));
+      String kind = !useRemoteSource && (provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema)
                     ? " (bundled)"
                     : "";
       return new MyWidgetState(tooltip + providerName + kind, name, true);

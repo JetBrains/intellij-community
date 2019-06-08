@@ -30,7 +30,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <fileTypeFactory implementation="com.intellij.uiDesigner.FormFileTypeFactory"/>
+    <fileType name="GUI_DESIGNER_FORM" extensions="form"
+              implementationClass="com.intellij.uiDesigner.GuiFormFileType" fieldName="INSTANCE"/>
 
     <search.topHitProvider implementation="com.intellij.uiDesigner.GuiDesignerOptionsTopHitProvider"/>
     <projectConfigurable groupId="editor" instance="com.intellij.uiDesigner.GuiDesignerConfigurable" id="project.propGUI" key="title.gui.designer"
@@ -248,6 +249,7 @@
               use-shortcut-of="$Delete"/>
     </group>
 
+    <!--suppress PluginXmlCapitalization -->
     <action id="GuiDesigner.GenerateMain" class="com.intellij.uiDesigner.actions.GenerateMainAction">
       <add-to-group anchor="after" group-id="GenerateGroup" relative-to-action="GenerateSuperMethodCall"/>
     </action>

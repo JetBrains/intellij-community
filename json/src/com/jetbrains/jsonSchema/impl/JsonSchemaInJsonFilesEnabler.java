@@ -10,4 +10,9 @@ public class JsonSchemaInJsonFilesEnabler implements JsonSchemaEnabler {
   public boolean isEnabledForFile(VirtualFile file) {
     return JsonUtil.isJsonFile(file);
   }
+
+  @Override
+  public boolean canBeSchemaFile(VirtualFile file) {
+    return isEnabledForFile(file);
+  }
 }

@@ -4,12 +4,37 @@ module.exports = {
     devtool: "source-map",
   },
   integrity: true,
-  chainWebpack: config => {
-    config.externals({
-      "@amcharts/amcharts4/core": "am4core",
-      "@amcharts/amcharts4/charts": "am4charts",
-      "@amcharts/amcharts4/themes/animated": "am4themes_animated",
-      "@amcharts/amcharts4/plugins/sunburst": "am4plugins_sunburst",
-    })
+  configureWebpack: config => {
+    if (process.env.NODE_ENV === "production") {
+      config.optimization.splitChunks.cacheGroups.amcharts = {
+        name: "amcharts",
+        test: /[\\/]node_modules[\\/]@amcharts[\\/]/,
+        priority: -5,
+        chunks: "initial"
+      }
+    }
   },
+  chainWebpack: config => {
+    // noinspection SpellCheckingInspection
+    return config
+      .externals({
+          // doesn't work for pdfmake, because chunk name and module name differs (well, it is ok, prefetch works)
+         "pdfmake": "pdfmake",
+         "xlsx": "xlsx",
+       })
+      .plugin("prefetch")
+      .tap(args => {
+        return [
+          {
+            rel: "prefetch",
+            include: "asyncChunks",
+            fileBlacklist: [
+              /\.map$/,
+              /pdfmake\.[^.]+\.js$/,
+              /xlsx\.[^.]+\.js$/,
+            ]
+          }
+        ]
+      })
+  }
 }

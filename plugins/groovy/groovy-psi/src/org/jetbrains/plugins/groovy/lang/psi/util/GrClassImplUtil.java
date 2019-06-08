@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,8 +11,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -127,7 +127,7 @@ public class GrClassImplUtil {
   @NotNull
   public static PsiMethod[] getAllMethods(final GrTypeDefinition grType) {
     return CachedValuesManager.getCachedValue(grType, () -> {
-      List<PsiMethod> list = ContainerUtil.newArrayList();
+      List<PsiMethod> list = new ArrayList<>();
       getAllMethodsInner(grType, list, new HashSet<>());
       return CachedValueProvider.Result
         .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
@@ -557,7 +557,7 @@ public class GrClassImplUtil {
         signatures.add(signature, method);
       }
 
-      Set<MethodSignature> result = ContainerUtil.newHashSet();
+      Set<MethodSignature> result = new java.util.HashSet<>();
       for (MethodSignature signature : signatures.keySet()) {
         if (signatures.valuesForKey(signature) > 1) {
           result.add(signature);

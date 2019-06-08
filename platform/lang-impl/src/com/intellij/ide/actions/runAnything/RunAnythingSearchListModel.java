@@ -1,18 +1,21 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Vector;
 
 @SuppressWarnings("unchecked")
@@ -27,7 +30,7 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
   }
 
   @NotNull
-  protected abstract Collection<RunAnythingGroup> getGroups();
+  protected abstract List<RunAnythingGroup> getGroups();
 
   void clearIndexes() {
     RunAnythingGroup.clearIndexes(getGroups());
@@ -45,6 +48,11 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
   @Nullable
   String getTitle(int titleIndex) {
     return RunAnythingGroup.getTitle(getGroups(), titleIndex);
+  }
+
+  @Nullable
+  RunAnythingGroup findItemGroup(int titleIndex) {
+    return RunAnythingGroup.findItemGroup(getGroups(), titleIndex);
   }
 
   int[] getAllIndexes() {
@@ -86,18 +94,32 @@ public abstract class RunAnythingSearchListModel extends DefaultListModel<Object
   public static class RunAnythingMainListModel extends RunAnythingSearchListModel {
     @NotNull
     @Override
-    public Collection<RunAnythingGroup> getGroups() {
-      Collection<RunAnythingGroup> groups = ContainerUtil.newArrayList(RunAnythingRecentGroup.INSTANCE);
+    public List<RunAnythingGroup> getGroups() {
+      List<RunAnythingGroup> groups = ContainerUtil.newArrayList(RunAnythingRecentGroup.INSTANCE);
       groups.addAll(RunAnythingCompletionGroup.MAIN_GROUPS);
       return groups;
     }
   }
 
   public static class RunAnythingHelpListModel extends RunAnythingSearchListModel {
+    @Nullable private List<RunAnythingGroup> myHelpGroups;
+
     @NotNull
     @Override
-    protected Collection<RunAnythingGroup> getGroups() {
-      return Arrays.asList(RunAnythingHelpGroup.EP_NAME.getExtensions());
+    protected List<RunAnythingGroup> getGroups() {
+      if (myHelpGroups == null) {
+        myHelpGroups = new ArrayList<>();
+        myHelpGroups.addAll(ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.extensions())
+                                                .filter(provider -> provider.getHelpGroupTitle() != null)
+                                                .groupingBy(provider -> provider.getHelpGroupTitle())
+                                                .entrySet(), entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue())));
+
+        List<RunAnythingGroup> epGroups = Arrays.asList(RunAnythingHelpGroup.EP_NAME.getExtensions());
+        if (!epGroups.isEmpty()) {
+          myHelpGroups.addAll(epGroups);
+        }
+      }
+      return myHelpGroups;
     }
   }
 }

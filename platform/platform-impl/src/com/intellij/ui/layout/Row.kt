@@ -21,12 +21,6 @@ abstract class Row : Cell() {
 
   protected abstract val builder: LayoutBuilderImpl
 
-  // backward compatibility - return type should be void
-  fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
-    val label = Label(text, style, fontColor, bold)
-    label(gapLeft = gapLeft)
-  }
-
   /**
    * Specifies the right alignment for the component if the cell is larger than the component plus its gaps.
    */

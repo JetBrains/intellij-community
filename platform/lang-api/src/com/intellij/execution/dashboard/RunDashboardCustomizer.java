@@ -20,11 +20,11 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Map;
 
@@ -52,8 +52,9 @@ public abstract class RunDashboardCustomizer {
     return null;
   }
 
-  public boolean handleDoubleClick(@NotNull MouseEvent event, @NotNull RunDashboardRunConfigurationNode node) {
-    return false;
+  @Nullable
+  public Navigatable getNavigatable(@NotNull RunDashboardRunConfigurationNode node) {
+    return null;
   }
 
   @Nullable

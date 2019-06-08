@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.EmptyIterator;
-import java.util.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.*;
@@ -267,6 +253,9 @@ public class SmartListTest {
     assertThat(l.toArray(new Integer[4])).containsExactly(0, 1, null, null);
 
     l.remove(1);
+
+    checkForEach(l);
+
     assertThat(l.toArray(new Integer[4])).containsExactly(0, null, null, null);
     assertThat(l.toArray()).containsExactly(0);
   }
@@ -337,6 +326,8 @@ public class SmartListTest {
   public void testEqualsListWithSingleNonNullElement() {
     List<Integer> list = new SmartList<>(1);
 
+    checkForEach(list);
+
     assertThat(list).isEqualTo(new SmartList<>(new Integer(1)));
     assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(new Integer(1))));
     assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(new Integer(1))));
@@ -355,6 +346,8 @@ public class SmartListTest {
   public void testEqualsListWithMultipleElements() {
     List<Integer> list = new SmartList<>(1, null, 3);
 
+    checkForEach(list);
+
     assertThat(list).isEqualTo(new SmartList<>(new Integer(1), null, new Integer(3)));
     assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(new Integer(1), null, new Integer(3))));
     assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(new Integer(1), null, new Integer(3))));
@@ -364,5 +357,12 @@ public class SmartListTest {
     assertThat(list).isNotEqualTo(new ArrayList<>(Arrays.asList(new Integer(1), new Integer(2), new Integer(3))));
     assertThat(list).isNotEqualTo(new LinkedList<>(Arrays.asList(new Integer(1), new Integer(2), new Integer(3))));
     assertThat(list).isNotEqualTo(Arrays.asList(new Integer(1), new Integer(2), new Integer(3)));
+  }
+
+  private static <T> void checkForEach(@NotNull List<T> list) {
+    List<T> checkList = new ArrayList<>();
+    //noinspection UseBulkOperation
+    list.forEach(integer -> checkList.add(integer));
+    assertThat(list).isEqualTo(checkList);
   }
 }

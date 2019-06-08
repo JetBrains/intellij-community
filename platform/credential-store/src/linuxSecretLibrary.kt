@@ -34,7 +34,7 @@ internal class SecretCredentialStore(schemeName: String) : CredentialStore {
   companion object {
     // no need to load lazily - if store created, then it will be used
     // and for clients better to get error earlier, in creation place
-    private val library = Native.loadLibrary("secret-1", SecretLibrary::class.java)
+    private val library = Native.load("secret-1", SecretLibrary::class.java)
   }
 
   private val scheme by lazy {
@@ -138,13 +138,9 @@ private interface SecretLibrary : Library {
 }
 
 @Suppress("unused")
+@Structure.FieldOrder("domain", "code", "message")
 internal class GErrorStruct : Structure() {
-  @JvmField
-  var domain = 0
-  @JvmField
-  var code = 0
-  @JvmField
-  var message: String? = null
-
-  override fun getFieldOrder() = listOf("domain", "code", "message")
+  @JvmField var domain = 0
+  @JvmField var code = 0
+  @JvmField var message: String? = null
 }

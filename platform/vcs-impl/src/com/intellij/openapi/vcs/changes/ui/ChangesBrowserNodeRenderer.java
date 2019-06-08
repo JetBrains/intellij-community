@@ -49,7 +49,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
 
-  protected void appendFileName(@Nullable VirtualFile vFile, @NotNull String fileName, Color color) {
+  public void appendFileName(@Nullable VirtualFile vFile, @NotNull String fileName, Color color) {
     ChangesFileNameDecorator decorator = myProject != null && !myProject.isDefault()
                                          ? ChangesFileNameDecorator.getInstance(myProject) : null;
 

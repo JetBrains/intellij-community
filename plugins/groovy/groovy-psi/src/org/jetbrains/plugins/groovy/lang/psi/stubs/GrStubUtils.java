@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq;
 import static com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq;
@@ -40,7 +38,7 @@ public class GrStubUtils {
 
   @NotNull
   public static String[] readStringArray(@NotNull StubInputStream dataStream) throws IOException {
-    return ArrayUtil.toStringArray(readSeq(dataStream, dataStream::readNameString));
+    return ArrayUtilRt.toStringArray(readSeq(dataStream, dataStream::readNameString));
   }
 
   public static void writeNullableString(StubOutputStream dataStream, @Nullable String typeText) throws IOException {
@@ -61,7 +59,7 @@ public class GrStubUtils {
   private static Map<String, String> getAliasMapping(@Nullable PsiFile file) {
     if (!(file instanceof GroovyFile)) return Collections.emptyMap();
     return CachedValuesManager.getCachedValue(file, () -> {
-      Map<String, String> mapping = ContainerUtil.newHashMap();
+      Map<String, String> mapping = new HashMap<>();
       for (GrImportStatement importStatement : ((GroovyFile)file).getImportStatements()) {
         String fqn = importStatement.getImportFqn();
         if (fqn != null && !importStatement.isStatic() && importStatement.isAliasedImport()) {
@@ -97,7 +95,7 @@ public class GrStubUtils {
   }
 
   public static String[] getAnnotationNames(PsiModifierListOwner psi) {
-    List<String> annoNames = ContainerUtil.newArrayList();
+    List<String> annoNames = new ArrayList<>();
     final PsiModifierList modifierList = psi.getModifierList();
     if (modifierList instanceof GrModifierList) {
       for (GrAnnotation annotation : ((GrModifierList)modifierList).getRawAnnotations()) {
@@ -107,7 +105,7 @@ public class GrStubUtils {
         }
       }
     }
-    return ArrayUtil.toStringArray(annoNames);
+    return ArrayUtilRt.toStringArray(annoNames);
   }
 
   public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {

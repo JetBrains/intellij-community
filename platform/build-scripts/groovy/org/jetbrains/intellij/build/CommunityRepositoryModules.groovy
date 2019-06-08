@@ -53,37 +53,23 @@ class CommunityRepositoryModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
-    "intellij.platform.credentialStore",
     "intellij.platform.diff.impl",
-    "intellij.platform.vcs.dvcs.impl",
     "intellij.platform.editor.ex",
-    "intellij.platform.images",
     "intellij.platform.indexing.impl",
-    "intellij.json",
     "intellij.platform.lang.impl",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
     "intellij.platform.projectModel.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
-    "intellij.relaxng",
     "intellij.platform.remoteServers.impl",
     "intellij.platform.scriptDebugger.backend",
     "intellij.platform.scriptDebugger.ui",
     "intellij.platform.smRunner",
-    "intellij.spellchecker",
     "intellij.platform.structureView.impl",
     "intellij.platform.tasks.impl",
     "intellij.platform.testRunner",
-    "intellij.platform.vcs.impl",
-    "intellij.platform.vcs.log.graph.impl",
-    "intellij.platform.vcs.log.impl",
-    "intellij.platform.debugger.impl",
-    "intellij.xml.analysis.impl",
-    "intellij.xml.psi.impl",
-    "intellij.xml.structureView.impl",
-    "intellij.xml.impl",
-    "intellij.platform.configurationStore.impl",
+    "intellij.platform.debugger.impl"
   ]
 
   /**
@@ -158,6 +144,7 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
+      withArtifact("maven-event-listener", "")
       withResource("maven36-server-impl/lib/maven3", "lib/maven3")
       withResource("maven3-server-common/lib", "lib/maven3-server-lib")
       withResource("maven2-server-impl/lib/maven2", "lib/maven2")
@@ -183,6 +170,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
       //the plugin is for internal use for now so it shouldn't be published
       defaultPublishingSpec = PluginPublishingSpec.DO_NOT_UPLOAD_AUTOMATICALLY
@@ -250,7 +238,6 @@ class CommunityRepositoryModules {
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
-      withResource("features/resources", "lib")
     },
   ]
 
@@ -291,7 +278,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
 
-      withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.deployer", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
@@ -335,6 +321,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.lint:lint-api")
       withProjectLibrary("com.android.tools.lint:lint-checks")
       withProjectLibrary("com.android.tools:sdk-common")
+      withProjectLibrary("com.android.tools:dvlib")
       withProjectLibrary("com.android.tools:sdklib")
       withProjectLibrary("com.android.tools:common")
       withProjectLibrary("com.android.tools:repository")

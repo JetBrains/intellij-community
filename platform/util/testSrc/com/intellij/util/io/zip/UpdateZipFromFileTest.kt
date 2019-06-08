@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.zip
 
+import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
 import org.junit.Test
 import java.io.File
@@ -21,13 +22,13 @@ class UpdateZipFromFileTest {
     val zip = JBZipFile(File(dir, "a.zip"))
     zip.use { zip.getOrCreateEntry("b.txt").setDataFromFile(File(dir, "b.txt")) }
 
-    directoryContent {
+    dir.assertMatches(directoryContent {
       zip("a.zip") {
         file("a.txt", text = "a")
         file("b.txt", text = "b")
       }
       file("b.txt", text = "b")
-    }
+    })
   }
 
   @Test
@@ -42,11 +43,11 @@ class UpdateZipFromFileTest {
     val zip = JBZipFile(File(dir, "a.zip"))
     zip.use { zip.getOrCreateEntry("a.txt").setDataFromFile(File(dir, "b.txt")) }
 
-    directoryContent {
+    dir.assertMatches(directoryContent {
       zip("a.zip") {
         file("a.txt", text = "b")
       }
       file("b.txt", text = "b")
-    }
+    })
   }
 }

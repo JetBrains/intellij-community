@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
@@ -12,7 +12,6 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
@@ -34,6 +33,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,7 +58,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private JPanel myTemplatesTreeContainer;
   private ComboBox<String> myShortcutComboBox;
   private JPanel myDescriptionPanel;
-  private final Map<PostfixTemplateProvider, String> myProviderToLanguage = ContainerUtil.newHashMap();
+  private final Map<PostfixTemplateProvider, String> myProviderToLanguage = new HashMap<>();
   private final Alarm myUpdateDescriptionPanelAlarm = new Alarm();
 
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
@@ -67,8 +67,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   public PostfixTemplatesConfigurable() {
     myTemplatesSettings = PostfixTemplatesSettings.getInstance();
-    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
-    for (LanguageExtensionPoint extension : extensions) {
+    for (LanguageExtensionPoint extension : LanguagePostfixTemplate.EP_NAME.getExtensionList()) {
       PostfixTemplateProvider provider = (PostfixTemplateProvider)extension.getInstance();
       Set<PostfixTemplate> templates = PostfixTemplatesUtils.getAvailableTemplates(provider);
       if (!templates.isEmpty()) {

@@ -24,14 +24,14 @@ import java.util.function.Function;
 public class JavaReferringObjectsValue extends JavaValue {
   private static final long MAX_REFERRING = 100;
   private final ReferringObjectsProvider myReferringObjectsProvider;
-  private final Function<XValueNode, XValueNode> myNodeConfigurator;
+  private final Function<? super XValueNode, ? extends XValueNode> myNodeConfigurator;
 
   private JavaReferringObjectsValue(@Nullable JavaValue parent,
                                     @NotNull ValueDescriptorImpl valueDescriptor,
                                     @NotNull EvaluationContextImpl evaluationContext,
                                     @NotNull ReferringObjectsProvider referringObjectsProvider,
                                     NodeManagerImpl nodeManager,
-                                    @Nullable Function<XValueNode, XValueNode> nodeConfigurator) {
+                                    @Nullable Function<? super XValueNode, ? extends XValueNode> nodeConfigurator) {
     super(parent, valueDescriptor, evaluationContext, nodeManager, false);
     myReferringObjectsProvider = referringObjectsProvider;
     myNodeConfigurator = nodeConfigurator;
@@ -39,7 +39,7 @@ public class JavaReferringObjectsValue extends JavaValue {
 
   public JavaReferringObjectsValue(@NotNull JavaValue javaValue,
                                    @NotNull ReferringObjectsProvider referringObjectsProvider,
-                                   @Nullable Function<XValueNode, XValueNode> nodeConfigurator) {
+                                   @Nullable Function<? super XValueNode, ? extends XValueNode> nodeConfigurator) {
     super(null, javaValue.getName(), javaValue.getDescriptor(), javaValue.getEvaluationContext(), javaValue.getNodeManager(), false);
     myReferringObjectsProvider = referringObjectsProvider;
     myNodeConfigurator = nodeConfigurator;

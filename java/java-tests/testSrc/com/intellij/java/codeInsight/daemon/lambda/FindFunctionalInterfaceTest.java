@@ -224,6 +224,17 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertSize(5, FunctionalExpressionSearch.search(findClassAtCaret()).findAll());
   }
 
+  public void testFindLambdaForAllEquivalentSams() {
+    configure();
+
+    PsiFile file = myFixture.addFileToProject("a.java",
+                                              "interface Foo { void foo(); }" +
+                                              "interface Foo { void bar(); } ");
+    PsiClass[] fooClasses = ((PsiJavaFile)file).getClasses();
+    assertOneElement(FunctionalExpressionSearch.search(fooClasses[0]).findAll());
+    assertOneElement(FunctionalExpressionSearch.search(fooClasses[1]).findAll());
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/findUsages/";

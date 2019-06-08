@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.security.CompositeX509TrustManager;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +14,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,7 +55,7 @@ public class SslSocketFactory extends SSLSocketFactory {
   public static TrustManager[] createTrustManagers(@NotNull String caCertPath) throws Exception {
     String string = FileUtilRt.loadFile(new File(caCertPath));
     String[] tokens = string.split(END_CERTIFICATE);
-    List<TrustManager> result = ContainerUtilRt.newArrayListWithCapacity(tokens.length);
+    List<TrustManager> result = new ArrayList<TrustManager>(tokens.length);
     for (String token : tokens) {
       if (token == null || token.trim().length() == 0) continue;
       result.add(new MyTrustManager(readCertificate(stringStream(token + END_CERTIFICATE))));

@@ -18,4 +18,3 @@ deprecated: ql_console.png; to be removed in IDEA 2020 - use DatabaseIcons.Conso
 deprecated: scrollToStackTrace.png; to be removed in IDEA 2020
 deprecated: selectFirstDefect.png; to be removed in IDEA 2020
 deprecated: sourceAtException.png; to be removed in IDEA 2020
-deprecated: withCoverageLayer.png; to be removed in IDEA 2020

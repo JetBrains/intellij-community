@@ -84,7 +84,9 @@ public class CompilerManagerImpl extends CompilerManager {
     }
 
     for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensionList(project)) {
-      addCompiler(new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project), PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
+      addCompiler(
+        new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project),
+                                       PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
     }
     addCompilableFileType(StdFileTypes.JAVA);
 
@@ -156,15 +158,10 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   @NotNull
   public <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass) {
-    return getCompilers(compilerClass, CompilerFilter.ALL);
-  }
-
-  @NotNull
-  private <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
     for (final Compiler item : myCompilers) {
       T concreteCompiler = ObjectUtils.tryCast(item, compilerClass);
-      if (concreteCompiler != null && filter.acceptCompiler(concreteCompiler)) {
+      if (concreteCompiler != null) {
         compilers.add(concreteCompiler);
       }
     }
@@ -204,7 +201,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @NotNull
-  private List<CompileTask> getCompileTasks(@NotNull List<CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
+  private List<CompileTask> getCompileTasks(@NotNull List<? extends CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
     List<CompileTask> beforeTasks = new ArrayList<>(taskList);
     for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
       if (extension.myExecutionPhase == phase) {
@@ -364,12 +361,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public Collection<ClassObject> compileJavaCode(List<String> options,
-                                                 Collection<File> platformCp,
-                                                 Collection<File> classpath,
-                                                 Collection<File> upgradeModulePath,
-                                                 Collection<File> modulePath,
-                                                 Collection<File> sourcePath,
-                                                 Collection<File> files,
+                                                 Collection<? extends File> platformCp,
+                                                 Collection<? extends File> classpath,
+                                                 Collection<? extends File> upgradeModulePath,
+                                                 Collection<? extends File> modulePath,
+                                                 Collection<? extends File> sourcePath,
+                                                 Collection<? extends File> files,
                                                  File outputDir) throws IOException, CompilationException {
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 

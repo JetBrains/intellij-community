@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +76,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     myEnablePartialChangelists.setSelected(myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS);
 
     Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
-    myIgnoredFiles.setListData(ArrayUtil.toStringArray(conflicts));
+    myIgnoredFiles.setListData(ArrayUtilRt.toStringArray(conflicts));
     myClearButton.setEnabled(!conflicts.isEmpty());
   }
 

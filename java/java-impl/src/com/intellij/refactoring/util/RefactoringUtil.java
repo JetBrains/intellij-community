@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -381,7 +381,8 @@ public class RefactoringUtil {
       if (infos.length > 0) {
         type = infos[0].getType();
         if (type instanceof PsiPrimitiveType) {
-          type = ((PsiPrimitiveType)type).getBoxedType(expr);
+          type = infos.length > 1 && !(infos[1].getType() instanceof PsiPrimitiveType) ? infos[1].getType()
+                                                                                       : ((PsiPrimitiveType)type).getBoxedType(expr);
         }
       }
       else {
@@ -1209,7 +1210,7 @@ public class RefactoringUtil {
     throws IncorrectOperationException {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
-      if (VfsUtil.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
+      if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
         return directory;
       }
     }
@@ -1251,7 +1252,7 @@ public class RefactoringUtil {
   public static PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
-      if (VfsUtil.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
+      if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
         return directory;
       }
     }

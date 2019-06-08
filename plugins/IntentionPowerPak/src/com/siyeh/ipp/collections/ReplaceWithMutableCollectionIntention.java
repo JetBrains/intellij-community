@@ -2,8 +2,8 @@
 package com.siyeh.ipp.collections;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
@@ -36,15 +36,9 @@ public class ReplaceWithMutableCollectionIntention extends Intention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(PsiElement element) {
-        PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
-        PsiElement parent =
-          PsiTreeUtil.getParentOfType(call, PsiLambdaExpression.class, PsiConditionalExpression.class, PsiStatement.class);
-        if (parent == null || parent instanceof PsiConditionalExpression) return false;
-        return ImmutableCollectionModelUtils.createModel(call) != null;
-      }
+    return element -> {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
+      return call != null && ImmutableCollectionModelUtils.createModel(call) != null;
     };
   }
 }

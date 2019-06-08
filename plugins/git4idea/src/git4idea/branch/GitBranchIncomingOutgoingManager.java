@@ -12,10 +12,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -39,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.commands.GitAuthenticationMode.*;
+import static git4idea.config.GitIncomingCheckStrategy.*;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
 import static java.util.Collections.singletonList;
@@ -48,6 +52,9 @@ import static one.util.streamex.StreamEx.of;
 public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener {
 
   private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
+  private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd";
+
+  private static final boolean HAS_EXTERNAL_SSH_AGENT = hasExternalSSHAgent();
 
   @NotNull private final Object LOCK = new Object();
   @NotNull private final Set<GitRepository> myDirtyReposPull = new HashSet<>();
@@ -79,14 +86,30 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
     myQueue = new MergingUpdateQueue("GitBranchIncomingOutgoingManager", 1000, true, null,
                                      myProject, null, Alarm.ThreadToUse.POOLED_THREAD);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        stopScheduling();
+      }
+    });
+  }
+
+  private static boolean hasExternalSSHAgent() {
+    String ssh_auth_sock = EnvironmentUtil.getValue("SSH_AUTH_SOCK");
+    if (ssh_auth_sock == null) return false;
+    return !StringUtil.contains(ssh_auth_sock, MAC_DEFAULT_LAUNCH);
   }
 
   public boolean hasIncomingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
-    return getBranchesToPull(repository).contains(new GitLocalBranch(localBranchName));
+    return shouldCheckIncoming() && getBranchesToPull(repository).contains(new GitLocalBranch(localBranchName));
   }
 
   public boolean hasOutgoingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
     return getBranchesToPush(repository).contains(new GitLocalBranch(localBranchName));
+  }
+
+  public boolean shouldCheckIncoming() {
+    return Registry.is("git.update.incoming.outgoing.info") && myGitSettings.getIncomingCheckStrategy() != Never;
   }
 
   @NotNull
@@ -102,7 +125,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(myProject);
   }
 
-  public void startScheduling() {
+  public void activate() {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (myConnection == null) {
@@ -110,42 +133,34 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
         myConnection.subscribe(GitRepository.GIT_REPO_CHANGE, this);
         myConnection.subscribe(GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS, this);
       }
-      forceUpdateBranches(false);
-      if (myPeriodicalUpdater == null) {
-        int updateTime = myGitSettings.getBranchInfoUpdateTime();
-        myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchesToPull(), updateTime, updateTime,
-                                                                                 TimeUnit.MINUTES);
-        Disposer.register(myProject, new Disposable() {
-          @Override
-          public void dispose() {
-            stopScheduling();
-          }
-        });
-      }
+      updateBranchesToPush();
+      updateIncomingScheduling();
     });
   }
 
+  public void updateIncomingScheduling() {
+    if (myPeriodicalUpdater == null && shouldCheckIncoming()) {
+      updateBranchesToPull(false);
+      int timeout = Registry.intValue("git.update.incoming.info.time");
+      myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchesToPull(false), timeout, timeout,
+                                                                               TimeUnit.MINUTES);
+    }
+    else if (myPeriodicalUpdater != null && !shouldCheckIncoming()) {
+      stopScheduling();
+    }
+  }
+
   @CalledInAwt
-  public void stopScheduling() {
+  private void stopScheduling() {
     if (myPeriodicalUpdater != null) {
       myPeriodicalUpdater.cancel(true);
       myPeriodicalUpdater = null;
     }
-    if (myConnection != null) {
-      myConnection.disconnect();
-      myConnection = null;
-    }
   }
 
   @CalledInAny
-  public void forceUpdateBranches(boolean useForceAuthentication) {
-    synchronized (LOCK) {
-      if (useForceAuthentication) myUseForceAuthentication = true;
-      List<GitRepository> repositories = myRepositoryManager.getRepositories();
-      myDirtyReposPull.addAll(repositories);
-      myDirtyReposPush.addAll(repositories);
-    }
-    scheduleUpdate();
+  public void forceUpdateBranchesToPull() {
+   updateBranchesToPull(true);
 
     new Task.Backgroundable(myProject, "Update Branches Info...") {
       @Override
@@ -169,7 +184,6 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void scheduleUpdate() {
-    if (!myGitSettings.shouldUpdateBranchInfo()) return;
     myQueue.queue(Update.create("update", () -> {
       List<GitRepository> toPull;
       List<GitRepository> toPush;
@@ -206,17 +220,25 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return getBranches(repository, myLocalBranchesToPush);
   }
 
-  @CalledInBackground
-  private void updateBranchesToPull() {
+  private void updateBranchesToPull(boolean useForceAuthentication) {
+    if (!shouldCheckIncoming()) return;
     synchronized (LOCK) {
+      if (useForceAuthentication) myUseForceAuthentication = true;
       myDirtyReposPull.addAll(myRepositoryManager.getRepositories());
+    }
+    scheduleUpdate();
+  }
+
+  private void updateBranchesToPush() {
+    synchronized (LOCK) {
+      myDirtyReposPush.addAll(myRepositoryManager.getRepositories());
     }
     scheduleUpdate();
   }
 
   @NotNull
   private Map<GitLocalBranch, Hash> calculateBranchesToPull(@NotNull GitRepository repository, boolean useForceAuthentication) {
-    Map<GitLocalBranch, Hash> result = newHashMap();
+    Map<GitLocalBranch, Hash> result = new HashMap<>();
     groupTrackInfoByRemotes(repository).entrySet()
       .forEach(entry -> result.putAll(calcBranchesToPullForRemote(repository, entry.getKey(), entry.getValue(),
                                                                   getAuthenticationMode(repository, entry.getKey(), useForceAuthentication))));
@@ -228,7 +250,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                                                 @NotNull GitRemote gitRemote,
                                                                 @NotNull Collection<GitBranchTrackInfo> trackInfoList,
                                                                 GitAuthenticationMode mode) {
-    Map<GitLocalBranch, Hash> result = newHashMap();
+    Map<GitLocalBranch, Hash> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
       lsRemote(repository, gitRemote, map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()), mode);
@@ -265,15 +287,23 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return NONE;
   }
 
+  private boolean shouldAvoidUserInteraction(@NotNull GitRemote remote) {
+    return myGitSettings.getIncomingCheckStrategy() == Auto && HAS_EXTERNAL_SSH_AGENT && containsSSHUrl(remote);
+  }
+
+  private static boolean containsSSHUrl(@NotNull GitRemote remote) {
+    return exists(remote.getUrls(), url -> !url.startsWith(URLUtil.HTTP_PROTOCOL));
+  }
+
   @NotNull
   private Map<String, Hash> lsRemote(@NotNull GitRepository repository,
                                      @NotNull GitRemote remote,
                                      @NotNull List<String> branchRefNames,
                                      @NotNull GitAuthenticationMode authenticationMode) {
-    Map<String, Hash> result = newHashMap();
+    Map<String, Hash> result = new HashMap<>();
 
     if (!supportsIncomingOutgoing()) return result;
-    if (authenticationMode == NONE) {
+    if (authenticationMode == NONE || (authenticationMode == SILENT && shouldAvoidUserInteraction(remote))) {
       myErrorMap.putValue(repository, remote);
       return result;
     }
@@ -299,8 +329,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   private GitLineHandler createLsRemoteHandler(@NotNull GitRepository repository,
                                                @NotNull GitRemote remote,
                                                @NotNull List<String> params, @NotNull GitAuthenticationMode authenticationMode) {
-    GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE,
-                                          authenticationMode == NONE ? singletonList("credential.helper=") : emptyList());
+    GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE);
     h.setIgnoreAuthenticationMode(authenticationMode);
     h.addParameters(params);
     h.setUrls(remote.getUrls());
@@ -308,6 +337,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private boolean shouldUpdateBranchesToPull(@NotNull GitRepository repository) {
+    if (!shouldCheckIncoming()) return false;
     Map<GitLocalBranch, Hash> cachedBranchesToPull = myLocalBranchesToPull.get(repository);
     return cachedBranchesToPull == null ||
            exists(repository.getBranchTrackInfos(),
@@ -317,7 +347,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @NotNull
   private Map<GitLocalBranch, Hash> calculateBranchesToPush(@NotNull GitRepository gitRepository) {
-    Map<GitLocalBranch, Hash> branchesToPush = newHashMap();
+    Map<GitLocalBranch, Hash> branchesToPush = new HashMap<>();
     GitBranchesCollection branchesCollection = gitRepository.getBranches();
     for (GitLocalBranch branch : branchesCollection.getLocalBranches()) {
       GitPushTarget pushTarget = GitPushSupport.getPushTargetIfExist(gitRepository, branch);
@@ -380,6 +410,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @Override
   public void authenticationSucceeded(@NotNull GitRepository repository, @NotNull GitRemote remote) {
+    if(!shouldCheckIncoming()) return;
     Collection<GitRemote> remotes = myErrorMap.get(repository);
     myAuthSuccessMap.putValue(repository, remote);
     if (remotes.contains(remote)) {
@@ -389,7 +420,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
           calcBranchesToPullForRemote(repository, remote, trackInfoByRemotes.get(remote), SILENT);
         myLocalBranchesToPull.compute(repository, (r, branchHashMap) -> {
           if (branchHashMap == null) {
-            return newHashMap(newBranchMap);
+            return new HashMap<>(newBranchMap);
           }
           else {
             branchHashMap.putAll(newBranchMap);

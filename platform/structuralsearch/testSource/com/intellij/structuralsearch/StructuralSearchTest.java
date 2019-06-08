@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -18,23 +18,22 @@ import java.util.List;
 @SuppressWarnings("ALL")
 public class StructuralSearchTest extends StructuralSearchTestCase {
   @Override
-  protected int findMatchesCount(@Language("JAVA") String in, String pattern, FileType fileType) {
+  protected int findMatchesCount(@Language("JAVA") String in, String pattern, LanguageFileType fileType) {
     return super.findMatchesCount(in, pattern, fileType);
   }
 
   @Override
   protected List<MatchResult> findMatches(@Language("JAVA") String in,
                                           String pattern,
-                                          FileType patternFileType,
+                                          LanguageFileType patternFileType,
                                           com.intellij.lang.Language patternLanguage,
-                                          FileType sourceFileType,
-                                          String sourceExtension,
+                                          LanguageFileType sourceFileType,
                                           boolean physicalSourceFile) {
-    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, sourceExtension, physicalSourceFile);
+    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, physicalSourceFile);
   }
 
   @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, FileType patternFileType) {
+  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, LanguageFileType patternFileType) {
     return super.findMatches(in, pattern, patternFileType);
   }
 
@@ -693,6 +692,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s143, "class '_a { '_d{0,0}:[ script( \"__context__.constructor\" ) ]('_b '_c+); }"));
     assertEquals("parameterless constructor search 2", 2,
                  findMatchesCount(s143, "'_Constructor() { '_st*; }"));
+    assertEquals("method & constructor search", 5,
+                 findMatchesCount(s143, "'_T? '_identifier('_PT '_p*);"));
   }
 
   public void testScriptSearch() {
@@ -794,7 +795,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     assertEquals("Variables initialized to null even when not present in search results", 1,
                  findMatchesCount(source3, "[script(\"args == null\")]new String('_args*)"));
-
+    String source4 = "class X {{\n" +
+                     "  // comment\n" +
+                     "  new /*!*/ Object() {};\n" +
+                     "}}";
+    assertEquals("expected variable of type anonymous class", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]new 'XX()"));
+    assertEquals("expected variable of type anonymous class 2", 1,
+                 findMatchesCount(source4, "[script (\"XX instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
+    assertEquals("expected variable of type anonymous class 3", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiExpressionStatement\")]new Object() {};"));
+    assertEquals("expected variable of type anonymous class 4", 1,
+                 findMatchesCount(source4, "[script (\"__context__ instanceof com.intellij.psi.PsiAnonymousClass\")]class 'XX {}"));
   }
 
   public void testCheckScriptValidation() {
@@ -2282,6 +2294,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}}";
     String pattern3 = "3 * 8 + 2 + 2";
     assertEquals(1, findMatchesCount(source2, pattern3));
+
+    String source3 = "class C {" +
+                     "  static int foo() {\n" +
+                     "    return (Integer.parseInt(\"3\"));\n" +
+                     "  }" +
+                     "}";
+    String pattern4 = "Integer.parseInt('_x)";
+    assertEquals(1, findMatchesCount(source3, pattern4));
   }
 
   public void testFindSelfAssignment() {
@@ -2372,6 +2392,35 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     String pattern8 = "String '_x;";
     assertEquals("avoid IncorrectOperationException", 0, findMatchesCount(source3, pattern8));
+
+    String source4 = "class Main2 {\n" +
+                     "    public static void main(String[] args) {\n" +
+                     "        //need to match this\n" +
+                     "        JSTestUtils.testES6(\"myProject\", () -> {\n" +
+                     "            doTest1();\n" +
+                     "            doTest2();\n" +
+                     "        });\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest1() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    private static void doTest2() {\n" +
+                     "    }\n" +
+                     "\n" +
+                     "    static class JSTestUtils {\n" +
+                     "        private JSTestUtils() {\n" +
+                     "        }\n" +
+                     "\n" +
+                     "        static void testES6(Object project, Runnable runnable) {\n" +
+                     "            runnable.run();\n" +
+                     "        }\n" +
+                     "    }\n" +
+                     "}";
+    String pattern9 = "JSTestUtils.testES6('_expression, () -> {\n" +
+                      "    '_statements*;\n" +
+                      "})";
+    assertEquals("match lambda body correctly", 1, findMatchesCount(source4, pattern9));
   }
 
   public void testFindDefaultMethods() {
@@ -2567,6 +2616,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern3 = "'_st;" +
                       "// tokamak";
     assertEquals("find statement followed by comment", 1, findMatchesCount(source3, pattern3));
+
+    String source4 = "/*";
+    String pattern4 = "//'_comment:[regex( .* )]";
+    assertEquals("no error on broken code", 1, findMatchesCount(source4, pattern4));
   }
 
   public void testCaseInsensitive() {
@@ -2964,6 +3017,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(3, findMatchesCount(source6, "'x:[exprtype( List )]"));
     assertEquals(1, findMatchesCount(source6, "'x:[exprtype( List<List<String>> )]"));
     assertEquals(2, findMatchesCount(source6, "'x:[exprtype( List<Garbage> )]"));
+
+    String source7 = "class X {{" +
+                     "  System.out.println(1.0 * 2 + 3 * 4);\n" +
+                     "}}";
+    assertEquals(1, findMatchesCount(source7, "[exprtype( int )]'_a * '_b"));
   }
 
   public void testSearchReferences() {
@@ -3197,17 +3255,32 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   public void testForStatement() {
     String in = "class X {{" +
                 "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
+                "  for (int i = 0; i < 10; i++) {}" +
                 "  " +
                 "  for (;;) {}" +
                 "  for (int i = 0; ;) {}" +
                 "  for (int i = 0; true; ) {}" +
                 "}}";
-    assertEquals("find all for loops", 4, findMatchesCount(in, "for(;;) '_st;"));
+    assertEquals("find all for loops", 7, findMatchesCount(in, "for(;;) '_st;"));
     assertEquals("find loops without initializers", 1, findMatchesCount(in, "for('_init{0,0};;) '_st;"));
     assertEquals("find loops without condition", 2, findMatchesCount(in, "for(;'_cond{0,0};) '_st;"));
     assertEquals("find loops without update", 3, findMatchesCount(in, "for(;;'_update{0,0}) '_st;"));
-    assertEquals("find all for loops 2", 4, findMatchesCount(in, "for('_init?;;) '_st;"));
-    assertEquals("find all for loops 3", 4, findMatchesCount(in, "for(;;'_update?) '_st;"));
-    assertEquals("find all for loops 4", 4, findMatchesCount(in, "for(;'_cond?;) '_st;"));
+    assertEquals("find all for loops 2", 7, findMatchesCount(in, "for('_init?;;) '_st;"));
+    assertEquals("find all for loops 3", 7, findMatchesCount(in, "for(;;'_update?) '_st;"));
+    assertEquals("find all for loops 4", 7, findMatchesCount(in, "for(;'_cond?;) '_st;"));
+    assertEquals("find loops with initializer, condition and update", 4, findMatchesCount(in, "for ('_init; '_cond; '_update) '_st;"));
+
+    String in2 = "class X {{" +
+                 "  int i = 0, j = 0;" +
+                 "  for (i=1, j=1;; i++, j++) {}" +
+                 "  for (;; i++, j++) {}" +
+                 "  for (i=1;;i++){}" +
+                 "}}";
+    assertEquals("find for loops with 2 initializer expressions", 1, findMatchesCount(in2, "for ('_init{2,2};;) '_st;"));
+    assertEquals("find for loops with 2 initializer expressions 2", 1, findMatchesCount(in2, "for ('_init1, '_init2;;) '_st;"));
+    assertEquals("find for loops with 2 update expressions", 2, findMatchesCount(in2, "for (;;'_update{2,2}) '_st;"));
+    assertEquals("find for loops with 2 update expressions 2", 2, findMatchesCount(in2, "for (;;'_update1, '_update2) '_st;"));
   }
 }

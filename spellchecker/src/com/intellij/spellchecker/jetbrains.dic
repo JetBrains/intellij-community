@@ -43,6 +43,7 @@ autorelease
 autorotate
 azul
 backend
+backport
 backref
 backtrace
 barcode
@@ -71,6 +72,7 @@ btree
 buffered
 buffering
 bugprone
+bugzilla
 buildable
 builtin
 bzip
@@ -79,6 +81,7 @@ calc
 callee
 callouts
 camelcase
+cancellability
 cancelable
 cancellable
 capath
@@ -169,6 +172,7 @@ decompiles
 decompiling
 dedent
 deduplicate
+deduplication
 deferrable
 deferrer
 deque
@@ -317,6 +321,7 @@ initializer
 initrans
 injectable
 inline
+inlining
 innodb
 inode
 inode's
@@ -459,6 +464,7 @@ mongodb
 monoid
 monoidal
 monoids
+monorepo
 monospaced
 msql
 mssql
@@ -712,6 +718,8 @@ sfinae
 sftp
 shader
 sharding
+shellcheck
+shfmt
 sigabrt
 sigaio
 sigalrm
@@ -884,6 +892,7 @@ ungrouping
 unhandled
 uninstall
 uniques
+unmarshal
 unmerged
 unpivot
 unprotect
@@ -935,6 +944,7 @@ wildcards
 wildfly
 wordwrap
 workflow
+workgroup
 writeln
 wsdl
 xcode

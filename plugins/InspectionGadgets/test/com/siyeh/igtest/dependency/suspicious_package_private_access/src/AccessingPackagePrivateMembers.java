@@ -38,7 +38,7 @@ public class AccessingPackagePrivateMembers {
     <warning descr="Method StaticMembers.importedMethod() is package-private, but declared in a different module 'dep'">importedMethod</warning>();
 
     new InnerClasses.<warning descr="Class xxx.InnerClasses.PackagePrivateInnerClass is package-private, but declared in a different module 'dep'">PackagePrivateInnerClass</warning>();
-    new InnerClasses.<warning descr="Constructor PackagePrivateInnerClassWithConstructor.PackagePrivateInnerClassWithConstructor() is package-private, but declared in a different module 'dep'">PackagePrivateInnerClassWithConstructor</warning>();
+    new InnerClasses.<warning descr="Class xxx.InnerClasses.PackagePrivateInnerClassWithConstructor is package-private, but declared in a different module 'dep'"><warning descr="Constructor PackagePrivateInnerClassWithConstructor.PackagePrivateInnerClassWithConstructor() is package-private, but declared in a different module 'dep'">PackagePrivateInnerClassWithConstructor</warning></warning>();
     new InnerClasses.<warning descr="Constructor ClassWithPackagePrivateConstructor.ClassWithPackagePrivateConstructor() is package-private, but declared in a different module 'dep'">ClassWithPackagePrivateConstructor</warning>();
   }
 }

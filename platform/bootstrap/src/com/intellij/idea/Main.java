@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,9 +13,11 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Properties;
 
-public class Main {
+public final class Main {
   public static final int NO_GRAPHICS = 1;
   public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
@@ -28,10 +31,14 @@ public class Main {
   public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;
+  // External cmdline and IDE activation
+  public static final int ACTIVATE_WRONG_TOKEN_CODE = 13;
+  public static final int ACTIVATE_LISTENER_NOT_INITIALIZED = 14;
+  public static final int ACTIVATE_RESPONSE_TIMEOUT = 15;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final String[] NO_ARGS = {};
+  private static final String[] NO_ARGS = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions");
   private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
@@ -43,6 +50,8 @@ public class Main {
   private Main() { }
 
   public static void main(String[] args) {
+    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
+    startupTimings.put("startup begin", System.nanoTime());
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }
@@ -59,7 +68,7 @@ public class Main {
     }
 
     try {
-      Bootstrap.main(args, Main.class.getName() + "Impl", "start");
+      Bootstrap.main(args, Main.class.getName() + "Impl", "start", startupTimings);
     }
     catch (Throwable t) {
       showMessage("Start Failed", t);
@@ -77,8 +86,8 @@ public class Main {
 
   public static void setFlags(@NotNull String[] args) {
     isHeadless = isHeadless(args);
-    isCommandLine = isCommandLine(args);
-    if (isHeadless()) {
+    isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
+    if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
   }
@@ -94,10 +103,6 @@ public class Main {
 
     String firstArg = args[0];
     return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
-  }
-
-  private static boolean isCommandLine(String[] args) {
-    return isHeadless(args) || args.length > 0 && GUI_COMMANDS.contains(args[0]);
   }
 
   private static boolean checkGraphics() {
@@ -132,6 +137,14 @@ public class Main {
     }
 
     t.printStackTrace(new PrintWriter(message));
+
+    Properties sp = System.getProperties();
+    String jre = sp.getProperty("java.runtime.version", sp.getProperty("java.version", "(unknown)"));
+    String vendor = sp.getProperty("java.vendor", "(unknown vendor)");
+    String arch = sp.getProperty("os.arch", "(unknown arch)");
+    String home = sp.getProperty("java.home", "(unknown java.home)");
+    message.append("\n-----\nJRE ").append(jre).append(' ').append(arch).append(" by ").append(vendor).append('\n').append(home);
+
     showMessage(title, message.toString(), true);
   }
 

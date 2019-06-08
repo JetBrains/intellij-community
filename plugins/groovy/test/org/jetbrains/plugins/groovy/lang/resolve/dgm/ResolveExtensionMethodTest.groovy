@@ -6,7 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase
@@ -16,7 +16,7 @@ import static org.jetbrains.plugins.groovy.dgm.DGMUtil.ORG_CODEHAUS_GROOVY_RUNTI
 @CompileStatic
 class ResolveExtensionMethodTest extends GroovyResolveTestCase {
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   private void addExtension(String directory = "services", @Language("Groovy") String text) {
     def factory = PsiFileFactory.getInstance(project)

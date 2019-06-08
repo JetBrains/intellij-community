@@ -2,13 +2,13 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -18,16 +18,16 @@ import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -36,10 +36,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
-  static {
-    if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
-  }
-
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
@@ -220,7 +216,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
-    return loadTextAndClose(new InputStreamReader(stream));
+    return loadTextAndClose(new InputStreamReader(stream, StandardCharsets.UTF_8));
   }
 
   @NotNull
@@ -319,8 +315,9 @@ public class FileUtil extends FileUtilRt {
     return new FixedFuture<>(null);
   }
 
-  private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
-    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
+  @NotNull
+  private static Future<Void> startDeletionThread(@NotNull File... tempFiles) {
+    RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
       final Thread currentThread = Thread.currentThread();
       final int priority = currentThread.getPriority();
       currentThread.setPriority(Thread.MIN_PRIORITY);
@@ -334,17 +331,7 @@ public class FileUtil extends FileUtilRt {
       }
     }, null);
 
-    try {
-      // attempt to execute on pooled thread
-      final Class<?> aClass = Class.forName("com.intellij.openapi.application.ApplicationManager");
-      final Method getApplicationMethod = aClass.getMethod("getApplication");
-      final Object application = getApplicationMethod.invoke(null);
-      final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
-      executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
-    }
-    catch (Exception ignored) {
-      new Thread(deleteFilesTask, "File deletion thread").start();
-    }
+    AppExecutorUtil.getAppExecutorService().execute(deleteFilesTask);
     return deleteFilesTask;
   }
 
@@ -352,7 +339,7 @@ public class FileUtil extends FileUtilRt {
   private static File renameToTempFileOrDelete(@NotNull File file) {
     String tempDir = getTempDirectory();
     boolean isSameDrive = true;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       String tempDirDrive = tempDir.substring(0, 2);
       String fileDrive = file.getAbsolutePath().substring(0, 2);
       isSameDrive = tempDirDrive.equalsIgnoreCase(fileDrive);
@@ -382,26 +369,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (NIOReflect.IS_AVAILABLE) {
-      return deleteRecursivelyNIO(file);
-    }
-    return deleteRecursively(file);
+    return FileUtilRt.delete(file);
   }
 
-  private static boolean deleteRecursively(@NotNull File file) {
-    FileAttributes attributes = FileSystemUtil.getAttributes(file);
-    if (attributes == null) return true;
-
-    if (attributes.isDirectory() && !attributes.isSymLink()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          if (!deleteRecursively(child)) return false;
-        }
-      }
-    }
-
-    return deleteFile(file);
+  public static void delete(@NotNull Path path) throws IOException {
+    FileUtilRt.deleteRecursivelyNIO(path);
   }
 
   public static boolean createParentDirs(@NotNull File file) {
@@ -447,7 +419,7 @@ public class FileUtil extends FileUtilRt {
       }
     }
 
-    if (SystemInfo.isUnix && fromFile.canExecute()) {
+    if (SystemInfoRt.isUnix && fromFile.canExecute()) {
       FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
     }
   }
@@ -511,7 +483,7 @@ public class FileUtil extends FileUtilRt {
    * @throws IOException in case of any IO troubles
    */
   public static void copyDirContent(@NotNull File fromDir, @NotNull File toDir) throws IOException {
-    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY);
+    File[] children = ObjectUtils.notNull(fromDir.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY);
     for (File child : children) {
       copyFileOrDir(child, new File(toDir, child.getName()));
     }
@@ -551,7 +523,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String getNameWithoutExtension(@NotNull File file) {
-    return getNameWithoutExtension(file.getName());
+    return FileUtilRt.getNameWithoutExtension(file.getName());
   }
 
   @NotNull
@@ -680,7 +652,7 @@ public class FileUtil extends FileUtilRt {
   public static String normalize(@NotNull String path) {
     int start = 0;
     boolean separator = false;
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (path.startsWith("//")) {
         start = 2;
         separator = true;
@@ -714,7 +686,7 @@ public class FileUtil extends FileUtilRt {
     final StringBuilder result = new StringBuilder(path.length());
     result.append(path, 0, prefixEnd);
     int start = prefixEnd;
-    if (start==0 && SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+    if (start==0 && SystemInfoRt.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
       start = 2;
       result.append("//");
       separator = true;
@@ -820,15 +792,14 @@ public class FileUtil extends FileUtilRt {
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
   @Deprecated
-  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {
-    return FileUtilRt.getExtension(fileName).toLowerCase();
+    return StringUtil.toLowerCase(FileUtilRt.getExtension(fileName));
   }
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfo.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
+    return SystemInfoRt.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {
@@ -1089,13 +1060,15 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  @NotNull
-  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
-    return FILE_TRAVERSER.withRoot(root);
+  private static class Lazy {
+    private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
+      (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
   }
 
-  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
-    (Function<File, Iterable<File>>)file -> file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.empty());
+  @NotNull
+  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
+    return Lazy.FILE_TRAVERSER.withRoot(root);
+  }
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
@@ -1236,7 +1209,7 @@ public class FileUtil extends FileUtilRt {
   public static String getLocationRelativeToUserHome(@Nullable String path, boolean unixOnly) {
     if (path == null) return null;
 
-    if (SystemInfo.isUnix || !unixOnly) {
+    if (SystemInfoRt.isUnix || !unixOnly) {
       File projectDir = new File(path);
       File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {
@@ -1257,7 +1230,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File[] notNullize(@Nullable File[] files) {
-    return notNullize(files, ArrayUtil.EMPTY_FILE_ARRAY);
+    return notNullize(files, ArrayUtilRt.EMPTY_FILE_ARRAY);
   }
 
   @NotNull
@@ -1348,10 +1321,27 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.generateRandomTemporaryPath();
   }
 
+  public static void setExecutable(@NotNull File file) throws IOException {
+    PosixFileAttributeView view = Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class);
+    if (view != null) {
+      Set<PosixFilePermission> permissions = view.readAttributes().permissions();
+      if (permissions.add(PosixFilePermission.OWNER_EXECUTE)) {
+        view.setPermissions(permissions);
+      }
+    }
+  }
+
+  /** @deprecated use {@link FileUtil#setExecutable(File)} or {@link File#setExecutable} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     FileUtilRt.setExecutableAttribute(path, executableFlag);
   }
 
+  /** @deprecated not very useful; use {@link Files#setLastModifiedTime} or {@link File#setLastModified} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @SuppressWarnings("RedundantThrows")
   public static void setLastModified(@NotNull File file, long timeStamp) throws IOException {
     if (!file.setLastModified(timeStamp)) {
       LOG.warn(file.getPath());
@@ -1445,20 +1435,6 @@ public class FileUtil extends FileUtilRt {
     return list;
   }
 
-  public static boolean isJarOrZip(@NotNull File file) {
-    return isJarOrZip(file, true);
-  }
-
-  public static boolean isJarOrZip(@NotNull File file, boolean isCheckIsDirectory) {
-    if (isCheckIsDirectory && file.isDirectory()) {
-      return false;
-    }
-
-    // do not use getName to avoid extra String creation (File.getName() calls substring)
-    final String path = file.getPath();
-    return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
-  }
-
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
     if (!processor.process(root)) {
       return false;
@@ -1474,25 +1450,6 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
-  }
-
-  /**
-   * Like {@link Properties#load(Reader)}, but preserves the order of key/value pairs.
-   */
-  @NotNull
-  public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
-    final Map<String, String> map = ContainerUtil.newLinkedHashMap();
-
-    new Properties() {
-      @Override
-      public synchronized Object put(Object key, Object value) {
-        map.put(String.valueOf(key), String.valueOf(value));
-        //noinspection UseOfPropertiesAsHashtable
-        return super.put(key, value);
-      }
-    }.load(reader);
-
-    return map;
   }
 
   public static boolean isRootPath(@NotNull String path) {
@@ -1511,8 +1468,8 @@ public class FileUtil extends FileUtilRt {
       throw new FileNotFoundException(path);
     }
 
-    FileAttributes upper = FileSystemUtil.getAttributes(path.toUpperCase(Locale.ENGLISH));
-    FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
+    FileAttributes upper = FileSystemUtil.getAttributes(StringUtil.toUpperCase(path));
+    FileAttributes lower = FileSystemUtil.getAttributes(StringUtil.toLowerCase(path));
     return !(attributes.equals(upper) && attributes.equals(lower));
   }
 

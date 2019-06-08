@@ -29,7 +29,7 @@ interface ResolveTestBase {
       "No // RESULT tag in file")
 
     val refText = refComment.text.substringAfter("REF:")
-    val parent = refComment.uastParent
+    val parent = refComment.uastParent!!
     val matchingElement = parent.findElementByText<UResolvable>(refText)
     val resolveResult = matchingElement.resolve() ?: throw IllegalArgumentException("Unresolved reference")
     val resultText = resolveResult.javaClass.simpleName + (if (resolveResult is PsiNamedElement) ":${resolveResult.name}" else "")

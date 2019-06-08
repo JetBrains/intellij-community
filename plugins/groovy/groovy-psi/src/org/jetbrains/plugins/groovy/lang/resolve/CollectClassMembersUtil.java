@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -25,9 +25,9 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 public class CollectClassMembersUtil {
 
   private static class ClassMembers {
-    private final Map<String, CandidateInfo> fields = ContainerUtil.newLinkedHashMap();
-    private final Map<String, List<CandidateInfo>> methods = ContainerUtil.newLinkedHashMap();
-    private final Map<String, CandidateInfo> innerClasses = ContainerUtil.newLinkedHashMap();
+    private final Map<String, CandidateInfo> fields = new LinkedHashMap<>();
+    private final Map<String, List<CandidateInfo>> methods = new LinkedHashMap<>();
+    private final Map<String, CandidateInfo> innerClasses = new LinkedHashMap<>();
   }
 
   private static final Key<CachedValue<ClassMembers>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
@@ -51,7 +51,7 @@ public class CollectClassMembersUtil {
   }
 
   private static boolean checkClass(@NotNull PsiClass aClass) {
-    Set<PsiClass> visited = ContainerUtil.newHashSet();
+    Set<PsiClass> visited = new HashSet<>();
     Queue<PsiClass> queue = ContainerUtil.newLinkedList(aClass);
 
     while (!queue.isEmpty()) {

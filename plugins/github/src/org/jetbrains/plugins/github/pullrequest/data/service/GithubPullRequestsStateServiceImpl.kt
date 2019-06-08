@@ -37,7 +37,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun close(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
-    progressManager.run(object : Task.Backgroundable(project, "Closing Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Closing Pull Request...", true) {
       override fun run(indicator: ProgressIndicator) {
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
@@ -62,7 +62,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
   override fun reopen(pullRequest: Long) {
     if (!busyStateTracker.acquire(pullRequest)) return
 
-    progressManager.run(object : Task.Backgroundable(project, "Reopening Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Reopening Pull Request...", true) {
       override fun run(indicator: ProgressIndicator) {
         requestExecutor.execute(indicator,
                                 GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.user, repoPath.repository, pullRequest,
@@ -88,7 +88,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     if (!busyStateTracker.acquire(pullRequest)) return
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
-    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
       private lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
@@ -130,7 +130,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     if (!busyStateTracker.acquire(pullRequest)) return
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
-    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
       lateinit var details: GithubPullRequestDetailed
 
       override fun run(indicator: ProgressIndicator) {
@@ -162,7 +162,7 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
     if (!busyStateTracker.acquire(pullRequest)) return
 
     val dataProvider = dataLoader.getDataProvider(pullRequest)
-    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request", true) {
+    progressManager.run(object : Task.Backgroundable(project, "Merging Pull Request...", true) {
       lateinit var details: GithubPullRequestDetailed
       lateinit var commits: List<GithubCommit>
 

@@ -30,15 +30,18 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
- * Library entry for module ("in-place") libraries
- *  @author dsl
+ * Library entry for module ("in-place") libraries.
+ * This class isn't supposed to be used from plugins. Use {@link OrderEntryUtil#isModuleLibraryOrderEntry(OrderEntry)} to check whether an
+ * entry corresponds to a module-level library.
  */
+@ApiStatus.Internal
 public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   @NotNull

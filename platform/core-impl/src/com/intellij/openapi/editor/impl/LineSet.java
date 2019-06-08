@@ -134,9 +134,9 @@ public class LineSet{
     int[] starts = new int[newLineCount];
     byte[] flags = new byte[newLineCount];
 
-    for (int i = 0; i < startLine; i++) {
-      starts[i] = myStarts[i];
-      flags[i] = myFlags[i];
+    if (startLine > 0) {
+      System.arraycopy(myStarts, 0, starts, 0, startLine);
+      System.arraycopy(myFlags, 0, flags, 0, startLine);
     }
 
     int toIndex = startLine;
@@ -146,11 +146,7 @@ public class LineSet{
       toIndex++;
     }
 
-    for (int from = 1; from < patch.myStarts.length; from++) {
-      starts[toIndex] = patch.myStarts[from] + startOffset;
-      flags[toIndex] = patch.myFlags[from];
-      toIndex++;
-    }
+    toIndex = patch.shiftData(starts, flags, 1, toIndex, patch.myStarts.length - 1, startOffset);
 
     if (endOffset < myLength) {
       if (addEndLine) {
@@ -162,13 +158,19 @@ public class LineSet{
       }
     }
 
-    for (int i = endLine + 1; i < myStarts.length; i++) {
-      starts[toIndex] = myStarts[i] + lengthShift;
-      flags[toIndex] = myFlags[i];
-      toIndex++;
-    }
+    shiftData(starts, flags, endLine + 1, toIndex, myStarts.length - (endLine + 1), lengthShift);
 
     return new LineSet(starts, flags, myLength + lengthShift);
+  }
+
+  private int shiftData(int[] dstStarts, byte[] dstFlags, int srcOffset, int dstOffset, int count, int offsetDelta) {
+    if (count < 0) return dstOffset;
+
+    System.arraycopy(myFlags, srcOffset, dstFlags, dstOffset, count);
+    for (int i = 0; i < count; i++) {
+      dstStarts[dstOffset + i] = myStarts[srcOffset + i] + offsetDelta;
+    }
+    return dstOffset + count;
   }
 
   public int findLineIndex(int offset) {

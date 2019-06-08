@@ -1,16 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.ex.temp;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +26,12 @@ import java.util.Set;
  * @author max
  */
 public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem {
+  private static final String TEMP_PROTOCOL = "temp";
   private final FSItem myRoot = new FSDir(null, "/");
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static TempFileSystem getInstance() {
-    return ApplicationManager.getApplication().getComponent(TempFileSystem.class);
+    return (TempFileSystem)VirtualFileManager.getInstance().getFileSystem(TEMP_PROTOCOL);
   }
 
   @NotNull
@@ -141,7 +142,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   @Override
   @NotNull
   public String getProtocol() {
-    return "temp";
+    return TEMP_PROTOCOL;
   }
 
   @Override
@@ -272,7 +273,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
 
     @NotNull
     public String[] list() {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     @Override
@@ -313,7 +314,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     @NotNull
     @Override
     public String[] list() {
-      return ArrayUtil.toStringArray(myChildren.keySet());
+      return ArrayUtilRt.toStringArray(myChildren.keySet());
     }
   }
 

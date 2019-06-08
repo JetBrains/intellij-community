@@ -27,6 +27,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
@@ -177,7 +178,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     add(panel, BorderLayout.CENTER);
   }
 
-  private void applyVariables(final List<Variable> variables) {
+  private void applyVariables(final List<? extends Variable> variables) {
     myTemplate.removeAllParsed();
     for (Variable variable : variables) {
       myTemplate.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(),
@@ -208,7 +209,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
   private JPanel createTemplateOptionsPanel() {
     JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.options.title"), true));
+    panel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("dialog.edit.template.options.title")));
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -346,7 +347,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         myContextPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, pair.second)
           .setRequestFocus(true)
           .setResizable(true).createPopup();
-        myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - JBUI.scale(4))));
+        myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - JBUIScale.scale(4))));
         myContextPopup.addListener(new JBPopupAdapter() {
           @Override
           public void onClosed(@NotNull LightweightWindowEvent event) {
@@ -434,7 +435,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   @NotNull
-  private static List<TemplateContextType> sortContexts(Collection<TemplateContextType> contextTypes) {
+  private static List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
     return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
   }
 

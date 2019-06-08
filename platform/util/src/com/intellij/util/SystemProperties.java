@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,7 +39,7 @@ public class SystemProperties {
   /** @deprecated use {@link SystemInfo#OS_NAME} (to be removed in IDEA 2020) */
   @Deprecated
   public static String getOsName() {
-    return SystemInfo.OS_NAME;
+    return SystemInfoRt.OS_NAME;
   }
 
   /** @deprecated use {@link SystemInfo#JAVA_VERSION} (to be removed in IDEA 2020) */
@@ -69,6 +70,18 @@ public class SystemProperties {
       catch (NumberFormatException ignored) { }
     }
 
+    return defaultValue;
+  }
+
+  public static float getFloatProperty(@NotNull String key, float defaultValue) {
+    String value = System.getProperty(key);
+    if (value != null) {
+      try {
+        return Float.parseFloat(value);
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
     return defaultValue;
   }
 

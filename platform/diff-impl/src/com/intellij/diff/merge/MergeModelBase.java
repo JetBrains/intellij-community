@@ -77,7 +77,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     return myEndLines.get(index);
   }
 
-  public void setChanges(@NotNull List<LineRange> changes) {
+  public void setChanges(@NotNull List<? extends LineRange> changes) {
     myStartLines.clear(changes.size());
     myEndLines.clear(changes.size());
 

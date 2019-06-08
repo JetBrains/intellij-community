@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -85,11 +85,11 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     Collection<Collection<BuildTarget<?>>> components = builder.getComponents();
     myTargetChunks = new ArrayList<>(components.size());
     for (Collection<BuildTarget<?>> component : components) {
-      myTargetChunks.add(new BuildTargetChunk(ContainerUtil.newLinkedHashSet(component)));
+      myTargetChunks.add(new BuildTargetChunk(new LinkedHashSet<>(component)));
     }
   }
 
-  private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<BuildTarget<?>> dependencies,
+  private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<? extends BuildTarget<?>> dependencies,
                                                                                         Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies) {
     ArrayList<BuildTarget<?>> realDependencies = new ArrayList<>(dependencies.size());
     Set<BuildTarget<?>> processed = new HashSet<>(dependencies);
@@ -125,7 +125,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     return result;
   }
 
-  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<BuildTarget<?>> result, CompileContext context) {
+  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<? super BuildTarget<?>> result, CompileContext context) {
     if (result.add(target)) {
       for (BuildTarget<?> dep : getDependencies(target,context)) {
         collectDependenciesRecursively(dep, result, context);

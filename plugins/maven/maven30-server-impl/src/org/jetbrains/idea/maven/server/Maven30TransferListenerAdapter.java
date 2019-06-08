@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ExceptionUtilRt;
 import org.sonatype.aether.transfer.TransferCancelledException;
 import org.sonatype.aether.transfer.TransferEvent;
 import org.sonatype.aether.transfer.TransferListener;
@@ -55,6 +56,7 @@ public class Maven30TransferListenerAdapter implements TransferListener {
     checkCanceled();
 
     try {
+      myIndicator.startedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, formatResourceName(event));
       myIndicator.setIndeterminate(true);
       myIndicator.setText2(formatResourceName(event));
     }
@@ -69,7 +71,7 @@ public class Maven30TransferListenerAdapter implements TransferListener {
   }
 
   @Override
-  public void transferProgressed(TransferEvent event) throws TransferCancelledException {
+  public void transferProgressed(TransferEvent event) {
     checkCanceled();
 
     TransferResource r = event.getResource();
@@ -99,10 +101,11 @@ public class Maven30TransferListenerAdapter implements TransferListener {
   }
 
   @Override
-  public void transferCorrupted(TransferEvent event) throws TransferCancelledException {
+  public void transferCorrupted(TransferEvent event) {
     try {
       myIndicator.setText2("Checksum failed: " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
+      myIndicator.failedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, formatResourceName(event), "Checksum failed", null);
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
@@ -114,6 +117,9 @@ public class Maven30TransferListenerAdapter implements TransferListener {
     try {
       myIndicator.setText2("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
+      myIndicator.completedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, formatResourceName(event));
+
+      Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
@@ -125,6 +131,7 @@ public class Maven30TransferListenerAdapter implements TransferListener {
     try {
       if (myIndicator.isCanceled()) {
         myIndicator.setText2("Canceling...");
+        myIndicator.failedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, formatResourceName(event), "Cancelled", null);
         return; // Don't throw exception here.
       }
     }
@@ -135,6 +142,16 @@ public class Maven30TransferListenerAdapter implements TransferListener {
     try {
       myIndicator.setText2("Failed to download " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
+      if (event.getException() != null) {
+        String stackTrace = ExceptionUtilRt.getThrowableText(event.getException(), "com.intellij.");
+        myIndicator.failedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, formatResourceName(event),
+                                   event.getException().getMessage(), stackTrace);
+      }
+      else {
+        myIndicator
+          .failedDownload(MavenServerProgressIndicator.ResolveType.DEPENDENCY, formatResourceName(event), "Failed to download", null);
+      }
+
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);

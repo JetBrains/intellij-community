@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -13,6 +12,8 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public class InvalidWriteAccessSearcher {
     if (dfaResult == null) return null;
 
 
-    List<ReadWriteVariableInstruction> result = ContainerUtil.newArrayList();
+    List<ReadWriteVariableInstruction> result = new ArrayList<>();
 
     Set<VariableDescriptor> descriptors = variables.stream()
       .map(VariableDescriptorFactory::createDescriptor)
@@ -88,8 +89,8 @@ public class InvalidWriteAccessSearcher {
   }
 
   private static class MyData {
-    private final Set<VariableDescriptor> myInitialized = ContainerUtil.newHashSet();
-    private final Set<VariableDescriptor> myOverInitialized = ContainerUtil.newHashSet();
+    private final Set<VariableDescriptor> myInitialized = new HashSet<>();
+    private final Set<VariableDescriptor> myOverInitialized = new HashSet<>();
 
     MyData(List<? extends MyData> ins) {
       for (MyData data : ins) {

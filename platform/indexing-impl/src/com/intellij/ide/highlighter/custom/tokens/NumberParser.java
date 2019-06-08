@@ -31,7 +31,7 @@ public final class NumberParser extends TokenParser {
     if (!myIgnoreCase) {
       mySuffices = suffices;
     } else {
-      mySuffices = suffices.toLowerCase().concat(StringUtil.toUpperCase(suffices));
+      mySuffices = StringUtil.toLowerCase(suffices).concat(StringUtil.toUpperCase(suffices));
     }
   }
 

@@ -47,7 +47,7 @@ void usage(int num, boolean someBoolean, List<String> args){
     expandTemplate(myFixture.getEditor())
     myFixture.checkResult '''
 void usage(int num, boolean someBoolean, List<String> args){
-    println "num = [$num], someBoolean = [$someBoolean], args = [$args]"
+    println "num = $num, someBoolean = $someBoolean, args = $args"
 }
 '''
   }

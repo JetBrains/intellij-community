@@ -66,9 +66,6 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   String getUrl();
 
-  @NotNull
-  HelpSetPath[] getHelpSets();
-
   String getVendorLogoPath();
 
   boolean getUseIdeaClassLoader();

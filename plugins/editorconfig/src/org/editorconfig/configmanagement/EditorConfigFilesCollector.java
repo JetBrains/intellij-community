@@ -2,16 +2,16 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.core.DefaultParserCallback;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class EditorConfigFilesCollector extends DefaultParserCallback {
-  private final List<String> myEditorConfigFilePaths = ContainerUtil.newArrayList();
+  private final List<String> myEditorConfigFilePaths = new ArrayList<>();
 
   @Override
   public boolean processEditorConfig(File configFile) {

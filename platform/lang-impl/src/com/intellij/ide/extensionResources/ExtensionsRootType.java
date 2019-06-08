@@ -8,6 +8,7 @@ import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -19,6 +20,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +30,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p> Extensions root type provide a common interface for plugins to access resources that are modifiable by the user. </p>
@@ -191,18 +193,25 @@ public class ExtensionsRootType extends RootType {
   private static List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
     String resourcesPath = EXTENSIONS_PATH + "/" + path;
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    ClassLoader pluginClassLoader = plugin != null ? plugin.getPluginClassLoader() : null;
-    Set<URL> urls = plugin == null ? null : ContainerUtil.newLinkedHashSet(ContainerUtil.toList(pluginClassLoader.getResources(resourcesPath)));
-    if (urls == null) return ContainerUtil.emptyList();
+    if (plugin == null) return ContainerUtil.emptyList();
+    ClassLoader pluginClassLoader = plugin.getPluginClassLoader();
+    final Enumeration<URL> resources = pluginClassLoader.getResources(resourcesPath);
+    if (resources == null) return ContainerUtil.emptyList();
+    if (plugin.getUseIdeaClassLoader()) return ContainerUtil.toList(resources);
 
-    PluginId corePluginId = PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID);
-    IdeaPluginDescriptor corePlugin = ObjectUtils.notNull(PluginManager.getPlugin(corePluginId));
-    ClassLoader coreClassLoader = corePlugin.getPluginClassLoader();
-    if (coreClassLoader != pluginClassLoader && !plugin.getUseIdeaClassLoader() && !pluginId.equals(corePluginId)) {
-      urls.removeAll(ContainerUtil.toList(coreClassLoader.getResources(resourcesPath)));
+    final Set<URL> urls = new LinkedHashSet<>(ContainerUtil.toList(resources));
+    // exclude parent classloader resources from list
+    final List<ClassLoader> dependentPluginClassLoaders = StreamEx.of(plugin.getDependentPluginIds())
+      .map(PluginManager::getPlugin)
+      .nonNull()
+      .map(PluginDescriptor::getPluginClassLoader)
+      .without(pluginClassLoader)
+      .collect(Collectors.toList());
+
+    for (ClassLoader classLoader : dependentPluginClassLoaders) {
+      urls.removeAll(ContainerUtil.toList(classLoader.getResources(resourcesPath)));
     }
-
-    return ContainerUtil.newArrayList(urls);
+    return new ArrayList<>(urls);
   }
 
   private static void extractResources(@NotNull VirtualFile from, @NotNull File to) throws IOException {

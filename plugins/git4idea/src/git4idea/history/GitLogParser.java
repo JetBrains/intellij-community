@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,10 +15,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -88,7 +85,7 @@ public class GitLogParser<R extends GitLogRecord> {
     myPretty = "--pretty=format:" + makeFormatFromOptions(options);
 
     myOptionsParser = new OptionsParser(options);
-    myPathsParser = new PathsParser(nameStatusOption);
+    myPathsParser = new MyPathsParser(nameStatusOption);
   }
 
   public GitLogParser(@NotNull Project project,
@@ -113,7 +110,7 @@ public class GitLogParser<R extends GitLogRecord> {
 
   @NotNull
   public List<R> parse(@NotNull CharSequence output) {
-    List<R> result = ContainerUtil.newArrayList();
+    List<R> result = new ArrayList<>();
 
     List<CharSequence> lines = StringUtil.split(output, "\n", true, false);
     for (CharSequence line : lines) {
@@ -358,11 +355,13 @@ public class GitLogParser<R extends GitLogRecord> {
     }
   }
 
-  private class PathsParser {
+  public static class PathsParser<R extends GitLogRecord> {
     @NotNull private final NameStatus myNameStatusOption;
+    @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
 
-    PathsParser(@NotNull NameStatus nameStatusOption) {
+    PathsParser(@NotNull NameStatus nameStatusOption, @NotNull GitLogRecordBuilder<R> recordBuilder) {
       myNameStatusOption = nameStatusOption;
+      myRecordBuilder = recordBuilder;
     }
 
     public void parseLine(@NotNull CharSequence line) {
@@ -377,7 +376,7 @@ public class GitLogParser<R extends GitLogRecord> {
         if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
         if (match.size() < 2) {
-          LOG.error("Could not parse status line [" + line + "] for record " + myOptionsParser.myResult.getResult());
+          LOG.error(getErrorText(line));
         }
         else {
           if (match.size() == 2) {
@@ -390,6 +389,11 @@ public class GitLogParser<R extends GitLogRecord> {
       }
     }
 
+    @NotNull
+    protected String getErrorText(@NotNull CharSequence line) {
+      return "Could not parse status line [" + line + "]";
+    }
+
     private void addPath(@NotNull String type, @NotNull String firstPath, @Nullable String secondPath) {
       myRecordBuilder.addPath(GitChangesParser.getChangeType(GitChangeType.fromString(type)), tryUnescapePath(firstPath),
                               tryUnescapePath(secondPath));
@@ -397,7 +401,7 @@ public class GitLogParser<R extends GitLogRecord> {
 
     @Nullable
     @Contract("!null -> !null")
-    private String tryUnescapePath(@Nullable String path) {
+    private static String tryUnescapePath(@Nullable String path) {
       if (path == null) return null;
       try {
         return GitUtil.unescapePath(path);
@@ -409,7 +413,7 @@ public class GitLogParser<R extends GitLogRecord> {
     }
 
     @NotNull
-    private List<String> parsePathsLine(@NotNull CharSequence line) {
+    private static List<String> parsePathsLine(@NotNull CharSequence line) {
       int offset = 0;
 
       PartialResult result = new PartialResult();
@@ -433,7 +437,7 @@ public class GitLogParser<R extends GitLogRecord> {
       return result.getResult();
     }
 
-    private boolean atLineEnd(@NotNull CharSequence line, int offset) {
+    private static boolean atLineEnd(@NotNull CharSequence line, int offset) {
       while (offset < line.length() && (line.charAt(offset) == '\t')) offset++;
       if (offset == line.length() || (line.charAt(offset) == '\n' || line.charAt(offset) == '\r')) return true;
       return false;
@@ -444,8 +448,20 @@ public class GitLogParser<R extends GitLogRecord> {
     }
   }
 
+  private class MyPathsParser extends PathsParser<R> {
+    MyPathsParser(@NotNull NameStatus nameStatusOption) {
+      super(nameStatusOption, myRecordBuilder);
+    }
+
+    @NotNull
+    @Override
+    protected String getErrorText(@NotNull CharSequence line) {
+      return super.getErrorText(line) + " for record " + myOptionsParser.myResult.getResult();
+    }
+  }
+
   private static class PartialResult {
-    @NotNull private List<String> myResult = ContainerUtil.newArrayList();
+    @NotNull private List<String> myResult = new ArrayList<>();
     @NotNull private final StringBuilder myCurrentItem = new StringBuilder();
 
     public void append(char c) {
@@ -464,7 +480,7 @@ public class GitLogParser<R extends GitLogRecord> {
 
     public void clear() {
       myCurrentItem.setLength(0);
-      myResult = ContainerUtil.newArrayList();
+      myResult = new ArrayList<>();
     }
 
     public boolean isEmpty() {

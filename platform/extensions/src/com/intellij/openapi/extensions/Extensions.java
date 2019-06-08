@@ -5,8 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -193,31 +191,6 @@ public final class Extensions {
     @Override
     public String toString() {
       return "AreaClassConfiguration{myClassName='" + myClassName + '\'' + ", myParentClassName='" + myParentClassName + "'}";
-    }
-  }
-
-  public static boolean isComponentSuitableForOs(@Nullable String os) {
-    if (StringUtil.isEmpty(os)) {
-      return true;
-    }
-
-    if (os.equals(OS.mac.name())) {
-      return SystemInfoRt.isMac;
-    }
-    else if (os.equals(OS.linux.name())) {
-      return SystemInfoRt.isLinux;
-    }
-    else if (os.equals(OS.windows.name())) {
-      return SystemInfoRt.isWindows;
-    }
-    else if (os.equals(OS.unix.name())) {
-      return SystemInfoRt.isUnix;
-    }
-    else if (os.equals(OS.freebsd.name())) {
-      return SystemInfoRt.isFreeBSD;
-    }
-    else {
-      throw new IllegalArgumentException("Unknown OS '" + os + "'");
     }
   }
 

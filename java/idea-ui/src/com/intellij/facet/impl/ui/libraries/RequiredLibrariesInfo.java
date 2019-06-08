@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class RequiredLibrariesInfo {
   }
 
   @Nullable
-  public RequiredClassesNotFoundInfo checkLibraries(List<VirtualFile> libraryFiles) {
+  public RequiredClassesNotFoundInfo checkLibraries(List<? extends VirtualFile> libraryFiles) {
     List<LibraryInfo> infos = new ArrayList<>();
     List<String> classes = new ArrayList<>();
 
@@ -67,7 +67,7 @@ public class RequiredLibrariesInfo {
     if (infos.isEmpty()) {
       return null;
     }
-    return new RequiredClassesNotFoundInfo(ArrayUtil.toStringArray(classes), infos.toArray(LibraryInfo.EMPTY_ARRAY));
+    return new RequiredClassesNotFoundInfo(ArrayUtilRt.toStringArray(classes), infos.toArray(LibraryInfo.EMPTY_ARRAY));
   }
 
   @Nullable

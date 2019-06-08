@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,7 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
@@ -43,7 +41,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   @Override
   @NotNull
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -181,7 +179,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     highlightNext(markedCallee, parameters, indexToNamedParameter, parameterToHintIndex, hintFlags, flattenedArguments.isEmpty(),
                   lastParamIndex);
 
-    String[] hints = ArrayUtil.toStringArray(hintsList);
+    String[] hints = ArrayUtilRt.toStringArray(hintsList);
     if (context instanceof ParameterInfoUIContextEx) {
       final ParameterInfoUIContextEx pic = (ParameterInfoUIContextEx)context;
       EnumSet[] flags = new EnumSet[hintFlags.size()];
@@ -365,6 +363,13 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         @Override
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
           visitNonPsiParameter(PyCallableParameterImpl.psi(param), first, last);
+        }
+
+        @Override
+        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
+          hintsList.add(last ? "/" : "/, ");
+          currentParameterIndex[0]++;
         }
 
         @Override

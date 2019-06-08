@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -46,15 +32,15 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +73,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
   private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
-    Map<String, String> map = ContainerUtil.newTroveMap();
+    Map<String, String> map = new THashMap<>();
     for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
       if (configurable instanceof SearchableConfigurable) {
         map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
@@ -121,7 +107,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
-    if (myProject != null && !myProject.isDisposed() && !DumbService.isDumb(myProject) &&    
+    if (myProject != null && !myProject.isDisposed() && !DumbService.isDumb(myProject) &&
         myEditor != null && !myEditor.isDisposed()) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
       ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
@@ -281,14 +267,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
     if (icon == null) return new JLabel(layeredIcon);
-    
+
     int width = icon.getIconWidth();
     int height = icon.getIconHeight();
     int emptyIconWidth = EMPTY_ICON.getIconWidth();
     int emptyIconHeight = EMPTY_ICON.getIconHeight();
     if (width <= emptyIconWidth && height <= emptyIconHeight) {
-      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1, 
-                          (emptyIconWidth - width) / 2, 
+      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1,
+                          (emptyIconWidth - width) / 2,
                           (emptyIconHeight - height) / 2);
     }
 
@@ -320,20 +306,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Override
   @NotNull
   public String[] getNames(boolean checkBoxState) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
   @NotNull
   public Object[] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   @NotNull
   public String getGroupName(@NotNull OptionDescription description) {
     String name = description.getGroupName();
     if (name == null) name = myConfigurablesNames.getValue().get(description.getConfigurableId());
-    String settings = SystemInfo.isMac ? "Preferences" : "Settings";
+    String settings = SystemInfoRt.isMac ? "Preferences" : "Settings";
     if (name == null || name.equals(description.getHit())) return settings;
     return settings + " > " + name;
   }
@@ -388,7 +374,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Override
   @NotNull
   public String[] getSeparators() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Nullable
@@ -441,7 +427,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @NotNull
   public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
-    TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
+    TreeSet<Object> objects = new TreeSet<>(this);
     objects.addAll(elements);
     return objects;
   }
@@ -543,7 +529,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @Nullable
-    private String getPathName(@NotNull List<ActionGroup> path) {
+    private String getPathName(@NotNull List<? extends ActionGroup> path) {
       String name = "";
       for (ActionGroup group : path) {
         name = appendGroupName(name, group, group.getTemplatePresentation());
@@ -552,7 +538,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @Nullable
-    private String getActualPathName(@NotNull List<ActionGroup> path, @NotNull DataContext context) {
+    private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull DataContext context) {
       String name = "";
       for (ActionGroup group : path) {
         Presentation presentation = updateActionBeforeShow(group, context).getPresentation();
@@ -671,7 +657,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), groupName)) return null;
       return groupName;
     }
-    
+
     public boolean isGroupAction() {
       return myAction instanceof ActionGroup;
     }
@@ -724,7 +710,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       }
       nameComponent.setBackground(bg);
       panel.add(nameComponent, BorderLayout.CENTER);
-      
+
       if (matchedValue instanceof String) { //...
         if (showIcon) {
           panel.add(new JBLabel(EMPTY_ICON), BorderLayout.WEST);
@@ -752,7 +738,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         if (disabled) {
           groupFg = UIUtil.getLabelDisabledForeground();
         }
-        
+
         if (showIcon) {
           Icon icon = presentation.getIcon();
           panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
@@ -880,7 +866,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull
     private static String getName(@Nullable String text, @Nullable String groupName, boolean toggle) {
       return toggle && StringUtil.isNotEmpty(groupName)
-             ? StringUtil.isNotEmpty(text) ? groupName + ": " + text 
+             ? StringUtil.isNotEmpty(text) ? groupName + ": " + text
                                            : groupName : StringUtil.notNullize(text);
     }
 
@@ -891,7 +877,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                                                  boolean selected) {
       SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);
       SimpleTextAttributes highlighted = new SimpleTextAttributes(null, fg, null, STYLE_SEARCH_MATCH);
-      List<TextRange> fragments = ContainerUtil.newArrayList();
+      List<TextRange> fragments = new ArrayList<>();
       if (selected) {
         int matchStart = StringUtil.indexOfIgnoreCase(name, pattern, 0);
         if (matchStart >= 0) {

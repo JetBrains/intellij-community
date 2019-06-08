@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenCompilerTask;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -53,7 +52,6 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     final MavenTasksManager tasksManager = getTasksManager(context);
     List<MavenCompilerTask> tasks = getTasks(context);

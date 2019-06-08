@@ -13,49 +13,29 @@
     <component>
       <interface-class>com.intellij.ide.DataManager</interface-class>
       <implementation-class>com.intellij.ide.impl.DataManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.idea.CommandLineApplication$MyDataManagerImpl</headless-implementation-class>
+      <headless-implementation-class>com.intellij.ide.impl.HeadlessDataManager</headless-implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.actionSystem.ActionManager</interface-class>
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.keymap.KeymapManager</interface-class>
-      <implementation-class>com.intellij.openapi.keymap.impl.KeymapManagerImpl</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.ide.IdeTooltipManager</implementation-class>
     </component>
-
     <component>
       <implementation-class>com.intellij.openapi.actionSystem.impl.MouseGestureManager</implementation-class>
     </component>
-
     <component>
       <interface-class>com.intellij.ide.SaveAndSyncHandler</interface-class>
       <implementation-class>com.intellij.configurationStore.SaveAndSyncHandlerImpl</implementation-class>
       <headless-implementation-class>com.intellij.configurationStore.HeadlessSaveAndSyncHandler</headless-implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.ide.ScreenReaderSupportHandler</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.ide.FrameStateManager</interface-class>
       <implementation-class>com.intellij.ide.FrameStateManagerImpl</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
-      <headless-implementation-class/>
-    </component>
   </application-components>
+
   <project-components>
     <component>
       <interface-class>com.intellij.openapi.wm.ToolWindowManager</interface-class>
@@ -67,13 +47,10 @@
       <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.wm.impl.WindowDressing</implementation-class>
-      <headless-implementation-class/>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.openapi.wm.impl.WindowDressing"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
   </extensions>
 </idea-plugin>

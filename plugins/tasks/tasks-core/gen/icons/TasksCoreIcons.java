@@ -1,6 +1,7 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
@@ -10,11 +11,11 @@ import javax.swing.*;
  */
 public final class TasksCoreIcons {
   private static Icon load(String path) {
-    return IconLoader.getIcon(path, TasksCoreIcons.class);
+    return IconManager.getInstance().getIcon(path, TasksCoreIcons.class);
   }
 
   private static Icon load(String path, Class<?> clazz) {
-    return IconLoader.getIcon(path, clazz);
+    return IconManager.getInstance().getIcon(path, clazz);
   }
 
   /** 16x16 */ public static final Icon Asana = load("/icons/asana.svg");

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -10,7 +10,7 @@ class GroovyGotoDeclarationTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + "gotoDeclaration/"
 
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 
   private void doTest() {
     def name = getTestName()

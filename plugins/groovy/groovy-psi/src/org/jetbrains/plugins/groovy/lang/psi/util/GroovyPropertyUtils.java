@@ -396,7 +396,7 @@ public class GroovyPropertyUtils {
 
   public static String capitalize(String s) {
     if (s.isEmpty()) return s;
-    if (s.length() == 1) return s.toUpperCase();
+    if (s.length() == 1) return StringUtil.toUpperCase(s);
     if (Character.isUpperCase(s.charAt(1))) return s;
     final char[] chars = s.toCharArray();
     chars[0] = Character.toUpperCase(chars[0]);

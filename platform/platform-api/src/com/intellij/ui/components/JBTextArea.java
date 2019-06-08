@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -68,7 +68,7 @@ public class JBTextArea extends JTextArea {
 
   @Override
   public void scrollRectToVisible(Rectangle r) {
-    JViewport viewport = UIUtil.getParentOfType(JViewport.class, this);
+    JViewport viewport = ComponentUtil.getParentOfType((Class<? extends JViewport>)JViewport.class, (Component)this);
     if (viewport != null) {
       r = SwingUtilities.convertRectangle(this, r, viewport);
       viewport.scrollRectToVisible(r);

@@ -53,7 +53,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
 
   @Override
   @Nullable
-  protected ModuleDescriptor merge(final List<ModuleDescriptor> entries) {
+  protected ModuleDescriptor merge(final List<? extends ModuleDescriptor> entries) {
     final ModuleInsight insight = getInsight();
     ModuleDescriptor mainDescr = null;
     for (ModuleDescriptor entry : entries) {
@@ -68,7 +68,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
-  protected ModuleDescriptor split(final ModuleDescriptor entry, final String newEntryName, final Collection<File> extractedData) {
+  protected ModuleDescriptor split(final ModuleDescriptor entry, final String newEntryName, final Collection<? extends File> extractedData) {
     return getInsight().splitModule(entry, newEntryName, extractedData);
   }
 

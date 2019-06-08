@@ -245,7 +245,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         addThreads(getDebugProcess().getVirtualMachineProxy().allThreads(), THREADS_SUSPEND_AND_NAME_COMPARATOR, true);
       }
 
-      boolean addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<JavaExecutionStack> comparator, boolean last) {
+      boolean addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<? super JavaExecutionStack> comparator, boolean last) {
         List<JavaExecutionStack> res = new ArrayList<>();
         for (ThreadReferenceProxyImpl thread : threads) {
           if (container.isObsolete()) {

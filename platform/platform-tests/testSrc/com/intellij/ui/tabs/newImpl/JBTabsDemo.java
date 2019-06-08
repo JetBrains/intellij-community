@@ -65,7 +65,7 @@ public class JBTabsDemo {
     bb.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(final ItemEvent e) {
-        tabs.setUseBufferedPaint(bb.isSelected());
+       // tabs.setUseBufferedPaint(bb.isSelected());
       }
     });
     south.add(bb);

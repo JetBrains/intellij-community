@@ -32,7 +32,7 @@ public class EnableOptimizeImportsOnTheFlyTest extends LightQuickFixParameterize
   }
 
   @Override
-  protected void doAction(@NotNull final ActionHint actionHint, final String testFullPath, final String testName) {
+  protected void doAction(@NotNull final ActionHint actionHint, @NotNull final String testFullPath, @NotNull final String testName) {
     CodeInsightWorkspaceSettings.getInstance(ourProject).setOptimizeImportsOnTheFly(false, getTestRootDisposable());
     IntentionAction action = findActionAndCheck(actionHint, testFullPath);
     if (action != null) {

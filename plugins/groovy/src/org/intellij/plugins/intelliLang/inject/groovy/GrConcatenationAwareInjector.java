@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,7 +58,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     new InjectionProcessor(Configuration.getProjectInstance(project), support, operands) {
       @Override
       protected void processInjection(Language language,
-                                      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                      List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                       boolean settingsAvailable,
                                       boolean unparsable) {
         InjectorUtils.registerInjection(language, list, file, registrar);
@@ -316,7 +317,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
       if (language == null) return;
 
       String languageID = language.getID();
-      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = ContainerUtil.newArrayList();
+      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<>();
 
       boolean unparsable = false;
 
@@ -351,7 +352,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     }
 
     protected void processInjection(Language language,
-                                    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                    List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                     boolean settingsAvailable, boolean unparsable) {
     }
   }

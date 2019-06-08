@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -29,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -52,7 +54,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
   private final Map<String, EffectType> myEffectsMap;
   {
-    Map<String, EffectType> map = ContainerUtil.newLinkedHashMap();
+    Map<String, EffectType> map = new LinkedHashMap<>();
     map.put(ApplicationBundle.message("combobox.effect.underscored"), EffectType.LINE_UNDERSCORE);
     map.put(ApplicationBundle.message("combobox.effect.boldunderscored"), EffectType.BOLD_LINE_UNDERSCORE);
     map.put(ApplicationBundle.message("combobox.effect.underwaved"), EffectType.WAVE_UNDERSCORE);
@@ -76,7 +78,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     add(myPanel, BorderLayout.CENTER);
 
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
-    myEffectsCombo.setModel(new CollectionComboBoxModel<>(ContainerUtil.newArrayList(myEffectsMap.keySet())));
+    myEffectsCombo.setModel(new CollectionComboBoxModel<>(new ArrayList<>(myEffectsMap.keySet())));
     myEffectsCombo.setRenderer(SimpleListCellRenderer.create("<invalid>", Functions.id()));
 
     ActionListener actionListener = e -> {

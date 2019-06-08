@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -173,7 +173,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
       final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myProject, myRootSchema, position).resolve();
-      final Set<String> knownNames = ContainerUtil.newHashSet();
+      final Set<String> knownNames = new HashSet<>();
       // too long here, refactor further
       schemas.forEach(schema -> {
         if (isName != ThreeState.NO) {
@@ -317,7 +317,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                           ? ((JsonArray)parent).getValueList().stream()
                             .filter(v -> v instanceof JsonStringLiteral).map(v -> ((JsonStringLiteral)v).getValue())
                             .collect(Collectors.toSet())
-                          : ContainerUtil.newHashSet();
+                          : new HashSet<>();
       propertiesObject.getPropertyList().stream().map(p -> p.getName()).filter(n -> !items.contains(n))
         .forEach(n -> addStringVariant(n));
     }

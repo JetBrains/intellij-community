@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.util.io.FileUtil
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.containers.ContainerUtil
 import git4idea.history.GitLogParser.*
 import git4idea.history.GitLogParser.GitLogOption.*
 import git4idea.history.GitLogParser.NameStatus.NONE
@@ -231,7 +230,7 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitLog
         return ""
       }
       if (newRefsFormat) {
-        val newRefs = ContainerUtil.newArrayList<String>()
+        val newRefs = mutableListOf<String>()
         var headRefMet = false
         for (ref in refs) {
           when {

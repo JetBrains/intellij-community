@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.Pair;
@@ -12,6 +13,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UI;
@@ -25,8 +27,10 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -64,16 +68,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         it.hasNext() ? JBUI.insets(0, 0, 10, 0) : JBUI.emptyInsets(), 0, 0)
       );
     }
+    if (!ConsentOptions.getInstance().isEAP()) {
+      addHintLabel(body, "Data sharing preferences apply to all installed " + ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " products.");
+    }
     if (!myPreferencesMode) {
-      JLabel hintLabel = new JBLabel("You can always change this behavior in " + ShowSettingsUtil.getSettingsMenuName() + " | Appearance & Behavior | System Settings | Data Sharing.");
-      hintLabel.setForeground(UIUtil.getContextHelpForeground());
-      hintLabel.setVerticalAlignment(SwingConstants.TOP);
-      hintLabel.setFont(JBUI.Fonts.smallFont());
-      //noinspection UseDPIAwareInsets
-      body.add(hintLabel, new GridBagConstraints(
-        0, GridBagConstraints.RELATIVE, 1, 1, 1.0,  1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-        new Insets(JBUI.scale(16), 0, JBUI.scale(10), 0), 0, 0)
-      );
+      addHintLabel(body, "You can always change this behavior in " +
+                           ShowSettingsUtil.getSettingsMenuName() +
+                           " | Appearance & Behavior | System Settings | Data Sharing.");
     }
     if (!myPreferencesMode) {
       body.setBorder(JBUI.Borders.empty(10));
@@ -84,8 +85,20 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     add(scrollPane);
   }
 
+  private static void addHintLabel(JPanel body, String text) {
+    JLabel hintLabel = new JBLabel(text);
+    hintLabel.setForeground(UIUtil.getContextHelpForeground());
+    hintLabel.setVerticalAlignment(SwingConstants.TOP);
+    hintLabel.setFont(JBUI.Fonts.smallFont());
+    //noinspection UseDPIAwareInsets
+    body.add(hintLabel, new GridBagConstraints(
+      0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+      new Insets(JBUIScale.scale(16), 0, JBUIScale.scale(10), 0), 0, 0)
+    );
+  }
+
   private static String getParagraphTag() {
-    return "<p style=\"margin-bottom:"+JBUI.scale(10)+"px;\">";
+    return "<p style=\"margin-bottom:" + JBUIScale.scale(10) + "px;\">";
   }
 
   @NotNull
@@ -93,7 +106,14 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     if (addCheckBox) {
-      final JCheckBox cb = new JBCheckBox(StringUtil.capitalize(consent.getName().toLowerCase(Locale.US)), consent.isAccepted());
+      String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
+      if (ConsentOptions.getInstance().isEAP()) {
+        final Consent usageStatsConsent = ConsentOptions.getInstance().getUsageStatsConsent();
+        if (usageStatsConsent != null && consent.getId().equals(usageStatsConsent.getId())) {
+          checkBoxText += " when using EAP versions";
+        }
+      }
+      final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);
@@ -123,11 +143,11 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
       styleSheet.addRule("body {margin-top:0;padding-top:0;}");
       //styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
-      styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+      styleSheet.addRule("h2, em {margin-top:" + JBUIScale.scaleFontSize((float)20) + "pt;}");
       styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
-      styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
-      styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
-      styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+      styleSheet.addRule("p, h1 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+      styleSheet.addRule("li {margin-bottom:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
+      styleSheet.addRule("h2 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
       styleSheet.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
       styleSheet.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
       styleSheet.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
@@ -168,9 +188,6 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   public void apply(@NotNull List<Consent> consents) {
     consents.clear();
     consents.addAll(getState());
-    if (myPreferencesMode) {
-      ConsentOptions.getInstance().setConsents(consents);
-    }
   }
 
   @NotNull

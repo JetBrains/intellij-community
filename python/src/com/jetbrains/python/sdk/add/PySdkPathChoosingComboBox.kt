@@ -17,20 +17,34 @@ package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.ComboBoxWithWidePopup
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ComboboxSpeedSearch
+import com.intellij.ui.components.fields.ExtendableTextComponent
+import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.PythonSdkType
-import javax.swing.JComboBox
+import javax.swing.plaf.basic.BasicComboBoxEditor
 
 /**
+ * A combobox with browse button for choosing a path to SDK, also capable of showing progress indicator.
+ * To toggle progress indicator visibility use [setBusy] method.
+ *
  * @author vlan
  */
 class PySdkPathChoosingComboBox(sdks: List<Sdk>, suggestedFile: VirtualFile?) :
-  ComponentWithBrowseButton<JComboBox<Sdk>>(JComboBox(sdks.toTypedArray()), null) {
+  ComponentWithBrowseButton<ComboBoxWithWidePopup<Sdk>>(ComboBoxWithWidePopup(sdks.toTypedArray()), null) {
+
+  private val busyIconExtension: ExtendableTextComponent.Extension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }
+  private val editor: BasicComboBoxEditor = object : BasicComboBoxEditor() {
+    override fun createEditorComponent() = ExtendableTextField().apply {
+      isEditable = false
+    }
+  }
 
   init {
     childComponent.apply {
@@ -64,4 +78,17 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk>, suggestedFile: VirtualFile?) :
 
   val items: List<Sdk>
     get() = (0 until childComponent.itemCount).map { childComponent.getItemAt(it) }
+
+  fun setBusy(busy: Boolean) {
+    if (busy) {
+      childComponent.isEditable = true
+      childComponent.editor = editor
+      (childComponent.editor.editorComponent as ExtendableTextField).addExtension(busyIconExtension)
+    }
+    else {
+      (childComponent.editor.editorComponent as ExtendableTextField).removeExtension(busyIconExtension)
+      childComponent.isEditable = false
+    }
+    repaint()
+  }
 }

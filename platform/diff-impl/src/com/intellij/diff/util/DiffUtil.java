@@ -41,6 +41,7 @@ import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -48,6 +49,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -83,6 +85,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ImageLoader;
@@ -110,18 +113,15 @@ public class DiffUtil {
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull public static final String DIFF_CONFIG = "diff.xml";
-  public static final int TITLE_GAP = JBUI.scale(2);
+  public static final int TITLE_GAP = JBUIScale.scale(2);
 
   public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
 
 
   @NotNull
   private static List<Image> loadDiffFrameImages() {
-    return ContainerUtil.list(
-      ImageLoader.loadFromResource("/diff_frame32.png"),
-      ImageLoader.loadFromResource("/diff_frame64.png"),
-      ImageLoader.loadFromResource("/diff_frame128.png")
-    );
+    return Arrays.asList(ImageLoader.loadFromResource("/diff_frame32.png"), ImageLoader.loadFromResource("/diff_frame64.png"),
+                         ImageLoader.loadFromResource("/diff_frame128.png"));
   }
 
   //
@@ -383,9 +383,26 @@ public class DiffUtil {
         return size;
       }
     }.setCopyable(true);
-    label.setForeground(UIUtil.getInactiveTextColor());
 
-    return new CenteredPanel(label, JBUI.Borders.empty(5));
+    return createMessagePanel(label);
+  }
+
+  @NotNull
+  public static JPanel createMessagePanel(@NotNull JComponent label) {
+    CenteredPanel panel = new CenteredPanel(label, JBUI.Borders.empty(5));
+
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
+    if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
+      label.setForeground(commentAttributes.getForegroundColor());
+    }
+    else {
+      label.setForeground(scheme.getDefaultForeground());
+    }
+    label.setBackground(scheme.getDefaultBackground());
+    panel.setBackground(scheme.getDefaultBackground());
+
+    return panel;
   }
 
   public static void addActionBlock(@NotNull DefaultActionGroup group, AnAction... actions) {
@@ -407,7 +424,7 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       return "Preferences | Tools | Diff & Merge";
     }
     return "Settings | Tools | Diff & Merge";
@@ -638,7 +655,7 @@ public class DiffUtil {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
     for (int i = 0; i < components.size(); i++) {
-      if (i != 0) panel.add(Box.createVerticalStrut(JBUI.scale(gap)));
+      if (i != 0) panel.add(Box.createVerticalStrut(JBUIScale.scale(gap)));
       panel.add(components.get(i));
     }
 
@@ -1492,7 +1509,7 @@ public class DiffUtil {
 
   private static boolean canBeHiddenBehind(@NotNull Window window) {
     if (!(window instanceof Frame)) return false;
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       if (window instanceof IdeFrame) {
         // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
         Project project = ((IdeFrame)window).getProject();
@@ -1648,9 +1665,9 @@ public class DiffUtil {
 
 
   private static class SyncHeightComponent extends JPanel {
-    @NotNull private final List<JComponent> myComponents;
+    @NotNull private final List<? extends JComponent> myComponents;
 
-    SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+    SyncHeightComponent(@NotNull List<? extends JComponent> components, int index) {
       super(new BorderLayout());
       myComponents = components;
       JComponent delegate = components.get(index);

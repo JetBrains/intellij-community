@@ -1258,6 +1258,9 @@ public abstract class LongRangeSet {
           return ">= " + LongRangeSet.formatNumber(myFrom);
         }
       }
+      if (myTo - myFrom == 1) {
+        return myFrom + " or " + myTo;
+      }
       return "in " + toString();
     }
 
@@ -2005,6 +2008,9 @@ public abstract class LongRangeSet {
         if (diff instanceof Point) {
           return "!= " + diff.min();
         }
+      }
+      if (myRanges.length == 4 && myRanges[0] == myRanges[1] && myRanges[2] == myRanges[3]) {
+        return myRanges[0] + " or " + myRanges[2];
       }
       return "in " + toString();
     }

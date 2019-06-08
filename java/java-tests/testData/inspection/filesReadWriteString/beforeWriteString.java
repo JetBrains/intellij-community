@@ -12,11 +12,11 @@ public class Example {
   }
 
   void test2() throws IOException {
-    byte[] bytes = "foo".getBytes(StandardCharsets.UTF_8/*3*/);
+    byte[] bytes = "foo".getBytes(StandardCharsets.UTF_16/*3*/);
     Files.write(Paths.get("/etc/passwd"), (/*1*/bytes/*2*/));
   }
 
   void test3() throws IOException {
-    Files.write(Paths.get("/etc/passwd"), (("foo").getBytes(StandardCharsets.UTF_8)));
+    Files.write(Paths.get("/etc/passwd"), (("foo").getBytes(StandardCharsets.UTF_16)));
   }
 }

@@ -298,6 +298,9 @@
   <action id="RecentFiles">
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
+  <action id="SwitcherRecentEditedChangedToggleCheckBox">
+    <keyboard-shortcut first-keystroke="shift F4"/>
+  </action>
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="shift alt F"/>
   </action>

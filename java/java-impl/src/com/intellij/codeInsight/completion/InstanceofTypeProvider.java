@@ -68,7 +68,7 @@ class InstanceofTypeProvider extends CompletionProvider<CompletionParameters> {
       });
   }
 
-  private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<PsiClass> toWildcardInheritors) {
+  private static LookupElement createInstanceofLookupElement(PsiClass psiClass, Set<? extends PsiClass> toWildcardInheritors) {
     final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
     if (typeParameters.length > 0) {
       for (final PsiClass parameterizedType : toWildcardInheritors) {

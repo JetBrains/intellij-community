@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class PsiMethodReferenceCompatibilityConstraint implements ConstraintFormula {
   private static final Logger LOG = Logger.getInstance(PsiMethodReferenceCompatibilityConstraint.class);
@@ -142,17 +140,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
     }
 
-    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
-    final PsiType added = map.put(myExpression, session.startWithFreshVars(groundTargetType));
-    final JavaResolveResult resolve;
-    try {
-      resolve = myExpression.advancedResolve(true);
-    }
-    finally {
-      if (added == null) {
-        map.remove(myExpression);
-      }
-    }
+    JavaResolveResult resolve = LambdaUtil.performWithTargetType(myExpression, session.startWithFreshVars(groundTargetType), () -> myExpression.advancedResolve(true));
     final PsiElement element = resolve.getElement();
     if (element == null || resolve instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolve).isApplicable()) {
       session.registerIncompatibleErrorMessage("No compile-time declaration for the method reference is found");
@@ -185,8 +173,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       if (typeParameters.length == 0 && method.getTypeParameters().length > 0) {
         final PsiClass interfaceClass = classResolveResult.getElement();
         LOG.assertTrue(interfaceClass != null);
-        if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
-                                                         ContainerUtil.newHashSet(method.getTypeParameters()))) {
+        if (PsiTypesUtil.mentionsTypeParameters(referencedMethodReturnType,
+                                                ContainerUtil.newHashSet(method.getTypeParameters()))) {
           session.initBounds(myExpression, psiSubstitutor, method.getTypeParameters());
           //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
           //when targeting the return type of the function type, as defined in 18.5.2.

@@ -328,11 +328,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         else {
           greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
         }
-        try (ExternalSystemEventDispatcher messageDispatcher = new ExternalSystemEventDispatcher(task, progressListener)) {
+        processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
+        try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
           ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
-
-            private boolean myResetGreeting = true;
-
             @Override
             public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
               if (progressListener != null) {
@@ -341,10 +339,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                 BuildViewSettingsProvider viewSettingsProvider =
                   consoleView instanceof BuildViewSettingsProvider ?
                   new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView) : null;
-                progressListener.onEvent(
+                progressListener.onEvent(id,
                   new StartBuildEventImpl(new DefaultBuildDescriptor(id, executionName, workingDir, eventTime), "running...")
                     .withProcessHandler(processHandler, view -> {
-                      processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
                       foldGreetingOrFarewell(consoleView, greeting, true);
                     })
                     .withContentDescriptorSupplier(() -> myContentDescriptor)
@@ -358,17 +355,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
             @Override
             public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-              if (myResetGreeting) {
-                processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
-                myResetGreeting = false;
-              }
               if (consoleView != null) {
                 consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
               }
               else {
                 processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
               }
-              messageDispatcher.append(text);
+              eventDispatcher.setStdOut(stdOut);
+              eventDispatcher.append(text);
             }
 
             @Override
@@ -376,29 +370,27 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               FailureResult failureResult =
                 ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
               if (progressListener != null) {
-                progressListener.onEvent(new FinishBuildEventImpl(
-                  id, null, System.currentTimeMillis(), "failed", failureResult));
+                progressListener.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "failed", failureResult));
               }
-              ExternalSystemUtil.printFailure(e, failureResult, consoleView, processHandler);
               processHandler.notifyProcessTerminated(1);
             }
 
             @Override
             public void onSuccess(@NotNull ExternalSystemTaskId id) {
               if (progressListener != null) {
-                progressListener.onEvent(new FinishBuildEventImpl(
-                  id, null, System.currentTimeMillis(), "completed successfully", new SuccessResultImpl()));
+                progressListener.onEvent(id, new FinishBuildEventImpl(
+                  id, null, System.currentTimeMillis(), "successful", new SuccessResultImpl()));
               }
             }
 
             @Override
             public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
               if (event instanceof ExternalSystemBuildEvent) {
-                messageDispatcher.onEvent(((ExternalSystemBuildEvent)event).getBuildEvent());
+                eventDispatcher.onEvent(event.getId(), ((ExternalSystemBuildEvent)event).getBuildEvent());
               }
               else if (event instanceof ExternalSystemTaskExecutionEvent) {
                 BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-                messageDispatcher.onEvent(buildEvent);
+                eventDispatcher.onEvent(event.getId(), buildEvent);
               }
             }
 
@@ -415,7 +407,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
               foldGreetingOrFarewell(consoleView, farewell, false);
               processHandler.notifyProcessTerminated(0);
-              messageDispatcher.close();
+              eventDispatcher.close();
             }
           };
           task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
@@ -425,10 +417,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       DefaultActionGroup actionGroup = new DefaultActionGroup();
       if (executionConsole instanceof BuildView) {
         actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
-        actionGroup.add(new ShowExecutionErrorsOnlyAction((BuildView)executionConsole));
+        actionGroup.add(BuildTreeFilters.createFilteringActionsGroup((BuildView)executionConsole));
       }
-      DefaultExecutionResult executionResult =
-        new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
+      DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
       executionResult.setRestartActions(restartActions);
       return executionResult;
     }
@@ -491,7 +482,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       myContentDescriptor = contentDescriptor;
       if (contentDescriptor != null) {
         contentDescriptor.setExecutionId(myEnv.getExecutionId());
-        contentDescriptor.setAutoFocusContent(true);
         RunnerAndConfigurationSettings settings = myEnv.getRunnerAndConfigurationSettings();
         if (settings != null) {
           contentDescriptor.setActivateToolWindowWhenAdded(settings.isActivateToolWindowBeforeRun());

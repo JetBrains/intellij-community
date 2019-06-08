@@ -17,6 +17,8 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
+
 /**
  * Describes proprietary tools which are used to build the product. Pass the instance of this class {@link BuildContext#createContext} method.
  *
@@ -25,7 +27,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 @Canonical
 class ProprietaryBuildTools {
-  public static final ProprietaryBuildTools DUMMY = new ProprietaryBuildTools(null, null, null, null)
+  public static final ProprietaryBuildTools DUMMY = new ProprietaryBuildTools(null, null, null, null, null)
 
   /**
    * This tool is required to sign *.exe files in Windows distribution. If it is {@code null} the files won't be signed and Windows may show
@@ -48,4 +50,9 @@ class ProprietaryBuildTools {
    * Describes a server that can be used to download built artifacts to install plugins into IDE
    */
   ArtifactsServer artifactsServer
+
+  /**
+   * Properties required to bundle a default version of feature usage statistics white list into IDE
+   */
+  FeatureUsageStatisticsProperties featureUsageStatisticsProperties
 }

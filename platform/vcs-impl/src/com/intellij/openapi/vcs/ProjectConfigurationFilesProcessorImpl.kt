@@ -28,7 +28,7 @@ private const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CO
 private const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES"
 
 class ProjectConfigurationFilesProcessorImpl(project: Project,
-                                             parentDisposable: Disposable,
+                                             private val parentDisposable: Disposable,
                                              private val vcsName: String,
                                              private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, ChangeListListener {
@@ -39,7 +39,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
 
-  init {
+  fun install() {
     runReadAction {
       if (!project.isDisposed) {
         changeListManager.addChangeListListener(this, parentDisposable)
@@ -90,6 +90,8 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   override val forCurrentProjectActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.add")
   override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.mute")
+
+  override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
 
   override fun rememberForAllProjects() {}
 

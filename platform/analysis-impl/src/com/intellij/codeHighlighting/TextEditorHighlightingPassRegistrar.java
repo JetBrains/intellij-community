@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,16 @@ public abstract class TextEditorHighlightingPassRegistrar {
     FIRST, LAST, BEFORE, AFTER,
   }
 
-  public static TextEditorHighlightingPassRegistrar getInstance(Project project){
+  public static TextEditorHighlightingPassRegistrar getInstance(Project project) {
     return ServiceManager.getService(project, TextEditorHighlightingPassRegistrar.class);
   }
 
   /**
    * Registers the factory for the new highlighting pass.
-   * Factory will be asked to create the highlighting pass every time IDEA tries to highlight the file.
+   * Factory will be asked to create the highlighting pass every time IDE tries to highlight the file.
    *
-   * @param anchorPassId                 id of the anchor pass. Predefined pass Ids are declared in {@link Pass}
-   * @return the id of the new pass which e.g. can be used as an anchor for the other pass.
+   * @param anchorPassId id of the anchor pass. Predefined pass Ids are declared in {@link Pass}
+   * @return the id of the new pass which, e.g., can be used as an anchor for the other pass.
    */
   public int registerTextEditorHighlightingPass(final TextEditorHighlightingPassFactory factory,
                                                 final Anchor anchor,
@@ -65,7 +65,7 @@ public abstract class TextEditorHighlightingPassRegistrar {
     return registerTextEditorHighlightingPass(factory, ids, null, needAdditionalIntentionsPass, -1);
   }
 
-  public abstract int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory, 
+  public abstract int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
                                                          @Nullable final int[] runAfterCompletionOf,
                                                          @Nullable int[] runAfterStartingOf,
                                                          boolean runIntentionsPassAfter,

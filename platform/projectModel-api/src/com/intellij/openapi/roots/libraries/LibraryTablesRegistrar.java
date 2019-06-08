@@ -17,12 +17,14 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class LibraryTablesRegistrar {
   @NonNls public static final String PROJECT_LEVEL = "project";
   @NonNls public static final String APPLICATION_LEVEL = "application";

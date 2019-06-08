@@ -15,13 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
-import com.intellij.build.events.impl.FinishEventImpl;
-import com.intellij.build.events.impl.StartEventImpl;
-import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.ProgressEvent;
@@ -48,6 +44,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final ExternalSystemTaskId myTaskId;
   private final Map<Object, Long> myStatusEventIds = new HashMap<>();
   private final int myOperationId;
+  private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
 
   public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener,
                                 @NotNull ExternalSystemTaskId taskId) {
@@ -77,21 +74,20 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       if (buildPhase == null) {
         String operationName = event.getDescriptor().getName();
         buildPhase = BuildPhase.find(operationName);
-        if (buildPhase == null) {
-          return;
+        if (buildPhase != null) {
+          myListener.onStatusChange(GradleProgressEventConverter.createProgressBuildEvent(myTaskId, myTaskId, event));
         }
+      }
+      if (event instanceof TaskProgressEvent) {
+        ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(
+          myTaskId, event, new GradleProgressEventConverter.EventId(eventId.id, myTaskId));
+        myListener.onStatusChange(notificationEvent);
+        buildPhase = BuildPhase.RUN_TASKS;
+      }
 
-        myListener.onStatusChange(GradleProgressEventConverter.createProgressBuildEvent(myTaskId, myTaskId, event));
+      if (buildPhase != null) {
+        myEventIds.put(eventId.id, buildPhase);
       }
-      else {
-        if (event instanceof TaskProgressEvent) {
-          ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(
-            myTaskId, event,
-            new GradleProgressEventConverter.EventId(eventId.id, myTaskId));
-          myListener.onStatusChange(notificationEvent);
-        }
-      }
-      myEventIds.put(eventId.id, buildPhase);
     }
   }
 
@@ -121,9 +117,9 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
             myStatusEventIds.put(operationName, (long)progress);
             if (statusEvent.getTotal() > 0) {
               int remaining = progressBarSize - progress;
-              remaining = remaining < 0 ? 0 : remaining;
+              remaining = Math.max(remaining, 0);
               int offset = 3 - ((int)Math.log10(fraction * 100) + 1);
-              offset = offset < 0 ? 0 : offset;
+              offset = Math.max(offset, 0);
               myListener.onTaskOutput(
                 myTaskId,
                 "\r[" + StringUtil.repeat(" ", offset) + (int)(fraction * 100) + "%" + ']' + " " +
@@ -151,19 +147,17 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   private void reportGradleDaemonStartingEvent(String eventDescription) {
-    if (StringUtil.equals("Starting Gradle Daemon", eventDescription)) {
-      ExternalSystemBuildEvent startDaemonEvent;
+    if (StringUtil.equals(STARTING_GRADLE_DAEMON_EVENT, eventDescription)) {
       long eventTime = System.currentTimeMillis();
-      if (!myStatusEventIds.containsKey(eventDescription)) {
-        startDaemonEvent = new ExternalSystemBuildEvent(
-          myTaskId, new StartEventImpl(eventDescription, myTaskId, eventTime, "Gradle Daemon starting..."));
+      Long startTime = myStatusEventIds.remove(eventDescription);
+      if (startTime == null) {
+        myListener.onTaskOutput(myTaskId, STARTING_GRADLE_DAEMON_EVENT + "...", true);
         myStatusEventIds.put(eventDescription, eventTime);
       }
       else {
-        startDaemonEvent = new ExternalSystemBuildEvent(
-          myTaskId, new FinishEventImpl(eventDescription, myTaskId, eventTime, "Gradle Daemon started", new SuccessResultImpl()));
+        String duration = StringUtil.formatDuration(eventTime - startTime);
+        myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", true);
       }
-      myListener.onStatusChange(startDaemonEvent);
     }
   }
 

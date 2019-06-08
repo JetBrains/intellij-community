@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
@@ -23,9 +23,9 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.THashMap;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NonNls;
@@ -84,8 +84,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private final JComboBox myCombobox;
 
-  private final Map<String, RepositoryArtifactDescription> myCoordinates = ContainerUtil.newTroveMap();
-  private final List<String> myShownItems = ContainerUtil.newArrayList();
+  private final Map<String, RepositoryArtifactDescription> myCoordinates = new THashMap<>();
+  private final List<String> myShownItems = new ArrayList<>();
   private final String myDefaultDownloadFolder;
 
   private String myFilterString;
@@ -392,20 +392,26 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return text.split(":").length == 3;
   }
 
-  public String getCoordinateText() {
+  private String getCoordinateText() {
     String text = getFullCoordinateText();
     List<String> parts = StringUtil.split(text, ":");
     return parts.size() == 4 ? parts.get(0) + ":" + parts.get(1) + ":" + parts.get(3) : text;
   }
 
-  @Nullable
-  public String getPackaging() {
+  @NotNull
+  private String getPackaging() {
     List<String> parts = StringUtil.split(getFullCoordinateText(), ":");
-    return parts.size() == 4 ? parts.get(2) : null;
+    return parts.size() == 4 ? parts.get(2) : JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING;
   }
 
   private String getFullCoordinateText() {
     return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText();
+  }
+
+  @NotNull
+  public JpsMavenRepositoryLibraryDescriptor getSelectedLibraryDescriptor() {
+    return new JpsMavenRepositoryLibraryDescriptor(getCoordinateText(), getPackaging(),
+                                                   getIncludeTransitiveDependencies(), Collections.emptyList());
   }
 
   private void createUIComponents() {

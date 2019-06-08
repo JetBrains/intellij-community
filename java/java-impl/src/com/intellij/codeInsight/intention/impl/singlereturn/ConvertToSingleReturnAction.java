@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -59,7 +60,12 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
     PsiCodeBlock copy = (PsiCodeBlock)block.copy();
     indicator.checkCanceled();
     indicator.setFraction(0.3);
-    convertReturns(project, copy, returnType, marker, returns.size(), indicator);
+    PsiLocalVariable variable = convertReturns(project, copy, returnType, marker, returns.size(), indicator);
+    if (variable != null) {
+      PsiJavaToken end = Objects.requireNonNull(copy.getRBrace());
+      copy.addBefore(JavaPsiFacade.getElementFactory(project).createStatementFromText("return " + variable.getName() + ";", copy), end);
+    }
+
     return copy;
   }
 

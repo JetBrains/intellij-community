@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.components.ProjectComponent;
@@ -9,8 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -223,7 +222,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
     Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
 
-    Map<AbstractVcs, VcsDirtyScopeImpl> scopes = ContainerUtil.newHashMap();
+    Map<AbstractVcs, VcsDirtyScopeImpl> scopes = new HashMap<>();
     for (AbstractVcs key : keys) {
       VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject, isEverythingDirty);
       scopes.put(key, scope);
@@ -236,15 +235,13 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @NotNull
   private MultiMap<AbstractVcs, FilePath> getEverythingDirtyRoots() {
     MultiMap<AbstractVcs, FilePath> dirtyRoots = MultiMap.createSet();
-    dirtyRoots.putAllValues(groupFilesByVcs(DefaultVcsRootPolicy.getInstance(myProject).getDirtyRoots()));
 
-    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    for (VcsDirectoryMapping mapping : mappings) {
-      if (!mapping.isDefaultMapping() && mapping.getVcs() != null) {
-        AbstractVcs vcs = myVcsManager.findVcsByName(mapping.getVcs());
-        if (vcs != null) {
-          dirtyRoots.putValue(vcs, VcsUtil.getFilePath(mapping.getDirectory(), true));
-        }
+    VcsRoot[] roots = myVcsManager.getAllVcsRoots();
+    for (VcsRoot root : roots) {
+      AbstractVcs vcs = root.getVcs();
+      VirtualFile path = root.getPath();
+      if (vcs != null && path != null) {
+        dirtyRoots.putValue(vcs, VcsUtil.getFilePath(path));
       }
     }
     return dirtyRoots;
@@ -270,7 +267,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
     VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);
     VcsInvalidated inProgress = calculateInvalidated(dirtBuilderInProgress);
-    Collection<FilePath> result = ContainerUtil.newArrayList();
+    Collection<FilePath> result = new ArrayList<>();
     for (FilePath fp : files) {
       if (invalidated.isFileDirty(fp) || inProgress.isFileDirty(fp)) {
         result.add(fp);

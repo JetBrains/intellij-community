@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -65,7 +65,7 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
 
   public abstract void setValues(@NonNls @NotNull String name, String[] values);
 
-  public static PropertiesComponent getInstance(Project project) {
+  public static PropertiesComponent getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, PropertiesComponent.class);
   }
 

@@ -11,8 +11,9 @@
     <serviceType1 <warning descr="Redundant attribute 'serviceInterface'">serviceInterface="java.lang.String"</warning>
                   serviceImplementation="java.lang.String"/>
 
-    <serviceType2 <warning descr="Redundant attribute 'serviceInterface'">serviceInterface="java.lang.String"</warning>
-                  serviceImplementation="java.lang.String"/>
+    <serviceType2 serviceInterface="java.lang.Number"
+                  serviceImplementation="java.lang.Double"
+                  testServiceImplementation="java.lang.Integer"/>
 
   </extensions>
 </idea-plugin>

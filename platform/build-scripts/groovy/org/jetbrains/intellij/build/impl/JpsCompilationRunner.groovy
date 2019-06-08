@@ -152,7 +152,7 @@ class JpsCompilationRunner {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, Collection<String> artifactNames, boolean includeTests,
                         boolean resolveProjectDependencies) {
-    if (!modulesSet.isEmpty() || allModules) {
+    if (context.options.jdkVersion < 9 && (!modulesSet.isEmpty() || allModules)) {
       addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
     }
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")

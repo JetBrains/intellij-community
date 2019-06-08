@@ -8,7 +8,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
 import java.security.SecureRandom
 import java.util.*
 import java.util.prefs.Preferences
@@ -16,7 +15,6 @@ import java.util.prefs.Preferences
 object EventLogConfiguration {
   private val LOG = Logger.getInstance(EventLogConfiguration::class.java)
   private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
-  const val version: Int = 11
 
   val sessionId: String = UUID.randomUUID().toString().shortedUUID()
 
@@ -26,7 +24,7 @@ object EventLogConfiguration {
   val build: String = ApplicationInfo.getInstance().build.asBuildNumber()
 
   private val salt: ByteArray = getOrGenerateSalt()
-  private val anonymizedCache = ContainerUtil.newHashMap<String, String>()
+  private val anonymizedCache = HashMap<String, String>()
 
   fun anonymize(data: String): String {
     if (StringUtil.isEmptyOrSpaces(data)) {

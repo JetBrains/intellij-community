@@ -54,7 +54,7 @@ public abstract class ReadonlyStatusHandler {
   }
 
   @NotNull
-  public abstract OperationStatus ensureFilesWritable(@NotNull Collection<VirtualFile> files);
+  public abstract OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> files);
 
   public static ReadonlyStatusHandler getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ReadonlyStatusHandler.class);

@@ -5,17 +5,18 @@ import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePr
 import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.*;
 
 public class IntellijPropertyKindMap {
-  private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = ContainerUtil.newHashMap();
+  private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = new HashMap<>();
 
   static {
     collectCommonLanguageProperties();
@@ -35,9 +36,6 @@ public class IntellijPropertyKindMap {
     PROPERTY_KIND_MAP.put("wrap_on_typing", GENERIC);
     PROPERTY_KIND_MAP.put("smart_tabs", GENERIC);
     PROPERTY_KIND_MAP.put("continuation_indent_size", GENERIC);
-
-    PROPERTY_KIND_MAP.put("imports_layout", UNSUPPORTED);
-    PROPERTY_KIND_MAP.put("packages_to_use_import_on_demand", UNSUPPORTED);
   }
 
   @NotNull
@@ -53,7 +51,7 @@ public class IntellijPropertyKindMap {
       @NotNull
       @Override
       protected List<CodeStyleObjectDescriptor> getSupportedFields() {
-        List<CodeStyleObjectDescriptor> descriptors = ContainerUtil.newArrayList();
+        List<CodeStyleObjectDescriptor> descriptors = new ArrayList<>();
         descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings(Language.ANY), null));
         descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings.IndentOptions(), null));
         return descriptors;

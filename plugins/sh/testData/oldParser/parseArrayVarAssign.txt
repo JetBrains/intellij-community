@@ -1,0 +1,37 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('a')
+          ARRAY_EXPRESSION
+            PsiElement([)('[')
+            LITERAL_EXPRESSION
+              NUMBER
+                PsiElement(int)('1')
+            PsiElement(])(']')
+          PsiElement(=)('=')
+          NUMBER
+            PsiElement(int)('1')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('a')
+          PsiElement(=)('=')
+          ASSIGNMENT_LIST
+            PsiElement(()('(')
+            ARRAY_ASSIGNMENT
+              LITERAL_EXPRESSION
+                NUMBER
+                  PsiElement(int)('1')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('2')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('3')
+            PsiElement())(')')

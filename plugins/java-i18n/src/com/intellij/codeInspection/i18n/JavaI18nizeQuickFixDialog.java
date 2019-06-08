@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -191,7 +191,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       result.add(getResourceBundleText());
     }
 
-    myRBEditorTextField.setHistory(ArrayUtil.toStringArray(result));
+    myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(result));
     SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
   }
 

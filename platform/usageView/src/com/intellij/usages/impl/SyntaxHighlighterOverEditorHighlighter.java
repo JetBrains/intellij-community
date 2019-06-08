@@ -34,13 +34,15 @@ import org.jetbrains.annotations.NotNull;
 public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter {
   private final Lexer lexer;
   private LayeredHighlighterIterator layeredHighlighterIterator;
+  @NotNull
   private final SyntaxHighlighter highlighter;
 
-  public SyntaxHighlighterOverEditorHighlighter(SyntaxHighlighter _highlighter, VirtualFile file, Project project) {
+  public SyntaxHighlighterOverEditorHighlighter(@NotNull SyntaxHighlighter _highlighter, @NotNull VirtualFile file, @NotNull Project project) {
     if (file.getFileType() == PlainTextFileType.INSTANCE) { // optimization for large files, PlainTextSyntaxHighlighterFactory is slow
       highlighter = new PlainSyntaxHighlighter();
       lexer = highlighter.getHighlightingLexer();
-    } else {
+    }
+    else {
       highlighter = _highlighter;
       EditorHighlighter editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file);
       

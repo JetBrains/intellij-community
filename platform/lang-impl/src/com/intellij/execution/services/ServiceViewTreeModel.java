@@ -1,62 +1,63 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.execution.services.ServiceModel.ServiceViewItem;
+import com.intellij.execution.services.ServiceViewModel.ServiceViewModelListener;
 import com.intellij.ui.tree.BaseTreeModel;
-import com.intellij.ui.tree.Searchable;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSupplier, Searchable {
-  final Project myProject;
-  final Object myRoot = ObjectUtils.sentinel("services root");
-  final Invoker myInvoker = new Invoker.BackgroundThread(this);
+class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
+  private final ServiceViewModel myModel;
+  private final ServiceViewModelListener myListener;
+  private final Object myRoot = ObjectUtils.sentinel("services root");
 
-  ServiceViewTreeModel(Project project) {
-    myProject = project;
+  ServiceViewTreeModel(ServiceViewModel model) {
+    myModel = model;
+    myListener = new ServiceViewModelListener() {
+      @Override
+      public void rootsChanged() {
+        treeStructureChanged(new TreePath(myRoot), null, null);
+      }
+    };
+    myModel.addModelListener(myListener);
   }
 
   @NotNull
   @Override
   public Invoker getInvoker() {
-    return myInvoker;
+    return myModel.getInvoker();
   }
 
-  @NotNull
   @Override
-  public Promise<TreePath> getTreePath(Object object) {
-    return Promises.resolvedPromise(new TreePath(myRoot)); // TODO [konstantin.aleev]
+  public void dispose() {
+    myModel.removeModelListener(myListener);
   }
 
   @Override
   public boolean isLeaf(Object object) {
-    return object != myRoot && ((ServiceTreeNode)object).getChildren().isEmpty();
+    return object != myRoot && myModel.getChildren(((ServiceViewItem)object)).isEmpty();
   }
 
   @Override
   public List<?> getChildren(Object parent) {
     if (parent == myRoot) {
-      return getRootChildren();
+      return myModel.getRoots();
     }
-    return ((ServiceTreeNode)parent).getChildren();
-  }
-
-  @NotNull
-  private List<?> getRootChildren() {
-    List<Object> result = new ArrayList<>();
-    for (ServiceViewContributor<?> contributor : ServiceViewManagerImpl.EP_NAME.getExtensions()) {
-      result.addAll(getContributorChildren(myProject, null, contributor));
-    }
-    return result;
+    return myModel.getChildren(((ServiceViewItem)parent));
   }
 
   @Override
@@ -64,127 +65,31 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
     return myRoot;
   }
 
-  void refresh(ServiceViewEventListener.ServiceEvent e) {
-    refreshAll();
-  }
-
-  void refreshAll() {
-    treeStructureChanged(null, null, null);
-  }
-
-  private static <T> List<ServiceTreeNode> getContributorChildren(Project project,
-                                                                  ServiceTreeNode parent,
-                                                                  ServiceViewContributor<T> contributor) {
-    Set<ServiceTreeNode> children = new LinkedHashSet<>();
-    Map<Object, ServiceGroupNode> groupNodes = new HashMap<>();
-    for (T service : contributor.getServices(project)) {
-      Object value = service instanceof ServiceViewProvidingContributor ? ((ServiceViewProvidingContributor)service).asService() : service;
-      ServiceTreeNode serviceNode = new ServiceNode(value, parent, contributor.getServiceDescriptor(service), project,
-                                                    service instanceof ServiceViewContributor ? (ServiceViewContributor)service : null);
-      if (value instanceof NodeDescriptor) {
-        ((NodeDescriptor)value).update();
-      }
-
-      ServiceTreeNode child = serviceNode;
-      if (contributor instanceof ServiceViewGroupingContributor) {
-        ServiceViewGroupingContributor<T, Object> groupingContributor = (ServiceViewGroupingContributor<T, Object>)contributor;
-        Object group = groupingContributor.groupBy(service);
-        if (group != null) {
-          ServiceGroupNode groupNode = groupNodes.get(group);
-          if (groupNode == null) {
-            groupNode = new ServiceGroupNode(group, parent, groupingContributor.getGroupDescriptor(group));
-            groupNodes.put(group, groupNode);
-          }
-          groupNode.getChildren().add(serviceNode);
-          child = groupNode;
+  Promise<TreePath> findPath(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    AsyncPromise<TreePath> result = new AsyncPromise<>();
+    getInvoker().runOrInvokeLater(() -> {
+      List<? extends ServiceViewItem> roots = myModel.getRoots();
+      ServiceViewItem serviceNode = JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
+        contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(myModel.getChildren(node)) : null)
+        .withRoots(roots)
+        .traverse(TreeTraversal.PLAIN_BFS)
+        .filter(node -> node.getValue().equals(service))
+        .first();
+      if (serviceNode != null) {
+        List<Object> path = new ArrayList<>();
+        do {
+          path.add(serviceNode);
+          serviceNode = roots.contains(serviceNode) ? null : serviceNode.getParent();
         }
+        while (serviceNode != null);
+        path.add(myRoot);
+        Collections.reverse(path);
+        result.setResult(new TreePath(ArrayUtil.toObjectArray(path)));
+        return;
       }
-      children.add(child);
-    }
-    return new ArrayList<>(children);
-  }
 
-  private static abstract class ServiceTreeNode implements ServiceViewItem {
-    private final Object myValue;
-    private final ServiceTreeNode myParent;
-    private final ServiceViewDescriptor myViewDescriptor;
-    private List<ServiceTreeNode> myChildren;
-
-    protected ServiceTreeNode(@NotNull Object value, @Nullable ServiceTreeNode parent, @NotNull ServiceViewDescriptor viewDescriptor) {
-      myValue = value;
-      myParent = parent;
-      myViewDescriptor = viewDescriptor;
-    }
-
-    @NotNull
-    @Override
-    public Object getValue() {
-      return myValue;
-    }
-
-    @NotNull
-    @Override
-    public ServiceViewDescriptor getViewDescriptor() {
-      return myViewDescriptor;
-    }
-
-    @Nullable
-    ServiceTreeNode getParent() {
-      return myParent;
-    }
-
-    @NotNull
-    List<ServiceTreeNode> getChildren() {
-      if (myChildren == null) {
-        myChildren = doGetChildren();
-      }
-      return myChildren;
-    }
-
-    @NotNull
-    abstract List<ServiceTreeNode> doGetChildren();
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ServiceTreeNode node = (ServiceTreeNode)o;
-      return myValue.equals(node.myValue);
-    }
-
-    @Override
-    public int hashCode() {
-      return myValue.hashCode();
-    }
-  }
-
-  private static class ServiceNode extends ServiceTreeNode {
-    private final Project myProject;
-    private final ServiceViewContributor<?> myContributor;
-
-    ServiceNode(@NotNull Object service, @Nullable ServiceTreeNode parent, @NotNull ServiceViewDescriptor viewDescriptor,
-                @NotNull Project project, @Nullable ServiceViewContributor contributor) {
-      super(service, parent, viewDescriptor);
-      myProject = project;
-      myContributor = contributor;
-    }
-
-    @NotNull
-    @Override
-    List<ServiceTreeNode> doGetChildren() {
-      return myContributor == null ? Collections.emptyList() : getContributorChildren(myProject, this, myContributor);
-    }
-  }
-
-  private static class ServiceGroupNode extends ServiceTreeNode {
-    ServiceGroupNode(@NotNull Object group, @Nullable ServiceTreeNode parent, @NotNull ServiceViewDescriptor viewDescriptor) {
-      super(group, parent, viewDescriptor);
-    }
-
-    @NotNull
-    @Override
-    List<ServiceTreeNode> doGetChildren() {
-      return new ArrayList<>();
-    }
+      result.setError("Service not found");
+    });
+    return result;
   }
 }

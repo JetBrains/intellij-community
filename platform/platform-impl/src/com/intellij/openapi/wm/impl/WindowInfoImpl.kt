@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.components.BaseState
@@ -10,6 +10,8 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Transient
 import java.awt.Rectangle
+import kotlin.math.max
+import kotlin.math.min
 
 private val LOG = logger<WindowInfoImpl>()
 
@@ -57,7 +59,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   /**
    * ID of the tool window
    */
-  var id: String? by string()
+  var id by string()
 
   /**
    * @return type of the tool window in internal (docked or sliding) mode. Actually the tool
@@ -65,9 +67,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * tool window had when it was internal one.
    */
   @get:Attribute("internal_type")
-  var internalType: ToolWindowType by property(ToolWindowType.DOCKED)
+  var internalType by enum(ToolWindowType.DOCKED)
 
-  override var type: ToolWindowType by property(ToolWindowType.DOCKED)
+  override var type by enum(ToolWindowType.DOCKED)
 
   @get:Attribute("visible")
   var isVisible by property(false)
@@ -80,9 +82,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */
-  var weight: Float by property(DEFAULT_WEIGHT) { Math.max(0f, Math.min(1f, it)) }
+  var weight by property(DEFAULT_WEIGHT) { max(0f, min(1f, it)) }
 
-  var sideWeight: Float by property(0.5f) { Math.max(0f, Math.min(1f, it)) }
+  var sideWeight by property(0.5f) { max(0f, min(1f, it)) }
 
   @get:Attribute("side_tool")
   override var isSplit by property(false)
@@ -93,10 +95,10 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   /**
    * Defines order of tool window button inside the stripe.
    */
-  var order: Int by property(-1)
+  var order by property(-1)
 
   @get:Transient
-  var isWasRead: Boolean = false
+  var isWasRead = false
     private set
 
   fun copy(): WindowInfoImpl {

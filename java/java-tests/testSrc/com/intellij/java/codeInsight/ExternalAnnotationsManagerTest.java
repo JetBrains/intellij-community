@@ -39,20 +39,28 @@ import org.jetbrains.idea.eclipse.util.PathUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
+  private static final Set<String> KNOWN_EXCEPTIONS = ContainerUtil.immutableSet(
+    "java.util.stream.Stream<T> generate(java.util.function.Supplier<T>)" // replaced with Supplier<? extends T> in JDK11
+  );
+  
   private final DefaultLightProjectDescriptor myDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
-      String home = jdk.getHomeDirectory().getParent().getPath();
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
-      String toolsPath = home + "/lib/tools.jar!/";
-      VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
+      if (jdk.getVersionString().matches("java version \"1\\.8\\..+\"")) {
+        String home = jdk.getHomeDirectory().getParent().getPath();
+        VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
+        String toolsPath = home + "/lib/tools.jar!/";
+        VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);
+        assertNotNull("tools.jar not found: " + toolsPath, toolsJar);
 
-      Sdk plusTools = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
+        sdk = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
+      }
 
       Collection<String> utilClassPath = PathManager.getUtilClassPath();
       VirtualFile[] files = StreamEx.of(utilClassPath)
@@ -62,7 +70,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
                      LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)))
         .toArray(VirtualFile[]::new);
 
-      return PsiTestUtil.addRootsToJdk(plusTools, OrderRootType.CLASSES, files);
+      return PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, files);
     }
 
     @Override
@@ -182,6 +190,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
     boolean found = !methods.isEmpty();
     if (!found) {
+      if (KNOWN_EXCEPTIONS.contains(methodSignature)) return;
       List<String> candidates = ContainerUtil.map(aClass.findMethodsByName(methodName, true), method ->
         XmlUtil.escape(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)));
       String additionalMsg = candidates.isEmpty() ? "" : "\nMaybe you have meant one of these methods instead:\n"+StringUtil.join(candidates, "\n")+"\n";

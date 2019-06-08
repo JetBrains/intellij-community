@@ -15,4 +15,7 @@ class A {
     widen((int)c);
   }
   
+  Object test(int x) {
+    return (long) x;
+  }
 }

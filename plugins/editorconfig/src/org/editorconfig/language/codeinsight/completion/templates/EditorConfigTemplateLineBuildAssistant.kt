@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.completion.templates
 
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.TextResult
+import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.Variable
@@ -60,7 +63,7 @@ class EditorConfigTemplateLineBuildAssistant(
     template.addVariable(
       EditorConfigTemplateUtil.uniqueId,
       MacroCallNode(CompleteMacro()),
-      EditorConfigTemplateSingletonExpression("value"),
+      ConstantNode("value").withLookupStrings("value"),
       true
     )
   }

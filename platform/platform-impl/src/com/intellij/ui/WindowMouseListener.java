@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
 import com.intellij.openapi.progress.util.PotemkinProgress;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.FieldAccessor;
 import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.UIUtil;
@@ -246,27 +232,24 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
 
     public ToolkitListenerHelper(WindowMouseListener l) {
       myListener =l;
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         try {
           classWComponentPeer = Class.forName("sun.awt.windows.WComponentPeer");
           reshapeInvocator = new MethodInvocator(classWComponentPeer, "reshapeNoCheck",
                                                  int.class, int.class, int.class, int.class);
 
-          xAccessor = new FieldAccessor<>(Component.class, "x");
-          yAccessor = new FieldAccessor<>(Component.class, "y");
-          widthAccessor = new FieldAccessor<>(Component.class, "width");
-          heightAccessor = new FieldAccessor<>(Component.class, "height");
+          xAccessor = new FieldAccessor<>(Component.class, "x", Integer.TYPE);
+          yAccessor = new FieldAccessor<>(Component.class, "y", Integer.TYPE);
+          widthAccessor = new FieldAccessor<>(Component.class, "width", Integer.TYPE);
+          heightAccessor = new FieldAccessor<>(Component.class, "height", Integer.TYPE);
 
-          addMouseListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "addMouseListener", MouseListener.class);
-          addMouseMotionListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "addMouseMotionListener", MouseMotionListener.class);
-          removeMouseListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "removeMouseListener", MouseListener.class);
-          removeMouseMotionListenerMethod =
-            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "removeMouseMotionListener", MouseMotionListener.class);
-
-        } catch (ClassNotFoundException ignored) {
+          Class<?> peerClass = Class.forName("sun.awt.windows.WWindowPeer");
+          addMouseListenerMethod = new MethodInvocator(peerClass, "addMouseListener", MouseListener.class);
+          addMouseMotionListenerMethod = new MethodInvocator(peerClass, "addMouseMotionListener", MouseMotionListener.class);
+          removeMouseListenerMethod = new MethodInvocator(peerClass, "removeMouseListener", MouseListener.class);
+          removeMouseMotionListenerMethod = new MethodInvocator(peerClass, "removeMouseMotionListener", MouseMotionListener.class);
+        }
+        catch (ClassNotFoundException ignored) {
         }
       }
     }

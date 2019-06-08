@@ -15,15 +15,22 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.issue.BuildIssue;
+import com.intellij.build.issue.BuildIssueChecker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
+import org.gradle.tooling.model.build.BuildEnvironment;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
+import org.jetbrains.plugins.gradle.issue.GradleIssueData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.notification.GotoSourceNotificationCallback;
 import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
@@ -33,6 +40,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author Vladislav.Soroka
@@ -43,18 +53,41 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
   @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
+  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                      @NotNull Throwable error,
                                                       @NotNull String projectPath,
                                                       @Nullable String buildFilePath) {
     GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
+    ExternalSystemException exception = doGetUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath, executionErrorHandler);
+    if (!exception.isCauseInitialized()) {
+      exception.initCause(notNull(executionErrorHandler.getRootCause(), error));
+    }
+    return exception;
+  }
+
+  @ApiStatus.Experimental
+  ExternalSystemException checkErrorsWithoutQuickFixes(@Nullable BuildEnvironment buildEnvironment,
+                                                       @NotNull Throwable error,
+                                                       @NotNull String projectPath,
+                                                       @Nullable String buildFilePath,
+                                                       @NotNull ExternalSystemException e) {
+    if (e.getQuickFixes().length > 0 || e instanceof BuildIssueException) return e;
+    return getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath);
+  }
+
+  private ExternalSystemException doGetUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                         @NotNull Throwable error,
+                                                         @NotNull String projectPath,
+                                                         @Nullable String buildFilePath,
+                                                         @NotNull GradleExecutionErrorHandler executionErrorHandler) {
     ExternalSystemException friendlyError = executionErrorHandler.getUserFriendlyError();
     if (friendlyError != null) {
       return friendlyError;
     }
 
-    LOG.info(String.format("Failed to import Gradle project at '%1$s'", projectPath), error);
+    LOG.debug(String.format("Failed to run Gradle project at '%1$s'", projectPath), error);
 
-    if(error instanceof ProcessCanceledException) {
+    if (error instanceof ProcessCanceledException) {
       return new ExternalSystemException("Project build was cancelled");
     }
 
@@ -62,6 +95,15 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     String location = executionErrorHandler.getLocation();
     if (location == null && !StringUtil.isEmpty(buildFilePath)) {
       location = String.format("Build file: '%1$s'", buildFilePath);
+    }
+
+    GradleIssueData issueData = new GradleIssueData(projectPath, error, buildEnvironment, null);
+    List<GradleIssueChecker> knownIssuesCheckList = GradleIssueChecker.getKnownIssuesCheckList();
+    for (BuildIssueChecker<GradleIssueData> checker : knownIssuesCheckList) {
+      BuildIssue buildIssue = checker.check(issueData);
+      if (buildIssue != null) {
+        return new BuildIssueException(buildIssue);
+      }
     }
 
     if (rootCause instanceof UnsupportedVersionException) {

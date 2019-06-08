@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ class LambdaAndExplicitMethodPair {
     myParameterIndex = index;
     myExplicitParameterType = explicitParameterType;
     myCanUseReturnValue = canUseReturnValue;
-    myDefaultLambdaParameters = defaultLambdaParameters.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : defaultLambdaParameters;
+    myDefaultLambdaParameters = defaultLambdaParameters.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : defaultLambdaParameters;
   }
 
   boolean isLambdaCall(PsiMethodCallExpression lambdaCall, PsiLambdaExpression lambda) {

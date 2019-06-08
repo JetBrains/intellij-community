@@ -121,7 +121,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         }
         catch (e: Exception) {
           ApplicationManager.getApplication().assertIsDispatchThread()
-          queue.add("coroutine yield caught ${e.javaClass.simpleName} because of ${e.cause?.javaClass?.simpleName}")
+          queue.add("coroutine yield caught ${e.javaClass.simpleName}")
           throw e
         }
         queue.add("coroutine end")
@@ -134,7 +134,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "coroutine start",
                           "disposed",
                           "coroutine before yield",
-                          "coroutine yield caught JobCancellationException because of null",
+                          "coroutine yield caught JobCancellationException",
                           "end")
     }.joinNonBlocking()
   }
@@ -254,7 +254,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
           queue.add("after yield disposed")
         }
         catch (e: Throwable) {
-          queue.add("coroutine yield caught ${e.javaClass.simpleName} because of ${e.cause?.javaClass?.simpleName}")
+          queue.add("coroutine yield caught ${e.javaClass.simpleName}")
           throw e
         }
         queue.add("coroutine end")
@@ -267,7 +267,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "disposing",
                           "disposable.dispose()",
                           "before yield disposed",
-                          "coroutine yield caught JobCancellationException because of null",
+                          "coroutine yield caught JobCancellationException",
                           "end")
     }.joinNonBlocking()
   }
@@ -322,7 +322,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
           queue.add("after yield disposed")
         }
         catch (e: Throwable) {
-          queue.add("coroutine yield caught ${e.javaClass.simpleName} because of ${e.cause?.javaClass?.simpleName}")
+          queue.add("coroutine yield caught ${e.javaClass.simpleName}")
           throw e
         }
         queue.add("coroutine end")
@@ -352,7 +352,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
                           "before yield",
                           "disposing",
                           "disposable.beforeTreeDispose()",
-                          "coroutine yield caught JobCancellationException because of null",
+                          "coroutine yield caught JobCancellationException",
                           "disposable.dispose()",
                           "end")
     }.joinNonBlocking()
@@ -368,7 +368,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
       "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
-      "[context: !outer + inner] coroutine yield caught JobCancellationException because of null",
+      "[context: !outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, _ ->
       queue.add("disposing constraint")
@@ -389,7 +389,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
       "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
-      "[context: !outer + inner] coroutine yield caught JobCancellationException because of null",
+      "[context: !outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, anotherDisposable ->
       queue.add("disposing anotherDisposable")
@@ -407,7 +407,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "anotherDisposable.beforeTreeDispose()",
       "anotherDisposable.dispose()",
       "[context: outer + inner] after receive disposed",
-      "[context: outer + inner] coroutine yield caught JobCancellationException because of null",
+      "[context: outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, _, anotherDisposable ->
       queue.add("disposing anotherDisposable")
@@ -501,7 +501,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
           emit("after yield disposed")
         }
         catch (e: Throwable) {
-          emit("coroutine yield caught ${e.javaClass.simpleName} because of ${e.cause?.javaClass?.simpleName}")
+          emit("coroutine yield caught ${e.javaClass.simpleName}")
           throw e
         }
         emit("coroutine end")

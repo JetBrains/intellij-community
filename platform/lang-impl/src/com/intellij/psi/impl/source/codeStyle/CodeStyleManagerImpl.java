@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -94,12 +96,21 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   private static PsiElement postProcessElement(@NotNull PsiFile file, @NotNull final PsiElement formatted) {
     PsiElement result = formatted;
-    if (getSettings(file).FORMATTER_TAGS_ENABLED && formatted instanceof PsiFile) {
-      postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), getSettings(file));
+    CodeStyleSettings settingsForFile = CodeStyle.getSettings(file);
+    if (settingsForFile.FORMATTER_TAGS_ENABLED && formatted instanceof PsiFile) {
+      postProcessEnabledRanges((PsiFile) formatted, formatted.getTextRange(), settingsForFile);
     }
     else {
       for (PostFormatProcessor postFormatProcessor : PostFormatProcessor.EP_NAME.getExtensionList()) {
-        result = postFormatProcessor.processElement(result, getSettings(file));
+        try {
+          result = postFormatProcessor.processElement(result, settingsForFile);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(PluginException.createByClass(e, postFormatProcessor.getClass()));
+        }
       }
     }
     return result;
@@ -210,7 +221,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       caretKeeper.restoreCaretPosition();
     }
     if (editor instanceof EditorEx && isFullReformat) {
-      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
+      //TODO<rv> Move to another place
+      //CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
     }
   }
 
@@ -628,7 +640,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   public Indent zeroIndent() {
     return new IndentImpl(CodeStyle.getSettings(myProject), 0, 0, null);
   }
-
 
   @NotNull
   private static CodeStyleSettings getSettings(@NotNull PsiFile file) {

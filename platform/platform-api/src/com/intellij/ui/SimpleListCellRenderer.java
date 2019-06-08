@@ -81,7 +81,7 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
 
   @FunctionalInterface
   public interface Customizer<T> {
-    void customize(@NotNull JBLabel label, @NotNull T value, int index);
+    void customize(@NotNull JBLabel label, T value, int index);
   }
 
   // @formatter:off

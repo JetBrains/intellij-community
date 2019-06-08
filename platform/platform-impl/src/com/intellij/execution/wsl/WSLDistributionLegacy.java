@@ -33,7 +33,7 @@ public class WSLDistributionLegacy extends WSLDistribution {
   }
 
   /**
-   * @return legacy WSL ("Bash-on-Windows") if it's available, <code>null</code> otherwise
+   * @return legacy WSL ("Bash-on-Windows") if it's available, {@code null} otherwise
    */
   @Nullable
   public static WSLDistributionLegacy getInstance() {

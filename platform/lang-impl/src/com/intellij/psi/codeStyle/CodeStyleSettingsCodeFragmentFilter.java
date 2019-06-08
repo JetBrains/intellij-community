@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -32,7 +18,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +36,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
   private final LanguageCodeStyleSettingsProvider myProvider;
 
   public CodeStyleSettingsCodeFragmentFilter(@NotNull PsiFile file,
-                                             @NotNull TextRange range, 
+                                             @NotNull TextRange range,
                                              @NotNull LanguageCodeStyleSettingsProvider settingsProvider) {
     myProvider = settingsProvider;
     myProject = file.getProject();
@@ -83,7 +68,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     compositeTask.setProgressText(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text"));
     compositeTask.setProgressText2(CodeInsightBundle.message("configure.code.style.on.fragment.dialog.progress.text.under"));
 
-    final Map<LanguageCodeStyleSettingsProvider.SettingsType, FilterFieldsTask> typeToTask = ContainerUtil.newHashMap();
+    final Map<LanguageCodeStyleSettingsProvider.SettingsType, FilterFieldsTask> typeToTask = new HashMap<>();
     for (LanguageCodeStyleSettingsProvider.SettingsType type : types) {
       Set<String> fields = myProvider.getSupportedFields(type);
       FilterFieldsTask task = new FilterFieldsTask(commonSettings, customSettings, fields);
@@ -109,7 +94,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
       @Override
       public List<String> getOtherSetting() {
-        return ContainerUtil.newArrayList(otherFieldsTask.getAffectedFields());
+        return new ArrayList<>(otherFieldsTask.getAffectedFields());
       }
     };
   }
@@ -125,7 +110,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
       if (languageProvider.getLanguage().equals(codeStyleSettingsProvider.getLanguage())) {
         CustomCodeStyleSettings settings = getCustomSettingsFromProvider(codeStyleSettingsProvider, tempSettings);
         if (settings != null) {
-          return null;
+          return settings;
         }
       }
     }
@@ -161,7 +146,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     private final int myTotalFieldsNumber;
     private final Collection<String> myAllFields;
 
-    private List<String> myAffectingFields = ContainerUtil.newArrayList();
+    private List<String> myAffectingFields = new ArrayList<>();
     private final Object myCommonSettings;
     @Nullable private final CustomCodeStyleSettings myCustomSettings;
 
@@ -186,7 +171,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
     @Override
     public void stop() {
-      if (!isDone()) myAffectingFields = ContainerUtil.newArrayList(myAllFields);
+      if (!isDone()) myAffectingFields = new ArrayList<>(myAllFields);
     }
 
     @Override
@@ -272,7 +257,7 @@ interface SequentialTaskWithFixedIterationsNumber extends SequentialTask {
 }
 
 class CompositeSequentialTask implements SequentialTask {
-  private final List<SequentialTaskWithFixedIterationsNumber> myUnfinishedTasks = ContainerUtil.newArrayList();
+  private final List<SequentialTaskWithFixedIterationsNumber> myUnfinishedTasks = new ArrayList<>();
   private SequentialTask myCurrentTask = null;
 
   private int myIterationsFinished;

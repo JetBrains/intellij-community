@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -45,10 +46,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -104,7 +103,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     myExcludeAllCheckboxPanel = new ExcludeAllCheckboxPanel();
     JPanel titleWithCheckbox = JBUI.Panels.simplePanel(titles.get(1)).addToLeft(myExcludeAllCheckboxPanel);
 
-    return DiffUtil.createSyncHeightComponents(ContainerUtil.list(titles.get(0), titleWithCheckbox));
+    return DiffUtil.createSyncHeightComponents(Arrays.asList(titles.get(0), titleWithCheckbox));
   }
 
   @NotNull
@@ -530,7 +529,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       Dimension size = myCheckbox.getPreferredSize();
       EditorGutterComponentEx gutter = getEditor2().getGutterComponentEx();
       int gutterWidth = gutter.getLineMarkerFreePaintersAreaOffset();
-      return new Dimension(Math.max(gutterWidth + JBUI.scale(2), size.width), size.height);
+      return new Dimension(Math.max(gutterWidth + JBUIScale.scale(2), size.width), size.height);
     }
 
     private void updateLayout() {

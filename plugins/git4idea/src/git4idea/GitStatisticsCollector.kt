@@ -24,7 +24,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     val usages = hashSetOf<UsageDescriptor>()
 
     usages.add(UsageDescriptor("config.repo.sync." + settings.syncSetting.name, 1))
-    usages.add(UsageDescriptor("config.update.type." + settings.updateType.name, 1))
+    usages.add(UsageDescriptor("config.update.type." + settings.updateMethod.name, 1))
     usages.add(UsageDescriptor("config.save.policy." + settings.updateChangesPolicy().name, 1))
     usages.add(getBooleanUsage("config.ssh", appSettings.isUseIdeaSsh))
 

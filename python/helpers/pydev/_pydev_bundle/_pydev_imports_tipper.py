@@ -6,13 +6,19 @@ from _pydev_bundle._pydev_tipper_common import do_find
 from _pydevd_bundle.pydevd_constants import IS_PY2
 
 if IS_PY2:
-    from inspect import getargspec
+    from inspect import getargspec as _originalgetargspec
+    def getargspec(*args, **kwargs):
+        ret = list(_originalgetargspec(*args, **kwargs))
+        ret.append([])
+        ret.append({})
+        return ret
+        
 else:
     from inspect import getfullargspec
 
     def getargspec(*args, **kwargs):
         arg_spec = getfullargspec(*args, **kwargs)
-        return arg_spec.args, arg_spec.varargs, arg_spec.varkw, arg_spec.defaults
+        return arg_spec.args, arg_spec.varargs, arg_spec.varkw, arg_spec.defaults, arg_spec.kwonlyargs or [], arg_spec.kwonlydefaults or {}
 
 try:
     xrange
@@ -154,13 +160,15 @@ def check_char(c):
         return '_'
     return c
 
+_SENTINEL = object()
+
 def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=getattr, filter=lambda name:True):
     '''
         @param obj_to_complete: the object from where we should get the completions
-        @param dir_comps: if passed, we should not 'dir' the object and should just iterate those passed as a parameter
-        @param getattr: the way to get a given object from the obj_to_complete (used for the completer)
-        @param filter: a callable that receives the name and decides if it should be appended or not to the results
-        @return: list of tuples, so that each tuple represents a completion with:
+        @param dir_comps: if passed, we should not 'dir' the object and should just iterate those passed as kwonly_arg parameter
+        @param getattr: the way to get kwonly_arg given object from the obj_to_complete (used for the completer)
+        @param filter: kwonly_arg callable that receives the name and decides if it should be appended or not to the results
+        @return: list of tuples, so that each tuple represents kwonly_arg completion with:
             name, doc, args, type (from the TYPE_* constants)
     '''
     ret = []
@@ -226,14 +234,18 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
 
                     if inspect.ismethod(obj) or inspect.isbuiltin(obj) or inspect.isfunction(obj) or inspect.isroutine(obj):
                         try:
-                            args, vargs, kwargs, defaults = getargspec(obj)
+                            args, vargs, kwargs, defaults, kwonly_args, kwonly_defaults = getargspec(obj)
 
-                            r = ''
-                            for a in (args):
-                                if len(r) > 0:
-                                    r = r + ', '
-                                r = r + str(a)
-                            args = '(%s)' % (r)
+                            args = args[:]
+                                
+                            for kwonly_arg in kwonly_args:
+                                default = kwonly_defaults.get(kwonly_arg, _SENTINEL)
+                                if default is not _SENTINEL:
+                                    args.append('%s=%s' % (kwonly_arg, default))
+                                else:
+                                    args.append(str(kwonly_arg))
+                            
+                            args = '(%s)' % (', '.join(args))
                         except TypeError:
                             #ok, let's see if we can get the arguments from the doc
                             args, doc = signature_from_docstring(doc, getattr(obj, '__name__', None))

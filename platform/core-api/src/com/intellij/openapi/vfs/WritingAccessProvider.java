@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public abstract class WritingAccessProvider {
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getReadOnlyMessage() {
     return EditorBundle.message("editing.read.only.file.hint");
   }

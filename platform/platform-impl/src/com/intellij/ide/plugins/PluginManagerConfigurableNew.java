@@ -8,14 +8,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -36,6 +33,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -84,8 +82,9 @@ public class PluginManagerConfigurableNew
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
+  @SuppressWarnings("UseJBColor")
   public static final Color MAIN_BG_COLOR =
-    JBColor.namedColor("Plugins.background", new JBColor(UIUtil.getListBackground(), new Color(0x313335)));
+    JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
 
   public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
 
@@ -215,8 +214,8 @@ public class PluginManagerConfigurableNew
     mySearchTextField.setBorder(JBUI.Borders.customLine(SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
-    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(6));
-    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(-1));
+    editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
@@ -690,7 +689,8 @@ public class PluginManagerConfigurableNew
       for (PluginId dependId : entry.getValue()) {
         if (!PluginManagerCore.isModuleDependency(dependId)) {
           IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
-          if (!(descriptor instanceof IdeaPluginDescriptorImpl) || !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
+          if (!(descriptor instanceof IdeaPluginDescriptorImpl) ||
+              !((IdeaPluginDescriptorImpl)descriptor).isDeleted() && !descriptor.isImplementationDetail()) {
             dependencies.add("\"" + (descriptor == null ? id.getIdString() : descriptor.getName()) + "\"");
           }
           break;
@@ -738,7 +738,6 @@ public class PluginManagerConfigurableNew
       return true;
     }
 
-    Set<String> disabledPlugins = PluginManagerCore.getDisabledPluginSet();
     int rowCount = myPluginsModel.getRowCount();
 
     for (int i = 0; i < rowCount; i++) {
@@ -746,7 +745,7 @@ public class PluginManagerConfigurableNew
       boolean enabledInTable = myPluginsModel.isEnabled(descriptor);
 
       if (descriptor.isEnabled() != enabledInTable) {
-        if (enabledInTable && !disabledPlugins.contains(descriptor.getPluginId().getIdString())) {
+        if (enabledInTable && !PluginManagerCore.isDisabled(descriptor.getPluginId().getIdString())) {
           continue; // was disabled automatically on startup
         }
         return true;
@@ -755,7 +754,7 @@ public class PluginManagerConfigurableNew
 
     for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
       Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled && !disabledPlugins.contains(entry.getKey().getIdString())) {
+      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey().getIdString())) {
         return true;
       }
     }
@@ -866,10 +865,14 @@ public class PluginManagerConfigurableNew
     int bundledEnabled = 0;
     int downloadedEnabled = 0;
 
+    boolean hideImplDetails = !Registry.is("plugins.show.implementation.details");
+
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
         if (descriptor.isBundled()) {
-          if (descriptor.isImplementationDetail() && !Registry.is("plugins.show.implementation.details")) continue;
+          if (hideImplDetails && descriptor.isImplementationDetail()) {
+            continue;
+          }
           bundled.descriptors.add(descriptor);
           if (descriptor.isEnabled()) {
             bundledEnabled++;
@@ -1027,7 +1030,7 @@ public class PluginManagerConfigurableNew
           case "repository:":
             return UpdateSettings.getInstance().getPluginHosts();
           case "sortBy:":
-            return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
+            return Arrays.asList("downloads", "name", "rating", "featured", "updated");
         }
         return null;
       }
@@ -1122,7 +1125,7 @@ public class PluginManagerConfigurableNew
 
             if (query.length() > 1) {
               try {
-                for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query), forceHttps())) {
+                for (String pluginId : requestToPluginRepository(createSearchSuggestUrl(query))) {
                   IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
                   if (descriptor != null) {
                     result.add(descriptor);
@@ -1144,7 +1147,7 @@ public class PluginManagerConfigurableNew
         }
         catch (Exception ignore) {
         }
-        return ContainerUtil.newArrayList(result);
+        return new ArrayList<>(result);
       }
 
       @Override
@@ -1197,7 +1200,7 @@ public class PluginManagerConfigurableNew
               return;
             }
 
-            for (String pluginId : requestToPluginRepository(createSearchUrl(parser.getUrlQuery(), 10000), forceHttps())) {
+            for (String pluginId : requestToPluginRepository(createSearchUrl(parser.getUrlQuery(), 10000))) {
               IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
               if (descriptor != null) {
                 result.descriptors.add(descriptor);
@@ -1233,7 +1236,7 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       protected List<String> getAttributes() {
-        return ContainerUtil.list("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
+        return Arrays.asList("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
       }
 
       @Nullable
@@ -1428,10 +1431,10 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull String name,
                         @NotNull String showAllQuery,
-                        @NotNull ThrowableNotNullFunction<List<IdeaPluginDescriptor>, Boolean, IOException> function) throws IOException {
+                        @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
 
     if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
@@ -1444,7 +1447,7 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull String name,
                         @NotNull String query,
@@ -1455,14 +1458,13 @@ public class PluginManagerConfigurableNew
   public static boolean loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
                                     @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
                                     @NotNull String query) throws IOException {
-    boolean forceHttps = forceHttps();
     Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
     Url offsetUrl = baseUrl;
     Map<String, String> offsetParameters = new HashMap<>();
     int offset = 0;
 
     while (true) {
-      List<String> pluginIds = requestToPluginRepository(offsetUrl, forceHttps);
+      List<String> pluginIds = requestToPluginRepository(offsetUrl);
       if (pluginIds.isEmpty()) {
         return false;
       }
@@ -1484,10 +1486,10 @@ public class PluginManagerConfigurableNew
   }
 
   @NotNull
-  public static List<String> requestToPluginRepository(@NotNull Url url, boolean forceHttps) throws IOException {
+  public static List<String> requestToPluginRepository(@NotNull Url url) throws IOException {
     List<String> ids = new ArrayList<>();
 
-    HttpRequests.request(url).forceHttps(forceHttps).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
+    HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
       URLConnection connection = request.getConnection();
       if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() != HttpURLConnection.HTTP_OK) {
         return null;
@@ -1527,11 +1529,6 @@ public class PluginManagerConfigurableNew
                                "&productCode=" + URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
   }
 
-  public static boolean forceHttps() {
-    return IdeaApplication.isLoaded() && !ApplicationManager.getApplication().isDisposed() &&
-           UpdateSettings.getInstance().canUseSecureConnection();
-  }
-
   @NotNull
   private List<IdeaPluginDescriptor> getPluginRepositories() {
     synchronized (myRepositoriesLock) {
@@ -1549,43 +1546,6 @@ public class PluginManagerConfigurableNew
       PluginManagerMain.LOG.info(e);
     }
     return Collections.emptyList();
-  }
-
-  @NotNull
-  public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
-                                       @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<String> enableAction) {
-    String message;
-
-    Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());
-    if (ContainerUtil.isEmpty(requiredPlugins)) {
-      message = "Incompatible with the current " + ApplicationNamesInfo.getInstance().getFullProductName() + " version.";
-    }
-    else if (requiredPlugins.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-      message = "The plugin requires IntelliJ IDEA Ultimate.";
-    }
-    else {
-      String deps = StringUtil.join(requiredPlugins, id -> {
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-        if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
-          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (descriptor instanceof IdeaPluginDescriptorImpl) {
-              if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id.getIdString())) {
-                plugin = descriptor;
-                break;
-              }
-            }
-          }
-        }
-        return plugin != null ? plugin.getName() : id.getIdString();
-      }, ", ");
-
-      int size = requiredPlugins.size();
-      message = IdeBundle.message("new.plugin.manager.incompatible.deps.tooltip", size, deps);
-      enableAction.set(IdeBundle.message("new.plugin.manager.incompatible.deps.action", size == 1 ? deps : "", size));
-    }
-
-    return message;
   }
 
   @NotNull
@@ -1736,11 +1696,11 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   public static <T extends Component> T installTiny(@NotNull T component) {
-    return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
+    return SystemInfoRt.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
   public static int offset5() {
-    return JBUI.scale(5);
+    return JBUIScale.scale(5);
   }
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {

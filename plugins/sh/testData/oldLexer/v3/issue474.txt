@@ -1,0 +1,8 @@
+word ('cat')
+WHITE_SPACE (' ')
+HEREDOC_MARKER_TAG ('<<')
+HEREDOC_MARKER_START ('EOF')
+; (';')
+\n ('\n')
+HEREDOC_CONTENT ('X\n')
+HEREDOC_MARKER_END ('EOF')

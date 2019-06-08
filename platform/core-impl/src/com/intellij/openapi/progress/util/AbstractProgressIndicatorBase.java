@@ -47,7 +47,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private TDoubleArrayList myFractionStack; // guarded by this
   private Stack<String> myText2Stack; // guarded by this
 
-  ProgressIndicator myModalityProgress;
+  private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile int myNonCancelableSectionCount;
   private final Object lock = ObjectUtils.sentinel("APIB lock");
@@ -230,6 +230,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     return myModalityProgress != null;
   }
 
+  final boolean isModalEntity() {
+    return myModalityProgress == this;
+  }
+
   @Override
   @NotNull
   public ModalityState getModalityState() {
@@ -237,14 +241,22 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @Override
-  public void setModalityProgress(ProgressIndicator modalityProgress) {
+  public void setModalityProgress(@Nullable ProgressIndicator modalityProgress) {
     LOG.assertTrue(!isRunning());
     myModalityProgress = modalityProgress;
-    ModalityState currentModality = ApplicationManager.getApplication().getCurrentModalityState();
-    myModalityState = myModalityProgress != null ? ((ModalityStateEx)currentModality).appendProgress(myModalityProgress) : currentModality;
+    setModalityState(modalityProgress);
+  }
+
+  private void setModalityState(@Nullable ProgressIndicator modalityProgress) {
+    ModalityState modalityState = ModalityState.defaultModalityState();
+
     if (modalityProgress != null) {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(myModalityState);
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      modalityState = ((ModalityStateEx)modalityState).appendProgress(modalityProgress);
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).enteredModality(modalityState);
     }
+
+    myModalityState = modalityState;
   }
 
   @Override

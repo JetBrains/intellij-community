@@ -149,6 +149,30 @@ public class Main {
     assert myFixture.complete(CompletionType.BASIC, 2).size() == 0
   }
 
+  void 'test show methods accessible on base type but inaccessible on cast type'() {
+    def clazz = myFixture.addClass '''
+package some;
+import another.*;
+
+public class Super {
+    void foo() {}
+    
+    void test(Super o) {
+      if (o instanceof Sub) {
+        o.fo<caret>o
+      }
+    }
+}
+
+'''
+    myFixture.addClass 'package another; public class Sub extends some.Super {}'
+
+    myFixture.configureFromExistingVirtualFile(clazz.containingFile.virtualFile)
+
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['foo']
+  }
+
   private void doTestSecond() {
     configure()
     assert myItems?.length == 0

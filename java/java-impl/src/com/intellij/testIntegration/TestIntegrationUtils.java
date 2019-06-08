@@ -225,7 +225,7 @@ public class TestIntegrationUtils {
 
     String templateText;
     try {
-      Properties properties = new Properties();
+      Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
       if (sourceClass != null && sourceClass.isValid()) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, sourceClass.getQualifiedName());
       }
@@ -242,7 +242,13 @@ public class TestIntegrationUtils {
     if (existingNames != null && !existingNames.add(name)) {
       int idx = 1;
       while (existingNames.contains(name)) {
-        final String newName = name + (idx++);
+        if (!name.startsWith("test")) {
+          name = "test" + StringUtil.capitalize(name);
+          if (existingNames.add(name)) {
+            break;
+          }
+        }
+        String newName = name + (idx++);
         if (existingNames.add(newName)) {
           name = newName;
           break;

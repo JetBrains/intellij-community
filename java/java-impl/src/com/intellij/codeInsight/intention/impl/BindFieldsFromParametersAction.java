@@ -185,7 +185,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @NotNull
   private static Iterable<PsiParameter> selectParameters(@NotNull Project project,
                                                          @NotNull PsiMethod method,
-                                                         @NotNull Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams,
+                                                         @NotNull Collection<? extends SmartPsiElementPointer<PsiParameter>> unboundedParams,
                                                          boolean isInteractive) {
     if (unboundedParams.size() < 2 || !isInteractive) {
       return revealPointers(unboundedParams);
@@ -247,7 +247,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   }
 
   @NotNull
-  private static <T extends PsiElement> List<T> revealPointers(@NotNull Iterable<SmartPsiElementPointer<T>> pointers) {
+  private static <T extends PsiElement> List<T> revealPointers(@NotNull Iterable<? extends SmartPsiElementPointer<T>> pointers) {
     final List<T> result = new ArrayList<>();
     for (SmartPsiElementPointer<T> pointer : pointers) {
       result.add(pointer.getElement());
@@ -256,7 +256,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   }
 
   @NotNull
-  private static List<PsiParameter> revealParameterClassMembers(@NotNull Iterable<ParameterClassMember> parameterClassMembers) {
+  private static List<PsiParameter> revealParameterClassMembers(@NotNull Iterable<? extends ParameterClassMember> parameterClassMembers) {
     final List<PsiParameter> result = new ArrayList<>();
     for (ParameterClassMember parameterClassMember : parameterClassMembers) {
       result.add(parameterClassMember.getParameter());
@@ -265,7 +265,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   }
 
   @NotNull
-  private static ParameterClassMember[] toClassMemberArray(@NotNull Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams) {
+  private static ParameterClassMember[] toClassMemberArray(@NotNull Collection<? extends SmartPsiElementPointer<PsiParameter>> unboundedParams) {
     final ParameterClassMember[] result = new ParameterClassMember[unboundedParams.size()];
     int i = 0;
     for (SmartPsiElementPointer<PsiParameter> pointer : unboundedParams) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -34,16 +34,13 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.ui.SimpleTextAttributes.*;
@@ -70,7 +67,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return;
-    Map<TextAttributesKey, Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> keyMap = ContainerUtil.newHashMap();
+    Map<TextAttributesKey, Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> keyMap = new HashMap<>();
     Processor<RangeHighlighterEx> processor = r -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(r);
       TextAttributesKey key = info != null
@@ -115,7 +112,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
       }
     }
     else {
-      ArrayList<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> attrs = ContainerUtil.newArrayList(keyMap.values());
+      ArrayList<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> attrs = new ArrayList<>(keyMap.values());
       Collections.sort(attrs, (o1, o2) -> StringUtil.naturalCompare(
         o1.first.getDisplayName() + o1.second.getDisplayName(), o2.first.getDisplayName() + o2.second.getDisplayName()));
 

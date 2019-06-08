@@ -29,9 +29,11 @@ import java.util.stream.Collectors;
 import static org.editorconfig.core.EditorConfig.OutPair;
 
 public class EditorConfigSettingsWriter extends OutputStreamWriter {
-  private final           CodeStyleSettings              mySettings;
-  private final @Nullable Project                        myProject;
-  private final           Map<String, String>            myGeneralOptions = new HashMap<>();
+  private final           CodeStyleSettings   mySettings;
+  private final @Nullable Project             myProject;
+  private final           Map<String, String> myGeneralOptions = new HashMap<>();
+  private final           boolean             myAddRootFlag;
+  private final           boolean             myCommentOutProperties;
 
   private final static Comparator<OutPair> PAIR_COMPARATOR = (pair1, pair2) -> {
     EditorConfigPropertyKind pKind1 = getPropertyKind(pair1.getKey());
@@ -45,10 +47,16 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   private final Set<EditorConfigPropertyKind> myPropertyKinds = EnumSet.allOf(EditorConfigPropertyKind.class);
   // endregion
 
-  public EditorConfigSettingsWriter(@Nullable Project project, @NotNull OutputStream out, CodeStyleSettings settings) {
+  public EditorConfigSettingsWriter(@Nullable Project project,
+                                    @NotNull OutputStream out,
+                                    CodeStyleSettings settings,
+                                    boolean isRoot,
+                                    boolean commentOutProperties) {
     super(out, StandardCharsets.UTF_8);
     mySettings = settings;
     myProject = project;
+    myAddRootFlag = isRoot;
+    myCommentOutProperties = commentOutProperties;
     fillGeneralOptions();
   }
 
@@ -75,6 +83,12 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     }
   }
 
+  public EditorConfigSettingsWriter forLanguages(List<Language> languages) {
+    myLanguages = new HashSet<>(languages.size());
+    myLanguages.addAll(languages);
+    return this;
+  }
+
   public EditorConfigSettingsWriter forLanguages(Language... languages) {
     myLanguages = new HashSet<>(languages.length);
     myLanguages.addAll(Arrays.asList(languages));
@@ -88,6 +102,10 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   }
 
   public void writeSettings() throws IOException {
+    if (myAddRootFlag) {
+      writeProperties(Collections.singletonList(new OutPair("root", "true")), false);
+      write("\n");
+    }
     writeGeneralSection();
     final MultiMap<String,LanguageCodeStylePropertyMapper> mappers = new MultiMap<>();
     CodeStylePropertiesUtil.collectMappers(mySettings, mapper -> {
@@ -118,7 +136,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
       .map(key -> new OutPair(key, myGeneralOptions.get(key)))
       .filter(pair -> isNameAllowed(pair.getKey()))
       .sorted(PAIR_COMPARATOR).collect(Collectors.toList());
-   writeProperties(pairs);
+   writeProperties(pairs, myCommentOutProperties);
   }
 
   private boolean writeLangSection(@NotNull LanguageCodeStylePropertyMapper mapper, @Nullable String pattern) throws IOException {
@@ -130,7 +148,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
           write("\n[" + pattern + "]\n");
         }
         Collections.sort(optionValueList, PAIR_COMPARATOR);
-        writeProperties(optionValueList);
+        writeProperties(optionValueList, myCommentOutProperties);
         return true;
       }
     }
@@ -170,14 +188,14 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
   }
 
   private static boolean isValueAllowed(@Nullable String value) {
-    if (value == null || value.trim().isEmpty()) return false;
-    // TODO<rv> REMOVE THE HACK
-    //  EditorConfig implementation doesn't allow dots. We need to skip such values till the parser issue is fixed.
-    return !value.contains(".");
+    return value != null && !value.trim().isEmpty();
   }
 
-  private void writeProperties(@NotNull List<OutPair> outPairs) throws IOException {
+  private void writeProperties(@NotNull List<OutPair> outPairs, boolean commentOut) throws IOException {
     for (OutPair pair : outPairs) {
+      if (commentOut) {
+        write("# ");
+      }
       write(pair.getKey() + " = " + pair.getVal() + "\n");
     }
   }

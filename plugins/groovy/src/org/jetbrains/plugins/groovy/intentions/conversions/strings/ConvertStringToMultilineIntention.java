@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
@@ -47,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -89,7 +75,7 @@ public class ConvertStringToMultilineIntention extends Intention {
   @NotNull
   private static List<GrExpression> collectExpressions(@NotNull PsiElement element) {
     assert element instanceof GrExpression;
-    List<GrExpression> result = ContainerUtil.newArrayList();
+    List<GrExpression> result = new ArrayList<>();
     result.add((GrExpression)element);
     while (element.getParent() instanceof GrBinaryExpression) {
       final GrBinaryExpression binary = (GrBinaryExpression)element.getParent();
@@ -146,7 +132,7 @@ public class ConvertStringToMultilineIntention extends Intention {
   }
 
   private void invokeImpl(@NotNull final GrExpression element, @NotNull final Project project, @NotNull final Editor editor) {
-    final List<GrLiteral> literals = collectOperands(element, ContainerUtil.newArrayList());
+    final List<GrLiteral> literals = collectOperands(element, new ArrayList<>());
     if (literals.isEmpty()) return;
 
     final StringBuilder buffer = prepareNewLiteralText(literals);

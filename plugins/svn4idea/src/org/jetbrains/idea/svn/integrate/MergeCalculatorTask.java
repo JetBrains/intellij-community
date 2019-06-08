@@ -17,11 +17,11 @@ import org.jetbrains.idea.svn.mergeinfo.MergeCheckResult;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class MergeCalculatorTask extends BaseMergeTask {
@@ -41,7 +41,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
     super(mergeProcess);
     myCopyPoint = copyPoint;
     myCallback = callback;
-    myChangeLists = newArrayList();
+    myChangeLists = new ArrayList<>();
     // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
     // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
@@ -97,7 +97,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
   @NotNull
   private List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
-    List<SvnChangeList> result = newArrayList();
+    List<SvnChangeList> result = new ArrayList<>();
 
     progress("Collecting not merged revisions");
     for (Pair<SvnChangeList, LogHierarchyNode> pair : changeLists) {
@@ -139,7 +139,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
                                             long revisionToExclude,
                                             int size,
                                             @NotNull PairFunction<SvnChangeList, LogHierarchyNode, T> resultProvider) throws VcsException {
-    List<T> result = newArrayList();
+    List<T> result = new ArrayList<>();
 
     ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())
       .getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mergeContext.getSourceUrl()),

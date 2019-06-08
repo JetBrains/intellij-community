@@ -12,7 +12,6 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -80,7 +79,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       result.stopHere();
     }
 
-    final Map<String, NamedArgumentDescriptor> map = ContainerUtil.newHashMap(calculateNamedArguments(mapOrArgumentList));
+    final Map<String, NamedArgumentDescriptor> map = new HashMap<>(calculateNamedArguments(mapOrArgumentList));
 
     for (GrNamedArgument argument : getSiblingNamedArguments(mapOrArgumentList)) {
       map.remove(argument.getLabelName());

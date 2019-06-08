@@ -15,16 +15,24 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Set;
 
 public class NormalizeDeclarationFix extends InspectionGadgetsFix {
 
@@ -58,16 +66,17 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
       PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)element;
       final PsiElement grandParent = element.getParent();
       if (grandParent instanceof PsiForStatement) {
-        splitMultipleDeclarationInForStatementInitialization(declarationStatement);
-        return;
+        splitMultipleDeclarationInForStatementInitialization((PsiForStatement)grandParent);
       }
-      final PsiElement[] elements = declarationStatement.getDeclaredElements();
-      final PsiVariable variable = (PsiVariable)elements[0];
-      variable.normalizeDeclaration();
-      for (int i = 1; i < elements.length; i++) {
-        declarationStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiDeclarationStatement.class);
-        assert declarationStatement != null;
-        JavaSharedImplUtil.normalizeBrackets((PsiVariable)declarationStatement.getDeclaredElements()[0]);
+      else {
+        final PsiElement[] elements = declarationStatement.getDeclaredElements();
+        final PsiVariable variable = (PsiVariable)elements[0];
+        variable.normalizeDeclaration();
+        for (int i = 1; i < elements.length; i++) {
+          declarationStatement = PsiTreeUtil.getNextSiblingOfType(declarationStatement, PsiDeclarationStatement.class);
+          assert declarationStatement != null;
+          JavaSharedImplUtil.normalizeBrackets((PsiVariable)declarationStatement.getDeclaredElements()[0]);
+        }
       }
     }
     else if (element instanceof PsiField) {
@@ -111,60 +120,70 @@ public class NormalizeDeclarationFix extends InspectionGadgetsFix {
     }
   }
 
-  private static void splitMultipleDeclarationInForStatementInitialization(PsiDeclarationStatement declarationStatement) {
-    final PsiElement forStatement = declarationStatement.getParent();
-    final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
-    final Project project = forStatement.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiElement greatGreatGrandParent = forStatement.getParent();
-    final PsiBlockStatement blockStatement;
-    final PsiCodeBlock codeBlock;
-    if (!(greatGreatGrandParent instanceof PsiCodeBlock)) {
-      blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", forStatement);
-      codeBlock = blockStatement.getCodeBlock();
+  private static void splitMultipleDeclarationInForStatementInitialization(PsiForStatement forStatement) {
+    if (!(forStatement.getParent() instanceof PsiCodeBlock)) {
+      forStatement = BlockUtils.expandSingleStatementToBlockStatement(forStatement);
+    }
+    final PsiStatement initialization = forStatement.getInitialization();
+    if (!(initialization instanceof PsiDeclarationStatement)) {
+      return;
+    }
+    final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
+    final List<PsiLocalVariable> variables =
+      StreamEx.of(declarationStatement.getDeclaredElements()).select(PsiLocalVariable.class).toList();
+    final int min, max;
+    final boolean dependentVariables = containsDependentVariables(variables);
+    if (dependentVariables) {
+      min = 0;
+      max = variables.size() - 1;
     }
     else {
-      blockStatement = null;
-      codeBlock = null;
+      min = 1;
+      max = variables.size();
     }
-    for (int i = 1; i < declaredElements.length; i++) {
-      final PsiElement declaredElement = declaredElements[i];
-      if (!(declaredElement instanceof PsiVariable)) {
-        continue;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(forStatement.getProject());
+
+    final CommentTracker ct = new CommentTracker();
+    for (int i = min; i < max; i++) {
+      final PsiVariable variable = variables.get(i);
+      final String name = variable.getName();
+      assert name != null;
+      final PsiDeclarationStatement newStatement =
+        factory.createVariableDeclarationStatement(name, variable.getType(), ct.markUnchanged(variable.getInitializer()),
+                                                   declarationStatement);
+      forStatement.getParent().addBefore(newStatement, forStatement);
+    }
+
+    final PsiVariable remainingVariable = variables.get(dependentVariables ? variables.size() - 1 : 0);
+    final String name = remainingVariable.getName();
+    assert name != null;
+    final PsiStatement replacementStatement =
+      factory.createVariableDeclarationStatement(name, remainingVariable.getType(), ct.markUnchanged(remainingVariable.getInitializer()),
+                                                 declarationStatement);
+    ct.replaceAndRestoreComments(declarationStatement, replacementStatement);
+  }
+
+  private static boolean containsDependentVariables(List<PsiLocalVariable> variables) {
+    if (variables.isEmpty()) return false;
+    final Set<PsiLocalVariable> visited = ContainerUtil.newHashSet(variables.get(0));
+    for (int i = 1; i < variables.size(); i++) {
+      final PsiLocalVariable variable = variables.get(i);
+      if (!PsiTreeUtil.processElements(variable.getInitializer(),
+                                       element -> !visited.contains(tryResolveLocalVariable(element)))) {
+        return true;
       }
-      final PsiVariable variable = (PsiVariable)declaredElement;
-      final PsiType type = variable.getType();
-      final String typeText = type.getCanonicalText();
-      final StringBuilder newStatementText = new StringBuilder(typeText);
-      newStatementText.append(' ').append(variable.getName());
-      final PsiExpression initializer = variable.getInitializer();
-      if (initializer != null) {
-        newStatementText.append('=').append(initializer.getText());
-      }
-      newStatementText.append(';');
-      final PsiStatement newStatement = factory.createStatementFromText(newStatementText.toString(), forStatement);
-      if (codeBlock == null) {
-        greatGreatGrandParent.addBefore(newStatement, forStatement);
-      }
-      else {
-        codeBlock.add(newStatement);
+      visited.add(variable);
+    }
+    return false;
+  }
+
+  private static PsiLocalVariable tryResolveLocalVariable(PsiElement element) {
+    if (element instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      if (referenceExpression.getQualifierExpression() == null) {
+        return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
       }
     }
-    for (int i = 0; i < declaredElements.length; i++) {
-      final PsiElement declaredElement = declaredElements[i];
-      if (!(declaredElement instanceof PsiVariable)) {
-        continue;
-      }
-      if (i == 0) {
-        ((PsiVariable)declaredElement).normalizeDeclaration();
-      }
-      else {
-        declaredElement.delete();
-      }
-    }
-    if (codeBlock != null) {
-      codeBlock.add(forStatement);
-      forStatement.replace(blockStatement);
-    }
+    return null;
   }
 }

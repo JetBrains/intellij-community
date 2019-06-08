@@ -19,6 +19,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -139,6 +141,22 @@ public class SLRUMap<K,V> {
     Set<Map.Entry<K, V>> set = new HashSet<Map.Entry<K,V>>(myProtectedQueue.entrySet());
     set.addAll(myProbationalQueue.entrySet());
     return set;
+  }
+
+  public void clearByCondition(@NotNull Condition<? super V> condition) {
+    clearByCondition(condition, myProtectedQueue);
+    clearByCondition(condition, myProbationalQueue);
+  }
+
+  private void clearByCondition(@NotNull Condition<? super V> condition, @NotNull LinkedHashMap<K, V> queue) {
+    Iterator<Map.Entry<K, V>> iterator = queue.entrySet().iterator();
+    while (iterator.hasNext()) {
+      Map.Entry<K, V> entry = iterator.next();
+      if (condition.value(entry.getValue())) {
+        onDropFromCache(entry.getKey(), entry.getValue());
+        iterator.remove();
+      }
+    }
   }
 
   public void clear() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.highlighter;
 
@@ -67,6 +67,8 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey GSTRING = createTextAttributesKey("GString", JavaHighlightingColors.STRING);
   public static final TextAttributesKey STRING = createTextAttributesKey("String", JavaHighlightingColors.STRING);
   public static final TextAttributesKey BRACES = createTextAttributesKey("Braces", JavaHighlightingColors.BRACES);
+  public static final TextAttributesKey CLOSURE_ARROW_AND_BRACES = createTextAttributesKey("Closure braces", BRACES);
+  public static final TextAttributesKey LAMBDA_ARROW_AND_BRACES = createTextAttributesKey("Lambda braces", BRACES);
   public static final TextAttributesKey BRACKETS = createTextAttributesKey("Brackets", JavaHighlightingColors.BRACKETS);
   public static final TextAttributesKey PARENTHESES = createTextAttributesKey("Parentheses", JavaHighlightingColors.PARENTHESES);
   public static final TextAttributesKey OPERATION_SIGN = createTextAttributesKey("Operation sign", JavaHighlightingColors.OPERATION_SIGN);

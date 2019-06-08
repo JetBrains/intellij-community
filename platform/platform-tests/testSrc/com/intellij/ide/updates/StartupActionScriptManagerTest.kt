@@ -11,6 +11,8 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.outputStream
 import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

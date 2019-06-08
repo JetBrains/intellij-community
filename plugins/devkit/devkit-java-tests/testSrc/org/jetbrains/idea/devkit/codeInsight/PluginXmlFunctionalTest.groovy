@@ -132,10 +132,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
         <module value="com.intellij.modules.vcs"/>
     """)
     addPluginXml("custom", "<id>com.intellij.custom</id>")
+    addPluginXml("custom2", "<id>com.intellij.custom2</id>")
+    addPluginXml("custom3", "<id>com.intellij.custom3</id>")
+    addPluginXml("custom4", "<id>com.intellij.custom4</id>")
+    addPluginXml("duplicated", "<id>com.intellij.duplicated</id>")
 
     myFixture.copyFileToProject("deprecatedAttributes.xml", "META-INF/optional.xml")
     configureByFile()
-    myFixture.checkHighlighting(false, false, false)
+    myFixture.checkHighlighting(true, false, false)
   }
 
   void testDependsConfigFileCompletion() {
@@ -176,6 +180,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     configureByFile()
     myFixture.checkHighlighting(false, false, false)
+  }
+
+  void testExtensionQualifiedNameUnnecessaryDeclaration() {
+    doHighlightingTest("ExtensionQualifiedNameUnnecessaryDeclaration.xml")
   }
 
   void testInnerClassReferenceHighlighting() {
@@ -226,14 +234,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.copyFileToProject(getTestName(false) + "_main.xml", "META-INF/plugin.xml")
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + "_dependent.xml", "META-INF/dep.xml"))
-    ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile("")) }
+    ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(module, myTempDirFixture.getFile("")) }
 
     myFixture.checkHighlighting(false, false, false)
   }
 
   private void addPluginXml(final String root, @Language("HTML") final String text) throws IOException {
     myTempDirFixture.createFile(root + "/META-INF/plugin.xml", "<idea-plugin>$text</idea-plugin>")
-    ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(myModule, myTempDirFixture.getFile(root)) }
+    ApplicationManager.application.runWriteAction { PsiTestUtil.addSourceContentToRoots(module, myTempDirFixture.getFile(root)) }
   }
 
   void testNoWordCompletionInClassPlaces() {
@@ -535,6 +543,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                        "    return true;" +
                        "  }" +
                        "}")
+    myFixture.addFileToProject("keymaps/MyKeymap.xml", "<keymap/>")
     myFixture.testHighlighting()
   }
 
@@ -554,10 +563,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     Module additionalModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "additionalModule",
                                                  myTempDirFixture.findOrCreateDir("../additionalModuleDir"))
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(LanguageExtensionPoint.class))))
-    ModuleRootModificationUtil.addDependency(myModule, anotherModule)
-    ModuleRootModificationUtil.addDependency(myModule, additionalModule)
+    ModuleRootModificationUtil.addDependency(module, anotherModule)
+    ModuleRootModificationUtil.addDependency(module, additionalModule)
     def moduleSet = new PluginXmlDomInspection.PluginModuleSet()
-    moduleSet.modules.add(myModule.name)
+    moduleSet.modules.add(module.name)
     moduleSet.modules.add(additionalModule.name)
     myInspection.PLUGINS_MODULES.add(moduleSet)
 

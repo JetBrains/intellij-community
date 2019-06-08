@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.function.Consumer;
 
@@ -13,7 +14,7 @@ public class MessageReader<T> extends Endpoint {
   private final Class<T> myMsgType;
 
   public MessageReader(InputStream input, Class<T> msgType) {
-    myIn = new BufferedReader(new InputStreamReader(input));
+    myIn = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
     myMsgType = msgType;
   }
 

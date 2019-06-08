@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -13,6 +13,7 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -131,6 +132,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       @Override
       protected boolean canSelect(PsiFileSystemItem file) {
         VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
+        vFile = BackedVirtualFile.getOriginFileIfBacked(vFile);
         if (vFile == null || !vFile.isValid()) return false;
         if (!vFile.isInLocalFileSystem()) return false;
 
@@ -245,7 +247,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode> list = ContainerUtil.newArrayList();
+      List<AbstractTreeNode> list = new ArrayList<>();
       for (RootType rootType : RootType.getAllRootTypes()) {
         ContainerUtil.addIfNotNull(list, createRootNode(getProject(), rootType, getSettings()));
       }
@@ -340,7 +342,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                                  @Nullable PsiDirectory directory,
                                                                  @NotNull ViewSettings settings,
                                                                  @NotNull PsiFileSystemItemFilter filter) {
-      final List<AbstractTreeNode> result = ContainerUtil.newArrayList();
+      final List<AbstractTreeNode> result = new ArrayList<>();
       PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
         @Override
         public boolean execute(@NotNull PsiFileSystemItem element) {

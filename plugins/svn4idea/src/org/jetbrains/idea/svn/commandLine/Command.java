@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,8 +18,8 @@ import java.util.List;
 // TODO: Probably make command immutable and use CommandBuilder for updates.
 public class Command {
 
-  @NotNull private final List<String> myParameters = ContainerUtil.newArrayList();
-  @NotNull private final List<String> myOriginalParameters = ContainerUtil.newArrayList();
+  @NotNull private final List<String> myParameters = new ArrayList<>();
+  @NotNull private final List<String> myOriginalParameters = new ArrayList<>();
   @NotNull private final SvnCommandName myName;
 
   private File workingDirectory;
@@ -159,7 +159,7 @@ public class Command {
 
   @NotNull
   public List<String> getParameters() {
-    return ContainerUtil.newArrayList(myParameters);
+    return new ArrayList<>(myParameters);
   }
 
   public String getText() {

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -119,14 +120,6 @@ public class IOUtil {
     }
   }
 
-  private static final ThreadLocalCachedValue<char[]> spareBufferLocal = new ThreadLocalCachedValue<char[]>() {
-    @NotNull
-    @Override
-    protected char[] create() {
-      return new char[STRING_LENGTH_THRESHOLD];
-    }
-  };
-
   public static String readUTFFast(@NotNull byte[] buffer, @NotNull DataInput storage) throws IOException {
     int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {
@@ -141,9 +134,7 @@ public class IOUtil {
     if (len == 0) return "";
     storage.readFully(buffer, 0, len);
 
-    char[] chars = spareBufferLocal.getValue();
-    for (int i = 0; i < len; ++i) chars[i] = (char)(buffer[i] & 0xFF);
-    return new String(chars, 0, len);
+    return new String(buffer, 0, len, StandardCharsets.ISO_8859_1);
   }
 
   public static boolean isAscii(@NotNull String str) {

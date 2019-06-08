@@ -1,0 +1,60 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('a')
+          PsiElement(=)('=')
+          ASSIGNMENT_LIST
+            PsiElement(()('(')
+            ARRAY_ASSIGNMENT
+              ASSIGNMENT_EXPRESSION
+                INDEX_EXPRESSION
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('a')
+                  PsiWhiteSpace(' ')
+                  PsiElement([)('[')
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('b')
+                  PsiElement(])(']')
+                PsiElement(=)('=')
+                LITERAL_EXPRESSION
+                  PsiElement(word)('x')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('z')
+            PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('#valid syntax, but invalid semantic, should trigger an inspection warning')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('a')
+          ARRAY_EXPRESSION
+            PsiElement([)('[')
+            LITERAL_EXPRESSION
+              NUMBER
+                PsiElement(int)('1')
+            PsiElement(])(']')
+          PsiElement(=)('=')
+          ASSIGNMENT_LIST
+            PsiElement(()('(')
+            ARRAY_ASSIGNMENT
+              ASSIGNMENT_EXPRESSION
+                INDEX_EXPRESSION
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('a')
+                  PsiWhiteSpace(' ')
+                  PsiElement([)('[')
+                  LITERAL_EXPRESSION
+                    PsiElement(word)('b')
+                  PsiElement(])(']')
+                PsiElement(=)('=')
+                LITERAL_EXPRESSION
+                  PsiElement(word)('x')
+                  PsiWhiteSpace(' ')
+                  PsiElement(word)('z')
+            PsiElement())(')')

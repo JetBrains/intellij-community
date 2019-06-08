@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -20,10 +20,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.*;
 
@@ -35,7 +35,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements PriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
 
-  private final Map<PsiType, String> myFromToMap = ContainerUtil.newHashMap();
+  private final Map<PsiType, String> myFromToMap = new HashMap<>();
 
   {
     myFromToMap.put(PsiType.INT, AtomicInteger.class.getName());
@@ -167,7 +167,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       if (atomicReferenceArrayClass == null) {//show warning
         return null;
       }
-      final Map<PsiTypeParameter, PsiType> substitutor = ContainerUtil.newHashMap();
+      final Map<PsiTypeParameter, PsiType> substitutor = new HashMap<>();
       final PsiTypeParameter[] typeParameters = atomicReferenceArrayClass.getTypeParameters();
       if (typeParameters.length == 1) {
         PsiType componentType = ((PsiArrayType)fromType).getComponentType();
@@ -181,7 +181,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       if (atomicReferenceClass == null) {//show warning
         return null;
       }
-      final Map<PsiTypeParameter, PsiType> substitutor = ContainerUtil.newHashMap();
+      final Map<PsiTypeParameter, PsiType> substitutor = new HashMap<>();
       final PsiTypeParameter[] typeParameters = atomicReferenceClass.getTypeParameters();
       if (typeParameters.length == 1) {
         PsiType type = fromType;

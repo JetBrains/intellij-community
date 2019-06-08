@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
@@ -14,8 +12,9 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.RowIcon;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.RowIcon;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +83,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   @Override
   public RowIcon getElementIcon(final int elementFlags) {
-    return createLayeredIcon(this, PlatformIcons.PACKAGE_ICON, elementFlags);
+    return IconManager.getInstance().createLayeredIcon(this, PlatformIcons.PACKAGE_ICON, elementFlags);
   }
 
   @Override
@@ -185,7 +184,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   @Override
   @NotNull
   public char[] textToCharArray() {
-    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
+    return ArrayUtilRt.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
   }
 
   @Override

@@ -936,6 +936,20 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-27615
+  public void testFStringFragmentWrappingSplitInsideExpression() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+    getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-27615
+  public void testFStringFragmentWrappingSplitInsideNestedExpression() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+    getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-31991
   public void testSpacesAroundFStringFragmentExpressionStripped() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);

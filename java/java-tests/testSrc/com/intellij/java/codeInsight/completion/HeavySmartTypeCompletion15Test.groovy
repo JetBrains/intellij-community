@@ -87,7 +87,7 @@ class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
     Module moduleA = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'A', myFixture.tempDirFixture.findOrCreateDir("a"))
     Module moduleB = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'B', myFixture.tempDirFixture.findOrCreateDir("b"))
 
-    ModuleRootModificationUtil.addDependency(myModule, moduleB)
+    ModuleRootModificationUtil.addDependency(module, moduleB)
     ModuleRootModificationUtil.addDependency(moduleB, moduleA)
 
     myFixture.addFileToProject('a/foo/Foo.java', 'package foo; public interface Foo {}')

@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
@@ -35,7 +35,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @NotNull
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
-    List<PsiAnnotation> result = ContainerUtil.newArrayList();
+    List<PsiAnnotation> result = new ArrayList<>();
     for (InferredAnnotationProvider provider : InferredAnnotationProvider.EP_NAME.getExtensionList(myProject)) {
       List<PsiAnnotation> annotations = provider.findInferredAnnotations(listOwner);
       for (PsiAnnotation annotation : annotations) {

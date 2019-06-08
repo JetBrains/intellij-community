@@ -36,7 +36,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   private boolean myAllSelected;
   private boolean myMixSelection;
 
-  private Consumer<PluginsGroupComponent> mySelectionListener;
+  private Consumer<? super PluginsGroupComponent> mySelectionListener;
 
   public MultiSelectionEventHandler() {
     clear();
@@ -197,6 +197,24 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
+  public void handleUpDown(@NotNull KeyEvent event) {
+    if (myComponents.isEmpty()) {
+      return;
+    }
+
+    try {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      CellPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
+
+      myKeyListener.keyPressed(event);
+    }
+    finally {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      CellPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
+    }
+  }
+
+  @Override
   public void connect(@NotNull PluginsGroupComponent container) {
     myContainer = container;
     myLayout = (PagePluginLayout)container.getLayout();
@@ -240,7 +258,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void setSelectionListener(@Nullable Consumer<PluginsGroupComponent> listener) {
+  public void setSelectionListener(@Nullable Consumer<? super PluginsGroupComponent> listener) {
     mySelectionListener = listener;
   }
 
@@ -478,7 +496,7 @@ public class MultiSelectionEventHandler extends EventHandler {
   }
 
   @Override
-  public void setSelection(@NotNull List<CellPluginComponent> components) {
+  public void setSelection(@NotNull List<? extends CellPluginComponent> components) {
     clearSelectionWithout(-1);
     mySelectionIndex = -1;
     mySelectionLength = components.size();

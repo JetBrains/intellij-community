@@ -18,6 +18,8 @@ package com.jetbrains.python.codeInsight.liveTemplates;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -47,5 +49,18 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
     lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
 
     myFixture.checkResultByFile(getTestName(false) + "/a_after.py");
+  }
+
+  public void testTrimCommentStart() {
+    myFixture.configureByText("a.py", "<caret>");
+
+    TemplateManager manager = TemplateManager.getInstance(myFixture.getProject());
+    Template template = manager.createTemplate("empty", "user", "$S$ comment $E$");
+    template.addVariable("S", "commentStart()", "", false);
+    template.addVariable("E", "commentEnd()", "", false);
+
+    manager.startTemplate(myFixture.getEditor(), template);
+
+    myFixture.checkResult("# comment ");
   }
 }

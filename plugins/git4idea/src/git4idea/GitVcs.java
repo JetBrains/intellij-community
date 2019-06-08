@@ -4,8 +4,9 @@ package git4idea;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -23,10 +24,10 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAnnotationProvider;
@@ -46,6 +47,8 @@ import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.status.GitChangeProvider;
@@ -64,9 +67,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-
-import static java.util.Comparator.comparing;
 
 /**
  * Git VCS implementation
@@ -128,7 +128,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, gitProjectSettings);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
-    myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor(myCheckinEnvironment) : null;
+    myCommitAndPushExecutor = myCheckinEnvironment != null ? new GitCommitAndPushExecutor() : null;
     myExecutableValidator = new GitExecutableValidator(myProject);
   }
 
@@ -252,10 +252,12 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void activate() {
-    myExecutableManager.testGitExecutableVersionValid(myProject);
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ProgressManager.getInstance().executeProcessUnderProgress(
+        () -> myExecutableManager.testGitExecutableVersionValid(myProject), new EmptyProgressIndicator()));
 
     if (myVFSListener == null) {
-      myVFSListener = new GitVFSListener(myProject, this, myGit, myVcsConsoleWriter);
+      myVFSListener = GitVFSListener.createInstance(this, myGit, myVcsConsoleWriter);
     }
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
 
@@ -267,9 +269,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     GitUserRegistry.getInstance(myProject).activate();
-    if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo()) {
-      GitBranchIncomingOutgoingManager.getInstance(myProject).startScheduling();
-    }
+    GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
   }
 
   @Override
@@ -303,7 +303,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @param list   a list of errors
    * @param action an action
    */
-  public void showErrors(@NotNull List<VcsException> list, @NotNull String action) {
+  public void showErrors(@NotNull List<? extends VcsException> list, @NotNull String action) {
     if (list.size() > 0) {
       StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
@@ -319,6 +319,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   /**
    * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
+   * @see GitExecutableManager#getVersionOrCancel
    */
   @NotNull
   public GitVersion getVersion() {
@@ -337,39 +338,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean allowsNestedRoots() {
     return true;
-  }
-
-  @NotNull
-  @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
-    Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
-
-    for (int i = 1; i < in.size(); i++) {
-      final S sChild = in.get(i);
-      final VirtualFile child = convertor.apply(sChild);
-      final VirtualFile childRoot = GitUtil.gitRootOrNull(child);
-      if (childRoot == null) {
-        // non-git file actually, skip it
-        continue;
-      }
-      for (int j = i - 1; j >= 0; --j) {
-        final S sParent = in.get(j);
-        final VirtualFile parent = convertor.apply(sParent);
-        // the method check both that parent is an ancestor of the child and that they share common git root
-        if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
-          in.remove(i);
-          //noinspection AssignmentToForLoopParameter
-          --i;
-          break;
-        }
-      }
-    }
-    return in;
-  }
-
-  @Override
-  public RootsConvertor getCustomConvertor() {
-    return GitRootConverter.INSTANCE;
   }
 
   public static VcsKey getKey() {
@@ -424,6 +392,17 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public CheckoutProvider getCheckoutProvider() {
     return new GitCheckoutProvider();
+  }
+
+  @Nullable
+  @Override
+  public CommittedChangeList loadRevisions(VirtualFile vf, VcsRevisionNumber number) {
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
+    if (repository == null) return null;
+
+    return VcsSynchronousProgressWrapper.compute(
+      () -> GitCommittedChangeListProvider.getCommittedChangeList(myProject, repository.getRoot(), (GitRevisionNumber)number),
+      getProject(), "Load Revision Contents");
   }
 
   @Override

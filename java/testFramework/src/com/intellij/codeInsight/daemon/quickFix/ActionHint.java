@@ -42,12 +42,13 @@ import static org.junit.Assert.fail;
  * @author Tagir Valeev
  */
 public class ActionHint {
+  @NotNull
   private final String myExpectedText;
   private final boolean myShouldPresent;
   private final ProblemHighlightType myHighlightType;
   private final boolean myExactMatch;
 
-  private ActionHint(String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch) {
+  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch) {
     myExpectedText = expectedText;
     myShouldPresent = shouldPresent;
     myHighlightType = severity;
@@ -63,6 +64,7 @@ public class ActionHint {
    * @return an expected action text. May throw an {@link IllegalStateException} if this ActionHint expects something else
    * (e.g. quick-fix of specific type, etc.)
    */
+  @NotNull
   public String getExpectedText() {
     return myExpectedText;
   }
@@ -86,7 +88,7 @@ public class ActionHint {
    * @throws AssertionError if no action is found, but it should present, or if action is found, but it should not present.
    */
   @Nullable
-  public IntentionAction findAndCheck(Collection<? extends IntentionAction> actions, Supplier<String> infoSupplier) {
+  public IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions, @NotNull Supplier<String> infoSupplier) {
     IntentionAction result = actions.stream().filter(t -> {
       String text = t.getText();
       return myExactMatch ? text.equals(myExpectedText) : text.startsWith(myExpectedText);
@@ -117,6 +119,7 @@ public class ActionHint {
     return result;
   }
 
+  @NotNull
   private String exceptionHeader() {
     return "Action with " + (myExactMatch ? "text" : "prefix") + " '" + myExpectedText + "'";
   }
@@ -141,7 +144,7 @@ public class ActionHint {
    *
    * @param file PsiFile associated with contents (used to determine the language)
    * @param contents file contents
-   * @param exactMatch if false then action hint matches prefix like in {@link CodeInsightTestFixture#filterAvailableIntentions(java.lang.String)}
+   * @param exactMatch if false then action hint matches prefix like in {@link CodeInsightTestFixture#filterAvailableIntentions(String)}
    * @return ActionHint object
    * @throws AssertionError if action hint is absent or has invalid format
    */

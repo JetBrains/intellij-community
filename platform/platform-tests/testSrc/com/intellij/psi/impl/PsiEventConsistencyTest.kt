@@ -5,6 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.CharTableImpl
 import com.intellij.psi.impl.source.DummyHolder
@@ -239,7 +240,7 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
   private val nodes = Generator.frequency(4, leaves, 2, composites)
 
   private fun withDummyHolder(e: TreeElement): TreeElement {
-    DummyHolder(LightPlatformTestCase.getPsiManager(), e, null, CharTableImpl())
+    DummyHolder(PsiManager.getInstance(project), e, null, CharTableImpl())
     CodeEditUtil.setNodeGenerated(e, true)
     return e
   }

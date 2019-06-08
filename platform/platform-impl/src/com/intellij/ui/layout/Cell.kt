@@ -102,6 +102,12 @@ abstract class Cell {
   val pushY = CCFlags.pushY
   val push = CCFlags.push
 
+  // backward compatibility - return type should be void
+  fun label(text: String, gapLeft: Int = 0, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) {
+    val label = Label(text, style, fontColor, bold)
+    label(gapLeft = gapLeft)
+  }
+
   fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit) {
     val result = Link(text, action = action)
     style?.let { UIUtil.applyStyle(it, result) }
@@ -167,6 +173,9 @@ abstract class Cell {
     val component = ComboBox(model)
     if (renderer != null) {
       component.renderer = renderer
+    }
+    else {
+      component.renderer = SimpleListCellRenderer.create("") { it.toString() }
     }
     val builder = component(growPolicy = growPolicy)
     return builder.withBinding({ component.selectedItem as T? }, { component.setSelectedItem(it) }, getter, setter)

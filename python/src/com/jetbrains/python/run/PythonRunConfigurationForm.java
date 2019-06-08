@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -92,7 +92,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myScriptTextField.addBrowseFolderListener(listener);
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       //TODO: enable it on Windows when it works there
       emulateTerminalEnabled(false);
     }
@@ -154,8 +154,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private void checkTargetComboConsistency(boolean mode) {
     String item = myTargetComboBox.getText();
     assert item != null;
-    //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-    if (mode && !item.toLowerCase().contains("module")) {
+    if (mode && !StringUtil.toLowerCase(item).contains("module")) {
       throw new IllegalArgumentException("This option should refer to a module");
     }
   }

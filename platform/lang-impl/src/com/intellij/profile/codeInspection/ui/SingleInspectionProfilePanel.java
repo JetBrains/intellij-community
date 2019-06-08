@@ -173,14 +173,14 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public static String renderSeverity(HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return "No highlighting, only fix"; //todo severity presentation
-    return StringUtil.capitalizeWords(severity.getName().toLowerCase(Locale.US), true);
+    return StringUtil.capitalizeWords(StringUtil.toLowerCase(severity.getName()), true);
   }
 
   private static boolean isDescriptorAccepted(Descriptor descriptor,
                                               @NonNls String filter,
                                               final boolean forceInclude,
                                               final List<Set<String>> keySetList, final Set<String> quoted) {
-    filter = filter.toLowerCase();
+    filter = StringUtil.toLowerCase(filter);
     if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
     }
@@ -200,7 +200,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       }
       final String description = descriptor.getToolWrapper().loadDescription();
-      if (description != null && StringUtil.containsIgnoreCase(description.toLowerCase(Locale.US), stripped)) {
+      if (description != null && StringUtil.containsIgnoreCase(StringUtil.toLowerCase(description), stripped)) {
         if (!forceInclude) return true;
       } else if (forceInclude) return false;
     }
@@ -394,7 +394,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       reloadModel();
       restoreTreeState();
       if (myTreeTable.getTree().getSelectionPath() == null) {
-        TreeUtil.selectFirstNode(myTreeTable.getTree());
+        TreeUtil.promiseSelectFirst(myTreeTable.getTree());
       }
     }
   }
@@ -774,23 +774,23 @@ public class SingleInspectionProfilePanel extends JPanel {
 
         severityPanel.add(new JLabel(InspectionsBundle.message("inspection.severity")),
                           new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL,
-                                                 JBUI.insets(10, 0), 0, 0));
+                                                 JBInsets.create(10, 0), 0, 0));
         final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
           severityLevelChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(severityLevelChooserComponent,
                           new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                 JBUI.insets(10, 0), 0, 0));
+                                                 JBInsets.create(10, 0), 0, 0));
         final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
           scopesChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
         severityPanel.add(scopesChooserComponent,
                           new GridBagConstraints(2, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                                 JBUI.insets(10, 0), 0, 0));
+                                                 JBInsets.create(10, 0), 0, 0));
         final JLabel label = new JLabel("", SwingConstants.RIGHT);
         severityPanel.add(label,
                           new GridBagConstraints(3, 0, 1, 1, 1, 0,
                                                  GridBagConstraints.EAST,
                                                  GridBagConstraints.BOTH,
-                                                 JBUI.insets(2, 0), 0, 0));
+                                                 JBInsets.create(2, 0), 0, 0));
         severityPanelWeightY = 0.0;
         if (singleNode != null) {
           setConfigPanel(configPanelAnchor, myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(),

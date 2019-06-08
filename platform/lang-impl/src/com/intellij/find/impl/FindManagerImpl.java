@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -108,7 +94,7 @@ public class FindManagerImpl extends FindManager {
   private FindUIHelper myHelper;
   private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
 
-  public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
+  public FindManagerImpl(@NotNull Project project, @NotNull FindSettings findSettings, @NotNull UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
     myBus = bus;
     findSettings.initModelBySetings(myFindInProjectModel);
@@ -594,7 +580,7 @@ public class FindManagerImpl extends FindManager {
           }
         }
         else {
-          relevantLanguages = ContainerUtil.newHashSet();
+          relevantLanguages = new HashSet<>();
           if (ftype instanceof AbstractFileType) {
             if (model.isInCommentsOnly()) {
               tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
@@ -620,7 +606,7 @@ public class FindManagerImpl extends FindManager {
         finally {
           LayeredLexer.ourDisableLayersFlag.set(null);
         }
-        
+
         model.putUserData(ourCommentsLiteralsSearchDataKey, data);
       }
 
@@ -655,7 +641,7 @@ public class FindManagerImpl extends FindManager {
               }
             }
           }
-          
+
           final int tokenContentStart = start;
 
           while (true) {
@@ -776,7 +762,7 @@ public class FindManagerImpl extends FindManager {
       }
     } catch (StackOverflowError soe) {
       String stringToFind = model.getStringToFind();
-      
+
       if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
         String content = stringToFind + " produced stack overflow when matching content of the file";
@@ -790,7 +776,7 @@ public class FindManagerImpl extends FindManager {
       return NOT_FOUND_RESULT;
     }
   }
-  
+
   private static final IntObjectMap<Boolean> ourReportedPatterns = ContainerUtil.createConcurrentIntObjectMap();
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
@@ -899,7 +885,7 @@ public class FindManagerImpl extends FindManager {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
     else if (isTailLower && (isReplacementLowercase || isReplacementUppercase)) {
-      buffer.append(toReplace.substring(1).toLowerCase());
+      buffer.append(StringUtil.toLowerCase(toReplace.substring(1)));
     }
     else {
       buffer.append(toReplace.substring(1));
@@ -965,33 +951,41 @@ public class FindManagerImpl extends FindManager {
 
   @Override
   public boolean findNextUsageInEditor(@NotNull FileEditor fileEditor) {
-    return findNextUsageInFile(fileEditor, SearchResults.Direction.DOWN);
+    if (!(fileEditor instanceof TextEditor)) return false;
+    return findNextUsageInFile(((TextEditor) fileEditor).getEditor(), SearchResults.Direction.DOWN);
   }
 
-  private boolean findNextUsageInFile(@NotNull FileEditor fileEditor, @NotNull SearchResults.Direction direction) {
-    if (fileEditor instanceof TextEditor) {
-      TextEditor textEditor = (TextEditor)fileEditor;
-      Editor editor = textEditor.getEditor();
-      editor.getCaretModel().removeSecondaryCarets();
-      if (tryToFindNextUsageViaEditorSearchComponent(editor, direction)) {
-        return true;
-      }
+  @Override
+  public boolean findNextUsageInEditor(@NotNull Editor editor) {
+    return findNextUsageInFile(editor, SearchResults.Direction.DOWN);
+  }
 
-      RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
-      if (highlighters.length > 0) {
-        return highlightNextHighlighter(highlighters, editor, editor.getCaretModel().getOffset(), direction == SearchResults.Direction.DOWN, false);
-      }
+  @Override
+  public boolean findPreviousUsageInEditor(@NotNull Editor editor) {
+    return findNextUsageInFile(editor, SearchResults.Direction.UP);
+  }
+
+  private boolean findNextUsageInFile(@NotNull Editor editor, @NotNull SearchResults.Direction direction) {
+    editor.getCaretModel().removeSecondaryCarets();
+    if (tryToFindNextUsageViaEditorSearchComponent(editor, direction)) {
+      return true;
+    }
+
+    RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
+    if (highlighters.length > 0) {
+      return highlightNextHighlighter(highlighters, editor, editor.getCaretModel().getOffset(), direction == SearchResults.Direction.DOWN, false);
     }
 
     if (direction == SearchResults.Direction.DOWN) {
-      return myFindUsagesManager.findNextUsageInFile(fileEditor);
+      return myFindUsagesManager.findNextUsageInFile(editor);
     }
-    return myFindUsagesManager.findPreviousUsageInFile(fileEditor);
+    return myFindUsagesManager.findPreviousUsageInFile(editor);
   }
 
   @Override
   public boolean findPreviousUsageInEditor(@NotNull FileEditor fileEditor) {
-    return findNextUsageInFile(fileEditor, SearchResults.Direction.UP);
+    if (!(fileEditor instanceof TextEditor)) return false;
+    return findNextUsageInFile(((TextEditor) fileEditor).getEditor(), SearchResults.Direction.UP);
   }
 
   private static boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {
@@ -1079,9 +1073,7 @@ public class FindManagerImpl extends FindManager {
       if (o1 == null) {
         return startOffset - o2.getEndOffset();
       }
-      else {
-        return o1.getEndOffset() - startOffset;
-      }
+      return o1.getEndOffset() - startOffset;
     });
     if (i < 0) {
       i = -i - 1;

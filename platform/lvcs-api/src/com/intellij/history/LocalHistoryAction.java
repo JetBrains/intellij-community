@@ -3,11 +3,7 @@
 package com.intellij.history;
 
 public interface LocalHistoryAction {
-  LocalHistoryAction NULL = new LocalHistoryAction() {
-    @Override
-    public void finish() {
-    }
-  };
+  LocalHistoryAction NULL = () -> { };
 
   void finish();
 }

@@ -9,7 +9,7 @@ import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -114,7 +114,7 @@ public class GeneralCommandLine implements UserDataHolder {
     myRedirectErrorStream = original.myRedirectErrorStream;
     myInputFile = original.myInputFile;
     // this is intentional memory waste, to avoid warning suppression. We should not copy UserData, but can't suppress a warning for a single field
-    myUserData = ContainerUtil.newHashMap();
+    myUserData = new HashMap<>();
   }
 
   @NotNull
@@ -391,7 +391,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     String exePath = myExePath;
-    if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
+    if (SystemInfoRt.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
       String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
@@ -450,7 +450,7 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfo.isUnix) {
+    if (SystemInfoRt.isUnix) {
       File workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
@@ -458,7 +458,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
@@ -502,14 +502,14 @@ public class GeneralCommandLine implements UserDataHolder {
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     if (myUserData == null) {
       if (value == null) return;
-      myUserData = ContainerUtil.newHashMap();
+      myUserData = new HashMap<>();
     }
     myUserData.put(key, value);
   }
 
   private static class MyTHashMap extends THashMap<String, String> {
     private MyTHashMap() {
-      super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
+      super(SystemInfoRt.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
     }
 
     @Override

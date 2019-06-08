@@ -60,10 +60,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     return currentRepository != null ? currentRepository.getRoot() : roots.get(0);
   }
 
-  protected static void showErrors(@NotNull Project project, @NotNull String actionName, @NotNull List<VcsException> exceptions) {
-    GitVcs.getInstance(project).showErrors(exceptions, actionName);
-  }
-
   /**
    * @deprecated "final tasks" are not called for all actions anymore.
    * They should be called by certain actions manually if and when needed.

@@ -34,6 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -361,6 +363,10 @@ public class GitUtil {
 
   public static boolean isGitRoot(@NotNull File folder) {
     return isGitRoot(folder.getPath());
+  }
+
+  public static boolean isGitRoot(@NotNull VirtualFile file) {
+    return isGitRoot(file.getPath());
   }
 
   /**
@@ -969,7 +975,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static <T> String getLogString(@NotNull String root, @NotNull Collection<T> changes,
+  public static <T> String getLogString(@NotNull String root, @NotNull Collection<? extends T> changes,
                                         @NotNull Convertor<? super T, ? extends FilePath> beforePathGetter,
                                         @NotNull Convertor<? super T, ? extends FilePath> afterPathGetter) {
     return StringUtil.join(changes, change -> {
@@ -1016,7 +1022,7 @@ public class GitUtil {
    * @param changes The changes which files were modified by a Git operation.
    *                If null, the whole root is refreshed. Otherwise, only the files touched by these changes.
    */
-  public static void refreshVfs(@NotNull VirtualFile root, @Nullable Collection<Change> changes) {
+  public static void refreshVfs(@NotNull VirtualFile root, @Nullable Collection<? extends Change> changes) {
     if (changes == null || Registry.is("git.refresh.vfs.total")) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
     }
@@ -1025,7 +1031,7 @@ public class GitUtil {
     }
   }
 
-  public static void updateAndRefreshVfs(@NotNull GitRepository repository, @Nullable Collection<Change> changes) {
+  public static void updateAndRefreshVfs(@NotNull GitRepository repository, @Nullable Collection<? extends Change> changes) {
     repository.update();
     refreshVfs(repository.getRoot(), changes);
   }
@@ -1078,6 +1084,18 @@ public class GitUtil {
       }
       throw e;
     }
+  }
+
+  @NotNull
+  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<GitRepository> repositories) {
+    Map<GitRepository, Hash> result = new LinkedHashMap<>();
+    for (GitRepository repository : repositories) {
+      String currentRevision = repository.getCurrentRevision();
+      if (currentRevision != null) {
+        result.put(repository, HashImpl.build(currentRevision));
+      }
+    }
+    return result;
   }
 
   private static class GitRepositoryNotFoundException extends VcsException {

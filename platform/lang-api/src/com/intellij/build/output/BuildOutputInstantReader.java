@@ -2,6 +2,7 @@
 package com.intellij.build.output;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -9,7 +10,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface BuildOutputInstantReader {
-  Object getBuildId();
+  @NotNull
+  Object getParentEventId();
 
   @Nullable
   String readLine();

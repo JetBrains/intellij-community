@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,10 +41,10 @@ final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
   public static final String FS_STATE_FILE = "fs_state.dat";
   private static final Boolean REPORT_BUILD_STATISTICS = Boolean.valueOf(System.getProperty(GlobalOptions.REPORT_BUILD_STATISTICS, "false"));
-  
+
   private final UUID mySessionId;
   private final Channel myChannel;
-  @Nullable 
+  @Nullable
   private final PreloadedData myPreloadedData;
   private volatile boolean myCanceled;
   private final String myProjectPath;
@@ -68,7 +54,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final EventsProcessor myEventsProcessor = new EventsProcessor();
   private volatile long myLastEventOrdinal;
   private volatile ProjectDescriptor myProjectDescriptor;
-  private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
+  private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<>());
   private final ConstantSearch myConstantSearch = new ConstantSearch();
   @NotNull
   private final BuildRunner myBuildRunner;
@@ -215,7 +201,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       myBuildRunner.setForceCleanCaches(true);
     }
     final ProjectDescriptor preloadedProject = myPreloadedData != null? myPreloadedData.getProjectDescriptor() : null;
-    final DataInputStream fsStateStream = 
+    final DataInputStream fsStateStream =
       storageFilesAbsent || preloadedProject != null || myLoadUnloadedModules || myInitialFSDelta == null /*this will force FS rescan*/? null : createFSDataStream(dataStorageRoot, myInitialFSDelta.getOrdinal());
 
     if (fsStateStream != null || myPreloadedData != null) {
@@ -261,7 +247,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
         if (myInitialFSDelta == null || myPreloadedData.getFsEventOrdinal() + 1L != myInitialFSDelta.getOrdinal()) {
           // FS rescan was forced
-          fsState.clearAll(); 
+          fsState.clearAll();
         }
         else {
           // apply events to already loaded state
@@ -291,7 +277,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
-      
+
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 
       // free memory
