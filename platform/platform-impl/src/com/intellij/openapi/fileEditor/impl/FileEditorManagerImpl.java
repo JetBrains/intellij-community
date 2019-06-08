@@ -5,7 +5,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -1513,7 +1512,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                 LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
                 LOG.info("Project opening took " + time + " ms");
-                PluginManagerCore.dumpPluginClassStatistics();
               }
             }, myProject.getDisposed());
             // group 1

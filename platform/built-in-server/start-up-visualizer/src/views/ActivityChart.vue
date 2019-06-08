@@ -5,11 +5,11 @@
 
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
-  import {ActivityChartManager} from "./ActivityChartManager"
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
-  import {ComponentChartManager} from "@/charts/ComponentChartManager"
   import {ChartManager} from "@/charts/ChartManager"
+  import {ActivityChartManager} from "@/charts/ActivityChartManager"
+  import {Notification} from "element-ui"
 
   @Component
   export default class ActivityChart extends BaseChartComponent<ChartManager> {
@@ -34,12 +34,14 @@
       const type = this.type
       const descriptor = chartDescriptors.find(it => it.id === type)
       if (descriptor == null) {
-        throw new Error(`Unknown chart type: ${type}`)
+        const message = `Unknown chart type: ${type}`
+        Notification.error(message)
+        throw new Error(message)
       }
 
       const sourceNames = descriptor.sourceNames
-      if (type === "components") {
-        return new ComponentChartManager(chartContainer, sourceNames!!, descriptor)
+      if (descriptor.chartManagerProducer != null) {
+        return descriptor.chartManagerProducer(chartContainer, sourceNames!!, descriptor)
       }
       else {
         return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames, descriptor)

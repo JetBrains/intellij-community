@@ -6,9 +6,10 @@
         <TimelineChart/>
       </keep-alive>
     </el-tab-pane>
-    <el-tab-pane label="Time Distribution" name="treeMap" lazy>
+    <!--  use v-once because `charts` is not going to be changed  -->
+    <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.id" lazy>
       <keep-alive>
-        <TreeMapChart/>
+        <ActivityChart :type="item.id"/>
       </keep-alive>
     </el-tab-pane>
     <el-tab-pane label="Stats" name="stats" lazy>
@@ -24,13 +25,16 @@
   import {Location} from "vue-router"
   import TimelineChart from "@/timeline/TimelineChart.vue"
   import StatsChart from "@/views/StatsChart.vue"
-  import TreeMapChart from "@/views/TreeMapChart.vue"
+  import ActivityChart from "@/views/ActivityChart.vue"
+  import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
   const DEFAULT_ACTIVE_TAB = "timeline"
 
-  @Component({components: {TimelineChart, TreeMapChart, StatsChart}})
+  @Component({components: {TimelineChart, ActivityChart, StatsChart}})
   export default class TabbedInfoCharts extends Vue {
     activeName: string = DEFAULT_ACTIVE_TAB
+
+    charts = chartDescriptors.filter(it => it.isInfoChart === true)
 
     created() {
       this.updateLocation(this.$route)

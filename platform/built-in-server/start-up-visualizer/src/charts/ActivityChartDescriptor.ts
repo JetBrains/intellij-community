@@ -1,9 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Item} from "@/state/data"
+import {ChartManager} from './ChartManager'
+import {ComponentChartManager} from "@/charts/ComponentChartManager"
+import {TreeMapChartManager} from "@/charts/TreeMapChartManager"
+import {PluginClassCountTreeMapChartManager} from "@/charts/PluginClassCountTreeMapChartManager"
 
 export interface ActivityChartDescriptor {
   readonly label: string
   readonly id: string
+
+  readonly isInfoChart?: boolean
 
   readonly sourceNames?: Array<string>
 
@@ -11,6 +17,7 @@ export interface ActivityChartDescriptor {
   readonly groupByThread?: boolean
   readonly sourceHasPluginInformation?: boolean
 
+  readonly chartManagerProducer?: (container: HTMLElement, sourceNames: Array<string>, descriptor: ActivityChartDescriptor) => ChartManager
   readonly shortNameProducer?: (item: Item) => string
 }
 
@@ -27,6 +34,7 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     id: "components",
     sourceNames: ["appComponents", "projectComponents", "moduleComponents"],
     shortNameProducer: getShortName,
+    chartManagerProducer: (container, sourceNames, descriptor) => new ComponentChartManager(container, sourceNames!!, descriptor)
   },
   {
     label: "Services",
@@ -66,5 +74,19 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     label: "GCs",
     id: "GCs",
     rotatedLabels: false,
+  },
+  {
+    label: "Time Distribution",
+    isInfoChart: true,
+    id: "timeDistribution",
+    sourceNames: [],
+    chartManagerProducer: (container, _sourceNames, _descriptor) => new TreeMapChartManager(container),
+  },
+  {
+    label: "Plugin Classes",
+    isInfoChart: true,
+    id: "pluginClassCount",
+    sourceNames: [],
+    chartManagerProducer: (container, _sourceNames, _descriptor) => new PluginClassCountTreeMapChartManager(container),
   },
 ]

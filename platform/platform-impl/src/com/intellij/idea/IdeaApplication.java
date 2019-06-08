@@ -340,8 +340,6 @@ public final class IdeaApplication {
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(commandLineArgs, willOpenProject);
 
-      PluginManagerCore.dumpPluginClassStatistics();
-
       // Temporary check until the jre implementation has been checked and bundled
       if (Registry.is("ide.popup.enablePopupType")) {
         System.setProperty("jbre.popupwindow.settype", "true");

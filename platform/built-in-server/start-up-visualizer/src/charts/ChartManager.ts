@@ -9,10 +9,14 @@ export interface ChartManager {
   dispose(): void
 }
 
-function configureCommonChartSettings(chart: am4charts.XYChart) {
+export function configureCommonChartSettings(chart: am4charts.XYChart) {
   chart.mouseWheelBehavior = "zoomX"
   chart.scrollbarX = new am4core.Scrollbar()
 
+  configureCursor(chart)
+}
+
+export function configureCursor(chart: am4charts.XYChart) {
   const cursor = new am4charts.XYCursor()
   cursor.lineY.disabled = true
   cursor.lineX.disabled = true

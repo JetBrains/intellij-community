@@ -77,7 +77,6 @@ public class PluginManagerCore {
   private static final TObjectIntHashMap<PluginId> ourId2Index = new TObjectIntHashMap<>();
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<>();
-  private static final PluginClassCache ourPluginClasses = new PluginClassCache();
   private static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
@@ -119,7 +118,7 @@ public class PluginManagerCore {
   private static final List<Runnable> ourDisabledPluginsListeners = new CopyOnWriteArrayList<>();
 
   /**
-   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins(StartupProgress)}
+   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins()}
    * if you need to get loaded plugins only.
    *
    * <p>
@@ -386,10 +385,6 @@ public class PluginManagerCore {
     return true;
   }
 
-  public static void addPluginClass(@NotNull PluginId pluginId) {
-    ourPluginClasses.addPluginClass(pluginId);
-  }
-
   /**
    * This is an internal method, use {@link PluginException#createByClass(String, Throwable, Class)} instead.
    */
@@ -435,10 +430,6 @@ public class PluginManagerCore {
     catch (Exception e) {
       return false;
     }
-  }
-
-  public static void dumpPluginClassStatistics() {
-    ourPluginClasses.dumpPluginClassStatistics();
   }
 
   private static boolean isDependent(@NotNull IdeaPluginDescriptor descriptor,
