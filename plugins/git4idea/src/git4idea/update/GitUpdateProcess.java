@@ -169,7 +169,7 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOTHING_TO_UPDATE;
     }
 
-    Map<GitRepository, Hash> previousPublishedTipPositions = calcPublishedTipPositions(trackedBranches);
+    GitUpdatedRanges updatedRanges = GitUpdatedRanges.calcInitialPositions(myProject, trackedBranches);
 
     try {
       updaters = tryFastForwardMergeForRebaseUpdaters(updaters);
@@ -248,15 +248,7 @@ public class GitUpdateProcess {
       return ObjectUtils.notNull(compoundResult.get(), GitUpdateResult.ERROR);
     }
     finally {
-      Map<GitRepository, Hash> newPublishedTipPositions = calcPublishedTipPositions(trackedBranches);
-      myUpdatedRanges = new LinkedHashMap<>();
-      for (GitRepository repository : newPublishedTipPositions.keySet()) {
-        Hash before = previousPublishedTipPositions.get(repository);
-        if (before != null) {
-          Hash after = newPublishedTipPositions.get(repository);
-          myUpdatedRanges.put(repository, new HashRange(before, after));
-        }
-      }
+      myUpdatedRanges = updatedRanges.calcCurrentPositions();
     }
   }
 
@@ -322,36 +314,6 @@ public class GitUpdateProcess {
   @NotNull
   Map<GitRepository, String> getSkippedRoots() {
     return mySkippedRoots;
-  }
-
-  @NotNull
-  private Map<GitRepository, Hash> calcPublishedTipPositions(@NotNull Map<GitRepository, GitBranchPair> trackedBranches) {
-    Map<GitRepository, Hash> result = new LinkedHashMap<>();
-    for (GitRepository repository : trackedBranches.keySet()) {
-      GitLocalBranch localBranch = trackedBranches.get(repository).getSource();
-      GitRemoteBranch trackedBranch = trackedBranches.get(repository).getTarget();
-      if (trackedBranch != null) {
-        Hash mergeBase = getMergeBase(repository.getRoot(), localBranch.getFullName(), trackedBranch.getFullName());
-        if (mergeBase != null) {
-          result.put(repository, mergeBase);
-        }
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private Hash getMergeBase(@NotNull VirtualFile root, @NotNull String firstRef, @NotNull String secondRef) {
-    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MERGE_BASE);
-    h.addParameters(firstRef, secondRef);
-    try {
-      String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
-      return HashImpl.build(output);
-    }
-    catch (Throwable t) {
-      LOG.warn("Couldn't find merge-base between " + firstRef + " and " + secondRef);
-      return null;
-    }
   }
 
   @Nullable
