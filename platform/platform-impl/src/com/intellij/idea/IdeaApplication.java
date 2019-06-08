@@ -67,7 +67,7 @@ public final class IdeaApplication {
 
       ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
 
-      Activity createAppActivity = StartUpMeasurer.start("create app");
+      Activity createAppActivity = initAppActivity.startChild("create app");
       boolean headless = Main.isHeadless();
       ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless,
                                                 Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION);
@@ -317,6 +317,7 @@ public final class IdeaApplication {
       Activity frameInitActivity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
       if (SystemInfoRt.isMac) {
         Activity activity = frameInitActivity.startChild("mac app init");
+        // calls TouchBarsManager.onApplicationInitialized, that requires ActionManager, so, cannot be executed before app component creation
         MacOSApplicationProvider.initApplication();
         activity.end();
       }
@@ -351,28 +352,19 @@ public final class IdeaApplication {
 
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
-      Runnable beforeSetVisible = SplashManager.getHideTask();
-
-      IdeFrame frame = null;
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
-        WelcomeFrame.showNow(beforeSetVisible);
+        WelcomeFrame.showNow(SplashManager.getHideTask());
         lifecyclePublisher.welcomeScreenDisplayed();
-      }
-      else {
-        Activity activity = frameInitActivity.startChild("showFrame");
-        frame = windowManager.showFrame(beforeSetVisible);
-        activity.end();
       }
 
       frameInitActivity.end();
 
-      AppExecutorUtil.getAppExecutorService().submit(() -> LifecycleUsageTriggerCollector.onIdeStart());
+      AppExecutorUtil.getAppExecutorService().execute(() -> LifecycleUsageTriggerCollector.onIdeStart());
 
-      IdeFrame finalFrame = frame;
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
         // The appStarting callback in RecentProjectsManagerBase will reopen the last project
-        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine, finalFrame);
+        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection
         EventQueue.invokeLater(PluginManager::reportPluginError);

@@ -2,7 +2,10 @@
 package com.intellij.ide;
 
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,7 +27,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
@@ -608,7 +613,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     return GeneralSettings.getInstance().isReopenLastProject() && getLastProjectPath() != null;
   }
 
-  protected void doReopenLastProject(IdeFrame frame) {
+  protected void doReopenLastProject(@Nullable IdeFrame frame) {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
     if (!generalSettings.isReopenLastProject()) {
       return;
@@ -622,6 +627,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
         openPaths = ContainerUtil.createMaybeSingletonSet(myState.lastPath);
         forceNewFrame = false;
       }
+    }
+
+    if (frame == null) {
+      Activity activity = StartUpMeasurer.start("showFrame");
+      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame(SplashManager.getHideTask());
+      activity.end();
     }
 
     try {
@@ -686,12 +697,12 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     @Override
-    public void appStarting(@Nullable Project projectFromCommandLine, IdeFrame frame) {
+    public void appStarting(@Nullable Project projectFromCommandLine) {
       if (projectFromCommandLine != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
         return;
       }
 
-      manager.doReopenLastProject(frame);
+      manager.doReopenLastProject(null);
     }
 
     @Override
