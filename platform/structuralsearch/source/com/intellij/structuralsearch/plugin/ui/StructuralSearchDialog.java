@@ -273,13 +273,19 @@ public class StructuralSearchDialog extends DialogWrapper {
   private void initializeFilterPanel() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, false, false);
-    if (compiledPattern != null) {
-      myFilterPanel.setCompiledPattern(compiledPattern);
-    }
-    if (!myFilterPanel.isInitialized()) {
-      myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
-    }
-    myFilterPanel.setValid(compiledPattern != null);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (compiledPattern != null) {
+        final SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(mySearchCriteriaEdit.getEditor());
+        if (handler != null) {
+          handler.updateEditorInlays();
+        }
+        myFilterPanel.setCompiledPattern(compiledPattern);
+      }
+      if (!myFilterPanel.isInitialized()) {
+        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+      }
+      myFilterPanel.setValid(compiledPattern != null);
+    });
   }
 
   private Configuration createConfiguration(Configuration template) {
