@@ -349,7 +349,7 @@ public final class IdeaApplication {
 
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
-      if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
+      if (!willOpenProject.get() || JetBrainsProtocolHandler.getCommand() != null) {
         WelcomeFrame.showNow(SplashManager.getHideTask());
         lifecyclePublisher.welcomeScreenDisplayed();
       }

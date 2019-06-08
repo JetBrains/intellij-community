@@ -249,15 +249,15 @@ public final class TouchBarsManager {
       return;
     }
 
-    final ProjectData pd;
+    ProjectData projectData;
     synchronized (ourProjectData) {
-      pd = ourProjectData.get(project);
-      if (pd == null) {
+      projectData = ourProjectData.get(project);
+      if (projectData == null) {
         // System.out.println("can't find project data to register editor: " + editor + ", project: " + proj);
         return;
       }
 
-      pd.registerEditor(editor);
+      projectData.registerEditor(editor);
     }
 
     if (editor instanceof EditorEx) {
@@ -265,13 +265,13 @@ public final class TouchBarsManager {
         @Override
         public void focusGained(@NotNull Editor editor) {
           // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
-          pd.get(BarType.DEFAULT).setOptionalContextVisible(null);
+          projectData.get(BarType.DEFAULT).setOptionalContextVisible(null);
 
-          final boolean hasDebugSession = pd.getDbgSessions() > 0;
+          final boolean hasDebugSession = projectData.getDbgSessions() > 0;
           if (!hasDebugSession) {
             // System.out.println("elevate default because editor window gained focus: " + editor);
             // StackTouchBars.changeReason = "elevate default because editor gained focus";
-            ourStack.elevateContainer(pd.get(BarType.DEFAULT));
+            ourStack.elevateContainer(projectData.get(BarType.DEFAULT));
           }
         }
       });
@@ -299,46 +299,46 @@ public final class TouchBarsManager {
       return;
     }
 
-    final Project project = editor.getProject();
+    Project project = editor.getProject();
     if (project == null) {
       return;
     }
 
     synchronized (ourProjectData) {
-      final ProjectData pd = ourProjectData.get(project);
-      if (pd == null) {
+      ProjectData projectData = ourProjectData.get(project);
+      if (projectData == null) {
         LOG.error("can't find project data to update header of editor: " + editor + ", project: " + project);
         return;
       }
 
-      final ProjectData.EditorData ed = pd.getEditorData(editor);
-      if (ed == null) {
+      ProjectData.EditorData editorData = projectData.getEditorData(editor);
+      if (editorData == null) {
         LOG.error("can't find editor-data to update header of editor: " + editor + ", project: " + project);
         return;
       }
 
       // System.out.printf("onUpdateEditorHeader: editor='%s', header='%s'\n", editor, header);
-
       final ActionGroup actions = header instanceof DataProvider ? TouchbarDataKeys.ACTIONS_KEY.getData((DataProvider)header) : null;
       if (header == null) {
         // System.out.println("set null header");
-        ed.editorHeader = null;
-        if (ed.containerSearch != null)
-          ourStack.removeContainer(ed.containerSearch);
-      } else {
+        editorData.editorHeader = null;
+        if (editorData.containerSearch != null)
+          ourStack.removeContainer(editorData.containerSearch);
+      }
+      else {
         // System.out.println("set header: " + header);
         // System.out.println("\t\tparent: " + header.getParent());
-        ed.editorHeader = header;
+        editorData.editorHeader = header;
 
-        if (ed.containerSearch == null || ed.actionsSearch != actions) {
-          if (ed.containerSearch != null) {
-            ourStack.removeContainer(ed.containerSearch);
-            ed.containerSearch.release();
+        if (editorData.containerSearch == null || editorData.actionsSearch != actions) {
+          if (editorData.containerSearch != null) {
+            ourStack.removeContainer(editorData.containerSearch);
+            editorData.containerSearch.release();
           }
 
           if (actions != null) {
-            ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
-            ourStack.showContainer(ed.containerSearch);
+            editorData.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
+            ourStack.showContainer(editorData.containerSearch);
           }
         }
       }
