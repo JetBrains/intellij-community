@@ -187,19 +187,30 @@ public final class IdeaApplication {
   }
 
   @NotNull
-  private static ApplicationStarter createAppStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
+  private static ApplicationStarter createAppStarter(@NotNull String[] args, @NotNull Future<?> pluginsLoaded) {
     LOG.assertTrue(!ApplicationManagerEx.isAppLoaded());
-
     LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
-
     StartupUtil.patchSystem(LOG);
-    ApplicationStarter starter = getStarter(args, pluginsLoaded);
-
-    if (Main.isHeadless() && !starter.isHeadless()) {
-      Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
-      System.exit(Main.NO_GRAPHICS);
+    if (args.length <= 0) {
+      return new IdeStarter();
     }
-    return starter;
+
+    try {
+      pluginsLoaded.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new CompletionException(e);
+    }
+
+    ApplicationStarter starter = findStarter(args[0]);
+    if (starter != null) {
+      if (Main.isHeadless() && !starter.isHeadless()) {
+        Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
+        System.exit(Main.NO_GRAPHICS);
+      }
+      return starter;
+    }
+    return new IdeStarter();
   }
 
   /**
@@ -228,30 +239,6 @@ public final class IdeaApplication {
       arguments.add(arg);
     }
     return ArrayUtilRt.toStringArray(arguments);
-  }
-
-  @NotNull
-  private static ApplicationStarter getStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
-    if (args.length > 0) {
-      if (pluginsLoaded == null) {
-        PluginManagerCore.getPlugins();
-      }
-      else {
-        try {
-          pluginsLoaded.get();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new CompletionException(e);
-        }
-      }
-
-      ApplicationStarter starter = findStarter(args[0]);
-      if (starter != null) {
-        return starter;
-      }
-    }
-
-    return new IdeStarter();
   }
 
   @Nullable
