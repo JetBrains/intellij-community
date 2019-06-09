@@ -136,7 +136,6 @@ public class GitMergeDialog extends DialogWrapper {
   public void updateBranches() throws VcsException {
     VirtualFile root = getSelectedRoot();
     GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.BRANCH);
-    handler.setSilent(true);
     handler.addParameters("--no-color", "-a", "--no-merged");
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
     myBranchChooser.clear();
