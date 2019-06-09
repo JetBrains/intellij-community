@@ -10,8 +10,9 @@ from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR, Null
 from pydev_console.protocol import CompletionOption, CompletionOptionType
+import signal
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -107,6 +108,130 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
 
+    def add_exec(self, code_fragment, debugger=None):
+        original_in = sys.stdin
+        try:
+            help = None
+            if 'pydoc' in sys.modules:
+                pydoc = sys.modules['pydoc']  # Don't import it if it still is not there.
+
+                if hasattr(pydoc, 'help'):
+                    # You never know how will the API be changed, so, let's code defensively here
+                    help = pydoc.help
+                    if not hasattr(help, 'input'):
+                        help = None
+        except:
+            # Just ignore any error here
+            pass
+
+        more = False
+        try:
+            sys.stdin = self.create_std_in(debugger, original_in)
+            try:
+                if help is not None:
+                    # This will enable the help() function to work.
+                    try:
+                        try:
+                            help.input = sys.stdin
+                        except AttributeError:
+                            help._input = sys.stdin
+                    except:
+                        help = None
+                        if not self._input_error_printed:
+                            self._input_error_printed = True
+                            sys.stderr.write('\nError when trying to update pydoc.help.input\n')
+                            sys.stderr.write('(help() may not work -- please report this as a bug in the pydev bugtracker).\n\n')
+                            traceback.print_exc()
+
+                try:
+                    self.start_exec()
+                    if hasattr(self, 'debugger'):
+                        self.debugger.enable_tracing()
+
+                    more = self.do_add_exec(code_fragment)
+
+                    if hasattr(self, 'debugger'):
+                        self.debugger.disable_tracing()
+
+                    self.finish_exec(more)
+                finally:
+                    if help is not None:
+                        try:
+                            try:
+                                help.input = original_in
+                            except AttributeError:
+                                help._input = original_in
+                        except:
+                            pass
+
+            finally:
+                sys.stdin = original_in
+        except SystemExit:
+            raise
+        except:
+            traceback.print_exc()
+
+        return more
+
+    def do_add_exec(self, codeFragment):
+        '''
+        Subclasses should override.
+
+        @return: more (True if more input is needed to complete the statement and False if the statement is complete).
+        '''
+        raise NotImplementedError()
+
+    def get_namespace(self):
+        '''
+        Subclasses should override.
+
+        @return: dict with namespace.
+        '''
+        raise NotImplementedError()
+
+    def __resolve_reference__(self, text):
+        """
+
+        :type text: str
+        """
+        obj = None
+        if '.' not in text:
+            try:
+                obj = self.get_namespace()[text]
+            except KeyError:
+                pass
+
+            if obj is None:
+                try:
+                    obj = self.get_namespace()['__builtins__'][text]
+                except:
+                    pass
+
+            if obj is None:
+                try:
+                    obj = getattr(self.get_namespace()['__builtins__'], text, None)
+                except:
+                    pass
+
+        else:
+            try:
+                last_dot = text.rindex('.')
+                parent_context = text[0:last_dot]
+                res = pydevd_vars.eval_in_context(parent_context, self.get_namespace(), self.get_namespace())
+                obj = getattr(res, text[last_dot + 1:])
+            except:
+                pass
+        return obj
+
+    def getDescription(self, text):
+        try:
+            obj = self.__resolve_reference__(text)
+            if obj is None:
+                return ''
+            return get_description(obj)
+        except:
+            return ''
+
     def do_exec_code(self, code, is_single_line):
         try:
             code_fragment = CodeFragment(code, is_single_line)
@@ -144,8 +269,6 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 called = False
                 try:
                     # Fix for #PyDev-500: Console interrupt can't interrupt on sleep
-                    import os
-                    import signal
                     if os.name == 'posix':
                         # On Linux we can't interrupt 0 as in Windows because it's
                         # actually owned by a process -- on the good side, signals
@@ -357,8 +480,9 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 traceback.print_exc()
                 sys.stderr.write('pydevd is not available, cannot connect\n', )
 
+            from _pydevd_bundle.pydevd_constants import set_thread_id
             from _pydev_bundle import pydev_localhost
-            threading.currentThread().__pydevd_id__ = "console_main"
+            set_thread_id(threading.currentThread(), "console_main")
 
             self.orig_find_frame = pydevd_vars.find_frame
             pydevd_vars.find_frame = self._findFrame
@@ -368,8 +492,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 pydevd.apply_debugger_options(debugger_options)
                 self.debugger.connect(pydev_localhost.get_localhost(), debuggerPort)
                 self.debugger.prepare_to_run()
-                from _pydevd_bundle import pydevd_tracing
-                pydevd_tracing.SetTrace(None)
+                self.debugger.disable_tracing()
             except:
                 traceback.print_exc()
                 sys.stderr.write('Failed to connect to target debugger.\n')

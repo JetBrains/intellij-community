@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +32,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt DOWN",                 "ShowContent", "MethodDown", "Arrangement.Rule.Match.Condition.Move.Down", "ShowSearchHistory"},
     { "alt UP",                   "MethodUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},
+    { "alt F6",                   "CommanderSyncViews", "EditPropertyValue"},
     { "alt INSERT",               "FileChooser.NewFolder", "Generate", "NewElement"},
     { "alt LEFT",                 "Diff.PrevChange", "PreviousTab"},
     { "alt RIGHT",                "Diff.NextChange", "NextTab"},
@@ -64,6 +65,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
+    { "control alt M",            "ExtractMethod", "Vcs.ToggleAmendCommitMode"},
     { "ctrl alt U",               "ShowUmlDiagramPopup", "ChangesView.UnshelveSilently"},
     { "ctrl alt shift P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction"},
     { "control MINUS",            "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
@@ -166,6 +168,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft"},
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
+    { "ctrl SPACE",               "ChangesView.SetDefault", "CodeCompletion"}
     });
     put("Emacs", new String[][] {
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
@@ -308,24 +311,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control H",          "ChangesView.ShelveSilently", "ReplaceInPath"},
     { "shift control K",          "HippieCompletion", "Vcs.Push"},
     { "control alt E",            "Console.History.Browse", "ExecuteInPyConsoleAction", "PerforceDirect.Edit"},
-    });
-    put("JBuilder", new String[][] {
-    { "F2",                       "EditorTab", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename", "ChangesView.Rename"},
-    { "F5",                       "ToggleBreakpointEnabled", "Graph.ApplyCurrentLayout"},
-    { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
-                                  "EmacsStyleIndent", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut",
-                                  "SearchEverywhere.CompleteCommand", "SearchEverywhere.NextTab"},
-    { "control F6",               "PreviousEditorTab", "PreviousTab", },
-    { "control L",                "Vcs.Log.FocusTextFilter", "EditorSelectLine"},
-    { "control M",                "Vcs.ShowMessageHistory", "OverrideMethods", "TodoViewGroupByShowModules"},
-    { "control P",                "ChangesView.GroupBy.Directory", "FileChooser.TogglePathShowing", "FindInPath", "TodoViewGroupByShowPackages"},
-    { "shift control A",          "SaveAll", "GotoAction"},
-    { "shift ctrl C",             "DatabaseView.CopyDdlAction", "SurroundWith"},
-    { "shift control E",          "RecentLocations", "ExtractMethod"},
-    { "shift control ENTER",      "FindUsages", "Console.Jpa.GenerateSql"},
-    { "shift control F6",         "NextTab", "ChangeTypeSignature"},
-    { "shift control G",          "GotoSymbol", "ClassTemplateNavigation", "GoToClass"},
-    { "shift control X",          "EditorToggleShowWhitespaces", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     });
     put("Eclipse (Mac OS X)", new String[][] {
     { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},

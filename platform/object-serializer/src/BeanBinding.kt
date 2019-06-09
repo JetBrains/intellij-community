@@ -3,15 +3,10 @@ package com.intellij.serialization
 
 import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
-import com.amazon.ion.system.IonBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.intellij.util.containers.ObjectIntHashMap
 import java.lang.reflect.Constructor
 import java.lang.reflect.Type
-
-private val structWriterBuilder by lazy {
-  IonBinaryWriterBuilder.standard().withStreamCopyOptimized(true).immutable()
-}
 
 private val structReaderBuilder by lazy {
   IonReaderBuilder.standard().immutable()
@@ -29,7 +24,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
   }
 
   // type parameters for bean binding doesn't play any role, should be the only binding for such class
-  override fun createCacheKey(aClass: Class<*>, type: Type) = aClass
+  override fun createCacheKey(aClass: Class<*>?, type: Type) = aClass!!
 
   override fun init(originalType: Type, context: BindingInitializationContext) {
     val list = context.propertyCollector.collect(beanClass)
@@ -96,7 +91,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
 
     val out = context.allocateByteArrayOutputStream()
     // ionType is already checked - so, struct is expected
-    structWriterBuilder.build(out).use { it.writeValue(context.reader) }
+    binaryWriterBuilder.newWriter(out).use { it.writeValue(context.reader) }
 
     // we cannot read all field values before creating instance because some field value can reference to parent - our instance,
     // so, first, create instance, and only then read rest of fields
@@ -135,11 +130,16 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       }
     }
 
-    val instance = try {
+    var instance = try {
       constructorInfo.constructor.newInstance(*initArgs)
     }
     catch (e: Exception) {
       throw SerializationException("Cannot create instance (beanClass=${beanClass.name}, initArgs=${initArgs.joinToString()})", e)
+    }
+
+    // must be called after creation because child properties can reference object
+    context.configuration.beanConstructed?.let {
+      instance = it(instance)
     }
 
     if (id != -1) {
@@ -152,7 +152,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
         readIntoObject(instance, context.createSubContext(reader), checkId = false /* already registered */) { !names.contains(it) }
       }
     }
-    return context.configuration.beanConstructed?.let { it(instance) } ?: instance
+    return instance
   }
 
   override fun deserialize(context: ReadContext): Any {
@@ -164,7 +164,11 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       return context.objectIdReader.getObject(reader.intValue())
     }
     else if (ionType != IonType.STRUCT) {
-      throw SerializationException("Expected STRUCT, but got $ionType")
+      var stringValue = ""
+      if (ionType == IonType.SYMBOL || ionType == IonType.STRING) {
+        stringValue = reader.stringValue()
+      }
+      throw SerializationException("Expected STRUCT, but got $ionType (stringValue=$stringValue)")
     }
 
     if (propertyMapping.isInitialized()) {
@@ -220,7 +224,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
         throw e
       }
       catch (e: Exception) {
-        context.errors.fields.add(ReadError("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e))
+        throw SerializationException("Cannot deserialize field value (field=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e)
       }
     }
   }

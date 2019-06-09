@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.diagnostic.AttachmentFactory;
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,6 +50,7 @@ import java.util.List;
  * @author Denis Zhdanov
  */
 public class SoftWrapApplianceManager implements Dumpable {
+  public static final Key<Object> IGNORE_OLD_SOFT_WRAP_LOGIC_REGISTRY_OPTION = new Key<>("softWrap.ignoreOldSoftWrapLogicRegistryOption");
 
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
   private static final int QUICK_DUMMY_WRAPPING = Integer.MAX_VALUE; // special value to request a tentative wrapping
@@ -225,7 +227,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
         doRecalculateSoftWrapsRoughly(event);
       }
-      else if (Registry.is("editor.old.soft.wrap.logic")) {
+      else if (Registry.is("editor.old.soft.wrap.logic") && !IGNORE_OLD_SOFT_WRAP_LOGIC_REGISTRY_OPTION.isIn(myEditor)) {
         doRecalculateSoftWraps(event, endOffsetUpperEstimate);
       }
       else {

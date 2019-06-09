@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -73,7 +74,7 @@ public class CollapsiblePanel extends JPanel {
                                0));
     if (title != null) {
       myTitleLabel = new Label(title);
-      myTitleLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+      myTitleLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
       myTitleLabel.setBackground(content.getBackground());
       add(myTitleLabel,
           new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0,

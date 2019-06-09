@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import javax.swing.UIManager;
+import javax.swing.*;
+import java.awt.*;
 
 final class CompactPainter implements Control.Painter {
   static final Control.Painter DEFAULT = new CompactPainter(true, null, null, 0);
@@ -30,14 +29,14 @@ final class CompactPainter implements Control.Painter {
     int left = getLeftIndent();
     int offset = getLeafIndent(leaf);
     if (offset < 0) offset = left + control.getWidth() + getRightIndent();
-    return depth > 1 ? (depth - 1) * (left + JBUI.scale(2)) + offset : offset;
+    return depth > 1 ? (depth - 1) * (left + JBUIScale.scale(2)) + offset : offset;
   }
 
   @Override
   public int getControlOffset(@NotNull Control control, int depth, boolean leaf) {
     if (depth <= 0 || leaf) return -1; // do not paint control
     int left = getLeftIndent();
-    return depth > 1 ? (depth - 1) * (left + JBUI.scale(2)) + left : left;
+    return depth > 1 ? (depth - 1) * (left + JBUIScale.scale(2)) + left : left;
   }
 
   @Override
@@ -48,12 +47,12 @@ final class CompactPainter implements Control.Painter {
     if (!paintLines && leaf) return; // nothing to paint
     int controlWidth = control.getWidth();
     int left = getLeftIndent();
-    int indent = left + JBUI.scale(2);
+    int indent = left + JBUIScale.scale(2);
     x += left;
     int controlX = !leaf && depth > 1 ? (depth - 1) * indent + x : x;
     if (paintLines && (depth != 1 || (!leaf && expanded))) {
       g.setColor(LINE_COLOR);
-      x += JBUI.scale(1);
+      x += JBUIScale.scale(1);
       while (--depth > 0) {
         g.drawLine(x, y, x, y + height);
         x += indent;
@@ -72,14 +71,14 @@ final class CompactPainter implements Control.Painter {
   }
 
   private int getLeftIndent() {
-    return myLeftIndent == null ? 0 : Math.max(0, JBUI.scale(myLeftIndent));
+    return myLeftIndent == null ? 0 : Math.max(0, JBUIScale.scale(myLeftIndent));
   }
 
   private int getRightIndent() {
-    return myRightIndent == null ? 0 : Math.max(0, JBUI.scale(myRightIndent));
+    return myRightIndent == null ? 0 : Math.max(0, JBUIScale.scale(myRightIndent));
   }
 
   private int getLeafIndent(boolean leaf) {
-    return !leaf || myLeafIndent == null ? -1 : JBUI.scale(myLeafIndent);
+    return !leaf || myLeafIndent == null ? -1 : JBUIScale.scale(myLeafIndent);
   }
 }

@@ -251,6 +251,19 @@ public class VcsFileUtil {
    * Get relative path
    *
    * @param root a root path
+   * @param file a target path
+   * @return a relative path
+   * @throws IllegalArgumentException if path is not under root.
+   */
+  @NotNull
+  public static String relativePath(@NotNull FilePath root, @NotNull FilePath file) {
+    return relativePath(root.getIOFile(), file.getIOFile());
+  }
+
+  /**
+   * Get relative path
+   *
+   * @param root a root path
    * @param path a path to file (possibly deleted file)
    * @return a relative path
    * @throws IllegalArgumentException if path is not under root.
@@ -383,5 +396,13 @@ public class VcsFileUtil {
     if (checkinEnvironment != null) {
       checkinEnvironment.scheduleUnversionedFilesForAddition(value);
     }
+  }
+
+  public static boolean isAncestor(@NotNull FilePath ancestor, @NotNull FilePath path, boolean strict) {
+    return FileUtil.isAncestor(ancestor.getIOFile(), path.getIOFile(), strict);
+  }
+
+  public static boolean isAncestor(@NotNull VirtualFile root, @NotNull FilePath path) {
+    return FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), path.getIOFile(), false);
   }
 }

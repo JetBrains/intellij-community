@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -393,7 +394,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
   private class HideAction extends DumbAwareAction {
     HideAction() {
-      copyFrom(ActionManager.getInstance().getAction(InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID));
+      ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID);
       getTemplatePresentation().setIcon(AllIcons.General.HideToolWindow);
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }

@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -237,7 +238,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myCommitOptions = new CommitOptionsPanel(() -> getDefaultCommitActionName());
     myWarningLabel = new JBLabel();
 
-    JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUI.scale(150), JBUI.scale(400)));
+    JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUIScale.scale(150), JBUIScale.scale(400)));
     mainPanel.add(mySplitter);
     mainPanel.add(myCommitOptions);
 

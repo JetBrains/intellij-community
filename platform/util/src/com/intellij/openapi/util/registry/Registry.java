@@ -208,6 +208,14 @@ public class Registry  {
     }
   }
 
+  /**
+   * @deprecated Use extension point `com.intellij.registryKey`.
+   */
+  @Deprecated
+  public static void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
+    addKey(key, description, Integer.toString(defaultValue), restartRequired);
+  }
+
   public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {
     addKey(key, description, Boolean.toString(defaultValue), restartRequired);
   }

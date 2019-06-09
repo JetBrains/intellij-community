@@ -202,8 +202,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myArgumentList == argumentList;
   }
 
-  public void setErased(boolean erased) {
-    myErased = erased;
+  public void setErased() {
+    myErased = true;
   }
 
   public boolean isErased() {

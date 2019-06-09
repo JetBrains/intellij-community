@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.javafx;
 
 import com.intellij.ide.IdeEventQueue;
@@ -9,7 +9,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.webkit.Accessor;
@@ -36,6 +36,7 @@ public class JavaFxHtmlPanel implements Disposable {
   private final JPanel myPanelWrapper;
   @NotNull
   private final List<Runnable> myInitActions = new ArrayList<>();
+  private final JavaFXLafManagerListener myLafManagerListener;
   @Nullable
   protected JFXPanel myPanel;
   @Nullable protected WebView myWebView;
@@ -52,7 +53,7 @@ public class JavaFxHtmlPanel implements Disposable {
       PropertiesComponent.getInstance().setValue(JAVAFX_INITIALIZATION_INCOMPLETE_PROPERTY, false, false);
       myWebView = new WebView();
       myWebView.setContextMenuEnabled(false);
-      myWebView.setZoom(JBUI.scale(1.f));
+      myWebView.setZoom(JBUIScale.scale(1.f));
 
       final WebEngine engine = myWebView.getEngine();
       registerListeners(engine);
@@ -83,7 +84,8 @@ public class JavaFxHtmlPanel implements Disposable {
       }));
     })));
 
-    LafManager.getInstance().addLafManagerListener(new JavaFXLafManagerListener());
+    myLafManagerListener = new JavaFXLafManagerListener();
+    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
     runInPlatformWhenAvailable(() -> updateLaf(UIUtil.isUnderDarcula()));
   }
 
@@ -176,6 +178,7 @@ public class JavaFxHtmlPanel implements Disposable {
     runInPlatformWhenAvailable(
       () -> getWebViewGuaranteed().getEngine().load(null)
     );
+    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
   }
 
 

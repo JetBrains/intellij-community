@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -68,7 +69,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   public CustomizeUIThemeStepPanel() {
     setLayout(createSmallBorderLayout());
-    IconLoader.activate();
 
     initThemes(myThemes);
 
@@ -184,7 +184,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     try {
       boolean wasUnderDarcula = UIUtil.isUnderDarcula();
       UIManager.setLookAndFeel(info.getClassName());
-      LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
+      AppUIUtil.updateForDarcula(UIUtil.isUnderDarcula());
       String className = info.getClassName();
       WelcomeWizardUtil.setWizardLAF(className);
       Window window = SwingUtilities.getWindowAncestor(component);

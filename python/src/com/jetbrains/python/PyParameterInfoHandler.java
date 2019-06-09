@@ -366,6 +366,13 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         }
 
         @Override
+        public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
+          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
+          hintsList.add(last ? "/" : "/, ");
+          currentParameterIndex[0]++;
+        }
+
+        @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
           hintsList.add(last ? "*" : "*, ");

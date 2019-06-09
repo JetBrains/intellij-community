@@ -10,7 +10,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -108,7 +108,7 @@ public class OnePixelDivider extends Divider {
       OnePixelDivider d = OnePixelDivider.this;
       if ((vertical ? p.x : p.y) < 0 || vertical && p.x > d.getWidth() || !vertical && p.y > d.getHeight()) return false;
       int r = Math.abs(vertical ? p.y : p.x);
-      return r < JBUI.scale(Registry.intValue("ide.splitter.mouseZone"));
+      return r < JBUIScale.scale(Registry.intValue("ide.splitter.mouseZone"));
     }
 
     @Override

@@ -73,8 +73,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -95,7 +97,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,12 +112,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doW
  * @author Denis Zhdanov
  */
 public class ExternalSystemUtil {
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  @NotNull public static final Key<ExternalSystemTaskId> EXTERNAL_SYSTEM_TASK_ID_KEY =
-    Key.create("com.intellij.openapi.externalSystem.util.taskId");
-
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
   @NotNull private static final Map<String, String> RUNNER_IDS = new HashMap<>();
@@ -473,7 +468,7 @@ public class ExternalSystemUtil {
 
               if (isPreviewMode) return;
               String message = "syncing...";
-              eventDispatcher.onEvent(
+              eventDispatcher.onEvent(id,
                 new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
                   .withProcessHandler(processHandler, null)
                   .withRestartAction(rerunImportAction)
@@ -522,11 +517,11 @@ public class ExternalSystemUtil {
               if (isPreviewMode) return;
               if (event instanceof ExternalSystemBuildEvent) {
                 BuildEvent buildEvent = ((ExternalSystemBuildEvent)event).getBuildEvent();
-                eventDispatcher.onEvent(buildEvent);
+                eventDispatcher.onEvent(event.getId(), buildEvent);
               }
               else if (event instanceof ExternalSystemTaskExecutionEvent) {
                 BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-                eventDispatcher.onEvent(buildEvent);
+                eventDispatcher.onEvent(event.getId(), buildEvent);
               }
             }
 
@@ -606,12 +601,12 @@ public class ExternalSystemUtil {
           }
         }
         if (finishBuildEvent != null) {
-          ServiceManager.getService(project, SyncViewManager.class).onEvent(finishBuildEvent);
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(resolveProjectTask.getId(), finishBuildEvent);
         }
         else {
           String message = "Sync finish event has not been received";
           LOG.warn(message, exception);
-          ServiceManager.getService(project, SyncViewManager.class).onEvent(
+          ServiceManager.getService(project, SyncViewManager.class).onEvent(resolveProjectTask.getId(),
             new FinishBuildEventImpl(resolveProjectTask.getId(), null, System.currentTimeMillis(), "failed",
                                      new FailureResultImpl(new Exception(message, exception))));
         }

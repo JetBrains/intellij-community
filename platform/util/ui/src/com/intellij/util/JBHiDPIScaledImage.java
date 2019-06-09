@@ -2,9 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +19,7 @@ import static java.lang.Math.round;
 * @author Konstantin Bulenkov
 * @author tav
 */
-public class JBHiDPIScaledImage extends BufferedImage {
+public final class JBHiDPIScaledImage extends BufferedImage {
   @Nullable private final Image myImage;
   private final double myUserWidth;
   private final double myUserHeight;
@@ -60,7 +60,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param rm the rounding mode
    */
   public JBHiDPIScaledImage(@Nullable Graphics2D g, double width, double height, int type, @NotNull RoundingMode rm) {
-    this(JBUI.sysScale(g), width, height, type, rm);
+    this(JBUIScale.sysScale(g), width, height, type, rm);
   }
 
   /**
@@ -74,7 +74,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @see #JBHiDPIScaledImage(GraphicsConfiguration, double, double, int)
    */
   public JBHiDPIScaledImage(@Nullable ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
-    this(JBUI.sysScale(ctx), width, height, type, rm);
+    this(JBUIScale.sysScale(ctx), width, height, type, rm);
   }
 
   /**
@@ -99,7 +99,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param type the type
    */
   public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
-    this(JBUI.sysScale(gc), width, height, type, rm);
+    this(JBUIScale.sysScale(gc), width, height, type, rm);
   }
 
   private JBHiDPIScaledImage(double scale, double width, double height, int type, @NotNull RoundingMode rm) {

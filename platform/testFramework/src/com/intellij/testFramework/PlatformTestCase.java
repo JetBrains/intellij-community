@@ -439,10 +439,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void cleanupApplicationCaches(@Nullable Project project) {
-      UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
-      if (globalInstance != null) {
-        globalInstance.dropHistoryInTests();
-      }
+    if (ApplicationManager.getApplication() == null) {
+      return;
+    }
+
+    UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
+    if (globalInstance != null) {
+      globalInstance.dropHistoryInTests();
+    }
+
     if (project != null && !project.isDisposed()) {
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
       ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
@@ -465,7 +470,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (localFileSystem != null) {
       localFileSystem.cleanupForNextTest();
     }
-
   }
 
   @NotNull

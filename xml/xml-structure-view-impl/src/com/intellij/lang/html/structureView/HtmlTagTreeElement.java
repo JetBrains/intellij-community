@@ -29,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationPresentation {
+public class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationPresentation {
   static final int MAX_TEXT_LENGTH = 50;
 
-  HtmlTagTreeElement(final XmlTag tag) {
+  public HtmlTagTreeElement(final XmlTag tag) {
     super(tag);
   }
 

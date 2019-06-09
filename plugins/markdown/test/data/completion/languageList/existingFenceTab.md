@@ -1,6 +1,6 @@
 Foobar
 
-```j<caret>avascript
+```j<caret>son
 console.log("!");
 ```
 

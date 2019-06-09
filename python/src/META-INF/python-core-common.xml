@@ -556,8 +556,6 @@
 
     <treeStructureProvider implementation="com.jetbrains.python.projectView.PyTreeStructureProvider"/>
 
-    <project.converterProvider implementation="com.jetbrains.python.testing.converters.PythonTestConverterProvider"/>
-
     <projectConfigurable groupId="build" dynamic="true" id="pyconsole" instance="com.jetbrains.python.console.PyConsoleOptionsConfigurable"
                          displayName="Console"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
@@ -646,7 +644,6 @@
     <!-- Run Anything -->
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingProvider"/>
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyConsoleRunAnythingProvider"/>
-    <runAnything.helpGroup implementation="com.jetbrains.python.run.runAnything.PyRunAnythingHelpGroup"/>
     <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
 
     <!-- Statistics -->

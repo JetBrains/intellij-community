@@ -80,9 +80,9 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
     return isLocalState() ? super.getStatusText() : myRemoteDeployment.getStatusText();
   }
 
-  @Override
-  public DeploymentRuntime getRuntime() {
-    return isLocalState() ? super.getRuntime() : myRemoteDeployment.getRuntime();
+  @Nullable
+  public DeploymentRuntime getRemoteRuntime() {
+    return isLocalState() ? null : myRemoteDeployment.getRuntime();
   }
 
   @Override

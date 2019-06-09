@@ -233,6 +233,11 @@ def zip_sources(zip_path):
         try:
             while True:
                 line = sys.stdin.readline()
+
+                if not line:
+                    # TextIOWrapper.readline returns an empty string if EOF is hit immediately.
+                    break
+
                 line = line.strip()
 
                 if line == '-':

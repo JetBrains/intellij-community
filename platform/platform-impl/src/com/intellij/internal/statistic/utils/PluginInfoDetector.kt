@@ -31,10 +31,6 @@ fun getPluginInfo(className: String): PluginInfo {
  */
 fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
   if (pluginId == null) return unknownPlugin
-
-  if (PluginManagerCore.CORE_PLUGIN_ID == pluginId.idString) {
-    return platformPlugin
-  }
   return getPluginInfoByDescriptor(PluginManager.getPlugin(pluginId))
 }
 
@@ -46,6 +42,10 @@ fun getPluginInfoByDescriptor(plugin: IdeaPluginDescriptor?): PluginInfo {
   if (plugin == null) return unknownPlugin
 
   val id = plugin.pluginId.idString
+  if (PluginManagerCore.CORE_PLUGIN_ID == id) {
+    return platformPlugin
+  }
+
   if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
     return if (plugin.isBundled) {
       PluginInfo(PluginType.JB_BUNDLED, id)
@@ -80,6 +80,15 @@ enum class PluginType {
   fun isSafeToReport(): Boolean {
     return isDevelopedByJetBrains() || this == LISTED
   }
+}
+
+fun findPluginTypeByValue(value: String): PluginType? {
+  for (type in PluginType.values()) {
+    if (type.name == value) {
+      return type
+    }
+  }
+  return null
 }
 
 class PluginInfo(val type: PluginType, val id: String?) {

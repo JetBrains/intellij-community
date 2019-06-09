@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.javafx;
 
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.FieldAccessor;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.embed.EmbeddedSceneInterface;
 import com.sun.javafx.tk.TKScene;
 import javafx.application.Platform;
@@ -35,10 +35,10 @@ public class JFXPanelWrapper extends JFXPanel {
   public void addNotify() {
     // todo: remove it when IDEA finally switches to JFX10
     if (myScaleFactorAccessor.isAvailable()) {
-      if (UIUtil.isJreHiDPIEnabled()) {
+      if (JreHiDpiUtil.isJreHiDPIEnabled()) {
         // JFXPanel is scaled asynchronously after first repaint, what may lead
         // to showing unscaled content. To work it around, set "scaleFactor" ahead.
-        int scale = Math.round(JBUI.sysScale(this));
+        int scale = Math.round(JBUIScale.sysScale(this));
         myScaleFactorAccessor.set(this, scale);
         Scene scene = getScene();
         // If scene is null then it will be set later and super.setEmbeddedScene(..) will init its scale properly,

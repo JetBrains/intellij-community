@@ -203,15 +203,26 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
                                   e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
           }
           else {
-            myViewer.setEmptyText("");
+            setEmptyAffectedText();
           }
         }
         else {
           myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-          myViewer.setEmptyText("");
+          setEmptyAffectedText();
         }
       }
     });
+  }
+
+  private void setEmptyAffectedText() {
+    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) {
+      myViewer.setEmptyText("");
+    }
+    else {
+      myViewer.getEmptyText().setText("No changes that affect selected filters.").
+        appendSecondaryText("Show all changes", VcsLogUiUtil.getLinkAttributes(),
+                            e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
+    }
   }
 
   @NotNull
@@ -249,7 +260,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   @NotNull
   private Collection<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
-    if (!isShowOnlyAffected() || myAffectedPaths == null) return changes;
+    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return changes;
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
       if (filePath.isDirectory()) {
         return FileHistoryUtil.affectsDirectory(change, filePath);
@@ -266,7 +277,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
            myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
   }
 
-  private boolean isShowOnlyAffected() {
+  private boolean isShowOnlyAffectedSelected() {
     return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
            myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }

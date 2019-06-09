@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +39,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.ComponentsKt;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -308,7 +308,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     commentPanel.add(commentLabel, BorderLayout.NORTH);
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER);
 
-    JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
+    JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUIScale.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
     attachmentsPanel.add(attachmentsLabel, BorderLayout.NORTH);
     attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 350), BorderLayout.WEST);
@@ -609,7 +609,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     Container parentComponent = getRootPane();
     if (dialogClosed) {
-      IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, parentComponent);
+      IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)parentComponent);
       parentComponent = frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame();
     }
 
@@ -828,7 +828,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       first = message;
       pluginId = findPluginId(message.getThrowable());
       plugin = PluginManager.getPlugin(pluginId);
-      submitter = getSubmitter(message.getThrowable(), pluginId, plugin);
+      submitter = getSubmitter(message.getThrowable(), plugin);
       detailsText = detailsText();
     }
 
@@ -978,12 +978,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    return getSubmitter(t, pluginId, plugin);
+  static @Nullable ErrorReportSubmitter getSubmitter(@NotNull Throwable t, @Nullable PluginId pluginId) {
+    return getSubmitter(t, PluginManager.getPlugin(pluginId));
   }
 
-  private static ErrorReportSubmitter getSubmitter(Throwable t, PluginId pluginId, IdeaPluginDescriptor plugin) {
+  private static ErrorReportSubmitter getSubmitter(Throwable t, @Nullable IdeaPluginDescriptor plugin) {
     if (t instanceof MessagePool.TooManyErrorsException || t instanceof AbstractMethodError) {
       return null;
     }
@@ -999,7 +998,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (plugin != null) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
-        if (descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
+        if (descriptor != null && plugin.getPluginId() == descriptor.getPluginId()) {
           return reporter;
         }
       }

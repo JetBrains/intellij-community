@@ -4,13 +4,10 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
@@ -18,6 +15,7 @@ internal class CommitState(val changes: List<Change>, val commitMessage: String)
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
+  private val changeListManager = ChangeListManager.getInstance(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
@@ -25,17 +23,27 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
   internal lateinit var commitState: CommitState
 
   init {
-    val connection = project.messageBus.connect()
-    connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
-      Disposer.dispose(connection)
-
-      runInEdt { updateVcses(vcsManager.allActiveVcss.toSet()) }
-    })
+    updateVcses(vcsManager.allActiveVcss.toSet())
   }
+
+  internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =
+    changes.firstOrNull()?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
 
   override fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) {
     if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
   }
+
+  override fun executeCustom(executor: CommitExecutor, session: CommitSession) =
+    executeCustom(executor, session, commitState.changes, commitState.commitMessage)
+
+  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) {
+    if (result == CheckinHandler.ReturnResult.COMMIT) {
+      doCommitCustom(executor, session, commitState.changes, commitState.commitMessage)
+    }
+  }
+
+  override fun doRunBeforeCommitChecks(checks: Runnable) =
+    PartialChangesUtil.runUnderChangeList(project, getAffectedChangeList(commitState.changes), checks)
 
   private fun doCommit() {
     LOG.debug("Do actual commit")
@@ -51,7 +59,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     override fun onFailure() = resetState()
 
     private fun resetState() = runInEdt {
-      workflow.clearCommitOptions()
+      workflow.disposeCommitOptions()
       workflow.areCommitOptionsCreated = false
 
       workflow.clearCommitContext()

@@ -639,9 +639,7 @@ public class PyUtil {
     if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
-    if (virtualFile instanceof BackedVirtualFile) {
-      virtualFile = ((BackedVirtualFile)virtualFile).getOriginFile();
-    }
+    virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
 
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
@@ -1601,7 +1599,9 @@ public class PyUtil {
     if (hasPositionalContainer(parameters) || hasKeywordContainer(parameters)) {
       return requiredCount <= otherRequiredCount;
     }
-    return requiredCount <= otherRequiredCount && parameters.size() >= otherParameters.size() && optionalCount >= otherOptionalCount;
+    return requiredCount <= otherRequiredCount &&
+           optionalCount >= otherOptionalCount &&
+           namedParametersCount(parameters) >= namedParametersCount(otherParameters);
   }
 
   private static int optionalParametersCount(@NotNull List<PyCallableParameter> parameters) {
@@ -1615,7 +1615,7 @@ public class PyUtil {
   }
 
   private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
-    return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
+    return namedParametersCount(parameters) - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
   }
 
   private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
@@ -1648,6 +1648,10 @@ public class PyUtil {
       }
     }
     return false;
+  }
+
+  private static int namedParametersCount(@NotNull List<PyCallableParameter> parameters) {
+    return ContainerUtil.count(parameters, p -> p.getParameter() instanceof PyNamedParameter);
   }
 
   private static boolean isFirstParameterSpecial(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {

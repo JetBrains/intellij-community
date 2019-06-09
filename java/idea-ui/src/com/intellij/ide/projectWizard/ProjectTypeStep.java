@@ -712,16 +712,16 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     reportStatistics("attempt");
   }
 
-  private void reportStatistics(String groupId) {
+  private void reportStatistics(String eventId) {
     TemplatesGroup group = myProjectTypeList.getSelectedValue();
     FeatureUsageData data = new FeatureUsageData();
-    data.addData("projectType", group.isSafeToReport() ? group.getId() : "third-party");
-    myFrameworksPanel.reportFeatureUsageData(data);
+    data.addData("projectType", group.isSafeToReport() ? group.getId() : "third.party");
+    myFrameworksPanel.reportSelectedFrameworks(eventId, data);
     ModuleWizardStep step = getCustomStep();
     if (step instanceof StatisticsAwareModuleWizardStep) {
-      ((StatisticsAwareModuleWizardStep) step).reportFeatureUsageData(data);
+      ((StatisticsAwareModuleWizardStep) step).addCustomFeatureUsageData(eventId, data);
     }
 
-    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", groupId, data);
+    FUCounterUsageLogger.getInstance().logEvent("new.project.wizard", eventId, data);
   }
 }

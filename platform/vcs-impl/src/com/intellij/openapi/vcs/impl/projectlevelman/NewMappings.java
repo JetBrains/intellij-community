@@ -114,6 +114,8 @@ public class NewMappings implements Disposable {
       myActivated = true;
 
       activator = updateActiveVcses();
+
+      LOG.debug("activated");
     }
     activator.activate();
 

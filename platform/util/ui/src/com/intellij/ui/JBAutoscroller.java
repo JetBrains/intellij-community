@@ -137,7 +137,8 @@ public class JBAutoscroller implements ActionListener {
   }
 
   private boolean autoscroll() {
-    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, myLatestDragEvent.getComponent());
+    JScrollPane scrollPane =
+      ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, myLatestDragEvent.getComponent());
     if (scrollPane == null) return false;
 
     boolean scrolled = scroll(scrollPane.getVerticalScrollBar(), myVerticalScrollDelta);
@@ -213,7 +214,7 @@ public class JBAutoscroller implements ActionListener {
     MoveTableCellEditorOnAutoscrollFix(JTable table) {
       myTable = table;
 
-      JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, myTable);
+      JScrollPane scrollPane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)myTable);
       assert scrollPane != null : "MoveTableCellEditorOnAutoscrollFix can only be applied to tables having a scrollpane as it's parent!";
 
       scrollPane.addPropertyChangeListener(this);

@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -97,9 +96,9 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
 
     val executor = getExecutor(project)
-    if (executor == null && isNonModalCommit()) {
-      val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
-      workflowHandler?.run {
+    val workflowHandler = (ChangesViewManager.getInstance(project) as? ChangesViewManager)?.commitWorkflowHandler
+    if (executor == null && workflowHandler != null) {
+      workflowHandler.run {
         setCommitState(included, isForceUpdateNotEmptyCommitState())
         activate()
       }

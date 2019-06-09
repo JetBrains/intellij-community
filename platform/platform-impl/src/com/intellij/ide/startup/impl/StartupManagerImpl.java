@@ -16,6 +16,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +41,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +52,8 @@ import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -152,22 +156,47 @@ public class StartupManagerImpl extends StartupManagerEx {
     // because sub activities performed in a different threads (depends on dumb awareness),
     // but because there is no any other concurrent phase and timeline end equals to last dumb-aware activity,
     // we measure it as a sequential activity to put on a timeline and make clear what's going on the end (avoid last "unknown" phase).
-    Activity activity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES);
+    Activity dumbAwareActivity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE);
+
+    AtomicReference<Activity> edtActivity = new AtomicReference<>();
+
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
     DumbService dumbService = DumbService.getInstance(myProject);
-    for (StartupActivity extension : StartupActivity.POST_STARTUP_ACTIVITY.getExtensionList()) {
+
+    AtomicInteger counter = new AtomicInteger();
+    StartupActivity.POST_STARTUP_ACTIVITY.processWithPluginDescriptor((extension, pluginDescriptor) -> {
       if (DumbService.isDumbAware(extension)) {
-        runActivity(uiFreezeWarned, extension);
+        runActivity(uiFreezeWarned, extension, pluginDescriptor);
       }
       else {
-        dumbService.runWhenSmart(() -> runActivity(uiFreezeWarned, extension));
+        if (edtActivity.get() == null) {
+          edtActivity.set(StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT));
+        }
+
+        counter.incrementAndGet();
+        dumbService.runWhenSmart(() -> {
+          runActivity(uiFreezeWarned, extension, pluginDescriptor);
+          if (counter.decrementAndGet() == 0) {
+            Activity activity = edtActivity.getAndSet(null);
+            if (activity != null) {
+              activity.end();
+            }
+          }
+        });
+      }
+    });
+
+    if (counter.get() == 0) {
+      Activity activity = edtActivity.getAndSet(null);
+      if (activity != null) {
+        activity.end();
       }
     }
-    activity.end();
+    dumbAwareActivity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
   }
 
-  private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension) {
+  private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
     long startTime = StartUpMeasurer.getCurrentTime();
     try {
       extension.runActivity(myProject);
@@ -182,8 +211,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       LOG.error(e);
     }
 
-    ClassLoader loader = extension.getClass().getClassLoader();
-    String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
+    String pluginId = pluginDescriptor.getPluginId().getIdString();
     long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass(), null, pluginId);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       Application app = ApplicationManager.getApplication();
@@ -413,6 +441,14 @@ public class StartupManagerImpl extends StartupManagerEx {
     activity.end();
   }
 
+  public void runBackgroundPostStartupActivities() {
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
+        activity.runActivity(myProject);
+      }
+    }, 5, TimeUnit.SECONDS);
+  }
+
   public static void runActivity(@NotNull Runnable runnable) {
     ProgressManager.checkCanceled();
     try {
@@ -434,7 +470,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     final Application application = ApplicationManager.getApplication();
     if (application == null) return;
 
-    Runnable runnable = () -> {
+    GuiUtils.invokeLaterIfNeeded(() -> {
       if (myProject.isDisposed()) return;
 
       //noinspection SynchronizeOnThis
@@ -449,8 +485,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
 
       action.run();
-    };
-    GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.defaultModalityState());
+    }, ModalityState.defaultModalityState());
   }
 
   @TestOnly

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
@@ -47,6 +48,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   private boolean wasExited = false;
 
   ToolWindowsWidget(@NotNull Disposable parent) {
+    setBorder(JBUI.Borders.empty());
     new BaseButtonBehavior(this, TimedDeadzone.NULL) {
       @Override
       protected void execute(MouseEvent e) {
@@ -111,7 +113,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     }
     if (myAlarm.getActiveRequestCount() == 0) {
       myAlarm.addRequest(() -> {
-        final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, this);
+        final IdeFrameImpl frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
         if (frame == null) return;
 
         List<ToolWindow> toolWindows = new ArrayList<>();
@@ -227,8 +229,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   }
 
   private boolean isActive() {
-    return myStatusBar != null && myStatusBar.getFrame() != null && myStatusBar.getFrame().getProject() != null && Registry
-      .is("ide.windowSystem.showTooWindowButtonsSwitcher");
+    return myStatusBar != null && myStatusBar.getProject() != null && Registry.is("ide.windowSystem.showTooWindowButtonsSwitcher");
   }
 
   @Override

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.LafManagerImpl;
@@ -41,7 +42,8 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
                                 final EditorColorsScheme current,
                                 final EditorColorsScheme scheme,
                                 final boolean addScheme) {
-    group.add(new DumbAwareAction(SchemeManager.getDisplayName(scheme), "", scheme == current ? ourCurrentAction : ourNotCurrentAction) {
+    group.add(new DumbAwareAction(SchemeManager.getDisplayName(scheme), "", scheme == current ? AllIcons.Actions.Forward
+                                                                                              : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {

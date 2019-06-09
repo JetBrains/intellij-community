@@ -2,9 +2,9 @@
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
-import com.intellij.util.ui.JBUIScale.ScaleType;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +16,8 @@ import java.awt.geom.Rectangle2D;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR;
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
-import static com.intellij.util.ui.JBUIScale.DerivedScaleType.PIX_SCALE;
-import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
+import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * Utility methods for pixel-perfect painting in JRE-managed HiDPI mode.
@@ -320,7 +320,7 @@ public class PaintUtil {
       y += comp.getY();
       comp = (JComponent)comp.getParent();
     }
-    double scale = JBUI.sysScale(comp);
+    double scale = JBUIScale.sysScale(comp);
     double sx = x * scale;
     double sy = y * scale;
     return new Point2D.Double((sx - (int)sx) / scale, (sy - (int)sy) / scale);

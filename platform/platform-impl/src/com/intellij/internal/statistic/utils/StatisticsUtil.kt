@@ -88,8 +88,12 @@ fun getEnumUsage(key: String, value: Enum<*>?): UsageDescriptor {
  * @value Value to be checked among the given ranges.
  */
 fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescriptor {
-  if (steps.isEmpty()) return UsageDescriptor("$key.$value", 1)
-  if (value < steps[0]) return UsageDescriptor("$key.<${steps[0]}", 1)
+  return UsageDescriptor("$key." + getCountingStepName(value, steps), 1)
+}
+
+fun getCountingStepName(value: Int, steps: List<Int>): String {
+  if (steps.isEmpty()) return value.toString()
+  if (value < steps[0]) return "<" + steps[0]
 
   var stepIndex = 0
   while (stepIndex < steps.size - 1) {
@@ -99,8 +103,7 @@ fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescripto
 
   val step = steps[stepIndex]
   val addPlus = stepIndex == steps.size - 1 || steps[stepIndex + 1] != step + 1
-  val stepName = humanize(step) + if (addPlus) "+" else ""
-  return UsageDescriptor("$key.$stepName", 1)
+  return humanize(step) + if (addPlus) "+" else ""
 }
 
 /**

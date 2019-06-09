@@ -1,5 +1,5 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="maven-event-listener">
+  <artifact type="jar" build-on-make="true" name="maven-event-listener">
     <output-path>$PROJECT_DIR$/out/artifacts/maven_event_listener</output-path>
     <root id="archive" name="maven-event-listener.jar">
       <element id="module-output" name="intellij.maven.server.eventListener" />

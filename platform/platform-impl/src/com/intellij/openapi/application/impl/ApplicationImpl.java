@@ -5,11 +5,8 @@ import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
@@ -45,12 +42,17 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.messages.ListenerDescriptor;
+import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.ApiStatus;
@@ -73,9 +75,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
-  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
-  public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
-
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 
@@ -123,7 +122,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
-    IconLoader.setStrictGlobally(strictMode);
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
@@ -169,6 +167,29 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // replaces system event queue
     //noinspection ResultOfMethodCallIgnored
     IdeEventQueue.getInstance();
+  }
+
+  // this method not in ApplicationImpl constructor because application starter can perform this activity in parallel to another task
+  public static void registerMessageBusListeners(@NotNull Application app, @NotNull List<IdeaPluginDescriptor> pluginDescriptors, boolean isUnitTestMode) {
+    ConcurrentMap<String, List<ListenerDescriptor>> map = ContainerUtil.newConcurrentMap();
+    for (IdeaPluginDescriptor descriptor : pluginDescriptors) {
+      List<ListenerDescriptor> listeners = ((IdeaPluginDescriptorImpl)descriptor).getListeners();
+      if (!listeners.isEmpty()) {
+        for (ListenerDescriptor listener : listeners) {
+          if (isUnitTestMode && !listener.activeInTestMode) {
+            continue;
+          }
+
+          List<ListenerDescriptor> list = map.get(listener.topicClassName);
+          if (list == null) {
+            list = new SmartList<>();
+            map.put(listener.topicClassName, list);
+          }
+          list.add(listener);
+        }
+      }
+    }
+    ((MessageBusImpl)app.getMessageBus()).setLazyListeners(map);
   }
 
   /**
@@ -1409,6 +1430,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     return ((IdeaPluginDescriptorImpl)pluginDescriptor).getAppServices();
   }
+
+  @Override
+  protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
+    super.logMessageBusDelivery(topic, messageName, handler, durationNanos);
+    if (topic == ProjectManager.TOPIC) {
+      ParallelActivity.PROJECT_OPEN_HANDLER.record(StartUpMeasurer.getCurrentTime() - durationNanos, handler.getClass(),
+                                                   StartUpMeasurer.Level.PROJECT);
+    }
+    else if (topic == VirtualFileManager.VFS_CHANGES) {
+      if (TimeUnit.NANOSECONDS.toMillis(durationNanos) > 50) {
+        LOG.info(String.format("LONG VFS PROCESSING. Topic=%s, offender=%s, message=%s, time=%dms", topic.getDisplayName(), handler.getClass(), messageName, TimeUnit.NANOSECONDS.toMillis(durationNanos)));
+      }
+    }
+  }
+
 
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {

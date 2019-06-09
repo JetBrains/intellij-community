@@ -388,15 +388,47 @@ class FileHistoryTest {
       6()
     }
   }
+
+  @Test
+  fun renamedDirectoryHack() {
+    val directory = LocalFilePath("community/platform", true)
+    val directoryBeforeRename = LocalFilePath("platform", true)
+
+    val fileNamesData = FileNamesDataBuilder(directory)
+      .addChange(directory, 0, listOf(MODIFIED), listOf(1))
+      .addChange(directoryBeforeRename, 1, listOf(MODIFIED), listOf(2)) // unrelated modification
+      .addChange(directory, 2, listOf(ADDED, ADDED), listOf(3, 4))
+      .addChange(directoryBeforeRename, 2, listOf(REMOVED, REMOVED), listOf(3, 4))
+      .addRename(3, 2, directoryBeforeRename, directory)
+      .addChange(directoryBeforeRename, 5, listOf(MODIFIED), listOf(7))
+      .addChange(directoryBeforeRename, 6, listOf(MODIFIED), listOf(8)) // unrelated modification
+      .build()
+
+    graph {
+      0(1)
+      1(2)
+      2(3, 4)
+      3(5)
+      4(6)
+      5(7)
+      6(8)
+      7()
+      8()
+    }.assert(0, directory, fileNamesData) {
+      0(2.dot)
+      2(5.dot)
+      5()
+    }
+  }
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {
   private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> =
     THashMap(FILE_PATH_HASHING_STRATEGY)
-  private val renamesMap: MultiMap<Couple<Int>, Couple<FilePath>> = MultiMap.createSmart()
+  private val renamesMap: MultiMap<EdgeData<Int>, EdgeData<FilePath>> = MultiMap.createSmart()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
-    renamesMap.putValue(Couple(parent, child), Couple(beforePath, afterPath))
+    renamesMap.putValue(EdgeData(parent, child), EdgeData(beforePath, afterPath))
     return this
   }
 
@@ -407,8 +439,8 @@ private class FileNamesDataBuilder(private val path: FilePath) {
 
   fun build(): FileHistoryData {
     return object : FileHistoryData(path) {
-      override fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): Couple<FilePath>? {
-        return renamesMap[Couple(parent, child)].find { FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.second else it.first, path) }
+      override fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>? {
+        return renamesMap[EdgeData(parent, child)].find { FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.child else it.parent, path) }
       }
 
       override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {

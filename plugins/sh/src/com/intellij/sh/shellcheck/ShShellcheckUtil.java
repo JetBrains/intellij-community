@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
@@ -38,6 +34,7 @@ import java.util.TreeMap;
 class ShShellcheckUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
+  private static final String WINDOWS_EXTENSION = ".exe";
   static final String SHELLCHECK = "shellcheck";
   static final String SHELLCHECK_VERSION = "0.6.0-1";
   static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
@@ -46,14 +43,14 @@ class ShShellcheckUtil {
                                        "org/jetbrains/intellij/deps/shellcheck/";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
-  static void download(@Nullable Project project, @Nullable Runnable onSuccess) {
+  static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     File directory = new File(DOWNLOAD_PATH);
     if (!directory.exists()) {
       //noinspection ResultOfMethodCallIgnored
       directory.mkdirs();
     }
 
-    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK);
+    File shellcheck = new File(DOWNLOAD_PATH + File.separator + SHELLCHECK + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
     if (shellcheck.exists()) {
       try {
         String path = ShSettings.getShellcheckPath();
@@ -63,16 +60,13 @@ class ShShellcheckUtil {
         }
         else {
           ShSettings.setShellcheckPath(shellcheckPath);
-          showInfoNotification();
         }
-        if (onSuccess != null) {
-          ApplicationManager.getApplication().invokeLater(onSuccess);
-        }
+        ApplicationManager.getApplication().invokeLater(onSuccess);
         return;
       }
       catch (IOException e) {
         LOG.debug("Can't evaluate shellcheck path", e);
-        showErrorNotification();
+        ApplicationManager.getApplication().invokeLater(onFailure);
         return;
       }
     }
@@ -98,30 +92,35 @@ class ShShellcheckUtil {
           if (file != null) {
             String path = decompressShellcheck(file.getCanonicalPath(), directory);
             if (StringUtil.isNotEmpty(path)) {
-              FileUtilRt.setExecutableAttribute(path, true);
+              FileUtil.setExecutable(new File(path));
               ShSettings.setShellcheckPath(path);
-              showInfoNotification();
-              if (onSuccess != null) {
-                ApplicationManager.getApplication().invokeLater(onSuccess);
-              }
+              ApplicationManager.getApplication().invokeLater(onSuccess);
               ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
             }
           }
         }
         catch (IOException e) {
           LOG.warn("Can't download shellcheck", e);
-          showErrorNotification();
+          ApplicationManager.getApplication().invokeLater(onFailure);
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task));
+    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
+    processIndicator.setIndeterminate(false);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
+  }
+
+  static boolean isExecutionValidPath(@Nullable String path) {
+    if (path == null || ShSettings.I_DO_MIND.equals(path)) return false;
+    File file = new File(path);
+    return file.canExecute() && file.getName().contains(SHELLCHECK);
   }
 
   static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
     if (ShSettings.I_DO_MIND.equals(path)) return true;
     File file = new File(path);
-    return file.canExecute() && file.getName().contains("shellcheck");
+    return file.canExecute() && file.getName().contains(SHELLCHECK);
 
 //    try {
 //      GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
@@ -155,7 +154,7 @@ class ShShellcheckUtil {
     FileUtil.delete(tmpDir);
     FileUtil.delete(archive);
 
-    File shellcheck = new File(directory, SHELLCHECK + (SystemInfoRt.isWindows ? ".exe" : ""));
+    File shellcheck = new File(directory, SHELLCHECK + (SystemInfoRt.isWindows ? WINDOWS_EXTENSION : ""));
     return shellcheck.exists() ? shellcheck.getCanonicalPath() : "";
   }
 
@@ -172,16 +171,6 @@ class ShShellcheckUtil {
     if (SystemInfoRt.isLinux) return "linux";
     if (SystemInfoRt.isWindows) return "windows";
     return null;
-  }
-
-  private static void showInfoNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Shellcheck has been successfully installed",
-        NotificationType.INFORMATION));
-  }
-
-  private static void showErrorNotification() {
-    Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shellcheck. Please install it manually",
-        NotificationType.ERROR));
   }
 
   static final Map<String, String> shellCheckCodes = new TreeMap<String, String>(){{

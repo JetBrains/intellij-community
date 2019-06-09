@@ -11,6 +11,7 @@
                     interface="com.intellij.openapi.application.ApplicationStarter"/>
 
     <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
@@ -36,6 +37,11 @@
     <extensionPoint name="applicationConfigurable"
                     beanClass="com.intellij.openapi.options.ConfigurableEP">
       <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+    </extensionPoint>
+
+    <extensionPoint name="fileType"
+                    beanClass="com.intellij.openapi.fileTypes.FileTypeBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.FileType"/>
     </extensionPoint>
 
     <extensionPoint name="selectInTarget"
@@ -191,7 +197,6 @@
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
 
-    <extensionPoint name="statusBarComponent" interface="com.intellij.openapi.wm.StatusBarCustomComponentFactory"/>
     <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider"/>
 
     <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>
@@ -212,7 +217,7 @@
     <extensionPoint name="statistics.applicationUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector"/>
     <extensionPoint name="statistics.projectUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector"/>
     <extensionPoint name="statistics.counterUsagesCollector" beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP"/>
-    <extensionPoint name="statistics.validation.customUtilWhiteListRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule"/>
+    <extensionPoint name="statistics.validation.customWhiteListRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule"/>
 
     <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.EditorHighlighterProvider"/>

@@ -3,19 +3,20 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory.parseSimpleExpression
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import junit.framework.TestCase
+import org.junit.Assert
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -114,36 +115,36 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
 
   @Test
   fun test_simple_regexp_rules() {
-    // custom regexp is:   (.+)\s*:\s*(.*)  => matches  'aaa:java.lang.String'
+    // custom regexp is:   (.+)\s*:\s*(.*)  => matches  'aaa/java.lang.String'
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_regexp_rules.json"))
 
     var elg = EventLogGroup("my.simple.regexp.value", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
 
      elg = EventLogGroup("my.simple.regexp.node.value", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
 
     elg = EventLogGroup("my.simple.regexp.ref", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
 
     elg = EventLogGroup("my.simple.regexp.node.ref", 1)
-    assertEventAccepted(validator, elg, "aaa:java.lang.String")
+    assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
   }
 
   @Test
   fun test_simple_expression_rules() {
-    // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_],xxx:{enum:AAA|BBB|CCC},zzz{enum#myEnum},yyy"
+    // custom expression is:   "JUST_TEXT[_{regexp:\\d+(\\+)?}_]_xxx_{enum:AAA|BBB|CCC}_zzz{enum#myEnum}_yyy"
     val validator = createTestSensitiveDataValidator(loadContent("test_simple_expression_rules.json"))
     var elg = EventLogGroup("my.simple.expression", 1)
 
     assertSize(1, validator.getEventRules(elg))
 
-    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_],xxx:CCC,zzzREF_AAA,yyy")
-    assertEventRejected(validator, elg, "JUST_TEXT[_FOO_],xxx:CCC,zzzREF_AAA,yyy")
+    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]_xxx_CCC_zzzREF_AAA_yyy")
+    assertEventRejected(validator, elg, "JUST_TEXT[_FOO_]_xxx_CCC_zzzREF_AAA_yyy")
     assertEventRejected(validator, elg, "")
 
     //  {enum:AAA|}foo
@@ -197,6 +198,19 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     assertEventDataRejected(validator, elg, "ed_1", "CC")
     assertEventDataRejected(validator, elg, "ed_2", "REF_XX")
     assertEventDataRuleUndefined(validator, elg, "undefined", "<unknown>")
+  }
+
+  @Test
+  fun test_validate_custom_rule_with_local_enum() {
+    val rule = TestLocalEnumCustomWhitelistRule()
+
+    Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("FIRST", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("SECOND", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("THIRD", EventContext.create("FIRST", emptyMap())))
+
+    Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("FORTH", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("", EventContext.create("FIRST", emptyMap())))
+    Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("UNKNOWN", EventContext.create("FIRST", emptyMap())))
   }
 
 
@@ -264,4 +278,8 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
       else whiteListRule.validateEventData(key, value, EventContext.create("", Collections.emptyMap())) // there are no configured rules
     }
   }
+
+  internal enum class TestCustomActionId {FIRST, SECOND, THIRD}
+
+  internal inner class TestLocalEnumCustomWhitelistRule : LocalEnumCustomWhitelistRule("custom_action_id", TestCustomActionId::class.java)
 }

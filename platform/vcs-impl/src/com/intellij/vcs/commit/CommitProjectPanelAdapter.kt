@@ -8,10 +8,8 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcsUtil.VcsUtil.getFilePath
 import java.io.File
 import javax.swing.JComponent
 
@@ -19,14 +17,6 @@ internal open class CommitProjectPanelAdapter(private val handler: AbstractCommi
   private val workflow get() = handler.workflow
   private val ui get() = handler.ui
   private val vcsManager get() = ProjectLevelVcsManager.getInstance(workflow.project)
-
-  private fun getDisplayedChanges() = ui.getDisplayedChanges()
-  private fun getIncludedChanges() = ui.getIncludedChanges()
-  private fun getDisplayedUnversionedFiles() = ui.getDisplayedUnversionedFiles()
-  private fun getIncludedUnversionedFiles() = ui.getIncludedUnversionedFiles()
-
-  private fun getDisplayedPaths() = getDisplayedChanges().map { getFilePath(it) } + getDisplayedUnversionedFiles().map { getFilePath(it) }
-  private fun getIncludedPaths() = getIncludedChanges().map { getFilePath(it) } + getIncludedUnversionedFiles().map { getFilePath(it) }
 
   override fun getCommitWorkflowHandler(): CommitWorkflowHandler = handler
   override fun getProject(): Project = workflow.project
@@ -38,10 +28,10 @@ internal open class CommitProjectPanelAdapter(private val handler: AbstractCommi
   override fun getPreferredFocusedComponent(): JComponent? = (ui as? ComponentContainer)?.preferredFocusableComponent
 
   override fun hasDiffs(): Boolean = !handler.isCommitEmpty()
-  override fun getVirtualFiles(): Collection<VirtualFile> = getIncludedPaths().mapNotNull { it.virtualFile }
-  override fun getSelectedChanges(): Collection<Change> = getIncludedChanges()
-  override fun getFiles(): Collection<File> = getIncludedPaths().map { it.ioFile }
-  override fun getRoots(): Collection<VirtualFile> = getDisplayedPaths().mapNotNullTo(hashSetOf()) { vcsManager.getVcsRootFor(it) }
+  override fun getVirtualFiles(): Collection<VirtualFile> = ui.getIncludedPaths().mapNotNull { it.virtualFile }
+  override fun getSelectedChanges(): Collection<Change> = ui.getIncludedChanges()
+  override fun getFiles(): Collection<File> = ui.getIncludedPaths().map { it.ioFile }
+  override fun getRoots(): Collection<VirtualFile> = ui.getDisplayedPaths().mapNotNullTo(hashSetOf()) { vcsManager.getVcsRootFor(it) }
 
   override fun vcsIsAffected(name: String): Boolean = vcsManager.checkVcsIsActive(name) && workflow.vcses.any { it.name == name }
   override fun getCommitActionName(): String = ui.defaultCommitActionName

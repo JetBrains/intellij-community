@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.CommonBundle;
@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.Gray;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -93,7 +94,7 @@ public final class LegalNoticeDialog extends DialogWrapper {
     messageArea.setText(UIUtil.toHtml(myBuilder.message));
     myFocusedComponent = messageArea;
 
-    JPanel panel = new JPanel(new BorderLayout(JBUI.scale(3), 0));
+    JPanel panel = new JPanel(new BorderLayout(JBUIScale.scale(3), 0));
     panel.add(iconPanel, BorderLayout.WEST);
     panel.add(messageArea, BorderLayout.CENTER);
     return panel;

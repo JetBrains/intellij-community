@@ -218,7 +218,7 @@ public class JsonSchemaObject {
     if (selfType == null) return otherType;
     if (otherType == null) {
       if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
-        Set<JsonSchemaType> filteredVariants = new HashSet<>(otherTypeVariants.size());
+        Set<JsonSchemaType> filteredVariants = EnumSet.noneOf(JsonSchemaType.class);
         for (JsonSchemaType variant : otherTypeVariants) {
           JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
           if (subtype != null) filteredVariants.add(subtype);
@@ -247,7 +247,7 @@ public class JsonSchemaObject {
     if (self == null) return other;
     if (other == null) return self;
 
-    Set<JsonSchemaType> resultSet = new HashSet<>(self.size());
+    Set<JsonSchemaType> resultSet = EnumSet.noneOf(JsonSchemaType.class);
     for (JsonSchemaType type : self) {
       JsonSchemaType merged = mergeTypes(type, null, other);
       if (merged != null) resultSet.add(merged);

@@ -24,6 +24,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -781,7 +782,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
 
     private RestartAction(PydevConsoleRunnerImpl runner) {
-      copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
+      ActionUtil.copyFrom(this, IdeActions.ACTION_RERUN);
       getTemplatePresentation().setIcon(AllIcons.Actions.Restart);
       myConsoleRunner = runner;
     }

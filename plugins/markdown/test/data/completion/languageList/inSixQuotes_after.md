@@ -1,3 +1,3 @@
-```javascript
+```json
 <caret>
 ```

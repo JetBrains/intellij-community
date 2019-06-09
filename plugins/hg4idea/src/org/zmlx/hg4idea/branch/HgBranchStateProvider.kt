@@ -5,7 +5,6 @@ import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.ChangesUtil.findValidParentAccurately
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchDataImpl
 import com.intellij.vcs.branch.BranchStateProvider
@@ -18,7 +17,7 @@ internal class HgBranchStateProvider(val project: Project) : BranchStateProvider
       return null
     }
 
-    val repository = findValidParentAccurately(path)?.let { VcsRepositoryManager.getInstance(project).getRepositoryForFile(it, true) } as? HgRepository
+    val repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(path, true) as? HgRepository
     return repository?.let { BranchDataImpl(it.root.presentableName, it.currentBranchName) }
   }
 }

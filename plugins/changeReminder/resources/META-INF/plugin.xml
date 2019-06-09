@@ -4,22 +4,35 @@
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-        Predict the full set of files in the commit given only a part of it. <br>
-        In other words, ChangeReminder predicts files which developer might have forgotten to modify or to add to VCS (currently only Git is supported).<br><br>
+        ChangeReminder predicts files which developer might have forgotten to modify.
+        The plugin uses VCS history (currently only Git is supported).<br><br>
 
-        It is easier to understand by example. <br>
-        When you are committing a file (<i>ExceptionHandler.java</i>),
+        There is an example. <br>
+        When you have a file (<i>ExceptionHandler</i>) in your active changelist,
             the system knows which files are usually committed with this one
-            and reminds you to add forgotten files (<i>ExceptionHandlerTest.java</i>, <i>ExceptionHandlerFactory.java</i>) to this commit
-            or to modify them.<br><br>
+            and shows you the unmodified related files (<i>ExceptionHandlerTest</i>, <i>ExceptionHandlerFactory</i>)
+            in <i>Related Files</i> node in <i>Local Changes</i>.
+            Maybe you wanted to modify them but forgot about it.
     ]]></description>
 
   <depends>com.intellij.modules.vcs</depends>
   <depends>Git4Idea</depends>
-
+  <actions>
+    <action id="ChangesView.ViewOptions.ShowRelatedFiles"
+            class="com.jetbrains.changeReminder.changes.ChangeReminderCheckAction"
+            text="Show Files Related to Active Changelist"
+            description="Show files related to active changelist"
+            icon="AllIcons.Actions.ShowHiddens">
+      <add-to-group group-id="ChangesView.ViewOptions"/>
+    </action>
+  </actions>
   <extensions defaultExtensionNs="com.intellij">
-    <checkinHandlerFactory implementation="com.jetbrains.changeReminder.commit.handle.ChangeReminderCheckinHandlerFactory"/>
+    <registryKey key="vcs.changeReminder.prediction.threshold"
+                 defaultValue="0.8"
+                 description="Do not show files which have probability less than threshold in Related Files node in Local Changes."/>
     <applicationService serviceImplementation="com.jetbrains.changeReminder.plugin.UserSettings"/>
     <statistics.counterUsagesCollector groupId="vcs.change.reminder" version="1"/>
+    <vcs.changes.changesViewModifier implementation="com.jetbrains.changeReminder.changes.ChangeReminderChangesViewModifier"/>
+    <projectService serviceImplementation="com.jetbrains.changeReminder.predict.PredictionService"/>
   </extensions>
 </idea-plugin>

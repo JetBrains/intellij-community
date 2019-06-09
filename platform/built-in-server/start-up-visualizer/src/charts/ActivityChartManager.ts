@@ -95,10 +95,14 @@ export class ActivityChartManager extends XYChartManager {
   }
 
   protected getTooltipText() {
-    return "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
+    let result = "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
+    if (this.descriptor.sourceHasPluginInformation !== false) {
+      result += "\nplugin: {plugin}"
+    }
+    return result
   }
 
-// https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
+  // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
   render(data: DataManager): void {
     const concatenatedData: Array<ClassItem> = []
     let colorIndex = 0
@@ -156,7 +160,6 @@ export class ActivityChartManager extends XYChartManager {
 
       // generate color before - even if no data for this type of items, still color should be the same regardless of current data set
       // so, if currently no data for project, but there is data for modules, color for modules should use index 3 and not 2
-      // @ts-ignore
       const items = getItemListBySourceName(sourceName)
       if (items == null || items.length === 0) {
         continue
@@ -195,9 +198,10 @@ export class ActivityChartManager extends XYChartManager {
   }
 
   protected transformDataItem(item: Item, chartConfig: ClassItemChartConfig, sourceName: string, _items: Array<Item>): ClassItem {
+    const nameTransformer = this.descriptor.shortNameProducer
     return {
       ...item,
-      shortName: getShortName(item),
+      shortName: nameTransformer == null ? item.name : nameTransformer(item),
       chartConfig,
       sourceName,
     }
@@ -223,36 +227,13 @@ export class ActivityChartManager extends XYChartManager {
     for (const guideLineDescriptor of data.computeGuides(items)) {
       // do not add range marker if equals to first item - it means that all items beyond of phase (e.g. project post-startup activities)
       if (guideLineDescriptor.item !== items[0]) {
-        this.createRangeMarker(nameAxis, guideLineDescriptor.item as ClassItem, guideLineDescriptor.label)
+        const range = nameAxis.axisRanges.create()
+        this.configureRangeMarker(range, guideLineDescriptor.label)
+        range.category = (guideLineDescriptor.item as ClassItem).shortName
+        range.label.rotation = 0
       }
     }
   }
-
-  private createRangeMarker(axis: am4charts.CategoryAxis, item: ClassItem, label: string): void {
-    const range = axis.axisRanges.create()
-    range.category = item.shortName
-    range.label.inside = true
-    range.label.horizontalCenter = "middle"
-    range.label.valign = "bottom"
-    range.label.text = label
-    range.label.rotation = 0
-    range.grid.stroke = am4core.color("#000000")
-    range.grid.strokeDasharray = "2,2"
-    range.grid.strokeOpacity = 1
-
-    range.label.adapter.add("dy", (_y, _target) => {
-      return -this.chart.yAxes.getIndex(0)!!.pixelHeight
-    })
-    range.label.adapter.add("x", (x, _target) => {
-      const rangePoint = range.point
-      return rangePoint == null ? x : rangePoint.x
-    })
-  }
-}
-
-function getShortName(item: Item): string {
-  const lastDotIndex = item.name.lastIndexOf(".")
-  return lastDotIndex < 0 ? item.name : item.name.substring(lastDotIndex + 1)
 }
 
 interface LegendItem {

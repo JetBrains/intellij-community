@@ -4,7 +4,7 @@ package com.intellij.internal.inspector;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -21,7 +21,7 @@ public class ApplyWindowSizeAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Component owner = IdeFocusManager.findInstance().getFocusOwner();
     if (owner != null) {
-      Window window = UIUtil.getParentOfType(Window.class, owner);
+      Window window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, owner);
       if (window != null) {
         int w = ConfigureCustomSizeAction.CustomSizeModel.INSTANCE.getWidth();
         int h = ConfigureCustomSizeAction.CustomSizeModel.INSTANCE.getHeight();

@@ -219,6 +219,17 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON27);
   }
 
+  // PY-35512
+  public void testPositionalOnlyParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> doTestByText(
+        "def f(pos1, <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
+        "    pass"
+      )
+    );
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

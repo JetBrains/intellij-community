@@ -692,6 +692,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s143, "class '_a { '_d{0,0}:[ script( \"__context__.constructor\" ) ]('_b '_c+); }"));
     assertEquals("parameterless constructor search 2", 2,
                  findMatchesCount(s143, "'_Constructor() { '_st*; }"));
+    assertEquals("method & constructor search", 5,
+                 findMatchesCount(s143, "'_T? '_identifier('_PT '_p*);"));
   }
 
   public void testScriptSearch() {

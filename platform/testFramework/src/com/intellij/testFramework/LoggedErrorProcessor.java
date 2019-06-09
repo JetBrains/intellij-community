@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.util.ArrayUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,10 @@ public class LoggedErrorProcessor {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+    if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && ArrayUtil.isEmpty(details)) {
+      throw (TestLoggerAssertionError)t;
+    }
+
     message += DefaultLogger.attachmentsToString(t);
     logger.info(message, t);
 
@@ -58,10 +63,16 @@ public class LoggedErrorProcessor {
       }
     }
 
-    throw new AssertionError(message, t);
+    throw new TestLoggerAssertionError(message, t);
   }
 
   public void disableStderrDumping(@NotNull Disposable parentDisposable) {
     DefaultLogger.disableStderrDumping(parentDisposable);
+  }
+
+  public static class TestLoggerAssertionError extends AssertionError {
+    private TestLoggerAssertionError(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 }

@@ -117,6 +117,7 @@ public class PyChangeSignatureDialog extends
     boolean hadPositionalContainer = false;
     boolean hadKeywordContainer = false;
     boolean hadDefaultValue = false;
+    boolean hadSlash = false;
     boolean hadSingleStar = false;
     boolean hadParamsAfterSingleStar = false;
     final LanguageLevel languageLevel = LanguageLevel.forElement(myMethod.getMethod());
@@ -137,6 +138,21 @@ public class PyChangeSignatureDialog extends
         hadSingleStar = true;
         if (index == parametersLength - 1) {
           return PyBundle.message("ANN.named.parameters.after.star");
+        }
+      }
+      else if (name.equals("/")) {
+        if (hadSlash) {
+          return PyBundle.message("ANN.multiple.slash");
+        }
+        hadSlash = true;
+        if (hadPositionalContainer) {
+          return PyBundle.message("ANN.slash.param.after.vararg");
+        }
+        else if (hadKeywordContainer) {
+          return PyBundle.message("ANN.slash.param.after.keyword");
+        }
+        if (index == 0) {
+          return PyBundle.message("ANN.named.parameters.before.slash");
         }
       }
       else if (name.startsWith("*") && !name.startsWith("**")) {

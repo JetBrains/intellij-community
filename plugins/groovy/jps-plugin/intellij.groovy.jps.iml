@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.groovy.constants.rt" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="library" scope="PROVIDED" name="Groovy-Eclipse-Batch" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
+    <orderEntry type="library" scope="PROVIDED" name="Eclipse" level="project" />
   </component>
 </module>

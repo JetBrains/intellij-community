@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -780,6 +781,23 @@ public class FileTypesTest extends PlatformTestCase {
     finally {
       manager.setDefaultCharsetName(oldProject);
     }
+  }
+
+  public void testFileTypeBeanByName() {
+    assertInstanceOf(myFileTypeManager.getStdFileType("IDEA_WORKSPACE"), WorkspaceFileType.class);
+  }
+
+  public void testFileTypeBeanRegistered() {
+    final FileType[] types = myFileTypeManager.getRegisteredFileTypes();
+    assertTrue(ContainerUtil.exists(types, (it) -> it instanceof WorkspaceFileType));
+  }
+
+  public void testFileTypeBeanByFileName() {
+    assertInstanceOf(myFileTypeManager.getFileTypeByFileName("foo.iws"), WorkspaceFileType.class);
+  }
+
+  public void testFileTypeBeanByExtensionWithFieldName() {
+    assertSame(ModuleFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("iml"));
   }
 
   @NotNull

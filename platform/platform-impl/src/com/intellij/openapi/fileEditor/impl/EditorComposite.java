@@ -25,10 +25,7 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.PrevNextActionsDescriptor;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -38,7 +35,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +123,8 @@ public abstract class EditorComposite implements Disposable {
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
 
-    myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerListener() {
+    fileEditorManager.getProject().getMessageBus().connect(this).subscribe(
+          FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull final FileEditorManagerEvent event) {
         final VirtualFile oldFile = event.getOldFile();
@@ -149,7 +146,7 @@ public abstract class EditorComposite implements Disposable {
           }
         }
       }
-    }, this);
+    });
   }
 
   @NotNull
@@ -213,7 +210,8 @@ public abstract class EditorComposite implements Disposable {
         publisher.selectionChanged(event);
       });
       final JComponent component = newSelectedEditor.getComponent();
-      final EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, component);
+      final EditorWindowHolder holder =
+        ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
       if (holder != null) {
         ((FileEditorManagerImpl)myFileEditorManager).addSelectionRecord(myFile, holder.getEditorWindow());
       }
@@ -361,7 +359,7 @@ public abstract class EditorComposite implements Disposable {
    */
   @NotNull
   FileEditor getSelectedEditor() {
-    return getSelectedEditorWithProvider().getFirst ();
+    return getSelectedEditorWithProvider().getFirst();
   }
 
   public boolean isDisposed() {

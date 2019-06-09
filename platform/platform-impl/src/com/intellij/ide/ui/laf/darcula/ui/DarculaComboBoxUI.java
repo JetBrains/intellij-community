@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -192,10 +193,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Rectangle r = new Rectangle(button.getSize());
     JBInsets.removeFrom(r, JBUI.insets(1, 0, 1, 1));
 
-    int tW = JBUI.scale(9);
-    int tH = JBUI.scale(5);
-    int xU = (r.width - tW) / 2 - JBUI.scale(1);
-    int yU = (r.height - tH) / 2 + JBUI.scale(1);
+    int tW = JBUIScale.scale(9);
+    int tH = JBUIScale.scale(5);
+    int xU = (r.width - tW) / 2 - JBUIScale.scale(1);
+    int yU = (r.height - tH) / 2 + JBUIScale.scale(1);
 
     Path2D path = new Path2D.Float();
     path.moveTo(xU, yU);
@@ -468,7 +469,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBUI.insets(2, 3) : getDefaultComboBoxInsets();
+    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBInsets.create(2, 3) : getDefaultComboBoxInsets();
   }
 
   @Override

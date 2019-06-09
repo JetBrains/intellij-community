@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -6,9 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.FrameState;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -285,7 +286,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   private static float getSysScale(GraphicsDevice screen) {
-    return UIUtil.isJreHiDPIEnabled() && screen != null ? JBUI.sysScale(screen.getDefaultConfiguration()) : 1f;
+    return JreHiDpiUtil.isJreHiDPIEnabled() && screen != null ? JBUIScale.sysScale(screen.getDefaultConfiguration()) : 1f;
   }
 
   /*
@@ -347,8 +348,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   private static void normalizeSize(GraphicsDevice screen, Rectangle bounds) {
-    if (UIUtil.isJreHiDPIEnabled()) {
-      float scale = JBUI.sysScale(screen.getDefaultConfiguration());
+    if (JreHiDpiUtil.isJreHiDPIEnabled()) {
+      float scale = JBUIScale.sysScale(screen.getDefaultConfiguration());
       bounds.setSize((int)Math.ceil(bounds.width * scale), (int)Math.ceil(bounds.height * scale));
     }
   }

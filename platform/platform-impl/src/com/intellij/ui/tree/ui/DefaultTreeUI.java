@@ -27,7 +27,6 @@ import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
-import static com.intellij.ide.ui.laf.LafManagerImpl.patchTreeRowHeight;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.components.JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS;
 import static com.intellij.util.ReflectionUtil.getMethod;
@@ -246,7 +245,6 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Override
   protected void installDefaults() {
-    patchTreeRowHeight(UIManager.getDefaults());
     super.installDefaults();
     JTree tree = getTree();
     if (tree != null) {

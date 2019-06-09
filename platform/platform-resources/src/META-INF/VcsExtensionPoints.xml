@@ -46,7 +46,9 @@
     <extensionPoint name="vcs.branchStateProvider" interface="com.intellij.vcs.branch.BranchStateProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider"/>
-
+    <extensionPoint name="vcs.changes.changesViewModifier"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
+                    area="IDEA_PROJECT"/>
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
                     area="IDEA_PROJECT"/>

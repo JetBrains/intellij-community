@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,7 +77,7 @@ public class NamePathComponent extends JPanel {
     myTfPath.setPreferredSize(new Dimension(200, myTfPath.getPreferredSize().height));
 
     myNameLabel = new JLabel(nameLabelText);
-    if (bold) myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    if (bold) myNameLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
 
     FileChooserDescriptor chooserDescriptor = (FileChooserDescriptor)BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR.clone();
@@ -92,7 +92,7 @@ public class NamePathComponent extends JPanel {
     myPathPanel = new FieldPanel(myTfPath, null, null, browseButtonActionListener, null);
 
     JLabel pathLabel = new JLabel(pathLabelText);
-    if (bold) pathLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    if (bold) pathLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     pathLabel.setLabelFor(myTfPath);
 
     add(myNameLabel, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(0, 0, 5, 4), 0, 0));

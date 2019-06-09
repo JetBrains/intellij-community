@@ -6,7 +6,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.SmartList
 
 data class ReadConfiguration(val allowAnySubTypes: Boolean = false,
-                             val classLoader: ClassLoader? = null,
+                             // loadClass for now doesn't support map or collection as host object
+                             val loadClass: ((name: String, hostObject: Any) -> Class<*>?)? = null,
                              val beanConstructed: BeanConstructed? = null)
 
 data class WriteConfiguration(val binary: Boolean = true,

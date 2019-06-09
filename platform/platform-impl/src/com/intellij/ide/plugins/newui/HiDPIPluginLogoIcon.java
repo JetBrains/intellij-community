@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.JBUIScale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,7 +13,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.intellij.util.ui.JBUIScale.ScaleType.USR_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * @author Alexander Lobas

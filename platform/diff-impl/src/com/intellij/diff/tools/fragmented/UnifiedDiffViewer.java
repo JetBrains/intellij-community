@@ -897,6 +897,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return pair.second.select(navigatable1, navigatable2);
   }
 
+  public boolean isContentGood() {
+    return myPanel.isGoodContent() && myChangedBlockData != null;
+  }
+
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return TwosideTextDiffViewer.canShowRequest(context, request);
   }

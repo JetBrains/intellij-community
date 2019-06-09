@@ -149,6 +149,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   @NotNull
   private JPanel createCommitMessageWrapper() {
     myCommitMessage = new CommitMessage(myProject, false, false, true);
+    Disposer.register(getDisposable(), myCommitMessage);
 
     return simplePanel(myCommitMessage).addToTop(new JLabel("Commit Message:"));
   }

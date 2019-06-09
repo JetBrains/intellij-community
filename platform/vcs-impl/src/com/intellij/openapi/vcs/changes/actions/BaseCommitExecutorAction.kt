@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcs.commit.CommitWorkflowHandler
 
 abstract class BaseCommitExecutorAction : DumbAwareAction() {
@@ -26,9 +27,16 @@ abstract class BaseCommitExecutorAction : DumbAwareAction() {
     workflowHandler.execute(executor)
   }
 
-  protected abstract val executorId: String
+  protected open val executorId: String = ""
+  protected open fun getCommitExecutor(handler: CommitWorkflowHandler?) = handler?.getExecutor(executorId)
 
   private fun getWorkflowHandler(e: AnActionEvent) = VcsDataKeys.COMMIT_WORKFLOW_HANDLER.getData(e.dataContext)
+}
 
-  private fun getCommitExecutor(handler: CommitWorkflowHandler?) = handler?.getExecutor(executorId)
+internal class DefaultCommitExecutorAction(private val executor: CommitExecutor) : BaseCommitExecutorAction() {
+  init {
+    templatePresentation.text = executor.actionText
+  }
+
+  override fun getCommitExecutor(handler: CommitWorkflowHandler?): CommitExecutor? = executor
 }

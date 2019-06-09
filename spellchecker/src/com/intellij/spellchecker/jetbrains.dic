@@ -81,6 +81,7 @@ calc
 callee
 callouts
 camelcase
+cancellability
 cancelable
 cancellable
 capath
@@ -320,6 +321,7 @@ initializer
 initrans
 injectable
 inline
+inlining
 innodb
 inode
 inode's
@@ -717,6 +719,7 @@ sftp
 shader
 sharding
 shellcheck
+shfmt
 sigabrt
 sigaio
 sigalrm

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.sh.shellcheck.ShellcheckOptionsPanel">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="6" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="5"/>
     <constraints>
       <xy x="20" y="20" width="500" height="400"/>
@@ -56,7 +56,7 @@
       </grid>
       <scrollpane id="1511d" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
-          <grid row="2" column="0" row-span="2" col-span="3" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="0" row-span="2" col-span="3" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="empty"/>
@@ -77,6 +77,15 @@
           </grid>
         </children>
       </scrollpane>
+      <component id="90c76" class="com.intellij.ui.components.JBLabel" binding="myErrorLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="1" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Can't download sh shellcheck. Please install it manually"/>
+          <visible value="false"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

@@ -5,7 +5,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +27,7 @@ public class EngravedLabel extends JLabel {
 
   @Override
   protected void paintComponent(Graphics graphics) {
-    if (!UIUtil.isUnderDarcula()) {
+    if (!StartupUiUtil.isUnderDarcula()) {
       graphics = new EngravedTextGraphics((Graphics2D)graphics, 0, 1, getShadowColor());
     }
     super.paintComponent(graphics);

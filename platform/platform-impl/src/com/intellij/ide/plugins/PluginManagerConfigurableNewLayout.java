@@ -36,13 +36,11 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,6 +135,9 @@ public class PluginManagerConfigurableNewLayout
     myTabHeaderComponent = new TabbedPaneHeaderComponent(createGearActions(), index -> {
       myCardPanel.select(index, true);
       storeSelectionTab(index);
+
+      String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
+      (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
     });
 
     myUpdateAll.setVisible(false);
@@ -275,7 +276,7 @@ public class PluginManagerConfigurableNewLayout
 
           @Override
           protected Border getDefaultItemComponentBorder() {
-            return new EmptyBorder(JBUI.insets(UIUtil.getListCellVPadding(), 15));
+            return new EmptyBorder(JBInsets.create(UIUtil.getListCellVPadding(), 15));
           }
         };
       }
@@ -541,7 +542,7 @@ public class PluginManagerConfigurableNewLayout
           }
         }); // TODO: icon
         myMarketplaceSortByAction.setPaintUnderline(false);
-        myMarketplaceSortByAction.setIconTextGap(JBUI.scale(4));
+        myMarketplaceSortByAction.setIconTextGap(JBUIScale.scale(4));
         myMarketplaceSortByAction.setHorizontalTextPosition(SwingConstants.LEFT);
         myMarketplaceSortByAction.setForeground(PluginsGroupComponent.SECTION_HEADER_FOREGROUND);
 
@@ -647,6 +648,7 @@ public class PluginManagerConfigurableNewLayout
                       result.descriptors.add(descriptor);
                     }
                   }
+                  ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
                   return;
                 }
@@ -668,6 +670,7 @@ public class PluginManagerConfigurableNewLayout
                       }
                     }
                   }
+                  ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
                   return;
                 }
@@ -695,6 +698,8 @@ public class PluginManagerConfigurableNewLayout
 
                   result.descriptors.addAll(0, builtinList);
                 }
+
+                ContainerUtil.removeDuplicates(result.descriptors);
 
                 if (!result.descriptors.isEmpty()) {
                   String title = "Sort By";

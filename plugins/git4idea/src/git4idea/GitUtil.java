@@ -34,6 +34,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -1082,6 +1084,18 @@ public class GitUtil {
       }
       throw e;
     }
+  }
+
+  @NotNull
+  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<GitRepository> repositories) {
+    Map<GitRepository, Hash> result = new LinkedHashMap<>();
+    for (GitRepository repository : repositories) {
+      String currentRevision = repository.getCurrentRevision();
+      if (currentRevision != null) {
+        result.put(repository, HashImpl.build(currentRevision));
+      }
+    }
+    return result;
   }
 
   private static class GitRepositoryNotFoundException extends VcsException {

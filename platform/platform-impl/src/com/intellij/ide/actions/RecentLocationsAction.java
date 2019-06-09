@@ -35,6 +35,7 @@ import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -55,10 +56,10 @@ import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPE
 public class RecentLocationsAction extends DumbAwareAction {
   private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
-  private static final int DEFAULT_WIDTH = JBUI.scale(700);
-  private static final int DEFAULT_HEIGHT = JBUI.scale(530);
-  private static final int MINIMUM_WIDTH = JBUI.scale(600);
-  private static final int MINIMUM_HEIGHT = JBUI.scale(450);
+  private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
+  private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
+  private static final int MINIMUM_WIDTH = JBUIScale.scale(600);
+  private static final int MINIMUM_HEIGHT = JBUIScale.scale(450);
   private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
   public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
                                                                 SHORTCUT_FOREGROUND_COLOR.getRed(),
@@ -266,7 +267,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     topPanel.add(checkbox, BorderLayout.EAST);
 
     Dimension size = topPanel.getPreferredSize();
-    size.height = JBUI.scale(29);
+    size.height = JBUIScale.scale(29);
     topPanel.setPreferredSize(size);
     topPanel.setBorder(JBUI.Borders.empty(5, 8));
 

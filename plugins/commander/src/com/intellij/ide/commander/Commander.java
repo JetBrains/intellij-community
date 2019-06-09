@@ -11,6 +11,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -268,7 +269,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
     };
-    backAction.copyFrom(actionManager.getAction(IdeActions.ACTION_GOTO_BACK));
+    ActionUtil.copyFrom(backAction, IdeActions.ACTION_GOTO_BACK);
     group.add(backAction);
 
     final AnAction forwardAction = new AnAction() {
@@ -282,7 +283,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         e.getPresentation().setEnabled(myHistory.canGoForward());
       }
     };
-    forwardAction.copyFrom(actionManager.getAction(IdeActions.ACTION_GOTO_FORWARD));
+    ActionUtil.copyFrom(forwardAction, IdeActions.ACTION_GOTO_FORWARD);
     group.add(forwardAction);
 
     group.add(actionManager.getAction("CommanderSwapPanels"));

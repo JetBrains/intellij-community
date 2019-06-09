@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
@@ -122,7 +123,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-          int bw = scale(1);
+          int bw = JBUIScale.scale(1);
           ButtonModel bm = getModel();
 
           // set clip
@@ -162,7 +163,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
           // paint icon
           Icon icon = LafIconLookup.getIcon(iconName, false, false, isEnabled());
-          icon.paintIcon(this, g2, scale(5), scale(3));
+          icon.paintIcon(this, g2, JBUIScale.scale(5), JBUIScale.scale(3));
 
           // paint border
           if (spinner.isEnabled()) {
@@ -227,12 +228,12 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
         Dimension nextButtonSize = nextButton.getPreferredSize();
         Dimension prevButtonSize = prevButton.getPreferredSize();
 
-        nextButtonSize.height = bounds.height * nextButtonSize.height / (nextButtonSize.height + prevButtonSize.height - scale(1));
+        nextButtonSize.height = bounds.height * nextButtonSize.height / (nextButtonSize.height + prevButtonSize.height - JBUIScale.scale(1));
         nextButton.setBounds(bounds.width - nextButtonSize.width, 0,
                              nextButtonSize.width, nextButtonSize.height);
 
-        prevButton.setBounds(bounds.width - prevButtonSize.width, nextButtonSize.height - scale(1),
-                             prevButtonSize.width, bounds.height - nextButtonSize.height + scale(1));
+        prevButton.setBounds(bounds.width - prevButtonSize.width, nextButtonSize.height - JBUIScale.scale(1),
+                             prevButtonSize.width, bounds.height - nextButtonSize.height + JBUIScale.scale(1));
 
         JComponent editor = spinner.getEditor();
         if (editor != null) {
@@ -246,7 +247,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
           editor.setBounds(i.left + m.left,
                            i.top + m.top + editorOffset,
-                           w - (i.left + m.left + scale(BUTTON_WIDTH) + m.right + i.right), editorHeight);
+                           w - (i.left + m.left + JBUIScale.scale(BUTTON_WIDTH) + m.right + i.right), editorHeight);
         }
       }
     };
@@ -269,8 +270,8 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
   @Override
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
-    int iconWidth = scale(BUTTON_WIDTH) + i.right;
-    int iconHeight = scale(SPINNER_HEIGHT) + i.top + i.bottom;
+    int iconWidth = JBUIScale.scale(BUTTON_WIDTH) + i.right;
+    int iconHeight = JBUIScale.scale(SPINNER_HEIGHT) + i.top + i.bottom;
 
     Dimension minSize = new Dimension(i.left + MINIMUM_WIDTH.get() + i.right, iconHeight);
     size = maximize(size, minSize);

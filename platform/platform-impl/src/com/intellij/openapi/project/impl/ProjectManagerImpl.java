@@ -38,6 +38,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -49,10 +50,7 @@ import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -266,9 +264,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+  private static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+    LOG.assertTrue(!project.isDefault());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null && !project.isDefault()) {
+    if (indicator != null) {
       indicator.setIndeterminate(false);
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
     }
@@ -286,7 +285,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       succeed = true;
     }
     finally {
-      if (!succeed && !project.isDefault()) {
+      if (!succeed) {
         TransactionGuard.submitTransaction(project, () -> WriteAction.run(() -> Disposer.dispose(project)));
       }
     }
@@ -417,16 +416,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }, ModalityState.NON_MODAL);
       ApplicationManager.getApplication().invokeLater(
-        () -> LoadingPhase.compareAndSet(LoadingPhase.FRAME_SHOWN,
-                                         DumbService.isDumb(project)
-                                         ? LoadingPhase.PROJECT_OPENED
-                                         : LoadingPhase.INDEXING_FINISHED),
+        () -> {
+          LoadingPhase.compareAndSet(LoadingPhase.FRAME_SHOWN,
+                                     DumbService.isDumb(project)
+                                     ? LoadingPhase.PROJECT_OPENED
+                                     : LoadingPhase.INDEXING_FINISHED);
+
+          startupManager.runBackgroundPostStartupActivities();
+        },
         ModalityState.NON_MODAL);
     }));
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       TransactionGuard.getInstance().submitTransactionAndWait(doLoad);
-    } else {
+    }
+    else {
       assertInTransaction();
       doLoad.run();
     }
@@ -784,7 +788,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     LOG.assertTrue(removed);
   }
 
-  protected void fireProjectOpened(@NotNull Project project) {
+  private void fireProjectOpened(@NotNull Project project) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectOpened");
     }
@@ -943,5 +947,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @NotNull
   public String[] getAllExcludedUrls() {
     return myExcludeRootsCache.getExcludedUrls();
+  }
+
+  @NotNull
+  @Override
+  public String[] getAllProjectUrls() {
+    synchronized (lock) {
+      return ContainerUtil.mapNotNull(myOpenProjects, project -> {
+        String basePath = project.getBasePath();
+        return basePath == null ? null : VfsUtilCore.pathToUrl(basePath);
+      }, ArrayUtil.EMPTY_STRING_ARRAY);
+    }
   }
 }

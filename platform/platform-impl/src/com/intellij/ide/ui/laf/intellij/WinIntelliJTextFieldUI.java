@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -64,7 +51,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected void paintBackground(Graphics g) {
     JTextComponent c = getComponent();
-    if (UIUtil.getParentOfType(JComboBox.class, c) != null) return;
+    if (ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)c) != null) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -104,11 +91,11 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   static void adjustInWrapperRect(Rectangle r, Component c) {
-    if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+    if (ComponentUtil.getParentOfType((Class<? extends Wrapper>)Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
       int delta = c.getHeight() - c.getPreferredSize().height;
       if (delta > 0) {
         delta -= delta % 2 == 0 ? 0 : 1;
-        JBInsets.removeFrom(r, JBUI.insets(delta / 2, 0));
+        JBInsets.removeFrom(r, JBInsets.create(delta / 2, 0));
       }
     }
   }
@@ -117,7 +104,8 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   protected int getMinimumHeight(int textHeight) {
     JComponent c = getComponent();
     Insets i = c.getInsets();
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class,
+                                                                                             (Component)c) != null ?
            textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
 
@@ -129,11 +117,11 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected Insets getDefaultMargins() {
     Component c = getComponent();
-    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(2, 6);
+    return isCompact(c) || isTableCellEditor(c) ? JBInsets.create(0, 3) : JBInsets.create(2, 6);
   }
 
   @Override
   protected int getClearIconGap() {
-    return JBUI.scale(3);
+    return JBUIScale.scale(3);
   }
 }

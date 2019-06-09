@@ -56,7 +56,7 @@ public class JavaLambdaNodeProvider
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(getCheckBoxText(), null, AllIcons.Nodes.Function);
+    return new ActionPresentationData(getCheckBoxText(), null, AllIcons.Nodes.Lambda);
   }
 
   @NotNull

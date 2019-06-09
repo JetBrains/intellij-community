@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.Repository;
@@ -168,7 +168,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   private String getToolTip(@NotNull Project project) {
     T currentRepository = guessCurrentRepository(project);
     if (currentRepository == null) return null;
-    String branchName = getFullBranchName(currentRepository);
+    String branchName = myPrefix + " Branch: " + getFullBranchName(currentRepository);
     if (isMultiRoot(project)) {
       return branchName + "\n" + "Root: " + currentRepository.getRoot().getName();
     }

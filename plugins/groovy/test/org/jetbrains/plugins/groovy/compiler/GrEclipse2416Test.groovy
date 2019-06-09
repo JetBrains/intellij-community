@@ -2,18 +2,15 @@
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.JarFileSystem
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.RepositoryTestLibrary
 
 @CompileStatic
 class GrEclipse2416Test extends GrEclipseTestBase {
 
   @Override
-  protected String getGrEclipsePath() {
-    def jarRoot = RepositoryTestLibrary.loadRoots(project, "org.codehaus.groovy:groovy-eclipse-batch:2.4.16-01")[0].file
-    return JarFileSystem.instance.getVirtualFileForJar(jarRoot).path
+  protected String getGrEclipseArtifactID() {
+    "org.codehaus.groovy:groovy-eclipse-batch:2.4.16-01"
   }
 
   @Override

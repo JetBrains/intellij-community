@@ -20,7 +20,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = new LinkedHashMap<>();
-  private static float ourSavedScaleFactor = JBUI.scale(1f);
+  private static float ourSavedScaleFactor = JBUIScale.scale(1f);
   private static int ourSavedConsoleFontSize;
 
   @Override
@@ -132,17 +132,17 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
           }
         }
       }
-      float scaleFactor = JBUI.getFontScale(settings.getPresentationModeFontSize());
-      ourSavedScaleFactor = JBUI.scale(1f);
-      JBUI.setUserScaleFactor(scaleFactor);
+      float scaleFactor = JBUIScale.getFontScale(settings.getPresentationModeFontSize());
+      ourSavedScaleFactor = JBUIScale.scale(1f);
+      JBUIScale.setUserScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {
         Object v = ourSavedValues.get(key);
         if (v instanceof Font) {
           Font font = (Font)v;
-          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), JBUI.scale(font.getSize())));
+          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), JBUIScale.scale(font.getSize())));
         }
         else if (v instanceof Integer) {
-          defaults.put(key, JBUI.scale(((Integer)v).intValue()));
+          defaults.put(key, JBUIScale.scale(((Integer)v).intValue()));
         }
       }
     }
@@ -150,7 +150,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
       for (Object key : ourSavedValues.keySet()) {
         defaults.put(key, ourSavedValues.get(key));
       }
-      JBUI.setUserScaleFactor(ourSavedScaleFactor);
+      JBUIScale.setUserScaleFactor(ourSavedScaleFactor);
       ourSavedValues.clear();
     }
   }

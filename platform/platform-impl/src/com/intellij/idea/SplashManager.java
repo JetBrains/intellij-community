@@ -2,7 +2,8 @@
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.ActivitySubNames;
+import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public final class SplashManager {
   @SuppressWarnings("SpellCheckingInspection")
@@ -34,15 +37,33 @@ public final class SplashManager {
     }
 
     assert SPLASH_WINDOW == null;
-    Activity splashInitialization = StartUpMeasurer.start("splash initialization");
+    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INITIALIZE_SPLASH);
     SPLASH_WINDOW = new Splash(ApplicationInfoImpl.getShadowInstance());
-    splashInitialization.end();
+    activity.end();
   }
 
-  public static void setVisible(boolean value) {
+  public static void executeWithHiddenSplash(@NotNull Window window, @NotNull Runnable runnable) {
+    WindowAdapter listener = new WindowAdapter() {
+      @Override
+      public void windowOpened(WindowEvent e) {
+        setVisible(false);
+      }
+    };
+    window.addWindowListener(listener);
+
+    runnable.run();
+
+    setVisible(true);
+    window.removeWindowListener(listener);
+  }
+
+  private static void setVisible(boolean value) {
     Splash splash = SPLASH_WINDOW;
     if (splash != null) {
       splash.setVisible(value);
+      if (value) {
+        splash.paint(splash.getGraphics());
+      }
     }
   }
 

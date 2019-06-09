@@ -21,17 +21,17 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -39,7 +39,6 @@ import java.util.regex.Pattern;
  */
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
   private static final String DELIMITER_CHARS = ",;.[]{}():";
-  protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
 
   @Override
   public void compile(PsiElement[] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
@@ -179,82 +178,12 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   @NotNull
   protected abstract LanguageFileType getFileType();
 
-  @NotNull
-  @Override
-  public PsiElement[] createPatternTree(@NotNull String text,
-                                        @NotNull PatternTreeContext context,
-                                        @NotNull LanguageFileType fileType,
-                                        @NotNull Language language,
-                                        @Nullable String contextName,
-                                        @NotNull Project project,
-                                        boolean physical) {
-    if (context == PatternTreeContext.Block) {
-      final String strContext = getContext(text, language, contextName);
-      if (strContext == null) {
-        return PsiElement.EMPTY_ARRAY;
-      }
-      final int offset = strContext.indexOf(PATTERN_PLACEHOLDER);
-
-      final int patternLength = text.length();
-      final String patternInContext = strContext.replace(PATTERN_PLACEHOLDER, text);
-
-      final String name = "__dummy." + fileType.getDefaultExtension();
-      final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(name, language, patternInContext, physical, true);
-      if (file == null) {
-        return PsiElement.EMPTY_ARRAY;
-      }
-
-      final List<PsiElement> result = new ArrayList<>();
-
-      PsiElement element = file.findElementAt(offset);
-      if (element == null) {
-        return PsiElement.EMPTY_ARRAY;
-      }
-
-      PsiElement topElement = element;
-      element = element.getParent();
-
-      while (element != null) {
-        if (element.getTextRange().getStartOffset() == offset && element.getTextLength() <= patternLength) {
-          topElement = element;
-        }
-        element = element.getParent();
-      }
-
-      if (topElement instanceof PsiFile) {
-        return topElement.getChildren();
-      }
-
-      final int endOffset = offset + patternLength;
-      result.add(topElement);
-      topElement = topElement.getNextSibling();
-
-      while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
-        result.add(topElement);
-        topElement = topElement.getNextSibling();
-      }
-
-      return result.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    return super.createPatternTree(text, context, fileType, language, contextName, project, physical);
-  }
-
   @Override
   public void checkReplacementPattern(Project project, ReplaceOptions options) {}
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return new DocumentBasedReplaceHandler(project);
-  }
-
-  @NotNull
-  public String[] getContextNames() {
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
-  }
-
-  @Nullable
-  protected String getContext(@NotNull String pattern, @Nullable Language language, @Nullable String contextName) {
-    return PATTERN_PLACEHOLDER;
   }
 
   static boolean canBePatternVariable(PsiElement element) {

@@ -24,64 +24,64 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
 
 public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testSimpleCodeFence() {
-    doTest("```ruby\n" +
+    doTest("```text\n" +
            "Runti<caret>me\n" +
            "```",
            "singleton_class",
-           "```ruby\n" +
+           "```text\n" +
            "singleton_class\n" +
            "```");
   }
 
   public void testSimpleCodeFenceNewLineBefore() {
-    doTest("```ruby\n" +
+    doTest("```text\n" +
            "Runti<caret>me\n" +
            "```",
            "\nRuntime",
-           "```ruby\n" +
+           "```text\n" +
            "\n" +
            "Runtime\n" +
            "```");
   }
 
   public void testSimpleCodeFenceNewLineAfter() {
-    doTest("```ruby\n" +
+    doTest("```text\n" +
            "Runt<caret>ime\n" +
            "```",
            "Runtime\n",
-           "```ruby\n" +
+           "```text\n" +
            "Runtime\n" +
            "\n" +
            "```");
   }
 
   public void testCodeFenceInList() {
-    doTest("* ```ruby\n" +
+    doTest("* ```text\n" +
            "  <caret>singleton_class\n" +
            "  ```",
            "singleton",
-           "```ruby\n" +
+           "```text\n" +
            "  singleton\n" +
            "  ```");
   }
 
   public void testCodeFenceInListNewLineBefore() {
-    doTest("* ```ruby\n" +
+    doTest("* ```text\n" +
            "  <caret>singleton_class\n" +
            "  ```",
            "\nsingleton_class",
-           "```ruby\n" +
+           "```text\n" +
            "  \n" +
            "  singleton_class\n" +
            "  ```");
   }
 
   public void testCodeFenceInListNewLineAfter() {
-    doTest("* ```ruby\n" +
+    doTest("* ```text\n" +
            "  <caret>singleton_class\n" +
            "  ```",
            "singleton_class\n",
-           "```ruby\n" +
+           "```text\n" +
            "  singleton_class\n" +
            "  \n" +
            "  ```");
@@ -89,24 +89,24 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
 
   public void testCodeFenceInNestedList() {
     doTest("* A\n" +
-           "  * ```ruby\n" +
+           "  * ```text\n" +
            "    <caret>setup\n" +
            "    ```\n" +
            "  * C\n" +
            "*D",
            "singleton_class\n",
-           "```ruby\n" +
+           "```text\n" +
            "    singleton_class\n" +
            "    \n" +
            "    ```");
   }
 
   public void testCodeFenceInQuotes() {
-    doTest(">```ruby\n" +
+    doTest(">```text\n" +
            "><caret>setup\n" +
            ">```",
            "singleton_class\n",
-           "```ruby\n" +
+           "```text\n" +
            ">singleton_class\n" +
            ">\n" +
            ">```");
@@ -118,11 +118,11 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
            "    >  * A \n" +
            "    >    \n" +
            "    >  * D  \n" +
-           "  -  >  -    > ```ruby\n" +
+           "  -  >  -    > ```text\n" +
            "     >       > <caret>$LAST_MATCH_INFO\n" +
            "     >       > ```\n",
            "singleton_class",
-           "```ruby\n" +
+           "```text\n" +
            "     >       > singleton_class\n" +
            "     >       > ```");
   }
@@ -133,11 +133,11 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
            "    >  * A \n" +
            "    >    \n" +
            "    >  * D  \n" +
-           "  -  >  -    > ```ruby\n" +
+           "  -  >  -    > ```text\n" +
            "     >       > <caret>$LAST_MATCH_INFO\n" +
            "     >       > ```\n",
            "\nsingleton_class",
-           "```ruby\n" +
+           "```text\n" +
            "     >       > \n" +
            "     >       > singleton_class\n" +
            "     >       > ```");
@@ -149,32 +149,32 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
            "    >  * A \n" +
            "    >    \n" +
            "    >  * D  \n" +
-           "  -  >  -    > ```ruby\n" +
+           "  -  >  -    > ```text\n" +
            "     >       > <caret>$LAST_MATCH_INFO\n" +
            "     >       > ```\n",
            "singleton_class\n",
-           "```ruby\n" +
+           "```text\n" +
            "     >       > singleton_class\n" +
            "     >       > \n" +
            "     >       > ```");
   }
 
   public void testThreeBackticksCodeFence() {
-    doTest("```ruby\n" +
+    doTest("```text\n" +
            "Runti<caret>me\n" +
            "```",
            "```singleton_class",
-           "```ruby\n" +
+           "```text\n" +
            "Runtime\n" +
            "```");
   }
 
   public void testThreeTildaCodeFence() {
-    doTest("```ruby\n" +
+    doTest("```text\n" +
            "Runti<caret>me\n" +
            "```",
            "~~~singleton_class",
-           "```ruby\n" +
+           "```text\n" +
            "Runtime\n" +
            "```");
   }

@@ -17,7 +17,7 @@ internal interface Binding {
     }
   }
 
-  fun createCacheKey(aClass: Class<*>, type: Type = aClass) = type
+  fun createCacheKey(aClass: Class<*>?, type: Type) = type
 
   fun init(originalType: Type, context: BindingInitializationContext) {
   }
@@ -51,7 +51,7 @@ internal inline fun write(hostObject: Any, accessor: MutableAccessor, context: W
   }
 }
 
-internal inline fun read(hostObject: Any, property: MutableAccessor, context: ReadContext, read: ValueReader.() -> Any) {
+internal inline fun read(hostObject: Any, property: MutableAccessor, context: ReadContext, read: ValueReader.() -> Any?) {
   if (context.reader.type == IonType.NULL) {
     property.set(hostObject, null)
   }

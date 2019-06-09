@@ -48,7 +48,7 @@ public class GithubUser {
     return login;
   }
 
-  @Nullable
+  @NotNull
   public String getHtmlUrl() {
     return htmlUrl;
   }

@@ -599,4 +599,16 @@ def m() {
   void 'test assign empty list literal to Set @CS'() {
     testHighlighting '@groovy.transform.CompileStatic def bar() { Set<String> x = [] }'
   }
+
+  void 'test nested closures expected type'() {
+    testHighlighting '''\
+@groovy.transform.TypeChecked
+int mmm(Closeable cc) {
+    1.with {
+        cc.withCloseable {}
+    }
+    return 42
+}
+'''
+  }
 }

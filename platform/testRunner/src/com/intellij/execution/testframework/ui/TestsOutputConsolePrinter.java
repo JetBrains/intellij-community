@@ -167,4 +167,9 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
       Printer.super.printWithAnsiColoring(text, processOutputType);
     }
   }
+  
+  @Override
+  public void printExpectedActualHeader(String expected, String actual) {
+    myProperties.printExpectedActualHeader(this, expected, actual);
+  }
 }

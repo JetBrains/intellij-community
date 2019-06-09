@@ -3,7 +3,7 @@ package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -195,7 +195,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     }
   }
 
-  public static class ProductivityUtilValidator extends CustomUtilsWhiteListRule {
+  public static class ProductivityUtilValidator extends CustomWhiteListRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {

@@ -682,4 +682,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         .forEach(element -> registerProblem(element, "Python version 3.5 does not support 'await' inside comprehensions"));
     }
   }
+
+  @Override
+  public void visitPySlashParameter(PySlashParameter node) {
+    super.visitPySlashParameter(node);
+
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
+                                   " not support positional-only parameters",
+                                   node);
+  }
 }

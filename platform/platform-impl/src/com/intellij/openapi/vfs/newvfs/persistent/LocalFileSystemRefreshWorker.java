@@ -535,9 +535,7 @@ class LocalFileSystemRefreshWorker {
       boolean hidden = path.getParent() != null && ((DosFileAttributes)a).isHidden();
       return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, hidden, a.size(), lastModified, writable);
     }
-    else {
-      return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
-    }
+    return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, false, a.size(), lastModified, writable);
   }
 
   private static final BasicFileAttributes BROKEN_SYMLINK_ATTRIBUTES = new BasicFileAttributes() {

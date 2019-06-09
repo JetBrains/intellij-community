@@ -19,7 +19,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ArrayUtil;
@@ -346,9 +345,9 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-            // pty4j expects \r on Windows and \n on Unix as Enter key code
-            // https://github.com/JetBrains/pty4j/commit/3166f860354c24740729999df51e9b8a46fb417c
-            return SystemInfoRt.isWindows ? LineSeparator.CR.getSeparatorBytes() : LineSeparator.LF.getSeparatorBytes();
+            // pty4j expects \r as Enter key code
+            // https://github.com/JetBrains/pty4j/blob/0.9.4/test/com/pty4j/PtyTest.java#L54
+            return LineSeparator.CR.getSeparatorBytes();
           }
           return super.getCode(key, modifiers);
         }

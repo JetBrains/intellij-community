@@ -36,7 +36,6 @@
     <orderEntry type="library" scope="TEST" name="snakeyaml" level="project" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
-    <orderEntry type="library" scope="TEST" name="xmlgraphics-commons" level="project" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="batik-transcoder" level="project" />

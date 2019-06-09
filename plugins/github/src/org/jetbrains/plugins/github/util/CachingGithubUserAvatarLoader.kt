@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.google.common.cache.CacheBuilder
@@ -13,7 +13,6 @@ import com.intellij.util.ImageLoader
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GithubUser
 import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -27,21 +26,19 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
 
   private val avatarCache = CacheBuilder.newBuilder()
     .expireAfterAccess(5, TimeUnit.MINUTES)
-    .build<GithubUser, CompletableFuture<Image?>>()
+    .build<String, CompletableFuture<Image?>>()
 
   init {
     LowMemoryWatcher.register(Runnable { avatarCache.invalidateAll() }, this)
   }
 
-  fun requestAvatar(requestExecutor: GithubApiRequestExecutor, user: GithubUser): CompletableFuture<Image?> {
+  fun requestAvatar(requestExecutor: GithubApiRequestExecutor, url: String): CompletableFuture<Image?> {
     val indicator = progressIndicator
     // store images at maximum used size with maximum reasonable scale to avoid upscaling (3 for system scale, 2 for user scale)
     val imageSize = MAXIMUM_ICON_SIZE * 6
 
-    return avatarCache.get(user) {
-      val url = user.avatarUrl
-      if (url == null) CompletableFuture.completedFuture(null)
-      else CompletableFuture.supplyAsync(Supplier {
+    return avatarCache.get(url) {
+      CompletableFuture.supplyAsync(Supplier {
         try {
           progressManager.runProcess(Computable { loadAndDownscale(requestExecutor, indicator, url, imageSize) }, indicator)
         }

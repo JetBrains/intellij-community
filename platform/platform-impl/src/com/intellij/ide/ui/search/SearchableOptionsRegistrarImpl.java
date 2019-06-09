@@ -22,6 +22,7 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharSequenceHashingStrategy;
@@ -49,6 +50,8 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private final Map<CharSequence, long[]> myStorage = new THashMap<>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE);
 
   private final Set<String> myStopWords = Collections.synchronizedSet(new THashSet<>());
+
+  private volatile MultiMap<String, String> myOptionsTopHit;
 
   @NotNull
   private volatile Map<Couple<String>, Set<String>> myHighlightOptionToSynonym = Collections.emptyMap();
@@ -105,6 +108,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
       SearchableOptionIndexLoader loader = new SearchableOptionIndexLoader(this, myStorage);
       loader.load(searchableOptions);
+      myOptionsTopHit = loader.getOptionsTopHit();
       myHighlightOptionToSynonym = loader.getHighlightOptionToSynonym();
     }
     catch (Exception e) {
@@ -249,6 +253,9 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                             @NotNull String option,
                                             @Nullable Project project) {
     Collection<Configurable> effectiveConfigurables;
+    if (ContainerUtil.isEmpty(configurables)) {
+      configurables = null;
+    }
     if (configurables == null) {
       effectiveConfigurables = new LinkedHashSet<>();
       Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
@@ -489,5 +496,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
     return result;
+  }
+
+  @Override
+  @NotNull
+  public Collection<String> getOptionsTopHit(@NotNull String configurableId) {
+    loadHugeFilesIfNecessary();
+    return Collections.unmodifiableCollection(myOptionsTopHit.get(configurableId));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -20,7 +20,6 @@ import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -321,7 +320,7 @@ public class BreakpointsDialog extends DialogWrapper {
     JPanel decoratedTree = decorator.createPanel();
     decoratedTree.setBorder(JBUI.Borders.empty());
 
-    JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
+    JScrollPane pane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)tree);
     if (pane != null) pane.setBorder(IdeBorderFactory.createBorder());
 
     myTreeController.setTreeView(tree);

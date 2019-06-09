@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.zip.ZipFile;
@@ -165,7 +167,7 @@ public class JarHandler extends ZipHandler {
       if (mirrorFileAttributes == null) {
         try {
           FileUtil.rename(tempJarFile, mirrorFile);
-          FileUtil.setLastModified(mirrorFile, originalAttributes.lastModified);
+          Files.setLastModifiedTime(mirrorFile.toPath(), FileTime.fromMillis(originalAttributes.lastModified));
         }
         catch (IOException ex) {
           reportIOErrorWithJars(originalFile, mirrorFile, ex);

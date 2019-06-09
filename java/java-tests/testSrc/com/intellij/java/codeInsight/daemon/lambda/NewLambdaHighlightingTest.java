@@ -168,6 +168,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnhandledExceptionInLambdaChain() { doTest(); }
   public void testFunctionalBound() { doTest(); }
   public void testValidFixesOnUnresolvedMethod() { doTest(); }
+  public void testPolyExpressionInVoidCompatibleLambdaReturn() { doTest(); }
 
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());

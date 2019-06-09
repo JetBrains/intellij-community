@@ -21,6 +21,6 @@ class UnsupportedFeatures {
     java.lang.annotation.ElementType t = null;
     switch (<error descr="Incompatible types. Found: 'java.lang.annotation.ElementType', required: 'byte, char, short or int'">t</error>) { }
 
-    String raw = <error descr="Raw string literals are not supported at language level '1.4'">`hi there`</error>;
+    String raw = <error descr="Text block literals are not supported at language level '1.4'">"""hi there"""</error>;
   }
 }

@@ -2,13 +2,13 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -18,16 +18,16 @@ import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -36,10 +36,6 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
-  static {
-    if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
-  }
-
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
@@ -319,8 +315,9 @@ public class FileUtil extends FileUtilRt {
     return new FixedFuture<>(null);
   }
 
-  private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
-    final RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
+  @NotNull
+  private static Future<Void> startDeletionThread(@NotNull File... tempFiles) {
+    RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
       final Thread currentThread = Thread.currentThread();
       final int priority = currentThread.getPriority();
       currentThread.setPriority(Thread.MIN_PRIORITY);
@@ -334,17 +331,7 @@ public class FileUtil extends FileUtilRt {
       }
     }, null);
 
-    try {
-      // attempt to execute on pooled thread
-      final Class<?> aClass = Class.forName("com.intellij.openapi.application.ApplicationManager");
-      final Method getApplicationMethod = aClass.getMethod("getApplication");
-      final Object application = getApplicationMethod.invoke(null);
-      final Method executeOnPooledThreadMethod = application.getClass().getMethod("executeOnPooledThread", Runnable.class);
-      executeOnPooledThreadMethod.invoke(application, deleteFilesTask);
-    }
-    catch (Exception ignored) {
-      new Thread(deleteFilesTask, "File deletion thread").start();
-    }
+    AppExecutorUtil.getAppExecutorService().execute(deleteFilesTask);
     return deleteFilesTask;
   }
 
@@ -382,26 +369,11 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
-    if (NIOReflect.IS_AVAILABLE) {
-      return deleteRecursivelyNIO(file);
-    }
-    return deleteRecursively(file);
+    return FileUtilRt.delete(file);
   }
 
-  private static boolean deleteRecursively(@NotNull File file) {
-    FileAttributes attributes = FileSystemUtil.getAttributes(file);
-    if (attributes == null) return true;
-
-    if (attributes.isDirectory() && !attributes.isSymLink()) {
-      File[] files = file.listFiles();
-      if (files != null) {
-        for (File child : files) {
-          if (!deleteRecursively(child)) return false;
-        }
-      }
-    }
-
-    return deleteFile(file);
+  public static void delete(@NotNull Path path) throws IOException {
+    FileUtilRt.deleteRecursivelyNIO(path);
   }
 
   public static boolean createParentDirs(@NotNull File file) {
@@ -1349,10 +1321,27 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.generateRandomTemporaryPath();
   }
 
+  public static void setExecutable(@NotNull File file) throws IOException {
+    PosixFileAttributeView view = Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class);
+    if (view != null) {
+      Set<PosixFilePermission> permissions = view.readAttributes().permissions();
+      if (permissions.add(PosixFilePermission.OWNER_EXECUTE)) {
+        view.setPermissions(permissions);
+      }
+    }
+  }
+
+  /** @deprecated use {@link FileUtil#setExecutable(File)} or {@link File#setExecutable} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     FileUtilRt.setExecutableAttribute(path, executableFlag);
   }
 
+  /** @deprecated not very useful; use {@link Files#setLastModifiedTime} or {@link File#setLastModified} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @SuppressWarnings("RedundantThrows")
   public static void setLastModified(@NotNull File file, long timeStamp) throws IOException {
     if (!file.setLastModified(timeStamp)) {
       LOG.warn(file.getPath());

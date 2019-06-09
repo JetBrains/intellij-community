@@ -128,7 +128,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
           @NotNull
           @Override
           protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
-            return SharedThreadPool.getInstance().executeOnPooledThread(task);
+            return SharedThreadPool.getInstance().submit(task);
           }
         };
 

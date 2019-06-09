@@ -19,29 +19,29 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.AbstractVcsTestCase;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.vcsUtil.VcsUtil;
+import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
+import org.junit.Before;
 import org.picocontainer.MutablePicoContainer;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.*;
-import java.lang.reflect.Method;
 
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The ancestor of all intellij.vcs.hg test cases.
  *
  * @deprecated Use {@link HgPlatformTest}.
  */
-public abstract class HgTest extends AbstractVcsTestCase {
+public abstract class HgTest extends AbstractJunitVcsTestCase {
 
   public static final String HG_EXECUTABLE_PATH = "IDEA_TEST_HG_EXECUTABLE_PATH";
   public static final String HG_EXECUTABLE = "hg";
@@ -57,9 +57,10 @@ public abstract class HgTest extends AbstractVcsTestCase {
   protected File myProjectDir; // location of the project repository. Initialized differently in each test: by init or by clone.
   protected HgTestChangeListManager myChangeListManager;
   private HgTestRepository myMainRepo;
+  private HgVcs myVcs;
 
-  @BeforeMethod
-  protected void setUp(final Method testMethod) throws Exception {
+  @Before
+  public void setUp() throws Exception {
     // setting hg executable
     String exec = System.getenv(HG_EXECUTABLE_PATH);
     if (exec != null) {
@@ -73,10 +74,13 @@ public abstract class HgTest extends AbstractVcsTestCase {
     myMainRepo = initRepositories();
     myProjectDir = new File(myMainRepo.getDirFixture().getTempDirPath());
 
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       try {
-        initProject(myProjectDir, testMethod.getName());
+        initProject(myProjectDir, getTestName());
         activateVCS(HgVcs.VCS_NAME);
+
+        myVcs = HgVcs.getInstance(myProject);
+        myVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -88,15 +92,13 @@ public abstract class HgTest extends AbstractVcsTestCase {
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
-  @AfterMethod
-  protected void tearDown() throws Exception {
-    GuiUtils.runOrInvokeAndWait(() -> {
-      try {
-        tearDownProject();
-        tearDownRepositories();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+  @After
+  public void tearDown() throws Exception {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new RunAll(() -> myVcs.getGlobalSettings().setHgExecutable(null),
+                 () -> tearDownProject(),
+                 () -> tearDownRepositories())
+        .run();
     });
   }
 

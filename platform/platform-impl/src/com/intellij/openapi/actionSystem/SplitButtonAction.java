@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -83,7 +84,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      size.width += ARROW_DOWN.getIconWidth() + JBUI.scale(7);
+      size.width += ARROW_DOWN.getIconWidth() + JBUIScale.scale(7);
       return size;
     }
 
@@ -104,7 +105,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       JBInsets.removeFrom(baseRect, getInsets());
 
       if (getPopState() == PUSHED && mousePressType != MousePressType.None && selectedActionEnabled() || isToggleActionPushed()) {
-        int arrowWidth = ARROW_DOWN.getIconWidth() + JBUI.scale(7);
+        int arrowWidth = ARROW_DOWN.getIconWidth() + JBUIScale.scale(7);
 
         Shape clip = g.getClip();
         Area buttonClip = new Area(clip);
@@ -122,14 +123,14 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
         g.setClip(clip);
       }
 
-      int x = baseRect.x + baseRect.width - JBUI.scale(3) - ARROW_DOWN.getIconWidth();
-      int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUI.scale(1);
+      int x = baseRect.x + baseRect.width - JBUIScale.scale(3) - ARROW_DOWN.getIconWidth();
+      int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUIScale.scale(1);
       look.paintIconAt(g, ARROW_DOWN, x, y);
 
-      x -= JBUI.scale(4);
+      x -= JBUIScale.scale(4);
       if (getPopState() == POPPED || getPopState() == PUSHED) {
         g.setColor(JBUI.CurrentTheme.ActionButton.hoverSeparatorColor());
-        g.fillRect(x, baseRect.y, JBUI.scale(1), baseRect.height);
+        g.fillRect(x, baseRect.y, JBUIScale.scale(1), baseRect.height);
       }
 
       Icon actionIcon = getIcon();
@@ -155,7 +156,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     protected void onMousePressed(@NotNull MouseEvent e) {
       Rectangle baseRect = new Rectangle(getSize());
       JBInsets.removeFrom(baseRect, getInsets());
-      int arrowWidth = ARROW_DOWN.getIconWidth() + JBUI.scale(7);
+      int arrowWidth = ARROW_DOWN.getIconWidth() + JBUIScale.scale(7);
 
       Rectangle execButtonRect = new Rectangle(baseRect.x, baseRect.y, baseRect.width - arrowWidth, baseRect.height);
       Rectangle arrowButtonRect = new Rectangle(execButtonRect.x + execButtonRect.width, baseRect.y, arrowWidth, baseRect.height);

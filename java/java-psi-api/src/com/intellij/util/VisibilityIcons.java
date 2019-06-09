@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -23,14 +9,21 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-public class VisibilityIcons {
+public final class VisibilityIcons {
   private VisibilityIcons() {}
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static void setVisibilityIcon(PsiModifierList modifierList, com.intellij.ui.RowIcon baseIcon) {
+    setVisibilityIcon(modifierList, ((RowIcon)baseIcon));
+  }
 
   public static void setVisibilityIcon(PsiModifierList modifierList, RowIcon baseIcon) {
     if (modifierList != null) {
@@ -55,6 +48,12 @@ public class VisibilityIcons {
         Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
         baseIcon.setIcon(emptyIcon, 1);
       }
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, com.intellij.ui.RowIcon baseIcon) {
+    setVisibilityIcon(accessLevel, ((RowIcon)baseIcon));
   }
 
   public static void setVisibilityIcon(@MagicConstant(intValues = {PsiUtil.ACCESS_LEVEL_PUBLIC, PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, PsiUtil.ACCESS_LEVEL_PRIVATE}) int accessLevel, RowIcon baseIcon) {

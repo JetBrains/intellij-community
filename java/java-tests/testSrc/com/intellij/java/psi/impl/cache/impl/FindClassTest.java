@@ -18,7 +18,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -127,7 +127,7 @@ public class FindClassTest extends PsiTestCase {
       FileDocumentManager.getInstance().saveAllDocuments();
       PsiClass psiClass = myJavaFacade.findClass("p.A");
       final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-      File ioFile = VfsUtil.virtualToIoFile(vFile);
+      File ioFile = VfsUtilCore.virtualToIoFile(vFile);
       ioFile.setLastModified(5);
 
       LocalFileSystem.getInstance().refresh(false);

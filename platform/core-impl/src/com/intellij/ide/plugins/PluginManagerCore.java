@@ -29,7 +29,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
@@ -64,11 +63,13 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class PluginManagerCore {
   public static final String META_INF = "META-INF/";
+  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
   public static final String CORE_PLUGIN_ID = "com.intellij";
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
+  private static final String ALL_MODULES_MARKER = "com.intellij.modules.all";
 
   /** @noinspection StaticNonFinalField*/
   public static String BUILD_NUMBER;
@@ -76,7 +77,6 @@ public class PluginManagerCore {
   private static final TObjectIntHashMap<PluginId> ourId2Index = new TObjectIntHashMap<>();
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<>();
-  private static final PluginClassCache ourPluginClasses = new PluginClassCache();
   private static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
@@ -88,7 +88,10 @@ public class PluginManagerCore {
   private static MultiMap<String, String> ourBrokenPluginVersions;
   private static final AtomicReference<IdeaPluginDescriptor[]> ourPlugins = new AtomicReference<>();
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
-  private static boolean ourUnitTestWithBundledPlugins = SystemProperties.getBooleanProperty("idea.run.tests.with.bundled.plugins", false);
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
+  private static boolean ourUnitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
   private static final String PLUGIN_IS_DISABLED_REASON = "Plugin is disabled";
 
@@ -115,7 +118,7 @@ public class PluginManagerCore {
   private static final List<Runnable> ourDisabledPluginsListeners = new CopyOnWriteArrayList<>();
 
   /**
-   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins(StartupProgress)}
+   * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins()}
    * if you need to get loaded plugins only.
    *
    * <p>
@@ -274,11 +277,6 @@ public class PluginManagerCore {
     return ourBrokenPluginVersions;
   }
 
-  private static boolean isUnitTestMode() {
-    final Application app = ApplicationManager.getApplication();
-    return app != null && app.isUnitTestMode();
-  }
-
   public static void addDisablePluginListener(@NotNull Runnable listener) {
     ourDisabledPluginsListeners.add(listener);
   }
@@ -387,10 +385,6 @@ public class PluginManagerCore {
     return true;
   }
 
-  public static void addPluginClass(@NotNull PluginId pluginId) {
-    ourPluginClasses.addPluginClass(pluginId);
-  }
-
   /**
    * This is an internal method, use {@link PluginException#createByClass(String, Throwable, Class)} instead.
    */
@@ -438,10 +432,6 @@ public class PluginManagerCore {
     }
   }
 
-  public static void dumpPluginClassStatistics() {
-    ourPluginClasses.dumpPluginClassStatistics();
-  }
-
   private static boolean isDependent(@NotNull IdeaPluginDescriptor descriptor,
                                      @NotNull PluginId on,
                                      @NotNull Map<PluginId, IdeaPluginDescriptor> map,
@@ -462,6 +452,24 @@ public class PluginManagerCore {
       }
     }
     return false;
+  }
+
+  /**
+   * In 191.* and earlier builds Java plugin was part of the platform, so any plugin installed in IntelliJ IDEA might be able to use its
+   * classes without declaring explicit dependency on the Java module. This method is intended to add implicit dependency on the Java plugin
+   * for such plugins to avoid breaking compatibility with them.
+   */
+  private static IdeaPluginDescriptor getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor) {
+    if (!ourModulesToContainingPlugins.containsKey(ALL_MODULES_MARKER) || descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
+      return null;
+    }
+
+    //if a plugin does not include any module dependency tags in its plugin.xml,it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin
+    boolean isLegacyPlugin = !hasModuleDependencies(descriptor);
+    //many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency on some other platform modules).
+    //this is definitely a misconfiguration but let's temprary add the Java plugin to their dependencies to avoid breaking compatibility
+    boolean isCustomPlugin = !descriptor.isBundled();
+    return isLegacyPlugin || isCustomPlugin ? ourModulesToContainingPlugins.get("com.intellij.modules.java") : null;
   }
 
   private static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
@@ -493,7 +501,15 @@ public class PluginManagerCore {
 
   @NotNull
   private static Method getAddUrlMethod(@NotNull ClassLoader loader) {
-    return ReflectionUtil.getDeclaredMethod(loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass(), "addURL", URL.class);
+    Class<?> loaderClass = loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass();
+    while (loaderClass != null && !Object.class.equals(loaderClass)) {
+      final Method method = ReflectionUtil.getDeclaredMethod(loaderClass, "addURL", URL.class);
+      if (method != null) {
+        return method;
+      }
+      loaderClass = loaderClass.getSuperclass();
+    }
+    return null;
   }
 
   @Nullable
@@ -517,7 +533,7 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (isUnitTestMode() && !ourUnitTestWithBundledPlugins) return null;
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return null;
 
     try {
       List<URL> urls = new ArrayList<>(classPath.length);
@@ -573,14 +589,20 @@ public class PluginManagerCore {
 
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
-                                                @NotNull PluginId[] pluginIds) {
-    if (isUnitTestMode() && !ourUnitTestWithBundledPlugins) return new ClassLoader[0];
+                                                @NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return new ClassLoader[0];
 
+    PluginId[] pluginIds = pluginDescriptor.getDependentPluginIds();
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
+    IdeaPluginDescriptor implicitDep = getImplicitDependency(pluginDescriptor);
+    if (implicitDep != null) {
+      loaders.add(implicitDep.getPluginClassLoader());
+    }
+
     for (PluginId id : pluginIds) {
-      IdeaPluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
-      if (pluginDescriptor != null) {  // might be an optional dependency
-        ClassLoader loader = pluginDescriptor.getPluginClassLoader();
+      IdeaPluginDescriptor depPluginDescriptor = idToDescriptorMap.get(id);
+      if (depPluginDescriptor != null) {  // might be an optional dependency
+        ClassLoader loader = depPluginDescriptor.getPluginClassLoader();
         if (loader == null) {
           getLogger().error("Plugin class loader should be initialized for plugin " + id);
         }
@@ -600,7 +622,7 @@ public class PluginManagerCore {
     if (!errors.isEmpty()) {
       String errorMessage = IdeBundle.message("error.problems.found.loading.plugins") + StringUtil.join(errors, "<p/>");
       Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isHeadlessEnvironment() && !app.isUnitTestMode()) {
+      if (app != null && !app.isHeadlessEnvironment() && !isUnitTestMode) {
         if (myPluginError == null) {
           myPluginError = errorMessage;
         }
@@ -629,7 +651,7 @@ public class PluginManagerCore {
 
     String cyclePresentation;
     Application app = ApplicationManager.getApplication();
-    if (app != null ? app.isInternal() : SystemProperties.is("idea.is.internal")) {
+    if (app != null ? app.isInternal() : SystemProperties.is(IDEA_IS_INTERNAL_PROPERTY)) {
       cyclePresentation = cycles.stream().map(c -> StringUtil.join(c, " ")).collect(Collectors.joining("; "));
     }
     else {
@@ -669,6 +691,10 @@ public class PluginManagerCore {
       public Iterator<PluginId> getIn(PluginId pluginId) {
         IdeaPluginDescriptor descriptor = idToDescriptorMap.get(pluginId);
         List<PluginId> plugins = new ArrayList<>();
+        IdeaPluginDescriptor implicitDep = getImplicitDependency(descriptor);
+        if (implicitDep != null) {
+          plugins.add(implicitDep.getPluginId());
+        }
         for (PluginId dependentPluginId : descriptor.getDependentPluginIds()) {
           // check for missing optional dependency
           IdeaPluginDescriptor dep = idToDescriptorMap.get(dependentPluginId);
@@ -698,7 +724,7 @@ public class PluginManagerCore {
 
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), loadingContext.isBundled);
-      descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory());
+      descriptor.loadFromFile(descriptorFile, loadingContext.getXmlFactory(), isUnitTestMode);
       return descriptor;
     }
     catch (SerializationException | JDOMException | IOException e) {
@@ -1213,24 +1239,23 @@ public class PluginManagerCore {
 
   @NotNull
   public static IdeaPluginDescriptorImpl[] loadDescriptors(@NotNull List<? super String> errors) {
-    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
-
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.LOAD_PLUGIN_DESCRIPTORS);
+
+    List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(PluginManagerCore.class.getClassLoader(), urlsFromClassPath);
 
     boolean parallel = SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true);
     try (LoadDescriptorsContext context = new LoadDescriptorsContext(parallel)) {
       loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, false, context);
-      Application application = ApplicationManager.getApplication();
-      if (application == null || !application.isUnitTestMode()) {
+      if (!isUnitTestMode) {
         loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);
       }
 
       loadDescriptorsFromProperty(result, context);
       loadDescriptorsFromClassPath(urlsFromClassPath, result, context, platformPluginURL);
 
-      if (application != null && application.isUnitTestMode() && result.size() <= 1) {
+      if (isUnitTestMode && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         ourUnitTestWithBundledPlugins = true;
         loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);
@@ -1319,7 +1344,7 @@ public class PluginManagerCore {
     // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
     // If a plugin does not include any module dependency tags in its plugin.xml,
     // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
-    boolean checkModuleDependencies = !ourModulesToContainingPlugins.isEmpty() && !ourModulesToContainingPlugins.containsKey("com.intellij.modules.all");
+    boolean checkModuleDependencies = !ourModulesToContainingPlugins.isEmpty() && !ourModulesToContainingPlugins.containsKey(ALL_MODULES_MARKER);
     if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
       return "Plugin does not include any module dependency tags in its plugin.xml therefore is assumed legacy and can be loaded only in IntelliJ IDEA";
     }
@@ -1391,18 +1416,21 @@ public class PluginManagerCore {
                                 @Nullable String untilBuild,
                                 @Nullable String descriptorName,
                                 @Nullable String descriptorDebugString) {
-    JBIterable<String> messages = JBIterable.empty();
+    List<String> messages = null;
     BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName, null);
     if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
-      messages = messages.append("since build " + sinceBuildNumber + " > " + buildNumber);
+      messages = new SmartList<>("since build " + sinceBuildNumber + " > " + buildNumber);
     }
 
     BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName, null);
     if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
-      messages = messages.append("until build " + untilBuildNumber + " < " + buildNumber);
+      if (messages == null) {
+        messages = new SmartList<>();
+      }
+      messages.add("until build " + untilBuildNumber + " < " + buildNumber);
     }
-    if (messages.isNotEmpty()) {
-      getLogger().warn(ObjectUtils.coalesce(descriptorName, descriptorDebugString) + " not loaded: " + StringUtil.join(messages, ", "));
+    if (messages != null) {
+      getLogger().warn(ObjectUtils.chooseNotNull(descriptorName, descriptorDebugString) + " not loaded: " + StringUtil.join(messages, ", "));
       return true;
     }
 
@@ -1426,7 +1454,13 @@ public class PluginManagerCore {
   private static void checkEssentialPluginsAreAvailable(IdeaPluginDescriptorImpl[] plugins) {
     Set<String> available = ContainerUtil.map2Set(plugins, plugin -> plugin.getPluginId().getIdString());
     List<String> required = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
-    Set<String> missing = JBIterable.from(required).filter(id -> !available.contains(id)).toSet();
+
+    List<String> missing = new SmartList<>();
+    for (String id : required) {
+      if (!available.contains(id)) {
+        missing.add(id);
+      }
+    }
     if (!missing.isEmpty()) {
       throw new EssentialPluginMissingException(missing);
     }
@@ -1434,6 +1468,7 @@ public class PluginManagerCore {
 
   @NotNull
   private static IdeaPluginDescriptorImpl[] initializePlugins() {
+    Activity loadPluginsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
     configureExtensions();
 
     List<String> errors = new ArrayList<>();
@@ -1469,12 +1504,14 @@ public class PluginManagerCore {
       }
       else {
         File[] classPath = pluginDescriptor.getClassPath().toArray(ArrayUtilRt.EMPTY_FILE_ARRAY);
-        ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor.getDependentPluginIds());
+        ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, pluginDescriptor);
         if (parentLoaders.length == 0) parentLoaders = new ClassLoader[]{coreLoader};
         pluginDescriptor.setLoader(createPluginClassLoader(classPath, parentLoaders, pluginDescriptor));
       }
     }
 
+    loadPluginsActivity.end("plugin count: " + pluginDescriptors.length);
+    Activity registerExtensionsActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.REGISTER_EXTENSIONS);
     registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getRootArea(), result);
     //noinspection deprecation
     Extensions.AREA_LISTENER_EXTENSION_POINT.getPoint(null).registerExtension(new AreaListener() {
@@ -1483,6 +1520,7 @@ public class PluginManagerCore {
         registerExtensionPointsAndExtensions((ExtensionsAreaImpl)Extensions.getArea(areaInstance), result);
       }
     });
+    registerExtensionsActivity.end();
 
     ourLoadedPlugins = Collections.unmodifiableList(result);
     ourPlugins.set(pluginDescriptors);
@@ -1619,7 +1657,6 @@ public class PluginManagerCore {
 
   @NotNull
   private static synchronized IdeaPluginDescriptorImpl[] initPlugins() {
-    Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INIT_PLUGINS);
     IdeaPluginDescriptorImpl[] result;
     try {
       result = initializePlugins();
@@ -1631,7 +1668,6 @@ public class PluginManagerCore {
       getLogger().error(e);
       throw e;
     }
-    activity.end("plugin count: " + result.length);
     logPlugins(result);
     return result;
   }
@@ -1641,10 +1677,10 @@ public class PluginManagerCore {
     return Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
   }
 
-  static class EssentialPluginMissingException extends RuntimeException {
-    final Set<String> pluginIds;
+  static final class EssentialPluginMissingException extends RuntimeException {
+    final List<String> pluginIds;
 
-    EssentialPluginMissingException(@NotNull Set<String> ids) {
+    EssentialPluginMissingException(@NotNull List<String> ids) {
       super("Missing essential plugins: " + StringUtil.join(ids, ", "));
       pluginIds = ids;
     }

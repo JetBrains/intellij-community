@@ -227,7 +227,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
           return CommonBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
         }
         else {
-          return CommonBundle.message("failed.to.make.file.writeable.error.message", myReadonlyFiles[0].getPresentableUrl());
+          return CommonBundle.message("failed.to.make.file.writable.error.message", myReadonlyFiles[0].getPresentableUrl());
         }
       }
       throw new RuntimeException("No readonly files");

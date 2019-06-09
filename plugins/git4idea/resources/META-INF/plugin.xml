@@ -235,6 +235,7 @@
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
     <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
+    <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -253,7 +254,7 @@
     <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
-    <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
+    <fileType name="PLAIN_TEXT" fileNames=".gitmodules"/>
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>

@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -25,20 +25,27 @@ import com.intellij.ui.LightColors
 import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.CalledInAwt
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
 import javax.swing.JFrame
 
 object MergeConflictResolveUtil {
   private val ACTIVE_MERGE_WINDOW = Key.create<WindowWrapper>("ResolveConflictsWindow")
 
   @CalledInAwt
-  fun showMergeWindow(project: Project, file: VirtualFile?, resolverComputer: () -> GitMergeHandler.Resolver) {
+  fun showMergeWindow(project: Project,
+                      file: VirtualFile?,
+                      lock: BackgroundableActionLock,
+                      resolverComputer: () -> GitMergeHandler.Resolver) {
     if (focusActiveMergeWindow(file)) return
+
+    if (lock.isLocked) return
+    lock.lock()
 
     val title = if (file != null) MergeDialogCustomizer().getMergeWindowTitle(file) else "Merge"
 
-    val windowHandler = Consumer<WindowWrapper> { wrapper -> putActiveWindowKey(project, wrapper, file) }
+    val windowHandler = Consumer<WindowWrapper> { wrapper ->
+      UIUtil.runWhenWindowClosed(wrapper.window) { lock.unlock() }
+      putActiveWindowKey(project, wrapper, file)
+    }
     val hints = DiffDialogHints(WindowWrapper.Mode.FRAME, null, windowHandler)
 
     val producer = MyProducer(project, title, resolverComputer)
@@ -80,13 +87,10 @@ object MergeConflictResolveUtil {
     file.putUserData(ACTIVE_MERGE_WINDOW, wrapper)
     EditorNotifications.getInstance(project).updateNotifications(file)
 
-    window.addWindowListener(object : WindowAdapter() {
-      override fun windowClosed(e: WindowEvent?) {
-        window.removeWindowListener(this)
-        file.putUserData(ACTIVE_MERGE_WINDOW, null)
-        EditorNotifications.getInstance(project).updateNotifications(file)
-      }
-    })
+    UIUtil.runWhenWindowClosed(window) {
+      file.putUserData(ACTIVE_MERGE_WINDOW, null)
+      EditorNotifications.getInstance(project).updateNotifications(file)
+    }
   }
 
   private fun focusActiveMergeWindow(file: VirtualFile?): Boolean {

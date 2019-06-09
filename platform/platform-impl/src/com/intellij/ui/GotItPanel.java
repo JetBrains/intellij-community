@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +30,7 @@ public class GotItPanel {
   }
 
   private static void scaleFont(@NotNull JComponent component) {
-    component.setFont(component.getFont().deriveFont(1.0f * JBUI.scaleFontSize(component.getFont().getSize())));
+    component.setFont(component.getFont().deriveFont(1.0f * JBUIScale.scaleFontSize((float)component.getFont().getSize())));
   }
 
   private void createUIComponents() {
@@ -58,10 +44,10 @@ public class GotItPanel {
         super.paintComponent(g);
         GraphicsUtil.setupAAPainting(g);
         ((Graphics2D)g).setPaint(new GradientPaint(0, 0, BODY_COLOR_1, 0, getHeight(), BODY_COLOR_2));
-        g.fillRoundRect(0, 0, getWidth() - JBUI.scale(1), getHeight() - JBUI.scale(1), JBUI.scale(5), JBUI.scale(5));
+        g.fillRoundRect(0, 0, getWidth() - JBUIScale.scale(1), getHeight() - JBUIScale.scale(1), JBUIScale.scale(5), JBUIScale.scale(5));
         ((Graphics2D)g).setStroke(new BasicStroke(UIUtil.isUnderDarcula() ? 2f : 1f));
         g.setColor(BORDER_COLOR);
-        g.drawRoundRect(0, 0, getWidth() - JBUI.scale(1), getHeight() - JBUI.scale(1), JBUI.scale(5), JBUI.scale(5));
+        g.drawRoundRect(0, 0, getWidth() - JBUIScale.scale(1), getHeight() - JBUIScale.scale(1), JBUIScale.scale(5), JBUIScale.scale(5));
       }
     };
 

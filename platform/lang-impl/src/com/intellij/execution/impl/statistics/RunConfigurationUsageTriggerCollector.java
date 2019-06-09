@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomUtilsWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -18,15 +18,15 @@ import org.jetbrains.annotations.Nullable;
 public class RunConfigurationUsageTriggerCollector {
 
   public static void trigger(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull Executor executor) {
-    final String key = AbstractRunConfigurationTypeUsagesCollector.toReportedId(factory);
+    final String key = RunConfigurationTypeUsagesCollector.toReportedId(factory);
     if (StringUtil.isNotEmpty(key)) {
       final FeatureUsageData data = new FeatureUsageData().
-        addProject(project).addData("executor", executor.getId());
+        addProject(project).addExecutor(executor);
       FUCounterUsageLogger.getInstance().logEvent(project, "run.configuration.exec", key, data);
     }
   }
 
-  public static class RunConfigurationExecutorUtilValidator extends CustomUtilsWhiteListRule {
+  public static class RunConfigurationExecutorUtilValidator extends CustomWhiteListRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {

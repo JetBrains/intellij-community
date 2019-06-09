@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.editor
 
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -30,6 +31,7 @@ class DiffEditorProvider : FileEditorProvider, DumbAware {
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val processor = (file as DiffVirtualFile).createProcessor(project)
+    processor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR, true)
     return DiffRequestProcessorEditor(file, processor)
   }
 

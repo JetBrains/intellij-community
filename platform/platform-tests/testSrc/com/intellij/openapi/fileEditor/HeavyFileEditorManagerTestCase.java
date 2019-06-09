@@ -5,6 +5,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -32,9 +33,16 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
 
   @Override
   protected void tearDown() throws Exception {
-    myManager = null;
-
-    super.tearDown();
+    try {
+      Disposer.dispose(myManager);
+      myManager = null;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override

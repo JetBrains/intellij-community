@@ -4,6 +4,8 @@ package com.intellij.diff.applications;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeResult;
+import com.intellij.ide.CliResult;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -16,6 +18,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MergeApplication extends DiffApplicationBase {
   public MergeApplication() {
@@ -29,8 +34,9 @@ public class MergeApplication extends DiffApplicationBase {
     return DiffBundle.message("merge.application.usage.parameters.and.description", scriptName);
   }
 
+  @NotNull
   @Override
-  public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
+  public Future<? extends CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
     List<String> filePaths = Arrays.asList(args).subList(1, args.length);
     List<VirtualFile> files = findFiles(filePaths, currentDirectory);
     Project project = guessProject(files);
@@ -41,11 +47,15 @@ public class MergeApplication extends DiffApplicationBase {
     if (outputFile == null) throw new Exception("Can't find output file: " + ContainerUtil.getLastItem(filePaths));
     contents = replaceNullsWithEmptyFile(contents);
 
-    MergeRequest request = DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, outputFile, contents, null);
+    AtomicReference<MergeResult> resultRef = new AtomicReference<>();
+    MergeRequest request = DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, outputFile, contents, 
+                                                                                        result -> resultRef.set(result));
 
     DiffManagerEx.getInstance().showMergeBuiltin(project, request);
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(outputFile);
     if (document != null) FileDocumentManager.getInstance().saveDocument(document);
+    
+    return CompletableFuture.completedFuture(new CliResult(resultRef.get() != MergeResult.CANCEL ? 0 : 1, null));
   }
 }

@@ -17,7 +17,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -49,29 +48,9 @@ public abstract class FileAttributesReadingTest {
     }
   }
 
-  public static class FallbackTest extends FileAttributesReadingTest {
-    @BeforeClass
-    public static void setUpClass() {
-      System.setProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY, "true");
-      FileSystemUtil.resetMediator();
-      assertEquals("Fallback", FileSystemUtil.getMediatorName());
-    }
-
-    @Override public void linkToFile() { }
-    @Override public void doubleLink() { }
-    @Override public void linkToDirectory() { }
-    @Override public void missingLink() { }
-    @Override public void selfLink() { }
-    @Override public void innerSymlinkResolve() { }
-    @Override public void junction() { }
-    @Override public void innerJunctionResolve() { }
-    @Override public void permissionsCloning() { }
-  }
-
   @AfterClass
   public static void tearDownClass() {
     System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
-    System.clearProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY);
     FileSystemUtil.resetMediator();
   }
 
@@ -93,7 +72,7 @@ public abstract class FileAttributesReadingTest {
   @Test
   public void regularFile() throws IOException {
     File file = tempDir.newFile("file.txt");
-    FileUtil.writeToFile(file, myTestData);
+    Files.write(file.toPath(), myTestData);
 
     assertFileAttributes(file);
 
@@ -156,7 +135,8 @@ public abstract class FileAttributesReadingTest {
     File file = new File(SystemInfoRt.isWindows ? "C:\\" : "/");
 
     FileAttributes attributes = getAttributes(file);
-    assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+    assertEquals(file + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.type);
+    assertFalse(file + " " + attributes, attributes.isSymLink());
     if (SystemInfoRt.isWindows) {
       assertDirectoriesEqual(file);
     }
@@ -165,7 +145,7 @@ public abstract class FileAttributesReadingTest {
   @Test
   public void badNames() throws IOException {
     File file = tempDir.newFile("file.txt");
-    FileUtil.writeToFile(file, myTestData);
+    Files.write(file.toPath(), myTestData);
 
     assertFileAttributes(new File(file.getPath() + StringUtil.repeat(File.separator, 3)));
     assertFileAttributes(new File(file.getPath().replace(File.separator, StringUtil.repeat(File.separator, 3))));
@@ -175,7 +155,7 @@ public abstract class FileAttributesReadingTest {
 
     if (SystemInfoRt.isUnix) {
       File backSlashFile = tempDir.newFile("file\\txt");
-      FileUtil.writeToFile(backSlashFile, myTestData);
+      Files.write(backSlashFile.toPath(), myTestData);
       assertFileAttributes(backSlashFile);
     }
   }
@@ -200,7 +180,7 @@ public abstract class FileAttributesReadingTest {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File file = tempDir.newFile("file.txt");
-    FileUtil.writeToFile(file, myTestData);
+    Files.write(file.toPath(), myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
     File link = new File(tempDir.getRoot(), "link");
@@ -222,7 +202,7 @@ public abstract class FileAttributesReadingTest {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File file = tempDir.newFile("file.txt");
-    FileUtil.writeToFile(file, myTestData);
+    Files.write(file.toPath(), myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
     File link1 = new File(tempDir.getRoot(), "link1");
@@ -322,7 +302,7 @@ public abstract class FileAttributesReadingTest {
       String resolved1 = FileSystemUtil.resolveSymLink(junction);
       assertEquals(target.getPath(), resolved1);
 
-      FileUtil.delete(target);
+      Files.delete(target.toPath());
 
       attributes = getAttributes(junction);
       assertNull(attributes.type);
@@ -406,7 +386,7 @@ public abstract class FileAttributesReadingTest {
   public void extraLongName() throws IOException {
     String prefix = StringUtil.repeatSymbol('a', 128) + ".";
     File file = tempDir.newFile(prefix + ".dir/" + prefix + ".dir/" + prefix + ".dir/" + prefix + ".dir/" + prefix + ".dir/" + prefix + ".txt");
-    FileUtil.writeToFile(file, myTestData);
+    Files.write(file.toPath(), myTestData);
 
     assertFileAttributes(file);
     if (SystemInfoRt.isWindows) {
@@ -433,7 +413,7 @@ public abstract class FileAttributesReadingTest {
         assertTrue(getAttributes(dir).isDirectory());
 
         file = new File(dir, "file.txt");
-        FileUtil.writeToFile(file, "test".getBytes(StandardCharsets.UTF_8));
+        Files.write(file.toPath(), myTestData);
         assertTrue(file.exists());
         assertFileAttributes(file);
 
@@ -478,13 +458,13 @@ public abstract class FileAttributesReadingTest {
     assertEquals(target.length(), attributes.length);
     assertTimestampsEqual(target.lastModified(), attributes.lastModified);
 
-    FileUtil.writeToFile(target, myTestData);
+    Files.write(target.toPath(), myTestData);
     assertTrue(target.setLastModified(attributes.lastModified - 5000));
     assertTrue(target.length() > 0);
     assertTimestampsEqual(attributes.lastModified - 5000, target.lastModified());
 
     if (SystemInfoRt.isWindows) {
-      byte[] bytes = FileUtil.loadFileBytes(link);
+      byte[] bytes = Files.readAllBytes(link.toPath());
       assertEquals(myTestData.length, bytes.length);
     }
 
@@ -512,7 +492,7 @@ public abstract class FileAttributesReadingTest {
 
     t1 = System.currentTimeMillis();
     TimeoutUtil.sleep(10);
-    FileUtil.writeToFile(file, myTestData);
+    Files.write(file.toPath(), myTestData);
     TimeoutUtil.sleep(10);
     t2 = System.currentTimeMillis();
     attributes = getAttributes(file);
@@ -566,7 +546,7 @@ public abstract class FileAttributesReadingTest {
     String name = IoTestUtil.getUnicodeName();
     assumeTrue("Unicode names not supported", name != null);
     File file = tempDir.newFile(name + ".txt");
-    FileUtil.writeToFile(file, myTestData);
+    Files.write(file.toPath(), myTestData);
 
     assertFileAttributes(file);
 

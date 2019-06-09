@@ -21,10 +21,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.PlatformColors;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -73,7 +77,7 @@ public class ActionsTree {
         Rectangle visibleRect = getVisibleRect();
         Insets insets = getInsets();
         if (insets != null && insets.right > 0) {
-          visibleRect.width -= JBUI.scale(9);
+          visibleRect.width -= JBUIScale.scale(9);
         }
         Rectangle clip = g.getClipBounds();
         for (int row = 0; row < getRowCount(); row++) {

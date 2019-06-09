@@ -33,7 +33,7 @@ public class InferenceSessionContainer {
   }
 
   void registerNestedSession(InferenceSession session,
-                             PsiType returnType,
+                             @NotNull PsiType returnType,
                              PsiExpression returnExpression) {
     final PsiSubstitutor callSession = findNestedSubstitutor(((PsiCallExpression)returnExpression).getArgumentList(), null);
     if (callSession == null) {
@@ -153,11 +153,10 @@ public class InferenceSessionContainer {
           initialInferenceState = compoundInitialState.getInitialState(call);
           if (initialInferenceState != null) {
             final PsiExpressionList argumentList = call.getArgumentList();
-            final int idx = LambdaUtil.getLambdaIdx(argumentList, gParent);
+            final int idx = argumentList != null ? LambdaUtil.getLambdaIdx(argumentList, gParent) : -1;
             final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(call);
             final PsiElement method = result.getElement();
             if (method instanceof PsiMethod && idx > -1) {
-              LOG.assertTrue(argumentList != null);
               final PsiParameter[] methodParameters = ((PsiMethod)method).getParameterList().getParameters();
               if (methodParameters.length == 0) {
                 break;

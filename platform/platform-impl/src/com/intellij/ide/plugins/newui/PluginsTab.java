@@ -12,14 +12,18 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -202,8 +206,8 @@ public abstract class PluginsTab {
     mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
-    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(6));
-    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(-1));
+    editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
@@ -225,6 +229,26 @@ public abstract class PluginsTab {
 
   @NotNull
   protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+
+  @Nullable
+  public String getSearchQuery() {
+    if (mySearchPanel == null || mySearchPanel.isEmpty()) {
+      return null;
+    }
+    String query = mySearchPanel.getQuery();
+    return query.isEmpty() ? null : query;
+  }
+
+  public void setSearchQuery(@Nullable String query) {
+    mySearchTextField.setTextIgnoreEvents(query);
+    mySearchTextField.requestFocus();
+    if (query == null) {
+      hideSearchPanel();
+    }
+    else {
+      showSearchPanel(query);
+    }
+  }
 
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {

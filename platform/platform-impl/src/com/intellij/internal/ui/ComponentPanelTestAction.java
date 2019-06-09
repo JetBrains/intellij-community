@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.intellij.icons.AllIcons;
@@ -19,9 +19,11 @@ import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.labels.DropDownLink;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -154,7 +156,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private JComponent createComponentPanel() {
       JPanel topPanel = new JPanel(new GridBagLayout());
-      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 0), 0, 0);
+      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
+                                                     JBInsets.create(5, 0), 0, 0);
 
       JTextField text1 = new JTextField();
       new ComponentValidator(getDisposable()).
@@ -193,7 +196,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }).andRegisterOnDocumentListener(text1).installOn(text1);
 
       Dimension d = text1.getPreferredSize();
-      text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
+      text1.setPreferredSize(new Dimension(JBUIScale.scale(100), d.height));
 
       topPanel.add(UI.PanelFactory.panel(text1).
         withLabel("&Textfield:").
@@ -444,7 +447,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       panel.setBorder(JBUI.Borders.emptyTop(5));
       panel.add(p1);
-      panel.add(Box.createVerticalStrut(JBUI.scale(5)));
+      panel.add(Box.createVerticalStrut(JBUIScale.scale(5)));
       panel.add(p2);
       panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
 

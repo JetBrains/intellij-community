@@ -17,6 +17,10 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 
 public class JBHtmlEditorKit extends HTMLEditorKit {
+  static {
+    StartupUiUtil.configureHtmlKitStylesheet();
+  }
+
   @Override
   public Cursor getDefaultCursor() {
     return null;
