@@ -113,11 +113,7 @@ export class ActivityChartManager extends XYChartManager {
 
     let getItemListBySourceName: (name: string) => Array<Item> | null | undefined = name => {
       // @ts-ignore
-      const result: Array<Item> | null = data.data[name]
-      if (result != null) {
-        return result.filter(it => it.duration >= 10)
-      }
-      return result
+      return data.data[name]
     }
 
     let sourceNameToLegendName: (sourceName: string, itemCount: number) => string = this.sourceNameToLegendName.bind(this)

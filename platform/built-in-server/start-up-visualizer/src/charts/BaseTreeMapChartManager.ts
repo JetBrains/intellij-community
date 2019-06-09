@@ -8,6 +8,10 @@ export abstract class BaseTreeMapChartManager extends BaseChartManager<am4charts
     super(am4core.create(container, am4charts.TreeMap))
 
     configureCursor(this.chart)
+
+    // cursor tooltip is distracting (cannot be in BaseChartManager because only TreeMap creates axis as part of chart creation, for other charts axis is created customly)
+    this.chart.xAxis.cursorTooltipEnabled = false
+    this.chart.yAxis.cursorTooltipEnabled = false
   }
 
   protected enableZoom() {
@@ -15,9 +19,6 @@ export abstract class BaseTreeMapChartManager extends BaseChartManager<am4charts
     chart.mouseWheelBehavior = "zoomX"
     chart.scrollbarX = new am4core.Scrollbar()
     chart.mouseWheelBehavior = "zoomXY"
-    // cursor tooltip is distracting
-    chart.xAxis.cursorTooltipEnabled = false
-    chart.yAxis.cursorTooltipEnabled = false
   }
 
   protected configureLabelBullet(bullet: am4charts.LabelBullet) {

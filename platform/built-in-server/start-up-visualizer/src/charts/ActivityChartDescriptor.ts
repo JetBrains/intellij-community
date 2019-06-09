@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Item} from "@/state/data"
-import {ChartManager} from './ChartManager'
-import {ComponentChartManager} from "@/charts/ComponentChartManager"
-import {TreeMapChartManager} from "@/charts/TreeMapChartManager"
-import {PluginClassCountTreeMapChartManager} from "@/charts/PluginClassCountTreeMapChartManager"
+import {ChartManager} from "./ChartManager"
 
 export interface ActivityChartDescriptor {
   readonly label: string
@@ -17,7 +14,7 @@ export interface ActivityChartDescriptor {
   readonly groupByThread?: boolean
   readonly sourceHasPluginInformation?: boolean
 
-  readonly chartManagerProducer?: (container: HTMLElement, sourceNames: Array<string>, descriptor: ActivityChartDescriptor) => ChartManager
+  readonly chartManagerProducer?: (container: HTMLElement, sourceNames: Array<string>, descriptor: ActivityChartDescriptor) => Promise<ChartManager>
   readonly shortNameProducer?: (item: Item) => string
 }
 
@@ -34,7 +31,7 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     id: "components",
     sourceNames: ["appComponents", "projectComponents", "moduleComponents"],
     shortNameProducer: getShortName,
-    chartManagerProducer: (container, sourceNames, descriptor) => new ComponentChartManager(container, sourceNames!!, descriptor)
+    chartManagerProducer: async (container, sourceNames, descriptor) => new (await import(/* webpackMode: "eager" */ "./ComponentChartManager")).ComponentChartManager(container, sourceNames!!, descriptor)
   },
   {
     label: "Services",
@@ -80,13 +77,13 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     isInfoChart: true,
     id: "timeDistribution",
     sourceNames: [],
-    chartManagerProducer: (container, _sourceNames, _descriptor) => new TreeMapChartManager(container),
+    chartManagerProducer: async (container, _sourceNames, _descriptor) => new (await import(/* webpackMode: "eager" */ "./TreeMapChartManager")).TreeMapChartManager(container),
   },
   {
     label: "Plugin Classes",
     isInfoChart: true,
     id: "pluginClassCount",
     sourceNames: [],
-    chartManagerProducer: (container, _sourceNames, _descriptor) => new PluginClassCountTreeMapChartManager(container),
+    chartManagerProducer: async (container, _sourceNames, _descriptor) => new (await import(/* webpackMode: "eager" */ "./PluginClassCountTreeMapChartManager")).PluginClassCountTreeMapChartManager(container),
   },
 ]
