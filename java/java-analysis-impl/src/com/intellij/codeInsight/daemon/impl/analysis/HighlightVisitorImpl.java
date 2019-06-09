@@ -55,8 +55,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
 
-  @SuppressWarnings("StatefulEp") private PsiFile myFile;
-  @SuppressWarnings("StatefulEp") private PsiJavaModule myJavaModule;
+  private PsiFile myFile;
+  private PsiJavaModule myJavaModule;
 
   // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<>();
@@ -814,8 +814,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     super.visitLiteralExpression(expression);
     if (myHolder.hasErrorResults()) return;
+
     myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel,myFile));
-    if (myRefCountHolder != null && !myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(expression);
+
+    if (myRefCountHolder != null && !myHolder.hasErrorResults()) {
+      registerReferencesFromInjectedFragments(expression);
+    }
 
     if (myRefCountHolder != null && !myHolder.hasErrorResults()) {
       for (PsiReference reference : expression.getReferences()) {
