@@ -2,6 +2,7 @@
 package git4idea.merge;
 
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsException;
@@ -137,7 +138,9 @@ public class GitMergeDialog extends DialogWrapper {
     VirtualFile root = getSelectedRoot();
     GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.BRANCH);
     handler.addParameters("--no-color", "-a", "--no-merged");
-    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
+    String output = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> Git.getInstance().runCommand(handler).getOutputOrThrow(),
+      "Preparing List of Branches", true, myProject);
     myBranchChooser.clear();
     for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
       String branch = lines.nextToken().substring(2);
