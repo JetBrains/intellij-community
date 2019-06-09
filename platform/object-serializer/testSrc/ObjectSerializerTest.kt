@@ -188,7 +188,7 @@ private class Rectangle : Shape {
 
 
 internal enum class TestEnum {
-  RED, GREEN, BLUE
+  RED, BLUE
 }
 
 private class TestEnumBean {

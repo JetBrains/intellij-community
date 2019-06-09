@@ -23,7 +23,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.experimental.or
 
-private const val FORMAT_VERSION = 1
+private const val FORMAT_VERSION = 2
 
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
