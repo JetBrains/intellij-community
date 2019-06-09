@@ -53,9 +53,10 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
 
     VirtualFile root = (VirtualFile)value;
 
-    myColor = root == null ? UIUtil.getTableBackground(isSelected) : VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
+    myColor = root == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
+              VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
     myBorderColor = ObjectUtils.assertNotNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground());
-    setForeground(UIUtil.getTableForeground(false));
+    setForeground(UIUtil.getTableForeground(false, hasFocus));
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
       if (isTextShown(table, value, row, column)) {
