@@ -4,15 +4,21 @@ package git4idea.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -20,9 +26,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.vcs.ViewUpdateInfoNotification;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
+import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
@@ -30,6 +35,8 @@ import git4idea.merge.GitMerger;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.update.GitUpdateInfoAsLog;
+import git4idea.update.GitUpdatedRanges;
 import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
@@ -39,19 +46,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.notification.NotificationType.INFORMATION;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
+import static git4idea.update.GitUpdateSessionKt.getBodyForUpdateNotification;
+import static git4idea.update.GitUpdateSessionKt.getTitleForUpdateNotification;
 import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 
 abstract class GitMergeAction extends GitRepositoryAction {
+  private static final Logger LOG = Logger.getInstance(GitMergeAction.class);
 
   protected static class DialogState {
     final VirtualFile selectedRoot;
     final String progressTitle;
     final Computable<GitLineHandler> handlerProvider;
-    DialogState(@NotNull VirtualFile root, @NotNull String title, @NotNull Computable<GitLineHandler> provider) {
+    @NotNull private final List<String> selectedBranches;
+
+    DialogState(@NotNull VirtualFile root,
+                @NotNull String title,
+                @NotNull Computable<GitLineHandler> provider,
+                @NotNull List<String> selectedBranches) {
       selectedRoot = root;
       progressTitle = title;
       handlerProvider = provider;
+      this.selectedBranches = selectedBranches;
     }
   }
 
@@ -79,6 +97,22 @@ abstract class GitMergeAction extends GitRepositoryAction {
           new GitUntrackedFilesOverwrittenByOperationDetector(selectedRoot);
         GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
 
+        GitRepository repository = repositoryManager.getRepositoryForRoot(selectedRoot);
+        assert repository != null : "Repository can't be null for root " + selectedRoot;
+
+        GitUpdatedRanges updatedRanges = null;
+        if (repository.getCurrentBranch() != null && dialogState.selectedBranches.size() == 1) {
+          String selectedBranch = StringUtil.trimStart(dialogState.selectedBranches.get(0), "remotes/");
+          GitBranch targetBranch = repository.getBranches().findBranchByName(selectedBranch);
+          if (targetBranch != null) {
+            GitBranchPair refPair = new GitBranchPair(repository.getCurrentBranch(), targetBranch);
+            updatedRanges = GitUpdatedRanges.calcInitialPositions(project, singletonMap(repository, refPair));
+          }
+          else {
+            LOG.warn("Couldn't find the branch with name [" + selectedBranch + "]");
+          }
+        }
+
         try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = git.runCommand(() -> {
             GitLineHandler handler = handlerProvider.compute();
@@ -88,27 +122,28 @@ abstract class GitMergeAction extends GitRepositoryAction {
             return handler;
           });
 
-          GitRepository repository = repositoryManager.getRepositoryForRoot(selectedRoot);
-          assert repository != null : "Repository can't be null for root " + selectedRoot;
           String revision = repository.getCurrentRevision();
           if (revision == null) {
             return;
           }
+
           GitRevisionNumber currentRev = new GitRevisionNumber(revision);
-          handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector, repository, currentRev, beforeLabel);
+          handleResult(result, project, mergeConflict, localChangesDetector, untrackedFilesDetector, repository, currentRev, beforeLabel,
+                       updatedRanges);
         }
       }
     }.queue();
   }
 
   private void handleResult(@NotNull GitCommandResult result,
-                             @NotNull Project project,
-                             @NotNull GitSimpleEventDetector mergeConflictDetector,
-                             @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector,
-                             @NotNull GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector,
-                             @NotNull GitRepository repository,
-                             @NotNull GitRevisionNumber currentRev,
-                             @NotNull Label beforeLabel) {
+                            @NotNull Project project,
+                            @NotNull GitSimpleEventDetector mergeConflictDetector,
+                            @NotNull GitLocalChangesWouldBeOverwrittenDetector localChangesDetector,
+                            @NotNull GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector,
+                            @NotNull GitRepository repository,
+                            @NotNull GitRevisionNumber currentRev,
+                            @NotNull Label beforeLabel,
+                            @Nullable GitUpdatedRanges updatedRanges) {
     VirtualFile root = repository.getRoot();
 
     if (mergeConflictDetector.hasHappened()) {
@@ -118,10 +153,21 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
     if (result.success() || mergeConflictDetector.hasHappened()) {
       VfsUtil.markDirtyAndRefresh(false, true, false, root);
-      List<VcsException> exceptions = new ArrayList<>();
-      showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName());
       repository.update();
-      GitVcs.getInstance(project).showErrors(exceptions, getActionName());
+      if (updatedRanges != null && AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
+        new GitUpdateInfoAsLog(project, updatedRanges.calcCurrentPositions(), (filesCount, commitCount, filteredCommits, viewCommits) -> {
+          String title = getTitleForUpdateNotification(filesCount, commitCount);
+          String content = getBodyForUpdateNotification(filesCount, commitCount, filteredCommits);
+          Notification notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, INFORMATION, null);
+          notification.addAction(NotificationAction.createSimple("View Commits", viewCommits));
+          return notification;
+        }).buildAndShowNotification();
+      }
+      else {
+        List<VcsException> exceptions = new ArrayList<>();
+        showUpdates(project, exceptions, root, currentRev, beforeLabel, getActionName());
+        GitVcs.getInstance(project).showErrors(exceptions, getActionName());
+      }
     }
     else if (localChangesDetector.wasMessageDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, repository.getRoot(), getActionName(),

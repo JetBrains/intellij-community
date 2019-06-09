@@ -118,7 +118,7 @@ public class GitMergeDialog extends DialogWrapper {
     final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
       @Override
       public void elementMarkChanged(final String element, final boolean isMarked) {
-        setOKActionEnabled(myBranchChooser.getMarkedElements().size() != 0);
+        setOKActionEnabled(getSelectedBranches().size() != 0);
       }
     };
     listener.elementMarkChanged(null, true);
@@ -177,12 +177,16 @@ public class GitMergeDialog extends DialogWrapper {
     if (!GitMergeUtil.DEFAULT_STRATEGY.equals(strategy)) {
       h.addParameters("--strategy", strategy);
     }
-    for (String branch : myBranchChooser.getMarkedElements()) {
+    for (String branch : getSelectedBranches()) {
       h.addParameters(branch);
     }
     return h;
   }
 
+  @NotNull
+  public List<String> getSelectedBranches() {
+    return myBranchChooser.getMarkedElements();
+  }
 
   @Override
   protected JComponent createCenterPanel() {
