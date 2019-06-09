@@ -80,6 +80,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     myServersPanel.setMinimumSize(new Dimension(-1, 100));
 
     TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
+    Arrays.sort(groups);
 
     final List<AnAction> createActions = new ArrayList<>();
     for (final TaskRepositoryType repositoryType : groups) {
