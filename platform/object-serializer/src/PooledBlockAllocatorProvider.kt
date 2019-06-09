@@ -44,7 +44,14 @@ internal class PooledBlockAllocatorProvider : BlockAllocatorProvider() {
     override fun getBlockSize() = blockSize
 
     override fun close() {
-      if (allocators.putIfAbsent(blockSize, this) != null) {
+      if ((blockSize * freeBlocks.size) > POOL_THRESHOLD) {
+        return
+      }
+
+      if (allocators.putIfAbsent(blockSize, this) == null) {
+        removeExcess()
+      }
+      else {
         // help GC - nullize
         freeBlocks.clear()
         blockCounter.set(0)
@@ -70,6 +77,12 @@ internal class PooledBlockAllocatorProvider : BlockAllocatorProvider() {
     // PooledBlockAllocator is not thread safe - do not put a new one to pool
     val result = allocators.remove(blockSize) ?: PooledBlockAllocator(blockSize)
 
+    removeExcess()
+
+    return result
+  }
+
+  private fun removeExcess() {
     var totalByteSize = 0
     val iterator = allocators.values().iterator()
     var isExcess = false
@@ -86,7 +99,5 @@ internal class PooledBlockAllocatorProvider : BlockAllocatorProvider() {
         isExcess = true
       }
     }
-
-    return result
   }
 }
