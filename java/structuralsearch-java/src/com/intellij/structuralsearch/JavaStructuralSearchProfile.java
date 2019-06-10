@@ -12,6 +12,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaDummyHolder;
@@ -37,6 +38,7 @@ import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +51,10 @@ import java.util.stream.Collectors;
  * @author Eugene.Kudelevsky
  */
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
+
+  public static final PatternContext DEFAULT_CONTEXT = new PatternContext("default", "Default");
+  public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", "Class Member");
+  private static final List<PatternContext> PATTERN_CONTEXTS = ContainerUtil.immutableList(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
   private static final Set<String> PRIMITIVE_TYPES = new THashSet<>(Arrays.asList(
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
@@ -294,6 +300,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (physical) {
       throw new UnsupportedOperationException(getClass() + " cannot create physical PSI");
     }
+    if (MEMBER_CONTEXT.getId().equals(contextId)) {
+      context = PatternTreeContext.Class;
+    }
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if (context == PatternTreeContext.Block) {
       final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText("{\n" + text + "\n}", null);
@@ -416,8 +425,17 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
+  public List<PatternContext> getPatternContexts() {
+    if (!Registry.is("ssr.in.editor.problem.highlighting")) return super.getPatternContexts();
+    return PATTERN_CONTEXTS;
+  }
+
+  @NotNull
+  @Override
   public PsiCodeFragment createCodeFragment(Project project, String text, String contextId) {
-    return JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(text, null, true);
+    return MEMBER_CONTEXT.getId().equals(contextId)
+           ? JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(text, null, true)
+           : JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(text, null, true);
   }
 
   @Override
