@@ -1144,6 +1144,19 @@ public class HighlightUtil extends HighlightUtilBase {
         }
       }
     }
+    else if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      if (value == null) {
+        if (text.charAt(3) != '\n') {
+          String message = JavaErrorMessages.message("text.block.new.line");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
+        }
+        if (!text.endsWith("\"\"\"")) {
+          String message = JavaErrorMessages.message("text.block.unclosed");
+          int p = expression.getTextRange().getEndOffset();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message).create();
+        }
+      }
+    }
 
     if (value instanceof Float) {
       Float number = (Float)value;
