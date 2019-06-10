@@ -27,6 +27,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -352,7 +354,29 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
-      OSProcessHandler result = super.startProcess();
+      OSProcessHandler result = new ColoredProcessHandler(createCommandLine()) {
+        @NotNull
+        @Override
+        protected BaseOutputReader.Options readerOptions() {
+          return new BaseOutputReader.Options() {
+            @Override
+            public BaseDataReader.SleepingPolicy policy() {
+              return BaseDataReader.SleepingPolicy.BLOCKING;
+            }
+
+            @Override
+            public boolean splitToLines() {
+              return true;
+            }
+
+            @Override
+            public boolean sendIncompleteLines() {
+              return false;
+            }
+          };
+        }
+      };
+
       result.setShouldDestroyProcessRecursively(true);
       result.addProcessListener(new ProcessAdapter() {
         @Override

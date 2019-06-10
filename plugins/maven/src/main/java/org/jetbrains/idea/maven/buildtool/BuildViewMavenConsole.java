@@ -176,13 +176,6 @@ public class BuildViewMavenConsole extends MavenConsole {
       public void dispose() {
         super.dispose();
       }
-
-      @Override
-      public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-        if(!MavenSpyOutputParser.isSpyLog(text) ||Registry.is("maven.spy.events.debug")) {
-          super.print(text, contentType);
-        }
-      }
     };
   }
 }
