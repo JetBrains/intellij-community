@@ -44,8 +44,6 @@
     <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.project.manage.ReprocessContentRootDataActivity"/>
 
     <externalSystemConfigurationHandler
-        implementation="com.intellij.openapi.externalSystem.service.project.settings.CompilerConfigurationHandler"/>
-    <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandler"/>
@@ -66,7 +64,6 @@
 
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
-    <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
 
     <streamProviderFactory implementation="com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStreamProviderFactory"/>
 
