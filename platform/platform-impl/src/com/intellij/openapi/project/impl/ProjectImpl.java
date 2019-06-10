@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -254,11 +253,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
   }
 
-  @Override
-  public void init(@NotNull String filePath) {
+  public void init(@NotNull String filePath, @Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    init(indicator);
+    createComponents(indicator);
     if (indicator != null && !application.isHeadlessEnvironment()) {
       distributeProgress(indicator);
     }

@@ -70,14 +70,14 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
         }
 
         @Override
-        public void init(@NotNull String filePath) {
+        public void init(@NotNull String filePath, @Nullable ProgressIndicator indicator) {
           super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
           MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
 
           registerComponents(PluginManagerCore.getLoadedPlugins());
-          init((ProgressIndicator)null);
+          createComponents(null);
         }
 
         @Override
@@ -102,7 +102,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
     @Override
     void init(Project project) {
       ProjectImpl p = (ProjectImpl)project;
-      p.init("");
+      p.init("", null);
     }
   };
   private static final int DEFAULT_HASH_CODE = 4; // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
@@ -134,10 +134,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
   public boolean isCached() {
     return myDelegate.isCached();
-  }
-
-  @Override
-  public void init(@NotNull String filePath) {
   }
 
   @Override
