@@ -1170,6 +1170,9 @@
               text="Remove Configuration" icon="AllIcons.General.Remove"
               use-shortcut-of="$Delete"/>
       <separator/>
+      <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
+              text="Clear Content" icon="AllIcons.Actions.Cancel"/>
+      <separator/>
       <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"
               text="Group Configurations" icon="AllIcons.Actions.GroupByPackage"/>
       <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
