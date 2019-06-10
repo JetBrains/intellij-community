@@ -111,6 +111,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
+  public static final Key<Boolean> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
@@ -120,7 +121,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
   Language myDialect = null;
   PatternContext myPatternContext = null;
-  private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
+  final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
 
   // ui management
   private final Alarm myAlarm;
@@ -167,6 +168,7 @@ public class StructuralSearchDialog extends DialogWrapper {
 
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        if (myRangeHighlighters.isEmpty()) return;
         removeMatchHighlights();
         myEditor = event.getManager().getSelectedTextEditor();
         addMatchHighlights();
@@ -194,6 +196,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
+    document.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -211,11 +214,22 @@ public class StructuralSearchDialog extends DialogWrapper {
           }
         });
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-        final Project project = getProject();
-        final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
-        if (file != null) {
-          DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
+        if (profile.highlightProblemsInEditor()) {
+          profile.setProblemCallback(() -> {
+            mySearchCriteriaEdit.putClientProperty("JComponent.outline", "error");
+            mySearchCriteriaEdit.repaint();
+            getOKAction().setEnabled(false);
+            removeMatchHighlights();
+          });
         }
+        else {
+          final Project project = getProject();
+          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
+          if (file != null) {
+            DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
+          }
+        }
+
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
@@ -525,9 +539,11 @@ public class StructuralSearchDialog extends DialogWrapper {
           final Document searchDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
+          searchDocument.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
           final Document replaceDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
+          replaceDocument.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
           myFilterPanel.setProfile(profile);
           initiateValidation();
         }
@@ -728,7 +744,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
       reportMessage(null, false, mySearchCriteriaEdit);
-      addMatchHighlights();
+      if (getOKAction().isEnabled()) {
+        addMatchHighlights();
+      }
       if (myReplace) {
         try {
           Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
