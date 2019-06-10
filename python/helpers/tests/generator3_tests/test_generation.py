@@ -125,11 +125,11 @@ class SkeletonCachingTest(GeneratorTestCase):
                 _ast.py
         sdk_skeletons/
             _ast.py
-        """.format(hash=generator3.builtin_module_hash('_ast')))
+        """.format(hash=generator3.builtin_module_hash('_ast')[:10]))
 
     def test_builtins_generation_mode_stores_all_skeletons_in_same_cache_directory(self):
         self.run_generator(builtins=True)
-        builtins_hash = generator3.builtin_module_hash('sys')
+        builtins_hash = generator3.builtin_module_hash('sys')[:10]
         builtins_cache_dir = os.path.join(self.temp_cache_dir, builtins_hash)
         self.assertTrue(os.path.isdir(builtins_cache_dir))
         builtin_mod_skeletons = os.listdir(builtins_cache_dir)
@@ -145,7 +145,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 mod.py
         sdk_skeletons/
             mod.py
-        """.format(hash=generator3.physical_module_hash(mod_path)))
+        """.format(hash=generator3.physical_module_hash(mod_path)[:10]))
 
     def test_layout_for_physical_module_inside_package(self):
         mod_path = self.get_test_data_path('pkg/subpkg/mod.py')
@@ -164,7 +164,7 @@ class SkeletonCachingTest(GeneratorTestCase):
                 subpkg/
                     __init__.py
                     mod.py
-        """.format(hash=generator3.physical_module_hash(mod_path)))
+        """.format(hash=generator3.physical_module_hash(mod_path)[:10]))
 
     def test_skeleton_regenerated_for_changed_module(self):
         self.check_generator_output('mod', mod_path='mod.py', mod_root='versions/v2')

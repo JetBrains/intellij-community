@@ -364,9 +364,13 @@ def build_cache_dir_path(subdir, mod_qname, mod_path):
 def module_hash(mod_qname, mod_path):
     # Hash the content of a physical module
     if mod_path:
-        return physical_module_hash(mod_path)
+        hash_ = physical_module_hash(mod_path)
     else:
-        return builtin_module_hash(mod_qname)
+        hash_ = builtin_module_hash(mod_qname)
+    # Use shorter hashes in test data as it might affect developers on Windows
+    if is_test_mode():
+        return hash_[:10]
+    return hash_
 
 
 def builtin_module_hash(mod_qname):
