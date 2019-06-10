@@ -46,6 +46,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NonNls;
@@ -339,7 +340,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
       }
 
-      int width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(),
+      int width = Math.min(maxAuthorWidth + VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer),
                            JBUIScale.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
       if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
       return width;
@@ -347,7 +348,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     else if (index == DATE_COLUMN) {
       // all dates have nearly equal sizes
       return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
-             myStringCellRenderer.getHorizontalTextPadding();
+             VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
     }
     else if (index == HASH_COLUMN) {
       if (getModel().getRowCount() <= 0) {
@@ -356,7 +357,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       // all hashes have nearly equal sizes
       String hash = getModel().getValueAt(0, HASH_COLUMN).toString();
       return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(hash) +
-             myStringCellRenderer.getHorizontalTextPadding();
+             VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
     }
     LOG.error("Can only calculate author, hash or date columns width from data, yet given column " + index);
     return column.getPreferredWidth();
@@ -380,7 +381,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return getColumnByModelIndex(COMMIT_COLUMN);
   }
 
-  private static Font getTableFont() {
+  static Font getTableFont() {
     return UIManager.getFont("Table.font");
   }
 
@@ -710,12 +711,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (column == convertColumnIndexToView(COMMIT_COLUMN) || column == convertColumnIndexToView(AUTHOR_COLUMN)) {
         SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
       }
-    }
-
-    public int getHorizontalTextPadding() {
-      Insets borderInsets = getMyBorder().getBorderInsets(this);
-      Insets ipad = getIpad();
-      return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
     }
   }
 

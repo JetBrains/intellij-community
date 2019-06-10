@@ -20,6 +20,7 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -279,15 +280,8 @@ public class LabelPainter {
         refName = TWO_DOTS + refName.substring(separatorIndex);
       }
 
-      if (fontMetrics.stringWidth(refName) <= availableWidth) return refName;
-
       if (availableWidth > 0) {
-        for (int i = refName.length(); i > MAX_LENGTH; i--) {
-          String result = StringUtil.shortenTextWithEllipsis(refName, i, 0, THREE_DOTS);
-          if (fontMetrics.stringWidth(result) <= availableWidth) {
-            return result;
-          }
-        }
+        return VcsLogUiUtil.shortenTextToFit(refName, fontMetrics, availableWidth, MAX_LENGTH, THREE_DOTS);
       }
       return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, THREE_DOTS);
     }

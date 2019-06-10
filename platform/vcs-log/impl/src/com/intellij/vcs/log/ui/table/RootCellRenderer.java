@@ -9,6 +9,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,7 +61,17 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
       if (isTextShown(table, value, row, column)) {
-        append(path == null ? "" : path.getName());
+        if (path == null) {
+          append("");
+        }
+        else {
+          String text = path.getName();
+          int availableWidth = ((VcsLogGraphTable)table).getRootColumn().getWidth() -
+                               VcsLogUiUtil.getHorizontalTextPadding(this);
+          text = VcsLogUiUtil.shortenTextToFit(text, getFontMetrics(VcsLogGraphTable.getTableFont()),
+                                               availableWidth, 0, "\u2026");
+          append(text);
+        }
       }
       isNarrow = false;
     }
