@@ -9,6 +9,7 @@ intellij.python.reStructuredText
 intellij.python.terminal
 intellij.reStructuredText
 intellij.settingsRepository
+intellij.sh
 intellij.statsCollector
 intellij.tasks.core
 intellij.terminal
