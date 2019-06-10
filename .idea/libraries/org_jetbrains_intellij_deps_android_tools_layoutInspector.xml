@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="org.jetbrains.intellij.deps.android.tools:layoutInspector" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools:layoutInspector:26.3.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/layoutInspector/26.3.0/layoutInspector-26.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/layoutInspector/26.3.0/layoutInspector-26.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
