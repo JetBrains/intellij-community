@@ -100,7 +100,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this, getUsageViewSettings());
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
+  private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
   public static final UsageNode NULL_NODE = new UsageNode(null, NullUsage.INSTANCE);
   private final ButtonPanel myButtonPanel;
@@ -289,7 +289,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       });
     }
-    myExclusionHandler = new ExclusionHandler<DefaultMutableTreeNode>() {
+    myExclusionHandler = new ExclusionHandlerEx<DefaultMutableTreeNode>() {
       @Override
       public boolean isNodeExclusionAvailable(@NotNull DefaultMutableTreeNode node) {
         return node instanceof UsageNode;
@@ -305,7 +305,15 @@ public class UsageViewImpl implements UsageViewEx {
         Set<Node> nodes = new HashSet<>();
         collectAllChildNodes(node, nodes);
         collectParentNodes(node, true, nodes);
-        setExcludeNodes(nodes, true);
+        setExcludeNodes(nodes, true, true);
+      }
+
+      @Override
+      public void excludeNodeSilently(@NotNull DefaultMutableTreeNode node) {
+        Set<Node> nodes = new HashSet<>();
+        collectAllChildNodes(node, nodes);
+        collectParentNodes(node, true, nodes);
+        setExcludeNodes(nodes, true, false);
       }
 
       // include the parent if its all children (except the "node" itself) excluded flags are "almostAllChildrenExcluded"
@@ -325,7 +333,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
 
-      private void setExcludeNodes(@NotNull Set<? extends Node> nodes, boolean excluded) {
+      private void setExcludeNodes(@NotNull Set<? extends Node> nodes, boolean excluded, boolean updateImmediately) {
         Set<Usage> affectedUsages = new LinkedHashSet<>();
         for (Node node : nodes) {
           Object userObject = node.getUserObject();
@@ -334,10 +342,13 @@ public class UsageViewImpl implements UsageViewEx {
           }
           node.setExcluded(excluded, edtNodeChangedQueue);
         }
-        updateImmediatelyNodesUpToRoot(nodes);
 
-        for (ExcludeListener listener : myExcludeListeners) {
-          listener.fireExcluded(affectedUsages, excluded);
+        if (updateImmediately) {
+          updateImmediatelyNodesUpToRoot(nodes);
+
+          for (ExcludeListener listener : myExcludeListeners) {
+            listener.fireExcluded(affectedUsages, excluded);
+          }
         }
       }
 
@@ -346,7 +357,7 @@ public class UsageViewImpl implements UsageViewEx {
         Set<Node> nodes = new HashSet<>();
         collectAllChildNodes(node, nodes);
         collectParentNodes(node, false, nodes);
-        setExcludeNodes(nodes, false);
+        setExcludeNodes(nodes, false, true);
       }
 
       @Override
@@ -1177,8 +1188,20 @@ public class UsageViewImpl implements UsageViewEx {
       return null;
     }
 
+    for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
+      listener.beforeUsageAdded(usage);
+    }
+
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeInsertedUnderQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
+
+    if (child != null) {
+      for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
+        if (listener.isExcludedByDefault(usage)) {
+          myExclusionHandler.excludeNodeSilently(child);
+        }
+      }
+    }
 
     for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
       node.update(this, edtNodeChangedQueue);
@@ -2170,5 +2193,9 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
     return toSelect;
+  }
+
+  private interface ExclusionHandlerEx<Node> extends ExclusionHandler<Node> {
+    void excludeNodeSilently(@NotNull Node node);
   }
 }
