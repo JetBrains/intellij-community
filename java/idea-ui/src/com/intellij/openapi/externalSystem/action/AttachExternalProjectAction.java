@@ -31,12 +31,6 @@ public class AttachExternalProjectAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    // todo [Vlad, IDEA-187835]: provide java subsystem independent implementation
-    if (!ExternalSystemApiUtil.isJavaCompatibleIde()) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-
     ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     if (externalSystemId != null) {
       String name = externalSystemId.getReadableName();
