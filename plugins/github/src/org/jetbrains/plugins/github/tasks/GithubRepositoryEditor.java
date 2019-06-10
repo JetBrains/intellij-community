@@ -123,7 +123,6 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private void generateToken() {
     GithubLoginDialog dialog = new GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), myProject);
     dialog.withServer(getHost(), false);
-    dialog.setClientName("Tasks Plugin");
     if (dialog.showAndGet()) {
       myToken.setText(dialog.getToken());
     }

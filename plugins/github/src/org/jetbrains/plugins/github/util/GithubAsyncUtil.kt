@@ -60,7 +60,7 @@ object GithubAsyncUtil {
   }
 }
 
-fun <T> ProgressManager.submitBackgroundTask(project: Project,
+fun <T> ProgressManager.submitBackgroundTask(project: Project?,
                                              title: String,
                                              canBeCancelled: Boolean,
                                              progressIndicator: ProgressIndicator,
