@@ -114,18 +114,14 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
           count++
           val value = fromStorage.get(key)
 
-          val stub = value.getStub(false, serializationManager)
-
           // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-          val bytes = BufferExposingByteArrayOutputStream()
-          newSerializationManager.serialize(stub, bytes)
-
-          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null)
+          val newStubTree = value.reSerialize(serializationManager, newSerializationManager)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
               storage.get(key).getStub(false, newSerializationManager)
 
+              val stub = value.getStub(false, serializationManager)
               val bytes2 = BufferExposingByteArrayOutputStream()
               newSerializationManager.serialize(stub, bytes2)
 
