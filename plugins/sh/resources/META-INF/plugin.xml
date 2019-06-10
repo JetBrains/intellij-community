@@ -46,7 +46,7 @@
     <localInspection language="Shell Script" groupName="Shell Script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>
 
-    <fileTypeDetector implementation="com.intellij.sh.ShFileTypeDetector"/>
+    <fileTypeDetector implementation="com.intellij.sh.ShFileTypeDetector" order="first"/>
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 
