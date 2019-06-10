@@ -64,13 +64,16 @@ class CompareBranchesDiffPanel extends JPanel {
   private final JEditorPane myLabel;
   private final MyChangesBrowser myChangesBrowser;
 
-  CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
-    myHelper = helper;
-    myProject = helper.getProject();
+  CompareBranchesDiffPanel(@NotNull Project project,
+                           @NotNull DvcsCompareSettings settings,
+                           @NotNull String branchName,
+                           @NotNull String currentBranchName,
+                           @NotNull CommitCompareInfo compareInfo) {
+    myProject = project;
     myCurrentBranchName = currentBranchName;
     myCompareInfo = compareInfo;
     myBranchName = branchName;
-    myVcsSettings = helper.getDvcsCompareSettings();
+    myVcsSettings = settings;
 
     myLabel = new JEditorPane() {
       @Override
@@ -92,7 +95,7 @@ class CompareBranchesDiffPanel extends JPanel {
       }
     });
 
-    myChangesBrowser = new MyChangesBrowser(helper.getProject(), emptyList());
+    myChangesBrowser = new MyChangesBrowser(project, emptyList());
 
     setLayout(new BorderLayout());
     add(myLabel, BorderLayout.NORTH);
