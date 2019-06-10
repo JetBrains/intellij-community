@@ -71,8 +71,7 @@ class GitUpdateSession(private val project: Project,
     val title: String
     var content: String?
     val type: NotificationType
-    val mainMessage = "$updatedFilesNumber ${pluralize("file", updatedFilesNumber)} " +
-                      "updated in $updatedCommitsNumber ${pluralize("commit", updatedCommitsNumber)}"
+    val mainMessage = getTitleForUpdateNotification(updatedFilesNumber, updatedCommitsNumber)
     if (isCanceled) {
       title = "Project Partially Updated"
       content = mainMessage
@@ -80,11 +79,7 @@ class GitUpdateSession(private val project: Project,
     }
     else {
       title = mainMessage
-      content = when (filteredCommitsNumber) {
-        null -> ""
-        0 -> "No commits matching filters"
-        else -> "$filteredCommitsNumber ${pluralize("commit", filteredCommitsNumber)} matching filters"
-      }
+      content = getBodyForUpdateNotification(updatedFilesNumber, updatedCommitsNumber, filteredCommitsNumber)
       type = NotificationType.INFORMATION
     }
 
@@ -97,5 +92,19 @@ class GitUpdateSession(private val project: Project,
     }
 
     return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type, null)
+  }
+}
+
+fun getTitleForUpdateNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int): String {
+  val files = pluralize("file", updatedFilesNumber)
+  val commits = pluralize("commit", updatedCommitsNumber)
+  return "$updatedFilesNumber $files updated in $updatedCommitsNumber $commits"
+}
+
+fun getBodyForUpdateNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int, filteredCommitsNumber: Int?): String {
+  return when (filteredCommitsNumber) {
+    null -> ""
+    0 -> "No commits matching filters"
+    else -> "$filteredCommitsNumber ${pluralize("commit", filteredCommitsNumber)} matching filters"
   }
 }

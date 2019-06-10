@@ -1930,7 +1930,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myHeaderPanel.revalidate();
     myHeaderPanel.repaint();
 
-    TouchBarsManager.onUpdateEditorHeader(this, header);
+    if (SystemInfoRt.isMac) {
+      TouchBarsManager.onUpdateEditorHeader(this, header);
+    }
   }
 
   @Override

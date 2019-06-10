@@ -31,7 +31,7 @@ import java.util.*
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
-  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"))
+  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"), false)
 
   fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     try {
@@ -96,7 +96,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       stringEnumeratorFile.delete()
     }
 
-    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile)
+    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile, false)
 
     val map = HashMap<HashCode, Int>()
 
@@ -109,7 +109,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
       val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
                                                                         HashCodeDescriptor.instance, stubExternalizer)
 
-      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"))
+      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"), true)
 
       try {
         fromStorage.processKeysWithExistingMapping { key ->

@@ -32,7 +32,7 @@ class ChangesViewCommitWorkflowHandler(
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
 
-    updateDefaultCommitAction()
+    vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
 
   private fun ensureCommitOptions(): CommitOptions {

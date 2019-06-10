@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -95,7 +93,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    return new IdeFrameImpl(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
+    return new IdeFrameImpl();
   }
 
   @Override
@@ -200,6 +198,12 @@ public final class TestWindowManager extends WindowManagerEx {
 
   private static final class DummyStatusBar implements StatusBarEx {
     private final Map<String, StatusBarWidget> myWidgetMap = new HashMap<>();
+
+    @Nullable
+    @Override
+    public Project getProject() {
+      return null;
+    }
 
     @Override
     public Dimension getSize() {

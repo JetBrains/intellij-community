@@ -10,7 +10,7 @@ interface LogEventFilter {
 
 class LogEventWhitelistFilter(val whitelist: FUSWhitelist) : LogEventFilter {
   override fun accepts(event: LogEvent): Boolean {
-    return whitelist.accepts(event.group.id, event.group.version)
+    return whitelist.accepts(event.group.id, event.group.version, event.build)
   }
 }
 

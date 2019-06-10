@@ -1,31 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.openapi.shelf;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getInstance;
 
 public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
 
@@ -67,13 +57,26 @@ public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
     File beforeXmlInfo = new File(testDataPath, "before.xml");
     assert (beforeXmlInfo.exists());
     Element element = JDOMUtil.load(beforeXmlInfo);
-    ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
+    ShelveChangesManager shelveChangesManager = getInstance(myProject);
     shelveChangesManager.loadState(element);
     if (migrateResources) {
-      shelveChangesManager.checkAndMigrateOldPatchResourcesToNewSchemeStorage();
+      checkAndMigrateOldPatchResourcesToNewSchemeStorage(shelveChangesManager);
     }
-    shelfDir.refresh(false, true);
     PlatformTestUtil.saveProject(myProject);
+    shelfDir.refresh(false, true);
     PlatformTestUtil.assertDirectoriesEqual(afterDir, shelfDir);
+  }
+
+  /**
+   * Should be called only once: when Settings Repository plugin runs first time
+   */
+  private static void checkAndMigrateOldPatchResourcesToNewSchemeStorage(@NotNull ShelveChangesManager shelveChangesManager)
+    throws IOException {
+    for (ShelvedChangeList list : shelveChangesManager.getAllLists()) {
+      File newPatchDir = new File(shelveChangesManager.getShelfResourcesDirectory(), list.getName());
+      ShelvedChangeList migrated = shelveChangesManager.createChangelistCopyWithChanges(list, newPatchDir);
+      shelveChangesManager.saveListAsScheme(migrated);
+      shelveChangesManager.clearShelvedLists(Collections.singletonList(list), false);
+    }
   }
 }

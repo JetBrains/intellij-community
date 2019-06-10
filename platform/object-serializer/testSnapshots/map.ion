@@ -1,9 +1,8 @@
 {
   '@id':0,
-  map:[
-    foo,
-    bar
-  ],
+  map:{
+    foo:bar
+  },
   beanMap:[
   ]
 }

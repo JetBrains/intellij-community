@@ -5,10 +5,11 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.testFramework.PlatformTestCase
 import org.junit.Assert
 import org.junit.Test
 
-class MetricEventTest {
+class MetricEventTest : PlatformTestCase() {
 
   @Test
   fun `test create new metric`() {
@@ -188,9 +189,9 @@ class MetricEventTest {
     val obj = MetricEventTestObj()
     val default = MetricEventTestObj()
 
-    addIfDiffers(result, obj, default, {o -> o.strValue}, "metric.string")
-    addIfDiffers(result, obj, default, {o -> o.intValue}, "metric.int")
-    addIfDiffers(result, obj, default, {o -> o.floatValue}, "metric.float")
+    addIfDiffers(result, obj, default, { o -> o.strValue }, "metric.string")
+    addIfDiffers(result, obj, default, { o -> o.intValue }, "metric.int")
+    addIfDiffers(result, obj, default, { o -> o.floatValue }, "metric.float")
     Assert.assertTrue(result.isEmpty())
   }
 
@@ -202,9 +203,9 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addIfDiffers(result, obj, default, {o -> o.strValue}, "metric.string")
-    addIfDiffers(result, obj, default, {o -> o.intValue}, "metric.int")
-    addIfDiffers(result, obj, default, {o -> o.floatValue}, "metric.float")
+    addIfDiffers(result, obj, default, { o -> o.strValue }, "metric.string")
+    addIfDiffers(result, obj, default, { o -> o.intValue }, "metric.int")
+    addIfDiffers(result, obj, default, { o -> o.floatValue }, "metric.float")
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.string")
@@ -221,9 +222,9 @@ class MetricEventTest {
     val default = MetricEventTestObj()
     val data = FeatureUsageData().addPlace("MainMenu")
 
-    addIfDiffers(result, obj, default, {o -> o.strValue}, "metric.string", data)
-    addIfDiffers(result, obj, default, {o -> o.intValue}, "metric.int", data)
-    addIfDiffers(result, obj, default, {o -> o.floatValue}, "metric.float", data)
+    addIfDiffers(result, obj, default, { o -> o.strValue }, "metric.string", data)
+    addIfDiffers(result, obj, default, { o -> o.intValue }, "metric.int", data)
+    addIfDiffers(result, obj, default, { o -> o.floatValue }, "metric.float", data)
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.string")
@@ -240,9 +241,9 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addIfDiffers(result, obj, default, {o -> o.strValue}, "metric.string")
-    addIfDiffers(result, obj, default, {o -> o.intValue}, "metric.int")
-    addIfDiffers(result, obj, default, {o -> o.floatValue}, "metric.float")
+    addIfDiffers(result, obj, default, { o -> o.strValue }, "metric.string")
+    addIfDiffers(result, obj, default, { o -> o.intValue }, "metric.int")
+    addIfDiffers(result, obj, default, { o -> o.floatValue }, "metric.float")
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.int")
@@ -258,10 +259,10 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addIfDiffers(result, obj, default, {o -> o.strValue}, "metric.string")
-    addIfDiffers(result, obj, default, {o -> o.intValue}, "metric.int")
-    addIfDiffers(result, obj, default, {o -> o.floatValue}, "metric.float")
-    addIfDiffers(result, obj, default, {o -> o.boolValue}, "metric.bool")
+    addIfDiffers(result, obj, default, { o -> o.strValue }, "metric.string")
+    addIfDiffers(result, obj, default, { o -> o.intValue }, "metric.int")
+    addIfDiffers(result, obj, default, { o -> o.floatValue }, "metric.float")
+    addIfDiffers(result, obj, default, { o -> o.boolValue }, "metric.bool")
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.float")
@@ -279,9 +280,9 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addIfDiffers(result, obj, default, {o -> o.strValue}, "metric.string")
-    addIfDiffers(result, obj, default, {o -> o.intValue}, "metric.int")
-    addIfDiffers(result, obj, default, {o -> o.floatValue}, "metric.float")
+    addIfDiffers(result, obj, default, { o -> o.strValue }, "metric.string")
+    addIfDiffers(result, obj, default, { o -> o.intValue }, "metric.int")
+    addIfDiffers(result, obj, default, { o -> o.floatValue }, "metric.float")
     Assert.assertTrue(result.size == 3)
     for (event in result) {
       Assert.assertTrue(event.eventId in listOf("metric.string", "metric.int", "metric.float"))
@@ -304,9 +305,9 @@ class MetricEventTest {
     val default = MetricEventTestObj()
     val data = FeatureUsageData().addPlace("MainMenu")
 
-    addIfDiffers(result, obj, default, {o -> o.strValue}, "metric.string", data)
-    addIfDiffers(result, obj, default, {o -> o.intValue}, "metric.int", data)
-    addIfDiffers(result, obj, default, {o -> o.floatValue}, "metric.float", data)
+    addIfDiffers(result, obj, default, { o -> o.strValue }, "metric.string", data)
+    addIfDiffers(result, obj, default, { o -> o.intValue }, "metric.int", data)
+    addIfDiffers(result, obj, default, { o -> o.floatValue }, "metric.float", data)
     Assert.assertTrue(result.size == 3)
     for (event in result) {
       Assert.assertTrue(event.eventId in listOf("metric.string", "metric.int", "metric.float"))
@@ -325,7 +326,7 @@ class MetricEventTest {
     val obj = MetricEventTestObj()
     val default = MetricEventTestObj()
 
-    addBoolIfDiffers(result, obj, default, {o -> o.boolValue}, "metric.bool")
+    addBoolIfDiffers(result, obj, default, { o -> o.boolValue }, "metric.bool")
     Assert.assertTrue(result.isEmpty())
   }
 
@@ -337,7 +338,7 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addBoolIfDiffers(result, obj, default, {o -> o.boolValue}, "metric.bool")
+    addBoolIfDiffers(result, obj, default, { o -> o.boolValue }, "metric.bool")
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.bool")
@@ -354,7 +355,7 @@ class MetricEventTest {
     val default = MetricEventTestObj()
     val data = FeatureUsageData().addPlace("MainMenu")
 
-    addBoolIfDiffers(result, obj, default, {o -> o.boolValue}, "metric.bool", data)
+    addBoolIfDiffers(result, obj, default, { o -> o.boolValue }, "metric.bool", data)
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.bool")
@@ -369,7 +370,7 @@ class MetricEventTest {
     val obj = MetricEventTestObj()
     val default = MetricEventTestObj()
 
-    addCounterIfDiffers(result, obj, default, {o -> o.intValue}, "metric.count")
+    addCounterIfDiffers(result, obj, default, { o -> o.intValue }, "metric.count")
     Assert.assertTrue(result.isEmpty())
   }
 
@@ -381,7 +382,7 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addCounterIfDiffers(result, obj, default, {o -> o.intValue}, "metric.count")
+    addCounterIfDiffers(result, obj, default, { o -> o.intValue }, "metric.count")
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.count")
@@ -398,7 +399,7 @@ class MetricEventTest {
     val default = MetricEventTestObj()
     val data = FeatureUsageData().addPlace("MainMenu")
 
-    addCounterIfDiffers(result, obj, default, {o -> o.intValue}, "metric.count", data)
+    addCounterIfDiffers(result, obj, default, { o -> o.intValue }, "metric.count", data)
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.count")
@@ -413,7 +414,7 @@ class MetricEventTest {
     val obj = MetricEventTestObj()
     val default = MetricEventTestObj()
 
-    addCounterRangeIfDiffers(result, obj, default, {o -> o.intValue}, "metric.range")
+    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range")
     Assert.assertTrue(result.isEmpty())
   }
 
@@ -425,7 +426,7 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addCounterRangeIfDiffers(result, obj, default, {o -> o.intValue}, "metric.range")
+    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range")
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.range")
@@ -443,7 +444,7 @@ class MetricEventTest {
     val default = MetricEventTestObj()
     val data = FeatureUsageData().addPlace("MainMenu")
 
-    addCounterRangeIfDiffers(result, obj, default, {o -> o.intValue}, "metric.range", data)
+    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", data)
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.range")
@@ -459,7 +460,7 @@ class MetricEventTest {
     val obj = MetricEventTestObj()
     val default = MetricEventTestObj()
 
-    addCounterRangeIfDiffers(result, obj, default, {o -> o.intValue}, "metric.range", listOf(1, 5, 10))
+    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", listOf(1, 5, 10))
     Assert.assertTrue(result.isEmpty())
   }
 
@@ -471,7 +472,7 @@ class MetricEventTest {
 
     val default = MetricEventTestObj()
 
-    addCounterRangeIfDiffers(result, obj, default, {o -> o.intValue}, "metric.range", listOf(1, 5, 10))
+    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", listOf(1, 5, 10))
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.range")
@@ -489,7 +490,7 @@ class MetricEventTest {
     val default = MetricEventTestObj()
     val data = FeatureUsageData().addPlace("MainMenu")
 
-    addCounterRangeIfDiffers(result, obj, default, {o -> o.intValue}, "metric.range", listOf(1, 5, 10), data)
+    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", listOf(1, 5, 10), data)
     Assert.assertTrue(result.size == 1)
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.range")

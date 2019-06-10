@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -81,17 +80,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   final FrameInfo myDefaultFrameInfo = new FrameInfo();
 
   private final WindowAdapter myActivationListener;
-  private final DataManager myDataManager;
-  private final ActionManagerEx myActionManager;
 
   /**
    * invoked by reflection
    */
-  public WindowManagerImpl(DataManager dataManager, ActionManagerEx actionManager) {
-    myDataManager = dataManager;
-    myActionManager = actionManager;
-    if (myDataManager instanceof DataManagerImpl) {
-        ((DataManagerImpl)myDataManager).setWindowManager(this);
+  public WindowManagerImpl() {
+    DataManager dataManager = DataManager.getInstance();
+    if (dataManager instanceof DataManagerImpl) {
+      ((DataManagerImpl)dataManager).setWindowManager(this);
     }
 
     final Application application = ApplicationManager.getApplication();
@@ -434,7 +430,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   // this method is called when there is some opened project (IDE will not open Welcome Frame, but project)
   public IdeFrame showFrame(@Nullable Runnable beforeSetVisible) {
-    final IdeFrameImpl frame = new IdeFrameImpl(myActionManager, myDataManager);
+    final IdeFrameImpl frame = new IdeFrameImpl();
     myProjectToFrame.put(null, frame);
 
     Rectangle frameBounds = validateFrameBounds(myDefaultFrameInfo.getBounds());
@@ -471,7 +467,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     IdeFrameImpl frame = myProjectToFrame.remove(null);
     if (frame == null) {
-      frame = new IdeFrameImpl(myActionManager, myDataManager);
+      frame = new IdeFrameImpl();
     }
 
     final FrameInfo frameInfo = ProjectFrameBounds.getInstance(project).getRawFrameInfo();

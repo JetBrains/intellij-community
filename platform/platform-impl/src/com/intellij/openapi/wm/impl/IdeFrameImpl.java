@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
@@ -11,7 +10,6 @@ import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -63,7 +61,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
+public final class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
@@ -87,11 +85,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private boolean ready;
   private Image mySelfie;
 
-  public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager) {
+  public IdeFrameImpl() {
     super();
     updateTitle();
 
-    myRootPane = createRootPane(actionManager, dataManager);
+    myRootPane = new IdeRootPane(this);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
@@ -110,7 +108,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
-    size.height= Math.min(1000, size.height - 40);
+    size.height = Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
     setMinimumSize(new Dimension(340, getMinimumSize().height));
@@ -154,7 +152,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfoRt.isMac) setIconImage(null);
+    if (SystemInfoRt.isMac) {
+      setIconImage(null);
+    }
 
     MouseGestureManager.getInstance().add(this);
 
@@ -256,11 +256,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public void addNotify() {
     super.addNotify();
     PowerSupplyKit.checkPowerSupply();
-  }
-
-  @NotNull
-  private IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
-    return new IdeRootPane(actionManager, dataManager, this);
   }
 
   @NotNull

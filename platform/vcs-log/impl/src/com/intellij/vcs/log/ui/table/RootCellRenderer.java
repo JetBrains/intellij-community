@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.util.Objects;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 
@@ -47,37 +49,19 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    String text;
-    Color color;
-
-    if (value instanceof VirtualFile) {
-      VirtualFile root = (VirtualFile)value;
-      int readableRow = ScrollingUtil.getReadableRow(table, Math.round(table.getRowHeight() * 0.5f));
-      if (row < readableRow) {
-        text = "";
-      }
-      else if (row == 0 || !value.equals(table.getModel().getValueAt(row - 1, column)) || readableRow == row) {
-        text = root.getName();
-      }
-      else {
-        text = "";
-      }
-      color = VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
-    }
-    else {
-      text = "";
-      color = UIUtil.getTableBackground(isSelected);
-    }
-
     clear();
-    myColor = color;
-    Color background = ((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground();
-    assert background != null;
-    myBorderColor = background;
-    setForeground(UIUtil.getTableForeground(false));
+
+    VirtualFile root = (VirtualFile)value;
+
+    myColor = root == null ? UIUtil.getTableBackground(isSelected, hasFocus) :
+              VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
+    myBorderColor = ObjectUtils.assertNotNull(((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground());
+    setForeground(UIUtil.getTableForeground(false, hasFocus));
 
     if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
-      append(text);
+      if (isTextShown(table, value, row, column)) {
+        append(root == null ? "" : root.getName());
+      }
       isNarrow = false;
     }
     else {
@@ -86,6 +70,14 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
     }
 
     return this;
+  }
+
+  private static boolean isTextShown(JTable table, Object value, int row, int column) {
+    int readableRow = ScrollingUtil.getReadableRow(table, Math.round(table.getRowHeight() * 0.5f));
+    if (row < readableRow) {
+      return false;
+    }
+    return row == 0 || readableRow == row || !Objects.equals(value, table.getModel().getValueAt(row - 1, column));
   }
 
   @Override

@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtilRt.MEGABYTE;
 
-public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, UISettingsListener, Activatable {
+public final class MemoryUsagePanel extends JButton implements CustomStatusBarWidget, UISettingsListener, Activatable {
   public static final String WIDGET_ID = "Memory";
 
   private static final int INDENT = 6;

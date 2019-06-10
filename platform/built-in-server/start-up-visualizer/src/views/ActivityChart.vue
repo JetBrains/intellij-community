@@ -5,11 +5,10 @@
 
 <script lang="ts">
   import {Component, Prop, Watch} from "vue-property-decorator"
-  import {ActivityChartManager} from "./ActivityChartManager"
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
   import {BaseChartComponent} from "@/charts/BaseChartComponent"
-  import {ComponentChartManager} from "@/charts/ComponentChartManager"
   import {ChartManager} from "@/charts/ChartManager"
+  import {Notification} from "element-ui"
 
   @Component
   export default class ActivityChart extends BaseChartComponent<ChartManager> {
@@ -24,25 +23,28 @@
         this.chartManager = null
       }
 
-      this.chartManager = this.createChartManager()
       this.renderDataIfAvailable()
     }
 
     /** @override */
-    protected createChartManager(): ChartManager {
+    protected async createChartManager(): Promise<ChartManager> {
       const chartContainer = this.$refs.chartContainer as HTMLElement
       const type = this.type
       const descriptor = chartDescriptors.find(it => it.id === type)
       if (descriptor == null) {
-        throw new Error(`Unknown chart type: ${type}`)
+        const message = `Unknown chart type: ${type}`
+        Notification.error(message)
+        throw new Error(message)
       }
 
       const sourceNames = descriptor.sourceNames
-      if (type === "components") {
-        return new ComponentChartManager(chartContainer, sourceNames!!, descriptor)
+      if (descriptor.chartManagerProducer != null) {
+        // noinspection ES6RedundantAwait
+        return await descriptor.chartManagerProducer(chartContainer, sourceNames!!, descriptor)
       }
       else {
-        return new ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames, descriptor)
+        // noinspection ES6RedundantAwait
+        return new (await import(/* webpackMode: "eager" */ "@/charts/ActivityChartManager")).ActivityChartManager(chartContainer, sourceNames == null ? [type] : sourceNames, descriptor)
       }
     }
   }

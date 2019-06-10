@@ -9,9 +9,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
@@ -31,8 +33,10 @@ import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.MacOSApplicationProvider;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,74 +63,7 @@ public final class IdeaApplication {
   public static void initApplication(@NotNull String[] rawArgs) {
     Activity initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP);
     CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture = new CompletableFuture<>();
-    EventQueue.invokeLater(() -> {
-      String[] args = processProgramArguments(rawArgs);
-
-      ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
-
-      Activity createAppActivity = StartUpMeasurer.start("create app");
-      boolean headless = Main.isHeadless();
-      ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless,
-                                                Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION);
-      createAppActivity.end();
-
-      if (!headless) {
-        // todo investigate why in test mode dummy icon manager is not suitable
-        IconLoader.activate();
-        IconLoader.setStrictGlobally(app.isInternal());
-      }
-
-      starter.premain(args);
-
-      CompletableFuture<Void> registerComponentsFuture = pluginDescriptorsFuture
-        .thenCompose(pluginDescriptors -> {
-          CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
-            RegistryKeyBean.addKeysFromPlugins();
-            activity.end();
-
-            Activity busActivity = ParallelActivity.PREPARE_APP_INIT.start("add message bus listeners");
-            ApplicationImpl.registerMessageBusListeners(app, pluginDescriptors, false);
-            busActivity.end();
-          }, AppExecutorUtil.getAppExecutorService());
-
-          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
-          ((ApplicationImpl)ApplicationManager.getApplication()).registerComponents(pluginDescriptors);
-          activity.end();
-
-          return future;
-        });
-
-      if (!headless) {
-        SplashManager.showLicenseeInfoOnSplash(LOG);
-      }
-
-      // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
-      Activity placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
-      EventQueue.invokeLater(() -> {
-        placeOnEventQueueActivity.end();
-        StartupUtil.installExceptionHandler();
-        initAppActivity.end();
-        try {
-          Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
-          registerComponentsFuture.get();
-          activity.end();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new CompletionException(e);
-        }
-
-        app.load(null, SplashManager.getProgressIndicator());
-        if (!headless) {
-          addActivateAndWindowsCliListeners(app);
-        }
-        ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
-
-        if (PluginManagerCore.isRunningFromSources()) {
-          AppExecutorUtil.getAppExecutorService().execute(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
-        }
-      });
-    });
+    EventQueue.invokeLater(() -> executeInitAppInEdt(rawArgs, initAppActivity, pluginDescriptorsFuture));
 
     List<IdeaPluginDescriptor> plugins;
     try {
@@ -137,6 +74,100 @@ public final class IdeaApplication {
       return;
     }
     pluginDescriptorsFuture.complete(plugins);
+  }
+
+  private static void executeInitAppInEdt(@NotNull String[] rawArgs, @NotNull Activity initAppActivity,
+                                          @NotNull CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture) {
+    String[] args = processProgramArguments(rawArgs);
+
+    ApplicationStarter starter = createAppStarter(args, pluginDescriptorsFuture);
+
+    Activity createAppActivity = initAppActivity.startChild("create app");
+    boolean headless = Main.isHeadless();
+    ApplicationImpl app = new ApplicationImpl(Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, headless,
+                                              Main.isCommandLine(), ApplicationManagerEx.IDEA_APPLICATION);
+    createAppActivity.end();
+
+    if (!headless) {
+      // todo investigate why in test mode dummy icon manager is not suitable
+      IconLoader.activate();
+      IconLoader.setStrictGlobally(app.isInternal());
+
+      if (SystemInfoRt.isMac) {
+        Activity activity = initAppActivity.startChild("mac app init");
+        MacOSApplicationProvider.initApplication();
+        activity.end();
+      }
+    }
+
+    starter.premain(args);
+
+    List<Future<?>> futures = new ArrayList<>();
+    futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app));
+
+    if (!headless) {
+      if (SystemInfoRt.isMac) {
+        // ensure that TouchBarsManager is loaded before WelcomeFrame/project
+        futures.add(AppExecutorUtil.getAppExecutorService().submit(() -> {
+          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("mac touchbar");
+          //noinspection ResultOfMethodCallIgnored
+          TouchBarsManager.isTouchBarAvailable();
+          activity.end();
+        }));
+      }
+      SplashManager.showLicenseeInfoOnSplash(LOG);
+    }
+
+    // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    Activity placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE);
+    EventQueue.invokeLater(() -> {
+      placeOnEventQueueActivity.end();
+      StartupUtil.installExceptionHandler();
+      initAppActivity.end();
+      try {
+        Activity activity = StartUpMeasurer.start(Phases.WAIT_PLUGIN_INIT);
+        for (Future<?> future : futures) {
+          future.get();
+        }
+        activity.end();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new CompletionException(e);
+      }
+
+      app.load(null, SplashManager.getProgressIndicator());
+      if (!headless) {
+        addActivateAndWindowsCliListeners(app);
+      }
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> starter.main(args));
+
+      if (PluginManagerCore.isRunningFromSources()) {
+        AppExecutorUtil.getAppExecutorService().execute(() -> AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame()));
+      }
+    });
+  }
+
+  @NotNull
+  private static CompletableFuture<Void> registerRegistryAndMessageBusAndComponent(@NotNull CompletableFuture<List<IdeaPluginDescriptor>> pluginDescriptorsFuture,
+                                                                                   @NotNull ApplicationImpl app) {
+    return pluginDescriptorsFuture
+      .thenCompose(pluginDescriptors -> {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+          Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
+          RegistryKeyBean.addKeysFromPlugins();
+          activity.end();
+
+          Activity busActivity = ParallelActivity.PREPARE_APP_INIT.start("add message bus listeners");
+          ApplicationImpl.registerMessageBusListeners(app, pluginDescriptors, false);
+          busActivity.end();
+        }, AppExecutorUtil.getAppExecutorService());
+
+        Activity activity = ParallelActivity.PREPARE_APP_INIT.start("app component registration");
+        ((ApplicationImpl)ApplicationManager.getApplication()).registerComponents(pluginDescriptors);
+        activity.end();
+
+        return future;
+      });
   }
 
   private static void addActivateAndWindowsCliListeners(@NotNull ApplicationImpl app) {
@@ -187,19 +218,30 @@ public final class IdeaApplication {
   }
 
   @NotNull
-  private static ApplicationStarter createAppStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
+  private static ApplicationStarter createAppStarter(@NotNull String[] args, @NotNull Future<?> pluginsLoaded) {
     LOG.assertTrue(!ApplicationManagerEx.isAppLoaded());
-
     LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
-
     StartupUtil.patchSystem(LOG);
-    ApplicationStarter starter = getStarter(args, pluginsLoaded);
-
-    if (Main.isHeadless() && !starter.isHeadless()) {
-      Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
-      System.exit(Main.NO_GRAPHICS);
+    if (args.length <= 0) {
+      return new IdeStarter();
     }
-    return starter;
+
+    try {
+      pluginsLoaded.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new CompletionException(e);
+    }
+
+    ApplicationStarter starter = findStarter(args[0]);
+    if (starter != null) {
+      if (Main.isHeadless() && !starter.isHeadless()) {
+        Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
+        System.exit(Main.NO_GRAPHICS);
+      }
+      return starter;
+    }
+    return new IdeStarter();
   }
 
   /**
@@ -228,30 +270,6 @@ public final class IdeaApplication {
       arguments.add(arg);
     }
     return ArrayUtilRt.toStringArray(arguments);
-  }
-
-  @NotNull
-  private static ApplicationStarter getStarter(@NotNull String[] args, @Nullable Future<?> pluginsLoaded) {
-    if (args.length > 0) {
-      if (pluginsLoaded == null) {
-        PluginManagerCore.getPlugins();
-      }
-      else {
-        try {
-          pluginsLoaded.get();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new CompletionException(e);
-        }
-      }
-
-      ApplicationStarter starter = findStarter(args[0]);
-      if (starter != null) {
-        return starter;
-      }
-    }
-
-    return new IdeStarter();
   }
 
   @Nullable
@@ -293,7 +311,7 @@ public final class IdeaApplication {
         String filename = args[0];
         File file = new File(currentDirectory, filename);
 
-        if(file.exists()) {
+        if (file.exists()) {
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
           if (virtualFile != null) {
             int line = -1;
@@ -324,30 +342,26 @@ public final class IdeaApplication {
 
     @Override
     public void main(String[] args) {
-      Activity activity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
-      if (SystemInfoRt.isMac) {
-        MacOSApplicationProvider.initApplication();
-      }
+      Activity frameInitActivity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
 
-      SystemDock.updateMenu();
-
-      RecentProjectsManager.getInstance();  // ensures that RecentProjectsManager app listener is added
       GcPauseWatcher.Companion.getInstance();
 
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
+      Activity setWindowManagerActivity = frameInitActivity.startChild("set window manager");
       Application app = ApplicationManager.getApplication();
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
+      setWindowManagerActivity.end();
 
       List<String> commandLineArgs = args == null || args.length == 0 ? Collections.emptyList() : Arrays.asList(args);
 
       Ref<Boolean> willOpenProject = new Ref<>(Boolean.FALSE);
+      Activity appFrameCreatedActivity = frameInitActivity.startChild("call appFrameCreated");
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(commandLineArgs, willOpenProject);
-
-      PluginManagerCore.dumpPluginClassStatistics();
+      appFrameCreatedActivity.end();
 
       // Temporary check until the jre implementation has been checked and bundled
       if (Registry.is("ide.popup.enablePopupType")) {
@@ -356,29 +370,50 @@ public final class IdeaApplication {
 
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
-      Runnable beforeSetVisible = SplashManager.getHideTask();
-
-      IdeFrame frame = null;
-      if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
-        WelcomeFrame.showNow(beforeSetVisible);
+      if (!willOpenProject.get() || JetBrainsProtocolHandler.getCommand() != null) {
+        WelcomeFrame.showNow(SplashManager.getHideTask());
         lifecyclePublisher.welcomeScreenDisplayed();
       }
-      else {
-        frame = windowManager.showFrame(beforeSetVisible);
-      }
 
-      activity.end();
+      frameInitActivity.end();
 
-      IdeFrame finalFrame = frame;
+      AppExecutorUtil.getAppExecutorService().execute(() -> LifecycleUsageTriggerCollector.onIdeStart());
+
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
         // The appStarting callback in RecentProjectsManagerBase will reopen the last project
-        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine, finalFrame);
+        app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(PluginManager::reportPluginError);
+        EventQueue.invokeLater(PluginManager::reportPluginError);
+      });
 
-        LifecycleUsageTriggerCollector.onIdeStart();
+      if (!app.isHeadlessEnvironment()) {
+        postOpenUiTasks(app);
+      }
+    }
+
+    private static void postOpenUiTasks(@NotNull Application app) {
+      if (SystemInfoRt.isMac) {
+        AppExecutorUtil.getAppExecutorService().execute(() -> {
+          TouchBarsManager.onApplicationInitialized();
+          CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
+          if (customActionSchema != null) {
+            customActionSchema.touchBarAvailable(TouchBarsManager.isTouchBarAvailable());
+          }
+        });
+      }
+
+      app.invokeLater(() -> {
+        Activity updateSystemDockActivity = StartUpMeasurer.start("system dock menu");
+        SystemDock.updateMenu();
+        updateSystemDockActivity.end();
+      });
+      app.invokeLater(() -> {
+        GeneralSettings generalSettings = GeneralSettings.getInstance();
+        generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app,
+                                                  e -> ScreenReader.setActive((Boolean)e.getNewValue()));
+        ScreenReader.setActive(generalSettings.isSupportScreenReaders());
       });
     }
   }

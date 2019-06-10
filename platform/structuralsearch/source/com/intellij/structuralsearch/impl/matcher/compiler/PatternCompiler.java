@@ -571,7 +571,12 @@ public class PatternCompiler {
     }
 
     final GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
-    compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
+    try {
+      compilingVisitor.compile(elements.toArray(PsiElement.EMPTY_ARRAY), context);
+    }
+    catch (MalformedPatternException e) {
+      if (checkForErrors) throw e;
+    }
     new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
   }

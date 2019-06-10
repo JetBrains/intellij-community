@@ -97,7 +97,7 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
             else {
               commitsNumber = filteredCommitsNumber + " of " + updatedCommitsNumber;
             }
-            String actionText = String.format("View %s %s updated during the push", commitsNumber,
+            String actionText = String.format("View %s %s received during the push", commitsNumber,
                                               pluralize("commit", updatedCommitsNumber));
             notification.addAction(NotificationAction.createSimple(actionText, viewCommits));
             return notification;

@@ -4,8 +4,11 @@ package com.intellij.internal.statistic.eventLog.fus
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogWrapper
 
+private const val SETTINGS = "ui.settings"
 private const val DIALOGS = "ui.dialogs"
 
 class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
@@ -18,13 +21,29 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
   private val CLOSE_CANCEL_DIALOG_DATA = FeatureUsageData().addData("type", "close").addData("code", DialogWrapper.CANCEL_EXIT_CODE)
   private val CLOSE_CUSTOM_DIALOG_DATA = FeatureUsageData().addData("type", "close").addData("code", DialogWrapper.NEXT_USER_EXIT_CODE)
 
-  override fun logSelectConfigurable(name: String, context: Class<*>) {
+  override fun logSelectConfigurable(configurable: Configurable) {
+    if (FeatureUsageLogger.isEnabled()) {
+      logSettingsEvent(configurable, SELECT_CONFIGURABLE_DATA)
+    }
   }
 
-  override fun logApplyConfigurable(name: String, context: Class<*>) {
+  override fun logApplyConfigurable(configurable: Configurable) {
+    if (FeatureUsageLogger.isEnabled()) {
+      logSettingsEvent(configurable, APPLY_CONFIGURABLE_DATA)
+    }
   }
 
-  override fun logResetConfigurable(name: String, context: Class<*>) {
+  override fun logResetConfigurable(configurable: Configurable) {
+    if (FeatureUsageLogger.isEnabled()) {
+      logSettingsEvent(configurable, RESET_CONFIGURABLE_DATA)
+    }
+  }
+
+  private fun logSettingsEvent(configurable: Configurable, data: FeatureUsageData) {
+    val base: Any? = if (configurable is ConfigurableWrapper) configurable.configurable else configurable
+    base?.let {
+      FUCounterUsageLogger.getInstance().logEvent(SETTINGS, base::class.java.name, data)
+    }
   }
 
   override fun logShowDialog(name: String, context: Class<*>) {

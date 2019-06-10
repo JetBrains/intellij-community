@@ -677,10 +677,13 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof InputEvent)
+    if (e instanceof InputEvent && SystemInfoRt.isMac) {
       TouchBarsManager.onInputEvent((InputEvent)e);
+    }
 
-    if (dispatchByCustomDispatchers(e)) return;
+    if (dispatchByCustomDispatchers(e)) {
+      return;
+    }
 
     if (e instanceof InputMethodEvent) {
       if (SystemInfoRt.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {

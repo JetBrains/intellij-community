@@ -13,35 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.branch;
+package git4idea.branch
 
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import git4idea.GitBranch
+import git4idea.GitLocalBranch
 
 /**
  * Holder for Git branch and the branch it is "connected" with. It is tracked branch or so called "matched" branch.
- *
- * @author Kirill Likhodedov
  */
-public class GitBranchPair {
-  private @NotNull final GitLocalBranch myBranch;
-  private @Nullable final GitRemoteBranch myDestBranch;
-
-  public GitBranchPair(@NotNull GitLocalBranch branch, @Nullable GitRemoteBranch destination) {
-    myBranch = branch;
-    myDestBranch = destination;
-  }
-
-  @NotNull
-  public GitLocalBranch getBranch() {
-    return myBranch;
-  }
-
-  @Nullable
-  public GitRemoteBranch getDest() {
-    return myDestBranch;
-  }
-
-}
+data class GitBranchPair(val source: GitLocalBranch, val target: GitBranch)

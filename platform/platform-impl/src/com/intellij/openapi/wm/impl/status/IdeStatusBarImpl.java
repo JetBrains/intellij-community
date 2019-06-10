@@ -6,6 +6,7 @@ import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -522,6 +523,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof MouseEvent) {
+      if (myRightPanel == null) {
+        return false;
+      }
       Component component = ((MouseEvent)e).getComponent();
       if (component == null) {
         return false;
@@ -731,6 +735,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public IdeFrame getFrame() {
     return myFrame;
+  }
+
+  @Nullable
+  @Override
+  public Project getProject() {
+    return myFrame == null ? null : myFrame.getProject();
   }
 
   @Override
