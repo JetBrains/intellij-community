@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
@@ -163,7 +162,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     }
 
   var showMainMenu: Boolean
-    get() = !SystemInfoRt.isWindows || (SystemInfoRt.isWindows && state.showMainMenu)
+    get() = !SystemInfo.isWindows || (SystemInfo.isWindows && state.showMainMenu)
     set(value) {
       state.showMainMenu = value
     }
@@ -505,7 +504,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       if (readScale == null || readScale <= 0) {
         verbose("Reset font to default")
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfoRt.isMac) size = UISettingsState.defFontSize
+        if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
       }
       else {
         var oldDefFontScale = defFontScale

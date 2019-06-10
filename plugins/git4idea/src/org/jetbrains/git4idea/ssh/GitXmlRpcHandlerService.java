@@ -3,7 +3,7 @@ package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -71,7 +71,7 @@ public abstract class GitXmlRpcHandlerService<T> {
 
   @NotNull
   public File getScriptPath() throws IOException {
-    return getScriptPath(SystemInfoRt.isWindows);
+    return getScriptPath(SystemInfo.isWindows);
   }
 
   /**

@@ -484,7 +484,7 @@ public abstract class DialogWrapper {
       addHelpToLeftSide = true;
     }
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       Action macOtherAction = ContainerUtil.find(actions, MacOtherAction.class::isInstance);
       if (macOtherAction != null) {
         leftSideActions.add(macOtherAction);
@@ -762,7 +762,7 @@ public abstract class DialogWrapper {
       button = new JButton(action);
     }
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
@@ -1174,7 +1174,7 @@ public abstract class DialogWrapper {
     if (myPreferredFocusedComponentFromPanel != null) {
       return myPreferredFocusedComponentFromPanel;
     }
-    return SystemInfoRt.isMac ? myPreferredFocusedComponent : null;
+    return SystemInfo.isMac ? myPreferredFocusedComponent : null;
   }
 
   /**
@@ -1339,7 +1339,7 @@ public abstract class DialogWrapper {
     if (!postponeValidation()) {
       startTrackingValidation();
     }
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       installEnterHook(root, myDisposable);
     }
     myErrorTextAlarm.setActivationComponent(root);

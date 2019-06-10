@@ -536,7 +536,7 @@ public class MavenUtil {
       }
     }
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       File home = fromBrew();
       if (home != null) {
         return home;
@@ -546,7 +546,7 @@ public class MavenUtil {
         return home;
       }
     }
-    else if (SystemInfoRt.isLinux) {
+    else if (SystemInfo.isLinux) {
       File home = new File("/usr/share/maven");
       if (isValidMavenHome(home)) {
         return home;

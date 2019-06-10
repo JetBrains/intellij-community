@@ -2,7 +2,7 @@
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -144,13 +144,13 @@ public class FirefoxUtil {
 
   private static File[] getProfilesDirs() {
     final String userHome = SystemProperties.getUserHome();
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return new File[] {
         new File(userHome, "Library" + File.separator + "Mozilla" + File.separator + "Firefox"),
         new File(userHome, "Library" + File.separator + "Application Support" + File.separator + "Firefox"),
       };
     }
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       return new File[] {new File(userHome, ".mozilla" + File.separator + "firefox")};
     }
 

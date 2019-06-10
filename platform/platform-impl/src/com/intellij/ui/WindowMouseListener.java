@@ -3,7 +3,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.progress.util.PotemkinProgress;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.FieldAccessor;
 import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.UIUtil;
@@ -232,7 +232,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
 
     public ToolkitListenerHelper(WindowMouseListener l) {
       myListener =l;
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         try {
           classWComponentPeer = Class.forName("sun.awt.windows.WComponentPeer");
           reshapeInvocator = new MethodInvocator(classWComponentPeer, "reshapeNoCheck",

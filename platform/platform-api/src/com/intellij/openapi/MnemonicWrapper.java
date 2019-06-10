@@ -3,7 +3,7 @@ package com.intellij.openapi;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 
@@ -77,7 +77,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       int code = disabled ? KeyEvent.VK_UNDEFINED : myCode;
       if (code != getMnemonicCode()) setMnemonicCode(code);
       // update input map to support Alt-based mnemonics
-      if (SystemInfoRt.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+      if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
         InputMap map = myComponent.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         if (map != null) updateInputMap(map, code);
       }

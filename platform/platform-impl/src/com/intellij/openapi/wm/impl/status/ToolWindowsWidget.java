@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -147,7 +147,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         final Dimension size = list.getPreferredSize();
         final JComponent c = this;
         final Insets padding = UIUtil.getListViewportPadding();
-        final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfoRt.isMac
+        final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac
                                                                                                                          ? 2 : 0)));
 
         if (popup != null && popup.isVisible()) {

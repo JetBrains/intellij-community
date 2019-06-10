@@ -3,7 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -46,7 +46,7 @@ public class PermanentInstallationID {
     }
 
     // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       installationId = syncWithSharedFile("PermanentUserId", installationId, prefs, INSTALLATION_ID_KEY);
     }
 

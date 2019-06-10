@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.Gray;
@@ -246,7 +246,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 

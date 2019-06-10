@@ -152,7 +152,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       setIconImage(null);
     }
 
@@ -261,7 +261,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   @NotNull
   @Override
   public Insets getInsets() {
-    return SystemInfoRt.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
+    return SystemInfo.isMac && isInFullScreen() ? JBUI.emptyInsets() : super.getInsets();
   }
 
   @Override
@@ -358,7 +358,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   public static @Nullable String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfoRt.isWindows ? "(Administrator)" : "(ROOT)";
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "(Administrator)" : "(ROOT)";
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
@@ -379,7 +379,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
       }
-      else if (!SystemInfoRt.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
+      else if (!SystemInfo.isMac && !SystemInfo.isGNOME || builder.isEmpty()) {
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       builder.append(getSuperUserSuffix(), " ");
@@ -550,7 +550,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   @Override
   public void dispose() {
-    if (SystemInfoRt.isMac && isInFullScreen()) {
+    if (SystemInfo.isMac && isInFullScreen()) {
       ((MacMainFrameDecorator)myFrameDecorator).toggleFullScreenNow();
     }
     if (isTemporaryDisposed()) {
@@ -675,7 +675,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   private boolean temporaryFixForIdea156004(final boolean state) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       try {
         Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
         modalBlockerField.setAccessible(true);

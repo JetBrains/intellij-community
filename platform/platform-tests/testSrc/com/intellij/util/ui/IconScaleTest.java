@@ -4,7 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.ui.DeferredIconImpl;
@@ -53,7 +53,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
 
   @Test
   public void testJreHiDpi() throws MalformedURLException {
-    assumeTrue(SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfoRt.isLinux);
+    assumeTrue(SystemInfo.IS_AT_LEAST_JAVA9 || !SystemInfo.isLinux);
 
     overrideJreHiDPIEnabled(true);
     try {

@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -724,7 +724,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testUpperCaseEnvPropertiesOnWindows() {
-    if (!SystemInfoRt.isWindows) return;
+    if (!SystemInfo.isWindows) return;
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -740,7 +740,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testCaseInsencitiveOnWindows() throws Exception {
-    if (!SystemInfoRt.isWindows) return;
+    if (!SystemInfo.isWindows) return;
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -752,7 +752,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
   public void testNotUpperCaseEnvPropertiesOnWindows() throws Exception {
-    if (!SystemInfoRt.isWindows) return;
+    if (!SystemInfo.isWindows) return;
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

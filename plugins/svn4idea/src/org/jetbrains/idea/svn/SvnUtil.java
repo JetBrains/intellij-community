@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,17 +68,17 @@ import static java.util.Collections.emptyList;
 
 public class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME =
-    SystemInfoRt.isWindows && EnvironmentUtil.getValue("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
+    SystemInfo.isWindows && EnvironmentUtil.getValue("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
 
   public static final AtomicNotNullLazyValue<Path> USER_CONFIGURATION_PATH = createValue(
-    () -> SystemInfoRt.isWindows
+    () -> SystemInfo.isWindows
           ? Paths.get(notNull(EnvironmentUtil.getValue("APPDATA")), "Subversion")
           : Paths.get(getUserHome(), ".subversion"));
   public static final AtomicNotNullLazyValue<Path> SYSTEM_CONFIGURATION_PATH = createValue(
-    () -> SystemInfoRt.isWindows
+    () -> SystemInfo.isWindows
           ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
           : Paths.get("/etc/subversion"));
 

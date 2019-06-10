@@ -1030,7 +1030,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
                                         @Nullable Runnable backAction) {
     bottomPanel.removeAll();
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       addCancelButton(bottomPanel, backAction);
       addActionButton(bottomPanel, actionWithPanel, currentPanel);
     }

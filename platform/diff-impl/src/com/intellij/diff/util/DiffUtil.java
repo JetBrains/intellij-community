@@ -424,7 +424,7 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return "Preferences | Tools | Diff & Merge";
     }
     return "Settings | Tools | Diff & Merge";
@@ -1509,7 +1509,7 @@ public class DiffUtil {
 
   private static boolean canBeHiddenBehind(@NotNull Window window) {
     if (!(window instanceof Frame)) return false;
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       if (window instanceof IdeFrame) {
         // we can't move focus to full-screen main frame, as it will be hidden behind other frame windows
         Project project = ((IdeFrame)window).getProject();

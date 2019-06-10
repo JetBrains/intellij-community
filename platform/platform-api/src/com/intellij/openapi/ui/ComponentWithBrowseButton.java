@@ -14,7 +14,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
@@ -40,7 +40,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(@NotNull Comp component, @Nullable ActionListener browseActionListener) {
-    super(new BorderLayout(SystemInfoRt.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
+    super(new BorderLayout(SystemInfo.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
 
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component

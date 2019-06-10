@@ -871,7 +871,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
     myRequestorComponent = owner;
 
     boolean forcedDialog = myMayBeParent
-      || SystemInfoRt.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
+      || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner != null && myOwner.isShowing();
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
@@ -1182,7 +1182,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(false);
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
   }

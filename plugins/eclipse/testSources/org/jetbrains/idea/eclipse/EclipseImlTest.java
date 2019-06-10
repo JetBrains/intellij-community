@@ -17,7 +17,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,7 +57,7 @@ public class EclipseImlTest extends JavaProjectTestCase {
 
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBasePath());
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
 

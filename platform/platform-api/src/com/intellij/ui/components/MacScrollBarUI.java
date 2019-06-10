@@ -3,7 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.ComponentUtil;
@@ -201,7 +201,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   private static <T> T callMac(NotNullProducer<? extends T> producer) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       NSAutoreleasePool pool = new NSAutoreleasePool();
       try {
         return producer.produce();

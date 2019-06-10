@@ -2,7 +2,7 @@
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 
 import java.awt.*;
 
@@ -24,7 +24,7 @@ public class Patches {
    * The bug is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
    * for up to 10 seconds if clipboard owner is not responding.
    */
-  public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfoRt.isUnix;
+  public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isUnix;
 
   /**
    * A huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
@@ -80,13 +80,13 @@ public class Patches {
    * This doesn't work for some fonts, which don't use recognizable style suffixes in their names.
    * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.
    */
-  public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfoRt.isMac;
+  public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfo.isMac;
 
   /**
    * Older JDK versions could mistakenly use derived italics font, when genuine italic font was available in the system.
    * The issue was fixed in JDK 1.8.0_60 as part of <a href="https://bugs.openjdk.java.net/browse/JDK-8064833">JDK-8064833</a>.
    */
-  public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfoRt.isMac && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
+  public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
    * On macOS, font ligatures are not supported for natively loaded fonts, a font needs to be loaded explicitly by JDK.
@@ -94,7 +94,7 @@ public class Patches {
   public static final boolean JDK_BUG_ID_7162125;
   static {
     boolean value;
-    if (!SystemInfoRt.isMac || SystemInfo.IS_AT_LEAST_JAVA9) value = false;
+    if (!SystemInfo.isMac || SystemInfo.IS_AT_LEAST_JAVA9) value = false;
     else if (!SystemInfo.isJetBrainsJvm) value = true;
     else {
       try {
@@ -126,7 +126,7 @@ public class Patches {
    * Since 8u102, AWT supports Shift-scroll on all platforms (before, it only worked on macOS).
    * Ultimately fixed by <a href="https://bugs.openjdk.java.net/browse/JDK-8147994">JDK-8147994</a>.
    */
-  public static final boolean JDK_BUG_ID_8147994 = !(SystemInfoRt.isMac || SystemInfo.isJavaVersionAtLeast(8, 0, 102));
+  public static final boolean JDK_BUG_ID_8147994 = !(SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast(8, 0, 102));
 
   /**
    * https://bugs.openjdk.java.net/browse/JDK-8220231

@@ -3,7 +3,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.intellij.lang.annotations.MagicConstant;
 import org.junit.Assert;
 
@@ -149,7 +149,7 @@ public class EditorMouseFixture {
   }
 
   public EditorMouseFixture ctrl() {
-    myModifiers |= SystemInfoRt.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
+    myModifiers |= SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
     return this;
   }
 

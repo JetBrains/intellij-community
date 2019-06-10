@@ -13,7 +13,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -262,7 +262,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @NotNull
   public String decode(@NotNull String text) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       text = Normalizer.normalize(text, Normalizer.Form.NFC);
     }
 

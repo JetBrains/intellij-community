@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -78,7 +78,7 @@ public class ProjectTemplateList extends JPanel {
       String description = template.getDescription();
       if (StringUtil.isNotEmpty(description)) {
         description = "<html><body><font " +
-                      (SystemInfoRt.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + description +
+                      (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + description +
                       "</font></body></html>";
         myDescriptionPane.setText(description);
       }

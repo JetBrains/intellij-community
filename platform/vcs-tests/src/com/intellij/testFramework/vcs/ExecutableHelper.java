@@ -3,7 +3,7 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class ExecutableHelper {
     if (exec != null) {
       return exec;
     }
-    File fileExec = PathEnvironmentVariableUtil.findInPath(SystemInfoRt.isWindows ? winExec : unixExec);
+    File fileExec = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? winExec : unixExec);
     if (fileExec != null) {
       return fileExec.getAbsolutePath();
     }

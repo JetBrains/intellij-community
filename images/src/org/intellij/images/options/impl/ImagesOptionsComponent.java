@@ -21,7 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,7 +79,7 @@ final class ImagesOptionsComponent {
 
   ImagesOptionsComponent() {
 
-    wheelZooming.setText(ImagesBundle.message("enable.mousewheel.zooming", SystemInfoRt.isMac ? "Cmd" : "Ctrl"));
+    wheelZooming.setText(ImagesBundle.message("enable.mousewheel.zooming", SystemInfo.isMac ? "Cmd" : "Ctrl"));
 
     // Setup labels
     gridLineZoomFactorLabel.setLabelFor(gridLineZoomFactor);
@@ -250,7 +250,7 @@ final class ImagesOptionsComponent {
         final String path = FileUtil.toSystemIndependentName(externalEditorPath.getText());
         return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       });
-      FileChooserDescriptor fileDescriptor = new FileChooserDescriptor(true, SystemInfoRt.isMac, false, false, false, false);
+      FileChooserDescriptor fileDescriptor = new FileChooserDescriptor(true, SystemInfo.isMac, false, false, false, false);
       fileDescriptor.setShowFileSystemRoots(true);
       fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
       fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));

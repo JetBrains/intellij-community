@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -168,7 +168,7 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
       if (root != null) {
         File libRoot = new File(root, "lib");
         File[] versionRoots = libRoot.listFiles();
-        if (versionRoots != null && !SystemInfoRt.isWindows) {
+        if (versionRoots != null && !SystemInfo.isWindows) {
           final File versionRoot = ContainerUtil.find(versionRoots, file -> file.isDirectory() && file.getName().startsWith("python"));
           if (versionRoot != null) {
             libRoot = versionRoot;

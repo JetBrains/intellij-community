@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -583,7 +583,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   protected void processMouseEvent(MouseEvent e) {
     MouseEvent e2 = e;
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 

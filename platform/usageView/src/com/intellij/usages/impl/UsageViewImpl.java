@@ -1521,7 +1521,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void addButtonToLowerPane(@NotNull Action action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int index = myButtonPanel.getComponentCount();
-    if (!SystemInfoRt.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
+    if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonAction(index, action);
     Object o = action.getValue(Action.ACCELERATOR_KEY);
     if (o instanceof KeyStroke) {

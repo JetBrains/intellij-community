@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -22,7 +22,7 @@ public class Locations {
     final String relativeResourcePath = getRelativeResourcePath();
 
     File dataDir = null;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
       if (appdata != null) {
         dataDir = new File(appdata, relativeResourcePath);
@@ -31,13 +31,13 @@ public class Locations {
     else {
       final String userHome = System.getProperty("user.home");
       if (userHome != null) {
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           final File dataRoot = new File(userHome, "/Library/Application Support");
           if (dataRoot.exists()) {
             dataDir = new File(dataRoot, relativeResourcePath);
           }
         }
-        else if (SystemInfoRt.isUnix) {
+        else if (SystemInfo.isUnix) {
           final String dataHome = System.getenv("XDG_DATA_HOME");
           final File dataRoot = dataHome == null ? new File(userHome, ".local/share") : new File(dataHome);
           if (dataRoot.exists()) {

@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.sun.jna.platform.mac.XAttrUtil;
@@ -43,7 +43,7 @@ public class JavadocQuarantineStatusCleaner {
   private static final String QUARANTINE_ATTRIBUTE = "com.apple.quarantine";
 
   public static void cleanIfNeeded(@NotNull VirtualFile... docFolders) {
-    if (docFolders.length > 0 && SystemInfoRt.isMac) {
+    if (docFolders.length > 0 && SystemInfo.isMac) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<String> quarantined = Stream.of(docFolders)
           .filter(f -> f.isInLocalFileSystem() && f.isDirectory() && XAttrUtil.getXAttr(f.getPath(), QUARANTINE_ATTRIBUTE) != null)

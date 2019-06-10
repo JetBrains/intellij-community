@@ -468,7 +468,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     final Ref<Component> originalFocusOwner = new Ref<>();
     final Ref<ActionCallback> proxyFocusRequest = new Ref<>(ActionCallback.DONE);
 
-    boolean mnemonicsFix = myDialogMode && SystemInfoRt.isMac && Registry.is("ide.mac.inplaceDialogMnemonicsFix");
+    boolean mnemonicsFix = myDialogMode && SystemInfo.isMac && Registry.is("ide.mac.inplaceDialogMnemonicsFix");
     if (mnemonicsFix) {
       final IdeGlassPaneEx glassPane = (IdeGlassPaneEx)IdeGlassPaneUtil.find(myLayeredPane);
       assert glassPane != null;

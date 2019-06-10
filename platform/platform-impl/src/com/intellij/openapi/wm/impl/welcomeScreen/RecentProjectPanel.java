@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
@@ -467,7 +467,7 @@ public class RecentProjectPanel extends JPanel {
     protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
       super(new VerticalFlowLayout());
       myShortener = pathShortener;
-      myPath.setFont(JBUI.Fonts.label(SystemInfoRt.isMac ? 10f : 11f));
+      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }

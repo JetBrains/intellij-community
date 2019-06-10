@@ -2,7 +2,7 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -35,11 +35,11 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   @Nullable
   protected String getSystemPrefix() {
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       return super.getSystemPrefix();
-    } else if (SystemInfoRt.isWindows) {
+    } else if (SystemInfo.isWindows) {
       return UIUtil.isUnderWin10LookAndFeel() ? null : getPrefix() + "_windows";
-    } else if (SystemInfoRt.isMac) {
+    } else if (SystemInfo.isMac) {
       return UIUtil.isUnderDefaultMacTheme() ? getPrefix() + "_mac" : null;
     } else {
       return null;

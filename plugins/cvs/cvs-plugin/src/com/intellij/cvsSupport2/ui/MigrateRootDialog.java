@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +77,7 @@ public class MigrateRootDialog extends DialogWrapper {
       }
     });
     myCvsConfigurationPanel = new SelectCvsConfigurationPanel(project);
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       myCvsConfigurationPanel.setBorder(new EmptyBorder(2, 3, 2, 0));
     }
     myListener = new ListSelectionListener() {

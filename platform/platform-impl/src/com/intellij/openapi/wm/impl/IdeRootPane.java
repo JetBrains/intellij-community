@@ -17,7 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -73,7 +73,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   private final boolean myDecoratedMenu;
 
   IdeRootPane(@NotNull IdeFrame frame) {
-    if (SystemInfoRt.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
+    if (SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && frame instanceof IdeFrameImpl) {
       //setUI(DarculaRootPaneUI.createUI(this));
       try {
         setWindowDecorationStyle(FRAME);

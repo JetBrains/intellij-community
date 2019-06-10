@@ -6,7 +6,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,7 +80,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static VirtualFile getCondaDirectory(@NotNull Sdk sdk) {
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return null;
-    if (SystemInfoRt.isWindows) return homeDirectory.getParent();
+    if (SystemInfo.isWindows) return homeDirectory.getParent();
     return homeDirectory.getParent().getParent();
   }
 
@@ -192,7 +192,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     if (homeDirectory == null) {
       return null;
     }
-    final VirtualFile condaParent = SystemInfoRt.isWindows ? homeDirectory.getParent()
+    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
                                                            : homeDirectory.getParent().getParent();
     return condaParent.findChild("conda-meta");
   }

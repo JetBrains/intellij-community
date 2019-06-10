@@ -11,7 +11,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,7 +68,7 @@ public final class ConfigImportHelper {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = getConfigImportSettings();
-    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, SystemInfoRt.isMac, true);
+    List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir, SystemInfo.isMac, true);
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -235,7 +235,7 @@ public final class ConfigImportHelper {
       return pair(config, null);
     }
 
-    if (Files.isDirectory(selectedDir.resolve(SystemInfoRt.isMac ? CONTENTS : BIN))) {
+    if (Files.isDirectory(selectedDir.resolve(SystemInfo.isMac ? CONTENTS : BIN))) {
       Path configDir = getSettingsPath(selectedDir, PathManager.PROPERTY_CONFIG_PATH, PathManager::getDefaultConfigPathFor);
       if (configDir != null && isConfigDirectory(configDir)) {
         return pair(configDir, selectedDir);
@@ -248,7 +248,7 @@ public final class ConfigImportHelper {
   @Nullable
   private static Path getSettingsPath(@NotNull Path ideHome, String propertyName, Function<? super String, String> pathBySelector) {
     List<Path> files = new ArrayList<>();
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       files.add(ideHome.resolve(CONTENTS + '/' + BIN + '/' + PathManager.PROPERTIES_FILE_NAME));
       files.add(ideHome.resolve(CONTENTS + '/' + PLIST));
     }
@@ -378,13 +378,13 @@ public final class ConfigImportHelper {
       // the filter prevents web token reuse and accidental overwrite of files already created by this instance (port/lock/tokens etc.)
       FileUtil.copyDir(oldConfigDir.toFile(), newConfigDir.toFile(), path -> !blockImport(path.toPath(), oldConfigDir, newConfigDir));
 
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
       }
 
       // on macOS, plugins are normally not under the config directory
       Path oldPluginsDir = oldConfigDir.resolve(PLUGINS);
-      if (SystemInfoRt.isMac && !Files.isDirectory(oldPluginsDir)) {
+      if (SystemInfo.isMac && !Files.isDirectory(oldPluginsDir)) {
         oldPluginsDir = null;
         if (oldIdeHome != null) {
           oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
@@ -405,7 +405,7 @@ public final class ConfigImportHelper {
           oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
         }
         if (oldSystemDir == null) {
-          String selector = SystemInfoRt.isMac ? oldConfigDir.getFileName().toString() : StringUtil.trimLeading(oldConfigDir.getParent().getFileName().toString(), '.');
+          String selector = SystemInfo.isMac ? oldConfigDir.getFileName().toString() : StringUtil.trimLeading(oldConfigDir.getParent().getFileName().toString(), '.');
           oldSystemDir = Paths.get(PathManager.getDefaultSystemPathFor(selector));
         }
         Path script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath

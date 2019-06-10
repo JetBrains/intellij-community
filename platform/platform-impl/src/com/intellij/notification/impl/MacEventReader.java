@@ -7,7 +7,7 @@ import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ class MacEventReader {
   private static ExecutorService ourService = null;
 
   MacEventReader() {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, ourNotificationAdapter);
     }
   }

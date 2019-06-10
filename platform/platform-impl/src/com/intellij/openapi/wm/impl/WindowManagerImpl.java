@@ -16,7 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -695,11 +695,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public boolean isFullScreenSupportedInCurrentOS() {
-    return SystemInfo.isMacOSLion || SystemInfoRt.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
+    return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
   }
 
   static boolean isFloatingMenuBarSupported() {
-    return !SystemInfoRt.isMac && getInstance().isFullScreenSupportedInCurrentOS();
+    return !SystemInfo.isMac && getInstance().isFullScreenSupportedInCurrentOS();
   }
 
   /**
@@ -751,8 +751,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     private static boolean shouldConvert() {
-      if (SystemInfoRt.isLinux || // JRE-managed HiDPI mode is not yet implemented (pending)
-          SystemInfoRt.isMac)     // JRE-managed HiDPI mode is permanent
+      if (SystemInfo.isLinux || // JRE-managed HiDPI mode is not yet implemented (pending)
+          SystemInfo.isMac)     // JRE-managed HiDPI mode is permanent
       {
         return false;
       }

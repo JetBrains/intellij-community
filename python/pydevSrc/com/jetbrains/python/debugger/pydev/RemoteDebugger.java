@@ -12,7 +12,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -127,7 +127,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public String handshake() throws PyDebuggerException {
-    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfoRt.isUnix ? "UNIX" : "WIN", myHandshakeTimeout);
+    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN", myHandshakeTimeout);
     command.execute();
     String version = command.getRemoteVersion();
     if (version != null) {

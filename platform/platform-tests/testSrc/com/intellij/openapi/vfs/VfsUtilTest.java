@@ -15,7 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -143,7 +143,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testToUri() {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       assertEquals("file:///asd", VfsUtil.toUri(new File("/asd")).toASCIIString());
       assertEquals("file:///asd%20/sd", VfsUtil.toUri(new File("/asd /sd")).toASCIIString());
     }
@@ -167,7 +167,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNotNull(uri);
     assertEquals("someone@example.com", uri.getSchemeSpecificPart());
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       uri = VfsUtil.toUri("file://C:/p");
       assertNotNull(uri);
       assertEquals("file", uri.getScheme());

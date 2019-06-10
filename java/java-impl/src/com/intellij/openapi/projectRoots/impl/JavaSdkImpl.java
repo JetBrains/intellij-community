@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -47,7 +47,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
-  private static final String VM_EXE_NAME = SystemInfoRt.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
+  private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
   private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
@@ -200,7 +200,7 @@ public class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public String adjustSelectedSdkHome(@NotNull String homePath) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       File home = new File(homePath, "/Home");
       if (home.exists()) return home.getPath();
 
@@ -532,7 +532,7 @@ public class JavaSdkImpl extends JavaSdk {
     if (apiDocs != null) {
       sdkModificator.addRoot(apiDocs, docRootType);
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");
       if (commonDocs == null) commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
       if (commonDocs == null) commonDocs = findInJar(new File(jdkHome, "docs.jar"), "docs/api");

@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -256,7 +256,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarFont() {
-      return SystemInfoRt.isMac ? smallFont() : JBFont.label();
+      return SystemInfo.isMac ? smallFont() : JBFont.label();
     }
 
     @NotNull

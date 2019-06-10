@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.ide.Sizeable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,7 @@ public class TextBlockTransferable implements Transferable, Sizeable {
   @NotNull
   private static String cleanFromNullsIfNeeded(@NotNull String text) {
     // Clipboard on Windows and Linux works with null-terminated strings, on Mac nulls are not treated in a special way.
-    return SystemInfoRt.isMac ? text : text.replace('\000', ' ');
+    return SystemInfo.isMac ? text : text.replace('\000', ' ');
   }
 
   @Override

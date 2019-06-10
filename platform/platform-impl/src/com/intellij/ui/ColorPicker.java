@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.colorpicker.ColorPickerBuilder;
@@ -1074,7 +1074,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       Dialog picker = super.show();
       myTimer.start();
       // it seems like it's the lowest value for opacity for mouse events to be processed correctly
-      WindowManager.getInstance().setAlphaModeRatio(picker, SystemInfoRt.isMac ? 0.95f : 0.99f);
+      WindowManager.getInstance().setAlphaModeRatio(picker, SystemInfo.isMac ? 0.95f : 0.99f);
 
       Area area = new Area(new Rectangle(0, 0, DIALOG_SIZE, DIALOG_SIZE));
       area.subtract(new Area(new Rectangle(SIZE / 2 - 1, SIZE / 2 - 1, 3, 3)));

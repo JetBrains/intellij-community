@@ -19,7 +19,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -111,11 +111,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         if (myBuilder == null) return;
         myBuilder.buildRoot();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
 
     myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
     myTable.getInputMap(WHEN_FOCUSED).put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
+      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
     myTable.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -123,7 +123,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       }
     });
     myTable.getInputMap(WHEN_FOCUSED).put(
-      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_GO_UP);
+      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_GO_UP);
     myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
     myTable.getActionMap().put(ACTION_GO_UP, new AbstractAction() {
       @Override

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -63,7 +63,7 @@ class WinExeInstallerBuilder {
 
   void buildInstaller(String winDistPath, String additionalDirectoryToInclude, String secondJreSuffix = null, boolean jre32BitVersionSupported) {
 
-    if (!SystemInfoRt.isWindows && !SystemInfoRt.isLinux) {
+    if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
       buildContext.messages.warning("Windows installer can be built only under Windows or Linux")
       return
     }
@@ -91,7 +91,7 @@ class WinExeInstallerBuilder {
 
     generateInstallationConfigFileForSilentMode()
 
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       File ideaNsiPath = new File(box, "nsiconf/idea.nsi")
       ideaNsiPath.text = BuildUtils.replaceAll(ideaNsiPath.text, ["\${IMAGES_LOCATION}\\": "\${IMAGES_LOCATION}/"], "")
     }
@@ -128,7 +128,7 @@ class WinExeInstallerBuilder {
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.progress("Running NSIS tool to build .exe installer for Windows")
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                         " /DCOMMUNITY_DIR=\"$communityHome\"" +
                         " /DIPR=\"${customizer.associateIpr}\"" +
@@ -136,7 +136,7 @@ class WinExeInstallerBuilder {
                         " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
                         " \"${box}/nsiconf/idea.nsi\"")
     }
-    else if (SystemInfoRt.isLinux) {
+    else if (SystemInfo.isLinux) {
       String installerToolsDir = "$box/installer"
       String installScriptPath = "$installerToolsDir/install_nsis3.sh"
       buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)

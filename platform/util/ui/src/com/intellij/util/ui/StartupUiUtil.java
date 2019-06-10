@@ -5,7 +5,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivitySubNames;
 import com.intellij.diagnostic.ParallelActivity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -38,7 +38,7 @@ public class StartupUiUtil {
       return ourSystemLaFClassName;
     }
 
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       // Normally, GTK LaF is considered "system" when:
       // 1) Gnome session is run
       // 2) gtk lib is available
@@ -105,7 +105,7 @@ public class StartupUiUtil {
    */
   private static void blockATKWrapper() {
     // registry must be not used here, because this method called before application loading
-    if (!SystemInfoRt.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
+    if (!SystemInfo.isLinux || !SystemProperties.getBooleanProperty("linux.jdk.accessibility.atkwrapper.block", true)) {
       return;
     }
 

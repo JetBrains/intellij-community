@@ -4,7 +4,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessWrapper;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +26,7 @@ public class WinTerminalExecutor extends TerminalExecutor {
 
   static {
     // still use isWindows check here not to initialize corresponding property on non-Windows environments
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       System.setProperty("win.pty.cols", String.valueOf(TERMINAL_WINDOW_MAX_COLUMNS));
     }
   }

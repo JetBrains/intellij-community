@@ -6,7 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,10 +54,10 @@ public enum BrowserFamily implements Iconable {
 
   @Nullable
   public String getExecutionPath() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       return myWindowsPath;
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       return myMacPath;
     }
     else {

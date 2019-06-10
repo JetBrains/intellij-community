@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -49,7 +49,7 @@ public final class EditExternallyAction extends AnAction {
       if (files != null) {
         Map<String, String> env = EnvironmentUtil.getEnvironmentMap();
         for (String varName : env.keySet()) {
-          if (SystemInfoRt.isWindows) {
+          if (SystemInfo.isWindows) {
             executablePath = StringUtil.replace(executablePath, "%" + varName + "%", env.get(varName), true);
           }
           else {
@@ -60,7 +60,7 @@ public final class EditExternallyAction extends AnAction {
         File executable = new File(executablePath);
         GeneralCommandLine commandLine = new GeneralCommandLine();
         final String path = executable.exists() ? executable.getAbsolutePath() : executablePath;
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           commandLine.setExePath(ExecUtil.getOpenCommandPath());
           commandLine.addParameter("-a");
           commandLine.addParameter(path);

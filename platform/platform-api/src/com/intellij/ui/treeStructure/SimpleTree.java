@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -81,7 +81,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
         }
       }
     });
-    if (SystemInfoRt.isWindows && !SystemInfo.isWinVistaOrNewer) {
+    if (SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer) {
       setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
     }
 

@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
@@ -84,7 +84,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   @NotNull
   public static String getRelativePath(@Nullable FilePath parent, @NotNull FilePath child) {
     boolean isLocal = !child.isNonLocal();
-    boolean caseSensitive = isLocal && SystemInfoRt.isFileSystemCaseSensitive;
+    boolean caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive;
     String result = parent != null ? FileUtil.getRelativePath(parent.getPath(), child.getPath(), '/', caseSensitive) : null;
 
     result = result == null ? child.getPath() : result;

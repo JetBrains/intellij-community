@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.junit.Test;
 
@@ -24,7 +24,7 @@ public class EnvironmentUtilTest {
   @Test
   public void path() {
     assertNotNull(EnvironmentUtil.getValue("PATH"));
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       assertNotNull(EnvironmentUtil.getValue("Path"));
     }
   }
@@ -47,14 +47,14 @@ public class EnvironmentUtilTest {
 
   @Test(timeout = 30000)
   public void load() {
-    assumeTrue("unix only", SystemInfoRt.isUnix);
+    assumeTrue("unix only", SystemInfo.isUnix);
     Map<String, String> env = EnvironmentUtil.testLoader();
     assertTrue(env.size() >= System.getenv().size() / 2);
   }
 
   @Test(timeout = 30000)
   public void loadingBatEnv() throws Exception {
-    assumeTrue("windows only", SystemInfoRt.isWindows);
+    assumeTrue("windows only", SystemInfo.isWindows);
 
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "set FOO_TEST_1=123\r\nset FOO_TEST_2=%1");
@@ -66,7 +66,7 @@ public class EnvironmentUtilTest {
 
   @Test(timeout = 30000)
   public void loadingBatEnv_ErrorHandling() throws Exception {
-    assumeTrue("windows only", SystemInfoRt.isWindows);
+    assumeTrue("windows only", SystemInfo.isWindows);
 
     File file = FileUtil.createTempFile("test", ".bat", true);
     FileUtil.writeToFile(file, "echo some error\r\nexit /B 1");

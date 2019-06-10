@@ -15,7 +15,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -92,7 +92,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     }
 
     PtyCommandLine commandLine = new PtyCommandLine();
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       commandLine.getEnvironment().put("TERM", "xterm-256color");
     }
     commandLine.withConsoleMode(false);

@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
@@ -113,7 +113,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     JPanel topPanel = createHeaderPanel(title, checkBox);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
-    Color borderColor = SystemInfoRt.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
+    Color borderColor = SystemInfo.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
                         ? topPanel.getBackground()
                         : null;
 

@@ -4,7 +4,7 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.components.panels.VerticalBox;
@@ -27,7 +27,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       myRbSocket.setSelected(true);
       myRbShmem.setEnabled(false);
     }

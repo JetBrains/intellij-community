@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import org.jdom.Element;
@@ -25,7 +25,7 @@ class ValueElementReader {
   @NonNls private static final String MAC = "mac";
   @NonNls private static final String LINUX = "linux";
   @NonNls private static final String WINDOWS = "windows";
-  private static final String OS = SystemInfoRt.isWindows ? WINDOWS : SystemInfoRt.isMac ? MAC : LINUX;
+  private static final String OS = SystemInfo.isWindows ? WINDOWS : SystemInfo.isMac ? MAC : LINUX;
   private static final Logger LOG = Logger.getInstance(ValueElementReader.class);
 
   private String myAttribute;

@@ -13,7 +13,7 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -256,7 +256,7 @@ public final class ActionMenu extends JBMenu {
         else if (menuComponent instanceof ActionMenuItem) {
           // Looks like an old-fashioned ugly workaround
           // JDK 1.7 on Mac works wrong with such functional keys
-          if (!SystemInfoRt.isMac) {
+          if (!SystemInfo.isMac) {
             ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));
           }
         }

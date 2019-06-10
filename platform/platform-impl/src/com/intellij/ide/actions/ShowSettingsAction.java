@@ -11,7 +11,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +26,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(!ActionPlaces.isMacSystemMenuAction(e));
-    if (SystemInfoRt.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
+    if (SystemInfo.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
       // It's called from Preferences in App menu.
       e.getPresentation().setVisible(false);
     }

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +29,7 @@ public class LogUtil {
   public static String getProcessList() {
     try {
       @SuppressWarnings("SpellCheckingInspection") Process process = new ProcessBuilder()
-        .command(SystemInfoRt.isWindows ? new String[]{System.getenv("windir") + "\\system32\\tasklist.exe", "/v"} : new String[]{"ps", "a"})
+        .command(SystemInfo.isWindows ? new String[]{System.getenv("windir") + "\\system32\\tasklist.exe", "/v"} : new String[]{"ps", "a"})
         .redirectErrorStream(true)
         .start();
       return FileUtil.loadTextAndClose(process.getInputStream());
@@ -42,7 +42,7 @@ public class LogUtil {
   public static String getSystemMemoryInfo() {
     try {
       @SuppressWarnings("SpellCheckingInspection") Process process = new ProcessBuilder()
-        .command(SystemInfoRt.isWindows ? "systeminfo" : SystemInfoRt.isMac ? "vm_stat" : "free")
+        .command(SystemInfo.isWindows ? "systeminfo" : SystemInfo.isMac ? "vm_stat" : "free")
         .redirectErrorStream(true)
         .start();
       return FileUtil.loadTextAndClose(process.getInputStream());

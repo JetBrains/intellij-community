@@ -8,7 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImplKt;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author Sergey.Malenkov
  */
 public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> implements SchemesModel<KeymapScheme> {
-  public static final Predicate<Keymap> FILTER = keymap -> !SystemInfoRt.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+  public static final Predicate<Keymap> FILTER = keymap -> !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
 
   private final List<KeymapScheme> list = new ArrayList<>();
   private final KeymapSelector selector;

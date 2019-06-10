@@ -328,7 +328,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Keymap keymap = Objects.requireNonNull(KeymapManager.getInstance()).getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
-    int baseModifiers = SystemInfoRt.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
+    int baseModifiers = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
     for (Shortcut each : baseShortcut) {
       if (each instanceof KeyboardShortcut) {
         KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();

@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 
 // https://jetbrains.github.io/ui/controls/input_field/#spacing
 fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
-    override val isCompensateVisualPaddings = !SystemInfoRt.isLinux
+    override val isCompensateVisualPaddings = !SystemInfo.isLinux
 
     override val horizontalGap = JBUI.scale(8)
     override val verticalGap = JBUI.scale(5 * 2)

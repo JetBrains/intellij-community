@@ -2,7 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,6 +52,6 @@ public enum LineSeparator {
 
   @NotNull
   public static LineSeparator getSystemLineSeparator() {
-    return SystemInfoRt.isWindows ? CRLF : LF;
+    return SystemInfo.isWindows ? CRLF : LF;
   }
 }

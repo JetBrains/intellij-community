@@ -4,7 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +63,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     if (VfsUtilCore.isAncestor(home, file, true)) {
       return true;
     }
-    if (SystemInfoRt.isUnix && file.isInLocalFileSystem()) {
+    if (SystemInfo.isUnix && file.isInLocalFileSystem()) {
       VirtualFile parent = file.getParent();
       if (parent != null && parent.getParent() == null) {
         return false;

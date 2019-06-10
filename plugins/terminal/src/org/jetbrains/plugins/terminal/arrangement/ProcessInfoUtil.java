@@ -9,7 +9,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.pty4j.windows.WinPtyProcess;
@@ -40,7 +40,7 @@ public class ProcessInfoUtil {
 
   @Nullable
   private static String doGetCwd(@NotNull Process process) throws Exception {
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       int pid = OSProcessUtil.getProcessID(process);
       String result = tryGetCwdFastOnUnix(pid);
       if (result != null) {
@@ -48,13 +48,13 @@ public class ProcessInfoUtil {
       }
       return getCwdOnUnix(pid);
     }
-    else if (SystemInfoRt.isWindows) {
+    else if (SystemInfo.isWindows) {
       if (process instanceof WinPtyProcess) {
         return ((WinPtyProcess)process).getWorkingDirectory();
       }
       throw new IllegalStateException("Cwd can be fetched for " + WinPtyProcess.class + " only, got " + process.getClass());
     }
-    throw new IllegalStateException("Unsupported OS: " + SystemInfoRt.OS_NAME);
+    throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
   }
 
   @Nullable

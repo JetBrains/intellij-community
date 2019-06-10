@@ -55,7 +55,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   protected BasicLookAndFeel createBaseLookAndFeel() {
     try {
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
         return (BasicLookAndFeel)Class.forName(name).newInstance();
       }
@@ -101,7 +101,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     try {
       final UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       final UIDefaults defaults = base.getDefaults();
-      if (SystemInfoRt.isLinux) {
+      if (SystemInfo.isLinux) {
         if (!Registry.is("darcula.use.native.fonts.on.linux")) {
           Font font = findFont("DejaVu Sans");
           if (font != null) {
@@ -131,7 +131,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfoRt.isLinux && JBUIScale.isUsrHiDPI()) {
+      if (SystemInfo.isLinux && JBUIScale.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
@@ -202,7 +202,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Nullable
   protected String getSystemPrefix() {
-    String osSuffix = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
+    String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
     return getPrefix() + "_" + osSuffix;
   }
 

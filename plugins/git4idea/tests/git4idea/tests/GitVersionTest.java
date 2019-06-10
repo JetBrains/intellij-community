@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import git4idea.config.GitVersion;
 import org.junit.Assert;
 import org.junit.Test;
@@ -40,13 +40,13 @@ public class GitVersionTest {
    */
   @Test
   public void testParse() throws Exception {
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       for (TestGitVersion test : commonTests) {
         GitVersion version = GitVersion.parse(test.output);
         assertEqualVersions(version, test, Type.UNIX);
       }
     }
-    else if (SystemInfoRt.isWindows) {
+    else if (SystemInfo.isWindows) {
       for (TestGitVersion test : commonTests) {
         GitVersion version = GitVersion.parse(test.output);
         assertEqualVersions(version, test, Type.CYGWIN);
@@ -68,7 +68,7 @@ public class GitVersionTest {
     assertFalse(v1.equals(v2));
     assertFalse(v1.equals(v3));
     Assert.assertTrue(v2.equals(v3));
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       assertFalse(v1.equals(v4));
       assertFalse(v2.equals(v4));
       assertFalse(v3.equals(v4));

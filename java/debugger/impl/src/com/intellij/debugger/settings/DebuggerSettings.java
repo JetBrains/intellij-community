@@ -10,7 +10,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
@@ -340,7 +340,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   @Transient
   public int getTransport() {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       return SOCKET_TRANSPORT;
     }
     return DEBUGGER_TRANSPORT;

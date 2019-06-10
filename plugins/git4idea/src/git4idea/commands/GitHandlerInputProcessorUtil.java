@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public final class GitHandlerInputProcessorUtil {
         writer.flush();
       }
       finally {
-        if (!SystemInfoRt.isWindows || !endWithSecondSeparator) writer.close();
+        if (!SystemInfo.isWindows || !endWithSecondSeparator) writer.close();
       }
     };
   }

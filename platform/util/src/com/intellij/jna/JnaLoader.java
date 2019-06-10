@@ -2,7 +2,7 @@
 package com.intellij.jna;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Native;
 
 public class JnaLoader {
@@ -19,7 +19,7 @@ public class JnaLoader {
         ourJnaLoaded = Boolean.TRUE;
       }
       catch (Throwable t) {
-        logger.warn("Unable to load JNA library (OS: " + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION + ")", t);
+        logger.warn("Unable to load JNA library (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")", t);
       }
     }
   }

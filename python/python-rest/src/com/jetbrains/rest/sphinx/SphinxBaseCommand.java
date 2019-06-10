@@ -15,7 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelper;
@@ -130,7 +130,7 @@ public class SphinxBaseCommand {
 
     GeneralCommandLine cmd = new GeneralCommandLine();
     if (sdkHomePath != null) {
-      final String runnerName = "sphinx-quickstart" + (SystemInfoRt.isWindows ? ".exe" : "");
+      final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
       String executablePath = PythonSdkType.getExecutablePath(sdkHomePath, runnerName);
       if (executablePath != null) {
         cmd.setExePath(executablePath);

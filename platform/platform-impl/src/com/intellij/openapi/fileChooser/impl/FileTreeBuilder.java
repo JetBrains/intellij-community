@@ -9,7 +9,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.RootFileElement;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +87,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
     if (nodeDescriptor.getElement() instanceof RootFileElement) {
       return true;
     }
-    else if (!SystemInfoRt.isWindows) {
+    else if (!SystemInfo.isWindows) {
       NodeDescriptor parent = nodeDescriptor.getParentDescriptor();
       return parent != null && parent.getElement() instanceof RootFileElement;
     }

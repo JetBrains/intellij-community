@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +61,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
       AbstractAction makeStmtAction = new AbstractAction() {
         {
           UIUtil.setActionNameAndMnemonic(QuickFixBundle.message("side.effect.action.transform"), this);
-          if (SystemInfoRt.isMac) {
+          if (SystemInfo.isMac) {
             putValue(FOCUSED_ACTION, this);
           }
         }

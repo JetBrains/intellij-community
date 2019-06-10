@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -211,7 +211,7 @@ public abstract class GitHandler {
   }
 
   private boolean escapeNeeded(@NotNull String parameter) {
-    return SystemInfoRt.isWindows && isCmd() && parameter.contains("^");
+    return SystemInfo.isWindows && isCmd() && parameter.contains("^");
   }
 
   private boolean isCmd() {

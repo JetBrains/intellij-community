@@ -21,7 +21,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -172,7 +172,7 @@ public class RemoteConnectionBuilder {
       String versionString = jdk.getVersionString();
       throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
-    if (SystemInfoRt.isWindows && version == JavaSdkVersion.JDK_1_2) {
+    if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
         String versionString = jdk.getVersionString();
@@ -258,7 +258,7 @@ public class RemoteConnectionBuilder {
    * for Target JDKs versions 1.2.x - 1.3.0 the Classic VM should be used for debugging
    */
   private static boolean shouldForceClassicVM(Sdk jdk) {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return false;
     }
     if (jdk == null) return false;
@@ -268,14 +268,14 @@ public class RemoteConnectionBuilder {
       return false;
     }
 
-    if (version.startsWith("1.2") && SystemInfoRt.isWindows) {
+    if (version.startsWith("1.2") && SystemInfo.isWindows) {
       return true;
     }
     version += ".0";
-    if (version.startsWith("1.3.0") && SystemInfoRt.isWindows) {
+    if (version.startsWith("1.3.0") && SystemInfo.isWindows) {
       return true;
     }
-    if ((version.startsWith("1.3.1_07") || version.startsWith("1.3.1_08")) && SystemInfoRt.isWindows) {
+    if ((version.startsWith("1.3.1_07") || version.startsWith("1.3.1_08")) && SystemInfo.isWindows) {
       return false; // fixes bug for these JDKs that it cannot start with -classic option
     }
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;

@@ -3,7 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
@@ -722,7 +722,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private static boolean isAlwaysOpaque(Component view) {
-      return !SystemInfoRt.isMac && ScrollSettings.isNotSupportedYet(view);
+      return !SystemInfo.isMac && ScrollSettings.isNotSupportedYet(view);
     }
 
     private static void updateCornerBounds(Rectangle bounds, int x, int y) {
@@ -796,6 +796,6 @@ public class JBScrollPane extends JScrollPane {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static RegionPainter<Float> getThumbPainter(@NotNull Supplier<? extends Component> supplier) {
-    return new ScrollBarPainter.Thumb(supplier, SystemInfoRt.isMac);
+    return new ScrollBarPainter.Thumb(supplier, SystemInfo.isMac);
   }
 }

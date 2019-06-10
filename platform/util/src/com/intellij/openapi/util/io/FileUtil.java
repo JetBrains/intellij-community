@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -339,7 +338,7 @@ public class FileUtil extends FileUtilRt {
   private static File renameToTempFileOrDelete(@NotNull File file) {
     String tempDir = getTempDirectory();
     boolean isSameDrive = true;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       String tempDirDrive = tempDir.substring(0, 2);
       String fileDrive = file.getAbsolutePath().substring(0, 2);
       isSameDrive = tempDirDrive.equalsIgnoreCase(fileDrive);
@@ -419,7 +418,7 @@ public class FileUtil extends FileUtilRt {
       }
     }
 
-    if (SystemInfoRt.isUnix && fromFile.canExecute()) {
+    if (SystemInfo.isUnix && fromFile.canExecute()) {
       FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
     }
   }
@@ -652,7 +651,7 @@ public class FileUtil extends FileUtilRt {
   public static String normalize(@NotNull String path) {
     int start = 0;
     boolean separator = false;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       if (path.startsWith("//")) {
         start = 2;
         separator = true;
@@ -686,7 +685,7 @@ public class FileUtil extends FileUtilRt {
     final StringBuilder result = new StringBuilder(path.length());
     result.append(path, 0, prefixEnd);
     int start = prefixEnd;
-    if (start==0 && SystemInfoRt.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+    if (start==0 && SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
       start = 2;
       result.append("//");
       separator = true;
@@ -799,7 +798,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String resolveShortWindowsName(@NotNull String path) throws IOException {
-    return SystemInfoRt.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
+    return SystemInfo.isWindows && containsWindowsShortName(path) ? new File(path).getCanonicalPath() : path;
   }
 
   public static boolean containsWindowsShortName(@NotNull String path) {
@@ -1209,7 +1208,7 @@ public class FileUtil extends FileUtilRt {
   public static String getLocationRelativeToUserHome(@Nullable String path, boolean unixOnly) {
     if (path == null) return null;
 
-    if (SystemInfoRt.isUnix || !unixOnly) {
+    if (SystemInfo.isUnix || !unixOnly) {
       File projectDir = new File(path);
       File userHomeDir = new File(SystemProperties.getUserHome());
       if (isAncestor(userHomeDir, projectDir, true)) {

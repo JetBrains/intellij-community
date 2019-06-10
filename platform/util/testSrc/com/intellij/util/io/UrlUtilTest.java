@@ -4,7 +4,7 @@ package com.intellij.util.io;
 
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
@@ -36,7 +36,7 @@ public class UrlUtilTest {
     assertPair(URLUtil.splitJarUrl("jar:file:/path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
     assertPair(URLUtil.splitJarUrl("jar:file:///path/to/jar.jar!/resource.xml"), "/path/to/jar.jar", "resource.xml");
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       assertPair(URLUtil.splitJarUrl("file:/C:/path/to/jar.jar!/resource.xml"), "C:/path/to/jar.jar", "resource.xml");
       assertPair(URLUtil.splitJarUrl("file:////HOST/share/path/to/jar.jar!/resource.xml"), "//HOST/share/path/to/jar.jar", "resource.xml");
     }

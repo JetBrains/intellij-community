@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.NSWorkspace;
 import org.junit.Assume;
@@ -14,7 +14,7 @@ import static org.junit.Assert.assertThat;
 public class FoundationTest {
   @BeforeClass
   public static void assumeMac() {
-    Assume.assumeTrue("mac only", SystemInfoRt.isMac);
+    Assume.assumeTrue("mac only", SystemInfo.isMac);
   }
 
   @Test

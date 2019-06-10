@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
@@ -42,7 +42,7 @@ public class Restarter {
     protected Boolean compute() {
       String problem;
 
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         if (!JnaLoader.isLoaded()) {
           problem = "JNA not loaded";
         }
@@ -50,7 +50,7 @@ public class Restarter {
           problem = checkRestarter("restarter.exe");
         }
       }
-      else if (SystemInfoRt.isMac) {
+      else if (SystemInfo.isMac) {
         if (getMacOsAppDir() == null) {
           problem = "not a bundle: " + PathManager.getHomePath();
         }
@@ -58,7 +58,7 @@ public class Restarter {
           problem = checkRestarter("restarter");
         }
       }
-      else if (SystemInfoRt.isUnix) {
+      else if (SystemInfo.isUnix) {
         if (UnixProcessManager.getCurrentProcessId() <= 0) {
           problem = "cannot detect process ID";
         }
@@ -73,7 +73,7 @@ public class Restarter {
         }
       }
       else {
-        problem = "unknown platform: " + SystemInfoRt.OS_NAME;
+        problem = "unknown platform: " + SystemInfo.OS_NAME;
       }
 
       if (problem == null) {
@@ -93,13 +93,13 @@ public class Restarter {
 
   public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
     Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       restartOnWindows(elevate, beforeRestart);
     }
-    else if (SystemInfoRt.isMac) {
+    else if (SystemInfo.isMac) {
       restartOnMac(beforeRestart);
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       restartOnUnix(beforeRestart);
     }
     else {

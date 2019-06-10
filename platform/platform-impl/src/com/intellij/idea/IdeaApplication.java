@@ -93,7 +93,7 @@ public final class IdeaApplication {
       IconLoader.activate();
       IconLoader.setStrictGlobally(app.isInternal());
 
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         Activity activity = initAppActivity.startChild("mac app init");
         MacOSApplicationProvider.initApplication();
         activity.end();
@@ -106,7 +106,7 @@ public final class IdeaApplication {
     futures.add(registerRegistryAndMessageBusAndComponent(pluginDescriptorsFuture, app));
 
     if (!headless) {
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         // ensure that TouchBarsManager is loaded before WelcomeFrame/project
         futures.add(AppExecutorUtil.getAppExecutorService().submit(() -> {
           Activity activity = ParallelActivity.PREPARE_APP_INIT.start("mac touchbar");
@@ -394,7 +394,7 @@ public final class IdeaApplication {
     }
 
     private static void postOpenUiTasks(@NotNull Application app) {
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         AppExecutorUtil.getAppExecutorService().execute(() -> {
           TouchBarsManager.onApplicationInitialized();
           CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);

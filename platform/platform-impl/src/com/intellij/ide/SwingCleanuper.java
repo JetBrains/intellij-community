@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StatusBar;
@@ -75,7 +75,7 @@ public final class SwingCleanuper {
       }
     );
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       Toolkit.getDefaultToolkit().addAWTEventListener(event -> {
         if (!Registry.is("ide.mac.fix.accessibleLeak")) return;
 

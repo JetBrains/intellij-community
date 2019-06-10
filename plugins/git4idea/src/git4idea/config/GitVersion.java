@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * The minimal supported version
    */
-  public static final GitVersion MIN = SystemInfoRt.isWindows ? new GitVersion(2, 4, 0, 0)
+  public static final GitVersion MIN = SystemInfo.isWindows ? new GitVersion(2, 4, 0, 0)
                                                               : new GitVersion(1, 8, 0, 0);
 
   /**
@@ -107,7 +107,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     int patch = getIntGroup(m, 4);
 
     Type type;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       String suffix = getStringGroup(m, 5);
       if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
           StringUtil.toLowerCase(suffix).contains("windows")) {

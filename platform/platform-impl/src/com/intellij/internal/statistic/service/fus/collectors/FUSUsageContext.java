@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,9 +35,9 @@ public class FUSUsageContext {
   }
 
   public static String getOSNameContextData() {
-    if (SystemInfoRt.isWindows) return "Windows";
-    if (SystemInfoRt.isMac) return "Mac";
-    if (SystemInfoRt.isLinux) return "Linux";
+    if (SystemInfo.isWindows) return "Windows";
+    if (SystemInfo.isMac) return "Mac";
+    if (SystemInfo.isLinux) return "Linux";
     return "Other";
   }
 

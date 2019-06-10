@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.richcopy;
 import com.intellij.openapi.editor.richcopy.view.HtmlTransferableData;
 import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -44,7 +44,7 @@ public class RichCopyTest extends LightPlatformCodeInsightFixtureTestCase {
     assertMatches("HTML contents differs", expectedHtml, actualHtml);
 
     assertTrue(contents.isDataFlavorSupported(RtfTransferableData.FLAVOR));
-    String expectedRtf = getFileContents(getTestName(false) + ".rtf" + (SystemInfoRt.isMac ? ".mac" : ""));
+    String expectedRtf = getFileContents(getTestName(false) + ".rtf" + (SystemInfo.isMac ? ".mac" : ""));
     String actualRtf = readFully((InputStream)contents.getTransferData(RtfTransferableData.FLAVOR));
     assertMatches("RTF contents differs", expectedRtf, actualRtf);
   }

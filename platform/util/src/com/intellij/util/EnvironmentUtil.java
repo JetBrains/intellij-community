@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -48,7 +48,7 @@ public class EnvironmentUtil {
   private static final Future<Map<String, String>> ourEnvGetter;
 
   static {
-    if (SystemInfoRt.isMac &&
+    if (SystemInfo.isMac &&
         "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
         SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(() -> unmodifiableMap(setCharsetVar(getShellEnv())));
@@ -73,7 +73,7 @@ public class EnvironmentUtil {
   };
 
   private static Map<String, String> getSystemEnv() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       return unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
     else {
@@ -150,7 +150,7 @@ public class EnvironmentUtil {
    */
   @Contract(value = "null -> false", pure = true)
   public static boolean isValidName(@Nullable String name) {
-    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfoRt.isWindows ? 1 : 0) == -1;
+    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfo.isWindows ? 1 : 0) == -1;
   }
 
   /**
@@ -345,7 +345,7 @@ public class EnvironmentUtil {
     LOG.warn("shell env loader is timed out");
 
     // First, try to interrupt 'softly' (we know how to do it only on *nix)
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       UnixProcessManager.sendSigIntToProcessTree(process);
       exitCode = waitFor(process, 1000);
       if (exitCode != null) {
@@ -354,7 +354,7 @@ public class EnvironmentUtil {
       LOG.warn("failed to terminate shell env loader process gracefully, terminating forcibly");
     }
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       WinProcessManager.kill(process, true);
     }
     else {

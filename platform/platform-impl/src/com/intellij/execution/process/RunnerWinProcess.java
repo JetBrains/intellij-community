@@ -3,7 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 16) */
@@ -25,7 +25,7 @@ public class RunnerWinProcess extends ProcessWrapper {
 
   @NotNull
   public static Process create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    if (!SystemInfoRt.isWindows) {
+    if (!SystemInfo.isWindows) {
       throw new RuntimeException("RunnerWinProcess works on Windows only!");
     }
     boolean success = RunnerMediator.injectRunnerCommand(commandLine, false);
