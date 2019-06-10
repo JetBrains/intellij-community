@@ -146,6 +146,11 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
+  public void showDiffWithLocal(@NotNull String branchName, @NotNull List<GitRepository> repositories) {
+    new ShowDiffWithBranchDialog(myProject, branchName, repositories, GitBranchUtil.getCurrentBranchOrRev(repositories)).show();
+  }
+
+  @Override
   public void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Merging " + branchName, null) {
       @Override
