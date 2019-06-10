@@ -72,56 +72,60 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void buildArtifacts(String winDistPath) {
     def arch = customizer.bundledJreArchitecture
+    def jreSuffix = buildContext.bundledJreManager.secondJreSuffix()
+    String jreDirectoryPath64 = null
     //do not include win32 launcher into winzip with 9+ jbr bundled
     List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
-    String jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
-    List<String> jreDirectoryPaths = [jreDirectoryPath64]
+    if (buildContext.bundledJreManager.doBundleSecondJre()) {
+      jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractSecondBundledJreForWin(arch) : null
+      List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && buildContext.bundledJreManager.is32bitArchSupported()) {
-      File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
-      if (archive != null && archive.exists()) {
-        //prepare folder with jre x86 for win archive
-        def jreDirectoryPath = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
-        buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
-          tarfileset(dir: "${jreDirectoryPath}/jre32") {
-            include(name: "**/**")
+      if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+        File archive = buildContext.bundledJreManager.findSecondBundledJreArchiveForWin(JvmArchitecture.x32)
+        if (archive != null && archive.exists()) {
+          //prepare folder with jre x86 for win archive
+          def jreDirectoryPath = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x32)
+          buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
+            tarfileset(dir: "${jreDirectoryPath}/jre32") {
+              include(name: "**/**")
+            }
           }
+          jreDirectoryPaths = [jreDirectoryPath64, jreDirectoryPath]
         }
-        jreDirectoryPaths = [jreDirectoryPath64, jreDirectoryPath]
+      }
+      if (customizer.buildZipArchive) {
+         buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, [])
+      }
+      if (arch != null && customizer.buildZipWithBundledOracleJre && arch != JvmArchitecture.x32) {
+        String oracleJrePath = buildContext.bundledJreManager.extractSecondBundledOracleJreForWin(arch)
+        if (oracleJrePath != null) {
+          buildWinZip([oracleJrePath], "${jreSuffix}-oracle-win", winDistPath)
+        }
+        else {
+          buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
+        }
       }
     }
 
-    def jreSuffix = buildContext.bundledJreManager.jreSuffix()
-    def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
-    def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("windows", secondJreBuild) : null
+    def jreDirectoryPath = buildContext.bundledJreManager.extractJre("windows")
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, !buildContext.bundledJreManager.is32bitArchSupported() ? excludeList : [])
-      if (secondJreDirectoryPath != null) {
-        buildWinZip([secondJreDirectoryPath], ".win", winDistPath, excludeList)
-      }
-    }
-
-    if (arch != null && customizer.buildZipWithBundledOracleJre &&
-        (arch != JvmArchitecture.x32 || buildContext.bundledJreManager.is32bitArchSupported())) {
-      String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
-      if (oracleJrePath != null) {
-        buildWinZip([oracleJrePath], "${jreSuffix}-oracle-win", winDistPath)
-      }
-      else {
-        buildContext.messages.warning("Skipping building Windows zip archive with bundled Oracle JRE because JRE archive is missing")
-      }
+      buildWinZip([jreDirectoryPath], ".win", winDistPath, excludeList)
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
-      generateProductJson(productJsonDir, jreDirectoryPath64 != null)
-      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir, null, buildContext.bundledJreManager.is32bitArchSupported())
-      if (secondJreDirectoryPath != null) {
-        generateProductJson(productJsonDir, secondJreDirectoryPath != null)
-        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, secondJreDirectoryPath], [])
-        new WinExeInstallerBuilder(buildContext, customizer, secondJreDirectoryPath).buildInstaller(winDistPath, productJsonDir, "", buildContext.bundledJreManager.getSecondJreVersion().toInteger() == 8)
+      if (buildContext.bundledJreManager.doBundleSecondJre()) {
+        generateProductJson(productJsonDir, jreDirectoryPath64 != null)
+        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
+        new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64)
+          .buildInstaller(winDistPath, productJsonDir,
+                          buildContext.bundledJreManager.secondJreSuffix(),
+                          buildContext.bundledJreManager.secondBundledJreModular)
       }
+      generateProductJson(productJsonDir, jreDirectoryPath != null)
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
+        .buildInstaller(winDistPath, productJsonDir, '', buildContext.bundledJreManager.bundledJreModular)
     }
   }
 

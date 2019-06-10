@@ -438,8 +438,7 @@ idea.fatal.error.notification=disabled
     }
     [
       'intellij.build.bundle.second.jre',
-      'intellij.build.bundled.second.jre.build',
-      'intellij.build.bundled.second.jre.version'
+      'intellij.build.bundled.second.jre.build'
     ].each { prop ->
       System.getProperty(prop)?.with {
         args += "-D$prop=$it"
