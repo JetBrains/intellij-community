@@ -54,8 +54,6 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
     val bytes = BufferExposingByteArrayOutputStream()
     serializationManager.serialize(stub, bytes)
 
-    val file = fileContent.file
-
     return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
   }
 
