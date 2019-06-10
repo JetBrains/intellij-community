@@ -228,6 +228,10 @@ class CommunityRepositoryModules {
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
     },
+    plugin("intellij.textmate") {
+      withResource("lib/bundles", "lib/bundles")
+      withResource("lib/themes", "lib/themes")
+    },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
     plugin("intellij.android.smali") {
