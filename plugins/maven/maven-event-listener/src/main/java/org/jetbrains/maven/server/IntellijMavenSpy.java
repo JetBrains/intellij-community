@@ -20,7 +20,6 @@ import static org.jetbrains.maven.server.SpyConstants.NEWLINE;
 @Named("Intellij Idea Maven Embedded Event Spy")
 @Singleton
 public class IntellijMavenSpy extends AbstractEventSpy {
-
   @Override
   public void onEvent(Object event) {
     try {
@@ -74,9 +73,6 @@ public class IntellijMavenSpy extends AbstractEventSpy {
   }
 
   private static void onRepositoryEvent(RepositoryEvent event) {
-    if (event.getType() == ARTIFACT_RESOLVING || event.getType() == ARTIFACT_RESOLVED) {
-      return; //do not spam event log
-    }
     String errMessage = event.getException() == null ? "" : event.getException().getMessage();
     String path = event.getFile() == null ? "" : event.getFile().getPath();
     String artifactCoord = event.getArtifact() == null ? "" : event.getArtifact().toString();

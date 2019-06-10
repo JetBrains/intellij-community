@@ -12,7 +12,6 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       " test:project:pom:1\n" +
                       "  install\n" +
                       " test:m1:jar:1\n" +
-                      "  Resolving Dependencies\n" +
                       "  resources\n" +
                       "  compile\n" +
                       "  testResources\n" +
@@ -21,7 +20,6 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "  jar\n" +
                       "  install\n" +
                       " test:m2:jar:1\n" +
-                      "  Resolving Dependencies\n" +
                       "  resources\n" +
                       "  compile\n" +
                       "  testResources\n" +
@@ -69,7 +67,6 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "  [INFO] ------------------------------------------------------------------------\n" +
                       "  [INFO] Building m1 1\n" +
                       "  [INFO] ------------------------------------------------------------------------\n" +
-                      "  Resolving Dependencies\n" +
                       "  resources\n" +
                       "   [INFO]\n" +
                       "   [INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ m1 ---\n" +
@@ -104,7 +101,6 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                       "  [INFO] ------------------------------------------------------------------------\n" +
                       "  [INFO] Building m2 1\n" +
                       "  [INFO] ------------------------------------------------------------------------\n" +
-                      "  Resolving Dependencies\n" +
                       "  resources\n" +
                       "   [INFO]\n" +
                       "   [INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ m2 ---\n" +
