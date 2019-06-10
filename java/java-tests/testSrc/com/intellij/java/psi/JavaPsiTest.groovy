@@ -105,6 +105,7 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
           \t<p>
           \t\thello
           \t</p>\""";
+          String openingSpaces = \""" \t \f \n    \""";
         }""".stripIndent())
     def values = file.classes[0].fields.collect { ((it as PsiField).initializer as PsiLiteralExpression).value }
     assert values[0] == null
@@ -115,6 +116,7 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
     assert values[5] == "hello\n"
     assert values[6] == "<p>\n  hello\n</p>"
     assert values[7] == "<p>\n\thello\n</p>"
+    assert values[8] == ""
   }
 
   private PsiJavaFile configureFile(String text) {
