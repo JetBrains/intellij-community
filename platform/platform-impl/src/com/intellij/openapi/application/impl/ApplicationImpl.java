@@ -409,7 +409,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ApplicationLoadListener.EP_NAME.forEachExtensionSafe(listener -> listener.beforeComponentsCreated());
       componentRegisteredActivity.end();
 
-      init(indicator);
+      if (indicator == null) {
+        // no splash, no need to to use progress manager
+        createComponents(null);
+      }
+      else {
+        ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
+      }
 
       ourThreadExecutorsService.submit(() -> createLocatorFile());
 
@@ -435,18 +441,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       token.finish();
     }
     myLoaded = true;
-  }
-
-  @Override
-  protected void createComponents(@Nullable ProgressIndicator indicator) {
-    // we cannot wrap "init()" call because ProgressManager instance could be created only after component registration (our "componentsRegistered" callback)
-    if (indicator == null) {
-      // no splash, no need to to use progress manager
-      super.createComponents(null);
-    }
-    else {
-      ProgressManager.getInstance().runProcess(() -> super.createComponents(indicator), indicator);
-    }
   }
 
   @Override

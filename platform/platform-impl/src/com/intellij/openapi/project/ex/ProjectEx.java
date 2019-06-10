@@ -19,7 +19,5 @@ public interface ProjectEx extends Project {
     }
   }
 
-  void init(@NotNull String filePath);
-
   void setProjectName(@NotNull String name);
 }

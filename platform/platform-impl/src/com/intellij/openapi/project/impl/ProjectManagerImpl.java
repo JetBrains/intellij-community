@@ -288,7 +288,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (template != null) {
         stateStore.loadProjectFromTemplate(template);
       }
-      project.init(filePath);
+      project.init(filePath, indicator);
       succeed = true;
     }
     finally {
