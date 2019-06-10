@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
@@ -170,6 +170,17 @@ public interface JavaElementType {
     }
   }
   ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();
+
+  IElementType MEMBERS = new ICodeFragmentElementType("MEMBERS", JavaLanguage.INSTANCE) {
+    private final JavaParserUtil.ParserWrapper myParser =
+      builder -> JavaParser.INSTANCE.getDeclarationParser().parseClassBodyDeclarations(builder, false);
+
+    @Nullable
+    @Override
+    public ASTNode parseContents(@NotNull ASTNode chameleon) {
+      return JavaParserUtil.parseFragment(chameleon, myParser);
+    }
+  };
 
   IElementType STATEMENTS = new ICodeFragmentElementType("STATEMENTS", JavaLanguage.INSTANCE) {
     private final JavaParserUtil.ParserWrapper myParser = builder -> JavaParser.INSTANCE.getStatementParser().parseStatements(builder);
