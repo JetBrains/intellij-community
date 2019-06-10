@@ -8,6 +8,7 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.RemoteDesktopService;
+import com.intellij.ide.ui.ScreenAreaTracker;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -59,7 +60,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
-public class BalloonImpl implements Balloon, IdeTooltip.Ui {
+public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.ScreenAreaConsumer {
 
   private static final Logger LOG = Logger.getInstance(BalloonImpl.class);
 
@@ -503,7 +504,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         lp.width -= myContainerInsets.right;
         lp.height -= myContainerInsets.bottom;
 
-        if (!lp.contains(rec)) {
+        if (!lp.contains(rec) || !ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, rec, this)) {
           Rectangle2D currentSquare = lp.createIntersection(rec);
 
           double maxSquare = currentSquare.getWidth() * currentSquare.getHeight();
@@ -527,9 +528,30 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (myPosition != position) {
       myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane),
                                                  myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
+      position = myPosition;
     }
 
     createComponent();
+    Rectangle r = getRecForPosition(myPosition, false);
+    Point location = r.getLocation();
+    SwingUtilities.convertPointToScreen(location, myLayeredPane);
+    r.setLocation(location);
+    if (!ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
+      for (AbstractPosition eachPosition : myPosition.getOtherPositions()) {
+        r = getRecForPosition(eachPosition, false);
+        location = r.getLocation();
+        SwingUtilities.convertPointToScreen(location, myLayeredPane);
+        r.setLocation(location);
+        if (ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
+          myPosition = eachPosition;
+          positionChangeFix = myPosition.getChangeShift(position, myPositionChangeXShift, myPositionChangeYShift);
+          myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane),
+                                                     myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
+          myPosition.updateBounds(this);
+          break;
+        }
+      }
+    }
 
     myComp.validate();
 
@@ -740,6 +762,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.add(myComp);
     myLayeredPane.setLayer(myComp, getLayer(), 0); // the second balloon must be over the first one
     myPosition.updateBounds(this);
+
+    ScreenAreaTracker.register(this);
+
     if (myBlockClicks) {
       myComp.addMouseListener(new MouseAdapter() {
         @Override
@@ -760,6 +785,21 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
+
+  @NotNull
+  @Override
+  public Rectangle getConsumedScreenBounds() {
+    Rectangle bounds = myComp.getBounds();
+    Point location = bounds.getLocation();
+    SwingUtilities.convertPointToScreen(location, myLayeredPane);
+    bounds.setLocation(location);
+    return bounds;
+  }
+
+  @Override
+  public Component getUnderlyingAreaOwner() {
+    return myLayeredPane;
+  }
 
   @NotNull
   private EmptyBorder getPointlessBorder() {
@@ -1275,6 +1315,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     public abstract Point getShiftedPoint(Point targetPoint, int shift);
 
     public abstract Point getShiftedPoint(Point targetPoint, Insets shift);
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName();
+    }
   }
 
   public static final AbstractPosition BELOW = new Below();
