@@ -2,7 +2,6 @@
 package org.editorconfig.plugincomponents;
 
 import com.intellij.AppTopics;
-import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -19,12 +18,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.EditorConfigRegistry;
-import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorSettingsManager;
 import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
-import org.editorconfig.configmanagement.finder.EditorConfigFinder;
-import org.editorconfig.configmanagement.finder.EditorConfigFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 
 public class ConfigProjectComponent implements StartupActivity, DumbAware {
@@ -75,9 +71,5 @@ public class ConfigProjectComponent implements StartupActivity, DumbAware {
         }
       }
     }, project);
-    if (Utils.isEnabled(CodeStyle.getSettings(project)) && EditorConfigFilesNotifier.isShowNotification(project)) {
-      //noinspection deprecation
-      EditorConfigFinder.startSearch(project.getBaseDir(), new EditorConfigFilesNotifier(project));
-    }
   }
 }
