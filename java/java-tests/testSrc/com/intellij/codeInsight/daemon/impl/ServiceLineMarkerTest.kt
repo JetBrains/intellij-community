@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.codeInsight.daemon.impl
+package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider.ServiceNavigationHandler
+import com.intellij.codeInsight.daemon.impl.JavaServiceUtil.ServiceNavigationHandler
 import com.intellij.icons.AllIcons
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
