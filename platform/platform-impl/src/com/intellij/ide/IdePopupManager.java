@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,7 +77,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         if (KeyEvent.KEY_TYPED == e.getID()) return true;
         myIgnoreNextKeyTypedEvent = false;
       }
-      else if (SystemInfoRt.isMac && InputEvent.ALT_DOWN_MASK == keyEvent.getModifiersEx() &&
+      else if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == keyEvent.getModifiersEx() &&
                Registry.is("ide.mac.alt.mnemonic.without.ctrl") && source instanceof Component) {
         // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
         if (KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled() ||

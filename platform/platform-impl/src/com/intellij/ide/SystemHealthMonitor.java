@@ -20,7 +20,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
@@ -77,7 +77,7 @@ public class SystemHealthMonitor implements BaseComponent {
       if (!SystemInfo.isJetBrainsJvm || outdatedRuntime) {
         JdkBundle bundledJdk;
         boolean validBundledJdk =
-          (SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfoRt.isLinux) &&
+          (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) &&
           (bundledJdk = JdkBundle.createBundled()) != null &&
           bundledJdk.isOperational();
 
@@ -139,7 +139,7 @@ public class SystemHealthMonitor implements BaseComponent {
   }
 
   private void checkSignalBlocking() {
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       try {
         Signal sigInt = new Signal("INT");
         SignalHandler oldInt = Signal.handle(sigInt, NO_OP_HANDLER);

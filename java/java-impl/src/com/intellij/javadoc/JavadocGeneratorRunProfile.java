@@ -27,7 +27,7 @@ import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -133,7 +133,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
       cmdLine.setWorkDirectory((File)null);
 
-      String toolName = SystemInfoRt.isWindows ? "javadoc.exe" : "javadoc";
+      String toolName = SystemInfo.isWindows ? "javadoc.exe" : "javadoc";
       File tool = new File(binPath, toolName);
       if (!tool.exists()) {
         tool = new File(new File(binPath).getParent(), toolName);

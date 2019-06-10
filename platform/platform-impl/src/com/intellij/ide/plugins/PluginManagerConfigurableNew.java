@@ -1696,7 +1696,7 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   public static <T extends Component> T installTiny(@NotNull T component) {
-    return SystemInfoRt.isMac ? RelativeFont.TINY.install(component) : component;
+    return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
   public static int offset5() {

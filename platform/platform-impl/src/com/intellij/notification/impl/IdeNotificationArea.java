@@ -13,7 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -230,7 +230,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
 
       int length = myStr.length();
-      if (SystemInfoRt.isMac || (SystemInfoRt.isWindows && length == 2)) {
+      if (SystemInfo.isMac || (SystemInfo.isWindows && length == 2)) {
         x += JBUIScale.scale(1);
       }
 

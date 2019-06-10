@@ -4,7 +4,7 @@ package org.jetbrains.jps.javac;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -432,7 +432,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private static void appendParam(List<? super String> cmdLine, String parameter) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
       }

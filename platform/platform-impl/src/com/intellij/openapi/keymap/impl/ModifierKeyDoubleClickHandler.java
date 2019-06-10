@@ -13,7 +13,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
@@ -81,7 +81,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
   }
 
   public static int getMultiCaretActionModifier() {
-    return SystemInfoRt.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
+    return SystemInfo.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
   }
 
   /**

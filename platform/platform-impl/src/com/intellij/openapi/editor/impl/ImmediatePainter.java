@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.EditorTextField;
@@ -234,7 +234,7 @@ class ImmediatePainter {
 
   private static boolean isImageValid(VolatileImage image, Component component) {
     GraphicsConfiguration componentConfig = component.getGraphicsConfiguration();
-    if (SystemInfoRt.isWindows && image instanceof SunVolatileImage) { // JBR-1540
+    if (SystemInfo.isWindows && image instanceof SunVolatileImage) { // JBR-1540
       GraphicsConfiguration imageConfig = ((SunVolatileImage)image).getGraphicsConfig();
       if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
     }

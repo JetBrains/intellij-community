@@ -175,7 +175,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
 
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
           vm.defineProperty("apple.awt.fileDialogForDirectories", "true");

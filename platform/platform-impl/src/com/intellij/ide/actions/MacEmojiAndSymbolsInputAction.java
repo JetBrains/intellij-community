@@ -3,7 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +17,12 @@ public class MacEmojiAndSymbolsInputAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(SystemInfoRt.isMac);
+    e.getPresentation().setEnabledAndVisible(SystemInfo.isMac);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (!SystemInfoRt.isMac) return;
+    if (!SystemInfo.isMac) return;
     Foundation.executeOnMainThread(false, false, () -> {
       ID app = Foundation.invoke("NSApplication", "sharedApplication");
       Foundation.invoke(app, "orderFrontCharacterPalette:", (Object)null);

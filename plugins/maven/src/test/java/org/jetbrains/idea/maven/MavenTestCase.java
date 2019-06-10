@@ -11,7 +11,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -225,15 +225,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static String getRoot() {
-    if (SystemInfoRt.isWindows) return "c:";
+    if (SystemInfo.isWindows) return "c:";
     return "";
   }
 
   protected static String getEnvVar() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       return "TEMP";
     }
-    else if (SystemInfoRt.isLinux) return "HOME";
+    else if (SystemInfo.isLinux) return "HOME";
     return "TMPDIR";
   }
 

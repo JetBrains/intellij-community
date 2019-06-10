@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -333,7 +333,7 @@ public class AboutPopup {
       UISettings.setupAntialiasing(g);
 
       Font labelFont = JBFont.label();
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
       }
 
@@ -363,7 +363,7 @@ public class AboutPopup {
 
       if (appInfo instanceof ApplicationInfoImpl) {
         g2.setColor(((ApplicationInfoImpl)appInfo).getCopyrightForeground());
-        if (SystemInfoRt.isMac) {
+        if (SystemInfo.isMac) {
           g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
@@ -450,7 +450,7 @@ public class AboutPopup {
         this.h = h;
         this.g2 = g2;
 
-        if (SystemInfoRt.isWindows) {
+        if (SystemInfo.isWindows) {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         }
       }

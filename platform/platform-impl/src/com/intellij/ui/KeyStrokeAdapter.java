@@ -2,7 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -76,7 +76,7 @@ public class KeyStrokeAdapter implements KeyListener {
   public static KeyStroke getDefaultKeyStroke(KeyEvent event) {
     if (event == null || event.isConsumed()) return null;
     // On Windows and Mac it is preferable to use normal key code here
-    boolean extendedKeyCodeFirst = !SystemInfoRt.isWindows && !SystemInfoRt.isMac && event.getModifiers() == 0;
+    boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac && event.getModifiers() == 0;
     KeyStroke stroke = getKeyStroke(event, extendedKeyCodeFirst);
     return stroke != null ? stroke : getKeyStroke(event, !extendedKeyCodeFirst);
   }

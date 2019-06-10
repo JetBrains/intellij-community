@@ -18,7 +18,7 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
@@ -697,7 +697,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   public static boolean isAvailable() { return ourLib != null; }
 
   private static GlobalMenuLib _loadLibrary() {
-    if (!SystemInfoRt.isLinux ||
+    if (!SystemInfo.isLinux ||
         Registry.is("linux.native.menu.force.disable") ||
         !Experiments.isFeatureEnabled("linux.native.menu") ||
         !JnaLoader.isLoaded() ||

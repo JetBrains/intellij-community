@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -92,7 +92,7 @@ public class MessageDialog extends DialogWrapper {
     myDefaultOptionIndex = defaultOptionIndex;
     myFocusedOptionIndex = focusedOptionIndex;
     myIcon = icon;
-    if (!SystemInfoRt.isMac) {
+    if (!SystemInfo.isMac) {
       setButtonsAlignment(SwingConstants.CENTER);
     }
     setDoNotAskOption(doNotAskOption);

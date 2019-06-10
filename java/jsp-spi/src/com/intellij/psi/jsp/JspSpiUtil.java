@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -184,7 +184,7 @@ public abstract class JspSpiUtil {
     }
 
     String url;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       url = "file:/" + path;
     }
     else {

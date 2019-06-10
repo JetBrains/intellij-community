@@ -6,7 +6,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SearchTextField;
 
@@ -26,7 +26,7 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
     updateToolTipText();
     addKeyListener(new KeyAdapter() {
     });
-    if (!SystemInfoRt.isMac) {
+    if (!SystemInfo.isMac) {
       JTextField editor = getTextEditor();
       editor.putClientProperty("JTextField.variant", "search");
       if (!(editor.getUI() instanceof TextFieldWithPopupHandlerUI)) {

@@ -2,7 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.ReflectionUtil;
@@ -68,7 +68,7 @@ public final class JreHiDpiUtil {
         catch (Throwable ignore) {
         }
       }
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         jreHiDPI.set(true);
       }
       return jreHiDPI.get();

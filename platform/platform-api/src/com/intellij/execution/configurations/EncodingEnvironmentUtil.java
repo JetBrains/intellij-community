@@ -2,7 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +38,7 @@ public class EncodingEnvironmentUtil {
    */
   @Deprecated
   public static void setLocaleEnvironmentIfMac(@NotNull GeneralCommandLine commandLine) {
-    if (SystemInfoRt.isMac && !isLocaleDefined(commandLine)) {
+    if (SystemInfo.isMac && !isLocaleDefined(commandLine)) {
       setLocaleEnvironment(commandLine.getEnvironment(), commandLine.getCharset());
     }
   }
@@ -50,7 +50,7 @@ public class EncodingEnvironmentUtil {
    */
   @Deprecated
   public static void setLocaleEnvironmentIfMac(@NotNull Map<String, String> env, @NotNull Charset charset) {
-    if (SystemInfoRt.isMac && !isLocaleDefined(env)) {
+    if (SystemInfo.isMac && !isLocaleDefined(env)) {
       setLocaleEnvironment(env, charset);
     }
   }

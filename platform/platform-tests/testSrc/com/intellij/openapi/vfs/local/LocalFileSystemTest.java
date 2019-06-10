@@ -5,7 +5,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -273,7 +273,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNull(root);
 
     VirtualFile root2;
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       root = myFS.findFileByPath("\\\\unit-133");
       assertNotNull(root);
       root2 = myFS.findFileByPath("//UNIT-133");
@@ -300,7 +300,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
         assertSame(String.valueOf(root), root, root2);
       }
     }
-    else if (SystemInfoRt.isUnix) {
+    else if (SystemInfo.isUnix) {
       root = myFS.findFileByPath("/");
       assertNotNull(root);
       assertEquals("/", root.getPath());
@@ -359,7 +359,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       runInEdtAndWait(() -> WriteAction.run(() -> file.setBinaryContent(testData, 0, 0, requestor)));
       assertTrue(file.getLength() > 0);
 
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         byte[] bytes = FileUtil.loadFileBytes(hardLinkFile);
         assertEquals(testData.length, bytes.length);
       }
@@ -376,7 +376,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testWindowsHiddenDirectory() {
-    assumeTrue("Windows expected", SystemInfoRt.isWindows);
+    assumeTrue("Windows expected", SystemInfo.isWindows);
 
     File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue("Documents and Settings assumed to exist", file.exists());
@@ -430,7 +430,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBadFileNameUnderUnix() throws IOException {
-    assumeTrue("Unix expected", SystemInfoRt.isUnix);
+    assumeTrue("Unix expected", SystemInfo.isUnix);
 
     File file = tempDir.newFile("test\\file.txt");
     VirtualFile vDir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());

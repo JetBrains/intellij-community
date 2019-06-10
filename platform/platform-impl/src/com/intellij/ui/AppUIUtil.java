@@ -87,7 +87,7 @@ public final class AppUIUtil {
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
       ScaleContext ctx = ScaleContext.create(window);
 
-      if (SystemInfoRt.isUnix) {
+      if (SystemInfo.isUnix) {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
         ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
@@ -95,7 +95,7 @@ public final class AppUIUtil {
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
       ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, fallback));
 
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         ContainerUtil.addIfNotNull(images, loadSmallApplicationIconImage(ctx));
       }
 
@@ -108,7 +108,7 @@ public final class AppUIUtil {
     }
 
     if (!images.isEmpty()) {
-      if (!SystemInfoRt.isMac) {
+      if (!SystemInfo.isMac) {
         window.setIconImages(images);
       }
       else if (!ourMacDocIconSet && PluginManagerCore.isRunningFromSources()) {
@@ -119,12 +119,12 @@ public final class AppUIUtil {
   }
 
   public static boolean isWindowIconAlreadyExternallySet() {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return ourMacDocIconSet || !PluginManagerCore.isRunningFromSources();
     }
 
     // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
+    return SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
   @NotNull
@@ -194,7 +194,7 @@ public final class AppUIUtil {
   }
 
   public static void updateFrameClass(@NotNull Toolkit toolkit) {
-    if (SystemInfoRt.isWindows || SystemInfoRt.isMac) {
+    if (SystemInfo.isWindows || SystemInfo.isMac) {
       return;
     }
 

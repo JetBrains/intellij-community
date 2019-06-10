@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import junit.framework.TestCase;
 import org.junit.Assume;
@@ -36,7 +36,7 @@ public class TouchBarSettingsTest extends TestCase {
 
   @Test
   public void testSettingsRead() {
-    Assume.assumeTrue("mac only", SystemInfoRt.isMac);
+    Assume.assumeTrue("mac only", SystemInfo.isMac);
 
     final String sysVer = NSDefaults.readStringVal("loginwindow", "SystemVersionStampAsString");
     assertNotNull(sysVer);

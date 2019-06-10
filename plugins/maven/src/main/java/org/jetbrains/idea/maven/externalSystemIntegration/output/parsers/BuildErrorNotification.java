@@ -6,7 +6,7 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     if (fullFileNameIdx < 0) {
       return false;
     }
-    int start = SystemInfoRt.isWindows && line.charAt(0) == '/' ? 1 : 0;
+    int start = SystemInfo.isWindows && line.charAt(0) == '/' ? 1 : 0;
     String filename = FileUtil.toSystemDependentName(line.substring(start, fileNameIdx) + "." + myExtension);
 
     File parsedFile = new File(filename);

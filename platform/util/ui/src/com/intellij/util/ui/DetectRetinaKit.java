@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +94,7 @@ public final class DetectRetinaKit {
   static boolean isRetina() {
     // Oracle JDK
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       GraphicsEnvironment e
         = GraphicsEnvironment.getLocalGraphicsEnvironment();
 

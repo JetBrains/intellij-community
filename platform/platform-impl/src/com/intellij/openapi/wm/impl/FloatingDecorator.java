@@ -8,7 +8,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -63,7 +63,7 @@ public final class FloatingDecorator extends JDialog {
     final JComponent cp=(JComponent)getContentPane();
     cp.setLayout(new BorderLayout());
 
-    if(SystemInfoRt.isWindows){
+    if(SystemInfo.isWindows){
       setUndecorated(true);
       cp.add(new BorderItem(ANCHOR_TOP),BorderLayout.NORTH);
       cp.add(new BorderItem(ANCHOR_LEFT),BorderLayout.WEST);

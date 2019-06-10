@@ -4,7 +4,7 @@ package org.intellij.images.fileTypes;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
@@ -40,7 +40,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
           }
           try {
             String path = file1.getPath();
-            if (SystemInfoRt.isWindows) {
+            if (SystemInfo.isWindows) {
               path = "/" + path;
             }
             final String url = new URI("file", null, path, null).toString();

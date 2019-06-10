@@ -2,7 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +55,7 @@ public class PythonStringUtil {
       s = FileUtil.toSystemIndependentName(s);
       final List<String> components = StringUtil.split(s, "/");
       for (String name : components) {
-        if (name == components.get(0) && SystemInfoRt.isWindows && name.endsWith(":")) {
+        if (name == components.get(0) && SystemInfo.isWindows && name.endsWith(":")) {
           continue;
         }
         if (!PathUtil.isValidFileName(name)) {

@@ -3,7 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
@@ -652,7 +652,7 @@ public class Splitter extends JPanel implements Splittable {
       if (e.getID() == MouseEvent.MOUSE_CLICKED) {
         if (mySwitchOrientationEnabled
             && e.getClickCount() == 1
-            && SwingUtilities.isLeftMouseButton(e) && (SystemInfoRt.isMac ? e.isMetaDown() : e.isControlDown())) {
+            && SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown())) {
           Splitter.this.setOrientation(!Splitter.this.getOrientation());
         }
         if (myResizeEnabled && e.getClickCount() == 2) {

@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -491,7 +491,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void removeFromLocalRepository(String relativePath) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().shutdown(true);
     }
     FileUtil.delete(new File(getRepositoryPath(), relativePath));

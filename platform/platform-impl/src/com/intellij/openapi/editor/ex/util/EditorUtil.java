@@ -634,7 +634,7 @@ public final class EditorUtil {
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
     if (e.getWheelRotation() == 0) return false;
-    return SystemInfoRt.isMac
+    return SystemInfo.isMac
            ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }

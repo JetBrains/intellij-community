@@ -6,7 +6,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -36,16 +36,16 @@ public abstract class JavaHomeFinder {
   protected abstract List<String> findExistingJdks();
 
   private static JavaHomeFinder getFinder() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       return new WindowsJavaFinder();
     }
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       return new MacFinder();
     }
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfo.isLinux) {
       return new DefaultFinder("/usr/java", "/opt/java", "/usr/lib/jvm");
     }
-    if (SystemInfoRt.isSolaris) {
+    if (SystemInfo.isSolaris) {
       return new DefaultFinder("/usr/jdk");
     }
     return new DefaultFinder();

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.MacMainFrameDecorator;
 import org.jetbrains.annotations.NotNull;
@@ -20,9 +20,9 @@ public abstract class MacWindowActionBase extends AnAction implements DumbAware 
   @Override
   public void update(@NotNull final AnActionEvent e) {
     Presentation p = e.getPresentation();
-    p.setVisible(SystemInfoRt.isMac);
+    p.setVisible(SystemInfo.isMac);
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       Project project = e.getProject();
       if (project != null) {
         JFrame frame = WindowManager.getInstance().getFrame(project);

@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -82,7 +82,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       pane.getVerticalScrollBar().addComponentListener(new ComponentAdapter() {
         @Override
         public void componentShown(ComponentEvent e) {
-          int top = SystemInfoRt.isMac ? 2 : 1;
+          int top = SystemInfo.isMac ? 2 : 1;
           pane.setBorder(JBUI.Borders.empty(top, 0, 1, 1));
         }
 

@@ -2,7 +2,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -159,7 +159,7 @@ object Urls {
     urls.any { equals(url, it, caseSensitive, true) }
 
   fun equalsIgnoreParameters(url: Url, file: VirtualFile): Boolean = when {
-    file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !SystemInfoRt.isFileSystemCaseSensitive)
+    file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !SystemInfo.isFileSystemCaseSensitive)
     url.isInLocalFileSystem -> false
     else -> parseUrl(file.url)?.equalsIgnoreParameters(url) ?: false
   }
@@ -179,7 +179,7 @@ object Urls {
     val inLocalFileSystem = url.isInLocalFileSystem
     val scheme = if (inLocalFileSystem) "file" else url.scheme
     val authority = if (inLocalFileSystem) "" else url.authority
-    val externalPath = if (inLocalFileSystem && SystemInfoRt.isWindows && url.path[0] != '/') "/${url.path}" else url.path
+    val externalPath = if (inLocalFileSystem && SystemInfo.isWindows && url.path[0] != '/') "/${url.path}" else url.path
     URI(scheme, authority, externalPath, null, null)
   }
   catch (e: URISyntaxException) {

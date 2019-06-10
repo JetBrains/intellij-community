@@ -4,7 +4,7 @@ package com.intellij.xdebugger.attach.osHandlers;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import com.intellij.xdebugger.attach.LocalAttachHost;
@@ -74,15 +74,15 @@ public abstract class AttachOSHandler {
 
   @NotNull
   private static OSType localComputeOsType() {
-    if(SystemInfoRt.isLinux) {
+    if(SystemInfo.isLinux) {
       return OSType.LINUX;
     }
 
-    if(SystemInfoRt.isMac) {
+    if(SystemInfo.isMac) {
       return OSType.MACOSX;
     }
 
-    if(SystemInfoRt.isWindows) {
+    if(SystemInfo.isWindows) {
       return OSType.WINDOWS;
     }
 

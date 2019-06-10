@@ -2,7 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
@@ -95,7 +95,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   @SuppressWarnings("UnusedParameters")
   public static ScrollBarUI createUI(JComponent c) {
-    return SystemInfoRt.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
+    return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
   }
 
   /**
@@ -270,7 +270,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     double rotation = event.getPreciseWheelRotation();
     if (ScrollSettings.isPixelPerfectEnabled()) {
       // calculate an absolute delta if possible
-      if (SystemInfoRt.isMac) {
+      if (SystemInfo.isMac) {
         // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
         // so we use 10 to restore amount of pixels to scroll.
         return 10 * rotation;

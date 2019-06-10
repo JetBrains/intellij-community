@@ -2,7 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ public class DarculaTextAreaUI extends BasicTextAreaUI {
   @Override
   protected void installKeyboardActions() {
     super.installKeyboardActions();
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       InputMap inputMap = getComponent().getInputMap();
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), DefaultEditorKit.upAction);
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), DefaultEditorKit.downAction);

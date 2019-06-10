@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testGuiFramework.recorder.actions.PerformScriptAction;
 import com.intellij.testGuiFramework.recorder.actions.StartPauseRecAction;
 import com.intellij.testGuiFramework.recorder.actions.StopRecAction;
@@ -33,7 +33,7 @@ public class GuiScriptEditorPanel {
 
     public GuiScriptEditorPanel() {
         super();
-        myStatusLabel.setFont(SystemInfoRt.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+        myStatusLabel.setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
         progressIcon.setVisible(false);
 
         myEditor = new GuiScriptEditor();

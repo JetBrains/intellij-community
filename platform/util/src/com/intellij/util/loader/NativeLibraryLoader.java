@@ -3,7 +3,7 @@ package com.intellij.util.loader;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public class NativeLibraryLoader {
       baseName = baseName.replace("32", "") + "64";
     }
     String fileName = System.mapLibraryName(baseName);
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       fileName = fileName.replace(".jnilib", ".dylib");
     }
     return fileName;

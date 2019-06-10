@@ -6,7 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
@@ -265,7 +265,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected void setupDefaultButton(JButton button) {
-    if (!SystemInfoRt.isMac) {
+    if (!SystemInfo.isMac) {
       Font f = new FontUIResource(isDefaultButton(button) ?
                                   button.getFont().deriveFont(Font.BOLD) :
                                   button.getFont().deriveFont(Font.PLAIN));

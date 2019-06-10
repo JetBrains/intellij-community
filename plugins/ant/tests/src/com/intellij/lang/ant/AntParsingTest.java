@@ -8,7 +8,7 @@ import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.testFramework.ParsingTestCase;
 
@@ -112,7 +112,7 @@ public class AntParsingTest extends ParsingTestCase {
   }
 
   public void testDirname() throws Exception {
-    doTest(SystemInfoRt.isWindows ? "_w" : "_u");
+    doTest(SystemInfo.isWindows ? "_w" : "_u");
   }
 
   public void testBasename() {

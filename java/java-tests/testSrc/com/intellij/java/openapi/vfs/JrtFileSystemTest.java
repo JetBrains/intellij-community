@@ -4,7 +4,7 @@ package com.intellij.java.openapi.vfs;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,7 +104,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     List<VFileEvent> events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
     Assertions.assertThat(childNames(myRoot)).describedAs("events=" + events).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
 
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       Assertions.assertThat(FileUtil.delete(myTempPath.toFile())).isTrue();
       events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
       Assertions.assertThat(myRoot.isValid()).describedAs("events=" + events).isFalse();
@@ -119,7 +119,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     VirtualFilePointer[] pointers = {manager.create(vTemp, myDisposable, null), manager.create(myRoot, myDisposable, null)};
     assertPointers(pointers, true);
 
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfo.isUnix) {
       VirtualFile testRoot = vTemp.getParent();
 
       Assertions.assertThat(FileUtil.delete(myTempPath.toFile())).isTrue();

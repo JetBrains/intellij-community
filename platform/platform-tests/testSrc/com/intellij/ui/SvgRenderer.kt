@@ -4,7 +4,7 @@ package com.intellij.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -130,7 +130,7 @@ internal class SvgRenderer(val svgFileDir: Path) {
       // &#27;Remember
       // no idea why transformer/batik doesn't escape it correctly
       .replace(">&#27;", ">&amp;")
-    return if (SystemInfoRt.isWindows) StringUtilRt.convertLineSeparators(result) else result
+    return if (SystemInfo.isWindows) StringUtilRt.convertLineSeparators(result) else result
   }
 
   fun render(component: Component): String {

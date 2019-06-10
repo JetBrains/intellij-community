@@ -3,7 +3,7 @@ package com.intellij.execution.process.impl;
 
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
@@ -15,7 +15,7 @@ public class ProcessListTest extends TestCase {
   public void testWorksOnAllPlatforms() {
     assertNotEmpty(Arrays.asList(OSProcessUtil.getProcessList()));
 
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessListUsingWindowsTaskList()));
       assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessListUsingWindowsWMIC()));
     }

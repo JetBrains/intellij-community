@@ -2,7 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -181,7 +181,7 @@ public abstract class Decompressor {
                 if (!entry.isWritable && !outputFile.setWritable(false, false)) {
                   throw new IOException("Can't make file read-only: " + outputFile);
                 }
-                if (entry.isExecutable && SystemInfoRt.isUnix && !outputFile.setExecutable(true, true)) {
+                if (entry.isExecutable && SystemInfo.isUnix && !outputFile.setExecutable(true, true)) {
                   throw new IOException("Can't make file executable: " + outputFile);
                 }
               }

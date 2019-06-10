@@ -35,7 +35,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -174,7 +174,7 @@ public class MemoryAgentUtil {
   }
 
   public static boolean isPlatformSupported() {
-    return SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfoRt.isLinux;
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux;
   }
 
   private static boolean isIbmJdk(@NotNull JavaParameters parameters) {
@@ -200,8 +200,8 @@ public class MemoryAgentUtil {
 
   private static AgentExtractor.AgentLibraryType detectAgentKind(String jdkPath) {
     LOG.assertTrue(isPlatformSupported());
-    if (SystemInfoRt.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
-    if (SystemInfoRt.isMac) return AgentExtractor.AgentLibraryType.MACOS;
+    if (SystemInfo.isLinux) return AgentExtractor.AgentLibraryType.LINUX;
+    if (SystemInfo.isMac) return AgentExtractor.AgentLibraryType.MACOS;
     JdkVersionDetector.JdkVersionInfo versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkPath);
     if (versionInfo == null) {
       LOG.warn("Could not detect jdk bitness. x64 will be used.");

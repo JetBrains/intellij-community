@@ -5,7 +5,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.icons.AllIcons.General;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -68,7 +68,7 @@ public final class ShortcutTextField extends ExtendableTextField {
       if (
         e.getID() == KeyEvent.KEY_PRESSED
         || (e.getID() == KeyEvent.KEY_RELEASED &&
-            SystemInfoRt.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
+            SystemInfo.isLinux && (e.isAltDown() || e.isAltGraphDown()) && myLastPressedKeyCode != keyCode) // press-event was skipped
       ) {
         setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
       }

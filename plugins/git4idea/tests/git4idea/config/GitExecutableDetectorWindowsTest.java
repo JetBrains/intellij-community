@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,7 @@ import java.io.IOException;
 public class GitExecutableDetectorWindowsTest {
   @Before
   public void setUp() throws IOException, NoSuchFieldException, IllegalAccessException {
-    Assume.assumeTrue("Windows-only test", SystemInfoRt.isWindows);
+    Assume.assumeTrue("Windows-only test", SystemInfo.isWindows);
     testRoot = FileUtil.createTempDirectory("", "");
   }
 

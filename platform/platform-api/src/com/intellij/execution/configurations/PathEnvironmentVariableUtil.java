@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
@@ -118,7 +118,7 @@ public class PathEnvironmentVariableUtil {
 
   @NotNull
   public static List<String> getWindowsExecutableFileExtensions() {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       String allExtensions = System.getenv("PATHEXT");
       if (allExtensions != null) {
         Collection<String> extensions = StringUtil.split(allExtensions, ";", true, true);
@@ -136,7 +136,7 @@ public class PathEnvironmentVariableUtil {
 
   @Contract("_, !null -> !null")
   public static String findExecutableInWindowsPath(@NotNull String exePath, @Nullable String defaultPath) {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
         List<String> executableFileExtensions = getWindowsExecutableFileExtensions();
 

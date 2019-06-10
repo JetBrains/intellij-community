@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -128,7 +128,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       if (!child.isDirectory()) {
         final String childName = StringUtil.toLowerCase(child.getName());
         for (String name : NAMES) {
-          if (SystemInfoRt.isWindows) {
+          if (SystemInfo.isWindows) {
             if (childName.equals(name)) {
               return FileUtil.toSystemDependentName(child.getPath());
             }

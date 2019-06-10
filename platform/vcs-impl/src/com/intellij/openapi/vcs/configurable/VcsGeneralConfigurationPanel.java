@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -81,7 +81,7 @@ public class VcsGeneralConfigurationPanel {
     }
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());                           // todo check text!
-    myOnPatchCreation.setName((SystemInfoRt.isMac ? "Reveal patch in" : "Show patch in ") +
+    myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
                               ShowFilePathAction.getFileManagerName() + " after creation:");
   }
 

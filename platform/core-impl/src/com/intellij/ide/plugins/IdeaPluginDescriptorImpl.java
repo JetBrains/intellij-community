@@ -876,19 +876,19 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (os.equals(Extensions.OS.mac.name())) {
-      return SystemInfoRt.isMac;
+      return SystemInfo.isMac;
     }
     else if (os.equals(Extensions.OS.linux.name())) {
-      return SystemInfoRt.isLinux;
+      return SystemInfo.isLinux;
     }
     else if (os.equals(Extensions.OS.windows.name())) {
-      return SystemInfoRt.isWindows;
+      return SystemInfo.isWindows;
     }
     else if (os.equals(Extensions.OS.unix.name())) {
-      return SystemInfoRt.isUnix;
+      return SystemInfo.isUnix;
     }
     else if (os.equals(Extensions.OS.freebsd.name())) {
-      return SystemInfoRt.isFreeBSD;
+      return SystemInfo.isFreeBSD;
     }
     else {
       throw new IllegalArgumentException("Unknown OS '" + os + "'");

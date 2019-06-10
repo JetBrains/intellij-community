@@ -9,7 +9,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -60,7 +60,7 @@ public class EditorEmptyTextPainter {
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
     Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     appendAction(painter, "Search Everywhere", shortcuts.length == 0 ?
-                                               "Double " + (SystemInfoRt.isMac ? MacKeymapUtil.SHIFT : "Shift") :
+                                               "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift") :
                                                KeymapUtil.getShortcutsText(shortcuts));
   }
 

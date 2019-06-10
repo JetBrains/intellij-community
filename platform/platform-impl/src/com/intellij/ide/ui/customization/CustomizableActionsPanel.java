@@ -19,7 +19,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -185,7 +185,7 @@ public class CustomizableActionsPanel {
     restorePathsAfterTreeOptimization(treePaths);
     CustomActionsSchema.getInstance().copyFrom(mySelectedSchema);
     CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       TouchBarsManager.reloadAll();
     }
   }

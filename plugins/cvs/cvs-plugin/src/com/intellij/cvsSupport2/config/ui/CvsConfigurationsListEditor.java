@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputException;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DumbAwareActionButton;
@@ -135,7 +135,7 @@ public class CvsConfigurationsListEditor extends DialogWrapper implements DataPr
         }
       };
     duplicateButton.setShortcut(new CustomShortcutSet(
-      KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfoRt.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)));
+      KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)));
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList).setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton anActionButton) {

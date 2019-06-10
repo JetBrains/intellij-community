@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
@@ -41,14 +41,14 @@ class NSScrollerHelper {
   private static final List<Reference<ScrollbarStyleListener>> ourStyleListeners = new ArrayList<>();
 
   static {
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       initNotificationObserver();
       updateBehaviorPreferences();
     }
   }
 
   private static boolean isOverlayScrollbarSupported() {
-    return SystemInfoRt.isMac && SystemInfo.isMacOSMountainLion;
+    return SystemInfo.isMac && SystemInfo.isMacOSMountainLion;
   }
 
   private static void initNotificationObserver() {
@@ -95,12 +95,12 @@ class NSScrollerHelper {
 
   @Nullable
   public static ClickBehavior getClickBehavior() {
-    if (!SystemInfoRt.isMac) return null;
+    if (!SystemInfo.isMac) return null;
     return ourClickBehavior;
   }
 
   private static void updateBehaviorPreferences() {
-    if (!SystemInfoRt.isMac) return;
+    if (!SystemInfo.isMac) return;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {

@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import org.junit.Before;
@@ -21,7 +21,7 @@ public class IdeaWin32PerformanceTest {
 
   @Before
   public void setUp() {
-    assumeTrue("windows only", SystemInfoRt.isWindows);
+    assumeTrue("windows only", SystemInfo.isWindows);
     myDriver = IdeaWin32.getInstance();
     myIdeaTotal = myJavaTotal = 0;
   }

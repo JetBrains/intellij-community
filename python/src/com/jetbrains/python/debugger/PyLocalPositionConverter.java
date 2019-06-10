@@ -4,7 +4,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,7 +31,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
       if (file == null) {
         return null;
       }
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         file = winNormCase(file);
       }
       return super.normalize(file);
@@ -48,7 +48,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
       if (file == null) {
         return null;
       }
-      if (SystemInfoRt.isWindows && isWindowsPath(file)) {
+      if (SystemInfo.isWindows && isWindowsPath(file)) {
         file = winNormCase(file);
       }
       return super.normalize(file);

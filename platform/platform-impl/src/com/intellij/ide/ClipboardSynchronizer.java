@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class ClipboardSynchronizer implements Disposable {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && ApplicationManager.getApplication().isUnitTestMode()) {
       myClipboardHandler = new HeadlessClipboardHandler();
     }
-    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isMac) {
+    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isMac) {
       myClipboardHandler = new MacClipboardHandler();
     }
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isXWindow) {
@@ -103,7 +103,7 @@ public class ClipboardSynchronizer implements Disposable {
       return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
     catch (IllegalStateException e) {
-      if (SystemInfoRt.isWindows) {
+      if (SystemInfo.isWindows) {
         LOG.debug("Clipboard is busy");
       } else {
         LOG.warn(e);

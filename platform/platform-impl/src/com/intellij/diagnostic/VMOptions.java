@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -177,8 +177,8 @@ public class VMOptions {
   @NotNull
   public static String getCustomVMOptionsFileName() {
     String fileName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
-    if (SystemInfo.is64Bit && !SystemInfoRt.isMac) fileName += "64";
-    if (SystemInfoRt.isWindows) fileName += ".exe";
+    if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
+    if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
     return fileName;
   }

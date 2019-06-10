@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +64,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
     StringBuilder result = new StringBuilder();
     result.append(exitCode);
 
-    if (SystemInfoRt.isWindows && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
+    if (SystemInfo.isWindows && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
       // Quote from http://support.microsoft.com/kb/308558:
       //   If the result code has the "C0000XXX" format, the task did not complete successfully (the "C" indicates an error condition).
       //   The most common "C" error code is "0xC000013A: The application terminated as a result of a CTRL+C".
@@ -74,7 +74,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
       }
       result.append(')');
     }
-    else if (SystemInfoRt.isUnix && exitCode >= 129 && exitCode <= 159) {
+    else if (SystemInfo.isUnix && exitCode >= 129 && exitCode <= 159) {
       // "Exit Codes With Special Meanings" (http://www.tldp.org/LDP/abs/html/exitcodes.html)
       @SuppressWarnings("SpellCheckingInspection") String[] signals = {
         "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "EMT", "FPE", "KILL", "BUS", "SEGV", "SYS", "PIPE", "ALRM", "TERM", "URG",

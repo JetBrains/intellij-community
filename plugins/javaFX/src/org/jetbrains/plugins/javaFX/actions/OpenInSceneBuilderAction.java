@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class OpenInSceneBuilderAction extends AnAction {
 
     String pathToSceneBuilder = info.path;
 
-    if (SystemInfoRt.isMac) {
+    if (SystemInfo.isMac) {
       pathToSceneBuilder += "/Contents/MacOS/";
       if (new File(pathToSceneBuilder, OLD_LAUNCHER).exists()) {
         pathToSceneBuilder += OLD_LAUNCHER;

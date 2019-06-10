@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -142,7 +142,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         dependenciesLabelText.append(dependentDescriptor.getName());
       }
       JLabel dependenciesLabel = createHTMLLabel(dependenciesLabelText.toString());
-      if (!SystemInfoRt.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, dependenciesLabel);
+      if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, dependenciesLabel);
 
       JLabel warningLabel = null;
       if (isVIM || isCloud) {
@@ -155,7 +155,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           warningLabel.setIcon(AllIcons.General.BalloonWarning);
         }
 
-        if (!SystemInfoRt.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
+        if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
       }
 
       final CardLayout wrapperLayout = new CardLayout();

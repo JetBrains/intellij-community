@@ -6,7 +6,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -281,10 +281,10 @@ public class DateFormatUtil {
   private static SyncDateFormat[] getDateTimeFormats() {
     DateFormat[] formats = null;
     try {
-      if (SystemInfoRt.isMac && JnaLoader.isLoaded()) {
+      if (SystemInfo.isMac && JnaLoader.isLoaded()) {
         formats = getMacFormats();
       }
-      else if (SystemInfoRt.isUnix) {
+      else if (SystemInfo.isUnix) {
         formats = getUnixFormats();
       }
       else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded() ) {
@@ -304,7 +304,7 @@ public class DateFormatUtil {
     }
 
     if (LOG.isTraceEnabled()) {
-      LOG.trace("formats (OS=" + SystemInfoRt.OS_NAME + " JNA=" + JnaLoader.isLoaded() + ")");
+      LOG.trace("formats (OS=" + SystemInfo.OS_NAME + " JNA=" + JnaLoader.isLoaded() + ")");
       for (DateFormat format: formats) {
         LOG.trace("'" + (format instanceof SimpleDateFormat ? ((SimpleDateFormat)format).toPattern() : format.toString()) + "'");
       }

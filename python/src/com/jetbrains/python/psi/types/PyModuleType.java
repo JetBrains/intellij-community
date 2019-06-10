@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -387,7 +387,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   private static boolean isBinaryModule(String filename) {
     final String ext = FileUtilRt.getExtension(filename);
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       return "pyd".equalsIgnoreCase(ext);
     }
     else {

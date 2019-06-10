@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
@@ -20,7 +20,7 @@ public class CountComponent extends JLabel {
 
   public CountComponent() {
     setBorder(null);
-    setFont(UIUtil.getLabelFont(SystemInfoRt.isMac || (SystemInfoRt.isLinux && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()))
+    setFont(UIUtil.getLabelFont(SystemInfo.isMac || (SystemInfo.isLinux && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()))
                                 ? UIUtil.FontSize.SMALL
                                 : UIUtil.FontSize.NORMAL));
     setForeground(JBColor.namedColor("Counter.foreground", new JBColor(0xFFFFFF, 0x3E434D)));

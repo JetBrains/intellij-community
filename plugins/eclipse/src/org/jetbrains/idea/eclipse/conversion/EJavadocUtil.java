@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
@@ -54,7 +54,7 @@ public class EJavadocUtil {
       if (Comparing.strEqual(((Element)o).getAttributeValue("name"), JAVADOC_LOCATION)) {
         Element attribute = (Element)o;
         String javadocPath = attribute.getAttributeValue("value");
-        if (!SystemInfoRt.isWindows) {
+        if (!SystemInfo.isWindows) {
           javadocPath = javadocPath.replaceFirst(FILE_PROTOCOL, FILE_PROTOCOL + "/");
         }
         modifiableModel.addRoot(toIdeaJavadocUrl(model, javadocPath, currentRoots), JavadocOrderRootType.getInstance());
