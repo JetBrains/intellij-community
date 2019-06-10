@@ -141,29 +141,20 @@ public class GitPushOperation {
           break;
         }
 
-        // propose to update if rejected
         if (!result.rejected.isEmpty()) {
-          boolean shouldUpdate = true;
-          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected)) {
-            shouldUpdate = false;
-          }
-          else if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
+
+          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected)) break;
+
+          // propose to update if rejected
+          if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
             // the dialog will be shown => check for rebase-over-merge problem in advance to avoid showing several dialogs in a row
             rebaseOverMergeProblemDetected = !findRootsWithMergeCommits(getRootsToUpdate(updateSettings,
                                                                                          result.rejected.keySet())).isEmpty();
 
             updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
                                                       rebaseOverMergeProblemDetected.booleanValue());
-            if (updateSettings != null) {
-              savePushUpdateSettings(updateSettings, rebaseOverMergeProblemDetected.booleanValue());
-            }
-            else {
-              shouldUpdate = false;
-            }
-          }
-
-          if (!shouldUpdate) {
-            break;
+            if (updateSettings == null) break;
+            savePushUpdateSettings(updateSettings, rebaseOverMergeProblemDetected.booleanValue());
           }
 
           if (beforePushLabel == null) { // put the label only before the very first update
