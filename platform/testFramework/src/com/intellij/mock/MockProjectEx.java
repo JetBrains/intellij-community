@@ -16,6 +16,6 @@ public class MockProjectEx  extends MockProject implements ProjectEx {
   }
 
   @Override
-  public void init() {
+  public void init(@NotNull String filePath) {
   }
 }

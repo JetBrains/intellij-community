@@ -10,7 +10,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -63,11 +66,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-@State(
-  name = "ToolWindowManager",
-  defaultStateAsResource = true,
-  storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)
-)
+@State(name = "ToolWindowManager", defaultStateAsResource = true, storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class ToolWindowManagerImpl extends ToolWindowManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
