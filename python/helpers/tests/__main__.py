@@ -19,9 +19,21 @@ def discover_and_run_all_tests():
 
 def get_test_runner():
     try:
-        import teamcity.unittestpy
+        import teamcity
         if teamcity.is_running_under_teamcity():
-            return teamcity.unittestpy.TeamcityTestRunner(buffer=True)
+            from teamcity.unittestpy import TeamcityTestRunner, TeamcityTestResult
+
+            class PythonVersionAwareTestResultClass(TeamcityTestResult):
+                @staticmethod
+                def get_test_id(test):
+                    major, minor = sys.version_info[:2]
+                    interpreter_id = 'py{}{}'.format(major, minor)
+                    return '{}.{}'.format(interpreter_id, TeamcityTestResult.get_test_id(test))
+
+            class PythonVersionAwareTeamcityTestRunner(TeamcityTestRunner):
+                resultclass = PythonVersionAwareTestResultClass
+
+            return PythonVersionAwareTeamcityTestRunner(buffer=True)
     except ImportError:
         pass
     return unittest.TextTestRunner()
