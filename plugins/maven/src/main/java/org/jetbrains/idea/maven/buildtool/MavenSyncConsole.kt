@@ -59,13 +59,6 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  fun finishImportWithError(exception: Throwable) {
-    debugLog("Maven sync: finishImport with error", exception)
-    addText(mySyncId, ExceptionUtil.getThrowableText(exception, "com.intellij."), false)
-    doFinish(FailureResultImpl(exception))
-  }
-
-  @Synchronized
   fun notifyReadingProblems(file: VirtualFile) {
     debugLog("reading problems in $file")
   }
@@ -153,7 +146,7 @@ class MavenSyncConsole(private val myProject: Project) {
     else {
       addText(downloadArtifactString, error, true)
     }
-    completeTask(mySyncId, downloadString, FailureResultImpl(error))
+    completeTask(downloadString, downloadArtifactString, FailureResultImpl(error))
   }
 
 
