@@ -19,12 +19,20 @@ class FileHistoryColorManager(private val root: VirtualFile,
   }
 
   fun update(pack: VcsLogDataPack) {
-    val filePaths = pack.filePaths()
-    if (filePaths.isEmpty()) {
+    val pathsFromPack = pack.filePaths()
+    if (pathsFromPack.isEmpty()) {
       baseColorManager = VcsLogColorManagerImpl(setOf(path))
     }
     else {
-      baseColorManager = VcsLogColorManagerImpl(filePaths)
+      val newPaths = mutableListOf<FilePath>()
+      for (path in baseColorManager.paths) {
+        if (pathsFromPack.contains(path)) newPaths.add(path)
+      }
+      for (path in pathsFromPack) {
+        if (!newPaths.contains(path)) newPaths.add(path)
+      }
+      
+      baseColorManager = VcsLogColorManagerImpl(newPaths)
     }
   }
 
