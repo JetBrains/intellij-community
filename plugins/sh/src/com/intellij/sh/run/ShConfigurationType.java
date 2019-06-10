@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.sh.ShLanguage;
+import com.intellij.util.EnvironmentUtil;
 import icons.SHIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,11 @@ public class ShConfigurationType extends SimpleConfigurationType {
   @NotNull
   @Override
   public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-    return new ShRunConfiguration(project, this, ShLanguage.INSTANCE.getID());
+    ShRunConfiguration configuration = new ShRunConfiguration(project, this, ShLanguage.INSTANCE.getID());
+    String defaultShell = EnvironmentUtil.getValue("SHELL");
+    if (defaultShell != null) {
+      configuration.setInterpreterPath(defaultShell);
+    }
+    return configuration;
   }
 }

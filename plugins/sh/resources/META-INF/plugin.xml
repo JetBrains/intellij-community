@@ -29,6 +29,7 @@
     <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
     <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.ShDocumentationProvider"/>
     <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
+    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
 
     <defaultLiveTemplatesProvider implementation="com.intellij.sh.template.ShTemplateProvider"/>
     <liveTemplateContext implementation="com.intellij.sh.template.ShContextType"/>
