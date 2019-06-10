@@ -8,10 +8,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class ShowNotificationIconsDialogAction extends AnAction implements DumbAware {
@@ -61,11 +61,11 @@ public class ShowNotificationIconsDialogAction extends AnAction implements DumbA
       private JPanel createIconsRow(@NotNull NotificationType notificationType, boolean forToolWindow) {
         JPanel row = new JPanel();
         row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i <= 10; i++) {
           LayeredIcon icon = IdeNotificationArea.createIconWithNotificationCount(row, notificationType, i, forToolWindow);
           JBLabel label = new JBLabel(icon);
-          label.setMaximumSize(new Dimension(30, 20));
-          label.setMinimumSize(new Dimension(30, 20));
+          label.setMaximumSize(new JBDimension(30, 20));
+          label.setMinimumSize(new JBDimension(30, 20));
           row.add(label);
         }
         return row;
