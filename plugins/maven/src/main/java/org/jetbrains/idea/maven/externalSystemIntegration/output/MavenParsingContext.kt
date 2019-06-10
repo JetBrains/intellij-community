@@ -20,15 +20,20 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
     }
 
 
-  fun getProject(threadId: Int, parameters: Map<String, String>, create: Boolean): ProjectExecutionEntry? {
+
+  fun getProject(threadId: Int,  id: String?, create: Boolean): ProjectExecutionEntry? {
     var currentProject = search(ProjectExecutionEntry::class.java, context.get(threadId)
-    ) { e -> parameters["id"] == null || e.name == parameters["id"] }
+    ) { e -> id == null || e.name == id }
 
     if (currentProject == null && create) {
-      currentProject = ProjectExecutionEntry(parameters["id"] ?: "", threadId)
+      currentProject = ProjectExecutionEntry(id ?: "", threadId)
       add(threadId, currentProject)
     }
     return currentProject
+  }
+
+  fun getProject(threadId: Int, parameters: Map<String, String>, create: Boolean): ProjectExecutionEntry? {
+    return getProject(threadId, parameters["id"], create)
   }
 
 
@@ -105,7 +110,7 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
 
 
   private fun <T : MavenExecutionEntry> search(klass: Class<T>,
-                                               entries: ArrayList<MavenExecutionEntry>): T? {
+                                               entries: ArrayList<MavenExecutionEntry>?): T? {
     return search(klass, entries) { true }
   }
 
