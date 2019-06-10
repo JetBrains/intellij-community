@@ -7,6 +7,8 @@ import unittest
 from contextlib import contextmanager
 from io import open
 
+from pycharm_generator_utils.constants import ENV_TEST_MODE_FLAG
+
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
 _override_test_data = False
@@ -27,8 +29,12 @@ class GeneratorTestCase(unittest.TestCase):
         cls.log.addHandler(handler)
         cls.log.setLevel(logging.DEBUG)
 
+        os.environ[ENV_TEST_MODE_FLAG] = 'True'
+
     @classmethod
     def tearDownClass(cls):
+        os.environ.pop(ENV_TEST_MODE_FLAG)
+
         delattr(cls, 'log')
         super(GeneratorTestCase, cls).tearDownClass()
 
