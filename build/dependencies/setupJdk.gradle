@@ -11,7 +11,7 @@ cleanSetupJdks.dependsOn('cleanSetupJdk', 'cleanSetupJdk16', 'cleanDownloadJdk')
 project.ext.jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 project.ext.jdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
 def isModular = jdkVersion > 8
-project.ext.build = isModular ? secondJreBuild : jdkBuild
+project.ext.build = isModular ? jdkBuild : secondJreBuild
 def setupJbrSdk = System.getProperty('intellij.build.jbr.setupSdk', 'false').toBoolean()
 project.ext.jdkArtifactPrefix = isModular && !setupJbrSdk ? 'jbr-' : 'jbrsdk-'
 

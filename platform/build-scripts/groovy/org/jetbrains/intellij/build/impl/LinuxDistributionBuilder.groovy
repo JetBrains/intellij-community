@@ -57,29 +57,21 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           buildTarGz(null, osSpecificDistPath, "-no-jbr")
         }
       }
-      String jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
-      String modularJreDirectoryPath // Used for Snap packages
+      if (buildContext.bundledJreManager.doBundleSecondJre()) {
+        String jreDirectoryPath = buildContext.bundledJreManager.extractSecondBundledJreForLinux()
+        if (jreDirectoryPath != null) {
+          buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.secondJreSuffix())
+        }
+        else {
+          buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
+        }
+      }
+      // Used for Snap packages
+      String jreDirectoryPath = buildContext.bundledJreManager.extractJre("linux")
+      buildTarGz(jreDirectoryPath, osSpecificDistPath, "")
+
       if (jreDirectoryPath != null) {
-        buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.jreSuffix())
-        if (buildContext.bundledJreManager.bundledJreModular) {
-          modularJreDirectoryPath = jreDirectoryPath
-        }
-      }
-      else {
-        buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
-      }
-
-      String secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
-      if (secondJreBuild != null) {
-        String secondJreDirectoryPath = buildContext.bundledJreManager.extractSecondJre("linux", secondJreBuild)
-        buildTarGz(secondJreDirectoryPath, osSpecificDistPath, "")
-        if (buildContext.bundledJreManager.secondBundledJreModular) {
-          modularJreDirectoryPath = secondJreDirectoryPath
-        }
-      }
-
-      if (modularJreDirectoryPath != null) {
-        buildSnapPackage(modularJreDirectoryPath, osSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
       }
       else {
         buildContext.messages.info("Skipping building Snap packages because no modular JRE are available")
