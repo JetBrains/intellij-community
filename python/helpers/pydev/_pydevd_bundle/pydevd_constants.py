@@ -60,6 +60,9 @@ if IS_JYTHON:
     IS_WINDOWS = java.lang.System.getProperty("os.name").lower().startswith("windows")
     if sys.version_info[0] == 2 and sys.version_info[1] < 5:
         IS_JYTH_LESS25 = True
+elif IS_IRONPYTHON:
+    import System
+    IS_WINDOWS = "windows" in System.Environment.OSVersion.VersionString.lower()
 
 IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
 CYTHON_SUPPORTED = False
