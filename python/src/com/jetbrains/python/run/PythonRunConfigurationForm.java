@@ -2,6 +2,7 @@
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -143,6 +144,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     group.add(myEmulateTerminalCheckbox);
     group.add(myRedirectInputCheckBox);
     group.add(myShowCommandLineCheckbox);
+
+    ProgramParametersConfigurator.addMacroSupport(myScriptParametersTextField.getEditorField());
   }
 
   private void updateRunModuleMode() {
