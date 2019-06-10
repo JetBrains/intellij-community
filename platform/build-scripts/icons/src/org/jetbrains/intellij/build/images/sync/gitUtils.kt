@@ -135,7 +135,7 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (fi
   }
 }
 
-internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String): String {
+internal fun commitAndPush(repo: File, branch: String, message: String, user: String, email: String): CommitInfo {
   execute(
     repo, GIT,
     "-c", "user.name=$user",
@@ -143,8 +143,8 @@ internal fun commitAndPush(repo: File, branch: String, message: String, user: St
     "commit", "-m", message,
     "--author=$user <$email>"
   )
-  push(repo, "+$branch:$branch")
-  return commitInfo(repo)?.hash ?: error("Unable to read last commit")
+  push(repo, "$branch:$branch")
+  return commitInfo(repo) ?: error("Unable to read last commit")
 }
 
 internal fun checkout(repo: File, branch: String) = execute(repo, GIT, "checkout", branch)
@@ -159,9 +159,27 @@ internal fun deleteBranch(repo: File, branch: String) {
 }
 
 private fun push(repo: File, spec: String) =
-  retry(doRetry = { it.message?.contains("remote end hung up unexpectedly") == true }) {
+  retry(doRetry = { beforePushRetry(it, repo, spec) }) {
     execute(repo, GIT, "push", "origin", spec, withTimer = true)
   }
+
+private fun beforePushRetry(e: Throwable, repo: File, spec: String): Boolean {
+  if (!isGitServerUnavailable(e)) {
+    val specParts = spec.split(':')
+    if (specParts.count() == 2) {
+      val flippedSpec = "${specParts[1]}:${specParts[0]}"
+      execute(repo, GIT, "pull", "--rebase=true", "origin", flippedSpec)
+    }
+  }
+  return true
+}
+
+private fun isGitServerUnavailable(e: Throwable) = with(e.message ?: "") {
+  contains("remote end hung up unexpectedly")
+  || contains("Service is in readonly mode")
+  || contains("failed to lock")
+  || contains("Connection timed out")
+}
 
 @Volatile
 private var origins = emptyMap<File, String>()
@@ -313,8 +331,8 @@ internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
       parents = output[2].splitWithSpace(),
       committer = Committer(name = output[3], email = output[4]),
       subject = output.subList(5, output.size)
-      .joinToString(separator = "/")
-      .removeSuffix(System.lineSeparator())
+        .joinToString(separator = "/")
+        .removeSuffix(System.lineSeparator())
     )
   }
   else null

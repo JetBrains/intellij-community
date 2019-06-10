@@ -168,20 +168,6 @@ internal fun postComment(projectId: String, review: Review, comment: String) {
   }""")
 }
 
-// TODO: take commit message from revisions
-internal fun getOpenIconsReviewTitles(projectId: String) = upsourceGet("getReviews", """{
-    "projectId" : "$projectId",
-    "limit": ${Int.MAX_VALUE},
-    "query" : "state: open and created-by: {Icons Sync Robot}"
-  }""").run {
-  val reviews = extractAll(this, Regex(""""reviewId":"([^,"]+)""""))
-  val titles = extractAll(this, Regex(""""title":"([^"]+)""""))
-  if (reviews.size != titles.size) error("Size of ${reviews} != size of ${titles}")
-  reviews.withIndex().associate {
-    asUrl(it.value, projectId) to titles[it.index]
-  }
-}
-
 internal fun closeReview(projectId: String, review: Review) {
   upsourcePost("closeReview", """{
       "isFlagged" : true,
@@ -191,3 +177,5 @@ internal fun closeReview(projectId: String, review: Review) {
       }
   }""")
 }
+
+internal fun commitUrl(projectId: String, commit: CommitInfo) = "$UPSOURCE/$projectId/revision/${commit.hash}"
