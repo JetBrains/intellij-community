@@ -5,9 +5,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
@@ -26,6 +30,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -195,13 +200,13 @@ public class StructureFilterPopupComponent
     }
 
     if (roots.size() > 15) {
-      return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
+      return new DefaultActionGroup(createAllAction(), new EditPathsAction(), new SelectPathsInTreeAction(),
                                     new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
                                     new DefaultActionGroup(structureActions),
                                     new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
                                     new DefaultActionGroup(rootActions));
     }
-    return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
+    return new DefaultActionGroup(createAllAction(), new EditPathsAction(), new SelectPathsInTreeAction(),
                                   new Separator(VcsLogBundle.messagePointer("vcs.log.filter.roots")),
                                   new DefaultActionGroup(rootActions),
                                   new Separator(VcsLogBundle.messagePointer("vcs.log.filter.recent")),
@@ -353,9 +358,9 @@ public class StructureFilterPopupComponent
     }
   }
 
-  private class SelectFoldersAction extends DumbAwareAction {
+  private class SelectPathsInTreeAction extends DumbAwareAction {
 
-    SelectFoldersAction() {
+    SelectPathsInTreeAction() {
       super(VcsLogBundle.messagePointer("vcs.log.filter.select.folders"));
     }
 
@@ -363,23 +368,15 @@ public class StructureFilterPopupComponent
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getRequiredData(CommonDataKeys.PROJECT);
       Set<VirtualFile> roots = myFilterModel.getRoots();
-      VcsLogStructureFilter structureFilter = getStructureFilter(myFilterModel.getFilter());
 
-      Collection<VirtualFile> files;
-      if (structureFilter == null) {
-        files = Collections.emptySet();
-      }
-      else {
-        // for now, ignoring non-existing paths
-        files = ContainerUtil.mapNotNull(structureFilter.getFiles(), FilePath::getVirtualFile);
-      }
+      // for now, ignoring non-existing paths
+      Collection<VirtualFile> files = ContainerUtil.mapNotNull(getStructureFilterPaths(), FilePath::getVirtualFile);
 
       VcsStructureChooser chooser = new VcsStructureChooser(project, VcsLogBundle.message("vcs.log.select.folder.dialog.title"), files,
                                                             new ArrayList<>(roots));
       if (chooser.showAndGet()) {
         VcsLogStructureFilter newFilter = VcsLogFilterObject.fromVirtualFiles(chooser.getSelectedFiles());
-        myFilterModel.setFilter(new FilterPair<>(newFilter, null));
-        myUiProperties.addRecentlyFilteredGroup(PATHS, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
+        setStructureFilter(newFilter);
       }
     }
 
@@ -387,6 +384,50 @@ public class StructureFilterPopupComponent
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getProject() != null);
     }
+  }
+
+  private class EditPathsAction extends DumbAwareAction {
+    EditPathsAction() {
+      super(VcsLogBundle.messagePointer("vcs.log.filter.edit.folders"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+
+      Collection<FilePath> filesPaths = ContainerUtil.sorted(getStructureFilterPaths(), HierarchicalFilePathComparator.NATURAL);
+
+      String oldValue = StringUtil.join(ContainerUtil.map(filesPaths, FilePath::getPresentableUrl), "\n");
+      MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, Collections.emptyList(), oldValue, null);
+
+      JBPopup popup = popupBuilder.createPopup();
+      popup.addListener(new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          if (event.isOk()) {
+            List<FilePath> selectedPaths = ContainerUtil.map(popupBuilder.getSelectedValues(), VcsUtil::getFilePath);
+            setStructureFilter(VcsLogFilterObject.fromPaths(selectedPaths));
+          }
+        }
+      });
+      popup.showUnderneathOf(StructureFilterPopupComponent.this);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+    }
+  }
+
+  @NotNull
+  private Collection<FilePath> getStructureFilterPaths() {
+    VcsLogStructureFilter structureFilter = getStructureFilter(myFilterModel.getFilter());
+    return structureFilter != null ? structureFilter.getFiles() : Collections.emptyList();
+  }
+
+  private void setStructureFilter(@NotNull VcsLogStructureFilter newFilter) {
+    myFilterModel.setFilter(new FilterPair<>(newFilter, null));
+    myUiProperties.addRecentlyFilteredGroup(PATHS, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(newFilter));
   }
 
   private class SelectFromHistoryAction extends ToggleAction implements DumbAware {
