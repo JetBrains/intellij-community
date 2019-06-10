@@ -60,12 +60,12 @@ public final class TouchBarsManager {
 
     LOG.assertTrue(!isInitialized);
 
-    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      registerEditor(editor);
-    }
-
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       registerProject(project);
+    }
+
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      registerEditor(editor);
     }
 
     isInitialized = true;
