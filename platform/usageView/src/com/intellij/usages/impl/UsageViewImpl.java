@@ -1195,9 +1195,9 @@ public class UsageViewImpl implements UsageViewEx {
     UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtNodeInsertedUnderQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
-    if (child != null) {
+    if (child != null && getPresentation().isExcludeAvailable()) {
       for (UsageViewElementsListener listener : UsageViewElementsListener.EP_NAME.getExtensionList()) {
-        if (listener.isExcludedByDefault(usage)) {
+        if (listener.isExcludedByDefault(this, usage)) {
           myExclusionHandler.excludeNodeSilently(child);
         }
       }
