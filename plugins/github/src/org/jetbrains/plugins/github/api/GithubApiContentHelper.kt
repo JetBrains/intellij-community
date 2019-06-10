@@ -21,7 +21,7 @@ object GithubApiContentHelper {
   const val V3_HTML_JSON_MIME_TYPE = "application/vnd.github.v3.html+json"
   const val V3_DIFF_JSON_MIME_TYPE = "application/vnd.github.v3.diff+json"
 
-  val jackson: ObjectMapper = ObjectMapper()
+  private val jackson: ObjectMapper = ObjectMapper()
     .setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
     .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -32,7 +32,6 @@ object GithubApiContentHelper {
                                          JsonAutoDetect.Visibility.NONE,
                                          JsonAutoDetect.Visibility.NONE,
                                          JsonAutoDetect.Visibility.ANY))
-
 
   @Throws(GithubJsonException::class)
   inline fun <reified T> fromJson(string: String): T = fromJson(string, T::class.java)
@@ -50,7 +49,18 @@ object GithubApiContentHelper {
 
   @JvmStatic
   @Throws(GithubJsonException::class)
-  fun <T> readJson(reader: Reader, type: JavaType): T {
+  fun <T> readJsonObject(reader: Reader, clazz: Class<T>, vararg parameters: Class<*>): T {
+    return readJson(reader, jackson.typeFactory.constructParametricType(clazz, *parameters))
+  }
+
+  @JvmStatic
+  @Throws(GithubJsonException::class)
+  fun <T> readJsonList(reader: Reader, parameterClass: Class<T>): List<T> {
+    return readJson(reader, jackson.typeFactory.constructCollectionType(List::class.java, parameterClass))
+  }
+
+  @Throws(GithubJsonException::class)
+  private fun <T> readJson(reader: Reader, type: JavaType): T {
     try {
       @Suppress("UNCHECKED_CAST")
       if (type.isTypeOrSubTypeOf(Unit::class.java) || type.isTypeOrSubTypeOf(Void::class.java)) return Unit as T

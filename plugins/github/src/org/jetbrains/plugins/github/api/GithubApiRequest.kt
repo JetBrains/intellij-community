@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.fasterxml.jackson.databind.JavaType
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
@@ -35,12 +34,10 @@ sealed class GithubApiRequest<T>(val url: String) {
           Json(url, T::class.java, acceptMimeType)
       }
 
-      open class Json<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+      open class Json<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
         : Optional<T>(url, acceptMimeType) {
 
-        private val type = constructType(clazz)
-
-        override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
+        override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
       }
     }
 
@@ -55,40 +52,34 @@ sealed class GithubApiRequest<T>(val url: String) {
         JsonSearchPage(url, T::class.java, acceptMimeType)
     }
 
-    open class Json<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+    open class Json<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<T>(url, acceptMimeType) {
 
-      private val type = constructType(clazz)
-
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
     }
 
-    open class JsonList<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+    open class JsonList<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<List<T>>(url, acceptMimeType) {
 
-      private val type = constructListType(clazz)
-
-      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonResponse(response, type)
+      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonList(response, clazz)
     }
 
-    open class JsonPage<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+    open class JsonPage<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
-      private val type = constructListType(clazz)
-
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
-        return GithubResponsePage.parseFromHeader(parseJsonResponse(response, type),
+        return GithubResponsePage.parseFromHeader(parseJsonList(response, clazz),
                                                   response.findHeader(GithubResponsePage.HEADER_NAME))
       }
     }
 
-    open class JsonSearchPage<T>(url: String, clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+    open class JsonSearchPage<T>(url: String,
+                                 private val clazz: Class<T>,
+                                 acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
-      private val type = constructSearchResultType(clazz)
-
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
-        return GithubResponsePage.parseFromHeader(parseJsonResponse<GithubSearchResult<T>>(response, type).items,
+        return GithubResponsePage.parseFromHeader(parseJsonSearchPage(response, clazz).items,
                                                   response.findHeader(GithubResponsePage.HEADER_NAME))
       }
     }
@@ -109,18 +100,15 @@ sealed class GithubApiRequest<T>(val url: String) {
       inline fun <reified T> json(url: String, body: Any): Post<T> = Json(url, body, T::class.java)
     }
 
-    open class Json<T>(url: String, private val bodyObject: Any, clazz: Class<T>) : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE,
-                                                                                            url,
-                                                                                            GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>)
+      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+
       override val body: String
         get() = GithubApiContentHelper.toJson(bodyObject)
 
-      private val type = constructType(clazz)
-
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
     }
   }
-
 
   abstract class Put<T> @JvmOverloads constructor(override val bodyMimeType: String,
                                                   url: String,
@@ -131,9 +119,9 @@ sealed class GithubApiRequest<T>(val url: String) {
       inline fun <reified T> jsonList(url: String, body: Any): Put<List<T>> = JsonList(url, body, T::class.java)
     }
 
-    open class Json<T>(url: String, private val bodyObject: Any?, clazz: Class<T>) : Put<T>(GithubApiContentHelper.JSON_MIME_TYPE,
-                                                                                            url,
-                                                                                            GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+    open class Json<T>(url: String, private val bodyObject: Any?, private val clazz: Class<T>)
+      : Put<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+
       init {
         if (bodyObject == null) headers["Content-Length"] = "0"
       }
@@ -141,14 +129,12 @@ sealed class GithubApiRequest<T>(val url: String) {
       override val body: String?
         get() = bodyObject?.let { GithubApiContentHelper.toJson(it) }
 
-      private val type = constructType(clazz)
-
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
     }
 
-    open class JsonList<T>(url: String, private val bodyObject: Any?, clazz: Class<T>) : Put<List<T>>(GithubApiContentHelper.JSON_MIME_TYPE,
-                                                                                                      url,
-                                                                                                      GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+    open class JsonList<T>(url: String, private val bodyObject: Any?, private val clazz: Class<T>)
+      : Put<List<T>>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+
       init {
         if (bodyObject == null) headers["Content-Length"] = "0"
       }
@@ -156,9 +142,7 @@ sealed class GithubApiRequest<T>(val url: String) {
       override val body: String?
         get() = bodyObject?.let { GithubApiContentHelper.toJson(it) }
 
-      private val type = constructListType(clazz)
-
-      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonResponse(response, type)
+      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonList(response, clazz)
     }
   }
 
@@ -182,9 +166,9 @@ sealed class GithubApiRequest<T>(val url: String) {
       inline fun <reified T> json(url: String, body: Any? = null): Delete<T> = Json(url, body, T::class.java)
     }
 
-    open class Json<T>(url: String, private val bodyObject: Any? = null, clazz: Class<T>) : Delete<T>(GithubApiContentHelper.JSON_MIME_TYPE,
-                                                                                                      url,
-                                                                                                      GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+    open class Json<T>(url: String, private val bodyObject: Any? = null, private val clazz: Class<T>)
+      : Delete<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+
       init {
         if (bodyObject == null) headers["Content-Length"] = "0"
       }
@@ -192,25 +176,24 @@ sealed class GithubApiRequest<T>(val url: String) {
       override val body: String?
         get() = bodyObject?.let { GithubApiContentHelper.toJson(it) }
 
-      private val type = constructType(clazz)
-
-      override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, type)
+      override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
     }
   }
 
   companion object {
-    private fun constructSearchResultType(clazz: Class<*>): JavaType = GithubApiContentHelper.jackson.typeFactory
-      .constructParametricType(GithubSearchResult::class.java, clazz)
-
-    private fun constructListType(clazz: Class<*>): JavaType = GithubApiContentHelper.jackson.typeFactory
-      .constructCollectionType(List::class.java, clazz)
-
-    private fun constructType(clazz: Class<*>): JavaType {
-      return GithubApiContentHelper.jackson.typeFactory.constructSimpleType(clazz, emptyArray())
+    private fun <T> parseJsonObject(response: GithubApiResponse, clazz: Class<T>): T {
+      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJsonObject(it, clazz) })
     }
 
-    private fun <T> parseJsonResponse(response: GithubApiResponse, type: JavaType): T {
-      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJson<T>(it, type) })
+    private fun <T> parseJsonList(response: GithubApiResponse, clazz: Class<T>): List<T> {
+      return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJsonList(it, clazz) })
+    }
+
+    private fun <T> parseJsonSearchPage(response: GithubApiResponse, clazz: Class<T>): GithubSearchResult<T> {
+      return response.readBody(ThrowableConvertor {
+        @Suppress("UNCHECKED_CAST")
+        GithubApiContentHelper.readJsonObject(it, GithubSearchResult::class.java, clazz) as GithubSearchResult<T>
+      })
     }
   }
 }
