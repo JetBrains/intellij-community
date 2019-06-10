@@ -85,7 +85,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
   @Override
   public void dispose() {
     if (myModifiableArtifactModel != null) {
-      myModifiableArtifactModel.commit();
+      myModifiableArtifactModel.dispose();
     }
   }
 
