@@ -22,6 +22,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +49,10 @@ import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -186,9 +188,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     }
-    ProjectEx project = doCreateProject(projectName, filePath);
+    ProjectImpl project = doCreateProject(projectName, filePath);
     try {
-      initProject(project, useDefaultProjectSettings ? getDefaultProject() : null);
+      initProject(filePath, project, useDefaultProjectSettings ? getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
         myProjects.put(project, null);
       }
@@ -258,18 +260,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     myProjects.remove(DummyProject.getInstance()); // process queue
     return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
   }
+
   @TestOnly
   private int getLeakedProjectsCount() {
     myProjects.remove(DummyProject.getInstance()); // process queue
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  private static void initProject(@NotNull ProjectEx project, @Nullable Project template) {
+  private static void initProject(@NotNull String filePath, @NotNull ProjectImpl project, @Nullable Project template) {
     LOG.assertTrue(!project.isDefault());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setIndeterminate(false);
-      indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
+      // getting project name is not cheap and not possible at this moment
+      indicator.setText("Loading components...");
     }
 
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_BEFORE_LOADED);
@@ -278,10 +282,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     boolean succeed = false;
     try {
+      project.registerComponents();
+      IProjectStore stateStore = project.getStateStore();
+      stateStore.setPath(filePath);
       if (template != null) {
-        ProjectKt.getStateStore(project).loadProjectFromTemplate(template);
+        stateStore.loadProjectFromTemplate(template);
       }
-      project.init();
+      project.init(filePath);
       succeed = true;
     }
     finally {
@@ -292,7 +299,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @NotNull
-  protected ProjectEx doCreateProject(@Nullable String projectName, @NotNull String filePath) {
+  protected ProjectImpl doCreateProject(@Nullable String projectName, @NotNull String filePath) {
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_INSTANTIATION);
     ProjectImpl project = new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
     activity.end();
@@ -309,8 +316,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   public Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException {
     try {
-      ProjectEx project = doCreateProject(projectName, new File(filePath).getAbsolutePath());
-      initProject(project, null);
+      String normalizedFilePath = new File(filePath).getAbsolutePath();
+      ProjectImpl project = doCreateProject(projectName, normalizedFilePath);
+      initProject(normalizedFilePath, project, null);
       return project;
     }
     catch (Throwable t) {
@@ -517,7 +525,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     final String filePath = toCanonicalName(originalFilePath);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
     final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
-    ProjectEx project;
+    ProjectImpl project;
     if (conversionResult != null && conversionResult.openingIsCanceled()) {
       project = null;
     }
@@ -527,11 +535,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (!loadProjectWithProgress(project)) {
+            if (!loadProjectWithProgress(filePath, project)) {
               return;
             }
           }
-          catch (IOException e) {
+          catch (Throwable e) {
             LOG.error(e);
             return;
           }
@@ -566,7 +574,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
    */
   @Override
   @Nullable
-  public Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException {
+  public Project convertAndLoadProject(@NotNull VirtualFile path) {
     Activity activity = StartUpMeasurer.start(StartUpMeasurer.Phases.PROJECT_CONVERSION);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(path);
     activity.end();
@@ -574,33 +582,32 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return null;
     }
 
-    ProjectEx project = doCreateProject(null, path.getPath());
-    if (!loadProjectWithProgress(project)) return null;
+    String filePath = path.getPath();
+    ProjectImpl project = doCreateProject(null, filePath);
+    if (!loadProjectWithProgress(filePath, project)) {
+      return null;
+    }
     if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
   }
 
-  private static boolean loadProjectWithProgress(ProjectEx project) throws IOException {
+  private static boolean loadProjectWithProgress(@NotNull String filePath, @NotNull ProjectImpl project) {
     try {
       if (!ApplicationManager.getApplication().isDispatchThread() &&
           ProgressManager.getInstance().getProgressIndicator() != null) {
-        initProject(project, null);
+        initProject(filePath, project, null);
         return true;
       }
       ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
-        initProject(project, null);
+        initProject(filePath, project, null);
         return project;
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
       return true;
     }
     catch (ProcessCanceledException e) {
       return false;
-    }
-    catch (Throwable t) {
-      LOG.info(t);
-      throw new IOException(t);
     }
   }
 

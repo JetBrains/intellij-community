@@ -94,10 +94,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-@State(
-  name = "FileEditorManager",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
+@State(name = "FileEditorManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class FileEditorManagerImpl extends FileEditorManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
@@ -131,10 +131,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = ourOpenFilesSetModificationCount::get;
   private final List<EditorComposite> myOpenedEditors = new CopyOnWriteArrayList<>();
 
-  public FileEditorManagerImpl(@NotNull Project project, DockManager dockManager) {
-/*    ApplicationManager.getApplication().assertIsDispatchThread(); */
+  public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
-    myDockManager = dockManager;
+    myDockManager = DockManager.getInstance(myProject);
     myListenerList =
       new MessageListenerList<>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
 

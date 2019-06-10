@@ -28,7 +28,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -81,8 +80,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
 
     getPicoContainer().registerComponentInstance(Project.class, this);
-
-    getStateStore().setPath(filePath);
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
@@ -153,7 +150,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   // do not call for default project
   @NotNull
-  private IProjectStore getStateStore() {
+  public final IProjectStore getStateStore() {
     return (IProjectStore)getComponentStore();
   }
 
@@ -242,11 +239,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return workspaceFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(workspaceFilePath);
   }
 
-  @Override
-  public void init() {
-    Application application = ApplicationManager.getApplication();
-
-    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+  public void registerComponents() {
     String activityNamePrefix = activityNamePrefix();
     Activity activity = activityNamePrefix == null ? null : StartUpMeasurer.start(activityNamePrefix + Phases.REGISTER_COMPONENTS_SUFFIX);
     //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
@@ -255,11 +248,21 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       activity.end();
     }
 
-    init(progressIndicator, application.isUnitTestMode() ? () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this) : null);
-
-    if (!application.isHeadlessEnvironment()) {
-      distributeProgress();
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) {
+      app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
     }
+  }
+
+  @Override
+  public void init(@NotNull String filePath) {
+    Application application = ApplicationManager.getApplication();
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    init(indicator);
+    if (indicator != null && !application.isHeadlessEnvironment()) {
+      distributeProgress(indicator);
+    }
+
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
@@ -271,10 +274,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     indicator.setFraction(getPercentageOfComponentsLoaded() / (ourClassesAreLoaded ? 10 : 2));
   }
 
-  private void distributeProgress() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator == null) return;
-
+  private void distributeProgress(@NotNull ProgressIndicator indicator) {
     ModuleManager moduleManager = ModuleManager.getInstance(this);
     if (!(moduleManager instanceof ModuleManagerImpl)) {
       return;

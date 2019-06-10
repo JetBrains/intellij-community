@@ -9,7 +9,7 @@ import java.security.SecureRandom
 object DigestUtil {
   private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
 
-  private val random by lazy { SecureRandom() }
+  val random by lazy { SecureRandom() }
 
   @JvmStatic
   fun md5() = getMessageDigest("MD5")

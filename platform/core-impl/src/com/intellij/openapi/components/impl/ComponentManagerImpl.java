@@ -110,18 +110,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentConfigCount = componentConfigCount;
   }
 
-  protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
+  protected final void init(@Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!myComponentsCreated);
 
     String activityNamePrefix = activityNamePrefix();
     boolean isNeededToMeasure = activityNamePrefix != null;
-    if (componentsRegistered != null) {
-      Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.COMPONENTS_REGISTERED_CALLBACK_SUFFIX) : null;
-      componentsRegistered.run();
-      if (activity != null) {
-        activity.end();
-      }
-    }
+
 
     Activity activity = isNeededToMeasure ? StartUpMeasurer.start(activityNamePrefix + Phases.CREATE_COMPONENTS_SUFFIX) : null;
     createComponents(indicator);

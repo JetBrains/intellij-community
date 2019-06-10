@@ -29,6 +29,9 @@ public final class StoragePathMacros {
    */
   public static final String CACHE_FILE = "$CACHE_FILE$";
 
+  /**
+   * Applicable only for project-level.
+   */
   @ApiStatus.Experimental
   @NotNull
   public static final String PRODUCT_WORKSPACE_FILE = "$PRODUCT_WORKSPACE_FILE$";
