@@ -9,12 +9,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.SystemInfo
 
 class WindowsDefenderCheckerActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val app = ApplicationManager.getApplication()
-    if (!app.isInternal || !SystemInfo.isWindows || app.isUnitTestMode) return
+    if (!app.isInternal || app.isUnitTestMode) return
     app.executeOnPooledThread {
       val checkResult = WindowsDefenderChecker.getInstance().checkWindowsDefender(project)
       if (checkResult.status == WindowsDefenderChecker.RealtimeScanningStatus.SCANNING_ENABLED &&
