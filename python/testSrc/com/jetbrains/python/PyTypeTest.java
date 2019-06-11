@@ -3482,7 +3482,7 @@ public class PyTypeTest extends PyTestCase {
     // we don't support using `typing.Literal` with enums :(
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> doMultiFileTest("Any",
+      () -> doMultiFileTest("A",
                             "from typing_extensions import Literal\n" +
                             "\n" +
                             "from enum import Enum\n" +
