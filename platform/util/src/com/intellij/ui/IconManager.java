@@ -127,7 +127,7 @@ final class DummyIconManager implements IconManager {
   @NotNull
   @Override
   public <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
-    return f.apply(param);
+    return base;
   }
 
   @NotNull
