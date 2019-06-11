@@ -283,6 +283,9 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
 
+      withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
+      withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
+
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
@@ -331,6 +334,9 @@ class CommunityRepositoryModules {
       withProjectLibrary("com.android.tools.build:builder-model")
       withProjectLibrary("com.android.tools.build:builder-test-api")
       withProjectLibrary("com.android.tools.pixelprobe:pixelprobe")
+
+      withProjectLibrary("org.jetbrains.intellij.deps.android.tools:perflib")
+      withProjectLibrary("org.jetbrains.intellij.deps.android.tools:layoutInspector")
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
