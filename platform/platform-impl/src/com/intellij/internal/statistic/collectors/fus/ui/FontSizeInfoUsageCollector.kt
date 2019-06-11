@@ -55,9 +55,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val usageData = FeatureUsageData()
     usageData.addData("value", lineSpacing)
 
-    usages += setOf<UsageDescriptor>(
-      UsageDescriptor("editor.lineSpacing", usageData )
-    )
+    usages.add(UsageDescriptor("editor.lineSpacing", usageData ))
 
     return usages
   }
