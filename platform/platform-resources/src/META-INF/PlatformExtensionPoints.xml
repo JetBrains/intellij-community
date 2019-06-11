@@ -40,7 +40,7 @@
     </extensionPoint>
 
     <extensionPoint name="fileType"
-                    beanClass="com.intellij.openapi.fileTypes.FileTypeBean">
+                    beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.FileType"/>
     </extensionPoint>
 

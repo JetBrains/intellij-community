@@ -16,6 +16,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
@@ -73,6 +74,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
+  public static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -346,7 +348,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void loadFileTypeBeans() {
-    final List<FileTypeBean> fileTypeBeans = FileTypeManager.EP_NAME.getExtensionList();
+    final List<FileTypeBean> fileTypeBeans = EP_NAME.getExtensionList();
 
     for (FileTypeBean bean : fileTypeBeans) {
       bean.addMatchers(ContainerUtil.concat(parse(bean.extensions),

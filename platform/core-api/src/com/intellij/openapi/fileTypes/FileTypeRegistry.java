@@ -34,6 +34,7 @@ public abstract class FileTypeRegistry {
 
   public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
 
+  @Nullable
   public LanguageFileType findFileTypeByLanguage(Language language) {
     return language.findMyFileType(getRegisteredFileTypes());
   }
