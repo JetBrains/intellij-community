@@ -771,7 +771,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   class RecordingVfsListener extends IndexedFilesListener {
-    def vfsEventMerger = new VfsEventsMerger()
 
     @Override
     protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
@@ -784,18 +783,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       })
     }
 
-    protected void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      vfsEventMerger.recordBeforeFileEvent(((VirtualFileWithId)file).id, file, contentChange)
-    }
-
-    @Override
-    protected void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
-      vfsEventMerger.recordFileEvent(((VirtualFileWithId)file).id, file, contentChange)
-    }
-
     String indexingOperation(VirtualFile file) {
       Ref<String> operation = new Ref<>()
-      vfsEventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
+      eventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
         @Override
         boolean process(@NotNull VfsEventsMerger.ChangeInfo info) {
           operation.set(info.toString())
