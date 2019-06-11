@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.beans.MetricEventUtilKt;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -39,16 +40,16 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
       DataPack dataPack = logData.getDataPack();
       if (dataPack.isFull()) {
         PermanentGraph<Integer> permanentGraph = dataPack.getPermanentGraph();
-        MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
 
         Set<MetricEvent> usages = ContainerUtil.newHashSet(new MetricEvent("dataInitialized"));
         usages.add(MetricEventFactoryKt.newCounterMetric("commit.count", permanentGraph.getAllCommits().size()));
         usages.add(MetricEventFactoryKt.newCounterMetric("branches.count", dataPack.getRefsModel().getBranches().size()));
         usages.add(MetricEventFactoryKt.newCounterMetric("users.count", logData.getAllUsers().size()));
 
+        MultiMap<VcsKey, VirtualFile> groupedRoots = groupRootsByVcs(dataPack.getLogProviders());
         for (VcsKey vcs : groupedRoots.keySet()) {
-          String vcsKey = getVcsKeySafe(vcs);
-          usages.add(MetricEventFactoryKt.newCounterMetric(vcsKey + ".root.count", groupedRoots.get(vcs).size()));
+          FeatureUsageData vcsData = new FeatureUsageData().addData("vcs", getVcsKeySafe(vcs));
+          usages.add(MetricEventFactoryKt.newCounterMetric("root.count", groupedRoots.get(vcs).size(), vcsData));
         }
         return usages;
       }
