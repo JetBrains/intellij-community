@@ -93,8 +93,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String NO_RETURN = "typing.NoReturn";
   public static final String FINAL = "typing.Final";
   public static final String FINAL_EXT = "typing_extensions.Final";
-  private static final String LITERAL = "typing.Literal";
-  private static final String LITERAL_EXT = "typing_extensions.Literal";
+  public static final String LITERAL = "typing.Literal";
+  public static final String LITERAL_EXT = "typing_extensions.Literal";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";

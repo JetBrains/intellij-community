@@ -24,10 +24,7 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.types.PyCollectionType
-import com.jetbrains.python.psi.types.PyGenericType
-import com.jetbrains.python.psi.types.PyInstantiableType
-import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.*
 
 class PyTypeHintsInspection : PyInspection() {
 
@@ -86,6 +83,16 @@ class PyTypeHintsInspection : PyInspection() {
         if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
           registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null, ReplaceWithTypeNameQuickFix(typeName))
         }
+      }
+
+      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyDocstringFile) &&
+          node.multiFollowAssignmentsChain(resolveContext, this::followNotTypingOpaque)
+            .asSequence()
+            .mapNotNull { it.element }
+            .filterIsInstance<PyQualifiedNameOwner>()
+            .mapNotNull { it.qualifiedName }
+            .any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
+        registerProblem(node, "'Literal' must have at least one parameter")
       }
     }
 
@@ -254,7 +261,9 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.CLASS_VAR,
               PyTypingTypeProvider.NO_RETURN,
               PyTypingTypeProvider.FINAL,
-              PyTypingTypeProvider.FINAL_EXT ->
+              PyTypingTypeProvider.FINAL_EXT,
+              PyTypingTypeProvider.LITERAL,
+              PyTypingTypeProvider.LITERAL_EXT ->
                 registerProblem(base,
                                 "'${it.substringAfterLast('.')}' cannot be used with instance and class checks",
                                 ProblemHighlightType.GENERIC_ERROR)
@@ -288,7 +297,9 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.OPTIONAL,
                 PyTypingTypeProvider.CLASS_VAR,
                 PyTypingTypeProvider.FINAL,
-                PyTypingTypeProvider.FINAL_EXT -> {
+                PyTypingTypeProvider.FINAL_EXT,
+                PyTypingTypeProvider.LITERAL,
+                PyTypingTypeProvider.LITERAL_EXT -> {
                   registerProblem(base,
                                   "'${qName.substringAfterLast('.')}' cannot be used with instance and class checks",
                                   ProblemHighlightType.GENERIC_ERROR)
@@ -447,6 +458,8 @@ class PyTypeHintsInspection : PyInspection() {
       val index = node.indexExpression ?: return
 
       val callableQName = QualifiedName.fromDottedString(PyTypingTypeProvider.CALLABLE)
+      val literalQName = QualifiedName.fromDottedString(PyTypingTypeProvider.LITERAL)
+      val literalExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.LITERAL_EXT)
       val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
 
       var typingOnly = true
@@ -455,6 +468,7 @@ class PyTypeHintsInspection : PyInspection() {
       qNames.forEach {
         when (it) {
           genericQName -> checkGenericParameters(index)
+          literalQName, literalExtQName -> checkLiteralParameter(index)
           callableQName -> {
             callableExists = true
             checkCallableParameters(index)
@@ -466,6 +480,24 @@ class PyTypeHintsInspection : PyInspection() {
 
       if (qNames.isNotEmpty() && typingOnly) {
         checkTypingMemberParameters(index, callableExists)
+      }
+    }
+
+    private fun checkLiteralParameter(index: PyExpression) {
+      val subParameter = if (index is PySubscriptionExpression) index.operand else null
+      if (subParameter is PyReferenceExpression &&
+          PyResolveUtil
+            .resolveImportedElementQNameLocally(subParameter)
+            .any { qName -> qName.toString().let { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT} }) {
+        // if `index` is like `typing.Literal[...]` and has invalid form,
+        // outer `typing.Literal[...]` won't be highlighted
+        return
+      }
+
+      if (PyLiteralType.fromLiteralParameter(index, myTypeEvalContext) == null) {
+        registerProblem(index,
+                        "'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, " +
+                        "other literal types, or type aliases to other literal types")
       }
     }
 
