@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectStructureModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -15,7 +16,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesC
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.annotations.NotNull;
 
-public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsProvider {
+public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsProvider implements ProjectStructureModifiableModelsProvider {
   private final ModifiableModuleModel myModel;
   private final ModulesConfigurator myModulesConfigurator;
   private final ModifiableArtifactModel myModifiableArtifactModel;
