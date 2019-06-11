@@ -60,7 +60,9 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
-import com.intellij.util.io.*
+import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
+import com.intellij.util.io.EnumeratorStringDescriptor
+import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
@@ -800,10 +802,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testIndexedFilesListener() throws Throwable {
     def listener = new RecordingVfsListener()
 
-    ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
-      VirtualFileManager.VFS_CHANGES,
-      listener
-    )
+    VirtualFileManager.instance.addAsyncFileListener(listener, myFixture.testRootDisposable)
 
     def fileName = "test.txt"
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
@@ -912,7 +911,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   @CompileStatic
-  void "test Vfs Events Processing Performance"() {
+  void "test Vfs Event Processing Performance"() {
     def filename = 'A.java'
     myFixture.addFileToProject('foo/bar/' + filename, 'class A {}')
 
@@ -934,9 +933,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         eventList.add(new VFileCreateEvent(null, file.parent, filename, false, null, null, true, null))
       }
 
-      IndexedFilesListener indexedFilesListener = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector
-      indexedFilesListener.before(eventList)
-      indexedFilesListener.after(eventList)
+      def applier = ((FileBasedIndexImpl)FileBasedIndex.instance).changedFilesCollector.prepareChange(eventList)
+      applier.beforeVfsChange()
+      applier.afterVfsChange()
 
       files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(module))
       assert files?.length == 1
