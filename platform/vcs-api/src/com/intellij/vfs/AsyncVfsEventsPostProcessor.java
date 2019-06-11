@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * Subscribes to VFS events and processes them further on a dedicated pooled thread to {@link AsyncVfsEventsListener}s. <br/><br/>
  *
  * If your event processing code might be slow (in particular, if it calls {@link VFileEvent#getPath()}), this listener is preferred
- * over original ones. <br/><br/>
+ * over original ones. Please also consider a safer {@link com.intellij.openapi.vfs.AsyncFileListener}.<br/><br/>
  *
  * <b>NB:</b> All listeners are executed on a pooled thread, without read action,
  * so the VFS state is unreliable without additional checks. <br/><br/>
