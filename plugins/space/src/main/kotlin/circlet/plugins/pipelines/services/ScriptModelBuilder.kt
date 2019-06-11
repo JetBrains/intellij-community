@@ -5,6 +5,7 @@ import klogging.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.compile.util.*
 import circlet.pipelines.config.dsl.script.exec.common.*
+import circlet.pipelines.config.logging.*
 import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
@@ -34,14 +35,15 @@ class ScriptModelBuilder {
         {
             val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
             val path = normalizePath(automationSettingsComponent.state.kotlincFolderPath)
-            val kotlinCompilerPath = KotlinCompilerFinder { logBuildData.add(this) }
+            val logger = DelegatingLogger { logBuildData.add(this) }
+            val kotlinCompilerPath = KotlinCompilerFinder(logger)
                 .find(if (path.endsWith('/')) path else "$path/")
 
             val url = find(ScriptModelBuilder::class, "pipelines-config-dsl-scriptdefinition")
 
             val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
             val sourceCodeResolver = LocalSourceCodeResolver()
-            DslJarCompiler().compile(expectedFile.absolutePath, targetJar, sourceCodeResolver, kotlinCompilerPath, url.file)
+            DslJarCompiler(logger).compile(expectedFile.absolutePath, targetJar, sourceCodeResolver, kotlinCompilerPath, url.file)
 
             val config = DslScriptExecutor().evaluateModel(targetJar, "", "", "")
 
