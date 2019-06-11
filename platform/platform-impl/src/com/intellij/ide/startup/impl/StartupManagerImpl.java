@@ -48,7 +48,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -356,7 +355,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       return;
     }
 
-    PooledThreadExecutor.INSTANCE.submit(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       LOG.debug("FW/roots waiting started");
       while (true) {
         if (myProject.isDisposed()) return;
