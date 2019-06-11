@@ -14,6 +14,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -50,12 +51,13 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class StartupManagerImpl extends StartupManagerEx {
+public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
   private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
@@ -74,6 +76,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private final Project myProject;
   private boolean myInitialRefreshScheduled;
+  private ScheduledFuture<?> myBackgroundPostStartupScheduledFuture;
 
   public StartupManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -441,12 +444,19 @@ public class StartupManagerImpl extends StartupManagerEx {
     activity.end();
   }
 
-  public void runBackgroundPostStartupActivities() {
-    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+  public void scheduleBackgroundPostStartupActivities() {
+    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
       for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
         activity.runActivity(myProject);
       }
     }, 5, TimeUnit.SECONDS);
+  }
+
+  @Override
+  public void dispose() {
+    if (myBackgroundPostStartupScheduledFuture != null) {
+      myBackgroundPostStartupScheduledFuture.cancel(true);
+    }
   }
 
   public static void runActivity(@NotNull Runnable runnable) {
