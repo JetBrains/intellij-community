@@ -44,8 +44,6 @@ class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
 
   private fun getBigRepositoriesList() = getServiceIfCreated<VcsLogBigRepositoriesList>(VcsLogBigRepositoriesList::class.java)
 
-  override fun getData(): FeatureUsageData? = FeatureUsageData().addOS()
-
   override fun getGroupId(): String = "vcs.log.index.application"
 }
 
@@ -72,8 +70,6 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
   private fun getSharedSettings(project: Project) = getServiceIfCreated<VcsLogSharedSettings>(project, VcsLogSharedSettings::class.java)
 
   private fun getIndexCollector(project: Project) = getServiceIfCreated<VcsLogIndexCollector>(project, VcsLogIndexCollector::class.java)
-
-  override fun getData(project: Project): FeatureUsageData? = FeatureUsageData().addOS()
 
   override fun getGroupId(): String = "vcs.log.index.project"
 }
