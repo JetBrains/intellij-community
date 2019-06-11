@@ -87,6 +87,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon MoveToRightTop = load("/actions/moveToRightTop.svg");
     /** 16x16 */ public static final Icon MoveToTopLeft = load("/actions/moveToTopLeft.svg");
     /** 16x16 */ public static final Icon MoveToTopRight = load("/actions/moveToTopRight.svg");
+    /** 16x16 */ public static final Icon MoveToWindow = load("/actions/moveToWindow.svg");
     /** 16x16 */ public static final Icon MoveUp = load("/actions/moveUp.svg");
     /** 16x16 */ public static final Icon New = load("/actions/new.svg");
     /** 16x16 */ public static final Icon NewFolder = load("/actions/newFolder.svg");
