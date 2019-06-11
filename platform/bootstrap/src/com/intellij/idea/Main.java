@@ -189,7 +189,7 @@ public final class Main {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
       catch (Throwable t) {
-        stream.println("\nAlso, an UI exception occurred on attempt to show above message:");
+        stream.println("\nAlso, a UI exception occurred on an attempt to show the above message:");
         t.printStackTrace(stream);
       }
     }
