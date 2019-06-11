@@ -1063,7 +1063,10 @@
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
   <action id="ChangesView.GroupBy.Directory">
-    <keyboard-shortcut first-keystroke="ctrl P"/>
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="ChangesView.GroupBy.Module">
+    <keyboard-shortcut first-keystroke="control alt M"/>
   </action>
   <action id="ShelveChanges.UnshelveWithDialog">
     <keyboard-shortcut first-keystroke="control shift U" />
@@ -1158,5 +1161,15 @@
   <action id="SearchEverywhere.NavigateToPrevGroup">
     <keyboard-shortcut first-keystroke="PAGE_UP"/>
     <keyboard-shortcut first-keystroke="control UP"/>
+  </action>
+
+  <action id="TodoViewGroupByShowModules">
+    <keyboard-shortcut first-keystroke="control alt M"/>
+  </action>
+  <action id="TodoViewGroupByShowPackages">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="TodoViewGroupByFlattenPackage">
+    <keyboard-shortcut first-keystroke="control alt O"/>
   </action>
 </keymap>
