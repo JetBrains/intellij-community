@@ -14,16 +14,24 @@ import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JPanel myMainPanel;
@@ -194,6 +202,20 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       myOtherWarning.setText(oldStyleText);
       myOtherWarning.setIcon(Messages.getWarningIcon());
     }
+  }
+
+  private void createUIComponents() {
+    // Cause proxy exceptions to be a comma separated list after expanding
+    myProxyExceptions = new RawCommandLineEditor(text -> {
+      ArrayList<String> result = ContainerUtilRt.newArrayList();
+      for (String pattern : text.split(",")) {
+        String trimmedPattern = pattern.trim();
+        if (!trimmedPattern.isEmpty()) {
+          result.add(trimmedPattern);
+        }
+      }
+      return result;
+    }, strings -> StringUtil.join(strings, ", "));
   }
 
   @NotNull
