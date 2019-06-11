@@ -3,6 +3,7 @@ package org.jetbrains.ide.script;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -16,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.script.*;
 import java.io.IOException;
@@ -30,7 +30,7 @@ import java.util.concurrent.Future;
 class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManager.class);
 
-  private final Future<Pair<ScriptEngineManager, List<EngineInfo>>> myStateFuture = PooledThreadExecutor.INSTANCE.submit(() -> {
+  private final Future<Pair<ScriptEngineManager, List<EngineInfo>>> myStateFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
     long start = System.currentTimeMillis();
     try {
       return ClassLoaderUtil.runWithClassLoader(AllPluginsLoader.INSTANCE, (Computable<Pair<ScriptEngineManager, List<EngineInfo>>>)() -> {

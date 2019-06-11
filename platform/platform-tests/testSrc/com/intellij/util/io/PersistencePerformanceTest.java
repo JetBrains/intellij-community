@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -21,14 +21,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PersistencePerformanceTest extends LightPlatformCodeInsightFixtureTestCase {
-  private final ExecutorService myThreadPool = PooledThreadExecutor.INSTANCE;
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<>();
   private final List<String> myKeys = new ArrayList<>();
   private PersistentStringEnumerator myEnumerator;
@@ -84,10 +82,10 @@ public class PersistencePerformanceTest extends LightPlatformCodeInsightFixtureT
   public void testReadWrite() throws Exception {
     List<Future<Boolean>> futures = Collections.synchronizedList(new ArrayList<>());
     for (PersistentHashMap<String, Record> map : myMaps) {
-      Future<Boolean> submit = myThreadPool.submit(() -> doTask(map));
+      Future<Boolean> submit = ApplicationManager.getApplication().executeOnPooledThread(() -> doTask(map));
       futures.add(submit);
     }
-    Future<?> waitFuture = myThreadPool.submit(() -> {
+    Future<?> waitFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       while (ContainerUtil.exists(futures, future -> !future.isDone())) {
         TimeoutUtil.sleep(100);
         myMaps.forEach(PersistentHashMap::dropMemoryCaches);

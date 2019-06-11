@@ -4,6 +4,7 @@ package com.intellij.diagnostic
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
@@ -24,7 +25,7 @@ class DropAnErrorAction : DumbAwareAction("Drop an error", "Hold down SHIFT for 
       Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()))
     }
     else {
-      PooledThreadExecutor.INSTANCE.submit {
+      ApplicationManager.getApplication().executeOnPooledThread {
         for (i in 1..3) {
           Logger.getInstance(TEST_LOGGER).error(TEST_MESSAGE, Exception(randomString()))
           TimeoutUtil.sleep(200)
