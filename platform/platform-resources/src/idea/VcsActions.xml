@@ -89,8 +89,11 @@
 
     <group id="ChangesView.GroupBy" text="Group By" icon="AllIcons.Actions.GroupBy" popup="true"
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
+      <separator text="Group By"/>
       <action id="ChangesView.GroupBy.Directory" text="Directory"
-              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction">
+        <keyboard-shortcut first-keystroke="control alt P" keymap="$default"/>
+      </action>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 

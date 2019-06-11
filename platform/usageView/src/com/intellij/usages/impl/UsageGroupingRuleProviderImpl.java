@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
@@ -82,7 +83,10 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
     GroupByModuleTypeAction groupByModuleTypeAction = supportsModuleRule() ? new GroupByModuleTypeAction(impl) : null;
     if (groupByModuleTypeAction != null) {
-      groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)), component, impl);
+      KeyStroke stroke = SystemInfo.isMac
+                         ? KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK)
+                         : KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+      groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
     }
 
     GroupByFileStructureAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
@@ -90,19 +94,30 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     GroupByScopeAction groupByScopeAction = supportsScopesRule() ? new GroupByScopeAction(impl) : null;
 
     GroupByPackageAction groupByPackageAction = new GroupByPackageAction(impl);
-    groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)), component, impl);
+    KeyStroke stroke = SystemInfo.isMac
+                       ? KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)
+                       : KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+    groupByPackageAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
 
     ArrayList<AnAction> result = new ArrayList<>();
 
     if (view.getPresentation().isUsageTypeFilteringAvailable()) {
       GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
-      groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component, impl);
+      stroke = SystemInfo.isMac
+               ? KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)
+               : KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+      groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
 
       ContainerUtil.addIfNotNull(result, groupByUsageTypeAction);
       ContainerUtil.addIfNotNull(result, groupByScopeAction);
       ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);
       if (supportsModuleRule()) {
-        result.add(new FlattenModulesAction(impl));
+        FlattenModulesAction flattenModulesAction = new FlattenModulesAction(impl);
+        stroke = SystemInfo.isMac
+                 ? KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK)
+                 : KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+        flattenModulesAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
+        result.add(flattenModulesAction);
       }
       ContainerUtil.addIfNotNull(result, groupByPackageAction);
       ContainerUtil.addIfNotNull(result, groupByFileStructureAction);
@@ -119,9 +134,10 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   public static GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {
     final JComponent component = impl.getComponent();
     final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
-    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M,
-                                                                                                      InputEvent.CTRL_DOWN_MASK)), component,
-                                                         impl);
+    KeyStroke stroke = SystemInfo.isMac
+                       ? KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)
+                       : KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(stroke), component, impl);
 
     return groupByFileStructureAction;
   }
