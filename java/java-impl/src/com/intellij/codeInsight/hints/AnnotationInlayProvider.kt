@@ -40,23 +40,30 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
             if (nameReferenceElement != null && element.modifierList != null &&
                 (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(it))) {
               val offset = element.modifierList!!.textRange.startOffset
-              val presentation = annotationPresentation(it)
-              val menuOnClick = MenuOnClickPresentation(presentation, project) {
-                val makeExplicit = InsertAnnotationAction(project, file, element)
-                listOf(
-                  makeExplicit,
-                  ToggleSettingsAction("Turn off external annotations", settings::showExternal),
-                  ToggleSettingsAction("Turn off inferred annotations", settings::showInferred)
-                )
-              }
+              val presentation = createPresentation(it, element)
               when (element) {
-                is PsiMethod -> sink.addBlockElement(offset, true, true, 0, menuOnClick)
-                else -> sink.addInlineElement(offset, true, menuOnClick)
+                is PsiMethod -> sink.addBlockElement(offset, false, true, 0, presentation)
+                else -> sink.addInlineElement(offset, true, presentation)
               }
             }
           }
         }
         return true
+      }
+
+      private fun createPresentation(
+        annotation: PsiAnnotation,
+        element: PsiModifierListOwner
+      ): MenuOnClickPresentation {
+        val presentation = annotationPresentation(annotation)
+        return MenuOnClickPresentation(presentation, project) {
+          val makeExplicit = InsertAnnotationAction(project, file, element)
+          listOf(
+            makeExplicit,
+            ToggleSettingsAction("Turn off external annotations", settings::showExternal),
+            ToggleSettingsAction("Turn off inferred annotations", settings::showInferred)
+          )
+        }
       }
 
       private fun annotationPresentation(annotation: PsiAnnotation): InsetPresentation = with(factory) {
