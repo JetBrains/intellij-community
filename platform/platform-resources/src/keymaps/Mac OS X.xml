@@ -447,4 +447,21 @@
     <keyboard-shortcut first-keystroke="alt f9" />
     <mouse-shortcut keystroke="Force touch" />
   </action>
+
+  <action id="ChangesView.GroupBy.Directory">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="ChangesView.GroupBy.Module">
+    <keyboard-shortcut first-keystroke="control M"/>
+  </action>
+
+  <action id="TodoViewGroupByShowModules">
+    <keyboard-shortcut first-keystroke="control M"/>
+  </action>
+  <action id="TodoViewGroupByShowPackages">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="TodoViewGroupByFlattenPackage">
+    <keyboard-shortcut first-keystroke="control O"/>
+  </action>
 </keymap>
