@@ -65,7 +65,7 @@ abstract class FilterModel<Filter> {
   }
 
   protected static void triggerFilterSet(@NotNull String name) {
-    VcsLogUsageTriggerCollector.triggerUsage(StringUtil.capitalize(name) + "FilterSet", false);
+    VcsLogUsageTriggerCollector.triggerUsage(StringUtil.capitalize(name) + "FilterSet", false, null);
   }
 
   protected static <FilterObject, F> void triggerFilterSet(@Nullable FilterObject filter,

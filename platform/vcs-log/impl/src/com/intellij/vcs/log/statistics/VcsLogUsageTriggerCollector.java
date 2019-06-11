@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VcsLogUsageTriggerCollector {
 
@@ -16,18 +17,22 @@ public class VcsLogUsageTriggerCollector {
   }
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull String text) {
-    triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
+    triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null, e);
   }
 
   public static void triggerUsage(@NotNull String text) {
-    triggerUsage(text, "");
+    triggerUsage(text, "", null);
   }
 
-  public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    triggerUsage(text, isFromHistory ? "history" : "log");
+  public static void triggerUsage(@NotNull String text, boolean isFromHistory, @Nullable AnActionEvent e) {
+    triggerUsage(text, isFromHistory ? "history" : "log", e);
   }
 
-  private static void triggerUsage(@NotNull String text, @NotNull String context) {
-    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", text, new FeatureUsageData().addData("context", context));
+  private static void triggerUsage(@NotNull String text, @NotNull String context, @Nullable AnActionEvent event) {
+    FeatureUsageData featureUsageData = new FeatureUsageData().addData("context", context);
+    if (event != null) {
+      featureUsageData.addInputEvent(event);
+    }
+    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", text, featureUsageData);
   }
 }
