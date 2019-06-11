@@ -49,10 +49,7 @@ import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -167,8 +164,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
-    filePath = toCanonicalName(filePath);
-
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       TEST_PROJECTS_CREATED++;
@@ -176,7 +171,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       checkProjectLeaksInTests();
     }
 
-    File projectFile = new File(filePath);
+    filePath = FileUtilRt.toSystemIndependentName(toCanonicalName(filePath));
+    File projectFile = new File(FileUtilRt.toSystemDependentName(filePath));
     if (projectFile.isFile()) {
       FileUtil.delete(projectFile);
     }
@@ -188,6 +184,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
     }
+
     ProjectImpl project = doCreateProject(projectName, filePath);
     try {
       initProject(filePath, project, useDefaultProjectSettings ? getDefaultProject() : null);
@@ -267,7 +264,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
   }
 
-  private static void initProject(@NotNull String filePath, @NotNull ProjectImpl project, @Nullable Project template) {
+  private static void initProject(@NotNull @SystemIndependent String filePath, @NotNull ProjectImpl project, @Nullable Project template) {
     LOG.assertTrue(!project.isDefault());
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
@@ -288,7 +285,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (template != null) {
         stateStore.loadProjectFromTemplate(template);
       }
-      project.init(filePath, indicator);
+      project.init(indicator);
       succeed = true;
     }
     finally {

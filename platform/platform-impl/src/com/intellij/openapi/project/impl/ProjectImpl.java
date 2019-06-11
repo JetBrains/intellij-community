@@ -253,7 +253,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
   }
 
-  public void init(@NotNull String filePath, @Nullable ProgressIndicator indicator) {
+  public void init(@Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
     createComponents(indicator);
     if (indicator != null && !application.isHeadlessEnvironment()) {
