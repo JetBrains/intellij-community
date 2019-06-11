@@ -193,7 +193,7 @@ public class DiffUtil {
     }
 
     Language language = content != null ? content.getUserData(DiffUserDataKeys.LANGUAGE) : null;
-    if (language == null) language = TextEditorImpl.getDocumentLanguage(editor);
+    if (language == null && editor.getProject() != null) language = TextEditorImpl.getDocumentLanguage(editor);
     editor.getSettings().setLanguage(language);
 
     editor.getSettings().setCaretRowShown(false);
