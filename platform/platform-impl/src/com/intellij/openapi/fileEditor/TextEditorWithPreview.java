@@ -273,8 +273,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      myDelegate
-        .propertyChange(new PropertyChangeEvent(TextEditorWithPreview.this, evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
+      myDelegate.propertyChange(
+        new PropertyChangeEvent(TextEditorWithPreview.this, evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
     }
   }
 
