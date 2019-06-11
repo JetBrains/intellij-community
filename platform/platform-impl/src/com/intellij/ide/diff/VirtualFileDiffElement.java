@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.PlatformIcons;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,6 +113,17 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   @Override
   public byte[] getContent() throws IOException {
     return ReadAction.compute(() -> myFile.contentsToByteArray());
+  }
+
+  @Nullable
+  @Override
+  public InputStream getContentStream() throws IOException {
+    VirtualFileSystem fs = myFile.getFileSystem();
+    if (fs instanceof FileSystemInterface) {
+      return ((FileSystemInterface)fs).getInputStream(myFile);
+    }
+    // can't use VirtualFile.getInputStream here, as it will strip BOM
+    return super.getContentStream();
   }
 
   @Override

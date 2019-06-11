@@ -102,6 +102,8 @@ import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
@@ -840,6 +842,22 @@ public class DiffUtil {
       inverted[indexes[i]] = i;
     }
     return inverted;
+  }
+
+  public static boolean compareStreams(@Nullable InputStream stream1, @Nullable InputStream stream2) throws IOException {
+    try (InputStream s1 = stream1) {
+      try (InputStream s2 = stream2) {
+        if (s1 == null && s2 == null) return true;
+        if (s1 == null || s2 == null) return false;
+
+        while (true) {
+          int b1 = s1.read();
+          int b2 = s2.read();
+          if (b1 != b2) return false;
+          if (b1 == -1) return true;
+        }
+      }
+    }
   }
 
   //
