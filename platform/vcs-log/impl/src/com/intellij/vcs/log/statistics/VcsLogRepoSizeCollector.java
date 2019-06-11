@@ -81,4 +81,9 @@ public class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   public String getGroupId() {
     return "vcs.log.data";
   }
+
+  @Override
+  public int getVersion() {
+    return 2;
+  }
 }

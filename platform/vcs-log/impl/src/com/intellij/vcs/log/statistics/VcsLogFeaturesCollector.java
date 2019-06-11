@@ -138,4 +138,9 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   public String getGroupId() {
     return "vcs.log.ui";
   }
+
+  @Override
+  public int getVersion() {
+    return 2;
+  }
 }

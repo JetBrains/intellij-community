@@ -29,7 +29,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexProjectStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
 
-    <statistics.counterUsagesCollector groupId="vcs.log.trigger" version="1"/>
+    <statistics.counterUsagesCollector groupId="vcs.log.trigger" version="2"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
