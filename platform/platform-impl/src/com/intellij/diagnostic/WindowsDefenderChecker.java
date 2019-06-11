@@ -10,6 +10,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Restarter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class WindowsDefenderChecker {
   private static final Logger LOG = Logger.getInstance(WindowsDefenderChecker.class);
@@ -41,6 +42,7 @@ public class WindowsDefenderChecker {
 
   public static class CheckResult {
     public final RealtimeScanningStatus status;
+
     // Value in the map is true if the path is excluded, false otherwise
     public final Map<Path, Boolean> pathStatus;
 
@@ -53,6 +55,14 @@ public class WindowsDefenderChecker {
   public CheckResult checkWindowsDefender(@NotNull Project project) {
     RealtimeScanningStatus scanningStatus = getRealtimeScanningEnabled();
     if (scanningStatus == RealtimeScanningStatus.SCANNING_ENABLED) {
+      final Collection<String> processes = getExcludedProcesses();
+      final String binaryName = Restarter.getCurrentProcessExecutableName();
+      if (binaryName != null && processes != null &&
+          processes.contains(StringUtil.substringAfterLast(binaryName.toLowerCase(), "\\")) &&
+          processes.contains("java.exe")) {
+        return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
+      }
+
       List<Pattern> excludedPatterns = getExcludedPatterns();
       if (excludedPatterns != null) {
         Map<Path, Boolean> pathStatuses = checkPathsExcluded(getImportantPaths(project), excludedPatterns);
@@ -63,6 +73,7 @@ public class WindowsDefenderChecker {
   }
 
   /** Runs a powershell command to list the paths that are excluded from realtime scanning by Windows Defender. These
+   *
    * paths can contain environment variable references, as well as wildcards ('?', which matches a single character, and
    * '*', which matches any sequence of characters (but cannot match multiple nested directories; i.e., "foo\*\bar" would
    * match foo\baz\bar but not foo\baz\quux\bar)). The behavior of wildcards with respect to case-sensitivity is undocumented.
@@ -70,39 +81,43 @@ public class WindowsDefenderChecker {
    */
   @Nullable
   private static List<Pattern> getExcludedPatterns() {
-    try {
-      ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(
-        "powershell", "-inputformat", "none", "-outputformat", "text", "-NonInteractive", "-Command", "Get-MpPreference | select -ExpandProperty \"ExclusionPath\""), POWERSHELL_COMMAND_TIMEOUT_MS);
-      if (output.getExitCode() == 0) {
-        return output.getStdoutLines(true).stream().map(path -> wildcardsToRegex(expandEnvVars(path))).collect(Collectors.toList());
-      } else {
-        LOG.warn("Windows Defender exclusion path check exited with status " + output.getExitCode() + ": " +
-                 StringUtil.first(output.getStderr(), MAX_POWERSHELL_STDERR_LENGTH, false));
-      }
-    } catch (ExecutionException e) {
-      LOG.warn("Windows Defender exclusion path check failed", e);
-    }
-    return null;
+    final Collection<String> paths = getWindowsDefenderProperty("ExclusionPath");
+    if (paths == null) return null;
+    return ContainerUtil.map(paths, path -> wildcardsToRegex(expandEnvVars(path)));
   }
 
+  @Nullable
+  private static Collection<String> getExcludedProcesses() {
+    final Collection<String> processes = getWindowsDefenderProperty("ExclusionProcess");
+    if (processes == null) return null;
+    return ContainerUtil.map(processes, process -> process.toLowerCase());
+  }
 
   /** Runs a powershell command to determine whether realtime scanning is enabled or not. */
   @NotNull
   private static RealtimeScanningStatus getRealtimeScanningEnabled() {
+    final Collection<String> output = getWindowsDefenderProperty("DisableRealtimeMonitoring");
+    if (output == null) return RealtimeScanningStatus.ERROR;
+    if (output.size() > 0 && output.iterator().next().startsWith("False")) return RealtimeScanningStatus.SCANNING_ENABLED;
+    return RealtimeScanningStatus.SCANNING_DISABLED;
+  }
+
+  @Nullable
+  private static Collection<String> getWindowsDefenderProperty(final String propertyName) {
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(
-        "powershell", "-inputformat", "none", "-outputformat", "text", "-NonInteractive", "-Command", "Get-MpPreference | select -ExpandProperty \"DisableRealtimeMonitoring\""), POWERSHELL_COMMAND_TIMEOUT_MS);
+        "powershell", "-inputformat", "none", "-outputformat", "text", "-NonInteractive", "-Command",
+        "Get-MpPreference | select -ExpandProperty \"" + propertyName + "\""), POWERSHELL_COMMAND_TIMEOUT_MS);
       if (output.getExitCode() == 0) {
-        if (output.getStdout().startsWith("False")) return RealtimeScanningStatus.SCANNING_ENABLED;
-        return RealtimeScanningStatus.SCANNING_DISABLED;
+        return output.getStdoutLines();
       } else {
-        LOG.warn("Windows Defender realtime scanning status check exited with status " + output.getExitCode() + ": " +
+        LOG.warn("Windows Defender " + propertyName + " check exited with status " + output.getExitCode() + ": " +
                  StringUtil.first(output.getStderr(), MAX_POWERSHELL_STDERR_LENGTH, false));
       }
     } catch (ExecutionException e) {
-      LOG.warn("Windows Defender realtime scanning status check failed", e);
+      LOG.warn("Windows Defender " + propertyName + " check failed", e);
     }
-    return RealtimeScanningStatus.ERROR;
+    return null;
   }
 
   /** Returns a list of paths that might impact build performance if Windows Defender were configured to scan them. */
