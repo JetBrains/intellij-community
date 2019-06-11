@@ -53,7 +53,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val lineSpacing: Float = EditorColorsManager.getInstance().globalScheme.lineSpacing
 
     val usageData = FeatureUsageData()
-    usageData.addData("lineSpacing", lineSpacing)
+    usageData.addData("value", lineSpacing)
 
     usages += setOf<UsageDescriptor>(
       UsageDescriptor("editor.lineSpacing", usageData )
