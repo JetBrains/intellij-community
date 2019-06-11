@@ -313,7 +313,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Nullable
   public Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException {
     try {
-      String normalizedFilePath = new File(filePath).getAbsolutePath();
+      String normalizedFilePath = FileUtilRt.toSystemIndependentName(new File(filePath).getAbsolutePath());
       ProjectImpl project = doCreateProject(projectName, normalizedFilePath);
       initProject(normalizedFilePath, project, null);
       return project;
@@ -519,7 +519,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public Project loadAndOpenProject(@NotNull final String originalFilePath) {
-    final String filePath = toCanonicalName(originalFilePath);
+    final String filePath = FileUtilRt.toSystemIndependentName(toCanonicalName(originalFilePath));
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
     final ConversionResult conversionResult = virtualFile == null ? null : ConversionService.getInstance().convert(virtualFile);
     ProjectImpl project;
@@ -590,7 +590,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return project;
   }
 
-  private static boolean loadProjectWithProgress(@NotNull String filePath, @NotNull ProjectImpl project) {
+  private static boolean loadProjectWithProgress(@NotNull @SystemIndependent String filePath, @NotNull ProjectImpl project) {
     try {
       if (!ApplicationManager.getApplication().isDispatchThread() &&
           ProgressManager.getInstance().getProgressIndicator() != null) {
