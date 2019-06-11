@@ -27,6 +27,17 @@ public class ParametersListUtil {
     return result;
   };
   public static final Function<List<String>, String> COLON_LINE_JOINER = strings -> StringUtil.join(strings, ";");
+  public static final Function<String, List<String>> COMMA_LINE_PARSER = text -> {
+    ArrayList<String> result = new ArrayList<>();
+    for (String pattern : text.split(",")) {
+      String trimmedPattern = pattern.trim();
+      if (!trimmedPattern.isEmpty()) {
+        result.add(trimmedPattern);
+      }
+    }
+    return result;
+  };
+  public static final Function<List<String>, String> COMMA_LINE_JOINER = strings -> StringUtil.join(strings, ", ");
 
   /**
    * <p>Joins list of parameters into single string, which may be then parsed back into list by {@link #parseToArray(String)}.</p>

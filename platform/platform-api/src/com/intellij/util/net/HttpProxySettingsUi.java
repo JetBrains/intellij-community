@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
+import static com.intellij.util.execution.ParametersListUtil.COMMA_LINE_JOINER;
+import static com.intellij.util.execution.ParametersListUtil.COMMA_LINE_PARSER;
+
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
@@ -14,13 +17,11 @@ import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBRadioButton;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -206,16 +207,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
   private void createUIComponents() {
     // Cause proxy exceptions to be a comma separated list after expanding
-    myProxyExceptions = new RawCommandLineEditor(text -> {
-      ArrayList<String> result = ContainerUtilRt.newArrayList();
-      for (String pattern : text.split(",")) {
-        String trimmedPattern = pattern.trim();
-        if (!trimmedPattern.isEmpty()) {
-          result.add(trimmedPattern);
-        }
-      }
-      return result;
-    }, strings -> StringUtil.join(strings, ", "));
+    myProxyExceptions = new RawCommandLineEditor(COMMA_LINE_PARSER, COMMA_LINE_JOINER);
   }
 
   @NotNull
