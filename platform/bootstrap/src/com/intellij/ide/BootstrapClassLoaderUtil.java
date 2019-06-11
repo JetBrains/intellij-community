@@ -1,14 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +23,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -27,11 +31,11 @@ import java.util.regex.Pattern;
  * @author max
  */
 public class BootstrapClassLoaderUtil extends ClassUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.BootstrapClassLoaderUtil");
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
   public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
+  private static final String MARKETPLACE_PLUGIN_NAME = "marketplace";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -49,13 +53,16 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
 
-    final File mpBoot = new File(PathManager.getPluginsPath(), "marketplace/lib/boot/marketplace-bootstrap.jar");
+    final File mpBoot = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_NAME + "/lib/boot/marketplace-bootstrap.jar");
     final boolean installMarketplace = mpBoot.exists();
     if (installMarketplace) {
-      classpath.add(new File(PathManager.getPluginsPath(), "marketplace/lib/boot/marketplace-impl.jar").toURI().toURL());
+      final File marketplaceImpl = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_NAME + "/lib/boot/marketplace-impl.jar");
+      if (marketplaceImpl.exists()) {
+        classpath.add(marketplaceImpl.toURI().toURL());
+      }
     }
 
-    UrlClassLoader.Builder<BootstrapClassLoader> builder = UrlClassLoader.build(BootstrapClassLoader.class)
+    UrlClassLoader.Builder<?> builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
@@ -67,21 +74,26 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
     ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
 
-    final BootstrapClassLoader loader = builder.get();
-
     if (installMarketplace) {
       try {
-        final UrlClassLoader mpBootloader = UrlClassLoader.build().urls(mpBoot.toURI().toURL()).parent(BootstrapClassLoaderUtil.class.getClassLoader()).get();
-        for (BootstrapClassLoader.Transformer transformer : ServiceLoader.load(BootstrapClassLoader.Transformer.class, mpBootloader)) {
-          loader.addTransformer(transformer);
+        List<BytecodeTransformer> transformers = new SmartList<>();
+        UrlClassLoader mpBootloader = UrlClassLoader.build().urls(mpBoot.toURI().toURL()).parent(BootstrapClassLoaderUtil.class.getClassLoader()).get();
+        for (BytecodeTransformer transformer : ServiceLoader.load(BytecodeTransformer.class, mpBootloader)) {
+          transformers.add(transformer);
+        }
+        if (!transformers.isEmpty()) {
+          return new TransformingLoader(builder, transformers);
         }
       }
       catch (Throwable e) {
-        LOG.info("Marketplace boot error: ", e);
+        // at this point logging is not initialized yet, so reporting the error directly
+        final String message = "As a workaround you may uninstall or update JetBrains Marketplace Support plugin at " +
+                               new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_NAME).getAbsolutePath();
+        Main.showMessage("JetBrains Marketplace boot failure", new Exception(message, e));
       }
     }
 
-    return loader;
+    return builder.get();
   }
 
   /**
@@ -242,5 +254,35 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       }
     }
     return classpath;
+  }
+
+  private static class TransformingLoader extends UrlClassLoader {
+    private final List<BytecodeTransformer> myTransformers;
+
+    TransformingLoader(@NotNull Builder<?> builder, List<BytecodeTransformer> transformers) {
+      super(builder);
+      myTransformers = Collections.unmodifiableList(transformers);
+    }
+
+    @Override
+    protected Class _defineClass(String name, byte[] b) {
+      return super._defineClass(name, doTransform(name, null, b));
+    }
+
+    @Override
+    protected Class _defineClass(String name, byte[] b, @Nullable ProtectionDomain protectionDomain) {
+      return super._defineClass(name, doTransform(name, protectionDomain, b), protectionDomain);
+    }
+
+    private byte[] doTransform(String name, ProtectionDomain protectionDomain, byte[] bytes) {
+      byte[] b = bytes;
+      for (BytecodeTransformer transformer : myTransformers) {
+        final byte[] result = transformer.transform(this, name, protectionDomain, b);
+        if (result != null) {
+          b = result;
+        }
+      }
+      return b;
+    }
   }
 }
