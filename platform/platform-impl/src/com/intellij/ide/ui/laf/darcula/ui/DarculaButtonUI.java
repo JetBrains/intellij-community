@@ -260,16 +260,14 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   @Override
   public void update(Graphics g, JComponent c) {
+    setupDefaultButton(c, g);
     super.update(g, c);
-    setupDefaultButton((JButton)c);
   }
 
-  protected void setupDefaultButton(JButton button) {
-    if (!SystemInfo.isMac) {
-      Font f = new FontUIResource(isDefaultButton(button) ?
-                                  button.getFont().deriveFont(Font.BOLD) :
-                                  button.getFont().deriveFont(Font.PLAIN));
-      button.setFont(f);
+  protected void setupDefaultButton(JComponent button, Graphics g) {
+    Font f = button.getFont();
+    if (!SystemInfo.isMac && f instanceof FontUIResource) {
+      g.setFont(isDefaultButton(button) ? f.deriveFont(Font.BOLD) : f.deriveFont(Font.PLAIN));
     }
   }
 

@@ -101,7 +101,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override
-  protected void setupDefaultButton(JButton button) {}
+  protected void setupDefaultButton(JComponent button, Graphics g) {}
 
   @Override
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
