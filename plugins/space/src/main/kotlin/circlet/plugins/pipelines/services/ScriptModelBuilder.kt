@@ -37,7 +37,7 @@ class ScriptModelBuilder {
             val kotlinCompilerPath = KotlinCompilerFinder { logBuildData.add(this) }
                 .find(if (path.endsWith('/')) path else "$path/")
 
-            val url = find(ScriptModelBuilder::class, "pipelines-config-dsl-compile")
+            val url = find(ScriptModelBuilder::class, "pipelines-config-dsl-scriptdefinition")
 
             val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
             val sourceCodeResolver = LocalSourceCodeResolver()
