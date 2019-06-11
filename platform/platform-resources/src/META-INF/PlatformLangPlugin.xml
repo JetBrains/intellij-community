@@ -6,6 +6,7 @@
   <module value="com.intellij.modules.lang"/>
   <module value="com.intellij.modules.vcs"/>
   <module value="com.intellij.modules.xdebugger"/>
+  <module value="com.intellij.modules.externalSystem"/>
 
   <xi:include href="/componentSets/PlatformLangComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/PlatformLangActionManager.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -14,11 +15,13 @@
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/LangExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager"/>
@@ -87,4 +90,6 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

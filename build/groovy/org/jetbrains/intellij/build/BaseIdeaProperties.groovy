@@ -100,6 +100,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
       putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
 
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
+    productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
