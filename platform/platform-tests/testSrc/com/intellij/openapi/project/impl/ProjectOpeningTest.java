@@ -61,7 +61,7 @@ public class ProjectOpeningTest extends PlatformTestCase {
         }
       });
 
-      project = manager.loadAndOpenProject(foo.getPath());
+      project = manager.loadAndOpenProject(foo);
       assertFalse(project.isOpen());
       assertTrue(project.isDisposed());
     }
