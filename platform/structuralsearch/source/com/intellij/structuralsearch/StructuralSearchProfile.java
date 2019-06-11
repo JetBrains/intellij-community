@@ -184,7 +184,7 @@ public abstract class StructuralSearchProfile {
     myProblemCallback = new SoftReference<>(callback);
   }
 
-  public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file) {
+  public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {
     return true;
   }
 
