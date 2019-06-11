@@ -3,7 +3,6 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -97,9 +96,6 @@ public abstract class ProjectManager {
    */
   @Nullable
   public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
-
-  @ApiStatus.Experimental
-  public abstract Project loadAndOpenProject(@NotNull VirtualFile file) throws IOException, JDOMException;
 
   @ApiStatus.Experimental
   @TestOnly
