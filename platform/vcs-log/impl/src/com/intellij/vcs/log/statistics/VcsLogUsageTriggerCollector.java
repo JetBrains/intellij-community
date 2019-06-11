@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics;
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,11 +25,11 @@ public class VcsLogUsageTriggerCollector {
   }
 
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    triggerUsage(text, isFromHistory ? "history." : "log.");
+    triggerUsage(text, isFromHistory ? "history" : "log");
   }
 
-  private static void triggerUsage(@NotNull String text, @NotNull String prefix) {
-    String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
-    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", feature);
+  private static void triggerUsage(@NotNull String text, @NotNull String context) {
+    String feature = UsageDescriptorKeyValidator.ensureProperKey(text);
+    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", feature, new FeatureUsageData().addData("context", context));
   }
 }
