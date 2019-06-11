@@ -41,7 +41,7 @@ public class VSCBundle extends Bundle {
   @Override
   public List<String> getExtensions(File file, Plist plist) {
     loadExtensions();
-    return grammarToExtensions.getOrDefault(FileUtil.getRelativePath(bundleFile, file), emptyList());
+    return grammarToExtensions.getOrDefault(FileUtil.toSystemIndependentName(Objects.requireNonNull(FileUtil.getRelativePath(bundleFile, file))), emptyList());
   }
 
   private void loadExtensions() {
