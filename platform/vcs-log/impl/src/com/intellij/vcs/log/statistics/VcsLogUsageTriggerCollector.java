@@ -3,7 +3,6 @@ package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,6 @@ public class VcsLogUsageTriggerCollector {
   }
 
   private static void triggerUsage(@NotNull String text, @NotNull String context) {
-    String feature = UsageDescriptorKeyValidator.ensureProperKey(text);
-    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", feature, new FeatureUsageData().addData("context", context));
+    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", text, new FeatureUsageData().addData("context", context));
   }
 }
