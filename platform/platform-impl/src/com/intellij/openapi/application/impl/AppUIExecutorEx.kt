@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppExecutor
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.constraints.ConstrainedExecution
 import com.intellij.openapi.application.constraints.cancelJobOnDisposal
@@ -12,27 +13,31 @@ import kotlin.coroutines.CoroutineContext
 /**
  * @author eldar
  */
-interface AppUIExecutorEx : AppUIExecutor, ConstrainedExecution<AppUIExecutorEx> {
-  fun inUndoTransparentAction(): AppUIExecutor
-  fun inWriteAction(): AppUIExecutor
-}
 
-fun AppUIExecutor.inUndoTransparentAction() =
-  (this as AppUIExecutorEx).inUndoTransparentAction()
-fun AppUIExecutor.inWriteAction() =
-  (this as AppUIExecutorEx).inWriteAction()
+fun AppUIExecutor.inUndoTransparentAction(): AppUIExecutor =
+  (this as AppUIExecutorImpl).inUndoTransparentAction()
+fun AppUIExecutor.inWriteAction():AppUIExecutor =
+  (this as AppUIExecutorImpl).inWriteAction()
 
 fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint): AppUIExecutor =
-  (this as AppUIExecutorEx).withConstraint(constraint)
+  (this as AppUIExecutorImpl).withConstraint(constraint)
 fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint, parentDisposable: Disposable): AppUIExecutor =
-  (this as AppUIExecutorEx).withConstraint(constraint, parentDisposable)
+  (this as AppUIExecutorImpl).withConstraint(constraint, parentDisposable)
+
+fun AppExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint): AppExecutor =
+  (this as AppExecutorImpl).withConstraint(constraint)
+fun AppExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint, parentDisposable: Disposable): AppExecutor =
+  (this as AppExecutorImpl).withConstraint(constraint, parentDisposable)
 
 /**
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
  * Contains: [ContinuationInterceptor].
  */
+fun AppExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
+  (this as AppExecutorImpl).asCoroutineDispatcher()
+
 fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
-  (this as AppUIExecutorEx).asCoroutineDispatcher()
+  (this as AppUIExecutorImpl).asCoroutineDispatcher()
 
 
 @Throws(CancellationException::class)
