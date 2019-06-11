@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -446,16 +447,18 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
   public void scheduleBackgroundPostStartupActivities() {
     myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
-        activity.runActivity(myProject);
-      }
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+        for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
+          activity.runActivity(myProject);
+        }
+      });
     }, 5, TimeUnit.SECONDS);
   }
 
   @Override
   public void dispose() {
     if (myBackgroundPostStartupScheduledFuture != null) {
-      myBackgroundPostStartupScheduledFuture.cancel(true);
+      myBackgroundPostStartupScheduledFuture.cancel(false);
     }
   }
 
