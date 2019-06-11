@@ -11,6 +11,8 @@ import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -20,7 +22,7 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull
   public static <CommitId> PermanentCommitsInfoImpl<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                          @NotNull Map<Integer, CommitId> notLoadedCommits) {
+                                                                          @NotNull TIntObjectHashMap<CommitId> notLoadedCommits) {
     TimestampGetter timestampGetter = createTimestampGetter(graphCommits);
 
     boolean isIntegerCase = !graphCommits.isEmpty() && graphCommits.get(0).getId().getClass() == Integer.class;
@@ -81,11 +83,11 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull private final List<? extends CommitId> myCommitIdIndexes;
 
-  @NotNull private final Map<Integer, CommitId> myNotLoadCommits;
+  @NotNull private final TIntObjectHashMap<CommitId> myNotLoadCommits;
 
-  public PermanentCommitsInfoImpl(@NotNull TimestampGetter timestampGetter,
-                                  @NotNull List<? extends CommitId> commitIdIndex,
-                                  @NotNull Map<Integer, CommitId> notLoadCommits) {
+  private PermanentCommitsInfoImpl(@NotNull TimestampGetter timestampGetter,
+                                   @NotNull List<? extends CommitId> commitIdIndex,
+                                   @NotNull TIntObjectHashMap<CommitId> notLoadCommits) {
     myTimestampGetter = timestampGetter;
     myCommitIdIndexes = commitIdIndex;
     myNotLoadCommits = notLoadCommits;
@@ -119,8 +121,10 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
   }
 
   private int getNotLoadNodeId(@NotNull CommitId commitId) {
-    for (Map.Entry<Integer, CommitId> entry : myNotLoadCommits.entrySet()) {
-      if (entry.getValue().equals(commitId)) return entry.getKey();
+    TIntObjectIterator<CommitId> iterator = myNotLoadCommits.iterator();
+    while (iterator.hasNext()) {
+      iterator.advance();
+      if (iterator.value().equals(commitId)) return iterator.key();
     }
     return -1;
   }
@@ -158,8 +162,12 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
         LOG.warn("Unmatched commit ids " + unmatchedIds);
       }
     }
-    for (Map.Entry<Integer, CommitId> entry : myNotLoadCommits.entrySet()) {
-      if (commitIds.contains(entry.getValue())) result.add(entry.getKey());
+
+    TIntObjectIterator<CommitId> iterator = myNotLoadCommits.iterator();
+    while (iterator.hasNext()) {
+      iterator.advance();
+      CommitId value = iterator.value();
+      if (commitIds.contains(value)) result.add(iterator.key());
     }
     return result;
   }
