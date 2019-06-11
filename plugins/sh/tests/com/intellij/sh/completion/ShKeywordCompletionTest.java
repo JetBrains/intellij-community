@@ -358,6 +358,32 @@ public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
     assertEmpty(myFixture.completeBasic());
   }
 
+  public void testBashShebang() {
+    final String completionRule = "#!/usr/bin/env bash";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env bash");
+  }
+
+  public void testShShebang() {
+    final String completionRule = "#!/usr/bin/env sh";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env sh");
+  }
+
+  public void testZshShebang() {
+    final String completionRule = "#!/usr/bin/env zsh";
+    myFixture.configureByText("a.sh", "#!/usr<caret>");
+    completeByRule(completionRule);
+    myFixture.checkResult("#!/usr/bin/env zsh");
+  }
+
+  public void testNoShebang() {
+    myFixture.configureByText("a.sh", "\n #!<caret>");
+    assertEmpty(myFixture.completeBasic());
+  }
+
   private void assertLookupNotContainsTemplateKeywords() {
     List<String> templateKeywords = ContainerUtil.newSmartList("if", "select", "case", "for", "while", "until", "function", "elif");
     LookupImpl lookup = (LookupImpl) myFixture.getLookup();
