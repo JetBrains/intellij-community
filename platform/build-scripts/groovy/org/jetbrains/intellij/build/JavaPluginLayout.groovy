@@ -17,7 +17,12 @@ class JavaPluginLayout {
       withModule("intellij.java.resources", "resources.jar")
       withModule("intellij.java.resources.en", "resources.jar")
 
-      ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"].
+      ["intellij.java.compiler.antTasks",
+       "intellij.java.guiForms.compiler",
+       "intellij.java.guiForms.rt",
+       "intellij.java.compiler.instrumentationUtil",
+       "intellij.java.compiler.instrumentationUtil.java8",
+       "intellij.java.jps.javacRefScanner8"].
         each {
           withModule(it, "javac2.jar")
         }
@@ -38,6 +43,7 @@ class JavaPluginLayout {
       ].each {
         withModule(it, "java-api.jar", "java_resources_en.jar")
       }
+
       [
         "intellij.java.compiler.impl",
         "intellij.java.debugger.impl",
