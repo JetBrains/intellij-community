@@ -18,7 +18,7 @@ import runtime.reactive.*
 import javax.swing.*
 import javax.swing.tree.*
 
-class CircletScriptsViewFactory() {
+class CircletScriptsViewFactory {
     fun createView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
         return createModelTreeView(lifetime, project, viewModel)
     }

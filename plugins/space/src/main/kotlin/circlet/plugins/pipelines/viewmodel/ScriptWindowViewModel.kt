@@ -1,10 +1,7 @@
 package circlet.plugins.pipelines.viewmodel
 
 import circlet.pipelines.config.api.*
-import circlet.plugins.pipelines.services.*
-import circlet.runtime.*
 import com.intellij.openapi.project.*
-import runtime.async.*
 import runtime.reactive.*
 import javax.swing.tree.*
 
