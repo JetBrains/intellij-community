@@ -281,7 +281,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     try {
       project.registerComponents();
       IProjectStore stateStore = project.getStateStore();
-      stateStore.setPath(filePath);
+      stateStore.setPath(filePath, true);
       if (template != null) {
         stateStore.loadProjectFromTemplate(template);
       }
