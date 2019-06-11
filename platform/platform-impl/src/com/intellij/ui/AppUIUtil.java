@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -188,21 +188,6 @@ public class AppUIUtil {
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
     if (DEBUG_MODE) wmClass += "-debug";
     return wmClass;
-  }
-
-  public static void registerBundledFonts() {
-    if (SystemProperties.getBooleanProperty("ide.register.bundled.fonts", true)) {
-      registerFont("/fonts/Inconsolata.ttf");
-      registerFont("/fonts/SourceCodePro-Regular.ttf");
-      registerFont("/fonts/SourceCodePro-Bold.ttf");
-      registerFont("/fonts/SourceCodePro-It.ttf");
-      registerFont("/fonts/SourceCodePro-BoldIt.ttf");
-      registerFont("/fonts/FiraCode-Regular.ttf");
-      registerFont("/fonts/FiraCode-Bold.ttf");
-      registerFont("/fonts/FiraCode-Light.ttf");
-      registerFont("/fonts/FiraCode-Medium.ttf");
-      registerFont("/fonts/FiraCode-Retina.ttf");
-    }
   }
 
   private static void registerFont(@NonNls String name) {
