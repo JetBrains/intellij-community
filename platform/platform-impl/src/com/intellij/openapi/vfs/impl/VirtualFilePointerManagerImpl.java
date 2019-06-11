@@ -217,11 +217,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return pointer;
   }
 
+  // convert \ -> /
   // convert // -> /
   // convert /. ->
   // trim trailing / (except when it's !/)
   @NotNull
   private static String cleanupPath(@NotNull String path) {
+    path = FileUtilRt.toSystemIndependentName(path);
     path = trimTrailingSeparators(path);
     for (int i = 0; i < path.length(); ) {
       int slash = path.indexOf('/', i);
