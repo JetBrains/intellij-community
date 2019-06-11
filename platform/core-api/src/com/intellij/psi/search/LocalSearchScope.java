@@ -198,16 +198,11 @@ public class LocalSearchScope extends SearchScope {
 
   @Override
   public String toString() {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < myScope.length; i++) {
-      final PsiElement element = myScope[i];
-      if (i > 0) {
-        result.append(",");
-      }
-      result.append(element);
+    StringJoiner result = new StringJoiner(",", "LocalSearchScope:", "");
+    for (PsiElement element : myScope) {
+      result.add(String.valueOf(element));
     }
-    //noinspection HardCodedStringLiteral
-    return "LocalSearchScope:" + result;
+    return result.toString();
   }
 
   @Override

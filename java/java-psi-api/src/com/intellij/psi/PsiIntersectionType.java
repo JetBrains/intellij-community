@@ -169,10 +169,9 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("PsiIntersectionType: ");
-    for (int i = 0; i < myConjuncts.length; i++) {
-      if (i > 0) sb.append(", ");
-      sb.append(myConjuncts[i].getPresentableText());
+    StringJoiner sb = new StringJoiner(", ", "PsiIntersectionType: ", "");
+    for (PsiType conjunct : myConjuncts) {
+      sb.add(conjunct.getPresentableText());
     }
     return sb.toString();
   }

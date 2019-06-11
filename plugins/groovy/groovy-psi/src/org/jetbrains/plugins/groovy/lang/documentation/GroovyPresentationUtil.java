@@ -94,12 +94,11 @@ public class GroovyPresentationUtil {
       if (!structural.isEmpty()) {
         builder.append(".");
         String[] array = ArrayUtilRt.toStringArray(structural);
-        if (array.length > 1) builder.append("[");
-        for (int i = 0; i < array.length; i++) {
-          if (i > 0) builder.append(", ");
-          builder.append(array[i]);
+        if (array.length > 1) {
+          builder.append('[');
+          builder.append(String.join(", ", array));
+          builder.append(']');
         }
-        if (array.length > 1) builder.append("]");
       }
     }
   }
