@@ -6,6 +6,7 @@ import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.compile.util.*
 import circlet.pipelines.config.dsl.script.exec.common.*
 import circlet.pipelines.config.utils.*
+import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.utils.*
 import com.intellij.ide.plugins.cl.*
@@ -36,10 +37,7 @@ class ScriptModelBuilder {
             val kotlinCompilerPath = KotlinCompilerFinder { logBuildData.add(this) }
                 .find(if (path.endsWith('/')) path else "$path/")
 
-            //todo refac search for jar with script definition
-            val url = (ScriptModelBuilder::class.java.classLoader as PluginClassLoader).urls.firstOrNull {
-                x -> x.file.contains("/pipelines-config-dsl-compile")  }
-                ?: error("can't find pipelines-config-dsl-compile jar")
+            val url = find(ScriptModelBuilder::class, "pipelines-config-dsl-compile")
 
             val targetJar = createTempDir().absolutePath + "/compiledJar.jar"
             val sourceCodeResolver = LocalSourceCodeResolver()
