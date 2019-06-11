@@ -61,11 +61,6 @@ class JavaPluginLayout {
         withModule(it, "java-impl.jar", "java_resources_en.jar")
       }
 
-      // externalSystem API is coupled with `java` modules and therefore must be included into the same plugin
-      // TODO[Vlad, IDEA-187832] remove this from Java plugin distribution as soon as the externalSystem API become java subsystem independent platform API
-      withModule("intellij.platform.externalSystem.impl")
-      withModule("intellij.platform.externalSystem.rt")
-
       withArtifact("debugger-agent", "rt")
       withArtifact("debugger-agent-storage", "rt")
       withProjectLibrary("Eclipse")

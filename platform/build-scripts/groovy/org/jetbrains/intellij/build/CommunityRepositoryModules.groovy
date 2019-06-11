@@ -60,6 +60,7 @@ class CommunityRepositoryModules {
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
     "intellij.platform.projectModel.impl",
+    "intellij.platform.externalSystem.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
     "intellij.platform.remoteServers.impl",
