@@ -3,7 +3,6 @@ package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -295,7 +294,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         .run();
       return;
     }
-    WriteAction.run(() -> {
+    PsiFile file = modifierList.getContainingFile();
+    WriteCommandAction.writeCommandAction(file.getProject(), file)
+      .withName(IntentionPowerPackBundle.message("change.modifier.intention.name"))
+      .run(() -> {
       modifierList.setModifierProperty(modifier.toPsiModifier(), true);
       if (modifier != AccessModifier.PACKAGE_LOCAL) {
         final Project project = modifierList.getProject();
