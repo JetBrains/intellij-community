@@ -526,11 +526,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
-  public Project loadAndOpenProject(@NotNull VirtualFile virtualFile) {
-    return loadAndOpenProject(virtualFile, virtualFile.getPath());
-  }
-
-  @Override
   public Project loadAndOpenProject(@NotNull File file) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     return loadAndOpenProject(virtualFile, Objects.requireNonNull(virtualFile).getPath());
