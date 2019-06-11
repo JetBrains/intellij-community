@@ -261,10 +261,13 @@ public class StructuralSearchDialog extends DialogWrapper {
       final boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
         try {
           final CompiledPattern compiledPattern = compilePattern();
-          initializeFilterPanel();
           final JRootPane component = getRootPane();
           if (component == null) {
             return;
+          }
+          initializeFilterPanel();
+          if (compiledPattern != null) {
+            addMatchHighlights();
           }
           ApplicationManager.getApplication().invokeLater(() -> {
             setSearchTargets(myConfiguration.getMatchOptions());
@@ -744,9 +747,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
       reportMessage(null, false, mySearchCriteriaEdit);
-      if (getOKAction().isEnabled()) {
-        addMatchHighlights();
-      }
       if (myReplace) {
         try {
           Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());
