@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -50,27 +51,37 @@ public class SemVerTest {
     assertThat(parse("11.123.0-a.b.c-1")).isEqualByComparingTo(parse("11.123.0-a.b.c-1"));
 
     assertPrecedence("0.10.0", "1.0.0");
-    assertPrecedence("1.0.0","2.10.0");
+    assertPrecedence("1.0.0", "2.10.0");
     assertPrecedence("0.5.1000", "0.30.0");
-    assertPrecedence("0.30.10","0.100.0");
+    assertPrecedence("0.30.10", "0.100.0");
 
     assertPrecedence("2.9.100", "2.9.123-test");
-    assertPrecedence("2.9.123-test","2.9.124");
-    assertPrecedence("2.9.123","2.9.124-test");
+    assertPrecedence("2.9.123-test", "2.9.124");
+    assertPrecedence("2.9.123", "2.9.124-test");
 
-    assertPrecedence("1.2.3-a","1.2.3");
+    assertPrecedence("1.2.3-a", "1.2.3");
 
-    assertPrecedence("1.2.3-12","1.2.3-a");
-    assertPrecedence("1.2.3-22","1.2.3-100");
-    assertPrecedence("1.2.3-22","1.2.3-31");
+    assertPrecedence("1.2.3-12", "1.2.3-a");
+    assertPrecedence("1.2.3-22", "1.2.3-100");
+    assertPrecedence("1.2.3-22", "1.2.3-31");
+    assertPrecedence("1.2.3-22", "1.2.3-222");
 
-    assertPrecedence("1.2.3-a.b.c","1.2.3-a.b.d");
-    assertPrecedence("1.2.3-a.b.c","1.2.3-a.b.c.a");
+    assertPrecedence("1.2.3-a.b.c", "1.2.3-a.b.d");
+    assertPrecedence("1.2.3-a.b.c", "1.2.3-a.b.c.a");
 
-    assertPrecedence("1.2.3-a.b.1","1.2.3-a.b.c");
-    assertPrecedence("1.2.3-a.b.1","1.2.3-a.c.1");
-    assertPrecedence("1.2.3-a.cbc.100","1.2.3-a.cca.1");
-    assertPrecedence("1.2.3-a.cb.1","1.2.3-a.cba.1");
+    assertPrecedence("1.2.3-a.b.1", "1.2.3-a.b.c");
+    assertPrecedence("1.2.3-a.b.1", "1.2.3-a.c.1");
+    assertPrecedence("1.2.3-a.cbc.100", "1.2.3-a.cca.1");
+    assertPrecedence("1.2.3-a.cb.1", "1.2.3-a.cba.1");
+
+    // Example from SemVer documentation https://semver.org/#spec-item-11
+    assertPrecedence("1.0.0-alpha", "1.0.0-alpha.1");
+    assertPrecedence("1.0.0-alpha.1", "1.0.0-alpha.beta");
+    assertPrecedence("1.0.0-alpha.beta", "1.0.0-beta");
+    assertPrecedence("1.0.0-beta", "1.0.0-beta.2");
+    assertPrecedence("1.0.0-beta.2", "1.0.0-beta.11");
+    assertPrecedence("1.0.0-beta.11", "1.0.0-rc.1");
+    assertPrecedence("1.0.0-rc.1", "1.0.0");
 
     Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 5));
     Assert.assertTrue(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 5));
@@ -95,7 +106,11 @@ public class SemVerTest {
     assertThat(v1).isNotEqualTo(v2);
   }
 
-  private static void assertParsed(String version, int expectedMajor, int expectedMinor, int expectedPatch, @Nullable String expectedPreRelease) {
+  private static void assertParsed(@NotNull String version,
+                                   int expectedMajor,
+                                   int expectedMinor,
+                                   int expectedPatch,
+                                   @Nullable String expectedPreRelease) {
     assertThat(parse(version)).isEqualTo(new SemVer(version, expectedMajor, expectedMinor, expectedPatch, expectedPreRelease));
   }
 
