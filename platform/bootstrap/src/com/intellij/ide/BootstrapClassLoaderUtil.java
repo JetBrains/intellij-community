@@ -63,7 +63,7 @@ public class BootstrapClassLoaderUtil {
       }
     }
 
-    UrlClassLoader.Builder<?> builder = UrlClassLoader.build()
+    UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
@@ -260,7 +260,7 @@ public class BootstrapClassLoaderUtil {
   private static class TransformingLoader extends UrlClassLoader {
     private final List<BytecodeTransformer> myTransformers;
 
-    TransformingLoader(@NotNull Builder<?> builder, List<BytecodeTransformer> transformers) {
+    TransformingLoader(@NotNull Builder builder, List<BytecodeTransformer> transformers) {
       super(builder);
       myTransformers = Collections.unmodifiableList(transformers);
     }
