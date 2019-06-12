@@ -913,7 +913,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getTextFieldBackground()
+   * @deprecated use {@link com.intellij.util.ui.UIUtil#getTextFieldBackground()} instead
    */
   @Deprecated
   public static Color getActiveTextFieldBackgroundColor() {
@@ -925,7 +925,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getInactiveTextColor()
+   * @deprecated use {@link com.intellij.util.ui.UIUtil#getInactiveTextColor()} instead
    */
   @NotNull
   @Deprecated
@@ -3790,7 +3790,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /**
-   * @deprecated use com.intellij.util.ui.UIUtil#getPanelBackground() instead
+   * @deprecated use {@link com.intellij.util.ui.UIUtil#getPanelBackground()} instead
    */
   @SuppressWarnings("SpellCheckingInspection")
   @NotNull
