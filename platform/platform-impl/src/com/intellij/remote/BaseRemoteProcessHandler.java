@@ -16,9 +16,12 @@
 package com.intellij.remote;
 
 import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +106,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
   @NotNull
   @Override
   public Future<?> executeTask(@NotNull Runnable task) {
-    return AppExecutorUtil.getAppExecutorService().submit(task);
+    return ApplicationManager.getApplication().executeOnPooledThread(task);
   }
 
   private abstract static class RemoteOutputReader extends BaseOutputReader {
