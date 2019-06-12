@@ -2,13 +2,13 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.WaitFor;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -220,7 +220,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     MyQueue queue = new MyQueue();
     queue.showNotify();
     AtomicReference<Object> executed = new AtomicReference<>();
-    AppExecutorUtil.getAppExecutorService().submit(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         queue.queue(new MyUpdate("update"));
         queue.flush();
