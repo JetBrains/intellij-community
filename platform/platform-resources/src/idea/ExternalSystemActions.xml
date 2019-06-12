@@ -7,8 +7,6 @@
       <action id="ExternalSystem.RefreshProject"
               class="com.intellij.openapi.externalSystem.action.RefreshExternalProjectAction"
               icon="AllIcons.Actions.Refresh"/>
-      <action id="ExternalSystem.AttachProject"
-              class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
       <action id="ExternalSystem.DetachProject"
               class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"
               use-shortcut-of="$Delete"/>
@@ -129,7 +127,7 @@
 
     <group id="ExternalSystemView.ActionsToolbar.LeftPanel">
       <reference id="ExternalSystem.RefreshAllProjects"/>
-      <reference id="ExternalSystem.AttachProject"/>
+<!--      <reference id="ExternalSystem.AttachProject"/>-->
       <reference ref="ExternalSystem.DetachProject"/>
       <!--<reference id="ExternalSystem.Run/>-->
     </group>

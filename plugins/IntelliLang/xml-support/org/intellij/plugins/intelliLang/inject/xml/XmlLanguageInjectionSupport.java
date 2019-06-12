@@ -6,8 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +20,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
-import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.*;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
@@ -141,30 +138,21 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
   @Nullable
   private static BaseInjection showInjectionUI(final Project project, final BaseInjection xmlInjection) {
-    final DialogBuilder builder = new DialogBuilder(project);
     final AbstractInjectionPanel panel;
+    String helpId;
     if (xmlInjection instanceof XmlTagInjection) {
       panel = new XmlTagPanel((XmlTagInjection)xmlInjection, project);
-      builder.setHelpId("reference.settings.injection.language.injection.settings.xml.tag");
+      helpId = "reference.settings.injection.language.injection.settings.xml.tag";
     }
     else if (xmlInjection instanceof XmlAttributeInjection) {
       panel = new XmlAttributePanel((XmlAttributeInjection)xmlInjection, project);
-      builder.setHelpId("reference.settings.injection.language.injection.settings.xml.attribute");
+      helpId = "reference.settings.injection.language.injection.settings.xml.attribute";
     }
-    else throw new AssertionError();
+    else {
+      throw new AssertionError();
+    }
     panel.reset();
-    builder.addOkAction();
-    builder.addCancelAction();
-    builder.setCenterPanel(panel.getComponent());
-    builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(() -> {
-      panel.apply();
-      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-    });
-    if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
-      return xmlInjection.copy();
-    }
-    return null;
+    return showEditInjectionDialog(project, panel, null, helpId) ? xmlInjection.copy() : null;
   }
 
   @Nullable

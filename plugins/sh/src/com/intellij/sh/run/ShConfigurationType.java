@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShConfigurationType extends SimpleConfigurationType {
   public ShConfigurationType() {
-    super("ShConfigurationType", ShLanguage.INSTANCE.getID(), ShLanguage.INSTANCE.getID() + "configuration",
+    super("ShConfigurationType", ShLanguage.INSTANCE.getID(), ShLanguage.INSTANCE.getID() + " configuration",
           NotNullLazyValue.createValue(() -> SHIcons.ShFile));
   }
 

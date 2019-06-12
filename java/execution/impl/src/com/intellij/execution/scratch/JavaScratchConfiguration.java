@@ -81,7 +81,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
       }
 
       @Override
-      protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
+      protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
         super.setupJavaParameters(params);
         final File scrachesOutput = JavaScratchCompilationSupport.getScratchOutputDirectory(getProject());
         if (scrachesOutput != null) {
