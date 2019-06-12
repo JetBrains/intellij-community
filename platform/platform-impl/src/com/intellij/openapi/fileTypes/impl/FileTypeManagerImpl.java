@@ -75,7 +75,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, Disposable {
-  public static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
+  private static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
@@ -219,6 +219,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }, ModalityState.NON_MODAL);
       }
     });
+
+    // this should be done BEFORE reading state
+    initStandardFileTypes();
+
     myMessageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -258,9 +262,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
-
-    // this should be done BEFORE reading state
-    initStandardFileTypes();
   }
 
   @VisibleForTesting
@@ -1003,7 +1004,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public LanguageFileType findFileTypeByLanguage(Language language) {
+  public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {
     synchronized (PENDING_INIT_LOCK) {
       for (FileTypeBean bean : myPendingFileTypes.values()) {
         if (language.getID().equals(bean.language)) {
