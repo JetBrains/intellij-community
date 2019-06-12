@@ -20,7 +20,7 @@ import java.nio.file.Path
 class WindowsDefenderCheckerActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val app = ApplicationManager.getApplication()
-    if (!app.isInternal || app.isUnitTestMode) return
+    if (app.isUnitTestMode) return
 
     val windowsDefenderChecker = WindowsDefenderChecker.getInstance()
     if (windowsDefenderChecker.isVirusCheckIgnored(project)) return
