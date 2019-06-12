@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitLocalBranch;
-import git4idea.GitUtil;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +82,6 @@ import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAf
  * </p>
  */
 public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListener {
-
   private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
 
   private final Project myProject;
@@ -99,7 +97,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   private final Set<VirtualFile> myPossiblyUntrackedFiles = new HashSet<>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
-  private final GitRepositoryManager myRepositoryManager;
+  private final Object RESCAN_LOCK = new Object();
 
   GitUntrackedFilesHolder(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myProject = repository.getProject();
@@ -110,7 +108,6 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     myGit = Git.getInstance();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
-    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myRepositoryFiles = gitFiles;
   }
 
@@ -124,10 +121,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   @Override
   public void dispose() {
-    synchronized (myDefinitelyUntrackedFiles) {
-      myDefinitelyUntrackedFiles.clear();
-    }
     synchronized (LOCK) {
+      myDefinitelyUntrackedFiles.clear();
       myPossiblyUntrackedFiles.clear();
     }
   }
@@ -136,8 +131,9 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    * Adds the file to the list of untracked.
    */
   public void add(@NotNull VirtualFile file) {
-    synchronized (myDefinitelyUntrackedFiles) {
+    synchronized (LOCK) {
       myDefinitelyUntrackedFiles.add(file);
+      myPossiblyUntrackedFiles.add(file);
     }
   }
 
@@ -145,8 +141,9 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    * Adds several files to the list of untracked.
    */
   public void add(@NotNull Collection<? extends VirtualFile> files) {
-    synchronized (myDefinitelyUntrackedFiles) {
+    synchronized (LOCK) {
       myDefinitelyUntrackedFiles.addAll(files);
+      myPossiblyUntrackedFiles.addAll(files);
     }
   }
 
@@ -154,8 +151,9 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    * Removes several files from untracked.
    */
   public void remove(@NotNull Collection<VirtualFile> files) {
-    synchronized (myDefinitelyUntrackedFiles) {
+    synchronized (LOCK) {
       myDefinitelyUntrackedFiles.removeAll(files);
+      myPossiblyUntrackedFiles.addAll(files);
     }
   }
 
@@ -167,12 +165,11 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    */
   @NotNull
   public Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
-    if (isReady()) {
-      verifyPossiblyUntrackedFiles();
-    } else {
-      rescanAll();
+    synchronized (RESCAN_LOCK) {
+      rescan();
     }
-    synchronized (myDefinitelyUntrackedFiles) {
+
+    synchronized (LOCK) {
       return new ArrayList<>(myDefinitelyUntrackedFiles);
     }
   }
@@ -184,48 +181,28 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   }
 
   /**
-   * Resets the list of untracked files after retrieving the full list of them from Git.
-   */
-  private void rescanAll() throws VcsException {
-    Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, null);
-    synchronized (myDefinitelyUntrackedFiles) {
-      myDefinitelyUntrackedFiles.clear();
-      myDefinitelyUntrackedFiles.addAll(untrackedFiles);
-    }
-    synchronized (LOCK) {
-      myPossiblyUntrackedFiles.clear();
-      myReady = true;
-    }
-  }
-
-  /**
-   * @return {@code true} if untracked files list is initialized and being kept up-to-date, {@code false} if full refresh is needed.
-   */
-  private boolean isReady() {
-    synchronized (LOCK) {
-      return myReady;
-    }
-  }
-
-  /**
    * Queries Git to check the status of {@code myPossiblyUntrackedFiles} and moves them to {@code myDefinitelyUntrackedFiles}.
    */
-  private void verifyPossiblyUntrackedFiles() throws VcsException {
-    Set<VirtualFile> suspiciousFiles;
+  private void rescan() throws VcsException {
+    @Nullable Set<VirtualFile> suspiciousFiles;
     synchronized (LOCK) {
-      suspiciousFiles = new HashSet<>(myPossiblyUntrackedFiles);
+      suspiciousFiles = myReady ? new HashSet<>(myPossiblyUntrackedFiles) : null;
       myPossiblyUntrackedFiles.clear();
     }
 
-    synchronized (myDefinitelyUntrackedFiles) {
-      Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, suspiciousFiles);
-      suspiciousFiles.removeAll(untrackedFiles);
-      // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
-      @SuppressWarnings("UnnecessaryLocalVariable")
-      Set<VirtualFile> trackedFiles  = suspiciousFiles;
+    Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, suspiciousFiles);
 
-      myDefinitelyUntrackedFiles.addAll(untrackedFiles);
-      myDefinitelyUntrackedFiles.removeAll(trackedFiles);
+    synchronized (LOCK) {
+      if (suspiciousFiles != null) {
+        // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
+        myDefinitelyUntrackedFiles.removeAll(suspiciousFiles);
+        myDefinitelyUntrackedFiles.addAll(untrackedFiles);
+      }
+      else {
+        myDefinitelyUntrackedFiles.clear();
+        myDefinitelyUntrackedFiles.addAll(untrackedFiles);
+        myReady = true;
+      }
     }
   }
 
