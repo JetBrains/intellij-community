@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.util.containers.SoftFactoryMap;
@@ -10,6 +10,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author spleaner
@@ -23,15 +24,14 @@ public class ColorIconCache {
     }
   };
 
-  private ColorIconCache() {
-  }
+  private ColorIconCache() { }
 
   public static ColorIconCache getIconCache() {
     return INSTANCE;
   }
 
-  public Icon getIcon(@NotNull final Color color, final int size) {
-    return ourCache.get(color).computeIfAbsent(size, s -> new com.intellij.util.ui.ColorIcon(s, color, true));
+  public Icon getIcon(@NotNull Color color, int size) {
+    return Objects.requireNonNull(ourCache.get(color)).computeIfAbsent(size, s -> new com.intellij.util.ui.ColorIcon(s, color, true));
   }
 
   /**
@@ -100,6 +100,7 @@ public class ColorIconCache {
 
       final Composite old = ((Graphics2D)g).getComposite();
       ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
+      //noinspection UseJBColor
       g.setColor(Color.BLACK);
       g.drawRect(i, j, iconWidth-1, iconHeight-1);
       ((Graphics2D)g).setComposite(old);
