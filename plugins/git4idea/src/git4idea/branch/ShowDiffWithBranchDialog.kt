@@ -42,6 +42,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
       startLoading()
       add(mainPanel)
     }
+    mainPanel.setEmptyText("")
 
     val modalityState = ModalityState.stateForComponent(mainPanel)
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -54,6 +55,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
           when (result) {
             is LoadingResult.Success -> {
               mainPanel.setCompareInfo(result.compareInfo)
+              mainPanel.setEmptyText("No differences")
               UIUtil.setEnabled(mainPanel, true, true)
             }
             is LoadingResult.Error -> Messages.showErrorDialog(rootPane, result.error)
