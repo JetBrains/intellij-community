@@ -359,7 +359,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + getPresentableUrl() + "'") +
+                         : " '" + (myComponentStore.isComputed() ? getPresentableUrl() : "<no component store>") + "'") +
            " " + myName;
   }
 
