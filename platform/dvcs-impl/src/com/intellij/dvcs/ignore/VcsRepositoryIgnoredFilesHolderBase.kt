@@ -156,7 +156,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
             fireUpdateStarted()
             val ignored = action()
             inUpdateMode.set(false)
-            fireUpdateFinished(ignored)
+            fireUpdateFinished(ignored, isFullRescan)
             doAfterRescan?.run()
           }
         })
@@ -197,8 +197,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.multicaster.updateStarted()
   }
 
-  private fun fireUpdateFinished(paths: Collection<FilePath>) {
-    listeners.multicaster.updateFinished(paths)
+  private fun fireUpdateFinished(paths: Collection<FilePath>, isFullRescan: Boolean) {
+    listeners.multicaster.updateFinished(paths, isFullRescan)
   }
 
   private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
@@ -213,7 +213,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       addUpdateStateListener(this)
     }
 
-    override fun updateFinished(ignoredPaths: Collection<FilePath>) = awaitLatch.countDown()
+    override fun updateFinished(ignoredPaths: Collection<FilePath>, isFullRescan: Boolean) = awaitLatch.countDown()
 
     fun waitFor() {
       awaitLatch.await()
