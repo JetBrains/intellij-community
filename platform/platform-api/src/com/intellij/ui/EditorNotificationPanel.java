@@ -151,7 +151,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return 0;
   }
 
-  private class MyIntentionAction implements IntentionActionWithOptions, Iconable, IntentionAction {
+  private class MyIntentionAction implements IntentionActionWithOptions, Iconable {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
