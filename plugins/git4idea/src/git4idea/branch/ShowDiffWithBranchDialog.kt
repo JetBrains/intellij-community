@@ -5,15 +5,20 @@ import com.intellij.dvcs.ui.CompareBranchesDiffPanel
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.ui.UIUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.util.GitLocalCommitCompareInfo
 import java.awt.BorderLayout
 import javax.swing.Action
 import javax.swing.JComponent
+
+private val LOG = logger<ShowDiffWithBranchDialog>()
 
 internal class ShowDiffWithBranchDialog(val project: Project,
                                         val branchName: String,
@@ -31,6 +36,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 
   override fun createCenterPanel(): JComponent? {
     mainPanel = CompareBranchesDiffPanel(project, GitVcsSettings.getInstance(project), branchName, currentBranchName)
+    UIUtil.setEnabled(mainPanel, false, true)
 
     val loadingPanel = JBLoadingPanel(BorderLayout(), disposable).apply {
       startLoading()
@@ -39,15 +45,19 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 
     val modalityState = ModalityState.stateForComponent(mainPanel)
     ApplicationManager.getApplication().executeOnPooledThread {
-      val compareInfo = GitLocalCommitCompareInfo(project, branchName)
-      for (repository in repositories) {
-        compareInfo.putTotalDiff(repository, GitBranchWorker.loadTotalDiff(repository, branchName))
-      }
+      val result = loadDiff()
 
       runInEdt(modalityState) {
         if (!isDisposed) {
-          mainPanel.setCompareInfo(compareInfo)
           loadingPanel.stopLoading()
+
+          when (result) {
+            is LoadingResult.Success -> {
+              mainPanel.setCompareInfo(result.compareInfo)
+              UIUtil.setEnabled(mainPanel, true, true)
+            }
+            is LoadingResult.Error -> Messages.showErrorDialog(rootPane, result.error)
+          }
         }
       }
     }
@@ -61,4 +71,22 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 
   override fun getPreferredFocusedComponent(): JComponent = mainPanel
 
+  private fun loadDiff() : LoadingResult {
+    try {
+      val compareInfo = GitLocalCommitCompareInfo(project, branchName)
+      for (repository in repositories) {
+        compareInfo.putTotalDiff(repository, GitBranchWorker.loadTotalDiff(repository, branchName))
+      }
+      return LoadingResult.Success(compareInfo)
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
+      return LoadingResult.Error("Couldn't load diff with $branchName: ${e.message}")
+    }
+  }
+
+  private sealed class LoadingResult {
+    class Success(val compareInfo: GitLocalCommitCompareInfo): LoadingResult()
+    class Error(val error: String) : LoadingResult()
+  }
 }
