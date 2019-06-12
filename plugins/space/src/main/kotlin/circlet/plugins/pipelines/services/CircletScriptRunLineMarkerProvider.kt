@@ -16,14 +16,14 @@ class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
         val refs = element.references
         refs.forEach {
             if (it is KtSimpleNameReference) {
-                val r = it.resolve()
-                if (r != null) {
-                    val fqnName = r.getKotlinFqName()
+                val resolveResult = it.resolve()
+                if (resolveResult != null) {
+                    val fqnName = resolveResult.getKotlinFqName()
                     if (fqnName != null) {
                         if (fqnName.asString() == "circlet.pipelines.config.dsl.api.Project.task") {
                             val runAction = object : AnAction(ExecutionBundle.message("run.configurable.display.name"), null, AllIcons.RunConfigurations.TestState.Run) {
                                 override fun actionPerformed(e: AnActionEvent) {
-                                    Messages.showInfoMessage("run build", "circlet")
+                                    Messages.showInfoMessage("run task", "circlet")
                                 }
                             }
                             return Info(runAction)

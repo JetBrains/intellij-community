@@ -67,7 +67,7 @@ class CircletScriptsViewFactory {
                 if (viewModel.modelBuildIsRunning.value) {
                     return
                 }
-                Messages.showInfoMessage("run build", "circlet")
+                Messages.showInfoMessage("run task", "circlet")
             }
         }
 
