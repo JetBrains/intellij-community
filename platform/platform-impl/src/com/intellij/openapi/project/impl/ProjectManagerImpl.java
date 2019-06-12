@@ -429,7 +429,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
                                      ? LoadingPhase.PROJECT_OPENED
                                      : LoadingPhase.INDEXING_FINISHED);
 
-          startupManager.scheduleBackgroundPostStartupActivities();
+          if (!project.isDisposed()) {
+            startupManager.scheduleBackgroundPostStartupActivities();
+          }
         },
         ModalityState.NON_MODAL);
     }));
