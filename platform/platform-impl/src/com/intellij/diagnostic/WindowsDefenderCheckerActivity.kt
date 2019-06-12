@@ -21,24 +21,25 @@ class WindowsDefenderCheckerActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val app = ApplicationManager.getApplication()
     if (!app.isInternal || app.isUnitTestMode) return
-    app.executeOnPooledThread {
-      val windowsDefenderChecker = WindowsDefenderChecker.getInstance()
-      val checkResult = windowsDefenderChecker.checkWindowsDefender(project)
-      if (checkResult.status == WindowsDefenderChecker.RealtimeScanningStatus.SCANNING_ENABLED &&
-          checkResult.pathStatus.any { !it.value }) {
 
-        val nonExcludedPaths = checkResult.pathStatus.filter { !it.value }.keys
-        val notification = WindowsDefenderNotification(
-          DiagnosticBundle.message("virus.scanning.warn.message", ApplicationNamesInfo.getInstance().fullProductName,
-                                   nonExcludedPaths.joinToString("<br/>")),
-          nonExcludedPaths
-        )
-        notification.isImportant = true
-        windowsDefenderChecker.configureActions(notification)
+    val windowsDefenderChecker = WindowsDefenderChecker.getInstance()
+    if (windowsDefenderChecker.isVirusCheckIgnored(project)) return
 
-        app.invokeLater {
-          Notifications.Bus.notify(notification)
-        }
+    val checkResult = windowsDefenderChecker.checkWindowsDefender(project)
+    if (checkResult.status == WindowsDefenderChecker.RealtimeScanningStatus.SCANNING_ENABLED &&
+        checkResult.pathStatus.any { !it.value }) {
+
+      val nonExcludedPaths = checkResult.pathStatus.filter { !it.value }.keys
+      val notification = WindowsDefenderNotification(
+        DiagnosticBundle.message("virus.scanning.warn.message", ApplicationNamesInfo.getInstance().fullProductName,
+                                 nonExcludedPaths.joinToString("<br/>")),
+        nonExcludedPaths
+      )
+      notification.isImportant = true
+      windowsDefenderChecker.configureActions(project, notification)
+
+      app.invokeLater {
+        Notifications.Bus.notify(notification)
       }
     }
   }
