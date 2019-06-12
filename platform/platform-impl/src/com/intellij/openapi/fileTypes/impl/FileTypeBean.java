@@ -51,6 +51,12 @@ public class FileTypeBean extends AbstractExtensionPointBean {
   public String fileNames;
 
   /**
+   * Semicolon-separated list of patterns (strings containing ? and * characters) to be associated with the file type.
+   */
+  @Attribute("patterns")
+  public String patterns;
+
+  /**
    * Semicolon-separated list of exact file names (case insensitive) to be associated with the file type.
    */
   @Attribute("fileNamesCaseInsensitive")
