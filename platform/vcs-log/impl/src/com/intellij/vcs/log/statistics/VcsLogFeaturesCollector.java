@@ -3,6 +3,7 @@ package com.intellij.vcs.log.statistics;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newBooleanMetric;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addIfDiffers;
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
@@ -59,21 +61,22 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(project)) {
           if (factory.showMenuItem()) {
             addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(VcsLogHighlighterProperty.get(factory.getId())),
-                             "highlighter." + getFactoryIdSafe(factory));
+                             "highlighter", new FeatureUsageData().addData("id", getFactoryIdSafe(factory)));
           }
         }
 
         for (VcsLogFilterCollection.FilterKey<?> key : VcsLogFilterCollection.STANDARD_KEYS) {
           if (properties.getFilterValues(key.getName()) != null) {
-            metricEvents.add(MetricEventFactoryKt.newBooleanMetric(key.getName() + "Filter", true));
+            metricEvents.add(newBooleanMetric("filter", true, new FeatureUsageData().addData("name", key.getName())));
           }
         }
 
         Set<Integer> currentColumns = new HashSet<>(properties.get(COLUMN_ORDER));
         Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(COLUMN_ORDER));
         for (int column : GraphTableModel.DYNAMIC_COLUMNS) {
+          String columnName = StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]);
           addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column),
-                           StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]) + "Column");
+                           "column", new FeatureUsageData().addData("name", columnName));
         }
 
         List<String> tabs = projectLog.getTabsManager().getTabs();
