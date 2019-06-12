@@ -1,17 +1,17 @@
 package circlet.plugins.pipelines.services
 
 import circlet.components.*
-import klogging.*
 import circlet.pipelines.config.dsl.compile.*
 import circlet.pipelines.config.dsl.compile.util.*
 import circlet.pipelines.config.dsl.script.exec.common.*
-import circlet.pipelines.config.logging.*
 import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
 import circlet.plugins.pipelines.viewmodel.*
 import circlet.utils.*
-import com.intellij.ide.plugins.cl.*
 import com.intellij.openapi.project.*
+import klogging.*
+import org.slf4j.event.*
+import org.slf4j.helpers.*
 import runtime.reactive.*
 import java.io.*
 
@@ -35,7 +35,11 @@ class ScriptModelBuilder {
         {
             val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
             val path = normalizePath(automationSettingsComponent.state.kotlincFolderPath)
-            val logger = DelegatingLogger { logBuildData.add(this) }
+            val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
+            events.change.forEach(lifetime) {
+                logBuildData.add(it.index.message)
+            }
+            val logger = SubstituteLogger("ScriptModelBuilderLogger", events, false)
             val kotlinCompilerPath = KotlinCompilerFinder(logger)
                 .find(if (path.endsWith('/')) path else "$path/")
 
