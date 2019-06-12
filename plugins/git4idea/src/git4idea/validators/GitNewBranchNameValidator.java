@@ -39,14 +39,14 @@ import java.util.Collection;
  */
 public final class GitNewBranchNameValidator implements InputValidatorEx {
 
-  private final Collection<GitRepository> myRepositories;
+  private final Collection<? extends GitRepository> myRepositories;
   private String myErrorText;
 
-  private GitNewBranchNameValidator(@NotNull Collection<GitRepository> repositories) {
+  private GitNewBranchNameValidator(@NotNull Collection<? extends GitRepository> repositories) {
     myRepositories = repositories;
   }
 
-  public static GitNewBranchNameValidator newInstance(@NotNull Collection<GitRepository> repositories) {
+  public static GitNewBranchNameValidator newInstance(@NotNull Collection<? extends GitRepository> repositories) {
     return new GitNewBranchNameValidator(repositories);
   }
 

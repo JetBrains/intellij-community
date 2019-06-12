@@ -66,7 +66,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private boolean myCanGroupByChangeList = false;
   private boolean myGroupByChangeList = false;
   private JLabel myLoadingChangeListsLabel;
-  private List<CommittedChangeList> myCommittedChangeLists;
+  private List<? extends CommittedChangeList> myCommittedChangeLists;
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
   @NonNls private static final String CARD_STATUS = "Status";
   @NonNls private static final String CARD_CHANGES = "Changes";
@@ -368,7 +368,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  public void setChangeLists(final List<CommittedChangeList> receivedChanges) {
+  public void setChangeLists(final List<? extends CommittedChangeList> receivedChanges) {
     final boolean hasEmptyCaches = CommittedChangesCache.getInstance(myProject).hasEmptyCaches();
 
     ApplicationManager.getApplication().invokeLater(() -> {

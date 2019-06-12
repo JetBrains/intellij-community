@@ -53,7 +53,7 @@ public class UpdatedFiles implements JDOMExternalizable {
     return findByIdIn(myGroups, id);
   }
 
-  private static FileGroup findByIdIn(List<FileGroup> groups, String id) {
+  private static FileGroup findByIdIn(List<? extends FileGroup> groups, String id) {
     for (FileGroup fileGroup : groups) {
       if (id.equals(fileGroup.getId())) return fileGroup;
       FileGroup foundInChildren = findByIdIn(fileGroup.getChildren(), id);

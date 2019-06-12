@@ -22,7 +22,7 @@ private val LOG = logger<ShowDiffWithBranchDialog>()
 
 internal class ShowDiffWithBranchDialog(val project: Project,
                                         val branchName: String,
-                                        val repositories: MutableList<GitRepository>,
+                                        val repositories: List<GitRepository>,
                                         val currentBranchName: String) : DialogWrapper(project, true) {
 
   init {

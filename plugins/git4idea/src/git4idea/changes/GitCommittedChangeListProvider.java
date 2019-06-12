@@ -27,7 +27,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +83,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
 
   @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount,
-                                   final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   final AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException {
     try {
       getCommittedChangesImpl(settings, location, maxCount, gitCommittedChangeList -> consumer.consume(gitCommittedChangeList));
     }
@@ -105,7 +104,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount,
-                                       final Consumer<GitCommittedChangeList> consumer)
+                                       final Consumer<? super GitCommittedChangeList> consumer)
     throws VcsException {
     GitRepositoryLocation l = (GitRepositoryLocation)location;
     final Long beforeRev = settings.getChangeBeforeFilter();

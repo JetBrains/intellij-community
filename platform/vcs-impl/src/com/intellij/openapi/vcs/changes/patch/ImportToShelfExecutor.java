@@ -53,7 +53,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
   public void apply(@NotNull List<? extends FilePatch> remaining, @NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable final String fileName,
-                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     if (fileName == null) {
       LOG.error("Patch file name shouldn't be null");
       return;

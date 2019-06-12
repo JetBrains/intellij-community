@@ -524,11 +524,11 @@ public class NewMappings implements Disposable {
   }
 
   private static class MyVcsActivator {
-    @NotNull private final Collection<AbstractVcs> myAddVcses;
-    @NotNull private final Collection<AbstractVcs> myRemoveVcses;
+    @NotNull private final Collection<? extends AbstractVcs> myAddVcses;
+    @NotNull private final Collection<? extends AbstractVcs> myRemoveVcses;
 
-    private MyVcsActivator(@NotNull Collection<AbstractVcs> addVcses,
-                           @NotNull Collection<AbstractVcs> removeVcses) {
+    private MyVcsActivator(@NotNull Collection<? extends AbstractVcs> addVcses,
+                           @NotNull Collection<? extends AbstractVcs> removeVcses) {
       myAddVcses = addVcses;
       myRemoveVcses = removeVcses;
     }

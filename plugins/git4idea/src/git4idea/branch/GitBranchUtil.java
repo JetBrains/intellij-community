@@ -61,7 +61,7 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  static String getCurrentBranchOrRev(@NotNull Collection<GitRepository> repositories) {
+  static String getCurrentBranchOrRev(@NotNull Collection<? extends GitRepository> repositories) {
     if (repositories.size() > 1) {
       GitMultiRootBranchConfig multiRootBranchConfig = new GitMultiRootBranchConfig(repositories);
       String currentBranch = multiRootBranchConfig.getCurrentBranch();
@@ -237,7 +237,7 @@ public class GitBranchUtil {
    */
   @Nullable
   public static GitNewBranchOptions getNewBranchNameFromUser(@NotNull Project project,
-                                                             @NotNull Collection<GitRepository> repositories,
+                                                             @NotNull Collection<? extends GitRepository> repositories,
                                                              @NotNull String dialogTitle,
                                                              @Nullable String initialName) {
     return new GitNewBranchDialog(project, dialogTitle, initialName, GitNewBranchNameValidator.newInstance(repositories)).showAndGetOptions();

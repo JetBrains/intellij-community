@@ -45,7 +45,7 @@ class GitMergeOperation extends GitBranchOperation {
   private GitPreservingProcess myPreservingProcess;
 
   GitMergeOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
-                    @NotNull Collection<GitRepository> repositories,
+                    @NotNull Collection<? extends GitRepository> repositories,
                     @NotNull String branchToMerge, GitBrancher.DeleteOnMergeOption deleteOnMerge) {
     super(project, git, uiHandler, repositories);
     myBranchToMerge = branchToMerge;
@@ -195,7 +195,7 @@ class GitMergeOperation extends GitBranchOperation {
     }
   }
 
-  private boolean doSmartMerge(@NotNull final Collection<GitRepository> repositories) {
+  private boolean doSmartMerge(@NotNull final Collection<? extends GitRepository> repositories) {
     final AtomicBoolean success = new AtomicBoolean();
     myPreservingProcess = new GitPreservingProcess(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), "merge",
                                                    myBranchToMerge, STASH, getIndicator(),
@@ -213,7 +213,7 @@ class GitMergeOperation extends GitBranchOperation {
    * @return true if merge has succeeded without errors (but possibly with conflicts) in all repositories;
    *         false if it failed at least in one of them.
    */
-  private boolean doMerge(@NotNull Collection<GitRepository> repositories) {
+  private boolean doMerge(@NotNull Collection<? extends GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
       GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.emptyList(), mergeConflict);
@@ -279,7 +279,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private GitCompoundResult smartRollback(@NotNull Collection<GitRepository> repositories) {
+  private GitCompoundResult smartRollback(@NotNull Collection<? extends GitRepository> repositories) {
     LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
     Collection<VirtualFile> roots = GitUtil.getRootsFromRepositories(repositories);

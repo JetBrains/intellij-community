@@ -77,8 +77,8 @@ public class VcsShelveUtils {
   }
 
   private static void refreshFilesBeforeUnshelve(String projectPath,
-                                                 @NotNull List<ShelvedChange> shelvedChanges,
-                                                 @NotNull List<ShelvedBinaryFile> binaryFiles) {
+                                                 @NotNull List<? extends ShelvedChange> shelvedChanges,
+                                                 @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
     HashSet<File> filesToRefresh = new HashSet<>();
     shelvedChanges.forEach(c -> {
       if (c.getBeforePath() != null) {

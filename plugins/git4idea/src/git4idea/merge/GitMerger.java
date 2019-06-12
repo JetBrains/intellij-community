@@ -51,7 +51,7 @@ public class GitMerger {
                                            repository -> repository.getState() == Repository.State.MERGING));
   }
 
-  public void mergeCommit(@NotNull Collection<VirtualFile> roots) throws VcsException {
+  public void mergeCommit(@NotNull Collection<? extends VirtualFile> roots) throws VcsException {
     for (VirtualFile root : roots) {
       mergeCommit(root);
     }

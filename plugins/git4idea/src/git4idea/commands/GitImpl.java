@@ -63,7 +63,7 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<FilePath> paths)
+  public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths)
     throws VcsException {
     Set<VirtualFile> ignoredFiles = new HashSet<>();
 
@@ -132,7 +132,7 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
-                                         @Nullable Collection<VirtualFile> files) throws VcsException {
+                                         @Nullable Collection<? extends VirtualFile> files) throws VcsException {
     final Set<VirtualFile> untrackedFiles = new HashSet<>();
 
     if (files == null) {
@@ -211,7 +211,7 @@ public class GitImpl extends GitImplBase {
   @Override
   public GitCommandResult checkAttr(@NotNull final GitRepository repository,
                                     @NotNull final Collection<String> attributes,
-                                    @NotNull Collection<VirtualFile> files) {
+                                    @NotNull Collection<? extends VirtualFile> files) {
     List<String> relativeFilePaths = ContainerUtil.map(files, file -> VcsFileUtil.relativePath(repository.getRoot(), file));
 
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
@@ -459,7 +459,7 @@ public class GitImpl extends GitImplBase {
                                   final boolean force,
                                   final boolean updateTracking,
                                   final boolean skipHook,
-                                  final List<GitPushParams.ForceWithLease> forceWithLease,
+                                  final List<? extends GitPushParams.ForceWithLease> forceWithLease,
                                   @Nullable final String tagMode,
                                   @NotNull final GitLineHandlerListener... listeners) {
     return runCommand(() -> {
@@ -555,7 +555,7 @@ public class GitImpl extends GitImplBase {
   @NotNull
   public GitCommandResult fetch(@NotNull final GitRepository repository,
                                 @NotNull final GitRemote remote,
-                                @NotNull final List<GitLineHandlerListener> listeners,
+                                @NotNull final List<? extends GitLineHandlerListener> listeners,
                                 final String... params) {
     return fetch(repository, remote, listeners, null, params);
   }
@@ -563,7 +563,7 @@ public class GitImpl extends GitImplBase {
   @NotNull
   public GitCommandResult fetch(@NotNull final GitRepository repository,
                                 @NotNull final GitRemote remote,
-                                @NotNull final List<GitLineHandlerListener> listeners,
+                                @NotNull final List<? extends GitLineHandlerListener> listeners,
                                 @Nullable GitAuthenticationGate authenticationGate,
                                 final String... params) {
     return runCommand(() -> {
@@ -781,7 +781,7 @@ public class GitImpl extends GitImplBase {
     addListeners(handler, asList(listeners));
   }
 
-  private static void addListeners(@NotNull GitLineHandler handler, @NotNull List<GitLineHandlerListener> listeners) {
+  private static void addListeners(@NotNull GitLineHandler handler, @NotNull List<? extends GitLineHandlerListener> listeners) {
     for (GitLineHandlerListener listener : listeners) {
       handler.addLineListener(listener);
     }

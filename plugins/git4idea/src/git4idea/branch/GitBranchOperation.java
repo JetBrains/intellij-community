@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
@@ -68,14 +69,14 @@ abstract class GitBranchOperation {
   @NotNull private final Collection<GitRepository> myRemainingRepositories;
 
   protected GitBranchOperation(@NotNull Project project, @NotNull Git git,
-                               @NotNull GitBranchUiHandler uiHandler, @NotNull Collection<GitRepository> repositories) {
+                               @NotNull GitBranchUiHandler uiHandler, @NotNull Collection<? extends GitRepository> repositories) {
     myProject = project;
     myGit = git;
     myUiHandler = uiHandler;
 
     myRepositories = getRepositoryManager(project).sortByDependency(repositories);
-    myCurrentHeads = Maps.toMap(repositories, repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
-    myInitialRevisions = Maps.toMap(repositories, GitRepository::getCurrentRevision);
+    myCurrentHeads = ContainerUtil.newMapFromKeys(repositories.iterator(), repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
+    myInitialRevisions = ContainerUtil.newMapFromKeys(repositories.iterator(), GitRepository::getCurrentRevision);
     mySuccessfulRepositories = new ArrayList<>();
     mySkippedRepositories = new ArrayList<>();
     myRemainingRepositories = new ArrayList<>(myRepositories);
@@ -353,7 +354,7 @@ abstract class GitBranchOperation {
    * local changes.
    */
   @NotNull
-  Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<GitRepository> repositories,
+  Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<? extends GitRepository> repositories,
                                                                             @NotNull String otherBranch) {
     Map<GitRepository, List<Change>> changes = new HashMap<>();
     for (GitRepository repository : repositories) {

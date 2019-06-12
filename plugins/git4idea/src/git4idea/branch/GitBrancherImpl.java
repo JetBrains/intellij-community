@@ -43,7 +43,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories) {
+  public void checkoutNewBranch(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -69,7 +69,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void createNewTag(@NotNull String name, @NotNull String reference,
-                            @NotNull List<GitRepository> repositories,
+                            @NotNull List<? extends GitRepository> repositories,
                             @Nullable Runnable callInAwtLater) {
     new CommonBackgroundTask(myProject, "Checking out new branch " + name, callInAwtLater) {
       @Override
@@ -82,7 +82,7 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void checkout(@NotNull String reference,
                        boolean detach,
-                       @NotNull List<GitRepository> repositories,
+                       @NotNull List<? extends GitRepository> repositories,
                        @Nullable Runnable callInAwtLater) {
     new CommonBackgroundTask(myProject, "Checking out " + reference, callInAwtLater) {
       @Override
@@ -95,7 +95,7 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
                                             @NotNull String startPoint,
-                                            @NotNull List<GitRepository> repositories,
+                                            @NotNull List<? extends GitRepository> repositories,
                                             @Nullable Runnable callInAwtLater) {
     new CommonBackgroundTask(myProject, String.format("Checking out %s from %s", newBranchName, startPoint), callInAwtLater) {
       @Override
@@ -106,7 +106,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void deleteBranch(@NotNull String branchName, @NotNull List<GitRepository> repositories) {
+  public void deleteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -116,7 +116,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void deleteRemoteBranch(@NotNull String branchName, @NotNull List<GitRepository> repositories) {
+  public void deleteRemoteBranch(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -126,7 +126,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void compare(@NotNull String branchName, @NotNull List<GitRepository> repositories,
+  public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories,
                       @NotNull GitRepository selectedRepository) {
     VcsLogUtil.runWhenLogIsReady(myProject, (log, logManager) -> {
       VcsLogRangeFilter filters = VcsLogFilterObject.fromRange("HEAD", branchName);
@@ -135,12 +135,12 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void showDiffWithLocal(@NotNull String branchName, @NotNull List<GitRepository> repositories) {
+  public void showDiffWithLocal(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
     new ShowDiffWithBranchDialog(myProject, branchName, repositories, GitBranchUtil.getCurrentBranchOrRev(repositories)).show();
   }
 
   @Override
-  public void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<GitRepository> repositories) {
+  public void merge(@NotNull String branchName, @NotNull DeleteOnMergeOption deleteOnMerge, @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Merging " + branchName, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -150,7 +150,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
+  public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
     new CommonBackgroundTask(myProject, "Rebasing onto " + branchName, null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
@@ -160,7 +160,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void rebaseOnCurrent(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
+  public void rebaseOnCurrent(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
     new CommonBackgroundTask(myProject, "Rebasing " + branchName + "...", null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
@@ -170,7 +170,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<GitRepository> repositories) {
+  public void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Renaming " + currentName + " to " + newName + "...", null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
@@ -180,7 +180,7 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void deleteTag(@NotNull String name, @NotNull List<GitRepository> repositories) {
+  public void deleteTag(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
     new CommonBackgroundTask(myProject, "Deleting tag " + name, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {

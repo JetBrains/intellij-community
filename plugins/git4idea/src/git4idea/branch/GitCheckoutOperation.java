@@ -63,7 +63,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   GitCheckoutOperation(@NotNull Project project,
                        @NotNull Git git,
                        @NotNull GitBranchUiHandler uiHandler,
-                       @NotNull Collection<GitRepository> repositories,
+                       @NotNull Collection<? extends GitRepository> repositories,
                        @NotNull String startPointReference,
                        boolean detach,
                        boolean refShouldBeValid,
@@ -252,7 +252,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   // stash - checkout - unstash
-  private boolean smartCheckout(@NotNull final List<GitRepository> repositories, @NotNull final String reference,
+  private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories, @NotNull final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     AtomicBoolean result = new AtomicBoolean();
     GitPreservingProcess preservingProcess =
@@ -265,7 +265,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   /**
    * Checks out or shows an error message.
    */
-  private boolean checkoutOrNotify(@NotNull List<GitRepository> repositories, 
+  private boolean checkoutOrNotify(@NotNull List<? extends GitRepository> repositories,
                                    @NotNull String reference, @Nullable String newBranch, boolean force) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     for (GitRepository repository : repositories) {

@@ -44,7 +44,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
 
   GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull Git git,
-                                        @NotNull GitBranchUiHandler handler, @NotNull List<GitRepository> repositories,
+                                        @NotNull GitBranchUiHandler handler, @NotNull List<? extends GitRepository> repositories,
                                         @NotNull String name) {
     super(project, git, handler, repositories);
     myBranchName = name;
@@ -113,11 +113,11 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
 
   @NotNull
   private static Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
-                                                              @NotNull Collection<GitRepository> repositories) {
+                                                              @NotNull Collection<? extends GitRepository> repositories) {
     return new GitMultiRootBranchConfig(repositories).getCommonTrackingBranches(remoteBranch);
   }
 
-  private boolean doDeleteRemote(@NotNull String branchName, @NotNull Collection<GitRepository> repositories) {
+  private boolean doDeleteRemote(@NotNull String branchName, @NotNull Collection<? extends GitRepository> repositories) {
     Couple<String> pair = splitNameOfRemoteBranch(branchName);
     String remoteName = pair.getFirst();
     String branch = pair.getSecond();

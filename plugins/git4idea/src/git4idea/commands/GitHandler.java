@@ -58,7 +58,7 @@ public abstract class GitHandler {
   private boolean myStdoutSuppressed; // If true, the standard output is not copied to version control console
   private boolean myStderrSuppressed; // If true, the standard error is not copied to version control console
 
-  @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
+  @Nullable private ThrowableConsumer<? super OutputStream, IOException> myInputProcessor; // The processor for stdin
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   protected boolean mySilent; // if true, the command execution is not logged in version control view
@@ -222,7 +222,7 @@ public abstract class GitHandler {
     addRelativePaths(Arrays.asList(parameters));
   }
 
-  public void addRelativePaths(@NotNull Collection<FilePath> filePaths) {
+  public void addRelativePaths(@NotNull Collection<? extends FilePath> filePaths) {
     for (FilePath path : filePaths) {
       if (path instanceof RemoteFilePath) {
         myCommandLine.addParameter(path.getPath());
@@ -233,7 +233,7 @@ public abstract class GitHandler {
     }
   }
 
-  public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
+  public void addRelativeFiles(@NotNull final Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), file));
     }
@@ -342,7 +342,7 @@ public abstract class GitHandler {
    *
    * @param inputProcessor the processor
    */
-  public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
+  public void setInputProcessor(@Nullable ThrowableConsumer<? super OutputStream, IOException> inputProcessor) {
     myInputProcessor = inputProcessor;
   }
 
