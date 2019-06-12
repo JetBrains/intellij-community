@@ -43,12 +43,12 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -91,8 +91,6 @@ public class PluginManagerCore {
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
-
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static boolean ourUnitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
   private static final String PLUGIN_IS_DISABLED_REASON = "Plugin is disabled";
@@ -466,12 +464,10 @@ public class PluginManagerCore {
       return null;
     }
 
-    // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
-    // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
+    //if a plugin does not include any module dependency tags in its plugin.xml,it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin
     boolean isLegacyPlugin = !hasModuleDependencies(descriptor);
-    // Many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency
-    // on some other platform modules). This is definitely a misconfiguration but lets temporary add the Java plugin to their dependencies
-    // to avoid breaking compatibility.
+    //many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency on some other platform modules).
+    //this is definitely a misconfiguration but let's temprary add the Java plugin to their dependencies to avoid breaking compatibility
     boolean isCustomPlugin = !descriptor.isBundled();
     return isLegacyPlugin || isCustomPlugin ? ourModulesToContainingPlugins.get("com.intellij.modules.java") : null;
   }
@@ -503,49 +499,54 @@ public class PluginManagerCore {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
+  @NotNull
+  private static Method getAddUrlMethod(@NotNull ClassLoader loader) {
+    Class<?> loaderClass = loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass();
+    while (loaderClass != null && !Object.class.equals(loaderClass)) {
+      final Method method = ReflectionUtil.getDeclaredMethod(loaderClass, "addURL", URL.class);
+      if (method != null) {
+        return method;
+      }
+      loaderClass = loaderClass.getSuperclass();
+    }
+    return null;
+  }
+
   @Nullable
   private static ClassLoader createPluginClassLoader(@NotNull File[] classPath,
                                                      @NotNull ClassLoader[] parentLoaders,
-                                                     @NotNull IdeaPluginDescriptor descriptor) {
-    if (descriptor.getUseIdeaClassLoader()) {
-      ClassLoader loader = PluginManagerCore.class.getClassLoader();
+                                                     @NotNull IdeaPluginDescriptor pluginDescriptor) {
+    if (pluginDescriptor.getUseIdeaClassLoader()) {
       try {
-        // the method can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
-        MethodHandle addURL = MethodHandles.lookup().findVirtual(loader.getClass(), "addURL", MethodType.methodType(void.class, URL.class));
+        ClassLoader loader = PluginManagerCore.class.getClassLoader();
+        Method addUrlMethod = getAddUrlMethod(loader);
         for (File pathElement : classPath) {
-          try {
-            addURL.invoke(loader, classpathElementToUrl(pathElement));
-          }
-          catch (MalformedURLException e) {
-            throw new PluginException("Corrupted path element: `" + pathElement + '`', e, descriptor.getPluginId());
-          }
+          addUrlMethod.invoke(loader, pathElement.toPath().normalize().toUri().toURL());
         }
         return loader;
       }
-      catch (Throwable t) {
-        //noinspection GraziInspection
-        throw new IllegalStateException("Unexpected core classloader: " + loader + " (" + loader.getClass() + ")", t);
+      catch (IOException | IllegalAccessException | InvocationTargetException e) {
+        getLogger().warn(e);
       }
     }
-    else if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
-      return null;
-    }
-    else {
+
+    PluginId pluginId = pluginDescriptor.getPluginId();
+    File pluginRoot = pluginDescriptor.getPath();
+
+    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return null;
+
+    try {
       List<URL> urls = new ArrayList<>(classPath.length);
       for (File pathElement : classPath) {
-        try {
-          urls.add(classpathElementToUrl(pathElement));
-        }
-        catch (MalformedURLException e) {
-          throw new PluginException("Corrupted path element: `" + pathElement + '`', e, descriptor.getPluginId());
-        }
+        urls.add(pathElement.toPath().normalize().toUri().toURL());  // it is critical not to have "." and ".." in classpath elements
       }
-      return new PluginClassLoader(urls, parentLoaders, descriptor.getPluginId(), descriptor.getVersion(), descriptor.getPath());
+      return new PluginClassLoader(urls, parentLoaders, pluginId, pluginDescriptor.getVersion(), pluginRoot);
     }
-  }
+    catch (IOException e) {
+      getLogger().warn(e);
+    }
 
-  private static URL classpathElementToUrl(File cpElement) throws MalformedURLException {
-    return cpElement.toPath().normalize().toUri().toURL();  // it is important not to have "." and ".." in classpath elements
+    return null;
   }
 
   public static void invalidatePlugins() {
@@ -1472,9 +1473,7 @@ public class PluginManagerCore {
 
     List<String> errors = new ArrayList<>();
     IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(errors);
-    if (!isUnitTestMode) {
-      checkEssentialPluginsAreAvailable(pluginDescriptors);
-    }
+    checkEssentialPluginsAreAvailable(pluginDescriptors);
 
     Class callerClass = ReflectionUtil.findCallerClass(1);
     assert callerClass != null;

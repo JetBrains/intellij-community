@@ -169,7 +169,7 @@ class JBNavigateCommandTest : PlatformTestCase() {
     var project: Project? = manager.createProject("navigateToProject", path.path)
     project!!.save()
     PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-    project = manager.loadAndOpenProject(path)
+    project = manager.loadAndOpenProject(path.path)
     return project!!
   }
 

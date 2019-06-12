@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.project.ArtifactExternalDependenciesImporter;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ManifestFilesInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;

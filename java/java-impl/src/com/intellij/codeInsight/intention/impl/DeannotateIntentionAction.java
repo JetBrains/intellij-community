@@ -57,7 +57,7 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myAnnotationName = null;
-    PsiModifierListOwner listOwner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset(), true);
+    PsiModifierListOwner listOwner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     if (listOwner != null) {
       final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
       final PsiAnnotation[] annotations = externalAnnotationsManager.findExternalAnnotations(listOwner);
@@ -76,7 +76,7 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiModifierListOwner listOwner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset(), true);
+    final PsiModifierListOwner listOwner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     LOG.assertTrue(listOwner != null); 
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(listOwner);

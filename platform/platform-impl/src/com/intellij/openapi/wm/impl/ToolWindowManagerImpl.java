@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
@@ -797,36 +796,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   @NotNull
   public List<String> getIdsOn(@NotNull final ToolWindowAnchor anchor) {
     return myLayout.getVisibleIdsOn(anchor, this);
-  }
-
-  @NotNull
-  @Override
-  public Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon) {
-    ToolWindow window = getToolWindow(id);
-    WindowInfoImpl info = myLayout.getInfo(id, false);
-    if (window != null || info != null) {
-      ToolWindowType type = window != null ? window.getType() : info.getType();
-      if (type == ToolWindowType.FLOATING || type == ToolWindowType.WINDOWED) {
-        return AllIcons.Actions.MoveToWindow;
-      }
-
-      ToolWindowAnchor anchor = window != null ? window.getAnchor() : info.getAnchor();
-      boolean splitMode = window != null ? window.isSplitMode() : info.isSplit();
-
-      if (ToolWindowAnchor.BOTTOM.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToBottomRight : AllIcons.Actions.MoveToBottomLeft;
-      }
-      else if (ToolWindowAnchor.LEFT.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToLeftBottom : AllIcons.Actions.MoveToLeftTop;
-      }
-      else if (ToolWindowAnchor.RIGHT.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToRightBottom : AllIcons.Actions.MoveToRightTop;
-      }
-      else if (ToolWindowAnchor.TOP.equals(anchor)) {
-        return splitMode ? AllIcons.Actions.MoveToTopRight : AllIcons.Actions.MoveToTopLeft;
-      }
-    }
-    return fallbackIcon;
   }
 
   @Override

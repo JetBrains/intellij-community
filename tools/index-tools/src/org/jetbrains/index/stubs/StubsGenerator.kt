@@ -54,6 +54,8 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
     val bytes = BufferExposingByteArrayOutputStream()
     serializationManager.serialize(stub, bytes)
 
+    val file = fileContent.file
+
     return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
   }
 
@@ -114,14 +116,18 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
           count++
           val value = fromStorage.get(key)
 
+          val stub = value.getStub(false, serializationManager)
+
           // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-          val newStubTree = value.reSerialize(serializationManager, newSerializationManager)
+          val bytes = BufferExposingByteArrayOutputStream()
+          newSerializationManager.serialize(stub, bytes)
+
+          val newStubTree = SerializedStubTree(bytes.internalBuffer, bytes.size(), null)
 
           if (storage.containsMapping(key)) {
             if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
               storage.get(key).getStub(false, newSerializationManager)
 
-              val stub = value.getStub(false, serializationManager)
               val bytes2 = BufferExposingByteArrayOutputStream()
               newSerializationManager.serialize(stub, bytes2)
 

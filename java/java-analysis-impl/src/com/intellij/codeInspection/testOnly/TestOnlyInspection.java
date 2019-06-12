@@ -47,16 +47,8 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder h, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        validate(expression.getMethodExpression(), expression.resolveMethod(), h);
-      }
-
-      @Override
-      public void visitNewExpression(PsiNewExpression expression) {
-        PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
-        if (reference != null) {
-          validate(reference, expression.resolveMethod(), h);
-        }
+      public void visitCallExpression(PsiCallExpression e) {
+        validate(e, e.resolveMethod(), h);
       }
 
       @Override
@@ -88,12 +80,12 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
     };
   }
 
-  private static void validate(@NotNull PsiElement place, @Nullable PsiMember member, ProblemsHolder h) {
+  private static void validate(@NotNull PsiElement reference, @Nullable PsiMember member, ProblemsHolder h) {
     if (member == null || !isAnnotatedAsTestOnly(member)) return;
-    if (isInsideTestOnlyMethod(place)) return;
-    if (isInsideTestOnlyField(place)) return;
-    if (isInsideTestClass(place)) return;
-    if (isUnderTestSources(place)) return;
+    if (isInsideTestOnlyMethod(reference)) return;
+    if (isInsideTestOnlyField(reference)) return;
+    if (isInsideTestClass(reference)) return;
+    if (isUnderTestSources(reference)) return;
 
     PsiAnnotation anno = findVisibleForTestingAnnotation(member);
     if (anno != null) {
@@ -103,12 +95,12 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
       }
 
       LightModifierList modList = new LightModifierList(member.getManager(), JavaLanguage.INSTANCE, modifier);
-      if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modList, place, null, null)) {
+      if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modList, reference, null, null)) {
         return;
       }
     }
 
-    reportProblem(place, member, h);
+    reportProblem(reference, member, h);
   }
 
   private static final List<String> ourModifiersDescending =
