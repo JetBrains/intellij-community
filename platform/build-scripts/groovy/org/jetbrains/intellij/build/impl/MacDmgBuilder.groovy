@@ -37,9 +37,7 @@ class MacDmgBuilder {
 
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath, String secondJreArchive = null) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-
-    // Android Studio: modified by Change Idc07b110 / commit f20681e
-    def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJdk() : secondJreArchive
+    def jreArchivePath = (secondJreArchive == null) ? buildContext.bundledJreManager.findMacJreArchive() : secondJreArchive
     if (jreArchivePath != null) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, secondJreArchive)
     }

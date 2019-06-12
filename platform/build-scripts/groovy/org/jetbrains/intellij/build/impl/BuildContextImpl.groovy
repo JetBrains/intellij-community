@@ -77,7 +77,7 @@ class BuildContextImpl extends BuildContext {
       productProperties.productCode = applicationInfo.productCode
     }
     // Android Studio: modified by Change Idc07b110 / commit f20681e
-    bundledJreManager = new BundledJreManager(this, compilationContext.paths.communityHome)
+    bundledJreManager = new AndroidStudioBundledJreManager(this, compilationContext.paths.communityHome)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
     fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
@@ -273,8 +273,7 @@ class BuildContextImpl extends BuildContext {
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                      proprietaryBuildTools)
     child.paths.artifacts = paths.artifacts
-    // Android Studio: modified by Change Idc07b110 / commit f20681e
-    child.bundledJreManager.baseDirectoryForJdk = bundledJreManager.baseDirectoryForJdk
+    child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     return child
   }
 
@@ -290,8 +289,7 @@ class BuildContextImpl extends BuildContext {
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools)
     copy.paths.artifacts = paths.artifacts
-    // Android Studio: modified by Change Idc07b110 / commit f20681e
-    copy.bundledJreManager.baseDirectoryForJdk = bundledJreManager.baseDirectoryForJdk
+    copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     copy.compilationContext.prepareForBuild()
     return copy
   }

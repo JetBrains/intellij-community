@@ -11,21 +11,21 @@ import org.jetbrains.intellij.build.JvmArchitecture
  * @author nik
  */
 @CompileStatic
-class BundledJreManager {
+abstract class BundledJreManager {  // Android Studio: only instantiate subclass AndroidStudioBundledJreManager
   private final BuildContext buildContext
-  String baseDirectoryForJdk
+  String baseDirectoryForJre
 
-  BundledJreManager(BuildContext buildContext, String communityHome) {
+  BundledJreManager(BuildContext buildContext, String baseDirectoryForJre) {
     this.buildContext = buildContext
-    this.baseDirectoryForJdk = "$communityHome/../../prebuilts/studio/jdk"
+    this.baseDirectoryForJre = baseDirectoryForJre
   }
 
   /**
    * Extract JRE for Linux distribution of the product
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
-  String findLinuxJdk() {
-    return "$baseDirectoryForJdk/linux"
+  String extractLinuxJre() {
+    return extractJre("linux")
   }
 
   private static boolean doBundleSecondJre() {
@@ -95,16 +95,30 @@ class BundledJreManager {
    * Extract JRE for Windows distribution of the product
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
-  String findWinJdk(JvmArchitecture arch) {
-    return arch == JvmArchitecture.x32 ? "$baseDirectoryForJdk/win32" : "$baseDirectoryForJdk/win64"
+  String extractWinJre(JvmArchitecture arch) {
+    return extractJre("windows", arch)
   }
 
   /**
-   * Extract JRE for Mac distribution of the product
+   * Extract Oracle JRE for Windows distribution of the product
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
-  String findMacJdk() {
-    return "$baseDirectoryForJdk/mac"
+  String extractOracleWinJre(JvmArchitecture arch) {
+    return extractJre("windows", arch, JreVendor.Oracle)
+  }
+
+  /**
+   * Return path to a .tar.gz archive containing distribution of JRE for macOS which will be bundled with the product
+   */
+  String findMacJreArchive() {
+    return findJreArchive("osx")?.absolutePath
+  }
+
+  /**
+   * Return a .tar.gz archive containing distribution of JRE for Win OS which will be bundled with the product
+   */
+  File findWinJreArchive(JvmArchitecture arch) {
+    return findJreArchive("windows", arch)
   }
 
   String archiveNameJre(BuildContext buildContext) {

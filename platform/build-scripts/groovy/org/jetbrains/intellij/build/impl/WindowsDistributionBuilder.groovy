@@ -99,14 +99,16 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     */
 
     def jreSuffix = buildContext.bundledJreManager.jreSuffix()
+/* Android Studio: no Windows secondary build yet.
     def secondJreBuild = buildContext.bundledJreManager.getSecondJreBuild()
     def secondJreDirectoryPath = (secondJreBuild != null) ? buildContext.bundledJreManager.extractSecondJre("windows", secondJreBuild) : null
+*/
     // Android Studio: we build separate artifacts for win32 and win64.
     if (customizer.buildZipArchive) {
       // Android Studio: added by Change Idc07b110 / commit f20681e
-      buildWinZip(buildContext.bundledJreManager.findWinJdk(JvmArchitecture.x64),
+      buildWinZip(buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x64),
                   buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath, [])
-      buildWinZip(buildContext.bundledJreManager.findWinJdk(JvmArchitecture.x32),
+      buildWinZip(buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32),
                   buildContext.productProperties.buildCrossPlatformDistribution ? ".win32" : "", winDistPath, [])
 /* Android Studio: removed by Change Idc07b110 / commit f20681e
       buildWinZip(jreDirectoryPaths.findAll { it != null }, "${jreSuffix}.win", winDistPath, !buildContext.bundledJreManager.is32bitArchSupported() ? excludeList : [])
