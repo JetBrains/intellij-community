@@ -91,6 +91,8 @@ public class PluginManagerCore {
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
+
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static boolean ourUnitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
   private static final String PLUGIN_IS_DISABLED_REASON = "Plugin is disabled";
@@ -464,10 +466,12 @@ public class PluginManagerCore {
       return null;
     }
 
-    //if a plugin does not include any module dependency tags in its plugin.xml,it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin
+    // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
+    // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
     boolean isLegacyPlugin = !hasModuleDependencies(descriptor);
-    //many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency on some other platform modules).
-    //this is definitely a misconfiguration but let's temprary add the Java plugin to their dependencies to avoid breaking compatibility
+    // Many custom plugins use classes from Java plugin and don't declare a dependency on the Java module (although they declare dependency
+    // on some other platform modules). This is definitely a misconfiguration but lets temporary add the Java plugin to their dependencies
+    // to avoid breaking compatibility.
     boolean isCustomPlugin = !descriptor.isBundled();
     return isLegacyPlugin || isCustomPlugin ? ourModulesToContainingPlugins.get("com.intellij.modules.java") : null;
   }
