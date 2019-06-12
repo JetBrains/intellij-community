@@ -9,9 +9,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -255,11 +257,26 @@ public class WindowsDefenderChecker {
     return result;
   }
 
+  public void configureActions(WindowsDefenderNotification notification) {
+    notification.addAction(new WindowsDefenderFixAction(notification.getPaths()));
+  }
 
-  @NotNull
-  public static String getNotificationTextForNonExcludedPaths(@NotNull Map<Path, Boolean> pathStatuses) {
-    StringBuilder sb = new StringBuilder();
-    pathStatuses.entrySet().stream().filter(entry -> !entry.getValue()).forEach(entry -> sb.append("<br/>" + entry.getKey()));
-    return sb.toString();
+  public String getConfigurationInstructionsUrl() {
+    // TODO Provide a better article
+    return "https://intellij-support.jetbrains.com/hc/en-us/articles/360005028939-Slow-startup-on-Windows-splash-screen-appears-in-more-than-20-seconds";
+  }
+
+  public boolean runExcludePathsCommand(Project project, Collection<Path> paths) {
+    try {
+      ExecUtil.sudoAndGetOutput(new GeneralCommandLine("powershell", "-Command", "Add-MpPreference", "-ExclusionPath",
+                                                       StringUtil.join(paths, (path) -> StringUtil.wrapWithDoubleQuote(path.toString()), ",")), "");
+      return true;
+    }
+    catch (IOException | ExecutionException e) {
+      UIUtil.invokeLaterIfNeeded(() ->
+       Messages.showErrorDialog(project, DiagnosticBundle.message("virus.scanning.fix.failed", e.getMessage()),
+                                DiagnosticBundle.message("virus.scanning.fix.title")));
+    }
+    return false;
   }
 }
