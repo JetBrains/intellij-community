@@ -17,7 +17,12 @@ class JavaPluginLayout {
       withModule("intellij.java.resources", "resources.jar")
       withModule("intellij.java.resources.en", "resources.jar")
 
-      ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"].
+      ["intellij.java.compiler.antTasks",
+       "intellij.java.guiForms.compiler",
+       "intellij.java.guiForms.rt",
+       "intellij.java.compiler.instrumentationUtil",
+       "intellij.java.compiler.instrumentationUtil.java8",
+       "intellij.java.jps.javacRefScanner8"].
         each {
           withModule(it, "javac2.jar")
         }
@@ -38,6 +43,7 @@ class JavaPluginLayout {
       ].each {
         withModule(it, "java-api.jar", "java_resources_en.jar")
       }
+
       [
         "intellij.java.compiler.impl",
         "intellij.java.debugger.impl",
@@ -60,11 +66,6 @@ class JavaPluginLayout {
       ].each {
         withModule(it, "java-impl.jar", "java_resources_en.jar")
       }
-
-      // externalSystem API is coupled with `java` modules and therefore must be included into the same plugin
-      // TODO[Vlad, IDEA-187832] remove this from Java plugin distribution as soon as the externalSystem API become java subsystem independent platform API
-      withModule("intellij.platform.externalSystem.impl")
-      withModule("intellij.platform.externalSystem.rt")
 
       withArtifact("debugger-agent", "rt")
       withArtifact("debugger-agent-storage", "rt")

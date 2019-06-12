@@ -77,4 +77,11 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
 
   @NotNull
   public abstract List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
+
+  /*
+   * Returns visual representation of tool window location
+   * @see AllIcons.Actions#MoveToBottomLeft ... com.intellij.icons.AllIcons.Actions#MoveToWindow icon set
+   */
+  @NotNull
+  public abstract Icon getLocationIcon(@NotNull String id, @NotNull Icon fallbackIcon);
 }

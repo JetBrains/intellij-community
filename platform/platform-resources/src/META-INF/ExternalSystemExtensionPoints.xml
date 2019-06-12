@@ -6,6 +6,12 @@
                     interface="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl$Contributor"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.modifiableModelsProvider"
+                    interface="com.intellij.openapi.externalSystem.service.project.ModifiableModelsProviderExtension"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.moduleDataServiceExtension"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataServiceExtension"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.runConfigurationExtension"
+                    interface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationExtension"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemConfigurationHandler"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.runConfigurationImporter"

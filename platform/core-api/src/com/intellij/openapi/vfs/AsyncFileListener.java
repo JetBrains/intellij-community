@@ -12,9 +12,36 @@ import java.util.List;
 /**
  * An alternative to {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} that allows
  * for moving parts of VFS event processing to background thread and thus reduce the duration
- * of UI freezes.
+ * of UI freezes. Asynchronous listeners should preferably be registered as "vfs.asyncListener" extensions.
+ * If that's too inconvenient, manual registration via {@link VirtualFileManager#addAsyncFileListener} is possible.<p></p>
  *
- * @see VirtualFileManager#addAsyncFileListener(AsyncFileListener, com.intellij.openapi.Disposable)
+ * <h3>Migration of synchronous listeners:</h3>
+ *
+ * Synchronous listeners have two flavours: "before" and "after"; observing the state of the system before and after a VFS change, respectively.
+ * Since asynchronous listeners are executed before applying VFS events, they're more easily suited to "before" event processing. Note that
+ * not all synchronous listeners need to be migrated, only those that might take noticeable time.<p></p>
+ *
+ * To migrate a "before"-handler, you need to split the listener into two parts: one that analyzes the events but has no side effects,
+ * and one which actually modifies some other subsystem's state based on these events. The first part then goes into {@link #prepareChange},
+ * and the second one into {@link ChangeApplier#beforeVfsChange()}. Please ensure that the ordering of events
+ * (if it's important) isn't lost during this splitting, and that your listener can handle several events about the same file.<p></p>
+ *
+ * The "after"-part is more complicated, as it might need to observe the state of the whole system (e.g. VFS, project model, PSI) after
+ * the file system is changed. So moving these computations into "before"-part might not be straightforward. It's still possible sometimes:
+ * e.g. if you only check for changed file names, or whether some file (non-directory) with a specific name is created under project's roots.
+ * In this case the check can go into {@link #prepareChange}, and the action based on it &mdash; into {@link ChangeApplier#afterVfsChange()}.
+ * <p></p>
+ *
+ * When you migrate a listener with both "before" and "after" parts, you can try to just move the whole "after"-processing into
+ * {@link ChangeApplier#afterVfsChange()}. But make it as fast as possible to shorten the UI freezes.<p></p>
+ *
+ * If possible, consider moving heavy processing into background threads and/or performing it lazily.
+ * There's no general solution, each "after" event processing should be evaluated separately considering the needs and contracts
+ * of each specific subsystem it serves. Note that it'll likely need a consistent model of the world, probably with the help of
+ * {@link com.intellij.openapi.application.ReadAction#nonBlocking} (and note that other changes might happen after yours, and
+ * the state of the system can change when your asynchronous handler starts). This might also
+ * introduce a discrepancy in the world when the VFS is already changed but other subsystems aren't, and this discrepancy
+ * should be made as explicit as possible.
  */
 public interface AsyncFileListener {
 
@@ -51,8 +78,18 @@ public interface AsyncFileListener {
   ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events);
 
   interface ChangeApplier {
+    /**
+     * This method is called in write action before the VFS events are delivered and applied, and allows
+     * to apply modifications based on the information calculated during {@link #prepareChange}.
+     * The implementations should be as fast as possible.
+     */
     default void beforeVfsChange() {}
 
+    /**
+     * This method is called in write action after the VFS events are delivered and applied, and allows
+     * to apply modifications based on the information calculated during {@link #prepareChange}.
+     * The implementations should be as fast as possible.
+     */
     default void afterVfsChange() {}
   }
 }
