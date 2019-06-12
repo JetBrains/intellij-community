@@ -222,10 +222,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     if (model != null) {
-      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(project, model.getGroups(), model.getClass(), index,
-                                                                        SHIFT_IS_PRESSED.get(), ALT_IS_PRESSED.get());
+      RunAnythingUsageCollector.Companion.triggerExecCategoryStatistics(project, model.getGroups(), model.getClass(), index);
     }
     DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
+    if (SHIFT_IS_PRESSED.get()) {
+      RunAnythingUtil.triggerShiftStatistics(dataContext);
+    }
     RunAnythingUtil.executeMatched(dataContext, pattern);
 
     searchFinishedHandler.run();

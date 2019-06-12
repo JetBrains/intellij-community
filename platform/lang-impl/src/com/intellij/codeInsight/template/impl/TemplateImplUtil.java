@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.LinkedHashMap;
 
@@ -41,26 +40,6 @@ public class TemplateImplUtil {
   }
 
   public static boolean isValidVariableName(String varName) {
-    return parseVariableNames("$" + varName + "$").contains(varName);
-  }
-
-  public static TextRange findVariableAtOffset(CharSequence text, int offset) {
-    TemplateTextLexer lexer = new TemplateTextLexer();
-    lexer.start(text);
-
-    while (true) {
-      IElementType tokenType = lexer.getTokenType();
-      if (tokenType == null) {
-        return null;
-      }
-      int start = lexer.getTokenStart();
-      if (start < offset) {
-        int end = lexer.getTokenEnd();
-        if (end >= offset) {
-          return tokenType == TemplateTokenType.VARIABLE ? new TextRange(start + 1, end - 1) : null;
-        }
-      }
-      lexer.advance();
-    }
+    return parseVariables("$" + varName + "$").containsKey(varName);
   }
 }

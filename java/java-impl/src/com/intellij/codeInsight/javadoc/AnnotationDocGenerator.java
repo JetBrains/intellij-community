@@ -74,8 +74,6 @@ public class AnnotationDocGenerator {
 
     boolean red = type == null && !myResolveNotPossible && !isInferred() && !isExternal();
 
-    boolean highlightNonCodeAnnotations = format == AnnotationFormat.ToolTip && (isInferred() || isExternal());
-    if (highlightNonCodeAnnotations) buffer.append("<b>");
     if (isInferred()) buffer.append("<i>");
     if (red) buffer.append("<font color=red>");
 
@@ -93,7 +91,6 @@ public class AnnotationDocGenerator {
 
     generateAnnotationAttributes(buffer, generateLink);
     if (isInferred()) buffer.append("</i>");
-    if (highlightNonCodeAnnotations) buffer.append("</b>");
   }
 
   private void generateAnnotationAttributes(StringBuilder buffer, boolean generateLink) {

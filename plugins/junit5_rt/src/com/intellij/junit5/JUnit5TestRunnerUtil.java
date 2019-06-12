@@ -18,7 +18,6 @@ package com.intellij.junit5;
 import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.discovery.ClassNameFilter;
-import org.junit.platform.engine.discovery.ClasspathRootSelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TagFilter;
@@ -80,10 +79,7 @@ public class JUnit5TestRunnerUtil {
 
           List<DiscoverySelector> selectors = new ArrayList<>();
           while ((line = reader.readLine()) != null) {
-            DiscoverySelector selector = createSelector(line);
-            if (selector != null) {
-              selectors.add(selector);
-            }
+            selectors.add(createSelector(line));
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
           if (selectors.isEmpty()) {
@@ -116,9 +112,7 @@ public class JUnit5TestRunnerUtil {
         builder = builder.configurationParameter("junit.jupiter.conditions.deactivate", disableDisabledCondition);
       }
 
-      DiscoverySelector selector = createSelector(suiteClassNames[0]);
-      assert selector != null : "selector by class name is never null";
-      return builder.selectors(selector).build();
+      return builder.selectors(createSelector(suiteClassNames[0])).build();
     }
 
     return null;
@@ -205,12 +199,7 @@ public class JUnit5TestRunnerUtil {
     }
     else if (line.startsWith("\u002B")) {
       String directory = line.substring("\u002B".length());
-      List<ClasspathRootSelector> selectors = DiscoverySelectors.selectClasspathRoots(Collections.singleton(Paths.get(directory)));
-      if (selectors.isEmpty()) {
-        return null;
-      } else {
-        return selectors.iterator().next();
-      }
+      return DiscoverySelectors.selectClasspathRoots(Collections.singleton(Paths.get(directory))).iterator().next();
     }
     else if (line.contains(",")) {
       return DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));

@@ -111,7 +111,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
-  public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
+  public static final Key<Boolean> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH");
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   private final SearchContext mySearchContext;
@@ -196,7 +196,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     final Document document = UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, "", profile);
-    document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
+    document.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
 
     final EditorTextField textField = new EditorTextField(document, getProject(), myFileType, false, false) {
       @Override
@@ -261,13 +261,10 @@ public class StructuralSearchDialog extends DialogWrapper {
       final boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
         try {
           final CompiledPattern compiledPattern = compilePattern();
+          initializeFilterPanel();
           final JRootPane component = getRootPane();
           if (component == null) {
             return;
-          }
-          initializeFilterPanel();
-          if (compiledPattern != null) {
-            addMatchHighlights();
           }
           ApplicationManager.getApplication().invokeLater(() -> {
             setSearchTargets(myConfiguration.getMatchOptions());
@@ -542,12 +539,11 @@ public class StructuralSearchDialog extends DialogWrapper {
           final Document searchDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, mySearchCriteriaEdit.getText(), profile);
           mySearchCriteriaEdit.setNewDocumentAndFileType(myFileType, searchDocument);
-          final String contextId = (myPatternContext == null) ? "" : myPatternContext.getId();
-          searchDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
+          searchDocument.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
           final Document replaceDocument =
             UIUtil.createDocument(getProject(), myFileType, myDialect, myPatternContext, myReplaceCriteriaEdit.getText(), profile);
           myReplaceCriteriaEdit.setNewDocumentAndFileType(myFileType, replaceDocument);
-          replaceDocument.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
+          replaceDocument.putUserData(STRUCTURAL_SEARCH, Boolean.TRUE);
           myFilterPanel.setProfile(profile);
           initiateValidation();
         }
@@ -748,6 +744,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, true, !myEditConfigOnly);
       reportMessage(null, false, mySearchCriteriaEdit);
+      if (getOKAction().isEnabled()) {
+        addMatchHighlights();
+      }
       if (myReplace) {
         try {
           Replacer.checkReplacementPattern(project, myConfiguration.getReplaceOptions());

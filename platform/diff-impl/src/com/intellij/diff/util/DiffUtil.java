@@ -51,7 +51,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -191,11 +190,6 @@ public class DiffUtil {
       editor.getSettings().setTabSize(indentOptions.TAB_SIZE);
       editor.getSettings().setUseTabCharacter(indentOptions.USE_TAB_CHARACTER);
     }
-
-    Language language = content != null ? content.getUserData(DiffUserDataKeys.LANGUAGE) : null;
-    if (language == null && editor.getProject() != null) language = TextEditorImpl.getDocumentLanguage(editor);
-    editor.getSettings().setLanguage(language);
-
     editor.getSettings().setCaretRowShown(false);
     editor.reinitSettings();
   }

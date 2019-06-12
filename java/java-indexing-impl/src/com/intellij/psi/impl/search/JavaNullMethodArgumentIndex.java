@@ -86,8 +86,11 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   }
 
   private static boolean containsStopSymbol(int startIndex, @NotNull CharSequence text, boolean leftDirection) {
-    int i = leftDirection ? startIndex - 1 : startIndex + 1;
+    int i = startIndex;
     while (true) {
+
+      if (leftDirection) i--; else i++;
+
       if (leftDirection) {
         if (i < 0) return false;
       } else {
@@ -99,8 +102,6 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
       if (!Lazy.WHITE_SPACE_OR_EOL_SYMBOLS.contains(c) && !Character.isWhitespace(c)) {
         return false;
       }
-
-      if (leftDirection) i--; else i++;
     }
   }
 

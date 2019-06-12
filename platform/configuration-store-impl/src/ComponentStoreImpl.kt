@@ -231,7 +231,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   @CalledInAwt
   override fun saveComponent(component: PersistentStateComponent<*>) {
     val stateSpec = getStateSpec(component)
-    LOG.debug { "saveComponent is called for ${stateSpec.name}" }
+    LOG.info("saveComponent is called for ${stateSpec.name}")
     val saveManager = createSaveSessionProducerManager()
     commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), null)
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
@@ -242,7 +242,8 @@ abstract class ComponentStoreImpl : IComponentStore {
         val saveResult = saveManager.save()
         saveResult.throwIfErrored()
 
-        if (!saveResult.isChanged) {
+        val isSomethingChanged = saveResult.isChanged
+        if (!isSomethingChanged) {
           LOG.info("saveApplicationComponent is called for ${stateSpec.name} but nothing to save")
         }
       }

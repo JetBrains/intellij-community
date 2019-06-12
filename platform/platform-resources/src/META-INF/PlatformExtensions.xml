@@ -494,7 +494,7 @@
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
+    <postStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity"/>
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>

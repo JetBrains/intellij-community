@@ -253,7 +253,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
   }
 
-  public void init(@Nullable ProgressIndicator indicator) {
+  public void init(@NotNull String filePath, @Nullable ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
     createComponents(indicator);
     if (indicator != null && !application.isHeadlessEnvironment()) {
@@ -359,7 +359,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + (myComponentStore.isComputed() ? getPresentableUrl() : "<no component store>") + "'") +
+                         : " '" + getPresentableUrl() + "'") +
            " " + myName;
   }
 

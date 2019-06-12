@@ -41,6 +41,8 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
 
+  public static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
+
   @NotNull
   public static final Topic<FileTypeListener> TOPIC = new Topic<>("File types change", FileTypeListener.class);
 

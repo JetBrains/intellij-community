@@ -108,7 +108,7 @@ abstract class FileIndexBase implements FileIndex {
       ModuleRootManager.getInstance(module).getSourceRoots()};
   }
 
-  protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+  boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return ProjectFileIndexImpl.isFileInContent(file, info);
   }
 }

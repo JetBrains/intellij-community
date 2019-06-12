@@ -164,7 +164,9 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
            "Runti<caret>me\n" +
            "```",
            "```singleton_class",
-           "```singleton_class");
+           "```text\n" +
+           "Runtime\n" +
+           "```");
   }
 
   public void testThreeTildaCodeFence() {
@@ -172,7 +174,9 @@ public class MarkdownManipulatorTest extends LightPlatformCodeInsightFixtureTest
            "Runti<caret>me\n" +
            "```",
            "~~~singleton_class",
-           "~~~singleton_class");
+           "```text\n" +
+           "Runtime\n" +
+           "```");
   }
 
   public void doTest(String text, String newContent, String expectedText) {

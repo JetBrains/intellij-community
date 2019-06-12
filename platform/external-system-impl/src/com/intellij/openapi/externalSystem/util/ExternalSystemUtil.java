@@ -15,7 +15,10 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.rmi.RemoteUtil;
@@ -82,7 +85,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -129,9 +131,7 @@ public class ExternalSystemUtil {
 
   static {
     RUNNER_IDS.put(DefaultRunExecutor.EXECUTOR_ID, ExternalSystemConstants.RUNNER_ID);
-    // DebugExecutor ID  - com.intellij.execution.executors.DefaultDebugExecutor.EXECUTOR_ID
-    String debugExecutorId = ToolWindowId.DEBUG;
-    RUNNER_IDS.put(debugExecutorId, ExternalSystemConstants.DEBUG_RUNNER_ID);
+    RUNNER_IDS.put(DefaultDebugExecutor.EXECUTOR_ID, ExternalSystemConstants.DEBUG_RUNNER_ID);
   }
 
   private ExternalSystemUtil() {
@@ -849,13 +849,17 @@ public class ExternalSystemUtil {
           }
 
           @Override
-          public void processTerminated(@NotNull String executorIdLocal,
-                                        @NotNull ExecutionEnvironment environmentLocal,
-                                        @NotNull ProcessHandler handler,
-                                        int exitCode) {
+          public void processStarted(@NotNull final String executorIdLocal,
+                                     @NotNull final ExecutionEnvironment environmentLocal,
+                                     @NotNull final ProcessHandler handler) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
-              result.set(exitCode == 0);
-              targetDone.up();
+              handler.addProcessListener(new ProcessAdapter() {
+                @Override
+                public void processTerminated(@NotNull ProcessEvent event) {
+                  result.set(event.getExitCode() == 0);
+                  targetDone.up();
+                }
+              });
             }
           }
         });
@@ -887,14 +891,6 @@ public class ExternalSystemUtil {
           else {
             callback.onFailure();
           }
-        }
-        if (!result.get()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(environment.getExecutor().getToolWindowId());
-            if (window != null) {
-              window.activate(null, false, false);
-            }
-          }, project.getDisposed());
         }
       }
     };

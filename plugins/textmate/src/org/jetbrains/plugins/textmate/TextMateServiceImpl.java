@@ -69,8 +69,8 @@ public class TextMateServiceImpl extends TextMateService {
     FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "themes");
   @NonNls private static final String INSTALLED_THEMES_PATH = FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "themes");
   @NonNls public static final String PREINSTALLED_BUNDLES_PATH =
-    FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "bundles"));
-  @NonNls public static final String INSTALLED_BUNDLES_PATH = FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
+    FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "bundles");
+  @NonNls public static final String INSTALLED_BUNDLES_PATH = FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles");
   private final Set<TextMateBundleListener> myListeners = new HashSet<>();
 
   @Override
