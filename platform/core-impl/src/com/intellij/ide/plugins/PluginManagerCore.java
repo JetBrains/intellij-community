@@ -43,12 +43,12 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -503,54 +503,49 @@ public class PluginManagerCore {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, ExtensionAreas.IDEA_PROJECT);
   }
 
-  @NotNull
-  private static Method getAddUrlMethod(@NotNull ClassLoader loader) {
-    Class<?> loaderClass = loader instanceof URLClassLoader ? URLClassLoader.class : loader.getClass();
-    while (loaderClass != null && !Object.class.equals(loaderClass)) {
-      final Method method = ReflectionUtil.getDeclaredMethod(loaderClass, "addURL", URL.class);
-      if (method != null) {
-        return method;
-      }
-      loaderClass = loaderClass.getSuperclass();
-    }
-    return null;
-  }
-
   @Nullable
   private static ClassLoader createPluginClassLoader(@NotNull File[] classPath,
                                                      @NotNull ClassLoader[] parentLoaders,
-                                                     @NotNull IdeaPluginDescriptor pluginDescriptor) {
-    if (pluginDescriptor.getUseIdeaClassLoader()) {
+                                                     @NotNull IdeaPluginDescriptor descriptor) {
+    if (descriptor.getUseIdeaClassLoader()) {
+      ClassLoader loader = PluginManagerCore.class.getClassLoader();
       try {
-        ClassLoader loader = PluginManagerCore.class.getClassLoader();
-        Method addUrlMethod = getAddUrlMethod(loader);
+        // the method can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
+        MethodHandle addURL = MethodHandles.lookup().findVirtual(loader.getClass(), "addURL", MethodType.methodType(void.class, URL.class));
         for (File pathElement : classPath) {
-          addUrlMethod.invoke(loader, pathElement.toPath().normalize().toUri().toURL());
+          try {
+            addURL.invoke(loader, classpathElementToUrl(pathElement));
+          }
+          catch (MalformedURLException e) {
+            throw new PluginException("Corrupted path element: `" + pathElement + '`', e, descriptor.getPluginId());
+          }
         }
         return loader;
       }
-      catch (IOException | IllegalAccessException | InvocationTargetException e) {
-        getLogger().warn(e);
+      catch (Throwable t) {
+        //noinspection GraziInspection
+        throw new IllegalStateException("Unexpected core classloader: " + loader + " (" + loader.getClass() + ")", t);
       }
     }
-
-    PluginId pluginId = pluginDescriptor.getPluginId();
-    File pluginRoot = pluginDescriptor.getPath();
-
-    if (isUnitTestMode && !ourUnitTestWithBundledPlugins) return null;
-
-    try {
+    else if (isUnitTestMode && !ourUnitTestWithBundledPlugins) {
+      return null;
+    }
+    else {
       List<URL> urls = new ArrayList<>(classPath.length);
       for (File pathElement : classPath) {
-        urls.add(pathElement.toPath().normalize().toUri().toURL());  // it is critical not to have "." and ".." in classpath elements
+        try {
+          urls.add(classpathElementToUrl(pathElement));
+        }
+        catch (MalformedURLException e) {
+          throw new PluginException("Corrupted path element: `" + pathElement + '`', e, descriptor.getPluginId());
+        }
       }
-      return new PluginClassLoader(urls, parentLoaders, pluginId, pluginDescriptor.getVersion(), pluginRoot);
+      return new PluginClassLoader(urls, parentLoaders, descriptor.getPluginId(), descriptor.getVersion(), descriptor.getPath());
     }
-    catch (IOException e) {
-      getLogger().warn(e);
-    }
+  }
 
-    return null;
+  private static URL classpathElementToUrl(File cpElement) throws MalformedURLException {
+    return cpElement.toPath().normalize().toUri().toURL();  // it is important not to have "." and ".." in classpath elements
   }
 
   public static void invalidatePlugins() {
