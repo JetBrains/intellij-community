@@ -269,7 +269,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     }
 
     @Override
-    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {
+    public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
       if(myProject.isDisposed()) return;
 
       myChangesViewI.scheduleRefresh();
