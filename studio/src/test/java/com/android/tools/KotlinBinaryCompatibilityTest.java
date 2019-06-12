@@ -35,7 +35,7 @@ public class KotlinBinaryCompatibilityTest {
     ProcessBuilder process = new ProcessBuilder(
       System.getProperty("java.home") + "/bin/java",
       "-Dplugin.verifier.home.dir=" + tmpDir.getPath(),
-      "-jar", TestUtils.getWorkspaceFile("prebuilts/tools/common/intellij-plugin-verifier/verifier-cli-1.183-all.jar").getPath(),
+      "-jar", TestUtils.getWorkspaceFile("prebuilts/tools/common/intellij-plugin-verifier/verifier-cli-1.191-all.jar").getPath(),
       "-ignored-problems", TestUtils.getWorkspaceFile("tools/idea/studio/kotlin_known_problems.txt").getPath(),
       "-verification-reports-dir", TestUtils.getTestOutputDir().getPath(),
       "-runtime-dir", tmpDir.getPath() + "/android-studio/jre",

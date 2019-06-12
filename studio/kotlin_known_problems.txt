@@ -3,3 +3,18 @@
 // Parceler and LayoutContainer classes in the android-extensions-runtime module will contain references to Android classes below:
 org.jetbrains.kotlin::Access to unresolved class android.view.View
 org.jetbrains.kotlin::Access to unresolved class android.os.Parcel
+
+// Below are between Android Studio Beta 4 and Kotlin 1.3.40-release-Studio3.5-1. Complained packages are in kotlin-compiler.jar
+org.jetbrains.kotlin::Package 'org.jetbrains.kotlin.cli.jvm' is not found
+org.jetbrains.kotlin::Package 'org.jetbrains.kotlin.cli.common.extensions' is not found
+org.jetbrains.kotlin::Package 'org.jline' is not found
+org.jetbrains.kotlin::Package 'org.jetbrains.kotlin.cli.common.config' is not found
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.MessageRenderer
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.MessageCollectorBasedReporter
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.DiagnosticMessageReporter
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.MessageCollectorBasedReporter.DefaultImpls
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport.Companion
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport.SyntaxErrorReport
+org.jetbrains.kotlin::Access to unresolved class org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
