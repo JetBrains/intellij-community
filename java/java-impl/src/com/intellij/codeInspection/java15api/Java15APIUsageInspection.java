@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -47,10 +46,8 @@ import java.io.InputStreamReader;
 import java.lang.ref.Reference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -60,9 +57,9 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
 
   private static final String EFFECTIVE_LL = "effectiveLL";
 
-  private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = ContainerUtil.newEnumMap(LanguageLevel.class);
+  private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = new EnumMap<>(LanguageLevel.class);
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<>(10);
-  private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
+  private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
 
   private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_10;
 

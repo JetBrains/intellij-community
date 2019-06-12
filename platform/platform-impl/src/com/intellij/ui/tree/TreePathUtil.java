@@ -188,7 +188,7 @@ public class TreePathUtil {
     return convertReversedToTreePath(deque, converter);
   }
 
-  private static <I, O> O convert(I object, @NotNull Function<I, O> converter) {
+  private static <I, O> O convert(I object, @NotNull Function<? super I, ? extends O> converter) {
     return object == null ? null : converter.apply(object);
   }
 

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 
 /**
  * @author Dmitry Avdeev
@@ -161,28 +161,23 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     final String description = getStaticDescription();
     if (description != null) return description;
     try {
-      URL descriptionUrl = getDescriptionUrl();
-      if (descriptionUrl == null) return null;
-      return ResourceUtil.loadText(descriptionUrl);
+      InputStream descriptionStream = getDescriptionStream();
+      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
     }
     catch (IOException ignored) { }
 
     return getTool().loadDescription();
   }
 
-  private URL getDescriptionUrl() {
+  private InputStream getDescriptionStream() {
     Application app = ApplicationManager.getApplication();
-    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return superGetDescriptionUrl();
-    }
     String fileName = getDescriptionFileName();
-    return myEP.getLoaderForClass().getResource("inspectionDescriptions/" + fileName);
-  }
 
-  @Nullable
-  private URL superGetDescriptionUrl() {
-    final String fileName = getDescriptionFileName();
-    return ResourceUtil.getResource(getDescriptionContextClass(), "inspectionDescriptions", fileName);
+    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      return ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
+    }
+
+    return myEP.getLoaderForClass().getResourceAsStream("inspectionDescriptions/" + fileName);
   }
 
   @NotNull

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
 
@@ -34,7 +33,7 @@ public class PermanentInstallationID {
     final String oldValue = appInfo.isVendorJetBrains()? oldPrefs.get(OLD_USER_ON_MACHINE_ID_KEY, null) : null; // compatibility with previous versions
 
     final String companyName = appInfo.getShortCompanyName();
-    final Preferences prefs = Preferences.userRoot().node(StringUtil.isEmptyOrSpaces(companyName)? "jetbrains" : companyName.toLowerCase(Locale.US));
+    final Preferences prefs = Preferences.userRoot().node(StringUtil.isEmptyOrSpaces(companyName)? "jetbrains" : StringUtil.toLowerCase(companyName));
 
     String installationId = prefs.get(INSTALLATION_ID_KEY, null);
     if (StringUtil.isEmptyOrSpaces(installationId)) {

@@ -1,127 +1,140 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
+import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.ObjectUtils;
+import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 
-class ServiceView extends JPanel implements Disposable {
-  private final Project myProject;
-  private final ServiceViewState myState;
-  private final ServiceViewTree myTree;
-  private final ServiceViewUi myUi;
+abstract class ServiceView extends JPanel implements Disposable {
+  protected final Project myProject;
+  private final ServiceViewModel myModel;
+  protected final ServiceViewUi myUi;
+  private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
-  private ServiceViewItem myLastSelection;
-
-  ServiceView(@NotNull Project project, @NotNull ServiceViewUi ui, @NotNull ServiceViewState state) {
-    super(new BorderLayout());
+  ServiceView(LayoutManager layout, @NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewUi ui) {
+    super(layout);
     myProject = project;
-    myState = state;
+    myModel = model;
     myUi = ui;
-
-    ServiceViewTreeModel treeModel = new ServiceViewTreeModel(project);
-    myTree = new ServiceViewTree(treeModel, this);
-    ui.setMasterPanel(myTree, ServiceViewActionProvider.getInstance());
-    add(myUi.getComponent(), BorderLayout.CENTER);
-
-    project.getMessageBus().connect(this).subscribe(ServiceViewEventListener.TOPIC, treeModel::refresh);
-    myTree.addTreeSelectionListener(e -> onSelectionChanged());
-
-    treeModel.refreshAll();
-    state.treeState.applyTo(myTree, treeModel.getRoot());
-
-    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return ServiceViewManagerImpl.getToolWindowContextHelpId();
-      }
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
-        return ContainerUtil.map2Array(getSelectedItems(), ServiceViewItem::getValue);
-      }
-      List<ServiceViewItem> selectedItems = getSelectedItems();
-      ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
-      ServiceViewDescriptor descriptor = selectedItem == null ? null : selectedItem.getViewDescriptor();
-      DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();
-      if (dataProvider != null) {
-        return RecursionManager.doPreventingRecursion(this, false, () -> dataProvider.getData(dataId));
-      }
-      return null;
-    });
-  }
-
-  List<ServiceViewItem> getSelectedItems() {
-    return ContainerUtil.mapNotNull(TreeUtil.collectSelectedUserObjects(myTree), o -> ObjectUtils.tryCast(o, ServiceViewItem.class));
-  }
-
-  ServiceViewState getState() {
-    myUi.saveState(myState);
-    myState.treeState = TreeState.createOn(myTree);
-    return myState;
   }
 
   @Override
   public void dispose() {
   }
 
-  void selectItem(Object item) {
-    if (myLastSelection == null || !myLastSelection.getValue().equals(item)) {
-      TreeUtil.select(myTree, new NodeSelectionVisitor(item), path -> {});
+  ServiceViewModel getModel() {
+    return myModel;
+  }
+
+  ServiceViewUi getUi() {
+    return myUi;
+  }
+
+  void saveState(@NotNull ServiceViewState state) {
+    myModel.saveState(state);
+  }
+
+  @NotNull
+  abstract List<ServiceViewItem> getSelectedItems();
+
+  abstract Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass);
+
+  abstract void onViewSelected();
+
+  abstract void onViewUnselected();
+
+  boolean isFlat() {
+    return myModel.isFlat();
+  }
+
+  void setFlat(boolean flat) {
+    myModel.setFlat(flat);
+  }
+
+  boolean isGroupByType() {
+    return myModel.isGroupByType();
+  }
+
+  void setGroupByType(boolean value) {
+    myModel.setGroupByType(value);
+  }
+
+  abstract List<Object> getChildrenSafe(@NotNull Object value);
+
+  void setAutoScrollToSourceHandler(@NotNull AutoScrollToSourceHandler autoScrollToSourceHandler) {
+    myAutoScrollToSourceHandler = autoScrollToSourceHandler;
+  }
+
+  protected void onViewSelected(@NotNull ServiceViewDescriptor descriptor) {
+    descriptor.onNodeSelected();
+    if (myAutoScrollToSourceHandler != null) {
+      myAutoScrollToSourceHandler.onMouseClicked(this);
     }
   }
 
-  private void onSelectionChanged() {
-    List<ServiceViewItem> selected = getSelectedItems();
-    ServiceViewItem newSelection = ContainerUtil.getOnlyItem(selected);
-    if (Comparing.equal(newSelection, myLastSelection)) return;
-
-    ServiceViewDescriptor oldDescriptor = myLastSelection == null ? null : myLastSelection.getViewDescriptor();
-    if (oldDescriptor != null) {
-      oldDescriptor.onNodeUnselected();
-    }
-
-    myLastSelection = newSelection;
-    ServiceViewDescriptor newDescriptor = newSelection == null ? null : newSelection.getViewDescriptor();
-
-    if (newDescriptor != null) {
-      newDescriptor.onNodeSelected();
-    }
-    if (newDescriptor instanceof Navigatable) {
-      Navigatable navigatable = (Navigatable)newDescriptor;
-      if (ServiceViewManagerImpl.isAutoScrollToSourceEnabled(myProject) && navigatable.canNavigate()) navigatable.navigate(false);
-    }
-
-    myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
+  static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
+    ServiceView serviceView = viewModel instanceof ServiceViewModel.SingeServiceModel ?
+                              createSingleView(project, viewModel) :
+                              createTreeView(project, viewModel, viewState);
+    setDataProvider(serviceView);
+    setViewModelState(viewModel, viewState);
+    return serviceView;
   }
 
-  private static class NodeSelectionVisitor implements TreeVisitor {
-    private final Object myValue;
+  private static ServiceView createTreeView(@NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewState state) {
+    return new ServiceTreeView(project, model, new ServiceViewTreeUi(state), state);
+  }
 
-    NodeSelectionVisitor(Object value) {
-      myValue = value;
-    }
+  private static ServiceView createSingleView(@NotNull Project project, @NotNull ServiceViewModel model) {
+    return new ServiceSingleView(project, model, new ServiceViewSingleUi());
+  }
 
-    @NotNull
-    @Override
-    public Action visit(@NotNull TreePath path) {
-      Object node = path.getLastPathComponent();
-      if (node instanceof ServiceViewItem && ((ServiceViewItem)node).getValue().equals(myValue)) return Action.INTERRUPT;
+  private static void setDataProvider(ServiceView serviceView) {
+    serviceView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return ServiceViewManagerImpl.getToolWindowContextHelpId();
+      }
+      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+        return ContainerUtil.map2Array(serviceView.getSelectedItems(), ServiceViewItem::getValue);
+      }
+      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        List<Navigatable> navigatables =
+          ContainerUtil.mapNotNull(serviceView.getSelectedItems(), item -> item.getViewDescriptor().getNavigatable());
+        return navigatables.toArray(new Navigatable[0]);
+      }
+      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+        return new ServiceViewDeleteProvider(serviceView);
+      }
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return new ServiceViewCopyProvider(serviceView);
+      }
+      List<ServiceViewItem> selectedItems = serviceView.getSelectedItems();
+      ServiceViewItem selectedItem = ContainerUtil.getOnlyItem(selectedItems);
+      ServiceViewDescriptor descriptor = selectedItem == null ? null : selectedItem.getViewDescriptor();
+      DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();
+      if (dataProvider != null) {
+        return RecursionManager.doPreventingRecursion(serviceView, false, () -> dataProvider.getData(dataId));
+      }
+      return null;
+    });
+  }
 
-      return Action.CONTINUE;
-    }
+  private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
+    viewModel.setFlat(viewState.flat);
+    viewModel.setGroupByType(viewState.groupByType);
   }
 }

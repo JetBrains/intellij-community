@@ -39,9 +39,9 @@ public class AppMainV2 {
   private static native void triggerControlBreak();
 
   private static boolean loadHelper(String binPath) {
-    String osName = System.getProperty("os.name").toLowerCase(Locale.US);
+    String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     if (osName.startsWith("windows")) {
-      String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
+      String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
       File libFile = new File(binPath, arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
       if (libFile.isFile()) {
         System.load(libFile.getAbsolutePath());

@@ -23,14 +23,18 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction"
-            text="Move Left">
-      <keyboard-shortcut first-keystroke="control shift LEFT" keymap="$default"/>
+            text="Move Tab Left">
+      <keyboard-shortcut first-keystroke="control alt shift LEFT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction"
-            text="Move Right">
-      <keyboard-shortcut first-keystroke="control shift RIGHT" keymap="$default"/>
+            text="Move Tab Right">
+      <keyboard-shortcut first-keystroke="control alt shift RIGHT" keymap="$default"/>
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction"
+            text="Switch Focus To Editor">
+      <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
   </actions>
 

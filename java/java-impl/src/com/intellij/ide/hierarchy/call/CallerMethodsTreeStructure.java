@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,12 +48,12 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     }
 
     if (!(enclosingElement instanceof PsiMethod) || nodeDescriptor == null) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)nodeDescriptor).getTargetElement();
     if (baseMethod == null) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
     final SearchScope searchScope = getSearchScope(myScopeType, baseMethod.getContainingClass());
 
@@ -82,11 +83,6 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
   private static boolean isLocalOrAnonymousClass(PsiMember enclosingElement) {
     return enclosingElement instanceof PsiClass && ((PsiClass)enclosingElement).getQualifiedName() == null;
-  }
-
-  @Override
-  public boolean isAlwaysShowPlus() {
-    return true;
   }
 
   @Override

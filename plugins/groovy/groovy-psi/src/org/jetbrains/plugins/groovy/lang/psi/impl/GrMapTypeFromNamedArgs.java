@@ -16,10 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GrMapTypeFromNamedArgs extends GrMapType {
 
@@ -38,7 +35,7 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
     @NotNull
     @Override
     protected LinkedHashMap<String, PsiType> compute() {
-      LinkedHashMap<String, PsiType> result = ContainerUtil.newLinkedHashMap();
+      LinkedHashMap<String, PsiType> result = new LinkedHashMap<>();
       for (Map.Entry<String, GrExpression> entry : myStringEntries.entrySet()) {
         result.put(entry.getKey(), inferTypePreventingRecursion(entry.getValue()));
       }
@@ -54,8 +51,8 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
   public GrMapTypeFromNamedArgs(@NotNull JavaPsiFacade facade, @NotNull GlobalSearchScope scope, @NotNull GrNamedArgument[] namedArgs) {
     super(facade, scope);
 
-    myStringEntries = ContainerUtil.newLinkedHashMap();
-    myOtherEntries = ContainerUtil.newArrayList();
+    myStringEntries = new LinkedHashMap<>();
+    myOtherEntries = new ArrayList<>();
     for (GrNamedArgument namedArg : namedArgs) {
       final GrArgumentLabel label = namedArg.getLabel();
       final GrExpression expression = namedArg.getExpression();

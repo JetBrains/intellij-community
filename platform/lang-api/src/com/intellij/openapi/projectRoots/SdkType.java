@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.*;
 
 public abstract class SdkType implements SdkTypeId {
@@ -62,6 +63,15 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   public abstract boolean isValidSdkHome(String path);
+
+  /**
+   * Returns the message to be shown to the user when {@link #isValidSdkHome(String)} returned false for the path.
+   */
+  public String getInvalidHomeMessage(String path) {
+    return new File(path).isDirectory()
+      ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
+      : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
+  }
 
   @Override
   @Nullable
@@ -166,9 +176,7 @@ public abstract class SdkType implements SdkTypeId {
           if (!valid) {
             valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath));
             if (!valid) {
-              String message = files[0].isDirectory()
-                               ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
-                               : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
+              String message = getInvalidHomeMessage(selectedPath);
               throw new Exception(message);
             }
           }
@@ -244,7 +252,7 @@ public abstract class SdkType implements SdkTypeId {
    * @param parentComponent    the parent component for showing the dialog.
    * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
+   * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
@@ -275,5 +283,13 @@ public abstract class SdkType implements SdkTypeId {
   @NotNull
   public String sdkPath(@NotNull VirtualFile homePath) {
     return homePath.getPath();
+  }
+
+  /**
+   * If this method returns false, this SDK type will not be shown in the SDK type chooser popup when the user
+   * creates a new SDK.
+   */
+  public boolean allowCreationByUser() {
+    return true;
   }
 }

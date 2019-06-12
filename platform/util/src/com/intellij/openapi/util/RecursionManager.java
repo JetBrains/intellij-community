@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ import java.util.stream.Stream;
  * </ol>
  * Most likely, the results of {@code C()} would be different in those 3 cases, and it'd be unwise to cache just any of them randomly,
  * whatever is calculated first. In a multi-threaded environment, that'd lead to unpredictability.<p></p>
- * 
+ *
  * Of the 3 possible scenarios above, caching for {@code C()} makes sense only for the last one, because that's the result we'd get if there were no caching at all.
  * Therefore, if you use any kind of caching in an endless-recursion-prone environment, please ensure you don't cache incomplete results
  * that happen when you're inside the evil recursion loop.
@@ -106,7 +107,7 @@ public class RecursionManager {
         final int sizeBefore = stack.progressMap.size();
         stack.beforeComputation(realKey);
         final int sizeAfter = stack.progressMap.size();
-        Set<MyKey> preventionsBefore = memoize ? ContainerUtil.newTroveSet(stack.preventions) : Collections.emptySet();
+        Set<MyKey> preventionsBefore = memoize ? new THashSet<>(stack.preventions) : Collections.emptySet();
 
         try {
           T result = computation.compute();
@@ -247,7 +248,7 @@ public class RecursionManager {
 
     final void beforeComputation(MyKey realKey) {
       enters++;
-      
+
       if (progressMap.isEmpty()) {
         assert reentrancyCount == 0 : "Non-zero stamp with empty stack: " + reentrancyCount;
       }

@@ -4,8 +4,8 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -104,7 +104,7 @@ public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
         functionName = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(functionName);
         lambdaExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(lambdaExpression);
 
-        ReferenceNameExpression refExpr = new ReferenceNameExpression(name);
+        Expression refExpr = new ConstantNode(name);
 
         ((TemplateBuilderImpl)builder).replaceElement(lambdaExpression, name, refExpr, true);
         ((TemplateBuilderImpl)builder).replaceElement(functionName, name, name, false);
@@ -116,28 +116,6 @@ public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
         TemplateManager.getInstance(project).startTemplate(editor, template);
         editor.getCaretModel().moveToOffset(textOffSet);
       }
-    }
-  }
-  private static class ReferenceNameExpression extends Expression {
-    ReferenceNameExpression(String oldReferenceName) {
-      myOldReferenceName = oldReferenceName;
-    }
-
-    private final String myOldReferenceName;
-
-    @Override
-    public Result calculateResult(ExpressionContext context) {
-      return new TextResult(myOldReferenceName);
-    }
-
-    @Override
-    public Result calculateQuickResult(ExpressionContext context) {
-      return null;
-    }
-
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      return null;
     }
   }
 }

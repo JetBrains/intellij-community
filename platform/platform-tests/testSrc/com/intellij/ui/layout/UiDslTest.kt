@@ -8,7 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
-import com.intellij.ui.changeLafIfNeed
+import com.intellij.ui.changeLafIfNeeded
 import com.intellij.ui.layout.migLayout.patched.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -59,7 +59,7 @@ class UiDslTest {
     }
 
     System.setProperty("idea.ui.comment.copyable", "false")
-    changeLafIfNeed(lafName)
+    changeLafIfNeeded(lafName)
   }
 
   @After

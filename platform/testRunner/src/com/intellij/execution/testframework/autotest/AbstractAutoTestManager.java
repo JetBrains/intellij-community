@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.execution.ExecutionManager;
@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -40,7 +42,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   protected static final int AUTO_TEST_MANAGER_DELAY_DEFAULT = 3000;
   private static final Key<ProcessListener> ON_TERMINATION_RESTARTER_KEY = Key.create("auto.test.manager.on.termination.restarter");
   private final Project myProject;
-  private final Set<RunProfile> myEnabledRunProfiles = ContainerUtil.newHashSet();
+  private final Set<RunProfile> myEnabledRunProfiles = new HashSet<>();
   protected int myDelayMillis;
   private AutoTestWatcher myWatcher;
 
@@ -84,7 +86,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   }
 
   public static List<RunConfiguration> loadConfigurations(State state, Project project) {
-    List<RunConfiguration> configurations = ContainerUtil.newArrayList();
+    List<RunConfiguration> configurations = new ArrayList<>();
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     List<RunConfigurationDescriptor> descriptors = ContainerUtil.notNullize(state.myEnabledRunConfigurations);
     for (RunConfigurationDescriptor descriptor : descriptors) {
@@ -232,7 +234,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   public static class State {
     @Tag("enabled-run-configurations")
     @XCollection
-    List<AutoTestManager.RunConfigurationDescriptor> myEnabledRunConfigurations = ContainerUtil.newArrayList();
+    List<AutoTestManager.RunConfigurationDescriptor> myEnabledRunConfigurations = new ArrayList<>();
   }
 
   @Tag("run-configuration")

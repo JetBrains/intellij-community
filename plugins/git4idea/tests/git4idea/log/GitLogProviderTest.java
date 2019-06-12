@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,7 +102,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     prepareSomeHistory();
     createTaggedBranch();
     List<VcsCommitMetadata> expectedLog = log();
-    List<TimedVcsCommit> collector = ContainerUtil.newArrayList();
+    List<TimedVcsCommit> collector = new ArrayList<>();
     myLogProvider.readAllHashes(projectRoot, new CollectConsumer<>(collector));
     assertOrderedEquals(expectedLog, collector);
   }
@@ -257,7 +257,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
-    final List<String> hashes = ContainerUtil.newArrayList();
+    final List<String> hashes = new ArrayList<>();
     myLogProvider.readAllHashes(projectRoot, timedVcsCommit -> hashes.add(timedVcsCommit.getId().asString()));
 
     List<? extends VcsShortCommitDetails> shortDetails = myLogProvider.readMetadata(projectRoot, hashes);
@@ -270,10 +270,10 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
-    final List<String> hashes = ContainerUtil.newArrayList();
+    final List<String> hashes = new ArrayList<>();
     myLogProvider.readAllHashes(projectRoot, timedVcsCommit -> hashes.add(timedVcsCommit.getId().asString()));
 
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = new ArrayList<>();
     myLogProvider.readFullDetails(projectRoot, hashes, result::add);
 
     // we do not check for changes here
@@ -305,7 +305,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
    * @param takeAllUsers if true, don't filter by users, otherwise filter by default user.
    */
   private List<String> generateHistoryForFilters(boolean takeAllUsers, boolean allBranches) {
-    List<String> hashes = ContainerUtil.newArrayList();
+    List<String> hashes = new ArrayList<>();
     hashes.add(last(repo));
 
     GitTestUtil.setupUsername(myProject, "bob.smith", "bob.smith@example.com");
@@ -372,7 +372,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     final VcsUser defaultUser = getDefaultUser();
     final Function<String, Hash> TO_HASH = s -> HashImpl.build(s);
     return ContainerUtil.map(StringUtil.splitByLines(output), record -> {
-      String[] items = ArrayUtil.toStringArray(StringUtil.split(record, "|", true, false));
+      String[] items = ArrayUtilRt.toStringArray(StringUtil.split(record, "|", true, false));
       long time = Long.valueOf(items[2]) * 1000;
       return new VcsCommitMetadataImpl(TO_HASH.fun(items[0]), ContainerUtil.map(items[1].split(" "), TO_HASH), time,
                                        projectRoot, items[3], defaultUser, items[4], defaultUser, time);

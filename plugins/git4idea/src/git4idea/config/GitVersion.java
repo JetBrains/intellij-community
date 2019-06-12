@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.execution.ExecutableValidator;
@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -53,7 +52,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * The minimal supported version
    */
   public static final GitVersion MIN = SystemInfo.isWindows ? new GitVersion(2, 4, 0, 0)
-                                                            : new GitVersion(1, 8, 0, 0);
+                                                              : new GitVersion(1, 8, 0, 0);
 
   /**
    * Special version with a special Type which indicates, that Git version information is unavailable.
@@ -110,8 +109,8 @@ public final class GitVersion implements Comparable<GitVersion> {
     Type type;
     if (SystemInfo.isWindows) {
       String suffix = getStringGroup(m, 5);
-      if (suffix.toLowerCase(Locale.ENGLISH).contains("msysgit") ||
-          suffix.toLowerCase(Locale.ENGLISH).contains("windows")) {
+      if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
+          StringUtil.toLowerCase(suffix).contains("windows")) {
         type = Type.MSYS;
       }
       else {

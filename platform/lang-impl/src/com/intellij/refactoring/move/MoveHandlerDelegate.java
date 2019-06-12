@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 
 package com.intellij.refactoring.move;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -32,6 +35,14 @@ import java.util.Set;
 public abstract class MoveHandlerDelegate {
   public static final ExtensionPointName<MoveHandlerDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.moveHandler");
 
+  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
+    return canMove(elements, targetContainer);
+  }
+
+  /**
+   * @deprecated Please overload the method with 'reference' parameter instead
+   */
+  @Deprecated
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     return isValidTarget(targetContainer, elements);
   }
@@ -70,5 +81,15 @@ public abstract class MoveHandlerDelegate {
 
   public boolean isMoveRedundant(PsiElement source, PsiElement target) {
     return false;
+  }
+
+  @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
+  public String getActionName(@NotNull PsiElement[] elements) {
+    return null;
+  }
+
+  public boolean supportsLanguage(@NotNull Language language) {
+    return true;
   }
 }

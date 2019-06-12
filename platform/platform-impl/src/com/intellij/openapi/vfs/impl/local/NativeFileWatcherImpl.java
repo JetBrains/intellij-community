@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.sun.jna.Platform;
@@ -35,10 +34,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -123,7 +119,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
    * Subclasses should override this method if they want to use custom logic to disable their file watcher.
    */
   protected boolean isDisabled() {
-    return Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
+    if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
+    Application app = ApplicationManager.getApplication();
+    return app.isCommandLine() || app.isUnitTestMode();
   }
 
   /**
@@ -253,7 +251,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   public void resetChangedPaths() {
     synchronized (myLastChangedPaths) {
       myLastChangedPathIndex = 0;
-      for (int i = 0; i < myLastChangedPaths.length; ++i) myLastChangedPaths[i] = null;
+      Arrays.fill(myLastChangedPaths, null);
     }
   }
 
@@ -266,13 +264,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     @Override public boolean withSeparators() { return false; }
   };
 
-  @SuppressWarnings("SpellCheckingInspection")
   private enum WatcherOp { GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY }
 
   private class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
     private WatcherOp myLastOp;
-    private final List<String> myLines = ContainerUtil.newArrayList();
+    private final List<String> myLines = new ArrayList<>();
 
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
       super(process, commandLine, CHARSET);
@@ -372,7 +369,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     private void processRemap() {
-      Set<Pair<String, String>> pairs = ContainerUtil.newHashSet();
+      Set<Pair<String, String>> pairs = new HashSet<>();
       for (int i = 0; i < myLines.size() - 1; i += 2) {
         pairs.add(Pair.create(myLines.get(i), myLines.get(i + 1)));
       }

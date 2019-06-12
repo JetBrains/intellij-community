@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl.fixes;
 
 import com.intellij.codeInsight.template.Template;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
@@ -109,7 +110,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
       boolean isSingle = myData.myMissingPropertyIssues.size() == 1;
       PsiElement processedElement = element;
       List<JsonValidationError.MissingPropertyIssueData> reverseOrder
-        = ContainerUtil.reverse(ContainerUtil.newArrayList(myData.myMissingPropertyIssues));
+        = ContainerUtil.reverse(new ArrayList<>(myData.myMissingPropertyIssues));
       for (JsonValidationError.MissingPropertyIssueData issue: reverseOrder) {
         Object defaultValueObject = issue.defaultValue;
         String defaultValue = defaultValueObject instanceof String ? StringUtil.wrapWithDoubleQuote(defaultValueObject.toString()) : null;
@@ -154,7 +155,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
                        @NotNull CommonProblemDescriptor[] descriptors,
                        @NotNull List<PsiElement> psiElementsToIgnore,
                        @Nullable Runnable refreshViews) {
-    List<Pair<AddMissingPropertyFix, PsiElement>> propFixes = ContainerUtil.newArrayList();
+    List<Pair<AddMissingPropertyFix, PsiElement>> propFixes = new ArrayList<>();
     for (CommonProblemDescriptor descriptor: descriptors) {
       if (!(descriptor instanceof ProblemDescriptor)) continue;
       QuickFix[] fixes = descriptor.getFixes();

@@ -1,102 +1,101 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
+import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * Not thread-safe.
- * 
- * @author Denis Zhdanov
- */
-public class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
+public final class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
+  private final Map<LibraryPathType, Set<String>> paths = new EnumMap<>(LibraryPathType.class);
 
-  private static final long serialVersionUID = 1L;
-
-  private final Map<LibraryPathType, Set<String>> myPaths = new HashMap<>();
-  
-  private final boolean myUnresolved;
-  private String myGroup;
-  private String myArtifactId;
-  private String myVersion;
+  private final boolean unresolved;
+  private String group;
+  private String artifactId;
+  private String version;
 
   public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name) {
     this(owner, name, false);
   }
 
-  public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name, boolean unresolved) {
-    super(owner, name, name.isEmpty() ? "" : owner.getReadableName() + ": " + name);
-    myUnresolved = unresolved;
+  @PropertyMapping({"owner", "externalName", "unresolved"})
+  public LibraryData(@NotNull ProjectSystemId owner, @NotNull String externalName, boolean unresolved) {
+    super(owner, externalName, externalName.isEmpty() ? "" : owner.getReadableName() + ": " + externalName);
+
+    this.unresolved = unresolved;
+  }
+
+  @SuppressWarnings("unused")
+  private LibraryData() {
+    super(ProjectSystemId.IDE, "");
+
+    unresolved = false;
   }
 
   @Nullable
   @Override
   public String getGroupId() {
-    return myGroup;
+    return group;
   }
 
   public void setGroup(String group) {
-    myGroup = group;
+    this.group = group;
   }
 
   @Nullable
   @Override
   public String getArtifactId() {
-    return myArtifactId;
+    return artifactId;
   }
 
   public void setArtifactId(String artifactId) {
-    myArtifactId = artifactId;
+    this.artifactId = artifactId;
   }
 
   @Nullable
   @Override
   public String getVersion() {
-    return myVersion;
+    return version;
   }
 
   public void setVersion(String version) {
-    myVersion = version;
+    this.version = version;
   }
 
   public boolean isUnresolved() {
-    return myUnresolved;
+    return unresolved;
   }
 
   @NotNull
   public Set<String> getPaths(@NotNull LibraryPathType type) {
-    Set<String> result = myPaths.get(type);
+    Set<String> result = paths.get(type);
     return result == null ? Collections.emptySet() : result;
   }
 
   public void addPath(@NotNull LibraryPathType type, @NotNull String path) {
-    Set<String> paths = myPaths.get(type);
+    Set<String> paths = this.paths.get(type);
     if (paths == null) {
-      myPaths.put(type, paths = new LinkedHashSet<>());
-    } 
+      this.paths.put(type, paths = new LinkedHashSet<>());
+    }
     paths.add(ExternalSystemApiUtil.toCanonicalPath(path));
   }
 
   public void forgetAllPaths() {
-    myPaths.clear();
+    paths.clear();
   }
 
   @Override
   public int hashCode() {
-    int result = myPaths.hashCode();
+    int result = paths.hashCode();
     result = 31 * result + super.hashCode();
-    result = 31 * result + (myUnresolved ? 0 : 1);
-    result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
-    result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
-    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = 31 * result + (unresolved ? 0 : 1);
+    result = 31 * result + (group != null ? group.hashCode() : 0);
+    result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0);
+    result = 31 * result + (version != null ? version.hashCode() : 0);
     return result;
   }
 
@@ -105,16 +104,16 @@ public class LibraryData extends AbstractNamedData implements Named, ProjectCoor
     if (!super.equals(o)) return false;
 
     LibraryData that = (LibraryData)o;
-    if (myGroup != null ? !myGroup.equals(that.myGroup) : that.myGroup != null) return false;
-    if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
-    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
-    return super.equals(that) && myUnresolved == that.myUnresolved && myPaths.equals(that.myPaths);
+    if (group != null ? !group.equals(that.group) : that.group != null) return false;
+    if (artifactId != null ? !artifactId.equals(that.artifactId) : that.artifactId != null) return false;
+    if (version != null ? !version.equals(that.version) : that.version != null) return false;
+    return super.equals(that) && unresolved == that.unresolved && paths.equals(that.paths);
   }
 
   @Override
   public String toString() {
     String externalName = getExternalName();
-    String displayName = StringUtil.isEmpty(externalName) ? myPaths.toString() : externalName;
-    return String.format("library %s%s", displayName, myUnresolved ? "(unresolved)" : "");
+    String displayName = StringUtil.isEmpty(externalName) ? paths.toString() : externalName;
+    return String.format("library %s%s", displayName, unresolved ? "(unresolved)" : "");
   }
 }

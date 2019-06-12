@@ -5,13 +5,11 @@ import com.intellij.execution.TerminateRemoteProcessDialog
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.BaseContentCloseListener
 import com.intellij.execution.ui.RunContentManagerImpl
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
-import com.intellij.util.ObjectUtils
 import com.jediterm.terminal.ProcessTtyConnector
-import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
 
 class TerminalTabCloseListener(val content: Content,
                                val project: Project) : BaseContentCloseListener(content, project) {
@@ -20,6 +18,9 @@ class TerminalTabCloseListener(val content: Content,
 
   override fun closeQuery(content: Content, projectClosing: Boolean): Boolean {
     if (projectClosing) {
+      return true
+    }
+    if (content.getUserData(SILENT) == true) {
       return true
     }
     val widget = TerminalView.getWidgetByContent(content)
@@ -45,6 +46,19 @@ class TerminalTabCloseListener(val content: Content,
   override fun canClose(project: Project): Boolean {
     return project === this.project && closeQuery(this.content, true)
   }
+
+  companion object {
+    fun executeContentOperationSilently(content: Content, runnable: () -> Unit) {
+      content.putUserData(SILENT, true)
+      try {
+        runnable()
+      }
+      finally {
+        content.putUserData(SILENT, null)
+      }
+    }
+  }
 }
 
+private val SILENT = Key.create<Boolean>("Silent content operation")
 private val LOG = logger<TerminalTabCloseListener>()

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +64,6 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
-  private boolean myIsGlobal; // action is registered in ActionManager
 
 
   /**
@@ -88,7 +89,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
    */
-  public AnAction(@Nullable String text){
+  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text){
     this(text, null, null);
   }
 
@@ -103,7 +104,9 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
+                  @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+                  @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
     presentation.setDescription(description);
@@ -165,10 +168,9 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   /**
    * Copies template presentation and shortcuts set from {@code sourceAction}.
-   *
-   * @param sourceAction cannot be {@code null}
+   * Consider using {@link com.intellij.openapi.actionSystem.ex.ActionUtil#copyFrom(AnAction, String)} instead.
    */
-  public final void copyFrom(@NotNull AnAction sourceAction){
+  public final void copyFrom(@NotNull AnAction sourceAction) {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
     presentation.copyFrom(sourcePresentation);
@@ -271,7 +273,11 @@ public abstract class AnAction implements PossiblyDumbAware {
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
-    if (myIsGlobal && myShortcutSet != shortcutSet) {
+    if (myShortcutSet != shortcutSet &&
+        !"ProxyShortcutSet".equals(shortcutSet.getClass().getSimpleName()) && // avoid CyclicDependencyException
+        ApplicationManager.getApplication() != null &&
+        ActionManager.getInstance() != null &&
+        ActionManager.getInstance().getId(this) != null) {
       LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
                "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
                "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable());
@@ -334,14 +340,6 @@ public abstract class AnAction implements PossiblyDumbAware {
     return getTemplatePresentation().toString();
   }
 
-  public final boolean isGlobal() {
-    return myIsGlobal;
-  }
-
-  void markAsGlobal() {
-    myIsGlobal = true;
-  }
-
   /**
    * Returns default action text.
    * This method must be overridden in case template presentation contains user data like Project name,
@@ -350,6 +348,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @return action presentable text without private user data
    */
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String getTemplateText() {
     return getTemplatePresentation().getText();
   }

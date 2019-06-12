@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -135,7 +134,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     Module mod1 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
     Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
 
-    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, false);
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
 
     assertSize(2, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
@@ -145,11 +144,11 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addFileToProject("tests/B.java", "class B {}");
     myFixture.addFileToProject("mod2/C.java", "class C extends B {}");
 
-    PsiTestUtil.addSourceRoot(myModule, myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
+    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
     Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
 
     ModuleRootModificationUtil.updateModel(mod2, model ->
-      ((ModuleOrderEntryImpl)model.addModuleOrderEntry(myModule)).setProductionOnTestDependency(true));
+      model.addModuleOrderEntry(getModule()).setProductionOnTestDependency(true));
 
     assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("B")).findAll());
   }

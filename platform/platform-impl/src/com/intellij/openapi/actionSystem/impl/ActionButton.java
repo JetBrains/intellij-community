@@ -22,6 +22,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -165,7 +167,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       manager.queueActionPerformedEvent(myAction, dataContext, event);
       if (event.getInputEvent() instanceof MouseEvent) {
-        ToolbarClicksCollector.record(myAction, myPlace);
+        ToolbarClicksCollector.record(myAction, myPlace, e, dataContext);
       }
       ActionToolbar toolbar = getActionToolbar();
       if (toolbar != null) {
@@ -180,15 +182,16 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private ActionToolbar getActionToolbar() {
-    return UIUtil.getParentOfType(ActionToolbar.class, this);
+    return ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, (Component)this);
   }
 
   protected void actionPerformed(final AnActionEvent event) {
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
       showPopupMenu(event, (ActionGroup) myAction);
-    } else {
-      ActionUtil.performActionDumbAware(myAction, event);
+    }
+    else {
+      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
     }
   }
 
@@ -258,8 +261,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @Override
   public Insets getInsets() {
-    ActionToolbarImpl owner = UIUtil.getParentOfType(ActionToolbarImpl.class, this);
-    return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
+    ActionToolbarImpl owner = ComponentUtil.getParentOfType((Class<? extends ActionToolbarImpl>)ActionToolbarImpl.class, (Component)this);
+    return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBInsets.create(2, 1) : JBInsets.create(1, 2);
   }
 
   @Override
@@ -359,7 +362,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public void paintComponent(Graphics g) {
     jComponentPaint(g);
     paintButtonLook(g);
-    paintDownArrowIfGroup(g);
+    if (shallPaintDownArrow()) {
+      paintDownArrow(g);
+    }
   }
 
   // used in Rider, please don't change visibility
@@ -367,19 +372,23 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     super.paintComponent(g);
   }
 
-  private void paintDownArrowIfGroup(Graphics g) {
-    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return;
-    if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return;
-    if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return;
+  protected boolean shallPaintDownArrow() {
+    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return false;
+    if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return false;
+    return true;
+  }
+
+  private void paintDownArrow(Graphics g) {
     Container parent = getParent();
     boolean horizontal = !(parent instanceof ActionToolbarImpl) ||
                          ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
-    int x = horizontal ? JBUI.scale(6) : JBUI.scale(5);
-    int y = horizontal ? JBUI.scale(5) : JBUI.scale(6);
-    if (isButtonEnabled()) {
-      AllIcons.General.Dropdown.paintIcon(this, g, x, y);
-    } else {
-      IconLoader.getDisabledIcon(AllIcons.General.Dropdown).paintIcon(this, g, x, y);
+    int x = horizontal ? JBUIScale.scale(6) : JBUIScale.scale(5);
+    int y = horizontal ? JBUIScale.scale(5) : JBUIScale.scale(6);
+    Icon arrowIcon = isButtonEnabled() ? AllIcons.General.Dropdown :
+                     IconLoader.getDisabledIcon(AllIcons.General.Dropdown);
+    if (arrowIcon != null) {
+      arrowIcon.paintIcon(this, g, x, y);
     }
   }
 

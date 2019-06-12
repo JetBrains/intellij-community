@@ -525,7 +525,7 @@ public class StackVarsProcessor {
     return new Object[]{null, changed, false};
   }
 
-  private static boolean getUsedVersions(SSAUConstructorSparseEx ssa, VarVersionPair var, List<VarVersionNode> res) {
+  private static boolean getUsedVersions(SSAUConstructorSparseEx ssa, VarVersionPair var, List<? super VarVersionNode> res) {
     VarVersionsGraph ssuversions = ssa.getSsuversions();
     VarVersionNode varnode = ssuversions.nodes.getWithKey(var);
 

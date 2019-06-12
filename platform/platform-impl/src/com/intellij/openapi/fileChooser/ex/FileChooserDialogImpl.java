@@ -34,9 +34,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -172,7 +173,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     while (files.size() > 30) {
       files.remove(files.size() - 1);
     }
-    PropertiesComponent.getInstance().setValues(RECENT_FILES_KEY, ArrayUtil.toStringArray(files));
+    PropertiesComponent.getInstance().setValues(RECENT_FILES_KEY, ArrayUtilRt.toStringArray(files));
   }
 
   @NotNull
@@ -186,7 +187,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
       return recent;
     }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
 
@@ -222,16 +223,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         return new Dimension(myPathTextField.getField().getWidth(), super.getPreferredSize().height);
       }
     };
-    files.setCellRenderer(new ColoredListCellRenderer<String>() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, String path, int index, boolean selected, boolean hasFocus) {
-        append(path);
-        final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
-        if (file != null) {
-          setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
-        }
-      }
-    });
+    files.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      label.setText(value);
+      VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
+      label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
+    }));
     JBPopupFactory.getInstance()
       .createListPopupBuilder(files)
       .setItemChoosenCallback(

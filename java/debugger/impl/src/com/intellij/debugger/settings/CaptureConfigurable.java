@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.codeInsight.AnnotationsPanel;
@@ -39,6 +39,7 @@ import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
@@ -518,7 +519,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     return DebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
-  static void processCaptureAnnotations(BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+  static void processCaptureAnnotations(BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     DebuggerProjectSettings debuggerProjectSettings = DebuggerProjectSettings.getInstance(project);
@@ -529,14 +530,14 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   private static void scanPointsInt(Project project,
                                     DebuggerProjectSettings debuggerProjectSettings,
                                     boolean capture,
-                                    BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+                                    BiConsumer<? super Boolean, ? super PsiModifierListOwner> consumer) {
     try {
       GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       for (String annotationName : getAsyncAnnotations(debuggerProjectSettings, capture)) {
         PsiClass annotationClass = psiFacade.findClass(annotationName, allScope);
         if (annotationClass != null) {
-          AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
+          AnnotatedElementsSearch.<PsiModifierListOwner>searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
             .forEach(e -> {
               consumer.accept(capture, e);
             });
@@ -599,10 +600,10 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     protected void doOKAction() {
       mySettings.myAsyncScheduleAnnotations = StreamEx.of(myAsyncSchedulePanel.getAnnotations())
         .filter(e -> !e.equals(getAnnotationName(true)))
-        .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+        .toArray(ArrayUtilRt.EMPTY_STRING_ARRAY);
       mySettings.myAsyncExecuteAnnotations = StreamEx.of(myAsyncExecutePanel.getAnnotations())
         .filter(e -> !e.equals(getAnnotationName(false)))
-        .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+        .toArray(ArrayUtilRt.EMPTY_STRING_ARRAY);
       super.doOKAction();
     }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
@@ -137,7 +138,9 @@ public abstract class AppIcon {
         myAppListener = new ApplicationActivationListener() {
           @Override
           public void applicationActivated(@NotNull IdeFrame ideFrame) {
-            hideProgress(ideFrame.getProject(), myCurrentProcessId);
+            if (Registry.is("ide.appIcon.progress")) {
+              _hideProgress(ideFrame, myCurrentProcessId);
+            }
             _setOkBadge(ideFrame, false);
             _setTextBadge(ideFrame, null);
           }

@@ -587,11 +587,6 @@ public class PlatformTestUtil {
   }
 
   @NotNull
-  public static String getRtJarPath() {
-    return SystemProperties.getJavaHome() + "/lib/rt.jar";
-  }
-
-  @NotNull
   public static URL getRtJarURL() {
     String home = SystemProperties.getJavaHome();
     try {
@@ -631,19 +626,12 @@ public class PlatformTestUtil {
     assertTiming(message, expected, 4, actionToMeasure);
   }
 
-  public static long measure(@NotNull Runnable actionToMeasure) {
-    long start = System.currentTimeMillis();
-    actionToMeasure.run();
-    long finish = System.currentTimeMillis();
-    return finish - start;
-  }
-
   @SuppressWarnings("CallToSystemGC")
   public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
       waitForAllBackgroundActivityToCalmDown();
-      long duration = measure(actionToMeasure);
+      long duration = TimeoutUtil.measureExecutionTime(actionToMeasure::run);
       try {
         assertTiming(message, expected, duration);
         break;
@@ -821,6 +809,7 @@ public class PlatformTestUtil {
     System.setProperty("file.encoding", encoding);
   }
 
+  @SuppressWarnings("ImplicitDefaultCharsetUsage")
   public static void withStdErrSuppressed(@NotNull Runnable r) {
     PrintStream std = System.err;
     System.setErr(new PrintStream(NULL));
@@ -919,14 +908,14 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.utils.ProfilingUtil"), "captureMemorySnapshot");
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler"), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");
       }
     }
     catch (ClassNotFoundException e) {
-      // ProfilingUtil is missing from the classpath, ignore
+      // YourKitProfilerHandler is missing from the classpath, ignore
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

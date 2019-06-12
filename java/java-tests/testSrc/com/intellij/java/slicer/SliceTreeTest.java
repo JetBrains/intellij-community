@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.slicer.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -212,7 +198,7 @@ public class SliceTreeTest extends SliceTestCase {
   public void testNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
     JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
     JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
 
@@ -304,7 +290,7 @@ public class SliceTreeTest extends SliceTestCase {
 
     Object[] actualStrings = ContainerUtil.map2Array(actualNodes, SliceNode::toString);
 
-    String[] childrenExpected = dataExpected.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : dataExpected.split("\n");
+    String[] childrenExpected = dataExpected.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : dataExpected.split("\n");
     String curChildren = "";
     String curNode = null;
     int iactual = 0;
@@ -333,7 +319,7 @@ public class SliceTreeTest extends SliceTestCase {
   public void testDoubleNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DoubleNulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
     JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
 
     JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);

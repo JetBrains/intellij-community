@@ -31,7 +31,7 @@ class DuplicateExpressionsContext {
     list.add(expression);
   }
 
-  void forEach(BiConsumer<PsiExpression, List<PsiExpression>> consumer) {
+  void forEach(BiConsumer<? super PsiExpression, ? super List<PsiExpression>> consumer) {
     myOccurrences.forEach(consumer);
   }
 

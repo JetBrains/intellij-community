@@ -181,7 +181,7 @@ public class SideEffectChecker {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if (!ExpressionUtils.isArrayCreationExpression(expression) && !isSideEffectFreeConstructor(expression)) {
+      if (!expression.isArrayCreation() && !isSideEffectFreeConstructor(expression)) {
         if (addSideEffect(expression)) return;
       }
       super.visitNewExpression(expression);
@@ -257,7 +257,7 @@ public class SideEffectChecker {
     String name = method.getName();
     if (name.startsWith("assert") || name.startsWith("check") || name.startsWith("require")) return true;
     PsiClass aClass = method.getContainingClass();
-    if (InheritanceUtil.isInheritor(aClass, "org.assertj.core.api.Assert")) {
+    if (InheritanceUtil.isInheritor(aClass, "org.assertj.core.api.Descriptable")) {
       // See com.intellij.codeInsight.DefaultInferredAnnotationProvider#getHardcodedContractAnnotation
       return true;
     }

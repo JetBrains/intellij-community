@@ -199,6 +199,6 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   }
 
   protected static void assertContent(String expected, Entry e) {
-    assertEquals(expected, new String(e.getContent().getBytes()));
+    assertEquals(expected, new String(e.getContent().getBytes(), StandardCharsets.UTF_8));
   }
 }

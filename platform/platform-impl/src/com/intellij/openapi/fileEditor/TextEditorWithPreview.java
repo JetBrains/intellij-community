@@ -218,6 +218,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     }
   }
 
+  @NotNull
+  public TextEditor getTextEditor() {
+    return myEditor;
+  }
+
+  public Layout getLayout() {
+    return myLayout;
+  }
+
   static class MyFileEditorState implements FileEditorState {
     private final Layout mySplitLayout;
     private final FileEditorState myFirstState;

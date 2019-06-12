@@ -39,6 +39,10 @@ abstract class LiveTemplateTestCase extends LightCodeInsightFixtureTestCase {
     editor?.with { TemplateManagerImpl.getTemplateState(it) }
   }
 
+  protected TemplateManagerImpl getTemplateManager() {
+    return TemplateManager.getInstance(project) as TemplateManagerImpl
+  }
+
   def startTemplate(Template template) {
     TemplateManager.getInstance(getProject()).startTemplate(getEditor(), template)
     UIUtil.dispatchAllInvocationEvents()

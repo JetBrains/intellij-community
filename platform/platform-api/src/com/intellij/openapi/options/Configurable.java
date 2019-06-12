@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -121,9 +121,7 @@ import java.awt.*;
  * @see SearchableConfigurable
  */
 public interface Configurable extends UnnamedConfigurable {
-
   ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = ExtensionPointName.create("com.intellij.applicationConfigurable");
-
   ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = ExtensionPointName.create("com.intellij.projectConfigurable");
 
   /**
@@ -177,7 +175,7 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   /**
-   * Allows to dynamically define if current configurable settings apply to current project or to the IDE and update "For current project" 
+   * Allows to dynamically define if current configurable settings apply to current project or to the IDE and update "For current project"
    * indicator accordingly.
    */
   interface VariableProjectAppLevel {

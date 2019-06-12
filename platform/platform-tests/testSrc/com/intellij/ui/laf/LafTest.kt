@@ -8,7 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
-import com.intellij.ui.changeLafIfNeed
+import com.intellij.ui.changeLafIfNeeded
 import com.intellij.ui.layout.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -57,7 +57,7 @@ class LafTest {
       assumeTrue("macOS or Windows 10 are required", SystemInfo.isMacOSMojave || SystemInfo.isWin10OrNewer)
     }
 
-    changeLafIfNeed(lafName)
+    changeLafIfNeeded(lafName)
   }
 
   @Test

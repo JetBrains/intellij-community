@@ -109,11 +109,6 @@
     </group>
 
     <!-- Tools -->
-    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis" text="Fold Lines Like This">
-      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
-    </action>
-
-
     <group id="Internal1" text="IDEA Internal Actions" internal="true">
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
@@ -131,11 +126,11 @@
       </group>
 
       <separator/>
-      <group internal="true" text="Cached value profiler" popup="true">
+      <group internal="true" text="Cached Value Profiler" popup="true">
         <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
-                text="Turn on cached value profiler" internal="true"/>
+                text="Turn on Cached Value Profiler" internal="true"/>
         <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
-                text="Dump results" internal="true"/>
+                text="Dump Results" internal="true"/>
       </group>
 
       <separator/>
@@ -145,7 +140,7 @@
                 text="Mark File Dirty"/>
         <separator/>
         <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"
-                text="Check VFS sanity"/>
+                text="Check VFS Sanity"/>
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction" text="Load All Files Content"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"
                 text="Load All VFS Stored Files Content"/>
@@ -183,11 +178,6 @@
 
       <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
-
-    <reference ref="Compile">
-      <add-to-group group-id="EditorPopupMenu.Run" anchor="first"/>
-    </reference>
-
 
     <group id="EditorTabCompileGroup">
       <reference ref="Compile"/>
@@ -402,7 +392,6 @@
       <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
       <action id="WrapReturnValue" class="com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction"/>
       <separator/>
-      <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
       <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
@@ -414,6 +403,10 @@
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
+
+    <!-- The action remains for compabitility but is not added to menus because it does the same thing as Move, which is now
+         correctly labeled -->
+    <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="UpdateRunningApplication"/>
@@ -438,7 +431,7 @@
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       <add-to-group group-id="XDebugger.Actions"/>
     </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
+    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get Thread Dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
 
@@ -792,13 +785,6 @@
       <reference ref="EditorPopupMenu"/>
     </group>
 
-    <group id="MethodChainHintsContextMenu" popup="true">
-      <action id="MethodChainHintAction"
-              class="com.intellij.codeInsight.hints.MethodChainHintTurningAction"
-              text="Show method chain hints"/>
-      <separator/>
-      <reference ref="EditorPopupMenu"/>
-    </group>
 
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />

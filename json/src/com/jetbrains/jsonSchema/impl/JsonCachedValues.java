@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -26,10 +26,7 @@ import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
@@ -154,7 +151,7 @@ public class JsonCachedValues {
 
     JsonValue schemasValue = schemas.getValue();
     if (!(schemasValue instanceof JsonArray)) return null;
-    List<JsonSchemaCatalogEntry> catalogMap = ContainerUtil.newArrayList();
+    List<JsonSchemaCatalogEntry> catalogMap = new ArrayList<>();
     fillMap((JsonArray)schemasValue, catalogMap);
     return catalogMap;
   }
@@ -193,7 +190,7 @@ public class JsonCachedValues {
     }
 
     if (value instanceof JsonArray) {
-      List<String> strings = ContainerUtil.newArrayList();
+      List<String> strings = new ArrayList<>();
       for (JsonValue val: ((JsonArray)value).getValueList()) {
         if (val instanceof JsonStringLiteral) {
           strings.add(((JsonStringLiteral)val).getValue());

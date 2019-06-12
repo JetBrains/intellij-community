@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
@@ -17,15 +18,13 @@ import java.util.concurrent.ExecutorService;
 final class LoadDescriptorsContext implements AutoCloseable {
   @NotNull
   private final ExecutorService myExecutorService;
-  private final PluginLoadProgressManager myPluginLoadProgressManager;
 
   private final Collection<Interner<String>> myInterners;
 
   // synchronization will ruin parallel loading, so, string pool is local per thread
   private final ThreadLocal<SafeJdomFactory> myThreadLocalXmlFactory;
 
-  LoadDescriptorsContext(@Nullable PluginLoadProgressManager pluginLoadProgressManager, boolean isParallel) {
-    myPluginLoadProgressManager = pluginLoadProgressManager;
+  LoadDescriptorsContext(boolean isParallel) {
     int maxThreads = isParallel ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
       myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads);
@@ -46,11 +45,6 @@ final class LoadDescriptorsContext implements AutoCloseable {
   @NotNull
   ExecutorService getExecutorService() {
     return myExecutorService;
-  }
-
-  @Nullable
-  PluginLoadProgressManager getPluginLoadProgressManager() {
-    return myPluginLoadProgressManager;
   }
 
   @Nullable
@@ -89,7 +83,8 @@ final class LoadDescriptorsContext implements AutoCloseable {
 
     private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
 
-    private final Interner<String> stringInterner = new Interner<String>(ContainerUtil.concat(CLASS_NAME_LIST, IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES)) {
+    private final Interner<String>
+      stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST, IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES)) {
       @NotNull
       @Override
       public String intern(@NotNull String name) {

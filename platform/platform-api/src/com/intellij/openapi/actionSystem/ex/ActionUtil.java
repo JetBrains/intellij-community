@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +44,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -285,17 +285,10 @@ public class ActionUtil {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
   }
 
-  @NotNull
-  public static void sortAlphabetically(@NotNull List<AnAction> list) {
-    list.sort(new Comparator<AnAction>() {
-      @Override
-      public int compare(AnAction o1, AnAction o2) {
-        return Comparing.compare(o1.getTemplateText(), o2.getTemplateText());
-      }
-    });
+  public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
+    list.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }
 
-  @NotNull
   /**
    * Tries to find an 'action' and 'target action' by text and put the 'action' just before of after the 'target action'
    */
@@ -368,7 +361,7 @@ public class ActionUtil {
   }
 
   public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
-                                                  @NotNull Predicate<AnAction> condition) {
+                                                  @NotNull Predicate<? super AnAction> condition) {
     for (AnAction child : group.getChildren(null)) {
       if (condition.test(child)) return true;
       if (child instanceof ActionGroup) {
@@ -387,7 +380,11 @@ public class ActionUtil {
    * @param actionId action id
    */
   public static AnAction copyFrom(@NotNull AnAction action, @NotNull String actionId) {
-    action.copyFrom(ActionManager.getInstance().getAction(actionId));
+    AnAction from = ActionManager.getInstance().getAction(actionId);
+    if (from != null) {
+      action.copyFrom(from);
+    }
+    ActionsCollector.getInstance().onActionConfiguredByActionId(action, actionId);
     return action;
   }
 
@@ -415,6 +412,7 @@ public class ActionUtil {
     if (ss1 == CustomShortcutSet.EMPTY) {
       a1.copyShortcutFrom(a2);
     }
+    ActionsCollector.getInstance().onActionConfiguredByActionId(action, actionId);
     return a1;
   }
 
@@ -438,7 +436,7 @@ public class ActionUtil {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       manager.fireBeforeActionPerformed(action, dataContext, event);
-      action.actionPerformed(event);
+      performActionDumbAware(action, event);
       if (onDone != null) {
         onDone.run();
       }

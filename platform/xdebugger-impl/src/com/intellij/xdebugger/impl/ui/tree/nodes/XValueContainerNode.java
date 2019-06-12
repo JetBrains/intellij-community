@@ -122,9 +122,9 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Nullable
-  private List<XValueGroupNodeImpl> createGroupNodes(List<XValueGroup> groups,
+  private List<XValueGroupNodeImpl> createGroupNodes(List<? extends XValueGroup> groups,
                                                      @Nullable List<XValueGroupNodeImpl> prevNodes,
-                                                     List<XValueContainerNode<?>> newChildren) {
+                                                     List<? super XValueContainerNode<?>> newChildren) {
     if (groups.isEmpty()) return prevNodes;
 
     List<XValueGroupNodeImpl> nodes = prevNodes != null ? prevNodes : new SmartList<>();

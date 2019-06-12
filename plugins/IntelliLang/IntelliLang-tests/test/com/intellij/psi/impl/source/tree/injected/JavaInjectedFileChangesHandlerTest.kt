@@ -3,6 +3,10 @@ package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.lang.Language
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.lang.injection.MultiHostInjector
+import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
@@ -12,16 +16,21 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.injection.Injectable
+import com.intellij.psi.util.parentOfType
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.SmartList
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.StoringFixPresenter
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
+import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade
 
 class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
@@ -54,6 +63,56 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent())
     }
 
+  }
+
+  fun `test temp injection survive on host death and no edit in uninjected`() {
+    with(myFixture) {
+
+      configureByText("classA.java", """
+          class A {
+            void foo() {
+              String a = "{\"bca\":<caret> \n1}";
+            }
+          }
+      """.trimIndent())
+
+      InjectLanguageAction.invokeImpl(project,
+                                      myFixture.editor,
+                                      myFixture.file,
+                                      Injectable.fromLanguage(Language.findLanguageByID("JSON")))
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, editor, file)
+      val fragmentFile = quickEditHandler.newFile
+
+      TestCase.assertEquals("{\"bca\": \n1}", fragmentFile.text)
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+
+      fragmentFile.edit { insertString(text.indexOf(":"), "\n") }
+      checkResult("""
+          class A {
+            void foo() {
+              String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
+      injectionTestFixture.assertInjectedLangAtCaret("JSON")
+      UnInjectLanguageAction.invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      injectionTestFixture.assertInjectedLangAtCaret(null)
+
+      TestCase.assertFalse(quickEditHandler.isValid)
+      fragmentFile.edit { insertString(text.indexOf(":"), "       ") }
+      checkResult("""
+          class A {
+            void foo() {
+              String a = "{\"bca\"\n" +
+                      ": \n" +
+                      "1}";
+            }
+          }
+      """.trimIndent())
+    }
   }
 
   fun `test delete in multiple hosts`() {
@@ -89,7 +148,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }
 
   }
-
 
   fun `test edit multipart in 4 steps`() {
     with(myFixture) {
@@ -237,7 +295,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
-
   fun `test complex insert-commit-broken-reformat`() {
     with(myFixture) {
 
@@ -331,7 +388,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
-
   fun `test suffix-prefix-edit-reformat`() {
     with(myFixture) {
 
@@ -408,7 +464,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }
 
   }
-
 
   fun `test delete-commit-delete`() {
     with(myFixture) {
@@ -518,6 +573,61 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+  fun `test type new lines in fe then delete`() {
+    with(myFixture) {
+
+      val hostFile = configureByText("classA.java", """
+          class A {
+            void foo() {
+              String a = "<html></html><caret>";
+            }
+          }
+      """.trimIndent())
+
+      val fragmentFile = injectAndOpenInFragmentEditor("HTML")
+      TestCase.assertEquals("<html></html>", fragmentFile.text)
+
+      openFileInEditor(fragmentFile.virtualFile)
+      assertHostIsReachable(hostFile, file)
+
+      moveCaret(fragmentFile.text.length)
+      type("\n")
+      type("\n")
+
+      checkResult("classA.java", """
+        import org.intellij.lang.annotations.Language;
+        
+        class A {
+          void foo() {
+            @Language("HTML") String a = "<html></html>\n" +
+                    "\n";
+          }
+        }
+      """.trimIndent(), true)
+      assertHostIsReachable(hostFile, file)
+
+      type("\b")
+      type("\b")
+
+      checkResult("classA.java", """
+        import org.intellij.lang.annotations.Language;
+        
+        class A {
+          void foo() {
+            @Language("HTML") String a = "<html></html>";
+          }
+        }
+      """.trimIndent(), true)
+      assertHostIsReachable(hostFile, file)
+    }
+
+  }
+
+  private fun assertHostIsReachable(hostFile: PsiFile, injectedFile: PsiFile) {
+    TestCase.assertEquals("host file should be reachable from the context",
+                          hostFile.virtualFile,
+                          injectedFile.context?.containingFile?.virtualFile)
+  }
 
   fun `test edit with guarded blocks`() {
     with(myFixture) {
@@ -561,7 +671,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
     }
 
   }
-
 
   fun `test edit guarded blocks ending`() {
     with(myFixture) {
@@ -682,6 +791,61 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   }
 
+  fun `test edit inner within multiple injections`() {
+    with(myFixture) {
+
+      InjectedLanguageManager.getInstance(project).registerMultiHostInjector(JsonMultiInjector(), testRootDisposable)
+
+      configureByText("classA.java", """
+          class A {
+            void foo() {
+               String injectjson = "{\n" +
+                        "  \"html\": \"<html><caret></html>\"\n" +
+                        "}";
+            }
+          }
+      """.trimIndent())
+
+      injectionTestFixture.getAllInjections().map { it.second }.distinct().let { allInjections ->
+        UsefulTestCase.assertContainsElements(
+          allInjections.map { it.text },
+          "{\\n  \\\"html\\\": \\\"HTML\\\"\\n}",
+          "<html></html>")
+      }
+
+
+      val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+      val fragmentFile = quickEditHandler.newFile
+
+      TestCase.assertEquals("<html></html>", fragmentFile.text)
+
+      fragmentFile.edit { insertString(text.indexOf("</html>"), " ") }
+      checkResult("""
+          class A {
+            void foo() {
+               String injectjson = "{\n" +
+                       "  \"html\": \"<html> </html>\"\n" +
+                        "}";
+            }
+          }
+      """.trimIndent())
+      fragmentFile.edit {
+        val htmlBodyEnd = text.indexOf("</html>")
+        deleteString(htmlBodyEnd - 1, htmlBodyEnd)
+      }
+      checkResult("""
+          class A {
+            void foo() {
+               String injectjson = "{\n" +
+                       "  \"html\": \"<html></html>\"\n" +
+                        "}";
+            }
+          }
+      """.trimIndent())
+    }
+
+  }
+
   private fun injectAndOpenInFragmentEditor(language: String): PsiFile {
     with(myFixture) {
       StoringFixPresenter().apply {
@@ -696,7 +860,6 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
       return quickEditHandler.newFile
     }
   }
-
 
   private fun undo(editor: Editor) = runWithUndoManager(editor, UndoManager::undo)
 
@@ -743,4 +906,49 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 private fun String.indexAfter(string: String): Int {
   val r = indexOf(string)
   return if (r == -1) -1 else r + string.length
+}
+
+private class JsonMultiInjector : MultiHostInjector {
+  private val VAR_NAME = "injectjson"
+
+  override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
+    val concatenationsFacade = UStringConcatenationsFacade.create(context)?.takeIf { it.uastOperands.any() } ?: return
+    context.parentOfType<PsiVariable>()?.takeIf { it.name == VAR_NAME } ?: return
+
+    val cssReg = """"html"\s*:\s*"(.*)"""".toRegex()
+    val mhRegistrar = MultiHostRegistrarPlaceholderHelper(registrar)
+
+    mhRegistrar.startInjecting(Language.findLanguageByID("JSON")!!)
+    val cssInjections = SmartList<Pair<PsiLanguageInjectionHost, TextRange>>()
+    for (host in concatenationsFacade.psiLanguageInjectionHosts) {
+      val manipulator = ElementManipulators.getManipulator(host)
+      val fullRange = manipulator.getRangeInElement(host)
+      val escaper = host.createLiteralTextEscaper()
+
+      val decoded: CharSequence = StringBuilder().apply { escaper.decode(fullRange, this) }
+      val cssRanges = cssReg.find(decoded)?.groups?.get(1)?.range
+        ?.let { TextRange.create(it.first, it.last + 1) }
+        ?.let { cssRangeInDecoded ->
+          listOf(TextRange.create(
+            escaper.getOffsetInHost(cssRangeInDecoded.startOffset, fullRange),
+            escaper.getOffsetInHost(cssRangeInDecoded.endOffset, fullRange)
+          ))
+        }.orEmpty()
+
+      mhRegistrar.addHostPlaces(host, cssRanges.map { it to "HTML" })
+      cssInjections.addAll(cssRanges.map { host to it })
+    }
+
+    mhRegistrar.doneInjecting()
+
+    for ((host, cssRange) in cssInjections) {
+      registrar.startInjecting(Language.findLanguageByID("HTML")!!)
+      registrar.addPlace(null, null, host, cssRange)
+      registrar.doneInjecting()
+    }
+
+  }
+
+  override fun elementsToInjectIn() = listOf(PsiElement::class.java)
+
 }

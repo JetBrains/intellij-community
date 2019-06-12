@@ -25,9 +25,6 @@ import com.intellij.refactoring.inline.InlineParameterHandler;
 import com.intellij.refactoring.util.InlineUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.LightPlatformTestCase.getProject;
-
-
 public class JavaCodeInsightTestUtil {
   private static final int TARGET_FOR_INLINE_FLAGS =
     TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
@@ -50,7 +47,7 @@ public class JavaCodeInsightTestUtil {
     final Editor editor = fixture.getEditor();
     final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
     assert element instanceof PsiParameter : element;
-    new InlineParameterHandler().inlineElement(getProject(), editor, element);
+    new InlineParameterHandler().inlineElement(fixture.getProject(), editor, element);
     fixture.checkResultByFile(after, false);
   }
 
@@ -66,7 +63,7 @@ public class JavaCodeInsightTestUtil {
 
     final PsiMethod method = (PsiMethod)element;
     assert !(InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method)) : "Bad returns found";
-    new InlineMethodProcessor(getProject(), method, refExpr, editor, false).run();
+    new InlineMethodProcessor(fixture.getProject(), method, refExpr, editor, false).run();
     fixture.checkResultByFile(after, false);
   }
 
@@ -80,7 +77,7 @@ public class JavaCodeInsightTestUtil {
     final PsiReference ref = fixture.getFile().findReferenceAt(editor.getCaretModel().getOffset());
     final PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
 
-    new InlineConstantFieldProcessor((PsiField)element, getProject(), refExpr, false).run();
+    new InlineConstantFieldProcessor((PsiField)element, fixture.getProject(), refExpr, false).run();
     fixture.checkResultByFile(after, false);
   }
 }

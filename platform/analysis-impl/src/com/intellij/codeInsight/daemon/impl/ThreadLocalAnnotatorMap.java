@@ -35,7 +35,7 @@ abstract class ThreadLocalAnnotatorMap<K, V> {
 
   @SuppressWarnings("unchecked")
   @NotNull
-  private List<V> cloneTemplates(@NotNull Collection<V> templates) {
+  private List<V> cloneTemplates(@NotNull Collection<? extends V> templates) {
     List<V> result = new ArrayList<>(templates.size());
     PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
     for (V template : templates) {

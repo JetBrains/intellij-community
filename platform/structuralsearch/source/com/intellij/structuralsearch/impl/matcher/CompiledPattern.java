@@ -65,7 +65,7 @@ public abstract class CompiledPattern {
     return nodes;
   }
 
-  public void setNodes(List<PsiElement> elements) {
+  public void setNodes(List<? extends PsiElement> elements) {
     this.nodes = new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements));
     this.nodeCount = elements.size();
   }
@@ -86,7 +86,7 @@ public abstract class CompiledPattern {
   @NotNull
   public String getTypedVarString(PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    String typedVarString = (profile == null) ? element.getText() : profile.getTypedVarString(element);
+    final String typedVarString = (profile == null) ? element.getText() : profile.getTypedVarString(element);
     return typedVarString.trim();
   }
 

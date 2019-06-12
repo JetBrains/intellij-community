@@ -32,7 +32,7 @@ public class Fernflower implements IDecompiledData {
     String level = (String)properties.get(IFernflowerPreferences.LOG_LEVEL);
     if (level != null) {
       try {
-        logger.setSeverity(IFernflowerLogger.Severity.valueOf(level.toUpperCase(Locale.US)));
+        logger.setSeverity(IFernflowerLogger.Severity.valueOf(level.toUpperCase(Locale.ENGLISH)));
       }
       catch (IllegalArgumentException ignore) { }
     }

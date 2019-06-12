@@ -40,7 +40,7 @@ public class AnActionListEditor<T> extends JPanel {
     add(myForm.myWholePanel, BorderLayout.CENTER);
   }
 
-  public void addAddAction(final Factory<T> newItemFactory) {
+  public void addAddAction(final Factory<? extends T> newItemFactory) {
     ReorderableListController<T>.AddActionDescription description = myForm.getListActionsBuilder().addAddAction(
       AntBundle.message("add.action.name"), newItemFactory, true);
     description.addPostHandler(new ReorderableListController.ActionNotification<T>() {
@@ -52,7 +52,7 @@ public class AnActionListEditor<T> extends JPanel {
     description.setShowText(true);
   }
 
-  public void addRemoveButtonForAnt(final Condition<T> removeCondition, String actionName) {
+  public void addRemoveButtonForAnt(final Condition<? super T> removeCondition, String actionName) {
     final ReorderableListController<T>.RemoveActionDescription description = myForm.getListActionsBuilder().addRemoveAction(actionName);
     description.addPostHandler(new ReorderableListController.ActionNotification<List<T>>() {
       @Override
@@ -105,7 +105,7 @@ public class AnActionListEditor<T> extends JPanel {
     return myRemoved;
   }
 
-  public void setItems(Collection<T> items) {
+  public void setItems(Collection<? extends T> items) {
     DefaultListModel model = myForm.getListModel();
     model.removeAllElements();
     for (T item : items) {

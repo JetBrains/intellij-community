@@ -25,13 +25,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
 
+@Deprecated
+/**
+ * external executor should woork through maven run configuration
+ */
 public class MavenExternalExecutor extends MavenExecutor {
 
   private OSProcessHandler myProcessHandler;
@@ -71,10 +79,31 @@ public class MavenExternalExecutor extends MavenExecutor {
           @Override
           public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
             // todo move this logic to ConsoleAdapter class
-            if (!myConsole.isSuppressed(text)) {
+            if (!myConsole.isSuppressed(text) && (!MavenSpyOutputParser.isSpyLog(text) || Registry.is("maven.spy.events.debug"))) {
               super.notifyTextAvailable(text, outputType);
             }
             updateProgress(indicator, text);
+          }
+
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return new BaseOutputReader.Options() {
+              @Override
+              public BaseDataReader.SleepingPolicy policy() {
+                return BaseDataReader.SleepingPolicy.BLOCKING;
+              }
+
+              @Override
+              public boolean splitToLines() {
+                return true;
+              }
+
+              @Override
+              public boolean sendIncompleteLines() {
+                return false;
+              }
+            };
           }
         };
 

@@ -1,0 +1,18 @@
+print new Object
+()
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('print')
+    PsiWhiteSpace(' ')
+    Command arguments
+      NEW expression
+        PsiElement(new)('new')
+        PsiWhiteSpace(' ')
+        Reference element
+          PsiElement(identifier)('Object')
+        PsiElement(new line)('\n')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaCoreBundle;
@@ -32,6 +32,8 @@ public enum LanguageLevel {
   JDK_11(JavaCoreBundle.message("jdk.11.language.level.description"), 11),
   JDK_12(JavaCoreBundle.message("jdk.12.language.level.description"), 12),
   JDK_12_PREVIEW(JavaCoreBundle.message("jdk.12.preview.language.level.description"), 12),
+  JDK_13(JavaCoreBundle.message("jdk.13.language.level.description"), 13),
+  JDK_13_PREVIEW(JavaCoreBundle.message("jdk.13.preview.language.level.description"), 13),
   JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"), 12);
 
   public static final LanguageLevel HIGHEST = JDK_12;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -109,7 +110,7 @@ public class CheckRegExpForm {
       }
     };
     mySampleText.setOneLineMode(false);
-    int preferredWidth = Math.max(JBUI.scale(250), myRegExp.getPreferredSize().width);
+    int preferredWidth = Math.max(JBUIScale.scale(250), myRegExp.getPreferredSize().width);
     myRegExp.setPreferredWidth(preferredWidth);
     mySampleText.setPreferredWidth(preferredWidth);
 

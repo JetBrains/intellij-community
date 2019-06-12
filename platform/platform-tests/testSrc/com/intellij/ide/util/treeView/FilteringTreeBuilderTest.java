@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.TreeUIHelper;
@@ -9,7 +8,9 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.LinkedHashMap;
 
@@ -175,7 +176,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
     myFilter.update(text, selection);
   }
 
-  private class Node extends CachingSimpleNode {
+  private static class Node extends CachingSimpleNode {
 
     private final LinkedHashMap<String, Node> myKids = new LinkedHashMap<>();
 
@@ -209,7 +210,6 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
 
     @Override
     protected void updateFileStatus() {
-      
     }
   }
 
@@ -240,7 +240,8 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
       return value.toString().startsWith(myPattern);
     }
 
-    public ActionCallback update(final String pattern, Object selection) {
+    @NotNull
+    public Promise<?> update(final String pattern, Object selection) {
       myPattern = pattern;
       return fireUpdate(selection, true, false);
     }

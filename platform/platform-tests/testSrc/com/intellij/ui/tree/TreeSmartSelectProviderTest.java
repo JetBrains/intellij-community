@@ -796,22 +796,22 @@ public class TreeSmartSelectProviderTest {
     Assert.assertEquals(expected, !tree.isRootVisible() ? "-Root\n" + actual : actual);
   }
 
-  private static void test(Consumer<JTree> consumer) {
+  private static void test(Consumer<? super JTree> consumer) {
     test(true, consumer);
     test(false, consumer);
   }
 
-  private static void test(int selectionMode, Consumer<JTree> consumer) {
+  private static void test(int selectionMode, Consumer<? super JTree> consumer) {
     test(selectionMode, true, consumer);
     test(selectionMode, false, consumer);
   }
 
-  private static void test(boolean rootVisible, Consumer<JTree> consumer) {
+  private static void test(boolean rootVisible, Consumer<? super JTree> consumer) {
     test(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION, rootVisible, consumer);
     test(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, rootVisible, consumer);
   }
 
-  private static void test(int selectionMode, boolean rootVisible, Consumer<JTree> consumer) {
+  private static void test(int selectionMode, boolean rootVisible, Consumer<? super JTree> consumer) {
     @SuppressWarnings("UndesirableClassUsage")
     JTree tree = new JTree(new DefaultTreeModel(root()));
     tree.getSelectionModel().setSelectionMode(selectionMode);

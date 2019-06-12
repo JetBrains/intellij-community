@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -13,6 +12,7 @@ import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.YAMLValue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class YamlArrayAdapter implements JsonArrayValueAdapter {
@@ -86,7 +86,7 @@ public class YamlArrayAdapter implements JsonArrayValueAdapter {
   @NotNull
   private List<JsonValueAdapter> computeChildAdapters() {
     List<YAMLSequenceItem> items = myArray.getItems();
-    List<JsonValueAdapter> adapters = ContainerUtil.newArrayListWithCapacity(items.size());
+    List<JsonValueAdapter> adapters = new ArrayList<>(items.size());
     for (YAMLSequenceItem item: items) {
       YAMLValue value = item.getValue();
       if (value == null) {

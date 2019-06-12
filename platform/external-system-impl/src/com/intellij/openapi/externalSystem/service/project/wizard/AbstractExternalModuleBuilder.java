@@ -4,9 +4,12 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +28,16 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
                                           @NotNull final S externalProjectSettings) {
     myExternalSystemId = externalSystemId;
     myExternalProjectSettings = externalProjectSettings;
+    externalProjectSettings.setupNewProjectDefault();
     Icon icon = ExternalSystemUiUtil.getUiAware(externalSystemId).getProjectIcon();
     myIcon = icon == null ? super.getNodeIcon() : icon;
+  }
+
+  @Nullable
+  @Override
+  public Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+    ExternalProjectsManagerImpl.disableProjectWatcherAutoUpdate(project);
+    return super.commitModule(project, model);
   }
 
   @Override

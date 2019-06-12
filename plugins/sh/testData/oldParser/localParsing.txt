@@ -1,0 +1,16 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('local')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('local1')
+              PsiElement(=)('=')
+              NUMBER
+                PsiElement(int)('1')

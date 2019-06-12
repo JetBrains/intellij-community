@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -59,19 +60,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
@@ -86,7 +88,6 @@ import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 import java.util.*;
 
 import static com.intellij.psi.util.PsiTreeUtil.findChildOfType;
-import static com.intellij.util.ArrayUtil.contains;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkInnerClassReferenceFromInstanceContext;
 import static org.jetbrains.plugins.groovy.annotator.ImplKt.checkUnresolvedCodeReference;
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
@@ -1146,7 +1147,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private void checkNamedArgs(GrNamedArgument[] namedArguments, boolean forArgList) {
     highlightNamedArgs(namedArguments);
 
-    Set<Object> existingKeys = ContainerUtil.newHashSet();
+    Set<Object> existingKeys = new HashSet<>();
     for (GrNamedArgument namedArgument : namedArguments) {
       GrArgumentLabel label = namedArgument.getLabel();
       Object value = PsiUtil.getLabelValue(label);
@@ -1218,8 +1219,41 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Override
+  public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
+    super.visitLambdaExpression(expression);
+
+    PsiElement arrow = expression.getArrow();
+    myHolder.createInfoAnnotation(arrow, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+  }
+
+  @Override
+  public void visitBlockLambdaBody(@NotNull GrBlockLambdaBody body) {
+    super.visitBlockLambdaBody(body);
+
+    PsiElement lBrace = body.getLBrace();
+    if (lBrace != null) {
+      myHolder.createInfoAnnotation(lBrace, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+    }
+
+    PsiElement rBrace = body.getRBrace();
+    if (rBrace != null) {
+      myHolder.createInfoAnnotation(rBrace, null).setTextAttributes(GroovySyntaxHighlighter.LAMBDA_ARROW_AND_BRACES);
+    }
+  }
+
+  @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
     super.visitClosure(closure);
+
+    myHolder.createInfoAnnotation(closure.getLBrace(), null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    PsiElement rBrace = closure.getRBrace();
+    if (rBrace != null) {
+      myHolder.createInfoAnnotation(rBrace, null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    }
+    PsiElement closureArrow = closure.getArrow();
+    if (closureArrow != null) {
+      myHolder.createInfoAnnotation(closureArrow, null).setTextAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES);
+    }
 
     if (TypeInferenceHelper.isTooComplexTooAnalyze(closure)) {
       int startOffset = closure.getTextRange().getStartOffset();

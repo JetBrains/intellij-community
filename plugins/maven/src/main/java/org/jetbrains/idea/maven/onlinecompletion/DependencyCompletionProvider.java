@@ -12,7 +12,6 @@ import java.util.List;
 
 public interface DependencyCompletionProvider {
 
-
   @NotNull
   List<MavenDependencyCompletionItem> findGroupCandidates(MavenCoordinate template, SearchParameters searchParameters)
     throws IOException;

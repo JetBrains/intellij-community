@@ -30,6 +30,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
 import icons.GradleIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
@@ -44,6 +45,10 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated Use {@link JavaGradleProjectImportBuilder} instead
+ */
+@Deprecated
 public final class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
   public GradleProjectImportBuilder() {
     this(ProjectDataManager.getInstance());
@@ -211,5 +216,15 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
   @Override
   public Project createProject(String name, String path) {
     return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+  }
+
+  private static GradleProjectImportBuilder ourInstance = null;
+
+  @ApiStatus.Experimental
+  static GradleProjectImportBuilder getInstance() {
+    if (ourInstance == null) {
+      ourInstance = new GradleProjectImportBuilder();
+    }
+    return ourInstance;
   }
 }

@@ -1,16 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -18,24 +16,25 @@ import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.history.FileNamesData;
+import com.intellij.vcs.log.history.EdgeData;
+import com.intellij.vcs.log.history.FileHistoryData;
+import com.intellij.vcs.log.history.VcsDirectoryRenamesProvider;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
 public class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
@@ -44,6 +43,7 @@ public class IndexDataGetter {
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
   @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
+  @NotNull private final VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
 
   public IndexDataGetter(@NotNull Project project,
                          @NotNull Set<? extends VirtualFile> roots,
@@ -55,6 +55,8 @@ public class IndexDataGetter {
     myIndexStorage = indexStorage;
     myLogStorage = logStorage;
     myFatalErrorsConsumer = fatalErrorsConsumer;
+
+    myDirectoryRenamesProvider = VcsDirectoryRenamesProvider.getInstance(myProject);
   }
 
   //
@@ -108,7 +110,7 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
       if (parentsIndexes == null) return null;
-      List<Hash> result = ContainerUtil.newArrayList();
+      List<Hash> result = new ArrayList<>();
       for (int parentIndex : parentsIndexes) {
         CommitId id = myLogStorage.getCommitId(parentIndex);
         if (id == null) return null;
@@ -159,7 +161,7 @@ public class IndexDataGetter {
 
     TIntHashSet filteredByUser = null;
     if (userFilter != null) {
-      Set<VcsUser> users = ContainerUtil.newHashSet();
+      Set<VcsUser> users = new HashSet<>();
       for (VirtualFile root : myRoots) {
         users.addAll(userFilter.getUsers(root));
       }
@@ -189,9 +191,9 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
-        Set<Integer> commits = createFileNamesData(path).getCommits();
+        Set<Integer> commits = createFileHistoryData(path).build().getCommits();
         if (commits.isEmpty() && !path.isDirectory()) {
-          commits = createFileNamesData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
+          commits = createFileHistoryData(VcsUtil.getFilePath(path.getPath(), true)).build().getCommits();
         }
         TroveUtil.addAll(result, commits);
       }
@@ -274,7 +276,7 @@ public class IndexDataGetter {
   @SuppressWarnings("unused")
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
-    return executeAndCatch(() -> createFileNamesData(path).getFiles(), Collections.emptySet());
+    return executeAndCatch(() -> createFileHistoryData(path).build().getFiles(), Collections.emptySet());
   }
 
   @NotNull
@@ -312,31 +314,98 @@ public class IndexDataGetter {
     return affectedCommits;
   }
 
-  @Nullable
-  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<? super Couple<FilePath>> accept) {
-    return executeAndCatch(() -> myIndexStorage.paths.iterateRenames(parent, child, accept));
+  @NotNull
+  public FileHistoryData createFileHistoryData(@NotNull FilePath path) {
+    return createFileHistoryData(Collections.singletonList(path));
   }
 
   @NotNull
-  public FileNamesData createFileNamesData(@NotNull FilePath path) {
-    return createFileNamesData(Collections.singletonList(path));
+  public FileHistoryData createFileHistoryData(@NotNull Collection<FilePath> paths) {
+    if (paths.size() == 1 && ContainerUtil.getFirstItem(paths).isDirectory()) {
+      return new DirectoryHistoryData(ContainerUtil.getFirstItem(paths));
+    }
+    return new FileHistoryDataImpl(paths);
   }
 
-  @NotNull
-  public FileNamesData createFileNamesData(@NotNull Collection<FilePath> paths) {
-    return new FileNamesData(paths) {
-      @NotNull
-      @Override
-      public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
-        return IndexDataGetter.this.getAffectedCommits(path);
-      }
+  private class FileHistoryDataImpl extends FileHistoryData {
+    private FileHistoryDataImpl(@NotNull FilePath startPath) {
+      super(startPath);
+    }
 
-      @Nullable
-      @Override
-      public Couple<FilePath> findRename(int parent, int child, @NotNull Function1<? super Couple<FilePath>, Boolean> accept) {
-        return IndexDataGetter.this.findRename(parent, child, couple -> accept.invoke(couple));
+    private FileHistoryDataImpl(@NotNull Collection<? extends FilePath> startPaths) {
+      super(startPaths);
+    }
+
+    @NotNull
+    @Override
+    public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+      return IndexDataGetter.this.getAffectedCommits(path);
+    }
+
+    @Nullable
+    @Override
+    public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
+    }
+  }
+
+  private class DirectoryHistoryData extends FileHistoryDataImpl {
+    private final Map<EdgeData<Integer>, EdgeData<FilePath>> renamesMap = new HashMap<>();
+
+    private DirectoryHistoryData(@NotNull FilePath startPath) {
+      super(startPath);
+
+      for (Map.Entry<EdgeData<CommitId>, EdgeData<FilePath>> entry : myDirectoryRenamesProvider.getRenamesMap().entrySet()) {
+        EdgeData<CommitId> commits = entry.getKey();
+        EdgeData<FilePath> rename = entry.getValue();
+        if (VcsFileUtil.isAncestor(rename.getChild(), startPath, false)) {
+          FilePath renamedPath = VcsUtil.getFilePath(rename.getParent().getPath() + "/" +
+                                                     VcsFileUtil.relativePath(rename.getChild(), startPath), true);
+          renamesMap.put(new EdgeData<>(myLogStorage.getCommitIndex(commits.getParent().getHash(), commits.getParent().getRoot()),
+                                        myLogStorage.getCommitIndex(commits.getChild().getHash(), commits.getChild().getRoot())),
+                         new EdgeData<>(renamedPath, startPath));
+        }
       }
-    };
+    }
+
+    @NotNull
+    @Override
+    public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+      TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = super.getAffectedCommits(path);
+      if (!path.isDirectory()) return affectedCommits;
+      hackAffectedCommits(path, affectedCommits);
+      return affectedCommits;
+    }
+
+    private void hackAffectedCommits(@NotNull FilePath path,
+                                     @NotNull TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> affectedCommits) {
+      for (Map.Entry<EdgeData<Integer>, EdgeData<FilePath>> entry : renamesMap.entrySet()) {
+        int childCommit = entry.getKey().getChild();
+        if (affectedCommits.containsKey(childCommit)) {
+          EdgeData<FilePath> rename = entry.getValue();
+          if (FILE_PATH_HASHING_STRATEGY.equals(rename.getChild(), path)) {
+            affectedCommits.get(childCommit).transformValues(value -> VcsLogPathsIndex.ChangeKind.ADDED);
+          }
+          else if (FILE_PATH_HASHING_STRATEGY.equals(rename.getParent(), path)) {
+            affectedCommits.get(childCommit).transformValues(value -> VcsLogPathsIndex.ChangeKind.REMOVED);
+          }
+        }
+      }
+    }
+
+    @Nullable
+    @Override
+    public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      if (path.isDirectory()) return findFolderRename(parent, child, path, isChildPath);
+      return super.findRename(parent, child, path, isChildPath);
+    }
+
+    @Nullable
+    private EdgeData<FilePath> findFolderRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
+      EdgeData<FilePath> rename = renamesMap.get(new EdgeData<>(parent, child));
+      if (rename == null) return null;
+      return FILE_PATH_HASHING_STRATEGY.equals(isChildPath ? rename.getChild() : rename.getParent(), path) ? rename : null;
+    }
   }
 
   //

@@ -17,7 +17,7 @@ import com.intellij.testFramework.PlatformTestUtil
 class CreateModuleInfoActionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun test() {
     val dir = PsiManager.getInstance(project).findDirectory(MAIN.root()!!)!!
-    val ctx = MapDataContext(mapOf(LangDataKeys.IDE_VIEW to TestIdeView(dir), LangDataKeys.MODULE to myModule))
+    val ctx = MapDataContext(mapOf(LangDataKeys.IDE_VIEW to TestIdeView(dir), LangDataKeys.MODULE to module))
     val event = AnActionEvent.createFromDataContext("", null, ctx)
     ActionManager.getInstance().getAction("NewModuleInfo")!!.actionPerformed(event)
 

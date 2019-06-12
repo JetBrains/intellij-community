@@ -20,16 +20,14 @@ import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.BitUtil
 import com.intellij.util.Url
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.InputEvent
-import javax.swing.JList
 
 private val LOG = logger<BaseOpenInBrowserAction>()
 
@@ -163,13 +161,11 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
 
   val result = AsyncPromise<Url>()
   JBPopupFactory.getInstance()
-    .createPopupChooserBuilder(ContainerUtil.newArrayList(urls))
-    .setRenderer(object : ColoredListCellRenderer<Url>() {
-      override fun customizeCellRenderer(list: JList<out Url>, value: Url?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        // todo icons looks good, but is it really suitable for all URLs providers?
-        icon = AllIcons.Nodes.Servlet
-        append((value as Url).toDecodedForm())
-      }
+    .createPopupChooserBuilder(urls.toMutableList())
+    .setRenderer(SimpleListCellRenderer.create<Url> { label, value, _ ->
+      // todo icons looks good, but is it really suitable for all URLs providers?
+      label.icon = AllIcons.Nodes.Servlet
+      label.text = (value as Url).toDecodedForm()
     })
     .setTitle("Choose Url")
     .setItemChosenCallback { value ->

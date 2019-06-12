@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ReuseOfLocalVariableInspection extends BaseInspection {
   @Override
@@ -86,7 +88,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       if (variable == null) return;
       final PsiAssignmentExpression assignment = (PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(referenceExpression.getParent());
       if (assignment == null) return;
-      final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)assignment.getParent();
+      PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)assignment.getParent();
       final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
       if (lExpression == null) return;
       final String originalVariableName = lExpression.getText();
@@ -94,14 +96,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final PsiCodeBlock variableBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       final String newVariableName = codeStyleManager.suggestUniqueVariableName(originalVariableName, variableBlock, false);
-      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(assignmentStatement, PsiCodeBlock.class);
-      final SearchScope scope;
-      if (codeBlock != null) {
-        scope = new LocalSearchScope(codeBlock);
-      }
-      else {
-        scope = variable.getUseScope();
-      }
+      final SearchScope scope = new LocalSearchScope(assignmentStatement.getParent());
       final Query<PsiReference> query = ReferencesSearch.search(variable, scope, false);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -121,8 +116,9 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       final String rhsText = rhs == null ? "" : commentTracker.text(rhs);
       @NonNls final String newStatementText = type.getCanonicalText() + ' ' + newVariableName + " =  " + rhsText + ';';
 
-      final PsiDeclarationStatement declarationStatement =
-        (PsiDeclarationStatement)commentTracker.replaceAndRestoreComments(assignmentStatement, newStatementText);
+      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)BlockUtils.addAfter(assignmentStatement, factory.createStatementFromText(newStatementText, assignmentStatement));
+      assignmentStatement = PsiTreeUtil.getPrevSiblingOfType(declarationStatement, PsiExpressionStatement.class);
+      commentTracker.deleteAndRestoreComments(Objects.requireNonNull(assignmentStatement));
       final PsiElement[] elements = declarationStatement.getDeclaredElements();
       final PsiLocalVariable newVariable = (PsiLocalVariable)elements[0];
       final PsiElement context = declarationStatement.getParent();
@@ -178,8 +174,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
         // that a variable is used in only one branch of a try statement
         return;
       }
-      final PsiElement assignmentBlock =
-        assignmentParent.getParent();
+      final PsiElement assignmentBlock = assignmentParent.getParent();
       if (assignmentBlock == null) {
         return;
       }
@@ -207,17 +202,13 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       registerError(lhs);
     }
 
-    private static boolean loopExistsBetween(
-      PsiAssignmentExpression assignment, PsiCodeBlock block) {
+    private static boolean loopExistsBetween(PsiAssignmentExpression assignment, PsiCodeBlock block) {
       PsiElement elementToTest = assignment;
       while (elementToTest != null) {
         if (elementToTest.equals(block)) {
           return false;
         }
-        if (elementToTest instanceof PsiWhileStatement ||
-            elementToTest instanceof PsiForeachStatement ||
-            elementToTest instanceof PsiForStatement ||
-            elementToTest instanceof PsiDoWhileStatement) {
+        if (elementToTest instanceof PsiLoopStatement) {
           return true;
         }
         elementToTest = elementToTest.getParent();
@@ -225,8 +216,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       return false;
     }
 
-    private static boolean tryExistsBetween(
-      PsiAssignmentExpression assignment, PsiCodeBlock block) {
+    private static boolean tryExistsBetween(PsiAssignmentExpression assignment, PsiCodeBlock block) {
       PsiElement elementToTest = assignment;
       while (elementToTest != null) {
         if (elementToTest.equals(block)) {

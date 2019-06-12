@@ -157,7 +157,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   @Override
-  public Boolean getAddinionallyCachedData(SvnHistorySession session) {
+  public Boolean getAdditionallyCachedData(SvnHistorySession session) {
     return session.isHaveMergeSources();
   }
 

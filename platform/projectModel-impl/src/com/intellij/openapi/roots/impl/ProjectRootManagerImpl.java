@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -80,7 +79,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       }
     }
 
-    protected void beforeRootsChanged() {
+    public void beforeRootsChanged() {
       if (myBatchLevel == 0 || !myChanged) {
         if (fireBeforeRootsChanged(myFileTypes)) {
           myChanged = true;
@@ -88,7 +87,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       }
     }
 
-    protected void rootsChanged() {
+    public void rootsChanged() {
       if (myBatchLevel == 0) {
         if (fireRootsChanged(myFileTypes)) {
           myChanged = false;
@@ -105,7 +104,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return (ProjectRootManagerImpl)getInstance(project);
   }
 
-  public ProjectRootManagerImpl(Project project) {
+  public ProjectRootManagerImpl(@NotNull Project project) {
     myProject = project;
     myRootsCache = new OrderRootsCache(project);
     myJdkTableMultiListener = new JdkTableMultiListener(project);
@@ -122,8 +121,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public List<String> getContentRootUrls() {
     final List<String> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
-      final String[] urls = ModuleRootManager.getInstance(module).getContentRootUrls();
-      ContainerUtil.addAll(result, urls);
+      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getContentRootUrls());
     }
     return result;
   }
@@ -192,9 +190,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public Sdk getProjectSdk() {
-    return myProjectSdkName == null ? null :
-           myProjectSdkType == null ? ProjectJdkTable.getInstance().findJdk(myProjectSdkName) :
-           ProjectJdkTable.getInstance().findJdk(myProjectSdkName, myProjectSdkType);
+    if (myProjectSdkName == null) {
+      return null;
+    }
+
+    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+    if (myProjectSdkType == null) {
+      return projectJdkTable.findJdk(myProjectSdkName);
+    }
+    else {
+      return projectJdkTable.findJdk(myProjectSdkName, myProjectSdkType);
+    }
   }
 
   @Override
@@ -252,7 +258,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
   }
 
-  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");
@@ -314,7 +319,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myRootsCache.clearCache();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
+      ModuleRootManagerEx.getInstanceEx(module).dropCaches();
     }
   }
 
@@ -545,13 +550,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private final JdkTableMultiListener myJdkTableMultiListener;
 
-  private class JdkTableMultiListener extends ListenerContainer<ProjectJdkTable.Listener> implements ProjectJdkTable.Listener {
-    private final MessageBusConnection listenerConnection;
-
+  private final class JdkTableMultiListener extends ListenerContainer<ProjectJdkTable.Listener> implements ProjectJdkTable.Listener {
     private JdkTableMultiListener(@NotNull Project project) {
       super(new ProjectJdkTable.Listener[0]);
-      listenerConnection = project.getMessageBus().connect();
-      listenerConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this);
+
+      project.getMessageBus().connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this);
     }
 
     @Override
@@ -592,7 +595,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   void addJdkTableListener(@NotNull ProjectJdkTable.Listener jdkTableListener, @NotNull Disposable parent) {
     myJdkTableMultiListener.addListener(jdkTableListener);
-    Disposer.register(parent, ()->myJdkTableMultiListener.removeListener(jdkTableListener));
+    Disposer.register(parent, () -> myJdkTableMultiListener.removeListener(jdkTableListener));
   }
 
   void assertListenersAreDisposed() {

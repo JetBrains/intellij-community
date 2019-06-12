@@ -29,7 +29,7 @@ public class WSLUtilTest {
 
   @Test
   public void testWslToWinPath() {
-    assumeTrue(myLegacyWSL != null);
+    assumeWSLAvailable();
 
     assertWslPath("/usr/something/include", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include", true);
     assertWslPath("/usr/something/bin/gcc", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc", true);
@@ -48,9 +48,13 @@ public class WSLUtilTest {
     assertWslPath("/mnt/c/юникод", "c:\\юникод", false);
   }
 
+  private void assumeWSLAvailable() {
+    assumeTrue("WSL unavailable", myLegacyWSL != null);
+  }
+
   @Test
   public void testWinToWslPath() {
-    assumeTrue(myLegacyWSL != null);
+    assumeWSLAvailable();
 
     assertWinPath("c:\\foo", "/mnt/c/foo");
     assertWinPath("c:\\temp\\KeepCase", "/mnt/c/temp/KeepCase");
@@ -63,7 +67,7 @@ public class WSLUtilTest {
 
   @Test
   public void testPaths() {
-    assumeTrue(myLegacyWSL != null);
+    assumeWSLAvailable();
 
     final String originalWinPath = "c:\\usr\\something\\bin\\gcc";
     final String winPath = myLegacyWSL.getWindowsPath(myLegacyWSL.getWslPath(originalWinPath));
@@ -76,7 +80,7 @@ public class WSLUtilTest {
 
   @Test
   public void testResolveSymlink() throws Exception {
-    assumeTrue(myLegacyWSL != null);
+    assumeWSLAvailable();
 
     final File winFile = FileUtil.createTempFile("the_file.txt", null);
     final File winSymlink = new File(new File(FileUtil.getTempDirectory()), "sym_link");

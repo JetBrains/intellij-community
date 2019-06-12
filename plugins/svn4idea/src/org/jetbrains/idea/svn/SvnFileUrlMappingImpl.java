@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -21,13 +21,14 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.util.containers.ContainerUtil.find;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
 import static org.jetbrains.idea.svn.SvnUtil.*;
@@ -42,7 +43,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @NotNull private final SvnMapping myMapping = new SvnMapping();
   // grouped; if there are several mappings one under another, will return the upmost
   @NotNull private final SvnMapping myMoreRealMapping = new SvnMapping();
-  @NotNull private final List<RootUrlInfo> myErrorRoots = newArrayList();
+  @NotNull private final List<RootUrlInfo> myErrorRoots = new ArrayList<>();
   @NotNull private final MyRootsHelper myRootsHelper;
   @NotNull private final Project myProject;
   @NotNull private final NestedCopiesHolder myNestedCopiesHolder = new NestedCopiesHolder();
@@ -156,14 +157,14 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   @Override
   public List<RootUrlInfo> getErrorRoots() {
     synchronized (myMonitor) {
-      return newArrayList(myErrorRoots);
+      return new ArrayList<>(myErrorRoots);
     }
   }
 
   @Override
   @NotNull
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
-    if (MyRootsHelper.isInProgress()) return newArrayList(result);
+    if (MyRootsHelper.isInProgress()) return new ArrayList<>(result);
 
     synchronized (myMonitor) {
       List<VirtualFile> cachedRoots = myMoreRealMapping.getUnderVcsRoots();
@@ -172,7 +173,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         myChecker.reportNoRoots(lonelyRoots);
       }
 
-      return newArrayList(cachedRoots.isEmpty() ? result : cachedRoots);
+      Collection<? extends VirtualFile> iterable = cachedRoots.isEmpty() ? result : cachedRoots;
+      return new ArrayList<>(iterable);
     }
   }
 

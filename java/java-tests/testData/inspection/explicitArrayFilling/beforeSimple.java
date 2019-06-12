@@ -1,4 +1,4 @@
-// "Replace loop with 'Arrays.setAll' method call" "true"
+// "Replace loop with 'Arrays.setAll()' method call" "true"
 import java.util.Arrays;
 import java.util.List;
 

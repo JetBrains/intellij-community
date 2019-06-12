@@ -202,12 +202,12 @@ public class TextAttributes implements Cloneable {
   }
 
   @ApiStatus.Experimental
-  public void forEachAdditionalEffect(@NotNull BiConsumer<EffectType, Color> consumer) {
+  public void forEachAdditionalEffect(@NotNull BiConsumer<? super EffectType, ? super Color> consumer) {
     myAttrs.getAdditionalEffects().forEach(consumer);
   }
 
   @ApiStatus.Experimental
-  public void forEachEffect(@NotNull BiConsumer<EffectType, Color> consumer) {
+  public void forEachEffect(@NotNull BiConsumer<? super EffectType, ? super Color> consumer) {
     myAttrs.getAllEffects().forEach(consumer);
   }
 

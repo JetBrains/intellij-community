@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.*;
 import java.util.HashMap;
+import java.util.*;
 
 /**
  * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmart()}, {@link #create(TObjectHashingStrategy)} instead of override.
@@ -40,7 +40,7 @@ public class MultiMap<K, V> implements Serializable {
   public MultiMap<K, V> copy() {
     return new MultiMap<>(this);
   }
-  
+
   public MultiMap(int initialCapacity, float loadFactor) {
     myMap = createMap(initialCapacity, loadFactor);
   }
@@ -108,13 +108,13 @@ public class MultiMap<K, V> implements Serializable {
         return false;
       }
     }
-    return true;    
+    return true;
   }
 
   public boolean containsKey(K key) {
     return myMap.containsKey(key);
   }
-  
+
   public boolean containsScalarValue(V value) {
     for(Collection<V> valueList: myMap.values()) {
       if (valueList.contains(value)) {
@@ -280,7 +280,7 @@ public class MultiMap<K, V> implements Serializable {
       @NotNull
       @Override
       protected Collection<V> createCollection() {
-        return ContainerUtil.newLinkedHashSet();
+        return new LinkedHashSet<>();
       }
 
       @NotNull

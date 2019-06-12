@@ -18,6 +18,8 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -27,24 +29,26 @@ public class LayerDescriptor {
   private final String myTokenSeparator;
   private final TextAttributesKey myBackground;
 
-  public LayerDescriptor(final SyntaxHighlighter layerHighlighter, final String tokenSeparator, final TextAttributesKey background) {
+  public LayerDescriptor(@NotNull SyntaxHighlighter layerHighlighter, @NotNull String tokenSeparator, @Nullable TextAttributesKey background) {
     myBackground = background;
     myLayerHighlighter = layerHighlighter;
     myTokenSeparator = tokenSeparator;
   }
-  public LayerDescriptor(final SyntaxHighlighter layerHighlighter, final String tokenSeparator) {
+  public LayerDescriptor(@NotNull SyntaxHighlighter layerHighlighter, @NotNull String tokenSeparator) {
     this(layerHighlighter, tokenSeparator, null);
   }
 
-  public SyntaxHighlighter getLayerHighlighter() {
+  @NotNull
+  SyntaxHighlighter getLayerHighlighter() {
     return myLayerHighlighter;
   }
 
-  public String getTokenSeparator() {
+  @NotNull
+  String getTokenSeparator() {
     return myTokenSeparator;
   }
 
-  public TextAttributesKey getBackgroundKey() {
+  TextAttributesKey getBackgroundKey() {
     return myBackground;
   }
 }

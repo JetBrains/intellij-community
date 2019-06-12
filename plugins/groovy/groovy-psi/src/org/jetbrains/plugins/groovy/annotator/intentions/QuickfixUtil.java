@@ -8,7 +8,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,13 +84,13 @@ public class QuickfixUtil {
   public static String[] getArgumentsTypes(List<? extends ParamInfo> listOfPairs) {
     final List<String> result = new ArrayList<>();
 
-    if (listOfPairs == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (listOfPairs == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     for (ParamInfo listOfPair : listOfPairs) {
       String type = PsiTypesUtil.unboxIfPossible(listOfPair.type);
       result.add(type);
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   public static String[] getArgumentsNames(List<? extends ParamInfo> listOfPairs) {
@@ -100,7 +100,7 @@ public class QuickfixUtil {
       result.add(name);
     }
 
-    return ArrayUtil.toStringArray(result);
+    return ArrayUtilRt.toStringArray(result);
   }
 
   public static String shortenType(String typeText) {

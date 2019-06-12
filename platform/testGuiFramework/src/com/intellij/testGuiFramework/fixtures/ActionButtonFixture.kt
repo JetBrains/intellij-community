@@ -33,6 +33,10 @@ class ActionButtonFixture(robot: Robot, target: ActionButton) : JComponentFixtur
       it.isShowing && text == it.action.templatePresentation.text
     }
 
+    fun byIcon(icon: String): (ActionButton) -> Boolean = {
+      it.isShowing && it.icon.toString().endsWith(icon)
+    }
+
     fun fixtureByActionId(container: Container?, robot: Robot, actionId: String): ActionButtonFixture
       = ActionButtonFixture(robot, robot.findComponent(container, ActionButton::class.java, actionIdMatcher(actionId)))
 

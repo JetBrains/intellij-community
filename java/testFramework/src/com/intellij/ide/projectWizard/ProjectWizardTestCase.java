@@ -127,18 +127,18 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return createModuleFromWizard(project);
   }
 
-  protected Module createModuleFromWizard(@NotNull Project project) {
+  private Module createModuleFromWizard(@NotNull Project project) {
     return new NewModuleAction().createModuleFromWizard(project, null, myWizard);
   }
 
-  protected void runWizard(@NotNull String group,
-                           @Nullable final String name,
-                           @Nullable Project project,
-                           @Nullable final Consumer<? super Step> adjuster) throws IOException {
+  private void runWizard(@NotNull String group,
+                         @Nullable final String name,
+                         @Nullable Project project,
+                         @Nullable final Consumer<? super Step> adjuster) throws IOException {
     createWizard(project);
     ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
     if (!step.setSelectedTemplate(group, name)) {
-      throw new IllegalArgumentException(group + '/' + name + " template not found, available groups " + step.availableTemplateGroupsToString());
+      throw new IllegalArgumentException(group + '/' + name + " template not found. Available groups: " + step.availableTemplateGroupsToString());
     }
 
     runWizard(step1 -> {
@@ -151,7 +151,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     });
   }
 
-  protected void runWizard(@Nullable Consumer<? super Step> adjuster) {
+  private void runWizard(@Nullable Consumer<? super Step> adjuster) {
     while (true) {
       ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
@@ -236,7 +236,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return ContainerUtil.getFirstItem(ImportModuleAction.createFromWizard(project, myWizard));
   }
 
-  private static <T> T computeInWriteSafeContext(Supplier<T> supplier) {
+  private static <T> T computeInWriteSafeContext(Supplier<? extends T> supplier) {
     Ref<T> module = Ref.create();
     ApplicationManager.getApplication().invokeLater(() -> module.set(supplier.get()));
     UIUtil.dispatchAllInvocationEvents();

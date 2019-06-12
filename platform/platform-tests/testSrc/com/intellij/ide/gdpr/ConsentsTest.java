@@ -277,7 +277,7 @@ public class ConsentsTest extends TestCase{
 
   private static Pair<ConsentOptions, MemoryIOBackend> createConsentOptions(String initialDefauls, String initialBundled) {
     final MemoryIOBackend backend = new MemoryIOBackend(initialDefauls, initialBundled);
-    return Pair.create(new ConsentOptions(backend), backend);
+    return Pair.create(new ConsentOptions(backend, false), backend);
   }
 
   private static class MemoryIOBackend implements ConsentOptions.IOBackend {

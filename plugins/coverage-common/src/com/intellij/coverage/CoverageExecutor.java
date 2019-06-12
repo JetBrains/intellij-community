@@ -22,7 +22,7 @@ public class CoverageExecutor extends Executor {
   @NotNull
   @Override
   public String getStartActionText(@NotNull String configurationName) {
-    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'";
+    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
     return TextWithMnemonic.parse("Run%s with Co_verage").replaceFirst("%s", configName).toString();
   }
 

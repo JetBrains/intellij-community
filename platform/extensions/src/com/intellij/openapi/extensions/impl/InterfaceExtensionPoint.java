@@ -37,7 +37,16 @@ public class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
       throw new RuntimeException("'implementation' attribute not specified for '" + getName() + "' extension in '"
                                  + pluginDescriptor.getPluginId() + "' plugin");
     }
-    return doCreateAdapter(implementationClassName, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor, true, isUsePicoComponentAdapter());
+
+    String orderId = extensionElement.getAttributeValue("id");
+    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
+    Element effectiveElement = shouldDeserializeInstance(extensionElement) ? extensionElement : null;
+    if (isUsePicoComponentAdapter()) {
+      return new XmlExtensionAdapter.ConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
+    else {
+      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+    }
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {

@@ -23,14 +23,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
-public class ManagingContentRootFoldersTest extends IdeaTestCase {
+public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
   private VirtualFile root;
   private ContentEntry entry;
   private ModifiableRootModel myModel;

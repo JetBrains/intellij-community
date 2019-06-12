@@ -70,12 +70,12 @@ public class ProjectTaskResult {
     return myTasksState;
   }
 
-  public boolean anyMatch(@NotNull BiPredicate<ProjectTask, ProjectTaskState> predicate) {
+  public boolean anyMatch(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
     return myTasksState.entrySet().stream().anyMatch(entry -> predicate.test(entry.getKey(), entry.getValue()));
   }
 
   @NotNull
-  public List<ProjectTask> getTasks(@NotNull BiPredicate<ProjectTask, ProjectTaskState> predicate) {
+  public List<ProjectTask> getTasks(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
     return myTasksState.entrySet().stream()
       .filter(entry -> predicate.test(entry.getKey(), entry.getValue()))
       .map(Map.Entry::getKey)
@@ -83,7 +83,7 @@ public class ProjectTaskResult {
   }
 
   @NotNull
-  public List<Module> getAffectedModules(@NotNull Predicate<ProjectTaskState> predicate) {
+  public List<Module> getAffectedModules(@NotNull Predicate<? super ProjectTaskState> predicate) {
     return myTasksState.entrySet().stream()
       .filter(entry -> entry.getKey() instanceof ModuleBuildTask)
       .filter(entry -> predicate.test(entry.getValue()))
@@ -92,8 +92,8 @@ public class ProjectTaskResult {
   }
 
   @NotNull
-  public <T extends ProjectModelBuildableElement> List<T> getBuildableElements(@NotNull Class<T> buildableClass,
-                                                                               @NotNull Predicate<ProjectTaskState> predicate) {
+  public <T extends ProjectModelBuildableElement> List<T> getBuildableElements(@NotNull Class<? extends T> buildableClass,
+                                                                               @NotNull Predicate<? super ProjectTaskState> predicate) {
     return myTasksState.entrySet().stream()
       .filter(entry -> entry.getKey() instanceof ProjectModelBuildTask<?>)
       .filter(entry -> buildableClass.isInstance(((ProjectModelBuildTask)entry.getKey()).getBuildableElement()))

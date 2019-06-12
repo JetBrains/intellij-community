@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -438,7 +438,7 @@ public class RevisionsList {
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         Graphics2D g2d = (Graphics2D)g.create();
-        g2d.setColor(UIUtil.getBorderColor());
+        g2d.setColor(JBColor.border());
         g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{1}, 1));
         g2d.drawLine(x, y, x + width, y);
         if (isLast) {
@@ -500,7 +500,7 @@ public class RevisionsList {
             .append(filesCount).append(": ")
             .append(title);
         }
-        CopyPasteManager.getInstance().setContents(new TextTransferable(sb.toString()));
+        CopyPasteManager.getInstance().setContents(new TextTransferable(sb));
       }
 
       @Override

@@ -603,6 +603,12 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         GetArrayResponse ret = getPythonConsoleBackendClient().getArray(var.getName(), rowOffset, colOffset, rows, cols, format);
         return createArrayChunk(ret, this);
       }
+      catch (UnsupportedArrayTypeException e) {
+        throw new IllegalArgumentException(var.getType() + " is not supported", e);
+      }
+      catch (ExceedingArrayDimensionsException e) {
+        throw new IllegalArgumentException(var.getName() + " has more than two dimensions", e);
+      }
       catch (Exception e) {
         throw new PyDebuggerException("Evaluate in console failed", e);
       }

@@ -165,7 +165,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
         private final Set<VirtualFile> myProcessed = new HashSet<>();
         private AntDomTarget myDefaultTarget = null;
 
-        private void fillTargets(List<AntBuildTargetBase> list, AntBuildModelBase model, AntDomProject project, VirtualFile sourceFile) {
+        private void fillTargets(List<? super AntBuildTargetBase> list, AntBuildModelBase model, AntDomProject project, VirtualFile sourceFile) {
           if (myProcessed.contains(sourceFile)) {
             return;
           }

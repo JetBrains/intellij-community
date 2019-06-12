@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -9,10 +9,10 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.ui.AntialiasingType.getKeyForCurrentScope;
-import static com.intellij.util.ui.UIUtil.DEF_SYSTEM_FONT_SIZE;
 import static java.util.stream.Collectors.toList;
 import static javax.swing.SwingConstants.*;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
@@ -274,7 +273,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
   }
 
   private static float getFontSize(Font font) {
-    return font == null ? DEF_SYSTEM_FONT_SIZE : font.getSize2D();
+    return font == null ? JBUIScale.DEF_SYSTEM_FONT_SIZE : font.getSize2D();
   }
 
   private static final AbstractLayoutManager STATELESS_LAYOUT = new AbstractLayoutManager() {
@@ -465,7 +464,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         }
         if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
           Graphics2D g2 = (Graphics2D)g.create();
-          float stroke = JBUI.getFontScale(getFontSize(getFont()));
+          float stroke = JBUIScale.getFontScale(getFontSize(getFont()));
           // calculate a visible width of separator (30% of a whole path)
           int delta = (int)(scale * (.3 * getRightGap() + getLeftGap()));
           g2.clipRect(bounds.x - delta, bounds.y, Short.MAX_VALUE, bounds.height);

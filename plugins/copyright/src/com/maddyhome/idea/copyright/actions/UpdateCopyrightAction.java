@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +68,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
         return false;
       }
     }
-    else if (files != null && FileUtil.areFiles(files)) {
+    else if (files != null && areFiles(files)) {
       boolean copyrightEnabled  = false;
       for (VirtualFile vfile : files) {
         if (FileTypeUtil.getInstance().isSupportedFile(vfile)) {
@@ -193,5 +192,19 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     public void stop() {
       myIdx = mySize;
     }
+  }
+
+  private static boolean areFiles(VirtualFile[] files) {
+    if (files == null || files.length < 2) {
+      return false;
+    }
+
+    for (VirtualFile file : files) {
+      if (file.isDirectory()) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

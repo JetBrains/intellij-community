@@ -37,5 +37,5 @@ public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProv
     addCompletions(params, result, ContainerUtil.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(params)));
   }
 
-  protected abstract void addCompletions(CompletionParameters params, CompletionResultSet result, Collection<ExpectedTypeInfo> infos);
+  protected abstract void addCompletions(CompletionParameters params, CompletionResultSet result, Collection<? extends ExpectedTypeInfo> infos);
 }

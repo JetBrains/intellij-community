@@ -2,15 +2,18 @@
 
 package com.intellij.uiDesigner.projectView;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import com.intellij.uiDesigner.GuiFormFileType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -33,7 +36,7 @@ public class FormMoveProvider extends MoveHandlerDelegate {
   }
 
   @Override
-  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
     return false;
   }
 
@@ -68,5 +71,10 @@ public class FormMoveProvider extends MoveHandlerDelegate {
       }
     }
     return super.isMoveRedundant(source, target);
+  }
+
+  @Override
+  public boolean supportsLanguage(@NotNull Language language) {
+    return false;  // only available in project view
   }
 }

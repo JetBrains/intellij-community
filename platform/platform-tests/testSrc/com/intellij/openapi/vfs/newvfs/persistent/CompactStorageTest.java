@@ -1,8 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.Disposer;
@@ -13,6 +9,7 @@ import com.intellij.util.io.storage.Storage;
 import com.intellij.util.io.storage.StorageTestBase;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -20,18 +17,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
+import static org.junit.Assert.assertEquals;
+
+/**
+ * @author max
+ */
 public class CompactStorageTest extends StorageTestBase {
   @NotNull
   @Override
-  protected Storage createStorage(String fileName) throws IOException {
+  protected Storage createStorage(@NotNull String fileName) throws IOException {
     return new CompactStorage(fileName);
   }
 
+  @Test
   public void testCompactAndIterators() throws IOException {
     TIntArrayList recordsList = new TIntArrayList();
     // 1000 records after deletion greater than 3M limit for init time compaction
     final int recordCount = 2000;
-    for(int i = 0; i < recordCount; ++i) recordsList.add(createTestRecord());
+    for (int i = 0; i < recordCount; ++i) recordsList.add(createTestRecord(myStorage));
     final int physicalRecordCount = myStorage.getLiveRecordsCount();
     for (int i = 0; i < recordCount / 2; ++i) myStorage.deleteRecord(recordsList.getQuick(i));
     int logicalRecordCount = countLiveLogicalRecords();
@@ -41,7 +44,7 @@ public class CompactStorageTest extends StorageTestBase {
     assertEquals("No content for reading removed record",0, myStorage.readStream(removedRecordId).available());
 
     Disposer.dispose(myStorage);  // compact is triggered
-    myStorage = createStorage(getFileName());
+    setUpStorage();
     assertEquals(myStorage.getLiveRecordsCount(), physicalRecordCount / 2);
 
     logicalRecordCount = 0;
@@ -72,10 +75,6 @@ public class CompactStorageTest extends StorageTestBase {
   }
 
   private static final int TIMES_LIMIT = 10000;
-
-  private int createTestRecord() throws IOException {
-    return createTestRecord(myStorage);
-  }
 
   static  int createTestRecord(Storage storage) throws IOException {
     final int r = storage.createNewRecord();

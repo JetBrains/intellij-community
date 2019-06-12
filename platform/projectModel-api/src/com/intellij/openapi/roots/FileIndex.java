@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -25,11 +26,15 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.Set;
 
 /**
- * Provides information about files contained in a project or module. Should be used from a read action.
+ * Provides information about files contained in a project or module.
+ * In this interface and its inheritors, methods checking specific file status ("isX", "getX") should be used from a read action.
+ * Iteration methods ("iterateX") may be called outside of a read action (since iteration can take a long time),
+ * but they should be prepared to project model being changed in the middle of the iteration.
  *
  * @see ProjectRootManager#getFileIndex()
  * @see ModuleRootManager#getFileIndex()
  */
+@ApiStatus.NonExtendable
 public interface FileIndex {
   /**
    * Processes all files and directories under content roots skipping excluded and ignored files and directories.

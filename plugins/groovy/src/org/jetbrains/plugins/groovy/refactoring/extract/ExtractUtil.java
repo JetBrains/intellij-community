@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
@@ -25,10 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -125,7 +109,7 @@ public class ExtractUtil {
     }
     else if (mustAdd.size() == outputVars.length && outputVars.length == 1) {
       return new GrVariableDeclaration[]{
-        factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, callExpression, outputVars[0].getType(), outputVars[0].getName())
+        factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, callExpression, outputVars[0].getType(), outputVars[0].getName())
       };
     }
     else if (varsAreEqual(mustAdd, outputVars)) {
@@ -140,7 +124,7 @@ public class ExtractUtil {
 
   private static boolean varsAreEqual(List<VariableInfo> toAdd, VariableInfo[] outputVars) {
     if (toAdd.size() != outputVars.length) return false;
-    Set<String> names = ContainerUtil.newHashSet();
+    Set<String> names = new HashSet<>();
     for (VariableInfo info : toAdd) {
       names.add(info.getName());
     }
@@ -187,7 +171,7 @@ public class ExtractUtil {
 
     if (distinctDeclaration) {
       for (VariableInfo info : varInfos) {
-        result.add(factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", info.getType(), info.getName()));
+        result.add(factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, "", info.getType(), info.getName()));
       }
     }
     else {
@@ -195,7 +179,7 @@ public class ExtractUtil {
       for (int i = 0, mustAddLength = varInfos.size(); i < mustAddLength; i++) {
         names[i] = varInfos.get(i).getName();
       }
-      result.add(factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, initializer, varInfos.get(0).getType(), names));
+      result.add(factory.createVariableDeclaration(ArrayUtilRt.EMPTY_STRING_ARRAY, initializer, varInfos.get(0).getType(), names));
     }
     return result;
   }
@@ -440,7 +424,7 @@ public class ExtractUtil {
         i++;
       }
     }
-    return ArrayUtil.toStringArray(params);
+    return ArrayUtilRt.toStringArray(params);
   }
 
   @NotNull

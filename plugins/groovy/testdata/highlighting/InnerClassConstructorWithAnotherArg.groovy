@@ -4,10 +4,10 @@ class A {
   }
 
   def foo() {
-    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A)'">()</warning> // incorrect
-    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A, A)'">(new A())</warning> // incorrect
+    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '()'">()</warning> // incorrect
+    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A)'">(new A())</warning> // incorrect
     new Inner("") // correct
-    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A, A, java.lang.String)'">(new A(), "")</warning> // incorrect
+    new Inner<warning descr="Constructor 'Inner' in 'A.Inner' cannot be applied to '(A, java.lang.String)'">(new A(), "")</warning> // incorrect
   }
 
   static def bar() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
@@ -28,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +68,7 @@ public class ReferenceExpressionCompletionContributor {
     return TrueFilter.INSTANCE;
   }
 
-  @Nullable 
+  @Nullable
   public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<? super LookupElement> result) {
     final PsiElement element = parameters.getPosition();
     if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
@@ -167,7 +152,7 @@ public class ReferenceExpressionCompletionContributor {
     return elements;
   }
 
-  @NotNull 
+  @NotNull
   public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
     return JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)
            ? findConstantsUsedInSwitch(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)))
@@ -179,7 +164,7 @@ public class ReferenceExpressionCompletionContributor {
     final PsiCodeBlock body = sw.getBody();
     if (body == null) return Collections.emptySet();
 
-    Set<PsiField> used = ContainerUtil.newLinkedHashSet();
+    Set<PsiField> used = new LinkedHashSet<>();
     for (PsiStatement statement : body.getStatements()) {
       if (statement instanceof PsiSwitchLabelStatementBase) {
         final PsiExpressionList values = ((PsiSwitchLabelStatementBase)statement).getCaseValues();
@@ -217,7 +202,7 @@ public class ReferenceExpressionCompletionContributor {
     if (qualifierItem.getObject() instanceof PsiClass) {
       final String qname = ((PsiClass)qualifierItem.getObject()).getQualifiedName();
       if (qname == null) return null;
-      
+
       String text = qname + separator + "xxx";
       try {
         final PsiExpression expr = factory.createExpressionFromText(text, place);

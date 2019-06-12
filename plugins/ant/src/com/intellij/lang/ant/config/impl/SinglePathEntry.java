@@ -58,7 +58,7 @@ public class SinglePathEntry implements AntClasspathEntry {
   }
 
   @Override
-  public void addFilesTo(final List<File> files) {
+  public void addFilesTo(final List<? super File> files) {
     files.add(myFile);
   }
 

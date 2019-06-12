@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +14,6 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
@@ -36,7 +35,6 @@ import static com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsColle
 public class XBreakpointManagerImpl implements XBreakpointManager {
   private static final Logger LOG = Logger.getInstance(XBreakpointManagerImpl.class);
 
-  public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTER = new SkipDefaultValuesSerializationFilters();
   private final MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<>(true);
   private final Map<XBreakpointType, XBreakpointBase<?,?,?>> myDefaultBreakpoints = new LinkedHashMap<>();
   private final Map<XBreakpointType, BreakpointState<?,?,?>> myBreakpointsDefaults = new LinkedHashMap<>();
@@ -423,8 +421,8 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       state1.setTimeStamp(timeStamp2);
     }
 
-    Element elem1 = XmlSerializer.serialize(state1, SERIALIZATION_FILTER);
-    Element elem2 = XmlSerializer.serialize(state2, SERIALIZATION_FILTER);
+    Element elem1 = XmlSerializer.serialize(state1);
+    Element elem2 = XmlSerializer.serialize(state2);
     boolean res = !JDOMUtil.areElementsEqual(elem1, elem2);
 
     if (ignoreTimestamp) {
@@ -535,8 +533,8 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     myDependentBreakpointManager.saveState();
     final LineBreakpointState sourceState = ((XLineBreakpointImpl<?>)source).getState();
 
-    final LineBreakpointState newState =
-      XmlSerializer.deserialize(XmlSerializer.serialize(sourceState, SERIALIZATION_FILTER), LineBreakpointState.class);
+    Element element = XmlSerializer.serialize(sourceState);
+    LineBreakpointState newState = element == null ? new LineBreakpointState() : XmlSerializer.deserialize(element, LineBreakpointState.class);
     newState.setLine(line);
     newState.setFileUrl(fileUrl);
 

@@ -5,8 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -33,7 +32,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (file.getFileType() != PlainTextFileType.INSTANCE && !(file.getFileType() instanceof AbstractFileType)) return null;
+    if (!(file.getFileType() instanceof PlainTextLikeFileType)) return null;
 
     final String extension = file.getExtension();
     final String fileName = file.getName();
@@ -64,7 +63,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   }
 
   @Nullable
-  private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins, @NotNull Project project) {
+  private EditorNotificationPanel createPanel(final String extension, final Set<? extends PluginsAdvertiser.Plugin> plugins, @NotNull Project project) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
 
     panel.setText("Plugins supporting " + extension + " files found.");
@@ -111,7 +110,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     return panel;
   }
 
-  private static boolean hasNonBundledPlugin(Set<PluginsAdvertiser.Plugin> plugins) {
+  private static boolean hasNonBundledPlugin(Set<? extends PluginsAdvertiser.Plugin> plugins) {
     for (PluginsAdvertiser.Plugin plugin : plugins) {
       if (!plugin.myBundled) return true;
     }

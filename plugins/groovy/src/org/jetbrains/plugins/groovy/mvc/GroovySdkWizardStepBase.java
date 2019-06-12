@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
@@ -77,7 +78,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
 
   @Override
   public String getHelpId() {
-    return "reference.dialogs.new.project.fromScratch." + (myFramework == null ? "groovy" : myFramework.getFrameworkName().toLowerCase());
+    return "reference.dialogs.new.project.fromScratch." + (myFramework == null ? "groovy" : StringUtil.toLowerCase(myFramework.getFrameworkName()));
   }
 
   @Override

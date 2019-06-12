@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.openapi.application.JBProtocolCommand;
@@ -23,22 +9,23 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.ui.AppIcon;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JBProtocolCheckoutCommand extends JBProtocolCommand {
+final class JBProtocolCheckoutCommand extends JBProtocolCommand {
   private static final String REPOSITORY_NAME_KEY = "checkout.repo";
 
-  public JBProtocolCheckoutCommand() {
+  JBProtocolCheckoutCommand() {
     super("checkout");
   }
 
 
   @Override
-  public void perform(String vcsId, Map<String, String> parameters) {
+  public void perform(String vcsId, @NotNull Map<String, String> parameters) {
     String repository = parameters.get(REPOSITORY_NAME_KEY);
 
     if (StringUtil.isEmpty(repository)) {

@@ -53,7 +53,7 @@ public class MoveClassAndFileTest extends LightMultiFileTestCase {
     assertEquals(1, dirs.length);
 
     final JavaMoveFilesOrDirectoriesHandler handler = new JavaMoveFilesOrDirectoriesHandler();
-    assertTrue(handler.canMove(elements, dirs[0]));
+    assertTrue(handler.canMove(elements, dirs[0], null));
     handler.doMove(getProject(), elements, dirs[0], null);
   }
 }

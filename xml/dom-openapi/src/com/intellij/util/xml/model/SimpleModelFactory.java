@@ -28,5 +28,5 @@ public interface SimpleModelFactory<T extends DomElement, M extends DomModel<T>>
   M getModelByConfigFile(@Nullable XmlFile psiFile);
 
   @Nullable
-  DomFileElement<T> createMergedModelRoot(Set<XmlFile> configFiles);
+  DomFileElement<T> createMergedModelRoot(Set<? extends XmlFile> configFiles);
 }

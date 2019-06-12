@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.impl.HashImpl
@@ -64,14 +63,14 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
 
         commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
       }
-      
+
       val recordCollector = createRecordsCollector(consumer)
       readRecordsFromHandler(handler, recordCollector, *commandParameters)
       recordCollector.finish()
     }
     else {
       val consumer = Consumer<R> { record ->
-        commitConsumer.consume(createCommit(ContainerUtil.newArrayList(record), factory,
+        commitConsumer.consume(createCommit(mutableListOf(record), factory,
                                             requirements.diffRenameLimit))
       }
 

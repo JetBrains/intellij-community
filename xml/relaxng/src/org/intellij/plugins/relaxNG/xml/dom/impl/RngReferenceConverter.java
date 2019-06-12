@@ -22,7 +22,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xml.*;
 import org.intellij.plugins.relaxNG.model.Define;
 import org.intellij.plugins.relaxNG.model.resolve.DefinitionResolver;
@@ -73,8 +73,8 @@ public class RngReferenceConverter implements CustomReferenceConverter {
                       if (fileElement == null) {
                         return EMPTY_ARRAY;
                       }
-                      
-                      final Ref<Object[]> ref = new Ref<>(ArrayUtil.EMPTY_STRING_ARRAY);
+
+                      final Ref<Object[]> ref = new Ref<>(ArrayUtilRt.EMPTY_STRING_ARRAY);
                       fileElement.acceptChildren(new RngDomVisitor(){
                         @Override
                         public void visit(RngGrammar grammar) {
@@ -87,7 +87,7 @@ public class RngReferenceConverter implements CustomReferenceConverter {
                       return ref.get();
                     }
                   }
-                  return ArrayUtil.EMPTY_STRING_ARRAY; // TODO: look for unresolved refs;
+                  return ArrayUtilRt.EMPTY_STRING_ARRAY; // TODO: look for unresolved refs;
                 }
               }
       };

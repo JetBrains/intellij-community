@@ -38,6 +38,7 @@ public class CallMapper<T> {
 
   public CallMapper() {}
 
+  @SafeVarargs
   public CallMapper(CallHandler<T>... handlers) {
     for (CallHandler<T> handler : handlers) {
       register(handler);
@@ -49,7 +50,7 @@ public class CallMapper<T> {
     return this;
   }
 
-  public CallMapper<T> register(CallMatcher matcher, Function<PsiMethodCallExpression, T> handler) {
+  public CallMapper<T> register(CallMatcher matcher, Function<? super PsiMethodCallExpression, ? extends T> handler) {
     return register(CallHandler.of(matcher, handler));
   }
 

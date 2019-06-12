@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -45,10 +31,10 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,16 +48,17 @@ import java.util.List;
 import java.util.Map;
 
 public class DirectoryChooser extends DialogWrapper {
-  @NonNls private static final String FILTER_NON_EXISTING = "filter_non_existing";
+  private static final String FILTER_NON_EXISTING = "filter_non_existing";
   private static final String DEFAULT_SELECTION = "last_directory_selection";
+
   private final DirectoryChooserView myView;
   private boolean myFilterExisting;
   private PsiDirectory myDefaultSelection;
   private final List<ItemWrapper> myItems = new ArrayList<>();
   private PsiElement mySelection;
   private final TabbedPaneWrapper myTabbedPaneWrapper;
-  private final ChooseByNamePanel myChooseByNamePanel;
-  private final String myChooseByNameTabTitle;
+  private final ChooseByNamePanel myByClassPanel;
+  private final ChooseByNamePanel myByFilePanel;
 
   public DirectoryChooser(@NotNull Project project){
     this(project, new DirectoryChooserModuleTreeView(project));
@@ -84,20 +71,22 @@ public class DirectoryChooser extends DialogWrapper {
     myFilterExisting = propertiesComponent.isTrueValue(FILTER_NON_EXISTING);
     myTabbedPaneWrapper = new TabbedPaneWrapper(getDisposable());
     String gotoClassText = GotoClassPresentationUpdater.getTabTitle(false);
-    boolean useClass = gotoClassText.startsWith("Class");
-    myChooseByNameTabTitle = useClass ? gotoClassText : "File";
-    ChooseByNameModel model = useClass ? new GotoClassModel2(project) {
-      @Override
-      public void processNames(Processor<? super String> nameProcessor, boolean checkBoxState) {
-        super.processNames(nameProcessor, false);
-      }
-    } : new GotoFileModel(project) {
-      @Override
-      public void processNames(Processor<? super String> nameProcessor, boolean checkBoxState) {
-        super.processNames(nameProcessor, false);
-      }
-    };
-    myChooseByNamePanel = new ChooseByNamePanel(project, model, "", false, null) {
+    myByClassPanel = gotoClassText.startsWith("Class") ? createChooserPanel(project, true) : null;
+    myByFilePanel = createChooserPanel(project, false);
+    init();
+  }
+
+  private ChooseByNamePanel createChooserPanel(@NotNull Project project, boolean useClass) {
+    //@formatter:off
+    ChooseByNameModel model =
+      useClass ? new GotoClassModel2(project) {
+        @Override public boolean loadInitialCheckBoxState() { return true; }
+        @Override public void saveInitialCheckBoxState(boolean state) {}} :
+      new GotoFileModel(project) {
+        @Override public boolean loadInitialCheckBoxState() { return true; }
+        @Override public void saveInitialCheckBoxState(boolean state) {}};
+    //@formatter:on
+    ChooseByNamePanel panel = new ChooseByNamePanel(project, model, "", false, null) {
       @Override
       protected void showTextFieldPanel() {
       }
@@ -117,15 +106,27 @@ public class DirectoryChooser extends DialogWrapper {
         }
       }
     };
-    Disposer.register(myDisposable, myChooseByNamePanel);
-    init();
+    UiNotifyConnector.doWhenFirstShown(panel.getPanel(), () -> {
+      panel.invoke(new ChooseByNamePopupComponent.Callback() {
+        @Override
+        public void elementChosen(Object element) {
+          setSelection(element);
+        }
+      }, ModalityState.stateForComponent(getRootPane()), false);
+    });
+    Disposer.register(myDisposable, panel);
+    return panel;
   }
 
   @Override
   protected void doOKAction() {
     PropertiesComponent.getInstance().setValue(FILTER_NON_EXISTING, myFilterExisting);
-    if (myTabbedPaneWrapper.getSelectedIndex() == 1) {
-      setSelection(myChooseByNamePanel.getChosenElement());
+    JComponent selectedTab = myTabbedPaneWrapper.getSelectedComponent();
+    if (selectedTab == myByFilePanel.getPanel() ||
+        myByClassPanel != null && selectedTab == myByClassPanel.getPanel()) {
+      setSelection(selectedTab == myByFilePanel.getPanel()
+                   ? myByFilePanel.getChosenElement()
+                   : myByClassPanel.getChosenElement());
     }
     final ItemWrapper item = myView.getSelectedItem();
     if (item != null) {
@@ -160,15 +161,10 @@ public class DirectoryChooser extends DialogWrapper {
     installEnterAction(component);
     panel.add(jScrollPane, BorderLayout.CENTER);
     myTabbedPaneWrapper.addTab("Directory Structure", panel);
-
-    myChooseByNamePanel.invoke(new ChooseByNamePopupComponent.Callback() {
-      @Override
-      public void elementChosen(Object element) {
-        setSelection(element);
-      }
-    }, ModalityState.stateForComponent(getRootPane()), false);
-    myTabbedPaneWrapper.addTab("Choose by Neighbor " + myChooseByNameTabTitle, myChooseByNamePanel.getPanel());
-
+    if (myByClassPanel != null) {
+      myTabbedPaneWrapper.addTab("By Class", myByClassPanel.getPanel());
+    }
+    myTabbedPaneWrapper.addTab("By File", myByFilePanel.getPanel());
     return myTabbedPaneWrapper.getComponent();
   }
 
@@ -207,7 +203,7 @@ public class DirectoryChooser extends DialogWrapper {
     ArrayList<String[]> paths = new ArrayList<>();
     for (int i = 0; i < myView.getItemsSize(); i++) {
       ItemWrapper item = myView.getItemByIndex(i);
-      paths.add(ArrayUtil.toStringArray(FileUtil.splitPath(item.getPresentableUrl())));
+      paths.add(ArrayUtilRt.toStringArray(FileUtil.splitPath(item.getPresentableUrl())));
     }
     FragmentBuilder headBuilder = new FragmentBuilder(paths){
         @Override

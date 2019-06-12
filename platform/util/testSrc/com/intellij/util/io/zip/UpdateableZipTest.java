@@ -54,7 +54,7 @@ public class UpdateableZipTest extends TestCase {
     try (ZipFile utilZip = new ZipFile(zipFile)) {
       ZipEntry thirdEntry = utilZip.getEntry("/third");
       assertNotNull(thirdEntry);
-      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(thirdEntry)));
+      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(thirdEntry), StandardCharsets.UTF_8));
       assertEquals("third", thirdText);
     }
   }
@@ -72,7 +72,7 @@ public class UpdateableZipTest extends TestCase {
     try (ZipFile utilZip = new ZipFile(zipFile)) {
       ZipEntry updatedEntry = utilZip.getEntry("/second");
       assertNotNull(updatedEntry);
-      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(updatedEntry)));
+      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(updatedEntry), StandardCharsets.UTF_8));
       assertEquals("Content Replaced", thirdText);
     }
   }
@@ -203,7 +203,7 @@ public class UpdateableZipTest extends TestCase {
   private static void assertEntryWithContentExists(JBZipFile jbZip, String entryName, String content) throws IOException {
     JBZipEntry entry = jbZip.getEntry(entryName);
     assertNotNull(entry);
-    String text = new String(entry.getData());
+    String text = new String(entry.getData(), StandardCharsets.UTF_8);
     assertEquals(content, text);
   }
 

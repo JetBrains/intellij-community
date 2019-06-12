@@ -292,10 +292,18 @@ public class UsageInfo {
   public int compareToByStartOffset(@NotNull UsageInfo info) {
     Pair<VirtualFile, Integer> offset0 = offset();
     Pair<VirtualFile, Integer> offset1 = info.offset();
-    if (offset0 == null || offset0.first == null || offset1 == null || offset1.first == null || !Comparing.equal(offset0.first, offset1.first)) {
-      return 0;
+    if (offset0 == null || offset1 == null) {
+      return (offset0 == null ? 0 : 1) - (offset1 == null ? 0 : 1);
     }
-    return offset0.second - offset1.second;
+    VirtualFile file0 = offset0.first;
+    VirtualFile file1 = offset1.first;
+    if (file0 == null || file1 == null) {
+      return (file0 == null ? 0 : 1) - (file1 == null ? 0 : 1);
+    }
+    if (Comparing.equal(file0, file1)) {
+      return offset0.second - offset1.second;
+    }
+    return file0.getPath().compareTo(file1.getPath());
   }
 
   @NotNull

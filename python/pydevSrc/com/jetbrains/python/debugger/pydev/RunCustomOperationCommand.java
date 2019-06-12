@@ -1,9 +1,9 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 
@@ -71,15 +71,5 @@ public class RunCustomOperationCommand<T> extends AbstractCommand<T> {
       return "";
     }
   }
-
-  protected static String decode(String in) {
-    try {
-      return URLDecoder.decode(in, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      LOG.error("Unreachable? UTF-8 is always supported.", e);
-      return "";
-    }
-  }
-
 }
 

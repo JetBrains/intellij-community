@@ -57,11 +57,11 @@ public class VcsHistoryCache {
     synchronized (myLock) {
       myHistoryCache.put(new HistoryCacheBaseKey(filePath, vcsKey),
                          new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(),
-                                           session.getCurrentRevisionNumber(), factory.getAddinionallyCachedData(session), isFull));
+                                           session.getCurrentRevisionNumber(), factory.getAdditionallyCachedData(session), isFull));
     }
   }
 
-  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<List<VcsFileRevision>> consumer) {
+  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<? super List<VcsFileRevision>> consumer) {
     synchronized (myLock) {
       final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
       if (cachedHistory != null) {

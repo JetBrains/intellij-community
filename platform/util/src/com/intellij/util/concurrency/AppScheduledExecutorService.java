@@ -1,17 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -56,7 +61,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     }
 
     void setNewThreadListener(@NotNull Consumer<? super Thread> threadListener) {
-      if (newThreadListener != null) throw new IllegalStateException("Listener was already set: "+newThreadListener);
+      if (newThreadListener != null) throw new IllegalStateException("Listener was already set: " + newThreadListener);
       newThreadListener = threadListener;
     }
   }
@@ -90,13 +95,13 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   @Override
   void doShutdown() {
     super.doShutdown();
-    ((BackendThreadPoolExecutor)backendExecutorService).doShutdown();
+    ((BackendThreadPoolExecutor)backendExecutorService).superShutdown();
   }
 
   @NotNull
   @Override
   List<Runnable> doShutdownNow() {
-    return ContainerUtil.concat(super.doShutdownNow(), ((BackendThreadPoolExecutor)backendExecutorService).doShutdownNow());
+    return ContainerUtil.concat(super.doShutdownNow(), ((BackendThreadPoolExecutor)backendExecutorService).superShutdownNow());
   }
 
   public void shutdownAppScheduledExecutorService() {
@@ -120,9 +125,11 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   public int getBackendPoolExecutorSize() {
     return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
   }
+
   void setBackendPoolCorePoolSize(int size) {
-    ((BackendThreadPoolExecutor)backendExecutorService).doSetCorePoolSize(size);
+    ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
+
   int getBackendPoolCorePoolSize() {
     return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
@@ -152,12 +159,12 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       }
     }
 
-    private void doShutdown() {
+    private void superShutdown() {
       super.shutdown();
     }
 
     @NotNull
-    private List<Runnable> doShutdownNow() {
+    private List<Runnable> superShutdownNow() {
       return super.shutdownNow();
     }
 
@@ -178,7 +185,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       error();
     }
 
-    private void doSetCorePoolSize(int corePoolSize) {
+    private void superSetCorePoolSize(int corePoolSize) {
       super.setCorePoolSize(corePoolSize);
     }
 
@@ -197,13 +204,56 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       error();
     }
 
+    private void superSetKeepAliveTime(long time, TimeUnit unit) {
+      super.setKeepAliveTime(time, unit);
+    }
+
     @Override
     public void setThreadFactory(ThreadFactory threadFactory) {
       error();
     }
   }
+
   @NotNull
   public Thread getPeriodicTasksThread() {
     return delayQueue.getThread();
+  }
+
+
+  @TestOnly
+  void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
+    BackendThreadPoolExecutor executor = (BackendThreadPoolExecutor)backendExecutorService;
+    executor.getKeepAliveTime(TimeUnit.NANOSECONDS);
+    executor.superSetKeepAliveTime(1, TimeUnit.NANOSECONDS); // no need for zombies in tests
+    executor.superSetCorePoolSize(0); // interrupt idle workers
+    ReentrantLock mainLock = ReflectionUtil.getField(executor.getClass(), executor, ReentrantLock.class, "mainLock");
+    mainLock.lock();
+    Set workers;
+    try {
+      HashSet workersField = ReflectionUtil.getField(executor.getClass(), executor, HashSet.class, "workers");
+      workers = new HashSet(workersField); // to be able to iterate thread-safely outside the lock
+    }
+    finally {
+      mainLock.unlock();
+    }
+    executor.superSetKeepAliveTime(1, TimeUnit.SECONDS);
+
+    for (Object worker : workers) {
+      Thread thread = ReflectionUtil.getField(worker.getClass(), worker, Thread.class, "thread");
+      try {
+        thread.join(unit.toMillis(timeout));
+      }
+      catch (InterruptedException e) {
+        String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
+        for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
+          trace += " at " + stackTraceElement + "\n";
+        }
+        trace += "---\n";
+        System.err.println("Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
+                           "Thread " + thread + " dump:\n" + trace +
+                           "all thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n/////");
+        break;
+      }
+    }
   }
 }

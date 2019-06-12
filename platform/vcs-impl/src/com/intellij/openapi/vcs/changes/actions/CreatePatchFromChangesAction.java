@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -19,7 +19,10 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.CommitSession;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
@@ -111,10 +114,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<? extends Change> changes) {
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
-    CommitSession commitSession = executor.createCommitSession();
-    if (commitSession instanceof CommitSessionContextAware) {
-      ((CommitSessionContextAware)commitSession).setContext(new CommitContext());
-    }
+    CommitSession commitSession = executor.createCommitSession(new CommitContext());
     DialogWrapper sessionDialog = new SessionDialog(executor.getActionText(),
                                                     project,
                                                     commitSession,
@@ -123,6 +123,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     if (!sessionDialog.showAndGet()) return;
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      //noinspection unchecked
       commitSession.execute((Collection<Change>)changes, commitMessage);
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }

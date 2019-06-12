@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.lang.ImportOptimizer;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +69,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final Set<GrImportStatement> unresolvedOnDemandImports = new HashSet<>();
       final Set<String> implicitlyImportedClasses = new LinkedHashSet<>();
       final Set<String> innerClasses = new HashSet<>();
-      Map<String, String> aliasImported = ContainerUtil.newHashMap();
-      Map<String, String> annotatedImports = ContainerUtil.newHashMap();
+      Map<String, String> aliasImported = new HashMap<>();
+      Map<String, String> annotatedImports = new HashMap<>();
 
       GroovyImportUtil.processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, unresolvedOnDemandImports,
                                    implicitlyImportedClasses, innerClasses,
@@ -194,7 +193,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
       });
 
-      List<GrImportStatement> explicated = ContainerUtil.newArrayList();
+      List<GrImportStatement> explicated = new ArrayList<>();
       for (String importedClass : importedClasses) {
         final String parentName = StringUtil.getPackageName(importedClass);
         if (!annotations.containsKey(importedClass) && !aliased.containsKey(importedClass)) {

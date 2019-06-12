@@ -38,8 +38,8 @@ class ResolveInLibraries2Test : JavaCodeInsightFixtureTestCase() {
 
     fun getJarRootUrls(path: String) = listOf(VfsUtil.getUrlForLibraryRoot(File(path)))
 
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "nano1", getJarRootUrls("${libsDir.path}/foo.jar"), getJarRootUrls("${libsDir.path}/foo-src.zip"))
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "nano2", getJarRootUrls(jarCopy.path), getJarRootUrls(srcCopy.path))
+    ModuleRootModificationUtil.addModuleLibrary(module, "nano1", getJarRootUrls("${libsDir.path}/foo.jar"), getJarRootUrls("${libsDir.path}/foo-src.zip"))
+    ModuleRootModificationUtil.addModuleLibrary(module, "nano2", getJarRootUrls(jarCopy.path), getJarRootUrls(srcCopy.path))
 
     val parsers = JavaPsiFacade.getInstance(project).findClasses("foo.Foo", GlobalSearchScope.allScope(project))
     assertEquals(2, parsers.size)

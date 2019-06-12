@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -23,16 +9,16 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData.SourceRoot;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -51,7 +37,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +88,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       forceDirectoriesCreation = projectDataNode.getUserData(CREATE_EMPTY_DIRECTORIES) == Boolean.TRUE;
     }
 
-    Set<Module> modulesToExpand = ContainerUtil.newTroveSet();
+    Set<Module> modulesToExpand = new THashSet<>();
     MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ModuleData.class);
 
     filterAndReportDuplicatingContentRoots(byModule, project);
@@ -150,22 +135,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     final ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
-    final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
+    final Map<String, ContentEntry> contentEntriesMap = new HashMap<>();
     for (ContentEntry contentEntry : contentEntries) {
       contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
-    }
-
-    boolean createEmptyContentRootDirectories = forceDirectoriesCreation;
-    if (!forceDirectoriesCreation && !data.isEmpty()) {
-      ProjectSystemId projectSystemId = data.iterator().next().getData().getOwner();
-      AbstractExternalSystemSettings externalSystemSettings =
-        ExternalSystemApiUtil.getSettings(module.getProject(), projectSystemId);
-
-      String path = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
-      if (path != null) {
-        ExternalProjectSettings projectSettings = externalSystemSettings.getLinkedProjectSettings(path);
-        createEmptyContentRootDirectories = projectSettings != null && projectSettings.isCreateEmptyContentRootDirectories();
-      }
     }
 
     sourceFolderManager.removeSourceFolders(module);
@@ -188,7 +160,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         if (type != null) {
           for (SourceRoot path : contentRoot.getPaths(externalSrcType)) {
             createSourceRootIfAbsent(
-              sourceFolderManager, contentEntry, path, module, type, externalSrcType.isGenerated(), createEmptyContentRootDirectories);
+              sourceFolderManager, contentEntry, path, module, type, externalSrcType.isGenerated(), forceDirectoriesCreation);
           }
         }
       }
@@ -353,7 +325,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
   private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
                                                              @NotNull Project project) {
-    Map<String, DuplicateModuleReport> filter = ContainerUtil.newLinkedHashMap();
+    Map<String, DuplicateModuleReport> filter = new LinkedHashMap<>();
 
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : moduleNodeToRootNodes.entrySet()) {
       ModuleData moduleData = entry.getKey().getData();

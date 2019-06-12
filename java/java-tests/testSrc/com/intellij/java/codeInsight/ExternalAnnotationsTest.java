@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -22,16 +23,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 
 public class ExternalAnnotationsTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
-  private Module myModule;
-  private Project myProject;
- 
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -44,15 +46,15 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
 
     myFixture.setUp();
-    myModule = builder.getFixture().getModule();
+    Module myModule = builder.getFixture().getModule();
     ModuleRootModificationUtil.updateModel(myModule, model -> {
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath());
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl + "/src", false);
       final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
       extension.setExternalAnnotationUrls(new String[]{VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno")});
     });
-  
-    myProject = myFixture.getProject();
+
+    Project myProject = myFixture.getProject();
 
     JavaCodeStyleSettings.getInstance(myProject).USE_EXTERNAL_ANNOTATIONS = true;
   }
@@ -67,10 +69,16 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
     }
     finally {
       myFixture = null;
-      myModule = null;
-      myProject = null;
       super.tearDown();
     }
+  }
+
+  public void testAddedAnnotationInCodeWhenAlreadyPresent() {
+    PsiFile file = myFixture.configureByFile("src/withAnnotation/Foo.java");
+    PsiMethod method = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiMethod.class, false);
+    assertNotNull(method);
+    AddAnnotationPsiFix.createAddNullableFix(method).invoke(myFixture.getProject(), file, method, method);
+    myFixture.checkResultByFile("src/withAnnotation/Foo_after.java");
   }
 
   public void testRenameClassWithExternalAnnotations() {

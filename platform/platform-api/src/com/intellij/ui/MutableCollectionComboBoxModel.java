@@ -36,7 +36,7 @@ public class MutableCollectionComboBoxModel<T> extends CollectionComboBoxModel<T
     super(items, selection);
   }
 
-  public void update(@NotNull List<T> items) {
+  public void update(@NotNull List<? extends T> items) {
     replaceAll(items);
   }
 

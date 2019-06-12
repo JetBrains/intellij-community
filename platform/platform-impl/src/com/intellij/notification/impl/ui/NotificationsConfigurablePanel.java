@@ -15,11 +15,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.IndexTreePathState;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -265,7 +265,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         getTableCellRendererComponent(this, getModel().getColumnName(columnIndex), false, false, 0, columnIndex).
         getPreferredSize();
 
-      column.setMaxWidth(Math.max(JBUI.scale(65), Math.max(headerSize.width, renderer.getPreferredSize().width)));
+      column.setMaxWidth(Math.max(JBUIScale.scale(65), Math.max(headerSize.width, renderer.getPreferredSize().width)));
     }
 
     @Override

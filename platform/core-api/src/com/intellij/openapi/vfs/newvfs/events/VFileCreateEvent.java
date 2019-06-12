@@ -126,6 +126,6 @@ public class VFileCreateEvent extends VFileEvent {
   public String toString() {
     String kind = myDirectory ? (isEmptyDirectory() ? "(empty) " : "") + "dir " : "file ";
     return "VfsEvent[create " + kind + myParent.getUrl() + "/"+ myChildName +"]"
-           + (myChildren == null ? "" : " with children:\n"+StringUtil.join(myChildren, Object::toString, "\n"));
+           + (myChildren == null ? "" : " with "+myChildren.length+" children");
   }
 }

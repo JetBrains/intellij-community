@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.junit4.JUnit4TestListener;
@@ -27,6 +13,7 @@ import org.junit.runner.notification.Failure;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -128,7 +115,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
     final StringBuffer buf = new StringBuffer();
     JUnit4TestListener sender = createListener(buf);
-    
+
     sender.testRunStarted(root);
     for (Description test : tests) {
       sender.testStarted(test);
@@ -223,7 +210,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "\n" +
            "##teamcity[testSuiteFinished name='|[1|]']\n");
   }
-  
+
   @Test
   public void testParameterizedClassWithSameParameters() throws Exception {
     final String className = "a.TestA";
@@ -393,7 +380,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     root.addChild(testA);
     final Description testName = Description.createTestDescription("TestA", "testName");
     testA.addChild(testName);
-    
+
     final Description testB = Description.createSuiteDescription("TestB");
     root.addChild(testB);
     final Description testNameB = Description.createTestDescription("TestB", "testNameB");
@@ -604,7 +591,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
-  
+
   @Test
   public void testTearDownClassFailureSingleClass() throws Exception {
     final Description testA = Description.createSuiteDescription("TestA");
@@ -697,7 +684,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
                                           "\n" +
                                           "##teamcity[testIgnored name='TestA.testName' error='true' message='' details='java.lang.Exception|n']\n", StringUtil.convertLineSeparators(buf.toString()));
-    
+
   }
 
   @Test
@@ -826,7 +813,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
     final StringBuffer buf = new StringBuffer();
     final JUnit4TestListener sender = createListener(buf);
-  
+
     sender.testRunStarted(root);
     for (Description test : tests) {
       sender.testStarted(test);
@@ -857,7 +844,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     return new JUnit4TestListener(new PrintStream(new OutputStream() {
       @Override
       public void write(int b) {
-        buf.append(new String(new byte[]{(byte)b}));
+        buf.append(new String(new byte[]{(byte)b}, StandardCharsets.UTF_8));
       }
     })) {
       @Override
@@ -984,7 +971,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
       param1.addChild(testDescription);
     }
   }
-  
+
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
     createListener(buf).sendTree(description);

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
 
 public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeMethodReferenceInspection.class);
@@ -107,10 +106,11 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   @Nullable
-  public static PsiExpression canBeMethodReferenceProblem(final PsiVariable[] parameters,
-                                                          PsiType functionalInterfaceType,
+  public static PsiExpression canBeMethodReferenceProblem(@NotNull PsiVariable[] parameters,
+                                                          @Nullable PsiType functionalInterfaceType,
                                                           @Nullable PsiElement context,
                                                           final PsiExpression methodRefCandidate) {
+    if (functionalInterfaceType == null) return null;
     if (methodRefCandidate instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)methodRefCandidate;
       if (newExpression.getAnonymousClass() != null || newExpression.getArrayInitializer() != null) {
@@ -158,9 +158,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         LOG.error(callExpression.getText(), e);
         return null;
       }
-      final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
-      try {
-        map.put(methodReferenceExpression, functionalInterfaceType);
+      return LambdaUtil.performWithTargetType(methodReferenceExpression, functionalInterfaceType, () -> {
         final JavaResolveResult result = methodReferenceExpression.advancedResolve(false);
         final PsiElement element = result.getElement();
         if (element != null && result.isAccessible() &&
@@ -171,10 +169,8 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
 
           return method != null && MethodSignatureUtil.areSignaturesEqual((PsiMethod)element, method) ? callExpression : null;
         }
-      }
-      finally {
-        map.remove(methodReferenceExpression);
-      }
+        return null;
+      });
     }
     return null;
   }

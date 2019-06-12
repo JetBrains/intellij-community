@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
@@ -112,7 +112,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def $name$ = {\n" +
               "  '_T+\n" +
               "}", 0, 0);
-    final String old = options.getPatternContext();
+    final PatternContext old = options.getPatternContext();
     try {
       options.setPatternContext(GroovyStructuralSearchProfile.CLASS_CONTEXT);
       doTest(s, "def $name$ = {\n" +

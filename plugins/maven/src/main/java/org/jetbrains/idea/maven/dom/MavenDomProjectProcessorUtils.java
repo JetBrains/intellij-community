@@ -55,7 +55,7 @@ public class MavenDomProjectProcessorUtils {
     return models;
   }
 
-  private static void collectChildrenProjects(@NotNull final MavenDomProjectModel model, @NotNull Set<MavenDomProjectModel> models) {
+  private static void collectChildrenProjects(@NotNull final MavenDomProjectModel model, @NotNull Set<? super MavenDomProjectModel> models) {
     MavenProject mavenProject = MavenDomUtil.findProject(model);
     if (mavenProject != null) {
       final Project project = model.getManager().getProject();
@@ -441,9 +441,9 @@ public class MavenDomProjectProcessorUtils {
 
 
   private static <T> boolean processSettingsXml(@Nullable MavenProject mavenProject,
-                                                @NotNull Processor<T> processor,
+                                                @NotNull Processor<? super T> processor,
                                                 @NotNull Project project,
-                                                Function<? super MavenDomProfile, T> domProfileFunction) {
+                                                Function<? super MavenDomProfile, ? extends T> domProfileFunction) {
     MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
 
     for (VirtualFile each : settings.getEffectiveSettingsFiles()) {
@@ -457,10 +457,10 @@ public class MavenDomProjectProcessorUtils {
 
   private static <T> boolean processProject(MavenDomProjectModel projectDom,
                                             MavenProject mavenProjectOrNull,
-                                            Processor<T> processor,
+                                            Processor<? super T> processor,
                                             Project project,
-                                            Function<? super MavenDomProfile, T> domProfileFunction,
-                                            Function<? super MavenDomProjectModel, T> projectDomFunction) {
+                                            Function<? super MavenDomProfile, ? extends T> domProfileFunction,
+                                            Function<? super MavenDomProjectModel, ? extends T> projectDomFunction) {
 
     if (processProfilesXml(MavenDomUtil.getVirtualFile(projectDom), mavenProjectOrNull, processor, project, domProfileFunction)) {
       return true;
@@ -474,9 +474,9 @@ public class MavenDomProjectProcessorUtils {
 
   private static <T> boolean processProfilesXml(VirtualFile projectFile,
                                                 MavenProject mavenProjectOrNull,
-                                                Processor<T> processor,
+                                                Processor<? super T> processor,
                                                 Project project,
-                                                Function<? super MavenDomProfile, T> f) {
+                                                Function<? super MavenDomProfile, ? extends T> f) {
     VirtualFile profilesFile = MavenUtil.findProfilesXmlFile(projectFile);
     if (profilesFile == null) return false;
 
@@ -488,8 +488,8 @@ public class MavenDomProjectProcessorUtils {
 
   private static <T> boolean processProfiles(MavenDomProfiles profilesDom,
                                              MavenProject mavenProjectOrNull,
-                                             Processor<T> processor,
-                                             Function<? super MavenDomProfile, T> f) {
+                                             Processor<? super T> processor,
+                                             Function<? super MavenDomProfile, ? extends T> f) {
     Collection<String> activeProfiles =
       mavenProjectOrNull == null ? null : mavenProjectOrNull.getActivatedProfilesIds().getEnabledProfiles();
     for (MavenDomProfile each : profilesDom.getProfiles()) {
@@ -503,8 +503,8 @@ public class MavenDomProjectProcessorUtils {
   }
 
   private static <T> boolean processProfile(MavenDomProfile profileDom,
-                                            Processor<T> processor,
-                                            Function<? super MavenDomProfile, T> f) {
+                                            Processor<? super T> processor,
+                                            Function<? super MavenDomProfile, ? extends T> f) {
     T t = f.fun(profileDom);
     return t != null && processor.process(t);
   }

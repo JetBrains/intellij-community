@@ -65,29 +65,32 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     myFixtureBuilder = fixtureBuilder;
   }
 
+  @NotNull
   @Override
-  public ModuleFixtureBuilder<T> addContentRoot(final String contentRootPath) {
+  public ModuleFixtureBuilder<T> addContentRoot(@NotNull final String contentRootPath) {
     myContentRoots.add(contentRootPath);
     return this;
   }
 
+  @NotNull
   @Override
-  public ModuleFixtureBuilder<T> addSourceRoot(final String sourceRootPath) {
+  public ModuleFixtureBuilder<T> addSourceRoot(@NotNull final String sourceRootPath) {
     Assert.assertFalse("content root should be added first", myContentRoots.isEmpty());
     mySourceRoots.add(sourceRootPath);
     return this;
   }
 
   @Override
-  public void setOutputPath(final String outputPath) {
+  public void setOutputPath(@NotNull final String outputPath) {
     myOutputPath = outputPath;
   }
 
   @Override
-  public void setTestOutputPath(String outputPath) {
+  public void setTestOutputPath(@NotNull String outputPath) {
     myTestOutputPath = outputPath;
   }
 
+  @NotNull
   protected Module createModule() {
     final Project project = myFixtureBuilder.getFixture().getProject();
     Assert.assertNotNull(project);
@@ -99,6 +102,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     return ourIndex++;
   }
 
+  @NotNull
   @Override
   public synchronized T getFixture() {
     if (myModuleFixture == null) {
@@ -108,13 +112,15 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   }
 
   @Override
-  public void addSourceContentRoot(final String path) {
+  public void addSourceContentRoot(@NotNull final String path) {
     addContentRoot(path);
     addSourceRoot(path);
   }
 
+  @NotNull
   protected abstract T instantiateFixture();
 
+  @NotNull
   Module buildModule() {
     Module[] module = new Module[1];
     WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myFixtureBuilder.getFixture().getProject()).mergeRootsChangesDuring(() -> {

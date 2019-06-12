@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -39,6 +39,7 @@ class CommonCodeStyleSettingsManager {
   private static class DefaultsHolder {
     private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
     static {
+      SETTINGS.initIndentOptions();
       SETTINGS.setRootSettings(CodeStyleSettings.getDefaults());
     }
   }
@@ -206,7 +207,7 @@ class CommonCodeStyleSettingsManager {
         idToLang.put(language.getID(), language);
       }
 
-      String[] languages = ArrayUtil.toStringArray(ContainerUtil.union(myUnknownSettingsMap.keySet(), idToLang.keySet()));
+      String[] languages = ArrayUtilRt.toStringArray(ContainerUtil.union(myUnknownSettingsMap.keySet(), idToLang.keySet()));
       Arrays.sort(languages);
       for (String id : languages) {
         final Language language = idToLang.get(id);

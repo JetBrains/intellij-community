@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,11 +17,11 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import static com.intellij.openapi.progress.ProgressManager.progress;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.getFileContents;
@@ -38,7 +38,7 @@ public class SvnFileRevision implements VcsFileRevision {
   @NotNull private final Url myURL;
   private final Revision myPegRevision;
   private final String myCopyFromPath;
-  @NotNull private final List<SvnFileRevision> myMergeSources = newArrayList();
+  @NotNull private final List<SvnFileRevision> myMergeSources = new ArrayList<>();
 
   @Deprecated // Required for compatibility with external plugins.
   public SvnFileRevision(@NotNull SvnVcs vcs,

@@ -16,7 +16,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +32,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   private static final Logger LOG = Logger.getInstance(IntentionManagerSettings.class);
 
   private static final class MetaDataKey extends Pair<String, String> {
-    private static final StringInterner ourInterner = new WeakStringInterner();
+    private static final Interner<String> ourInterner = new WeakStringInterner();
     private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
       super(StringUtil.join(categoryNames, ":"), ourInterner.intern(familyName));
     }
@@ -161,13 +161,11 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
       try {
         SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
         if (registrar == null) return;
-        @NonNls String descriptionText = description.getText().toLowerCase();
+        @NonNls String descriptionText = StringUtil.toLowerCase(description.getText());
         descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-        final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
+        Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
         words.addAll(registrar.getProcessedWords(metaData.getFamily()));
-        for (String word : words) {
-          registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
-        }
+        registrar.addOptions(words, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
       }
       catch (IOException e) {
         LOG.error(e);

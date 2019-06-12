@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -30,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
@@ -61,6 +48,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   private boolean wasExited = false;
 
   ToolWindowsWidget(@NotNull Disposable parent) {
+    setBorder(JBUI.Borders.empty());
     new BaseButtonBehavior(this, TimedDeadzone.NULL) {
       @Override
       protected void execute(MouseEvent e) {
@@ -125,7 +113,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     }
     if (myAlarm.getActiveRequestCount() == 0) {
       myAlarm.addRequest(() -> {
-        final IdeFrameImpl frame = UIUtil.getParentOfType(IdeFrameImpl.class, this);
+        final IdeFrameImpl frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
         if (frame == null) return;
 
         List<ToolWindow> toolWindows = new ArrayList<>();
@@ -159,7 +147,8 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         final Dimension size = list.getPreferredSize();
         final JComponent c = this;
         final Insets padding = UIUtil.getListViewportPadding();
-        final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac ? 2 : 0)));
+        final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac
+                                                                                                                         ? 2 : 0)));
 
         if (popup != null && popup.isVisible()) {
           return;
@@ -240,8 +229,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   }
 
   private boolean isActive() {
-    return myStatusBar != null && myStatusBar.getFrame() != null && myStatusBar.getFrame().getProject() != null && Registry
-      .is("ide.windowSystem.showTooWindowButtonsSwitcher");
+    return myStatusBar != null && myStatusBar.getProject() != null && Registry.is("ide.windowSystem.showTooWindowButtonsSwitcher");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -44,8 +44,7 @@ public class PluginDownloader {
 
   private final String myPluginId;
   private final String myPluginName;
-  @Nullable
-  private final String myProductCode;
+  private final @Nullable String myProductCode;
   private final Date myReleaseDate;
   private final int myReleaseVersion;
   private final String myDescription;
@@ -53,14 +52,13 @@ public class PluginDownloader {
 
   private final String myPluginUrl;
   private final BuildNumber myBuildNumber;
-  private final boolean myForceHttps;
 
   private String myPluginVersion;
   private IdeaPluginDescriptor myDescriptor;
   private File myFile;
   private File myOldFile;
 
-  private PluginDownloader(IdeaPluginDescriptor descriptor, String url, BuildNumber buildNumber, boolean forceHttps) {
+  private PluginDownloader(IdeaPluginDescriptor descriptor, String url, BuildNumber buildNumber) {
     myPluginId = descriptor.getPluginId().getIdString();
     myPluginName = descriptor.getName();
     myProductCode = descriptor.getProductCode();
@@ -71,7 +69,6 @@ public class PluginDownloader {
 
     myPluginUrl = url;
     myBuildNumber = buildNumber;
-    myForceHttps = forceHttps;
 
     myPluginVersion = descriptor.getVersion();
     myDescriptor = descriptor;
@@ -236,7 +233,7 @@ public class PluginDownloader {
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
     File file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false);
-    return HttpRequests.request(myPluginUrl).gzip(false).forceHttps(myForceHttps).productNameAsUserAgent().connect(request -> {
+    return HttpRequests.request(myPluginUrl).gzip(false).productNameAsUserAgent().connect(request -> {
       request.saveToFile(file, indicator);
 
       String fileName = guessFileName(request.getConnection(), file);
@@ -292,15 +289,6 @@ public class PluginDownloader {
   public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                   @Nullable String host,
                                                   @Nullable BuildNumber buildNumber) throws IOException {
-    boolean forceHttps = host == null && (ApplicationManager.getApplication() == null || UpdateSettings.getInstance().canUseSecureConnection());
-    return createDownloader(descriptor, host, buildNumber, forceHttps);
-  }
-
-  @NotNull
-  public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
-                                                  @Nullable String host,
-                                                  @Nullable BuildNumber buildNumber,
-                                                  boolean forceHttps) throws IOException {
     String url;
     try {
       if (host != null && descriptor instanceof PluginNode) {
@@ -329,7 +317,7 @@ public class PluginDownloader {
       throw new IOException(e);
     }
 
-    return new PluginDownloader(descriptor, url, buildNumber, forceHttps);
+    return new PluginDownloader(descriptor, url, buildNumber);
   }
 
   @NotNull

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.beans.EventHandler.create;
-import static java.util.Locale.ENGLISH;
 
 public class ColorPanel extends JComponent {
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
@@ -133,7 +133,7 @@ public class ColorPanel extends JComponent {
     }
     Color color = enabled ? myColor : null;
     if (color != null) {
-      myTextField.setText(' ' + ColorUtil.toHex(color).toUpperCase(ENGLISH) + ' ');
+      myTextField.setText(' ' + StringUtil.toUpperCase(ColorUtil.toHex(color)) + ' ');
     }
     else {
       myTextField.setText(null);

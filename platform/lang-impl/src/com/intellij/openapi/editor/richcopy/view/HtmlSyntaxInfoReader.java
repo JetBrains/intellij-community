@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.richcopy.view;
 
 import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
@@ -16,7 +16,7 @@ import java.awt.*;
  * @author Denis Zhdanov
  */
 public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements MarkupHandler {
-  
+
   private final int myTabSize;
   protected StringBuilder    myResultBuffer;
   private ColorRegistry    myColorRegistry;

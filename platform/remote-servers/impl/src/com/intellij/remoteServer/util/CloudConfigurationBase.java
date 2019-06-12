@@ -124,7 +124,7 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
   protected static void doSetSafeValue(@Nullable CredentialAttributes credentialAttributes,
                                        @Nullable String credentialUser,
                                        @Nullable String secretValue,
-                                       @NotNull Consumer<String> unsafeSetter) {
+                                       @NotNull Consumer<? super String> unsafeSetter) {
 
     CloudConfigurationUtil.doSetSafeValue(credentialAttributes, credentialUser, secretValue, unsafeSetter);
   }

@@ -75,7 +75,7 @@ public abstract class LinkMouseListenerBase<T> extends ClickListener implements 
   public void mouseMoved(MouseEvent e) {
     Component component = (Component)e.getSource();
     Object tag = getTagAt(e);
-    UIUtil.setCursor(component, tag != null ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+    UIUtil.setCursor(component, tag != null ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null);
   }
 
   @Override

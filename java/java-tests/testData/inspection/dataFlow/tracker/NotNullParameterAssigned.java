@@ -1,6 +1,6 @@
 /*
-Value is always true (null == s)
-  's' was assigned (null)
+Value is always true (null == s; line#10)
+  's' was assigned to 'null' (=; line#9)
  */
 import org.jetbrains.annotations.NotNull;
 

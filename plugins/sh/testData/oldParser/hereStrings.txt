@@ -1,0 +1,268 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<< ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
+                PsiElement(CLOSE_QUOTE)('"')
+    PsiWhiteSpace(' ')
+    PsiElement(||)('||')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<<')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
+                PsiElement(CLOSE_QUOTE)('"')
+    PsiElement(||)('||')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<< ')
+              STRING
+                PsiElement(RAW_STRING)(''CREATE DATABASE dev'')
+    PsiWhiteSpace(' ')
+    PsiElement(||)('||')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<<')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
+                PsiElement(CLOSE_QUOTE)('"')
+    PsiElement(||)('||')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('mysql')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND_ELEMENT
+            REDIRECTION
+              PsiElement(<<<)('<<< ')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
+                PsiElement(CLOSE_QUOTE)('"')
+    PsiWhiteSpace(' ')
+    PsiElement(&&)('&&')
+    PsiWhiteSpace(' ')
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('echo')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('hi')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('output')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('tr')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      REDIRECTION
+                        PsiElement(<<<)('<<< ')
+                        PsiElement(word)('[[{')
+                        VARIABLE
+                          PsiElement(var)('$op')
+                        PsiElement(word)('[[')
+                        PsiElement($)('$')
+                        SHELL_PARAMETER_EXPANSION
+                          PsiElement({)('{')
+                          PsiElement(parameter_expansion_body)('branch')
+                          PsiElement(})('}')
+                        PsiElement(word)('\\<<<]]+={}')
+                        PsiWhiteSpace('   ')
+                        PsiElement(word)('sdfsdfsd')
+            PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('output')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('tr')
+                    PsiWhiteSpace('  ')
+                    SIMPLE_COMMAND_ELEMENT
+                      REDIRECTION
+                        PsiElement(<<<)('<<< ')
+                        PsiElement(word)('[[{')
+                        VARIABLE
+                          PsiElement(var)('$op')
+                        PsiElement(word)('[[')
+                        PsiElement($)('$')
+                        SHELL_PARAMETER_EXPANSION
+                          PsiElement({)('{')
+                          PsiElement(parameter_expansion_body)('branch')
+                          PsiElement(})('}')
+                        PsiElement(word)('\\<<<]]+={}')
+            PsiWhiteSpace('   ')
+            PsiElement())(')')
+    PsiElement(;)(';')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('output')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('tr')
+                    PsiWhiteSpace('  ')
+                    SIMPLE_COMMAND_ELEMENT
+                      REDIRECTION
+                        PsiElement(<<<)('<<< ')
+                        STRING
+                          PsiElement(RAW_STRING)(''[[8+8]][[${branch}\\)]$\&\&]+={}    p'')
+            PsiWhiteSpace('  ')
+            PsiElement())(')')
+    PsiElement(;)(';')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('output')
+          PsiElement(=)('=')
+          PsiElement($)('$')
+          SUBSHELL_COMMAND
+            PsiElement(()('(')
+            COMPOUND_LIST
+              PIPELINE_COMMAND
+                PIPELINE
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('tr')
+                    PsiWhiteSpace(' ')
+                    SIMPLE_COMMAND_ELEMENT
+                      REDIRECTION
+                        PsiElement(<<<)('<<< ')
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          PsiElement(STRING_CONTENT)('[[8+8]][[')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(parameter_expansion_body)('branch')
+                            PsiElement(})('}')
+                          PsiElement(STRING_CONTENT)('\\)]$\&\&]+={}    p')
+                          PsiElement(CLOSE_QUOTE)('"')
+            PsiWhiteSpace('  ')
+            PsiElement())(')')
+    PsiElement(;)(';')

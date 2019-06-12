@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.task.impl;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -33,15 +21,12 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.groupingBy;
@@ -54,6 +39,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.task.ProjectTaskManager");
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
+  private final List<ProjectTaskManagerListener> myListeners = new CopyOnWriteArrayList<>();
 
   public ProjectTaskManagerImpl(@NotNull Project project) {
     super(project);
@@ -122,7 +108,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
                                             boolean includeRuntimeDependencies) {
     return modules.length == 1
            ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
-           : new ProjectTaskList(map(list(modules), module ->
+           : new ProjectTaskList(map(Arrays.asList(modules), module ->
              new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
   }
 
@@ -130,7 +116,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   public ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... buildableElements) {
     return buildableElements.length == 1
            ? new ProjectModelBuildTaskImpl<>(buildableElements[0], isIncrementalBuild)
-           : new ProjectTaskList(map(list(buildableElements),
+           : new ProjectTaskList(map(Arrays.asList(buildableElements),
                                      buildableElement -> new ProjectModelBuildTaskImpl<>(buildableElement, isIncrementalBuild)));
   }
 
@@ -164,28 +150,62 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     };
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
 
+    context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
+      @NotNull
+      @Override
+      public <T extends ProjectTask> List<T> getRequestedTasks(@NotNull Class<T> instanceOf) {
+        List<T> tasks = new ArrayList<>();
+        //noinspection unchecked
+        toRun.forEach(pair -> pair.second.stream().filter(instanceOf::isInstance).map(task -> (T)task).forEach(tasks::add));
+        return tasks;
+      }
+    });
     myEventPublisher.started(context);
-    if (toRun.isEmpty()) {
-      sendSuccessNotify(new ListenerNotificator(context, callback));
-      return;
-    }
 
-    ProjectTaskResultsAggregator callbacksCollector =
-      new ProjectTaskResultsAggregator(new ListenerNotificator(context, callback), toRun.size());
-    for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
-      callback = new ProjectTaskRunnerNotification(pair.second, callbacksCollector);
-      if (pair.second.isEmpty()) {
-        sendSuccessNotify(callback);
+    // do not run before tasks on EDT
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      for (ProjectTaskManagerListener listener : myListeners) {
+        try {
+          listener.beforeRun(context);
+        }
+        catch (ExecutionException e) {
+          sendAbortedNotify(new ListenerNotificator(context, callback));
+          return;
+        }
       }
-      else {
-        pair.first.run(myProject, context, callback, pair.second);
+
+      if (toRun.isEmpty()) {
+        sendSuccessNotify(new ListenerNotificator(context, callback));
+        return;
       }
-    }
+
+      ProjectTaskResultsAggregator callbacksCollector =
+        new ProjectTaskResultsAggregator(new ListenerNotificator(context, callback), toRun.size());
+      for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
+        ProjectTaskRunnerNotification notification = new ProjectTaskRunnerNotification(pair.second, callbacksCollector);
+        if (pair.second.isEmpty()) {
+          sendSuccessNotify(notification);
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> pair.first.run(myProject, context, notification, pair.second));
+        }
+      }
+    });
+  }
+
+  public final void addListener(@NotNull ProjectTaskManagerListener listener) {
+    myListeners.add(listener);
   }
 
   private static void sendSuccessNotify(@Nullable ProjectTaskNotification notification) {
     if (notification != null) {
       notification.finished(new ProjectTaskResult(false, 0, 0));
+    }
+  }
+
+  private static void sendAbortedNotify(@Nullable ProjectTaskNotification notification) {
+    if (notification != null) {
+      notification.finished(new ProjectTaskResult(true, 0, 0));
     }
   }
 
@@ -238,16 +258,39 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     @Nullable private final ProjectTaskNotification myDelegate;
     @NotNull private final ProjectTaskContext myContext;
 
-    private ListenerNotificator(@NotNull ProjectTaskContext context, @Nullable ProjectTaskNotification delegate) {
+    private ListenerNotificator(@NotNull ProjectTaskContext context,
+                                @Nullable ProjectTaskNotification delegate) {
       myContext = context;
       myDelegate = delegate;
     }
 
     @Override
     public void finished(@NotNull ProjectTaskResult executionResult) {
+      if (!executionResult.isAborted() && executionResult.getErrors() == 0) {
+        // do not run after tasks on EDT
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            for (ProjectTaskManagerListener listener : myListeners) {
+              listener.afterRun(myContext, executionResult);
+            }
+            notify(myContext, executionResult);
+          }
+          catch (ExecutionException e) {
+            LOG.debug(e);
+            notify(myContext, new ProjectTaskResult(
+              false, executionResult.getErrors() + 1, executionResult.getWarnings(), executionResult.getTasksState()));
+          }
+        });
+      }
+      else {
+        notify(myContext, executionResult);
+      }
+    }
+
+    private void notify(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {
       GuiUtils.invokeLaterIfNeeded(() -> {
         if (!myProject.isDisposed()) {
-          myEventPublisher.finished(myContext, executionResult);
+          myEventPublisher.finished(context, executionResult);
         }
         if (myDelegate != null) {
           myDelegate.finished(executionResult);

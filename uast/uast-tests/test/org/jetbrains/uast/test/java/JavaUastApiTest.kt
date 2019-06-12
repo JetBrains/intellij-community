@@ -111,7 +111,6 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     doTest("Simple/CallExpression.java") { _, file ->
       fun assertArguments(argumentsInPositionalOrder: List<String?>?, refText: String) =
         file.findElementByTextFromPsi<UCallExpression>(refText).let { call ->
-          if (call !is UCallExpressionEx) throw AssertionError("${call.javaClass} is not a UCallExpressionEx")
           Assert.assertEquals(
             argumentsInPositionalOrder, call.resolve()?.let { psiMethod ->
             (0 until psiMethod.parameterList.parametersCount).map {

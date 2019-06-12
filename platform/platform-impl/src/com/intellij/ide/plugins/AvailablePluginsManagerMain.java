@@ -13,6 +13,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
@@ -25,7 +26,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Locale;
 import java.util.TreeSet;
 
 public class AvailablePluginsManagerMain extends PluginManagerMain {
@@ -48,7 +48,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         if (ShowSettingsUtil.getInstance().editConfigurable(myActionsPanel, new PluginHostsConfigurable())) {
           final List<String> pluginHosts = UpdateSettings.getInstance().getPluginHosts();
           if (!pluginHosts.contains(((AvailablePluginsTableModel)pluginsModel).getRepository())) {
-            ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, myFilter.getFilter().toLowerCase(Locale.ENGLISH));
+            ((AvailablePluginsTableModel)pluginsModel).setRepository(AvailablePluginsTableModel.ALL, StringUtil.toLowerCase(myFilter.getFilter()));
           }
           loadAvailablePlugins();
         }
@@ -105,7 +105,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       for (IdeaPluginDescriptor descr : selection) {
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
-          if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
+          if (((PluginNode)descr).getStatus() == PluginNode.Status.INSTALLED) {
             enabled &= ourState.hasNewerVersion(descr.getPluginId());
           }
         }
@@ -162,7 +162,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
-  protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
+  protected void propagateUpdates(List<? extends IdeaPluginDescriptor> list) {
     installed.modifyPluginsList(list); //propagate updates
   }
 
@@ -206,7 +206,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       return new DumbAwareAction(availableCategory) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
+          final String filter = StringUtil.toLowerCase(myFilter.getFilter());
           ((AvailablePluginsTableModel)pluginsModel).setCategory(availableCategory, filter);
         }
       };
@@ -249,7 +249,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       return new DumbAwareAction(host) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
+          final String filter = StringUtil.toLowerCase(myFilter.getFilter());
           ((AvailablePluginsTableModel)pluginsModel).setRepository(host, filter);
           TableUtil.ensureSelectionExists(getPluginTable());
         }

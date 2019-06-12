@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class ExecutionTestCase extends IdeaTestCase {
+public abstract class ExecutionTestCase extends JavaProjectTestCase {
   private OutputChecker myChecker;
   private int myTimeout;
   private static File ourOutputRoot;

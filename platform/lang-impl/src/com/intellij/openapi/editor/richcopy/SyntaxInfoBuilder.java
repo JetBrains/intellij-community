@@ -38,13 +38,13 @@ public final class SyntaxInfoBuilder {
                                                @NotNull MarkupModel markupModel,
                                                int startOffsetToUse,
                                                int endOffset) {
-    
+
     CompositeRangeIterator iterator =  new CompositeRangeIterator(
       schemeToUse,
       new HighlighterRangeIterator(highlighter, startOffsetToUse, endOffset),
       new MarkupModelRangeIterator(markupModel, schemeToUse, startOffsetToUse, endOffset)
     );
-    
+
     return new MyMarkupIterator(text, iterator, schemeToUse);
   }
 
@@ -61,7 +61,7 @@ public final class SyntaxInfoBuilder {
 
     void dispose();
   }
-  
+
   static class MyMarkupIterator {
     private final SegmentIterator mySegmentIterator;
     private final RangeIterator myRangeIterator;
@@ -532,9 +532,9 @@ public final class SyntaxInfoBuilder {
 
       int javaFontSize = scheme.getEditorFontSize();
       float fontSize = SystemInfo.isMac || ApplicationManager.getApplication().isHeadlessEnvironment() ?
-                       javaFontSize : 
+                       javaFontSize :
                        javaFontSize * 0.75f / UISettings.getDefFontScale(); // matching font size in external apps
-      
+
       builder = new SyntaxInfo.Builder(myDefaultForeground, myDefaultBackground, fontSize);
       myIndentSymbolsToStrip = indentSymbolsToStrip;
     }

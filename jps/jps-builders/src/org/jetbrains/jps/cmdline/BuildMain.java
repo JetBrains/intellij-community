@@ -221,7 +221,7 @@ public class BuildMain {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
               final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta, ourPreloadedData);
               mySession = session;
-              SharedThreadPool.getInstance().executeOnPooledThread(() -> {
+              SharedThreadPool.getInstance().execute(() -> {
                 //noinspection finally
                 try {
                   try {

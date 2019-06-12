@@ -65,7 +65,7 @@ public class JavaModuleRenameListener implements ProjectComponent, ModuleListene
     }
   }
 
-  private static void renameModules(Project project, List<Pair<SmartPsiElementPointer<PsiJavaModule>, String>> suggestions) {
+  private static void renameModules(Project project, List<? extends Pair<SmartPsiElementPointer<PsiJavaModule>, String>> suggestions) {
     MyAutomaticRenamer renamer = new MyAutomaticRenamer();
     for (Pair<SmartPsiElementPointer<PsiJavaModule>, String> rename : suggestions) {
       PsiJavaModule javaModule = rename.first.getElement();

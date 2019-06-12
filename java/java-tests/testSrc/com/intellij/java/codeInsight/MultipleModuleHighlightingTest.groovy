@@ -115,7 +115,7 @@ public class D extends C {
   void "test class qualifier with inaccessible super"() {
     def mod1 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     def mod2 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
-    ModuleRootModificationUtil.addDependency(mod1, myModule)
+    ModuleRootModificationUtil.addDependency(mod1, module)
     ModuleRootModificationUtil.addDependency(mod2, mod1)
     myFixture.addClass"public class Class0 {}"
 
@@ -140,7 +140,7 @@ public class Usage {
   void "test class qualifier with inaccessible super used for a constant field access"() {
     def mod1 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     def mod2 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
-    ModuleRootModificationUtil.addDependency(mod1, myModule)
+    ModuleRootModificationUtil.addDependency(mod1, module)
     ModuleRootModificationUtil.addDependency(mod2, mod1)
     myFixture.addClass"public class Class0 {}"
 
@@ -165,7 +165,7 @@ public class Usage {
   void "test class qualifier with inaccessible super of return type"() {
     def mod1 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     def mod2 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
-    ModuleRootModificationUtil.addDependency(mod1, myModule)
+    ModuleRootModificationUtil.addDependency(mod1, module)
     ModuleRootModificationUtil.addDependency(mod2, mod1)
     myFixture.addClass"public class Class0 {}"
 
@@ -224,14 +224,14 @@ class Class3 {
   private void addTwoModules() {
     def mod1 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
     def mod2 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
-    ModuleRootModificationUtil.addDependency(myModule, mod1)
-    ModuleRootModificationUtil.addDependency(myModule, mod2)
+    ModuleRootModificationUtil.addDependency(module, mod1)
+    ModuleRootModificationUtil.addDependency(module, mod2)
   }
 
   void testOverridingJdkExceptions() {
     def dep = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "dep", myFixture.tempDirFixture.findOrCreateDir("dep"))
-    ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).sdk)
-    ModuleRootModificationUtil.updateModel(myModule, { model ->
+    ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(module).sdk)
+    ModuleRootModificationUtil.updateModel(module, { model ->
       model.addModuleOrderEntry(dep)
 
       List<OrderEntry> entries = model.orderEntries as List

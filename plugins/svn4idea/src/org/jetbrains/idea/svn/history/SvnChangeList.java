@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -435,7 +435,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
     private List<Change> collectDetails(@NotNull List<Change> changes, @NotNull Set<Pair<Boolean, String>> duplicates)
       throws VcsException {
-      List<Change> result = ContainerUtil.newArrayList();
+      List<Change> result = new ArrayList<>();
 
       for (Change change : changes) {
         // directory statuses are already uploaded
@@ -456,7 +456,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     }
 
     private Set<Pair<Boolean, String>> collectDuplicates() {
-      Set<Pair<Boolean, String>> result = ContainerUtil.newHashSet();
+      Set<Pair<Boolean, String>> result = new HashSet<>();
 
       for (Change change : myDetailedList) {
         addDuplicate(result, true, change.getBeforeRevision());

@@ -94,7 +94,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   @Override
-  public void onEvent(@NotNull BuildEvent event) {
+  public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     if (isDisposed.get()) return;
 
     MultipleBuildsView buildsView;
@@ -104,14 +104,14 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
     else {
       buildsView = myBuildsViewValue.getValue();
-      if (!buildsView.shouldConsume(event)) {
+      if (!buildsView.shouldConsume(buildId, event)) {
         buildsView = myPinnedViews.stream()
-                                  .filter(pinnedView -> pinnedView.shouldConsume(event))
-                                  .findFirst().orElse(null);
+          .filter(pinnedView -> pinnedView.shouldConsume(buildId, event))
+          .findFirst().orElse(null);
       }
     }
     if (buildsView != null) {
-      buildsView.onEvent(event);
+      buildsView.onEvent(buildId, event);
     }
   }
 
@@ -121,7 +121,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     toolbarActions.removeAll();
     toolbarActions.addAll(view.createConsoleActions());
     toolbarActions.add(new PinBuildViewAction(buildsView));
-    toolbarActions.add(new ShowExecutionErrorsOnlyAction(view));
+    toolbarActions.add(BuildTreeFilters.createFilteringActionsGroup(view));
   }
 
   @Nullable
@@ -135,8 +135,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   protected void onBuildFinish(BuildDescriptor buildDescriptor) {
     BuildInfo buildInfo = (BuildInfo)buildDescriptor;
     if (buildInfo.result instanceof FailureResult) {
-      boolean activate = buildInfo.activateToolWindowWhenFailed;
-      myBuildContentManager.setSelectedContent(buildInfo.content, activate, activate, activate, null);
+      boolean activate = buildInfo.isActivateToolWindowWhenFailed();
+      myBuildContentManager.setSelectedContent(buildInfo.content, false, false, activate, null);
       List<? extends Failure>
         failures = ((FailureResult)buildInfo.result).getFailures();
       if (failures.isEmpty()) return;
@@ -174,8 +174,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     long endTime = -1;
     EventResult result;
     Content content;
-    boolean activateToolWindowWhenAdded;
-    boolean activateToolWindowWhenFailed = true;
 
     BuildInfo(@NotNull Object id,
                      @NotNull String title,

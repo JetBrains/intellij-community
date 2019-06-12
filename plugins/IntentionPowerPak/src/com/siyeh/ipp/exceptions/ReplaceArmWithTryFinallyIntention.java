@@ -1,14 +1,12 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +32,7 @@ public class ReplaceArmWithTryFinallyIntention extends Intention {
     if (resourceList == null) {
       return;
     }
-    final List<String> resources = ContainerUtil.newArrayList();
+    final List<String> resources = new ArrayList<>();
     final StringBuilder newTryStatement = new StringBuilder("{");
     for (PsiResourceListElement resource : resourceList) {
       if (resource instanceof PsiResourceVariable) {

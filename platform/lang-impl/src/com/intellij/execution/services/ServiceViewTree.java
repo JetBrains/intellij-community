@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
+import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
@@ -40,8 +42,6 @@ class ServiceViewTree extends Tree {
     new TreeSpeedSearch(this, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
     ServiceViewTreeLinkMouseListener mouseListener = new ServiceViewTreeLinkMouseListener(this);
     mouseListener.installOn(this);
-
-    //RowsDnDSupport.install(myTree, myTreeModel);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -54,6 +54,24 @@ class ServiceViewTree extends Tree {
                ((ServiceViewItem)lastComponent).getViewDescriptor().handleDoubleClick(e);
       }
     }.installOn(this);
+
+    // DnD
+    //RowsDnDSupport.install(myTree, myTreeModel);
+    setDragEnabled(true);
+  }
+
+  @Override
+  public boolean isFileColorsEnabled() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public Color getFileColorForPath(@NotNull TreePath path) {
+    Object node = path.getLastPathComponent();
+    if (!(node instanceof ServiceViewItem)) return null;
+
+    return ((ServiceViewItem)node).getViewDescriptor().getItemBackgroundColor();
   }
 
   private static class ServiceViewTreeCellRenderer extends ServiceViewTreeCellRendererBase {

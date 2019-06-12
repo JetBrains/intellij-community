@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +32,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   private static final String CUSTOM = "Custom";
   public static final String[] ENABLED_VALUES = {ENABLED_DISABLED, ENABLED, DISABLED, BUNDLED, CUSTOM};
 
-  private final Map<PluginId, Boolean> myEnabled = ContainerUtil.newHashMap();
-  private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = ContainerUtil.newHashMap();
+  private final Map<PluginId, Boolean> myEnabled = new HashMap<>();
+  private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
   private String myEnabledFilter = ENABLED_DISABLED;
 
   public InstalledPluginsTableModel() {
@@ -102,8 +101,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   private void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor, boolean enabled) {
-    final PluginId pluginId = ideaPluginDescriptor.getPluginId();
-    if (!enabled && !PluginManagerCore.getDisabledPluginSet().contains(pluginId.toString())) {
+    PluginId pluginId = ideaPluginDescriptor.getPluginId();
+    if (!enabled && !PluginManagerCore.isDisabled(pluginId.toString())) {
       myEnabled.put(pluginId, null);
     }
     else {
@@ -151,7 +150,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   @Override
-  public void updatePluginsList(List<IdeaPluginDescriptor> list) {
+  public void updatePluginsList(List<? extends IdeaPluginDescriptor> list) {
     fireTableDataChanged();
   }
 

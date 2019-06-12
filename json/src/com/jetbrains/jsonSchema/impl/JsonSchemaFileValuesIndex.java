@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonElementTypes;
@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -94,10 +93,10 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
 
   @NotNull
   static Map<String, String> readTopLevelProps(@NotNull FileType fileType, @NotNull CharSequence content) {
-    if (!(fileType instanceof JsonFileType)) return ContainerUtil.newHashMap();
+    if (!(fileType instanceof JsonFileType)) return new HashMap<>();
 
     Lexer lexer = fileType == Json5FileType.INSTANCE ? new Json5Lexer() : new JsonLexer();
-    final HashMap<String, String> map = ContainerUtil.newHashMap();
+    final HashMap<String, String> map = new HashMap<>();
     lexer.start(content);
 
     // We only care about properties at the root level having the form of "property" : "value".

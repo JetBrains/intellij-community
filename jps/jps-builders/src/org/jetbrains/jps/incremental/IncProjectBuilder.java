@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,7 +103,7 @@ public class IncProjectBuilder {
   private final boolean myIsTestMode;
 
   private final int myTotalModuleLevelBuilderCount;
-  private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<Future>());
+  private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<>());
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = ContainerUtil.newConcurrentMap();
 
@@ -129,7 +129,7 @@ public class IncProjectBuilder {
       final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
         if (scope.isAffected(target)) {
-          BuildOperations.ensureFSStateInitialized(context, target);
+          BuildOperations.ensureFSStateInitialized(context, target, true);
           final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
           delta.lockData();
           try {
@@ -349,10 +349,6 @@ public class IncProjectBuilder {
           //noinspection ResultOfMethodCallIgnored
           new File(root, CLASSPATH_INDEX_FILE_NAME).delete();
         }
-      }
-
-      @Override
-      public void filesDeleted(@NotNull FileDeletedEvent event) {
       }
     });
 
@@ -771,7 +767,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void runTasks(CompileContext context, final List<BuildTask> tasks) throws ProjectBuildException {
+  private static void runTasks(CompileContext context, final List<? extends BuildTask> tasks) throws ProjectBuildException {
     for (BuildTask task : tasks) {
       task.build(context);
     }
@@ -912,7 +908,7 @@ public class IncProjectBuilder {
       }
     }
 
-    private void queueTasks(List<BuildChunkTask> tasks) {
+    private void queueTasks(List<? extends BuildChunkTask> tasks) {
       if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
         final List<BuildTargetChunk> chunksToLog = new ArrayList<>();
         for (BuildChunkTask task : tasks) {
@@ -1065,7 +1061,7 @@ public class IncProjectBuilder {
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
 
       for (BuildTarget<?> target : chunk.getTargets()) {
-        BuildOperations.ensureFSStateInitialized(context, target);
+        BuildOperations.ensureFSStateInitialized(context, target, false);
       }
 
       doneSomething = processDeletedPaths(context, chunk.getTargets());

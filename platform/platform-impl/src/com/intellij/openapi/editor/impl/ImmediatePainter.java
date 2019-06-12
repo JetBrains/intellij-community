@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,16 +15,18 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import sun.awt.image.SunVolatileImage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -144,8 +146,8 @@ class ImmediatePainter {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
     final int caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
-                                         : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
-    final float caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1 / JBUI.sysScale((Graphics2D)g);
+                                         : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
+    final float caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1 / JBUIScale.sysScale((Graphics2D)g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float((int)(p2x + width2) - caretShift, p2y - topOverhang,
                                                              caretWidth, lineHeight + topOverhang + bottomOverhang);
 
@@ -214,8 +216,7 @@ class ImmediatePainter {
       if (myImage == null) {
         myImage = component.createVolatileImage(size.width, size.height);
       }
-      else if (!isLargeEnough(myImage, size) ||
-               ((VolatileImage)myImage).validate(component.getGraphicsConfiguration()) == VolatileImage.IMAGE_INCOMPATIBLE) {
+      else if (!isLargeEnough(myImage, size) || !isImageValid((VolatileImage)myImage, component)) {
         myImage.flush();
         myImage = component.createVolatileImage(size.width, size.height);
       }
@@ -229,6 +230,15 @@ class ImmediatePainter {
       throw new IllegalArgumentException("Image size is undefined");
     }
     return width >= size.width && height >= size.height;
+  }
+
+  private static boolean isImageValid(VolatileImage image, Component component) {
+    GraphicsConfiguration componentConfig = component.getGraphicsConfiguration();
+    if (SystemInfo.isWindows && image instanceof SunVolatileImage) { // JBR-1540
+      GraphicsConfiguration imageConfig = ((SunVolatileImage)image).getGraphicsConfig();
+      if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
+    }
+    return image.validate(componentConfig) != VolatileImage.IMAGE_INCOMPATIBLE;
   }
 
   private static void fillRect(final Graphics g, final Rectangle2D r, final Color color) {

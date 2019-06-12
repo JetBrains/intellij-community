@@ -286,6 +286,39 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
 
+  @Test
+  @EnvTestTagsRequired(tags = "xdist")
+  public void testParallelWithSetup() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/parallel", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_parallel.py", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.setAdditionalArguments("-n 4");
+            }
+          };
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                        @NotNull String stdout,
+                                        @NotNull String stderr,
+                                        @NotNull String all, int exitCode) {
+          Assert.assertThat("xdist not launched?", all, Matchers.containsString("xdist"));
+          Assert.assertEquals("Test tree:\n" +
+                              "[root](+)\n" +
+                              ".test_parallel(+)\n" +
+                              "..ExampleTestCase(+)\n" +
+                              "...test_example(+)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
   // Ensure test survives patched strftime
   @Test
   public void testMonkeyPatch() {

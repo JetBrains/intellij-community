@@ -68,7 +68,7 @@ public class JpsModuleRootModelSerializer {
   public static final String MODULE_LIBRARY_TYPE = "module-library";
   public static final String MODULE_TYPE = "module";
   public static final String MODULE_NAME_ATTRIBUTE = "module-name";
-  private static final String SOURCE_ROOT_TYPE_ATTRIBUTE = "type";
+  public static final String SOURCE_ROOT_TYPE_ATTRIBUTE = "type";
   public static final String JAVA_SOURCE_ROOT_TYPE_ID = "java-source";
   public static final String JAVA_TEST_ROOT_TYPE_ID = "java-test";
   private static final String GENERATED_LIBRARY_NAME_PREFIX = "#";

@@ -1,0 +1,110 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('trap')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-p')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-l')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-lp')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-pl')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(RAW_STRING)(''exit'')
+          PsiWhiteSpace(' ')
+          NUMBER
+            PsiElement(int)('1')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('trap')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-p')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-l')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-lp')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-pl')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(RAW_STRING)(''exit'')
+          PsiWhiteSpace(' ')
+          NUMBER
+            PsiElement(int)('1')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-p')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-l')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-lp')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('-pl')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        ASSIGNMENT_COMMAND
+          LITERAL
+            PsiElement(word)('avr')
+          PsiElement(=)('=')
+          NUMBER
+            PsiElement(int)('1')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('trap')
+          PsiWhiteSpace(' ')
+          STRING
+            PsiElement(OPEN_QUOTE)('"')
+            VARIABLE
+              PsiElement(var)('$avr')
+            PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        SIMPLE_COMMAND
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('trap')
+          PsiWhiteSpace(' ')
+          LITERAL
+            PsiElement(word)('1.0')
+          PsiWhiteSpace(' ')
+          NUMBER
+            PsiElement(int)('1')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    PIPELINE_COMMAND
+      PIPELINE
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('trap')

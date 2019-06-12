@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -291,7 +277,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       }
       JViewport viewport = getViewport();
       Font font = viewport == null ? null : getViewFont(viewport);
-      int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
+      int size = font == null ? JBUIScale.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
     if (ScrollSettings.isHighPrecisionEnabled()) {

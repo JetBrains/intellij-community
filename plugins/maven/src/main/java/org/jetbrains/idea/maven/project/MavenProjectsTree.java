@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.notification.Notification;
@@ -33,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -47,13 +32,16 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.importing.MavenImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.event.HyperlinkEvent;
@@ -65,6 +53,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
+
 
 public class MavenProjectsTree {
 
@@ -535,7 +524,6 @@ public class MavenProjectsTree {
       return;
     }
     updateStack.push(mavenProject);
-
     process.setText(ProjectBundle.message("maven.reading.pom", mavenProject.getPath()));
     process.setText2("");
 
@@ -1248,7 +1236,7 @@ public class MavenProjectsTree {
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
-    resolve(project, ContainerUtil.list(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
+    resolve(project, Collections.singletonList(mavenProject), generalSettings, embeddersManager, console, new ResolveContext(), process);
   }
 
   public void resolve(@NotNull Project project,
@@ -1283,8 +1271,7 @@ public class MavenProjectsTree {
               mavenProject.setConfigFileError(cause.getMessage());
             }
           }
-        }
-        else {
+        } else {
           throw t;
         }
       }
@@ -1324,7 +1311,7 @@ public class MavenProjectsTree {
     Throwable cause = ExceptionUtil.getRootCause(t);
     if (cause instanceof InvocationTargetException) {
       Throwable target = ((InvocationTargetException)cause).getTargetException();
-      if (target == null) {
+      if (target != null) {
         return ExceptionUtil.findCause(target, MavenConfigParseException.class);
       }
     }
@@ -1354,6 +1341,7 @@ public class MavenProjectsTree {
     Collection<MavenProjectReaderResult> results = new MavenProjectReader(project).resolveProject(
       generalSettings, embedder, files, explicitProfiles, myProjectLocator);
 
+    MavenUtil.notifySyncForUnresolved(project, results);
     for (MavenProjectReaderResult result : results) {
       MavenProject mavenProjectCandidate = null;
       for (MavenProject mavenProject : mavenProjects) {
@@ -1404,6 +1392,11 @@ public class MavenProjectsTree {
             filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
           }
         }
+        if(artifacts.isEmpty()) {
+          MavenProjectsManager.getInstance(myProject)
+            .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).showError(each.getMavenId().getKey());
+        }
+
       }
 
       mavenProject.resetCache();
@@ -1605,7 +1598,10 @@ public class MavenProjectsTree {
     }
 
     public void fireUpdatedIfNecessary() {
-      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) return;
+      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
+        //MavenProjectsManager.getInstance(myProject).getSyncConsole().finishImport();
+        return;
+      }
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
                                          ? Collections.emptyList()
                                          : new ArrayList<>(deletedProjects);
@@ -1755,7 +1751,7 @@ public class MavenProjectsTree {
     }
 
     default void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                         @Nullable NativeMavenProjectHolder nativeMavenProject) {
+                                 @Nullable NativeMavenProjectHolder nativeMavenProject) {
     }
 
     default void pluginsResolved(@NotNull MavenProject project) {
@@ -1778,8 +1774,8 @@ public class MavenProjectsTree {
     @Override
     public boolean equals(MavenCoordinate o1, MavenCoordinate o2) {
       return Comparing.equal(o1.getArtifactId(), o2.getArtifactId())
-        && Comparing.equal(o1.getVersion(), o2.getVersion())
-        && Comparing.equal(o1.getGroupId(), o2.getGroupId());
+             && Comparing.equal(o1.getVersion(), o2.getVersion())
+             && Comparing.equal(o1.getGroupId(), o2.getGroupId());
     }
   }
 }

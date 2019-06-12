@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -27,10 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
@@ -85,7 +82,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     }
     else {
       IntroduceTargetChooser.showChooser(
-        editor, ContainerUtil.newArrayList(map.keySet()), callback,
+        editor, new ArrayList<>(map.keySet()), callback,
         PsiElement::getText
       );
     }
@@ -109,11 +106,11 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   @NotNull
   private static Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
                                                                         @NotNull Editor editor,
-                                                                        @NotNull Set<ExpressionTypeProvider> handlers) {
+                                                                        @NotNull Set<? extends ExpressionTypeProvider> handlers) {
     if (handlers.isEmpty()) return Collections.emptyMap();
     boolean exactRange = false;
     TextRange range = EditorUtil.getSelectionInAnyMode(editor);
-    final Map<PsiElement, ExpressionTypeProvider> map = ContainerUtil.newLinkedHashMap();
+    final Map<PsiElement, ExpressionTypeProvider> map = new LinkedHashMap<>();
     int offset = !range.isEmpty() ? range.getStartOffset() : TargetElementUtil.adjustOffset(file, editor.getDocument(), range.getStartOffset());
     for (int i = 0; i < 3 && map.isEmpty() && offset >= i; i++) {
       PsiElement elementAt = file.findElementAt(offset - i);
@@ -134,7 +131,8 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   public static Set<ExpressionTypeProvider> getHandlers(final Project project, Language... languages) {
     DumbService dumbService = DumbService.getInstance(project);
     return JBIterable.of(languages).flatten(
-      language -> dumbService.filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(ContainerUtil.newLinkedHashSet());
+      language -> dumbService.filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(
+      new LinkedHashSet<>());
   }
 
   static final class DisplayedTypeInfo {

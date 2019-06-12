@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,12 +67,12 @@ public class Replacer {
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions options, Project project, boolean sourceIsFile) {
-    final FileType type = options.getMatchOptions().getFileType();
+    final LanguageFileType type = options.getMatchOptions().getFileType();
     return testReplace(in, what, by, options, project, sourceIsFile, false, type, null);
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions replaceOptions, Project project, boolean sourceIsFile,
-                                   boolean createPhysicalFile, FileType sourceFileType, Language sourceDialect) {
+                                   boolean createPhysicalFile, LanguageFileType sourceFileType, Language sourceDialect) {
     replaceOptions.setReplacement(by);
 
     final MatchOptions matchOptions = replaceOptions.getMatchOptions();
@@ -147,7 +147,7 @@ public class Replacer {
     }
   }
 
-  public void replaceAll(final List<ReplacementInfo> infos) {
+  public void replaceAll(final List<? extends ReplacementInfo> infos) {
     for (ReplacementInfo info : infos) {
       replaceHandler.prepare(info);
     }
@@ -165,9 +165,11 @@ public class Replacer {
             indicator.checkCanceled();
             indicator.setFraction((float)(i + 1) / size);
 
-            ReplacementInfo info = infos.get(i);
-            PsiElement element = info.getMatch(0);
-            assert element != null;
+            final ReplacementInfo info = infos.get(i);
+            final PsiElement element = info.getMatch(0);
+            if (element == null) {
+              continue;
+            }
             final VirtualFile vFile = element.getContainingFile().getVirtualFile();
             if (vFile != null && !vFile.equals(lastFile)) {
               indicator.setText2(vFile.getPresentableUrl());
@@ -214,7 +216,7 @@ public class Replacer {
   }
 
   private void reformatAndPostProcess(final PsiElement elementParent) {
-    if (elementParent == null) return;
+    if (elementParent == null || !elementParent.isValid()) return;
     final PsiFile containingFile = elementParent.getContainingFile();
 
     if (containingFile != null && options.isToReformatAccordingToStyle()) {
@@ -263,20 +265,20 @@ public class Replacer {
 
   public static void checkReplacementPattern(Project project, ReplaceOptions options) {
     try {
-      String search = options.getMatchOptions().getSearchPattern();
-      String replacement = options.getReplacement();
-      FileType fileType = options.getMatchOptions().getFileType();
-      Template template = TemplateManager.getInstance(project).createTemplate("" ,"", search);
-      Template template2 = TemplateManager.getInstance(project).createTemplate("", "", replacement);
+      final String search = options.getMatchOptions().getSearchPattern();
+      final String replacement = options.getReplacement();
+      final LanguageFileType fileType = options.getMatchOptions().getFileType();
+      final Template searchTemplate = TemplateManager.getInstance(project).createTemplate("" , "", search);
+      final Template replaceTemplate = TemplateManager.getInstance(project).createTemplate("", "", replacement);
 
-      int segmentCount = template2.getSegmentsCount();
+      final int segmentCount = replaceTemplate.getSegmentsCount();
       for(int i = 0; i < segmentCount; i++) {
-        final String replacementSegmentName = template2.getSegmentName(i);
-        final int segmentCount2  = template.getSegmentsCount();
+        final String replacementSegmentName = replaceTemplate.getSegmentName(i);
+        final int segmentCount2  = searchTemplate.getSegmentsCount();
         int j = 0;
 
         while (j < segmentCount2) {
-          final String searchSegmentName = template.getSegmentName(j);
+          final String searchSegmentName = searchTemplate.getSegmentName(j);
           if (replacementSegmentName.equals(searchSegmentName)) break;
 
           // Reference to
@@ -290,12 +292,12 @@ public class Replacer {
         }
 
         if (j == segmentCount2) {
-          ReplacementVariableDefinition definition = options.getVariableDefinition(replacementSegmentName);
+          final ReplacementVariableDefinition definition = options.getVariableDefinition(replacementSegmentName);
 
           if (definition == null || definition.getScriptCodeConstraint().length() <= 2 /*empty quotes*/) {
             throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName));
           } else {
-            String message = ScriptSupport.checkValidScript(StringUtil.unquoteString(definition.getScriptCodeConstraint()));
+            final String message = ScriptSupport.checkValidScript(StringUtil.unquoteString(definition.getScriptCodeConstraint()));
             if (message != null) {
               throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, message));
             }
@@ -303,7 +305,7 @@ public class Replacer {
         }
       }
 
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
       assert profile != null;
       ReadAction.run(() -> profile.checkReplacementPattern(project, options));
     } catch (IncorrectOperationException ex) {

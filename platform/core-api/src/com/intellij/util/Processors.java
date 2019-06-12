@@ -16,11 +16,24 @@
 package com.intellij.util;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public class Processors {
+  @NotNull
+  public static <T> Processor<T> filter(@NotNull Processor<? super T> processor,
+                                        @NotNull Condition<? super T> filter) {
+    return o -> !filter.value(o) || processor.process(o);
+  }
+
+  @NotNull
+  public static <T, S> Processor<S> map(@NotNull Processor<T> processor,
+                                        @NotNull Function<? super S, ? extends T> map) {
+    return o -> processor.process(map.fun(o));
+  }
+
   @NotNull
   public static <T> Processor<T> cancelableCollectProcessor(@NotNull Collection<T> collection) {
     return new CommonProcessors.CollectProcessor<T>(collection){

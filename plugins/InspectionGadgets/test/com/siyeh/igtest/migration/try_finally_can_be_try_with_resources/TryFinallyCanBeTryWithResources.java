@@ -102,3 +102,21 @@ class FinallyContainsTry {
     }
   }
 }
+
+class NonResourceBeforeTry {
+  public static String test(String str) throws IOException {
+    final InputStream stream = new ByteArrayInputStream(str.getBytes());
+    final StringBuilder res = new StringBuilder();
+    try {
+      int entry;
+      while ((entry = stream.read()) > -1) {
+        res.append(entry).append("\n");
+      }
+    }
+    finally {
+      stream.close();
+    }
+
+    return res.toString();
+  }
+}

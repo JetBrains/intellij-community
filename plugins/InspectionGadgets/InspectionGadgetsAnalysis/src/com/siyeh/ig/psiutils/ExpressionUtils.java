@@ -526,7 +526,7 @@ public class ExpressionUtils {
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
       } else if ("append".equals(name)) {
-        if (expressions.length < 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
+        if (expressions.length != 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
           return true;
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
@@ -1377,16 +1377,6 @@ public class ExpressionUtils {
       return PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
     }
     return null;
-  }
-
-  /**
-   * Returns true if given new-expression creates an array rather than an object.
-   *
-   * @param expression expression to check
-   * @return true if given new-expression creates an array
-   */
-  public static boolean isArrayCreationExpression(@NotNull PsiNewExpression expression) {
-    return expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0;
   }
 
   /**

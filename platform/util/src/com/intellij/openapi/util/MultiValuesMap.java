@@ -21,7 +21,7 @@ public class MultiValuesMap<K, V>{
     myBaseMap = ordered ? new LinkedHashMap<>() : new HashMap<>();
   }
 
-  public void putAll(K key, @NotNull Collection<V> values) {
+  public void putAll(K key, @NotNull Collection<? extends V> values) {
     for (V value : values) {
       put(key, value);
     }

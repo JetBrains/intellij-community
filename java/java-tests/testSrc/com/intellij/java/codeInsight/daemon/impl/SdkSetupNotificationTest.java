@@ -17,7 +17,7 @@ public class SdkSetupNotificationTest extends SdkSetupNotificationTestBase {
 
   public void testNoProjectSdk() {
     final EditorNotificationPanel panel = configureBySdkAndText(null, false, "Sample.java", "class Sample {}");
-    assertSdkSetupPanelShown(panel, "Project SDK is not defined");
+    assertSdkSetupPanelShown(panel, "Setup SDK");
   }
 
   public void testModuleSdk() {
@@ -27,6 +27,6 @@ public class SdkSetupNotificationTest extends SdkSetupNotificationTestBase {
 
   public void testNoModuleSdk() {
     final EditorNotificationPanel panel = configureBySdkAndText(null, true, "Sample.java", "class Sample {}");
-    assertSdkSetupPanelShown(panel, "Module SDK is not defined");
+    assertSdkSetupPanelShown(panel, "Setup SDK");
   }
 }

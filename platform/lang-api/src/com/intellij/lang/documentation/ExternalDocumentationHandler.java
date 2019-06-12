@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Implement additionally in your {@link DocumentationProvider}.
+ */
 public interface ExternalDocumentationHandler {
   boolean handleExternal(PsiElement element, PsiElement originalElement);
   boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context);

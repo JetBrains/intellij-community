@@ -388,7 +388,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     return elements;
   }
 
-  public void sort(Comparator<T> comparator) {
+  public void sort(Comparator<? super T> comparator) {
     myTableModel.sort(comparator);
   }
 

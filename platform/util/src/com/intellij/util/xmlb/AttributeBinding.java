@@ -1,8 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +13,7 @@ class AttributeBinding extends BasePrimitiveBinding {
   AttributeBinding(@NotNull MutableAccessor accessor, @Nullable Attribute attribute) {
     super(accessor, attribute == null ? null : attribute.value(), attribute == null ? null : attribute.converter());
 
-    valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());
+    valueClass = ClassUtil.typeToClass(accessor.getGenericType());
   }
 
   @Override

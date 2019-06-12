@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -7,9 +7,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -75,7 +75,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<ToolWindow
       return PlatformIcons.UI_FORM_ICON;
     }
 
-    icon = IconUtil.toSize(icon, JBUI.scale(16), JBUI.scale(16));
+    icon = IconUtil.toSize(icon, JBUIScale.scale(16), JBUIScale.scale(16));
     return icon;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
@@ -354,8 +354,8 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Nullable
-  public static PsiType getLeastUpperBoundNullable(@NotNull Iterable<PsiType> collection, @NotNull PsiManager manager) {
-    Iterator<PsiType> iterator = collection.iterator();
+  public static PsiType getLeastUpperBoundNullable(@NotNull Iterable<? extends PsiType> collection, @NotNull PsiManager manager) {
+    Iterator<? extends PsiType> iterator = collection.iterator();
     PsiType result = null;
     while (iterator.hasNext()) {
       result = getLeastUpperBoundNullable(result, iterator.next(), manager);
@@ -756,19 +756,7 @@ public class TypesUtil implements TypeConstants {
 
   @Nullable
   public static PsiType rawWildcard(PsiType type, PsiElement context) {
-    final PsiTypeMapper visitor = new PsiTypeMapper() {
-
-      @Override
-      public PsiType visitClassType(PsiClassType classType) {
-        final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
-        final PsiClass element = result.getElement();
-        if (element == null) return null;
-
-        final PsiType[] parameters = classType.getParameters();
-        PsiType[] replacedParams = Arrays.stream(parameters).map((arg) -> arg == null ? null : arg.accept(this)).toArray(PsiType[]::new);
-        return JavaPsiFacade.getElementFactory(context.getProject()).createType(element, replacedParams);
-      }
-
+    final PsiTypeMapper visitor = new GrTypeMapper(context) {
       @Override
       public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
         return getJavaLangObject(context);

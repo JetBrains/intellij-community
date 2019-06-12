@@ -176,7 +176,7 @@ public class MdnDocumentationUtil {
   public static String buildDoc(@NotNull String name,
                                 @NotNull String description,
                                 @Nullable Map mdnCompatData,
-                                @Nullable List<Couple<String>> additionalData) {
+                                @Nullable List<? extends Couple<String>> additionalData) {
     StringBuilder buf = new StringBuilder();
 
     buf.append(DocumentationMarkup.DEFINITION_START).append(name).append(DocumentationMarkup.DEFINITION_END);

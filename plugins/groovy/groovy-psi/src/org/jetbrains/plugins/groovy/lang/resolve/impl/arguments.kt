@@ -60,7 +60,7 @@ fun argumentMapping(method: PsiMethod, substitutor: PsiSubstitutor, arguments: A
       val parameters = method.parameterList.parameters
       if (arguments.size != parameters.size) return false
       val parameterType = parameterType(parameters.last().type, substitutor, true)
-      val lastArgApplicability = argumentApplicability(parameterType, arguments.last(), context)
+      val lastArgApplicability = argumentApplicability(parameterType, arguments.last().runtimeType, context)
       return lastArgApplicability == Applicability.applicable
     })
     if (invokedAsIs) {

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -47,7 +48,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
-    myTestGroupNames = ContainerUtil.newTroveSet(testGroupNames);
+    myTestGroupNames = new THashSet<>(testGroupNames);
 
     for (String groupName : filters.keySet()) {
       Collection<String> groupFilters = filters.get(groupName);
@@ -163,7 +164,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
       this.excluded = excluded;
       this.included = included;
     }
-    
+
     private boolean matches(String className) {
       return !matchesAnyPattern(excluded, className) && matchesAnyPattern(included, className);
     }

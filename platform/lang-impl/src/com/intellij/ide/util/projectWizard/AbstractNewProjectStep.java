@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -31,13 +31,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 
-public class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware {
+public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
   private final Customization<T> myCustomization;
 
@@ -104,10 +106,10 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
     }
 
     public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T>[] generators, @NotNull AbstractCallback<T> callback) {
-      final List<AnAction> actions = ContainerUtil.newArrayList();
+      final List<AnAction> actions = new ArrayList<>();
       for (DirectoryProjectGenerator<T> projectGenerator : generators) {
         try {
-          actions.addAll(ContainerUtil.list(getActions(projectGenerator, callback)));
+          actions.addAll(Arrays.asList(getActions(projectGenerator, callback)));
         } catch (Throwable throwable) {
           LOG.error("Broken project generator " + projectGenerator, throwable);
         }

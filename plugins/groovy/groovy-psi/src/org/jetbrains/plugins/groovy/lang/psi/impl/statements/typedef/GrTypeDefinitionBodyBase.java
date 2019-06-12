@@ -8,7 +8,6 @@ import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,7 +54,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   @Override
   public GrField[] getFields() {
     GrVariableDeclaration[] declarations = getStubOrPsiChildren(GroovyStubElementTypes.VARIABLE_DECLARATION, GrVariableDeclaration.ARRAY_FACTORY);
-    List<GrField> result = ContainerUtil.newArrayList();
+    List<GrField> result = new ArrayList<>();
     for (GrVariableDeclaration declaration : declarations) {
       GrVariable[] variables = declaration.getVariables();
       for (GrVariable variable : variables) {

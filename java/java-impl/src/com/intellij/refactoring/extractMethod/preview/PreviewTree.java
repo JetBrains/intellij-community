@@ -55,7 +55,7 @@ class PreviewTree implements Disposable {
     SmartExpander.installOn(tree);
     TreeUtil.installActions(tree);
     TreeUtil.expand(tree, 2);
-    TreeUtil.selectFirstNode(tree);
+    TreeUtil.promiseSelectFirst(tree);
 
     PopupHandler.installPopupHandler(tree, IdeActions.EXTRACT_METHOD_TOOL_WINDOW_TREE_POPUP, ActionPlaces.UNKNOWN);
     return tree;

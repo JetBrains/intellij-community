@@ -70,12 +70,6 @@ object IdeaGuiTestUtil{
           if (foundJdk == null) {
             ApplicationManager.getApplication().runWriteAction { ProjectJdkTable.getInstance().addJdk(newJdk) }
           }
-
-          ApplicationManager.getApplication().runWriteAction {
-            val modificator = newJdk.sdkModificator
-            JavaSdkImpl.attachJdkAnnotations(modificator)
-            modificator.commitChanges()
-          }
         }
         else {
           throw IllegalStateException("The resolved path '" + path.path + "' was not found")

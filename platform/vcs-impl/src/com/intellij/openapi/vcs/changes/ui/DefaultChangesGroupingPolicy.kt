@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
@@ -12,7 +12,7 @@ object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
 }
 
 object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
-  override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy {
+  override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
     return NoneChangesGroupingPolicy
   }
 }
@@ -38,11 +38,15 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
   }
 
   companion object {
-    val CONFLICTS_NODE_CACHE: Key<ChangesBrowserNode<*>> = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
+    val CONFLICTS_NODE_CACHE = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
   }
 
-  class Factory @JvmOverloads constructor(val project: Project, val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy =
-      if (forLocalChanges) DefaultChangesGroupingPolicy(project, model) else NoneChangesGroupingPolicy
+  class Factory @JvmOverloads constructor(private val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {
+    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
+      return when {
+        forLocalChanges -> DefaultChangesGroupingPolicy(project, model)
+        else -> NoneChangesGroupingPolicy
+      }
+    }
   }
 }

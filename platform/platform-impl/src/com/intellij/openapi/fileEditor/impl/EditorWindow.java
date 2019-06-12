@@ -23,18 +23,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +78,7 @@ public class EditorWindow {
   private final AtomicBoolean myTabsHidingInProgress = new AtomicBoolean(false);
   private final Stack<Pair<String, Integer>> myHiddenTabs = new Stack<>();
 
-  protected EditorWindow(final EditorsSplitters owner) {
+  protected EditorWindow(@NotNull EditorsSplitters owner) {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
     myPanel.setOpaque(false);
@@ -103,7 +105,7 @@ public class EditorWindow {
 
   private void createTabs() {
     LOG.assertTrue (myTabbedPane == null);
-    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject());
+    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), myOwner);
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
 
@@ -162,7 +164,11 @@ public class EditorWindow {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
     final Integer second = info.getSecond();
     if (file != null) {
-      getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
+      getManager().openFileImpl4(this, file, null,
+                                 new FileEditorOpenOptions()
+                                   .withCurrentTab(true)
+                                   .withFocusEditor(true)
+                                   .withIndex(second == null ? -1 : second.intValue()));
     }
   }
 
@@ -173,7 +179,10 @@ public class EditorWindow {
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
       final Integer second = info.getSecond();
       if (file != null) {
-        getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
+        getManager().openFileImpl4(this, file, null,
+                                   new FileEditorOpenOptions()
+                                     .withCurrentTab(true)
+                                     .withIndex(second == null ? -1 : second.intValue()));
       }
     }
   }
@@ -226,7 +235,8 @@ public class EditorWindow {
           if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
             final EditorsSplitters owner = getOwner();
             if (owner != null) {
-              final ThreeComponentsSplitter splitter = UIUtil.getParentOfType(ThreeComponentsSplitter.class, owner);
+              final ThreeComponentsSplitter splitter =
+                ComponentUtil.getParentOfType((Class<? extends ThreeComponentsSplitter>)ThreeComponentsSplitter.class, (Component)owner);
               if (splitter != null) {
                 splitter.revalidate();
                 splitter.repaint();
@@ -389,21 +399,21 @@ public class EditorWindow {
   }
 
   void setTabsPlacement(final int tabPlacement) {
+    boolean focusEditor = this == myOwner.getCurrentWindow() &&
+                          ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
     if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().getPresentationMode()) {
       if (myTabbedPane == null) {
         final EditorWithProviderComposite editor = getSelectedEditor();
         myPanel.removeAll();
         createTabs();
         restoreHiddenTabs();
-        setEditor (editor, true);
+        setEditor(editor, true, focusEditor);
       }
       else {
         myTabbedPane.setTabPlacement(tabPlacement);
       }
     }
     else if (myTabbedPane != null) {
-      final boolean focusEditor = this == myOwner.getCurrentWindow() &&
-                                  ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
       final VirtualFile currentFile = getSelectedFile();
       if (currentFile != null) {
         // do not close associated language console on tab placement change
@@ -413,7 +423,7 @@ public class EditorWindow {
       myHiddenTabs.clear();
       myTabsHidingInProgress.set(true);
       for (VirtualFile file : files) {
-        closeFile(file, false);
+        closeFile(file, false, false);
       }
       //Add flag switching activity to the end of queue
       getManager().runChange(splitters -> myTabsHidingInProgress.set(false), myOwner);
@@ -669,7 +679,7 @@ public class EditorWindow {
         if (initialIndex != null) {
           indexToInsert = initialIndex;
         }
-        else if (Registry.is("ide.editor.tabs.open.at.the.end")) {
+        else if (UISettings.getInstance().getOpenTabsAtTheEnd()) {
           indexToInsert = myTabbedPane.getTabCount();
         }
         else {
@@ -713,7 +723,7 @@ public class EditorWindow {
         final EditorWindow[] siblings = findSiblings();
         final EditorWindow target = siblings[0];
         if (virtualFile != null) {
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null, true).first;
+          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null).first;
           syncCaretIfPossible(editors);
         }
         return target;
@@ -759,7 +769,11 @@ public class EditorWindow {
 
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
           HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
-          final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState, true, focusNew, null, -1, true).first;
+          final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
+                                                                       new FileEditorOpenOptions()
+                                                                         .withCurrentTab(true)
+                                                                         .withFocusEditor(focusNew)
+                                                                         .withExactState()).first;
           syncCaretIfPossible(editors);
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
@@ -779,7 +793,11 @@ public class EditorWindow {
           final VirtualFile firstFile = firstEC.getFile();
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
           HistoryEntry currentState = firstEC.currentStateAsHistoryEntry();
-          fileEditorManager.openFileImpl4(res, nextFile, currentState, true, focusNew, null, -1, true);
+          fileEditorManager.openFileImpl4(res, nextFile, currentState,
+                                          new FileEditorOpenOptions()
+                                            .withCurrentTab(true)
+                                            .withFocusEditor(focusNew)
+                                            .withExactState());
           if (!focusNew) getGlobalInstance().requestFocus(oldComp, true);
         }
         return res;
@@ -900,7 +918,7 @@ public class EditorWindow {
 
     final Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
-    if (settings.getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
+    if (settings.getMarkModifiedTabsWithAsterisk()) {
       Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
       modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? crop : new EmptyIcon(7, 7);
       count++;
@@ -915,7 +933,7 @@ public class EditorWindow {
     final LayeredIcon result = new LayeredIcon(count);
     result.setIcon(baseIcon, i++);
     if (pinIcon != null) result.setIcon(pinIcon, i++);
-    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth(), 0);
+    if (modifiedIcon != null) result.setIcon(modifiedIcon, i++, -modifiedIcon.getIconWidth() / 2, 0);
 
     return JBUI.scale(result);
   }
@@ -1112,7 +1130,7 @@ public class EditorWindow {
     final VirtualFile[] allFiles = getFiles();
     final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileList();
 
-    LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<VirtualFile> closingOrder = new LinkedHashSet<>();
 
     // first, we search for files not in history
     for (final VirtualFile file : allFiles) {

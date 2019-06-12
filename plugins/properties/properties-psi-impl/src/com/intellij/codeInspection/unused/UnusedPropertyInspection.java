@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -53,7 +54,7 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
   private static GlobalSearchScope getWidestUseScope(@Nullable String key, @NotNull Project project, @NotNull Module ownModule) {
     if (key == null) return null;
 
-    Set<Module> modules = ContainerUtil.newLinkedHashSet();
+    Set<Module> modules = new LinkedHashSet<>();
     for (IProperty property : PropertiesImplUtil.findPropertiesByKey(project, key)) {
       Module module = ModuleUtilCore.findModuleForPsiElement(property.getPsiElement());
       if (module == null) {

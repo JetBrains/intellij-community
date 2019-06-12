@@ -2,12 +2,14 @@
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import javax.swing.SwingConstants
+import kotlin.math.roundToInt
 
 class UISettingsState : BaseState() {
   companion object {
@@ -18,9 +20,8 @@ class UISettingsState : BaseState() {
      */
     @JvmStatic
     val defFontSize: Int
-      get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale)
+      get() = (JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale).roundToInt()
   }
-
 
   @get:OptionTag("FONT_FACE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontFace"))
@@ -34,9 +35,11 @@ class UISettingsState : BaseState() {
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale by property(0f)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit by property(50)
 
+  @get:ReportValue
   @get:OptionTag("RECENT_LOCATIONS_LIMIT")
   var recentLocationsLimit by property(25)
 
@@ -47,6 +50,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("CONSOLE_CYCLE_BUFFER_SIZE_KB")
   var consoleCycleBufferSizeKb by property(1024)
 
+  @get:ReportValue
   @get:OptionTag("EDITOR_TAB_LIMIT")
   var editorTabLimit by property(10)
 
@@ -76,6 +80,8 @@ class UISettingsState : BaseState() {
   var showMainToolbar by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
   var showStatusBar by property(true)
+  @get:OptionTag("SHOW_MAIN_MENU")
+  var showMainMenu by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR")
   var showNavigationBar by property(true)
   @get:OptionTag("ALWAYS_SHOW_WINDOW_BUTTONS")
@@ -85,7 +91,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR")
   var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED")
-  var hideTabsIfNeed by property(true)
+  var hideTabsIfNeeded by property(true)
   @get:OptionTag("SHOW_CLOSE_BUTTON")
   var showCloseButton by property(true)
   @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT")
@@ -97,6 +103,11 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")
   var showIconInQuickNavigation by property(true)
 
+  @get:OptionTag("SORT_TABS_ALPHABETICALLY")
+  var sortTabsAlphabetically by property(false)
+  @get:OptionTag("OPEN_TABS_AT_THE_END")
+  var openTabsAtTheEnd by property(false)
+
   @get:OptionTag("CLOSE_NON_MODIFIED_FILES_FIRST")
   var closeNonModifiedFilesFirst by property(false)
   @get:OptionTag("ACTIVATE_MRU_EDITOR_ON_CLOSE")
@@ -107,11 +118,11 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("IDE_AA_TYPE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.ideAAType"))
-  internal var ideAAType by property(AntialiasingType.SUBPIXEL)
+  internal var ideAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:OptionTag("EDITOR_AA_TYPE")
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.editorAAType"))
-  internal var editorAAType by property(AntialiasingType.SUBPIXEL)
+  internal var editorAAType by enum(AntialiasingType.SUBPIXEL)
 
   @get:OptionTag("COLOR_BLINDNESS")
   var colorBlindness by enum<ColorBlindness>()

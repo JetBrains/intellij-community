@@ -19,39 +19,83 @@ import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
+import javax.swing.JRadioButton
 
 
 class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
-                                                   private val url: String,
+                                                   url: String,
                                                    rememberPassword: Boolean = true,
                                                    username: String? = null,
-                                                   editableUsername: Boolean = true) : DialogWrapper(project, true) {
+                                                   editableUsername: Boolean = true,
+                                                   private val showActionForCredHelper: Boolean = false) : DialogWrapper(project, true) {
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
   private val rememberCheckbox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), rememberPassword)
   private val additionalProvidersButton = JBOptionButton(null, null).apply { isVisible = false }
+  private var useCredentialHelper = false
+
+  companion object {
+    const val USE_CREDENTIAL_HELPER_CODE = NEXT_USER_EXIT_CODE
+  }
 
   var externalAuthData: AuthData? = null
     private set
 
   init {
-    title = "Git Login"
+    title = "Log In to $url"
     setOKButtonText("Log In")
     init()
   }
 
   override fun createCenterPanel(): JComponent {
+    val credentialsPanel = panel {
+      if (!showActionForCredHelper) {
+        row("Enter credentials:") {}
+      }
+      row("Username:") { usernameField(CCFlags.growX) }
+      row("Password:") { passwordField(CCFlags.growX) }
+      row { rememberCheckbox() }
+    }
+    if (!showActionForCredHelper) {
+      return credentialsPanel
+    }
+
+    val credRadioButton = JRadioButton("Enter credentials:", true).apply {
+      addActionListener {
+        useCredentialHelper = false
+        UIUtil.setEnabled(credentialsPanel, true, true)
+      }
+    }
+    val helperRadioButton = JRadioButton("Use credentials helper", false).apply {
+      addActionListener {
+        isOKActionEnabled = true
+        useCredentialHelper = true
+        UIUtil.setEnabled(credentialsPanel, false, true)
+      }
+    }
     return panel {
-      noteRow("Enter credentials for $url.")
-      row("Username:") { usernameField() }
-      row("Password:") { passwordField() }
-      row {
-        rememberCheckbox()
+      buttonGroup {
+        row {
+          credRadioButton()
+          row { credentialsPanel(CCFlags.growX) }
+        }
+        row { helperRadioButton() }
       }
     }
   }
 
+  override fun doOKAction() {
+    if (useCredentialHelper) {
+      close(USE_CREDENTIAL_HELPER_CODE, false)
+      return
+    }
+    super.doOKAction()
+  }
+
   override fun doValidateAll(): List<ValidationInfo> {
+    if (useCredentialHelper) {
+      return emptyList()
+    }
     return listOfNotNull(if (username.isBlank()) ValidationInfo("Username cannot be empty", usernameField) else null,
                          if (passwordField.password.isEmpty()) ValidationInfo("Password cannot be empty", passwordField) else null)
   }

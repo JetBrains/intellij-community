@@ -92,19 +92,19 @@ public interface IToken extends Serializable, Comparable{
     void setArgs(String args);
     String getParentPackage();
 
-    /**
-     *
-     * @return The complete path for the token.
-     *
-     * The following cases apply for imports:
-     *
-     * on module test decorating with module
-     * from x import testcase     (return test.x.testcase)
-     * from x import testcase as t(return test.x.testcase)
-     * import testcase            (return test.testcase)
-     *
-     * if not decorating would return the same as above without 'test'
-     */
+    ///**
+    // *
+    // * @return The complete path for the token.
+    // *
+    // * The following cases apply for imports:
+    // *
+    // * on module test decorating with module
+    // * from x import testcase     (return test.x.testcase)
+    // * from x import testcase as t(return test.x.testcase)
+    // * import testcase            (return test.testcase)
+    // *
+    // * if not decorating would return the same as above without 'test'
+    // */
 //    public String getOriginalRep(boolean decorateWithModule);
 
     /**
@@ -171,8 +171,8 @@ public interface IToken extends Serializable, Comparable{
 
     boolean isString();
 
-    /**
-     * @return the image that should be used in the code-completion for this token.
-     */
+    ///**
+    // * @return the image that should be used in the code-completion for this token.
+    // */
     //public Image getImage();
 }

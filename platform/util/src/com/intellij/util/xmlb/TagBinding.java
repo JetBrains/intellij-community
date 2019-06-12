@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.serialization.ClassUtil;
+import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -40,7 +42,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     else {
       Object node = myBinding.serialize(value, serialized, filter);
       if (node != null && node != serialized) {
-        addContent(serialized, node);
+        Binding.addContent(serialized, node);
       }
     }
     return serialized;
@@ -75,7 +77,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   public Object deserialize(@NotNull Object context, @NotNull Element element) {
     if (myBinding == null) {
       String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
-      XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+      XmlSerializerImpl.doSet(context, value, myAccessor, ClassUtil.typeToClass(myAccessor.getGenericType()));
     }
     else {
       deserialize(context, element.getChildren());
@@ -85,7 +87,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   private void deserialize(@NotNull Object context, @NotNull List<? extends Element> children) {
     assert myBinding != null;
-    if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
+    if (myBinding instanceof BeanBinding && !myAccessor.isWritable()) {
       ((BeanBinding)myBinding).deserializeInto(context, children.get(0));
     }
     else {

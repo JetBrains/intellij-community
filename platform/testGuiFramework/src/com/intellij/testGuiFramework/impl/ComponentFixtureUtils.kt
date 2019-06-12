@@ -228,6 +228,13 @@ fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, timeout
   }
 }
 
+fun <C : Container> ContainerFixture<C>.actionButtonByIcon(iconName: String, timeout: Timeout = defaultTimeout): ActionButtonFixture {
+  return step("search action button by icon name '$iconName'") {
+    val actionButton = findComponentWithTimeout(timeout, ActionButtonFixture.byIcon(iconName))
+    return@step ActionButtonFixture(robot(), actionButton)
+  }
+}
+
 fun <C : Container> ContainerFixture<C>.actionButton(actionName: String, filter: (ActionButton) -> Boolean, timeout: Timeout = defaultTimeout): ActionButtonFixture {
   val actionButton: ActionButton = try {
     findComponentWithTimeout(timeout) { ActionButtonFixture.textMatcher(actionName).invoke(it).and(filter.invoke(it)) }
@@ -435,6 +442,14 @@ fun <C : Container> ContainerFixture<C>.label(labelName: String, timeout: Timeou
   val jbLabel = GuiTestUtil.waitUntilFound(
     robot(), target() as Container,
     GuiTestUtilKt.typeMatcher(JBLabel::class.java) { it.isShowing && (it.text == labelName || labelName in it.text) },
+    timeout)
+  return JLabelFixture(robot(), jbLabel)
+}
+
+fun <C : Container> ContainerFixture<C>.jLabel(labelName: String, timeout: Timeout = defaultTimeout): JLabelFixture {
+  val jbLabel = GuiTestUtil.waitUntilFound(
+    robot(), target() as Container,
+    GuiTestUtilKt.typeMatcher(JLabel::class.java) { it.isShowing && it.text == labelName },
     timeout)
   return JLabelFixture(robot(), jbLabel)
 }

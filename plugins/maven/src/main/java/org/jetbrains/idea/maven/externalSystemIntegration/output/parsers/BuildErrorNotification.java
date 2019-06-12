@@ -6,7 +6,6 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +37,14 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
   }
 
   @Override
-  public boolean checkLogLine(@NotNull ExternalSystemTaskId id,
+  public boolean checkLogLine(@NotNull Object parentId,
                               @NotNull MavenLogEntryReader.MavenLogEntry logLine,
                               @NotNull MavenLogEntryReader logEntryReader,
                               @NotNull Consumer<? super BuildEvent> messageConsumer) {
 
     String line = logLine.getLine();
     if (line.endsWith("java.lang.OutOfMemoryError")) {
-      messageConsumer.accept(new MessageEventImpl(id, MessageEvent.Kind.ERROR, myMessageGroup,
+      messageConsumer.accept(new MessageEventImpl(parentId, MessageEvent.Kind.ERROR, myMessageGroup,
                                                   "Out of memory.", line));
       return true;
     }
@@ -77,7 +76,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
 
     String errorMessage = getErrorMessage(position, message);
     messageConsumer
-      .accept(new FileMessageEventImpl(id, MessageEvent.Kind.ERROR, myMessageGroup, errorMessage, errorMessage,
+      .accept(new FileMessageEventImpl(parentId, MessageEvent.Kind.ERROR, myMessageGroup, errorMessage, errorMessage,
                                        position));
     return true;
   }

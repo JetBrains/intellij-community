@@ -116,7 +116,7 @@ public class Util {
         i++;
       }
     }
-    id = id.toUpperCase();
+    id = StringUtil.toUpperCase(id);
     id = id.replace('.', '_').replace('-', '_');
     if (id.length() < 2 || !Character.isJavaIdentifierStart(id.charAt(0))) {
       id = typeName + "_" + id;

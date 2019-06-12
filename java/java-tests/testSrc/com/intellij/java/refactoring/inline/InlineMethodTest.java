@@ -490,6 +490,46 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testSpecializeClassGetName() {
     doTest();
   }
+  
+  public void testSpecializeEnumName() {
+    doTest();
+  }
+  
+  public void testSpecializeEnumValueOf() {
+    doTest();
+  }
+  
+  public void testBooleanModelSimple() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testBooleanModelMultiReturns() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testBooleanModelIfElse() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelIfElse2() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelContinue() {
+    doTestAssertBadReturn();
+  }
+
+  public void testBooleanModelFinalCondition() {
+    doTestAssertBadReturn();
+  }
+  
+  public void testInvertMethod() {
+    doTest();
+  }
+  
+  public void testUnusedParameter() {
+    doTest();
+  }
 
   @Override
   protected Sdk getProjectJDK() {

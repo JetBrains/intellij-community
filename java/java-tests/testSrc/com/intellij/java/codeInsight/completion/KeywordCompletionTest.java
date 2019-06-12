@@ -144,6 +144,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalAfterParameterAnno2() { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() { doTest(3, "final", "float", "class"); }
   public void testNoCaseInsideWhileInSwitch() { doTest(0, "case", "default"); }
+  public void testIndentDefaultInSwitch() { doTest(); }
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
   public void testFinalInCompleteCatch() { doTest(1, "final"); }
@@ -164,6 +165,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitiveInEnumConstructorCast() { doTest(1, "int"); }
   public void testNoStatementInForLoopCondition() { doTest(0, "synchronized", "if"); }
   public void testNoStatementInForLoopUpdate() { doTest(0, "synchronized", "if"); }
+  public void testSuggestModifiersAfterUnfinishedMethod() { doTest(1, "public"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
   public void testQualifiedNew() { doTest(1, "new"); }
 

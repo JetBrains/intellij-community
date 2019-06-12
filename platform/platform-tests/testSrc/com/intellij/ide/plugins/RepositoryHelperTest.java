@@ -141,6 +141,6 @@ public class RepositoryHelperTest {
     File tempFile = tempDir.newFile("repo.xml");
     FileUtil.writeToFile(tempFile, data);
     String url = tempFile.toURI().toURL().toString();
-    return RepositoryHelper.loadPlugins(url, null, false, null);
+    return RepositoryHelper.loadPlugins(url, null, null);
   }
 }

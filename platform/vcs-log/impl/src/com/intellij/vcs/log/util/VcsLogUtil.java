@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
@@ -34,6 +34,8 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +68,7 @@ public class VcsLogUtil {
     Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
     for (T item : items) {
       VirtualFile root = rootGetter.fun(item);
-      map.computeIfAbsent(root, k -> ContainerUtil.newHashSet()).add(item);
+      map.computeIfAbsent(root, k -> new HashSet<>()).add(item);
     }
     return map;
   }
@@ -175,7 +177,7 @@ public class VcsLogUtil {
     if (filter == null) return null;
 
     String branchName = null;
-    Set<VirtualFile> checkedRoots = ContainerUtil.newHashSet();
+    Set<VirtualFile> checkedRoots = new HashSet<>();
     for (VcsRef branch : refs.getBranches()) {
       if (!filter.matches(branch.getName())) continue;
 
@@ -212,7 +214,7 @@ public class VcsLogUtil {
   public static List<? extends VcsFullCommitDetails> getDetails(@NotNull VcsLogProvider logProvider,
                                                                 @NotNull VirtualFile root,
                                                                 @NotNull List<String> hashes) throws VcsException {
-    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> result = new ArrayList<>();
     logProvider.readFullDetails(root, hashes, result::add);
     return result;
   }
@@ -265,7 +267,7 @@ public class VcsLogUtil {
   @NotNull
   public static List<Change> collectChanges(@NotNull List<? extends VcsFullCommitDetails> detailsList,
                                             @NotNull Function<? super VcsFullCommitDetails, ? extends Collection<Change>> getChanges) {
-    List<Change> changes = ContainerUtil.newArrayList();
+    List<Change> changes = new ArrayList<>();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
     for (VcsFullCommitDetails details : detailsListReversed) {
       changes.addAll(getChanges.fun(details));
@@ -286,7 +288,12 @@ public class VcsLogUtil {
 
   @Nullable
   public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogUi logUi) {
-    VcsLogStructureFilter structureFilter = logUi.getDataPack().getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    return getAffectedPaths(logUi.getDataPack());
+  }
+
+  @Nullable
+  public static Collection<FilePath> getAffectedPaths(@NotNull VcsLogDataPack dataPack) {
+    VcsLogStructureFilter structureFilter = dataPack.getFilters().get(VcsLogFilterCollection.STRUCTURE_FILTER);
     if (structureFilter != null) {
       return structureFilter.getFiles();
     }
@@ -296,7 +303,7 @@ public class VcsLogUtil {
   @Nullable
   public static Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
     if (!isFolderHistoryShownInLog()) return null;
-    
+
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
       if (properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
@@ -323,7 +330,7 @@ public class VcsLogUtil {
    * waits for it in a background task, and executes the action after the log is ready.
    */
   @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<VcsProjectLog, VcsLogManager> action) {
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
     VcsProjectLog log = VcsProjectLog.getInstance(project);
     VcsLogManager manager = log.getLogManager();
     if (manager != null) {
@@ -362,21 +369,43 @@ public class VcsLogUtil {
   public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     int maxSize = 0;
     for (VcsFullCommitDetails details : detailsList) {
-      int size = 0;
-      if (details instanceof VcsChangesLazilyParsedDetails) {
-        size = ((VcsChangesLazilyParsedDetails)details).size();
-      }
-      else {
-        for (int i = 0; i < details.getParents().size(); i++) {
-          size += details.getChanges(i).size();
-        }
-      }
-      maxSize = Math.max(size, maxSize);
+      maxSize = Math.max(getSize(details), maxSize);
     }
     return maxSize;
   }
 
+  public static int getSize(@NotNull VcsFullCommitDetails details) {
+    if (details instanceof VcsChangesLazilyParsedDetails) {
+      return ((VcsChangesLazilyParsedDetails)details).size();
+    }
+    
+    int size = 0;
+    for (int i = 0; i < details.getParents().size(); i++) {
+      size += details.getChanges(i).size();
+    }
+    return size;
+  }
+
   public static int getShownChangesLimit() {
     return Registry.intValue("vcs.log.max.changes.shown");
+  }
+
+  @NotNull
+  public static String getSizeText(int maxSize) {
+    if (maxSize < 1000) {
+      return String.valueOf(maxSize);
+    }
+    DecimalFormat format = new DecimalFormat("#.#");
+    format.setRoundingMode(RoundingMode.FLOOR);
+    if (maxSize < 10_000) {
+      return format.format(maxSize / 1000.0) + "K";
+    }
+    else if (maxSize < 1_000_000) {
+      return (maxSize / 1000) + "K";
+    }
+    else if (maxSize < 10_000_000) {
+      return format.format(maxSize / 1_000_000.0) + "M";
+    }
+    return (maxSize / 1_000_000) + "M";
   }
 }

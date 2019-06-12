@@ -142,7 +142,7 @@ public abstract class Entry {
     return hasUnavailableContent(new ArrayList<>());
   }
 
-  public boolean hasUnavailableContent(List<Entry> entriesWithUnavailableContent) {
+  public boolean hasUnavailableContent(List<? super Entry> entriesWithUnavailableContent) {
     return false;
   }
 
@@ -162,7 +162,7 @@ public abstract class Entry {
     throw new UnsupportedOperationException(formatAddRemove(child));
   }
 
-  public void addChildren(Collection<Entry> children) {
+  public void addChildren(Collection<? extends Entry> children) {
     throw new UnsupportedOperationException();
   }
 
@@ -239,11 +239,11 @@ public abstract class Entry {
     return result;
   }
 
-  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<? super Difference> result, boolean isRightContentCurrent);
 
-  protected abstract void collectCreatedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent);
 
-  protected abstract void collectDeletedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent);
 
   @Override
   public String toString() {

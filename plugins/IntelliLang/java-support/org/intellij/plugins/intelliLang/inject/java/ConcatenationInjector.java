@@ -86,7 +86,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, injectionSupport, operands) {
       @Override
       protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
-                                                                          List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                          List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                                                           boolean settingsAvailable,
                                                                           boolean unparsable) {
         InjectorUtils.registerInjection(language, list, containingFile, registrar);
@@ -201,7 +201,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         private void visitVariableUsages(PsiVariable variable) {
           if (variable == null) return;
-          if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
+          if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
               PsiElement element = psiReference.getElement();
               if (element instanceof PsiExpression) {
@@ -218,6 +218,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
         @Override
         public boolean visitVariable(PsiVariable variable) {
+          if (!visitedVars.add(variable)) return false;
           visitVariableUsages(variable);
           PsiElement anchor = !(variable.getFirstChild() instanceof PsiComment) ? variable :
                               variable.getModifierList() != null ? variable.getModifierList() :
@@ -424,7 +425,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
-                                                                        List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                        List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                                                         boolean xmlInjection,
                                                                         boolean unparsable) {
       return null;

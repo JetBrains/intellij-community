@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -22,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
@@ -38,14 +24,17 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 /**
- * @author peter
+ * Use {@code com.intellij.dom.fileMetaData} to register.
  *
- * @see com.intellij.util.xml.MergingFileDescription
+ * @author peter
+ * @see MergingFileDescription
  */
 public class DomFileDescription<T> {
+
   /**
-   * @deprecated use "com.intellij.dom.fileMetaData" extension instead
+   * @deprecated use {@code com.intellij.dom.fileMetaData} extension instead
    */
+  @Deprecated
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
 
   private final Map<Class<? extends ScopeProvider>, ScopeProvider> myScopeProviders = ConcurrentInstanceMap.create();
@@ -62,7 +51,8 @@ public class DomFileDescription<T> {
   public DomFileDescription(final Class<T> rootElementClass, @NonNls final String rootTagName, @NonNls @NotNull String... allPossibleRootTagNamespaces) {
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
-    myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : allPossibleRootTagNamespaces;
+    myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY
+                                                                              : allPossibleRootTagNamespaces;
   }
 
   @NotNull
@@ -73,24 +63,24 @@ public class DomFileDescription<T> {
   /**
    * Register an implementation class to provide additional functionality for DOM elements.
    *
-   * @param domElementClass interface class.
+   * @param domElementClass     interface class.
    * @param implementationClass abstract implementation class.
-   *
-   * @deprecated use dom.implementation extension point instead
    * @see #initializeFileDescription()
+   * @deprecated use dom.implementation extension point instead
    */
   @Deprecated
-  public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
+  public final <Dom extends DomElement> void registerImplementation(Class<Dom> domElementClass, Class<? extends Dom> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
   }
 
   /**
    * @param namespaceKey namespace identifier
-   * @see com.intellij.util.xml.Namespace
+   * @see Namespace
    * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URLs or DTD public ids. This
    * function shouldn't use DOM since it may be not initialized for the file at the moment
-   * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, com.intellij.psi.xml.XmlFile)} instead
+   * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, XmlFile)} instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
     myNamespacePolicies.put(namespaceKey, policy);
@@ -98,7 +88,7 @@ public class DomFileDescription<T> {
 
   /**
    * @param namespaceKey namespace identifier
-   * @see com.intellij.util.xml.Namespace
+   * @see Namespace
    * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
@@ -106,7 +96,7 @@ public class DomFileDescription<T> {
   }
 
   /**
-   * Consider using {@link DomService#getXmlFileHeader(com.intellij.psi.xml.XmlFile)} when implementing this.
+   * Consider using {@link DomService#getXmlFileHeader(XmlFile)} when implementing this.
    */
   @NotNull
   public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
@@ -132,9 +122,9 @@ public class DomFileDescription<T> {
   /**
    * @return some version. Override and change (e.g. {@code super.getVersion()+1}) when after some changes some files stopped being
    * described by this description or vice versa, so that the
-   * {@link com.intellij.util.xml.DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
+   * {@link DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
    * index is rebuilt correctly.
-   * @deprecated use "domVersion" attribute of "com.intellij.dom.fileMetaData" extension instead
+   * @deprecated use "domVersion" attribute of {@code com.intellij.dom.fileMetaData} extension instead
    */
   @Deprecated
   public int getVersion() {
@@ -170,7 +160,7 @@ public class DomFileDescription<T> {
    * The right place to call
    * <ul>
    * <li>{@link #registerNamespacePolicy(String, String...)}</li>
-   * <li>{@link #registerTypeChooser(java.lang.reflect.Type, TypeChooser)}</li>
+   * <li>{@link #registerTypeChooser(Type, TypeChooser)}</li>
    * <li>{@link #registerReferenceInjector(DomReferenceInjector)}</li>
    * </ul>
    */
@@ -226,10 +216,11 @@ public class DomFileDescription<T> {
 
   /**
    * Get dependency items (the same, as in {@link com.intellij.psi.util.CachedValue}) for file. On any dependency item change, the
-   * {@link #isMyFile(com.intellij.psi.xml.XmlFile, Module)} method will be invoked once more to ensure that the file description still
-   * accepts this file 
+   * {@link #isMyFile(XmlFile, Module)} method will be invoked once more to ensure that the file description still
+   * accepts this file.
+   *
    * @param file XML file to get dependencies of
-   * @return dependency item set 
+   * @return dependency item set
    */
   @NotNull
   public Set<?> getDependencyItems(XmlFile file) {
@@ -271,7 +262,7 @@ public class DomFileDescription<T> {
 
   /**
    * @see Stubbed
-   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
+   * @deprecated define "stubVersion" of {@code com.intellij.dom.fileMetaData} extension instead
    */
   @Deprecated
   public boolean hasStubs() {
@@ -280,7 +271,7 @@ public class DomFileDescription<T> {
 
   /**
    * @see Stubbed
-   * @deprecated define "stubVersion" of "com.intellij.dom.fileMetaData" extension instead
+   * @deprecated define "stubVersion" of {@code com.intellij.dom.fileMetaData} extension instead
    */
   @Deprecated
   public int getStubVersion() {

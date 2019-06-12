@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -53,7 +52,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       merger.add(cache.getAllFileNames());
     }
     String[] result = merger.getResult();
-    return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
+    return result != null ? result : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -80,7 +79,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       merger.add(names);
     }
     String[] result = merger.getResult();
-    return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
+    return result != null ? result : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -197,7 +196,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       merger.add(cache.getAllMethodNames());
     }
     String[] result = merger.getResult();
-    return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
+    return result != null ? result : ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -227,7 +226,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       }
     }
     String[] result = merger == null ? null : merger.getResult();
-    return result == null ? ArrayUtil.EMPTY_STRING_ARRAY : result;
+    return result == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : result;
   }
 
   @Override
@@ -278,6 +277,6 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Override
   public String toString() {
-    return "Composite cache: " + Arrays.asList(myCaches);
+    return "Composite cache: " + Collections.singletonList(myCaches);
   }
 }

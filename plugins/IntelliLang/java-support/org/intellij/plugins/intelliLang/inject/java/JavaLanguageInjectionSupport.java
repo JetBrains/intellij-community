@@ -25,8 +25,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -45,8 +43,8 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.AdvancedSettingsUI;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
-import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
@@ -102,7 +100,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
   @Nullable
   @Override
-  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
+  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
     PsiFile containingFile = host.getContainingFile();
     boolean compiled = containingFile != null && containingFile.getOriginalFile() instanceof PsiCompiledFile;
     return compiled ? null : super.findCommentInjection(host, commentRef);
@@ -168,20 +166,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   private static BaseInjection showInjectionUI(final Project project, final MethodParameterInjection methodParameterInjection) {
     final AbstractInjectionPanel panel = new MethodParameterPanel(methodParameterInjection, project);
     panel.reset();
-    final DialogBuilder builder = new DialogBuilder(project);
-    builder.setHelpId("reference.settings.injection.language.injection.settings.java.parameter");
-    builder.addOkAction();
-    builder.addCancelAction();
-    builder.setCenterPanel(panel.getComponent());
-    builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(() -> {
-      panel.apply();
-      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-    });
-    if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
-      return new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
-    }
-    return null;
+    String helpID = "reference.settings.injection.language.injection.settings.java.parameter";
+    return showEditInjectionDialog(project, panel, null, helpID)
+           ? new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection)
+           : null;
   }
 
   @Override
@@ -252,12 +240,15 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
                                   && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
                                   && modifierListOwner.getModifierList() != null;
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class);
+    final PsiElement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class, PsiField.class);
     if (!addAnnotation && statement == null) return false;
 
     Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
     if (!configuration.isSourceModificationAllowed()) {
-      host.putUserData(InjectLanguageAction.FIX_KEY, annotationFixer);
+      String fixText = addAnnotation ?
+                       IntelliLangBundle.message("intelliLang.suggest.insert.annotation") :
+                       IntelliLangBundle.message("intelliLang.suggest.insert.comment");
+      InjectLanguageAction.addFixer(host, annotationFixer, fixText);
       return false;
     }
 

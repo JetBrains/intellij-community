@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages
 
 import com.intellij.openapi.components.*
@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.annotations.Transient
 /**
  * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
  */
+@Suppress("PropertyName")
 @State(name = "UsageViewSettings", storages = [Storage("usageView.xml")])
 open class UsageViewSettings(
   isGroupByFileStructure: Boolean = true,
@@ -27,35 +28,35 @@ open class UsageViewSettings(
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByModule")
-  var GROUP_BY_MODULE: Boolean = isGroupByModule
+  var GROUP_BY_MODULE = isGroupByModule
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByUsageType")
-  var GROUP_BY_USAGE_TYPE: Boolean = isGroupByUsageType
+  var GROUP_BY_USAGE_TYPE = isGroupByUsageType
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByFileStructure")
-  var GROUP_BY_FILE_STRUCTURE: Boolean = isGroupByFileStructure
+  var GROUP_BY_FILE_STRUCTURE = isGroupByFileStructure
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByScope")
-  var GROUP_BY_SCOPE: Boolean = isGroupByScope
+  var GROUP_BY_SCOPE = isGroupByScope
 
   @Suppress("unused")
   @JvmField
   @Transient
   @Deprecated(message = "Use isGroupByPackage")
-  var GROUP_BY_PACKAGE: Boolean = isGroupByPackage
+  var GROUP_BY_PACKAGE = isGroupByPackage
 
   @Suppress("MemberVisibilityCanPrivate")
   @get:OptionTag("EXPORT_FILE_NAME")
-  internal var EXPORT_FILE_NAME by property("report.txt")
+  internal var EXPORT_FILE_NAME by string("report.txt")
 
   @get:OptionTag("IS_EXPANDED")
   var isExpanded by property(false)
@@ -106,7 +107,7 @@ open class UsageViewSettings(
       EXPORT_FILE_NAME = PathUtil.toSystemIndependentName(value)
     }
 
-  override fun getState(): UsageViewSettings = this
+  override fun getState() = this
 
   @Suppress("DEPRECATION")
   override fun loadState(state: UsageViewSettings) {

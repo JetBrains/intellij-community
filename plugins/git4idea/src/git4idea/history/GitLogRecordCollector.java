@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +63,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
 
   protected void processCollectedRecords() {
     for (String hash : myHashToRecord.keySet()) {
-      ArrayList<R> records = ContainerUtil.newArrayList(notNull(myHashToRecord.get(hash)));
+      ArrayList<R> records = new ArrayList<>(notNull(myHashToRecord.get(hash)));
       R firstRecord = records.get(0);
       if (firstRecord.getParentsHashes().length != 0 && records.size() != firstRecord.getParentsHashes().length) {
         processIncompleteRecord(hash, records);
@@ -103,7 +103,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
     List<R> firstRecords = ContainerUtil.map(incompleteRecords.entrySet(), e -> ContainerUtil.getFirstItem(e.getValue()));
     Map<String, String> hashToTreeMap = getHashToTreeMap(project, root, firstRecords);
     for (String hash : incompleteRecords.keySet()) {
-      ArrayList<R> records = ContainerUtil.newArrayList(notNull(incompleteRecords.get(hash)));
+      ArrayList<R> records = new ArrayList<>(notNull(incompleteRecords.get(hash)));
       fillWithEmptyRecords(records, hashToTreeMap);
       consumer.consume(records);
     }
@@ -117,7 +117,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
                                                                                @NotNull VirtualFile root,
                                                                                @NotNull Collection<R> records)
     throws VcsException {
-    Set<String> hashes = ContainerUtil.newHashSet();
+    Set<String> hashes = new HashSet<>();
 
     for (R r : records) {
       hashes.add(r.getHash());

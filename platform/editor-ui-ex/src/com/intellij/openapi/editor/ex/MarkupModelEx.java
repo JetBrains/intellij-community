@@ -68,8 +68,8 @@ public interface MarkupModelEx extends MarkupModel {
                                                             TextAttributes textAttributes,
                                                             @NotNull HighlighterTargetArea targetArea,
                                                             boolean isPersistent,
-                                                            Consumer<RangeHighlighterEx> changeAttributesAction);
+                                                            Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
   // runs change attributes action and fires highlighterChanged event if there were changes
-  void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction);
+  void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);
 }

@@ -28,10 +28,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
@@ -142,7 +139,7 @@ public class GitLogUtil {
     }
 
     Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
-    List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
+    List<VcsCommitMetadata> commits = new ArrayList<>();
     Consumer<GitLogRecord> recordConsumer = record -> {
       VcsCommitMetadata commit = createMetadata(root, record, factory);
       commits.add(commit);
@@ -192,7 +189,7 @@ public class GitLogUtil {
                                                    @NotNull VirtualFile root,
                                                    String... parameters) throws VcsException {
 
-    List<GitCommit> commits = ContainerUtil.newArrayList();
+    List<GitCommit> commits = new ArrayList<>();
     try {
       readFullDetails(project, root, commits::add, parameters);
     }
@@ -257,7 +254,7 @@ public class GitLogUtil {
   static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
     // see RunnerMediator.sendCtrlEventThroughStream
-    String separator = GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion()) ? "\n" : System.lineSeparator();
+    String separator = GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs) ? "\n" : System.lineSeparator();
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
                                                                       separator,
                                                                       handler.getCharset(),
@@ -266,7 +263,7 @@ public class GitLogUtil {
 
   @NotNull
   static String getNoWalkParameter(@NotNull GitVcs vcs) {
-    return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs) ? "--no-walk=unsorted" : "--no-walk";
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -8,16 +8,17 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class IndentsModelImpl implements IndentsModel {
 
-  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = ContainerUtilRt.newHashMap();
-  private       List<IndentGuideDescriptor>         myIndents        = ContainerUtilRt.newArrayList();
+  private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = new HashMap<>();
+  private       List<IndentGuideDescriptor>         myIndents        = new ArrayList<>();
   @NotNull private final EditorImpl myEditor;
 
   public IndentsModelImpl(@NotNull EditorImpl editor) {

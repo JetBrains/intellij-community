@@ -1,22 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
-import com.intellij.configurationStore.properties.*
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.serialization.PropertyAccessor
 import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
+import java.util.*
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
+import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashMap
 
-private val LOG = logger<BaseState>()
+private val LOG = Logger.getInstance(BaseState::class.java)
+
+private val factory: StatePropertyFactory = ServiceLoader.load<StatePropertyFactory>(StatePropertyFactory::class.java).first()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
+    // should be part of class and not file level to access private field of class
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
 
@@ -25,135 +29,87 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   @Volatile
   @Transient
-  private var ownModificationCount: Long = 0
+  private var ownModificationCount = 0L
 
-  private fun addProperty(p: StoredProperty<*>) {
+  private fun <T> addProperty(p: StoredPropertyBase<T>): StoredPropertyBase<T> {
     @Suppress("UNCHECKED_CAST")
-    properties.add(p as StoredProperty<Any>)
+    properties.add(p as StoredPropertyBase<Any>)
+    return p
   }
 
-  protected fun <T : BaseState> property(): StoredPropertyBase<T?> {
-    val result = ObjectStoredProperty<T?>(null)
-    addProperty(result)
-    return result
-  }
+  protected fun <T : BaseState> property(): StoredPropertyBase<T?> = addProperty(factory.stateObject<T?>(null))
 
   /**
    * Value considered as default only if all properties have default values.
    * Passed instance is not used for `isDefault` check. It is just an initial value.
    */
-  protected fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> {
-    val result = StateObjectStoredProperty(initialValue)
-    addProperty(result)
-    return result
-  }
+  protected fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> = addProperty(factory.stateObject(initialValue))
 
   /**
    * For non-BaseState classes explicit `isDefault` must be provided, because no other way to check.
    */
-  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> {
-    val result = object : ObjectStoredProperty<T>(initialValue) {
-      override fun isEqualToDefault() = isDefault(value)
-    }
-
-    addProperty(result)
-    return result
-  }
+  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean) = addProperty(factory.obj(initialValue, isDefault))
 
   /**
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  protected fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
-    val result = CollectionStoredProperty(initialValue)
-    addProperty(result)
-    return result
-  }
+  protected fun stringSet(): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet())
+
+  /**
+   * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
+   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   */
+  protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = addProperty(factory.treeSet<E>())
 
   /**
    * Charset is an immutable, so, it is safe to use it as default value.
    */
-  protected fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> {
-    val result = ObjectStoredProperty(initialValue)
-    addProperty(result)
-    return result
-  }
+  protected fun <T : Charset> property(initialValue: T) = addProperty(factory.obj(initialValue))
 
   // Enum is an immutable, so, it is safe to use it as default value.
-  protected fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
-    val result = ObjectStoredProperty(defaultValue)
-    addProperty(result)
-    return result
+  @Deprecated(message = "Use [enum] instead", replaceWith = ReplaceWith("enum(defaultValue)"), level = DeprecationLevel.ERROR)
+  protected fun <T : Enum<*>> property(defaultValue: T) = addProperty(factory.obj(defaultValue))
+
+  protected inline fun <reified T : Enum<*>> enum(defaultValue: T): StoredPropertyBase<T> {
+    @Suppress("UNCHECKED_CAST")
+    return doEnum(defaultValue, T::class.java) as StoredPropertyBase<T>
   }
 
-  protected inline fun <reified T : Enum<*>> enum(defaultValue: T? = null): StoredPropertyBase<T?> {
-    return doEnum(defaultValue, T::class.java)
-  }
+  protected inline fun <reified T : Enum<*>> enum(): StoredPropertyBase<T?> = doEnum(null, T::class.java)
 
   @PublishedApi
-  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> {
-    val result = EnumStoredProperty(defaultValue, clazz)
-    addProperty(result)
-    return result
-  }
+  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> = addProperty(factory.enum(defaultValue, clazz))
 
   /**
    * Not-null list. Initialized as SmartList.
    */
-  protected fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
-    val result = ListStoredProperty<T>()
-    addProperty(result)
-    @Suppress("UNCHECKED_CAST")
-    return result as StoredPropertyBase<MutableList<T>>
-  }
+  protected fun <T : Any> list(): StoredPropertyBase<MutableList<T>> = addProperty(factory.list<T>())
 
-  protected fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
-    return map(value)
-  }
+  protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(null))
 
-  protected fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
-    val result = MapStoredProperty(value)
-    addProperty(result)
-    return result
-  }
+  protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(LinkedHashMap()))
 
-  /**
-   * Empty string is always normalized to null.
-   */
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use map", replaceWith = ReplaceWith("map()"))
+  protected fun <K : Any, V: Any> map(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(value))
+
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Use string", replaceWith = ReplaceWith("string(defaultValue)"))
   protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.
    */
-  protected fun string(defaultValue: String? = null): StoredPropertyBase<String?> {
-    val result = NormalizedStringStoredProperty(defaultValue)
-    addProperty(result)
-    return result
-  }
+  protected fun string(defaultValue: String? = null): StoredPropertyBase<String?> = addProperty(factory.string(defaultValue))
 
-  protected fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
-    val result = IntStoredProperty(defaultValue, null)
-    addProperty(result)
-    return result
-  }
+  protected fun property(defaultValue: Int = 0): StoredPropertyBase<Int> = addProperty(factory.int(defaultValue))
 
-  protected fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
-    val result = LongStoredProperty(defaultValue, null)
-    addProperty(result)
-    return result
-  }
+  protected fun property(defaultValue: Long = 0): StoredPropertyBase<Long> = addProperty(factory.long(defaultValue))
 
   protected fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
-    val result = FloatStoredProperty(defaultValue, valueNormalizer)
-    addProperty(result)
-    return result
+    return addProperty(factory.float(defaultValue, valueNormalizer))
   }
 
-  protected fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
-    val result = ObjectStoredProperty(defaultValue)
-    addProperty(result)
-    return result
-  }
+  protected fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> = addProperty(factory.bool(defaultValue))
 
   // reset on load state
   fun resetModificationCount() {
@@ -164,7 +120,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     intIncrementModificationCount()
   }
 
-  internal fun intIncrementModificationCount() {
+  fun intIncrementModificationCount() {
     MOD_COUNT_UPDATER.incrementAndGet(this)
   }
 
@@ -184,6 +140,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
+  /**
+   * If you use [set], [treeSet] or [linkedMap], you must ensure that [incrementModificationCount] is called for each mutation operation on corresponding property value (e.g. add, remove).
+   * Setting property to a new value updates modification count, but direct modification of mutable collection or map doesn't.
+   *
+   * [list] and [map] track content mutation, but if key or value is not primitive value, you also have to [incrementModificationCount] in case of nested mutation.
+   */
   @Transient
   override fun getModificationCount(): Long {
     var result = ownModificationCount
@@ -233,6 +195,34 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   // internal usage only
   @Suppress("FunctionName")
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   fun __getProperties() = properties
+}
+
+interface StatePropertyFactory {
+  fun bool(defaultValue: Boolean): StoredPropertyBase<Boolean>
+
+  fun <T> obj(defaultValue: T): StoredPropertyBase<T>
+
+  fun <T> obj(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T>
+
+  fun <T : BaseState?> stateObject(initialValue: T): StoredPropertyBase<T>
+
+  fun <T : Any> list(): StoredPropertyBase<MutableList<T>>
+
+  fun <K : Any, V: Any> map(value: MutableMap<K, V>?): StoredPropertyBase<MutableMap<K, V>>
+
+  fun float(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float>
+
+  fun long(defaultValue: Long): StoredPropertyBase<Long>
+
+  fun int(defaultValue: Int): StoredPropertyBase<Int>
+
+  fun stringSet(): StoredPropertyBase<MutableSet<String>>
+
+  fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState
+
+  fun <T : Enum<*>> enum(defaultValue: T?, clazz: Class<T>): StoredPropertyBase<T?>
+
+  fun string(defaultValue: String?): StoredPropertyBase<String?>
 }

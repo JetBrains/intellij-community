@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.mappings
 
-import com.intellij.openapi.application.PathManager
 import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.ImageCollector
 import org.jetbrains.intellij.build.images.isImage
@@ -24,7 +23,7 @@ private fun generateMappings() {
                      ?.map(String::trim)
                    ?: emptyList()
   val context = Context()
-  val mappings = (loadIdeaGeneratedIcons(context) + loadNonGeneratedIcons(context,"idea")).groupBy {
+  val mappings = (loadIdeaGeneratedIcons(context) + loadNonGeneratedIcons(context, "idea")).groupBy {
     "${it.product}#${it.set}"
   }.toSortedMap().values.flatMap {
     if (it.size > 1) {
@@ -57,13 +56,12 @@ private fun generateMappings() {
   }
   else {
     val branch = System.getProperty("branch") ?: "icons-mappings-update"
-    withUser(repo, "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com") {
-      execute(repo, GIT, "checkout", "-B", branch, "origin/master")
-      path.writeText(json)
-      val jsonFile = path.toRelativeString(repo)
-      stageFiles(listOf(jsonFile), repo)
-      commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update")
-    }
+    execute(repo, GIT, "checkout", "-B", branch, "origin/master")
+    path.writeText(json)
+    val jsonFile = path.toRelativeString(repo)
+    stageFiles(listOf(jsonFile), repo)
+    commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update",
+                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com")
   }
 }
 
@@ -86,12 +84,9 @@ private class Mapping(val product: String, val set: String, val path: String) {
 
 private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
   val home = context.devRepoDir
-  val homePath =  home.absolutePath
+  val homePath = home.absolutePath
   val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
-  val util = project.modules.find {
-    it.name == "intellij.platform.util"
-  } ?: throw error("Can't load module 'util'")
-  val generator = IconsClassGenerator(home, util)
+  val generator = IconsClassGenerator(home, project.modules)
   return protectStdErr {
     project.modules.parallelStream().map { module ->
       val iconsClassInfo = generator.getIconsClassInfo(module) ?: return@map null
@@ -99,7 +94,7 @@ private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
       val images = imageCollector.collect(module, includePhantom = true)
       if (images.isNotEmpty()) {
         val icons = images.asSequence()
-          .filter { it.file != null && isValidIcon(it.file!!) }
+          .filter { it.file != null && Icon(it.file!!.toFile()).isValid }
           .map { it.sourceRoot.file }.toSet()
         return@map when {
           icons.isEmpty() -> null

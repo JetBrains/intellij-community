@@ -293,5 +293,7 @@ public void testConvertToObjectStream() {
     myFixture.assertPreferredCompletionItems(0, "String.class");
   }
 
+  public void testNestedCollectorsCounting() { doTest(false); }
+
   public void testFilterInaccessibleConstructors() { doAntiTest(); }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -9,10 +9,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.ide.actions.CopyReferenceUtil.*;
@@ -95,7 +97,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   public static boolean doCopy(final PsiElement element, final Project project) {
-    return doCopy(Arrays.asList(element), project);
+    return doCopy(Collections.singletonList(element), project);
   }
 
   private static boolean doCopy(List<? extends PsiElement> elements, @Nullable final Project project) {
@@ -109,5 +111,16 @@ public class CopyReferenceAction extends DumbAwareAction {
   @Nullable
   public static String elementToFqn(@Nullable final PsiElement element) {
     return CopyReferenceUtil.elementToFqn(element, null);
+  }
+
+  public interface VirtualFileQualifiedNameProvider {
+    ExtensionPointName<VirtualFileQualifiedNameProvider> EP_NAME =
+      ExtensionPointName.create("com.intellij.virtualFileQualifiedNameProvider");
+
+    /**
+     * @return {@code virtualFile} fqn (relative path for example) or null if not handled by this provider
+     */
+    @Nullable
+    String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile);
   }
 }

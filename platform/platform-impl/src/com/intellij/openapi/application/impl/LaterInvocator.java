@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -202,7 +202,7 @@ public class LaterInvocator {
     ourModalEntities.add(modalEntity);
     ourModalityStack.push(appendedState);
 
-    TransactionGuardImpl guard = IdeaApplication.isLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
+    TransactionGuardImpl guard = ApplicationManagerEx.isAppLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
     if (guard != null) {
       guard.enteredModality(appendedState);
     }
@@ -345,7 +345,7 @@ public class LaterInvocator {
   }
 
   /**
-   * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances 
+   * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances
    * {@link EventQueue#peekEvent()} default implementation would return null, and {@link UIUtil#dispatchAllInvocationEvents()} would
    * stop processing events too early and lead to spurious test failures.
    *
@@ -407,6 +407,7 @@ public class LaterInvocator {
     }
 
     private boolean runNextEvent() {
+      long startedAt = System.currentTimeMillis();
       final RunnableInfo lastInfo = getNextEvent(true);
       myLastInfo = lastInfo;
 
@@ -421,6 +422,7 @@ public class LaterInvocator {
         }
         finally {
           if (!DEBUG) myLastInfo = null;
+          TransactionGuardImpl.logTimeMillis(startedAt, lastInfo.runnable);
         }
       }
       return lastInfo != null;

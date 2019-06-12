@@ -26,6 +26,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.indexing.FindSymbolParameters;
 
 import javax.swing.*;
 import java.util.List;
@@ -60,7 +61,7 @@ public class ClassChooserTest extends LightCodeInsightFixtureTestCase {
 
     ChooseByNameModelEx model = (ChooseByNameModelEx)ref.get();
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
-    model.processNames(processor, false);
+    model.processNames(processor, FindSymbolParameters.simple(getProject(), false));
     List<String> results = (List<String>)processor.getResults();
     assertEquals(1, results.size());
   }

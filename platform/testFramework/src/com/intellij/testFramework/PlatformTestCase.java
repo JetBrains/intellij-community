@@ -80,7 +80,9 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -277,9 +279,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
     try {
       String projectName = FileUtilRt.getNameWithoutExtension(fileName);
-      Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path);
-      project.putUserData(CREATION_PLACE, creationPlace);
-      return project;
+      return ProjectManagerEx.getInstanceEx().newProject(projectName, path);
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {
@@ -345,7 +345,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    String place = project.getUserData(CREATION_PLACE);
+    String place = project instanceof ProjectImpl ? ((ProjectImpl)project).getCreationTrace() : null;
     return project + " " +(place == null ? "" : place) + base;
   }
 
@@ -439,10 +439,15 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void cleanupApplicationCaches(@Nullable Project project) {
-      UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
-      if (globalInstance != null) {
-        globalInstance.dropHistoryInTests();
-      }
+    if (ApplicationManager.getApplication() == null) {
+      return;
+    }
+
+    UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
+    if (globalInstance != null) {
+      globalInstance.dropHistoryInTests();
+    }
+
     if (project != null && !project.isDisposed()) {
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
       ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
@@ -465,7 +470,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (localFileSystem != null) {
       localFileSystem.cleanupForNextTest();
     }
-
   }
 
   @NotNull
@@ -942,16 +946,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   protected VirtualFile getOrCreateProjectBaseDir() {
-    VirtualFile baseDir = myProject.getBaseDir();
+    String basePath = myProject.getBasePath();
+    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(Objects.requireNonNull(basePath));
     if (baseDir == null) {
-      String basePath = myProject.getBasePath();
       try {
-        FileUtil.ensureExists(new File(Objects.requireNonNull(basePath)));
+        Files.createDirectories(Paths.get(basePath));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
+      return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath));
     }
     return baseDir;
   }

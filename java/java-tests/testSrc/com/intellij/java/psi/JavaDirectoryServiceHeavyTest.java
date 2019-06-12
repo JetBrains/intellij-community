@@ -34,7 +34,7 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCase {
   public void testCreatingEnumInLanguageLevel3Project() {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
 
     PsiDirectory dir = getPsiManager().findDirectory(myFixture.getTempDirFixture().getFile(""));
     PsiClass createdEnum = JavaDirectoryService.getInstance().createEnum(dir, "Foo");
@@ -48,10 +48,10 @@ public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCas
 
     try {
       VirtualFile root = temp.findOrCreateDir("lib");
-      PsiTestUtil.addLibrary(myModule, "lib", root.getPath(), new String[]{}, new String[]{""});
+      PsiTestUtil.addLibrary(getModule(), "lib", root.getPath(), new String[]{}, new String[]{""});
 
       LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
-      IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_7);
+      IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
 
       assertEquals(LanguageLevel.JDK_1_3, JavaDirectoryService.getInstance().getLanguageLevel(getPsiManager().findDirectory(root)));
       assertEquals(LanguageLevel.JDK_1_3, JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(root));

@@ -20,10 +20,11 @@ import java.util.List;
  */
 public class BaselinePanel extends NonOpaquePanel {
   private Component myBaseComponent;
-  private final java.util.List<Component> myVersionComponents = new ArrayList<>();
+  private final List<Component> myVersionComponents = new ArrayList<>();
   private final List<Component> myButtonComponents = new ArrayList<>();
   private boolean[] myButtonEnableStates;
   private Component myProgressComponent;
+  private int myYOffset;
 
   private final JBValue myOffset = new JBValue.Float(8);
   private final JBValue myBeforeButtonOffset = new JBValue.Float(40);
@@ -102,9 +103,13 @@ public class BaselinePanel extends NonOpaquePanel {
         for (Component component : myButtonComponents) {
           if (component.isVisible()) {
             parentWidth -= component.getPreferredSize().width;
+            visibleCount++;
           }
         }
         parentWidth -= myButtonOffset.get() * (visibleCount - 1);
+        if (visibleCount > 0) {
+          parentWidth -= myOffset.get();
+        }
 
         if (myErrorComponent != null) {
           if (myErrorEnableComponent != null) {
@@ -128,8 +133,10 @@ public class BaselinePanel extends NonOpaquePanel {
         int x = 0;
         int calcBaseWidth = calculateBaseWidth(parent);
 
-        JLabel label = (JLabel)myBaseComponent;
-        label.setToolTipText(calcBaseWidth < baseSize.width ? label.getText() : null);
+        if (myBaseComponent instanceof JLabel) {
+          JLabel label = (JLabel)myBaseComponent;
+          label.setToolTipText(calcBaseWidth < baseSize.width ? label.getText() : null);
+        }
 
         baseSize.width = Math.min(baseSize.width, calcBaseWidth);
         myBaseComponent.setBounds(x, top, baseSize.width, baseSize.height);
@@ -162,7 +169,7 @@ public class BaselinePanel extends NonOpaquePanel {
           emptyButtons = false;
           Dimension size = component.getPreferredSize();
           lastX -= size.width;
-          setBaselineBounds(lastX, y, component, size);
+          setBaselineBounds(lastX, y - myYOffset, component, size);
           lastX -= myButtonOffset.get();
         }
 
@@ -211,6 +218,10 @@ public class BaselinePanel extends NonOpaquePanel {
 
   public void setListeners(@NotNull EventHandler eventHandler) {
     myEventHandler = eventHandler;
+  }
+
+  public void setYOffset(int YOffset) {
+    myYOffset = YOffset;
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -33,15 +34,20 @@ public interface JavaModuleFixtureBuilder<T extends ModuleFixture> extends Modul
     jdk15
   }
 
-  JavaModuleFixtureBuilder setLanguageLevel(LanguageLevel languageLevel);
+  @NotNull
+  JavaModuleFixtureBuilder setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
-  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls String... classPath);
+  @NotNull
+  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NonNls @NotNull String... classPath);
 
-  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, Map<OrderRootType, String[]> roots);
+  @NotNull
+  JavaModuleFixtureBuilder addLibrary(@NonNls String libraryName, @NotNull Map<OrderRootType, String[]> roots);
 
-  JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls String basePath, @NonNls String... jarNames);
+  @NotNull
+  JavaModuleFixtureBuilder addLibraryJars(@NonNls String libraryName, @NonNls @NotNull String basePath, @NonNls @NotNull String... jarNames);
 
-  JavaModuleFixtureBuilder addJdk(@NonNls String jdkPath);
+  @NotNull
+  JavaModuleFixtureBuilder addJdk(@NonNls @NotNull String jdkPath);
 
-  void setMockJdkLevel(MockJdkLevel level);
+  void setMockJdkLevel(@NotNull MockJdkLevel level);
 }

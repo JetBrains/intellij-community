@@ -20,7 +20,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -30,41 +29,15 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.Processors;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
-  @Override
-  @NotNull
-  public String[] getNames(Project project, boolean includeNonProjectItems) {
-    GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    List<String> result = new ArrayList<>();
-    Processor<String> processor = Processors.cancelableCollectProcessor(result);
-
-    processNames(processor, scope, IdFilter.getProjectIdFilter(project, includeNonProjectItems));
-
-    return ArrayUtil.toStringArray(result);
-  }
-
-  @Override
-  @NotNull
-  public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    List<NavigationItem> result = new ArrayList<>();
-    Processor<NavigationItem> processor = Processors.cancelableCollectProcessor(result);
-    processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
-
-    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY :
-           result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
-  }
 
   @Override
   public String getQualifiedName(final NavigationItem item) {

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
@@ -15,14 +16,15 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -34,24 +36,25 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 @SuppressWarnings("WeakerAccess")
-public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileListener {
+public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileListener {
   private final CompilerReferenceServiceBase<?> myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
   private final Object myLock = new Object();
 
-  private final Set<Module> myVFSChangedModules = ContainerUtil.newHashSet(); // guarded by myLock
-  private final Set<Module> myChangedModulesDuringCompilation = ContainerUtil.newHashSet(); // guarded by myLock
+  private final Set<Module> myVFSChangedModules = new HashSet<>(); // guarded by myLock
+
+  private final Set<Module> myChangedModulesDuringCompilation = new HashSet<>(); // guarded by myLock
+
   private final List<ExcludeEntryDescription> myExcludedDescriptions = new SmartList<>(); // guarded by myLock
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
@@ -201,8 +204,25 @@ public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileList
     return getDirtyScope().contains(file);
   }
 
+  @Nullable
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    final List<Module> modulesToBeMarkedDirty = getModulesToBeMarkedDirtyBefore(events);
+
+    return new ChangeApplier() {
+      @Override
+      public void beforeVfsChange() {
+        modulesToBeMarkedDirty.forEach(DirtyScopeHolder.this::addToDirtyModules);
+      }
+
+      @Override
+      public void afterVfsChange() {
+        after(events);
+      }
+    };
+  }
+
+  private void after(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent || event instanceof VFileCopyEvent || event instanceof VFileMoveEvent) {
         VirtualFile file = event.getFile();
@@ -220,12 +240,20 @@ public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileList
     }
   }
 
-  @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  @Contract(pure=true)
+  @NotNull
+  private List<Module> getModulesToBeMarkedDirtyBefore(@NotNull List<? extends VFileEvent> events) {
+    final List<Module> modulesToBeMarkedDirty = new ArrayList<>();
+
     for (VFileEvent event : events) {
+      ProgressManager.checkCanceled();
+
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFileContentChangeEvent) {
         VirtualFile file = event.getFile();
-        fileChanged(file);
+        if (file != null) {
+          final Module module = getModuleForSourceContentFile(file);
+          ContainerUtil.addIfNotNull(modulesToBeMarkedDirty, module);
+        }
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
@@ -234,16 +262,17 @@ public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileList
           final String path = pce.getFile().getPath();
           for (Module module : ModuleManager.getInstance(myService.getProject()).getModules()) {
             if (FileUtil.isAncestor(path, module.getModuleFilePath(), true)) {
-              addToDirtyModules(module);
+              modulesToBeMarkedDirty.add(module);
             }
           }
         }
       }
     }
+    return modulesToBeMarkedDirty;
   }
 
-  public void installVFSListener() {
-    myService.getProject().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
+  public void installVFSListener(@NotNull Disposable parentDisposable) {
+    VirtualFileManager.getInstance().addAsyncFileListener(this, parentDisposable);
   }
 
   private void fileChanged(@NotNull VirtualFile file) {
@@ -252,6 +281,7 @@ public class DirtyScopeHolder extends UserDataHolderBase implements BulkFileList
       addToDirtyModules(module);
     }
   }
+
   private void addToDirtyModules(@NotNull Module module) {
     synchronized (myLock) {
       if (myCompilationPhase) {

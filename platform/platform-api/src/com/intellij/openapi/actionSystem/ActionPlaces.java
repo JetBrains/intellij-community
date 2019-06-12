@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +32,7 @@ public abstract class ActionPlaces {
   public static final String EDITOR_TAB = "EditorTab";
   public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
   public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
+  public static final String RIGHT_EDITOR_GUTTER_POPUP = "RightEditorGutterPopup";
   public static final String COMMANDER_POPUP = "CommanderPopup";
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
   public static final String CONTEXT_TOOLBAR = "ContextToolbar";
@@ -59,6 +62,7 @@ public abstract class ActionPlaces {
   public static final String J2EE_ATTRIBUTES_VIEW_POPUP = "J2EEAttributesViewPopup";
   public static final String J2EE_VIEW_POPUP = "J2EEViewPopup";
   public static final String RUNNER_TOOLBAR = "RunnerToolbar";
+  public static final String RUNNER_LAYOUT_BUTTON_TOOLBAR = "RunnerLayoutButtonToolbar";
   public static final String DEBUGGER_TOOLBAR = "DebuggerToolbar";
   public static final String USAGE_VIEW_POPUP = "UsageViewPopup";
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
@@ -131,6 +135,8 @@ public abstract class ActionPlaces {
 
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
+  public static final String REFACTORING_QUICKLIST = "RefactoringQuickList";
+
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
            KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
@@ -178,5 +184,14 @@ public abstract class ActionPlaces {
   @NotNull
   public static String getActionGroupPopupPlace(@Nullable String actionId) {
     return actionId == null ? POPUP : POPUP_PREFIX + actionId;
+  }
+
+  /**
+   * Returns true if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
+   * (Used to avoid duplicate processing of the same action.)
+   */
+  @ApiStatus.Internal
+  public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
+    return SystemInfo.isMacSystemMenu && isMainMenuOrShortcut(e.getPlace());
   }
 }

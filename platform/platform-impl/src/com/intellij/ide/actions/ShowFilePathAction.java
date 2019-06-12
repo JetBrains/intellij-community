@@ -199,7 +199,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     return url;
   }
 
-  private static ListPopup createPopup(List<? extends VirtualFile> files, List<Icon> icons) {
+  private static ListPopup createPopup(List<? extends VirtualFile> files, List<? extends Icon> icons) {
     BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>(RevealFileAction.getActionName(), files, icons) {
       @NotNull
       @Override

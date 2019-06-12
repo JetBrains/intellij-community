@@ -5,10 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,9 +16,10 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Objects;
 
 /**
  * Due to many bugs and "features" in {@link JComboBox} implementation we provide
@@ -41,8 +39,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   public static final String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor";
 
   private int myMinimumAndPreferredWidth;
-  private boolean mySwingPopup = true;
-  private JBPopup myJBPopup;
   protected boolean myPaintingNow;
 
   public ComboBox() {
@@ -79,19 +75,51 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   private void init(int width) {
     myMinimumAndPreferredWidth = width;
     registerCancelOnEscape();
-    UIUtil.installComboBoxCopyAction(this);
-    final JButton arrowButton = UIUtil.findComponentOfType(this, JButton.class);
-    if (arrowButton != null) {
-      arrowButton.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          if (!mySwingPopup) {
-            e.consume();
-            setPopupVisible(true);
+    installComboBoxCopyAction(this);
+  }
+
+  private static void installComboBoxCopyAction(@NotNull JComboBox comboBox) {
+    final ComboBoxEditor editor = comboBox.getEditor();
+    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
+    if (!(editorComponent instanceof JTextComponent)) return;
+    final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
+    for (KeyStroke keyStroke : inputMap.allKeys()) {
+      if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
+        comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
+      }
+    }
+    comboBox.getActionMap().put(DefaultEditorKit.copyAction, new AbstractAction() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        if (!(e.getSource() instanceof JComboBox)) return;
+        final JComboBox comboBox = (JComboBox)e.getSource();
+        final String text;
+        final Object selectedItem = comboBox.getSelectedItem();
+        if (selectedItem instanceof String) {
+          text = (String)selectedItem;
+        }
+        else {
+          final Component component =
+            comboBox.getRenderer().getListCellRendererComponent(new JList(), selectedItem, 0, false, false);
+          if (component instanceof JLabel) {
+            text = ((JLabel)component).getText();
+          }
+          else if (component != null) {
+            final String str = component.toString();
+            // skip default Component.toString and handle SimpleColoredComponent case
+            text = str == null || str.startsWith(component.getClass().getName() + "[") ? null : str;
+          }
+          else {
+            text = null;
           }
         }
-      });
-    }
+        if (text != null) {
+          final JTextField textField = new JTextField(text);
+          textField.selectAll();
+          textField.copy();
+        }
+      }
+    });
   }
 
   public static void registerTableCellEditor(@NotNull JComboBox comboBox, @NotNull TableCellEditor cellEditor) {
@@ -105,41 +133,9 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
   @Override
   public void setPopupVisible(boolean visible) {
-    if (!isSwingPopup()) {
-      if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
-        final JBList<E> list = createJBList(getModel());
-        myJBPopup = Objects.requireNonNull(getPopupFactory())
-          .createListPopupBuilder(list)
-          .setItemChoosenCallback(() -> {
-            final Object value = list.getSelectedValue();
-            if (value != null) {
-              configureEditor(getEditor(), value);
-              IdeFocusManager.getGlobalInstance().requestFocus(this, true);
-              assert myJBPopup != null;
-              getUI().setPopupVisible(this, false);
-              myJBPopup.cancel();
-            }
-          })
-          .setFocusOwners(new Component[]{this})
-          .setMinSize(new Dimension(getWidth(), -1))
-          .createPopup();
-        list.setBorder(JBUI.Borders.empty());
-        myJBPopup.showUnderneathOf(this);
-        list.addFocusListener(new FocusAdapter() {
-          @Override
-          public void focusLost(FocusEvent e) {
-            getUI().setPopupVisible(ComboBox.this, false);
-            myJBPopup.cancel();
-          }
-        });
-      }
-      return;
-    }
-
     if (getModel().getSize() == 0 && visible) {
       return;
     }
-
     if (visible) {
       JBPopupFactory jbPopupFactory = getPopupFactory();
       if (jbPopupFactory != null /* allow ComboBox on welcome wizard */ && jbPopupFactory.getChildFocusedPopup(this) != null) {
@@ -156,7 +152,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       final ComboBoxEditor editor = getEditor();
       final Object item = editor.getItem();
       final Object selectedItem = getSelectedItem();
-      if (isSwingPopup() && (item == null || item != selectedItem)) {
+      if (item == null || item != selectedItem) {
         configureEditor(editor, selectedItem);
       }
     }
@@ -168,10 +164,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       return null;
     }
     return JBPopupFactory.getInstance();
-  }
-
-  protected JBList<E> createJBList(ComboBoxModel<E> model) {
-    return new JBList<>(model);
   }
 
   @Override
@@ -188,7 +180,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
 
     WindowEvent we = (WindowEvent)event;
     for (JBPopup each : jbPopupFactory.getChildPopups(this)) {
-      if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
+      if (!each.isDisposed() && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
         super.setPopupVisible(false);
       }
     }
@@ -209,11 +201,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   public void removeNotify() {
     super.removeNotify();
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-    if (myJBPopup != null) {
-      getUI().setPopupVisible(this, false);
-      myJBPopup.cancel();
-
-    }
   }
 
   @Nullable
@@ -221,12 +208,24 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     return UIUtil.getComboBoxPopup(this);
   }
 
-  public boolean isSwingPopup() {
-    return mySwingPopup;
+  public void setSwingPopup(boolean swingPopup) {
+    putClientProperty("ComboBox.jbPopup", swingPopup ? null : true);
+    updateUI();
   }
 
-  public void setSwingPopup(boolean swingPopup) {
-    mySwingPopup = swingPopup;
+  public boolean isSwingPopup() {
+    return getClientProperty("ComboBox.jbPopup") == null;
+  }
+
+  @Override
+  public void setKeySelectionManager(KeySelectionManager aManager) {
+    super.setKeySelectionManager(aManager == null || isSwingPopup() ? aManager : new KeySelectionManager() {
+      @Override
+      public int selectionForKey(char aKey, ComboBoxModel aModel) {
+        showPopup();
+        return -1;
+      }
+    });
   }
 
   public void setMinimumAndPreferredWidth(final int minimumAndPreferredWidth) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -55,10 +55,10 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 10/1/2015.
  */
 public class JsonSchemaCompletionContributor extends CompletionContributor {
-  private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
-  private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
-  private static final String USER_USAGE_KEY = "json.schema.user.completion";
-  private static final String REMOTE_USAGE_KEY = "json.schema.remote.completion";
+  private static final String BUILTIN_USAGE_KEY = "builtin";
+  private static final String SCHEMA_USAGE_KEY = "schema";
+  private static final String USER_USAGE_KEY = "user";
+  private static final String REMOTE_USAGE_KEY = "remote";
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -173,7 +173,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
       final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myProject, myRootSchema, position).resolve();
-      final Set<String> knownNames = ContainerUtil.newHashSet();
+      final Set<String> knownNames = new HashSet<>();
       // too long here, refactor further
       schemas.forEach(schema -> {
         if (isName != ThreeState.NO) {
@@ -317,7 +317,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                           ? ((JsonArray)parent).getValueList().stream()
                             .filter(v -> v instanceof JsonStringLiteral).map(v -> ((JsonStringLiteral)v).getValue())
                             .collect(Collectors.toSet())
-                          : ContainerUtil.newHashSet();
+                          : new HashSet<>();
       propertiesObject.getPropertyList().stream().map(p -> p.getName()).filter(n -> !items.contains(n))
         .forEach(n -> addStringVariant(n));
     }

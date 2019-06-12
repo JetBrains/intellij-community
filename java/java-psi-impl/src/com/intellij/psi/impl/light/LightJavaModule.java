@@ -17,12 +17,12 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -67,7 +67,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   }
 
   private List<PsiPackageAccessibilityStatement> findExports() {
-    List<PsiPackageAccessibilityStatement> exports = ContainerUtil.newArrayList();
+    List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
 
     VfsUtilCore.visitChildrenRecursively(myJarRoot, new VirtualFileVisitor() {
       private final JavaDirectoryService service = JavaDirectoryService.getInstance();

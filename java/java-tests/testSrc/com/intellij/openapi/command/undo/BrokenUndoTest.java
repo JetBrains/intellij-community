@@ -30,7 +30,7 @@ public class BrokenUndoTest extends UndoTestCase {
     assertEquals("Some initial text modification", document.getText());
   }
 
-  private static void performInEditor(@NotNull Document document, boolean isViewer, Consumer<Editor> task) {
+  private static void performInEditor(@NotNull Document document, boolean isViewer, Consumer<? super Editor> task) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Editor editor = isViewer ? editorFactory.createViewer(document) : editorFactory.createEditor(document);
     try {

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -62,7 +61,7 @@ public class MavenIndex implements MavenSearchIndex {
   private final NotNexusIndexer myNotNexusIndexer;
   private final File myDir;
 
-  private final Set<String> myRegisteredRepositoryIds = ContainerUtil.newHashSet();
+  private final Set<String> myRegisteredRepositoryIds = new HashSet<>();
   private final CachedValue<String> myId = new CachedValueImpl<>(new MyIndexRepositoryIdsProvider());
 
   private final String myRepositoryPathOrUrl;

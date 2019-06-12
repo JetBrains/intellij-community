@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -10,20 +11,19 @@ import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.*
+import com.intellij.util.containers.MultiMap
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogStructureFilter
 import com.intellij.vcs.log.data.CompressedRefs
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.GraphCommitImpl
 import com.intellij.vcs.log.graph.PermanentGraph
-import com.intellij.vcs.log.graph.VisibleGraph
-import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
-import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.history.FileHistoryVisiblePack.Companion.fileHistory
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -41,15 +41,16 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                                   logData.commitDetailsGetter, index)
 
   override fun filter(dataPack: DataPack,
+                      oldVisiblePack: VisiblePack,
                       sortType: PermanentGraph.SortType,
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
     val filePath = getFilePath(filters)
-    if (filePath == null || (filePath.isDirectory && logProviders.keys.contains(filePath.virtualFile))) {
-      return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+    if (filePath == null || filePath.isDirectory) {
+      return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
     }
     val root = VcsLogUtil.getActualRoot(project, filePath)!!
-    return MyWorker(root, filePath, getHash(filters)).filter(dataPack, sortType, filters, commitCount)
+    return MyWorker(root, filePath, getHash(filters)).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
   }
 
   override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean {
@@ -61,21 +62,18 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                                            private val hash: Hash?) {
 
     fun filter(dataPack: DataPack,
+               oldVisiblePack: VisiblePack,
                sortType: PermanentGraph.SortType,
                filters: VcsLogFilterCollection,
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val start = System.currentTimeMillis()
 
-      if (index.isIndexed(root) && (dataPack.isFull || filePath.isDirectory)) {
-        val visiblePack = filterWithIndex(dataPack, sortType, filters)
+      if (index.isIndexed(root) && dataPack.isFull) {
+        val visiblePack = filterWithIndex(dataPack, oldVisiblePack, sortType, filters)
         LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
         if (checkNotEmpty(dataPack, visiblePack, true)) {
           return Pair(visiblePack, commitCount)
         }
-      }
-
-      if (filePath.isDirectory) {
-        return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
       }
 
       ProjectLevelVcsManager.getInstance(project).getVcsFor(root)?.let { vcs ->
@@ -89,13 +87,13 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
           }
           catch (e: VcsException) {
             LOG.error(e)
-            vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+            vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
           }
         }
       }
 
       LOG.warn("Could not find vcs or history provider for file $filePath")
-      return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+      return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
     }
 
     private fun checkNotEmpty(dataPack: DataPack, visiblePack: VisiblePack, withIndex: Boolean): Boolean {
@@ -122,7 +120,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
       if (dataPack.isFull) {
-        val pathsMap = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
+        val pathsMap = HashMap<Int, MaybeDeletedFilePath>()
         for (revision in revisions) {
           val revisionEx = revision as VcsFileRevisionEx
           pathsMap[getIndex(revision)] = MaybeDeletedFilePath(revisionEx.path, revisionEx.isDeleted)
@@ -131,9 +129,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
       }
 
-      val commits = ContainerUtil.newArrayListWithCapacity<GraphCommit<Int>>(revisions.size)
+      val commits = ArrayList<GraphCommit<Int>>(revisions.size)
 
-      val pathsMap = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
+      val pathsMap = HashMap<Int, MaybeDeletedFilePath>()
       for (revision in revisions) {
         val index = getIndex(revision)
         val revisionEx = revision as VcsFileRevisionEx
@@ -151,7 +149,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
     private fun getFilteredRefs(dataPack: DataPack): Map<VirtualFile, CompressedRefs> {
       val compressedRefs = dataPack.refsModel.allRefsByRoot[root] ?: CompressedRefs(emptySet(), storage)
-      return mapOf(kotlin.Pair(root, compressedRefs))
+      return mapOf(Pair(root, compressedRefs))
     }
 
     private fun getIndex(revision: VcsFileRevision): Int {
@@ -159,10 +157,12 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     private fun filterWithIndex(dataPack: DataPack,
+                                oldVisiblePack: VisiblePack,
                                 sortType: PermanentGraph.SortType,
                                 filters: VcsLogFilterCollection): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
-      val data = indexDataGetter.createFileNamesData(filePath)
+      val renames = collectRenamesFromProvider(oldVisiblePack.fileHistory)
+      val data = indexDataGetter.createFileHistoryData(filePath).build(renames.union(oldVisiblePack.fileHistory.commitToRename))
 
       val permanentGraph = dataPack.permanentGraph
       if (permanentGraph !is PermanentGraphImpl) {
@@ -175,25 +175,35 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
 
       val commit = (hash ?: getHead(dataPack))?.let { storage.getCommitIndex(it, root) }
-      val historyBuilder = FileHistoryBuilder(commit, filePath, data)
+      val historyBuilder = FileHistoryBuilder(commit, filePath, data, oldVisiblePack.fileHistory)
       val visibleGraph = permanentGraph.createVisibleGraph(sortType, matchingHeads, data.getCommits(), historyBuilder)
+      val fileHistory = historyBuilder.fileHistory
 
-      if (!filePath.isDirectory) reindexFirstCommitsIfNeeded(visibleGraph)
-      return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, historyBuilder.pathsMap)
+      return FileHistoryVisiblePack(dataPack, visibleGraph, fileHistory.unmatchedAdditionsDeletions.isNotEmpty(), filters, fileHistory)
     }
 
-    private fun reindexFirstCommitsIfNeeded(graph: VisibleGraph<Int>) {
-      // we may not have renames big commits, may need to reindex them
-      if (graph is VisibleGraphImpl<*>) {
-        val liteLinearGraph = LinearGraphUtils.asLiteLinearGraph((graph as VisibleGraphImpl<*>).linearGraph)
-        for (row in 0 until liteLinearGraph.nodesCount()) {
-          // checking if commit is a root commit (which means file was added or renamed there)
-          if (liteLinearGraph.getNodes(row, LiteLinearGraph.NodeFilter.DOWN).isEmpty()
-              && index is VcsLogModifiableIndex) {
-            index.reindexWithRenames(graph.getRowInfo(row).commit, root)
-          }
-        }
+    private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
+      if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
+
+      val start = System.currentTimeMillis()
+
+      val handler = logProviders[root]?.fileHistoryHandler ?: return MultiMap.empty()
+
+      val renames = fileHistory.unmatchedAdditionsDeletions.mapNotNull {
+        val parentHash = storage.getCommitId(it.parent)!!.hash
+        val childHash = storage.getCommitId(it.child)!!.hash
+        if (it.isAddition) handler.getRename(root, it.filePath, parentHash, childHash)
+        else handler.getRename(root, it.filePath, childHash, parentHash)
+      }.map { r ->
+        Rename(r.filePath1, r.filePath2, storage.getCommitIndex(r.hash1, root), storage.getCommitIndex(r.hash2, root))
       }
+
+      LOG.debug("Found ${renames.size} renames for ${fileHistory.unmatchedAdditionsDeletions.size} addition-deletions in " +
+                StopWatch.formatTime(System.currentTimeMillis() - start))
+
+      val result = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
+      renames.forEach { result.putValue(it.commits, it) }
+      return result
     }
 
     private fun getHead(pack: DataPack): Hash? {
@@ -235,5 +245,14 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       }
       return VcsLogFilterObject.collection(fileFilter, revisionFilter)
     }
+  }
+}
+
+private fun <K : Any?, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): MultiMap<K, V> {
+  if (isEmpty) return map
+  if (map.isEmpty) return this
+  return MultiMap.createSmart<K, V>().also {
+    it.putAllValues(this)
+    it.putAllValues(map)
   }
 }

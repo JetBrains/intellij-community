@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
@@ -148,7 +134,7 @@ public final class StandardMethodContract extends MethodContract {
    * (e.g. contracts with different parameter count)
    */
   @Nullable("When result is too big or contracts are erroneous")
-  public static List<StandardMethodContract> toNonIntersectingContracts(List<StandardMethodContract> contracts) {
+  public static List<StandardMethodContract> toNonIntersectingStandardContracts(List<StandardMethodContract> contracts) {
     if (contracts.isEmpty()) return contracts;
     int paramCount = contracts.get(0).getParameterCount();
     List<StandardMethodContract> result = new ArrayList<>();
@@ -203,7 +189,7 @@ public final class StandardMethodContract extends MethodContract {
   public static List<StandardMethodContract> parseContract(@NotNull String text) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(text)) return Collections.emptyList();
 
-    List<StandardMethodContract> result = ContainerUtil.newArrayList();
+    List<StandardMethodContract> result = new ArrayList<>();
     String[] split = StringUtil.replace(text, " ", "").split(";");
     for (int clauseIndex = 0; clauseIndex < split.length; clauseIndex++) {
       String clause = split[clauseIndex];

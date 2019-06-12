@@ -90,7 +90,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
            : parent != null || object != state ? null : state.toString();
   }
 
-  private Object getUniqueID(TreePath path, Node node, ArrayDeque<String> deque) {
+  private Object getUniqueID(TreePath path, Node node, ArrayDeque<? super String> deque) {
     deque.addFirst(node.getName());
     Object object = path.getLastPathComponent();
     TreePath parent = path.getParentPath();
@@ -160,10 +160,6 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
       if (entry != null) return entry.getIndexOf((Node)child);
     }
     return -1;
-  }
-
-  @Override
-  public void valueForPathChanged(TreePath path, Object newValue) {
   }
 
   private boolean hasEntry(VirtualFile file) {

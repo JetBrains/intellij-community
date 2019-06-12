@@ -1,12 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ConfigurationUtil;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -42,21 +40,21 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected boolean filterOutputByDirectoryForJunit5(Set<PsiMember> classNames) {
+  protected boolean filterOutputByDirectoryForJunit5(Set<Location<?>> classNames) {
     return super.filterOutputByDirectoryForJunit5(classNames) && classNames.isEmpty();
   }
 
   @Override
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<PsiMember> classes) {
+  protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) {
     searchTests(module, classFilter, classes, true);
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<PsiMember> classes) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) {
     searchTests(module, classFilter, classes, false);
   }
 
-  private void searchTests(Module module, TestClassFilter classFilter, Set<PsiMember> classes, boolean junit5) {
+  private void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes, boolean junit5) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
@@ -67,21 +65,23 @@ public class TestsPattern extends TestPackage {
             String methodName = StringUtil.getShortName(className, ',');
             PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
             if (methods.length > 0) {
-              classes.add(methods[0]);
+              classes.add(MethodLocation.elementInClass(methods[0], psiClass));
             }
             else {
-              classes.add(psiClass);
+              classes.add(PsiLocation.fromPsiElement(psiClass));
             }
           }
           else {
-            classes.add(psiClass);
+            classes.add(PsiLocation.fromPsiElement(psiClass));
           }
         }
       }
       else {
         classes.clear();
         if (!junit5) {//junit 5 process tests automatically
-          ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+          LinkedHashSet<PsiClass> psiClasses = new LinkedHashSet<>();
+          ConfigurationUtil.findAllTestClasses(classFilter, module, psiClasses);
+          psiClasses.stream().map(PsiLocation::fromPsiElement).forEach(classes::add);
         }
         return;
       }
@@ -89,7 +89,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<PsiMember> foundClasses, String packageName) {
+  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
     return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 

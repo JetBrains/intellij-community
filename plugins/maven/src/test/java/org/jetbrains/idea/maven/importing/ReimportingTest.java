@@ -23,12 +23,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -246,13 +244,13 @@ public class ReimportingTest extends MavenImportingTestCase {
     assertModules("m1", "m2");
     ModuleOrderEntry dep = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"));
     assertNotNull(dep);
-    assertFalse(((ModuleOrderEntryImpl)dep).isProductionOnTestDependency());
+    assertFalse(dep.isProductionOnTestDependency());
 
     createModulePom("m1", createPomXmlWithModuleDependency("test-jar"));
     importProjects(m1, m2);
     ModuleOrderEntry dep2 = OrderEntryUtil.findModuleOrderEntry(ModuleRootManager.getInstance(getModule("m1")), getModule("m2"));
     assertNotNull(dep2);
-    assertTrue(((ModuleOrderEntryImpl)dep2).isProductionOnTestDependency());
+    assertTrue(dep2.isProductionOnTestDependency());
 
   }
 

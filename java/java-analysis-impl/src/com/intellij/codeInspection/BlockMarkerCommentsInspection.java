@@ -14,7 +14,8 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.PsiJavaPatterns.*;
+import static com.intellij.patterns.PsiJavaPatterns.or;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author Dmitry Batkovich
@@ -71,7 +72,7 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
         if (prefix != null && rawCommentText.startsWith(prefix)) {
           rawCommentText = rawCommentText.substring(prefix.length());
         }
-        final String commentText = rawCommentText.trim().toLowerCase();
+        final String commentText = StringUtil.toLowerCase(rawCommentText.trim());
         if (!commentText.startsWith(END_WORD) || StringUtil.split(commentText, " ").size() > 3) {
           return;
         }

@@ -67,7 +67,7 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
 
   @Override
   public String getHelpTopic() {
-    return "reference.dialogs.rundebug.#org.jetbrains.idea.devkit.run.PluginConfigurationType";
+    return "reference.dialogs.rundebug.devkit.PluginConfigurationType";
   }
 
   @NotNull

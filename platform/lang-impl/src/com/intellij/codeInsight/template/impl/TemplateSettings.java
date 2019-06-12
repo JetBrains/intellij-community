@@ -181,8 +181,12 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private TemplateKey myLastSelectedTemplate;
 
-  public TemplateSettings(@NotNull SchemeManagerFactory schemeManagerFactory) {
-    mySchemeManager = schemeManagerFactory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
+  public TemplateSettings() {
+    this(SchemeManagerFactory.getInstance());
+  }
+
+  public TemplateSettings(SchemeManagerFactory factory) {
+    mySchemeManager = factory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
@@ -689,7 +693,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return element;
   }
 
-  public void setTemplates(@NotNull List<TemplateGroup> newGroups) {
+  public void setTemplates(@NotNull List<? extends TemplateGroup> newGroups) {
     myTemplates.clear();
     myState.deletedKeys.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {

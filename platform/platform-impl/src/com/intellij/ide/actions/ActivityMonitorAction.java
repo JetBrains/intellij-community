@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -106,7 +107,7 @@ class ActivityMonitorAction extends DumbAwareAction {
 
       private String getCommonThreadName(ThreadInfo info) {
         String name = info.getThreadName();
-        if (name.startsWith("AWT-EventQueue")) return "UI thread";
+        if (ThreadDumper.isEDT(name)) return "UI thread";
 
         int numberStart = CharArrayUtil.shiftBackward(name, name.length() - 1, "0123456789/ ") + 1;
         if (numberStart > 0) return name.substring(0, numberStart);

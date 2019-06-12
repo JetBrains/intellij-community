@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -222,14 +222,14 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
     if (source.getName().endsWith(".groovy")) {
       try {
-        org.codehaus.groovy.tools.FileSystemCompiler.commandLineCompile(ArrayUtil.toStringArray(args));
+        org.codehaus.groovy.tools.FileSystemCompiler.commandLineCompile(ArrayUtilRt.toStringArray(args));
       }
       catch (Exception e) {
         throw new IllegalStateException(e);
       }
     }
     else {
-      int result = com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(args));
+      int result = com.sun.tools.javac.Main.compile(ArrayUtilRt.toStringArray(args));
       if (result != 0) throw new IllegalStateException("javac failed with exit code " + result);
     }
   }

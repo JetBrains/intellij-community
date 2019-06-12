@@ -101,7 +101,7 @@ public class RenameMethodMultiTest extends LightMultiFileTestCase {
 
   private void doAutomaticRenameMethod(final String className, final String methodSignature, final String newName) {
     doTest(() -> {
-      final PsiClass aClass = myFixture.getJavaFacade().findClass(className, GlobalSearchScope.moduleScope(myModule));
+      final PsiClass aClass = myFixture.getJavaFacade().findClass(className, GlobalSearchScope.moduleScope(getModule()));
       assertNotNull(aClass);
       final PsiMethod methodBySignature = aClass.findMethodBySignature(getElementFactory().createMethodFromText(
         methodSignature + "{}", null), false);

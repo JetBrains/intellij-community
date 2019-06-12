@@ -430,7 +430,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     return result.toArray(PsiClassType.EMPTY_ARRAY);
   }
 
-  private static boolean isCatchParameterRedundant(PsiClassType catchParamType, Collection<PsiClassType> thrownTypes) {
+  private static boolean isCatchParameterRedundant(PsiClassType catchParamType, Collection<? extends PsiClassType> thrownTypes) {
     for (PsiType exceptionType : thrownTypes) {
       if (exceptionType.isConvertibleFrom(catchParamType)) return false;
     }

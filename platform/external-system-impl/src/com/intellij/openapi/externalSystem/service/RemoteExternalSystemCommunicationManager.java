@@ -1,11 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StorageUtilKt;
-import com.intellij.core.JavaCoreBundle;
-import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -27,6 +24,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
@@ -34,15 +32,14 @@ import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystem
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiBundle;
+import com.intellij.serialization.ObjectSerializer;
 import com.intellij.ui.PlaceHolder;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
@@ -53,12 +50,11 @@ import kotlin.Unit;
 import kotlin.reflect.full.NoSuchPropertyException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.nustaq.serialization.FSTConfiguration;
-import org.objenesis.Objenesis;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -114,13 +110,11 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         File myWorkingDirectory = new File(configuration);
         params.setWorkingDirectory(myWorkingDirectory.isDirectory() ? myWorkingDirectory.getPath() : PathManager.getBinPath());
-        final List<String> classPath = ContainerUtilRt.newArrayList();
 
         // IDE jars.
-        classPath.addAll(PathManager.getUtilClassPath());
+        List<String> classPath = new ArrayList<>(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ProjectBundle.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PlaceHolder.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(DebuggerView.class));
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.ProjectBundle", ProjectBundle.class);
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(PsiBundle.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Alarm.class));
@@ -128,12 +122,13 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExtensionPointName.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StorageUtilKt.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StdModuleTypes.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(JavaModuleType.class));
-        ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.JavaCoreBundle", JavaCoreBundle.class);
+
+        // java plugin jar if it's installed
+        Class<? extends SdkType> javaSdkClass = ExternalSystemJdkProvider.getInstance().getJavaSdkType().getClass();
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(javaSdkClass));
+
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ModuleType.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(EmptyModuleType.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(LanguageLevel.class));
 
         // add Kotlin runtime
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Unit.class));
@@ -145,9 +140,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemException.class));
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
         // com.intellij.openapi.externalSystem.model.FSTSerializer dependencies
-        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(FSTConfiguration.class));
-        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(JsonFactory.class));
-        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(Objenesis.class));
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(ObjectSerializer.class));
 
         params.getClassPath().addAll(classPath);
 
@@ -260,7 +253,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
   @Override
   public void clear() {
-    mySupport.stopAll(true); 
+    mySupport.stopAll(true);
   }
 
   @Override

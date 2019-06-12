@@ -1,5 +1,3 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -1294,13 +1292,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // array_initializer_declaration array_initializer
+  // array_initializer_declaration mb_nl array_initializer
   static boolean array_initializer_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "array_initializer_tail")) return false;
     if (!nextTokenIsFast(b, T_LBRACK)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = array_initializer_declaration(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     r = r && array_initializer(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -4670,24 +4669,35 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ['=' mb_nl expression_or_application]
+  // [mb_nl ('=') mb_nl expression_or_application]
   static boolean mb_initializer(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mb_initializer")) return false;
     mb_initializer_0(b, l + 1);
     return true;
   }
 
-  // '=' mb_nl expression_or_application
+  // mb_nl ('=') mb_nl expression_or_application
   private static boolean mb_initializer_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mb_initializer_0")) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeTokenFast(b, T_ASSIGN);
-    p = r; // pin = 1
+    r = mb_nl(b, l + 1);
+    r = r && mb_initializer_0_1(b, l + 1);
+    p = r; // pin = 2
     r = r && report_error_(b, mb_nl(b, l + 1));
     r = p && expression_or_application(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
+  }
+
+  // ('=')
+  private static boolean mb_initializer_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "mb_initializer_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, T_ASSIGN);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4949,23 +4959,24 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // tuple !'->' tuple_initializer
+  // tuple  mb_nl !'->' tuple_initializer
   static boolean multi_tuple_assignment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "multi_tuple_assignment")) return false;
     if (!nextTokenIsFast(b, T_LPAREN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
     r = tuple(b, l + 1);
-    r = r && multi_tuple_assignment_1(b, l + 1);
-    p = r; // pin = 2
+    r = r && mb_nl(b, l + 1);
+    r = r && multi_tuple_assignment_2(b, l + 1);
+    p = r; // pin = 3
     r = r && tuple_initializer(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
   // !'->'
-  private static boolean multi_tuple_assignment_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "multi_tuple_assignment_1")) return false;
+  private static boolean multi_tuple_assignment_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "multi_tuple_assignment_2")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NOT_);
     r = !consumeToken(b, T_ARROW);
@@ -5034,13 +5045,26 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // array_initializer_tail | array_declaration | call_argument_list
+  // array_initializer_tail | array_declaration | (mb_nl call_argument_list)
   static boolean new_expression_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "new_expression_tail")) return false;
     boolean r;
+    Marker m = enter_section_(b);
     r = array_initializer_tail(b, l + 1);
     if (!r) r = array_declaration(b, l + 1);
-    if (!r) r = call_argument_list(b, l + 1);
+    if (!r) r = new_expression_tail_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl call_argument_list
+  private static boolean new_expression_tail_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "new_expression_tail_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && call_argument_list(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -6269,13 +6293,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // single_tuple tuple_initializer
+  // single_tuple mb_nl tuple_initializer
   static boolean single_tuple_assignment(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "single_tuple_assignment")) return false;
     if (!nextTokenIs(b, T_LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = single_tuple(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     r = r && tuple_initializer(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -7066,7 +7091,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // non_empty_modifier_list tuple_var_declaration_tuple tuple_initializer
+  // non_empty_modifier_list tuple_var_declaration_tuple mb_nl tuple_initializer
   public static boolean tuple_var_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple_var_declaration")) return false;
     boolean r, p;
@@ -7074,7 +7099,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = non_empty_modifier_list(b, l + 1);
     r = r && tuple_var_declaration_tuple(b, l + 1);
     p = r; // pin = tuple_var_declaration_tuple
-    r = r && tuple_initializer(b, l + 1);
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && tuple_initializer(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -7648,7 +7674,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 0 && assignment_expression_rvalue(b, l + 1)) {
+      if (g < 0 && assignment_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, ASSIGNMENT_EXPRESSION, r, true, null);
       }
@@ -7704,7 +7730,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 8);
         exit_section_(b, l, m, IN_EXPRESSION, r, true, null);
       }
-      else if (g < 8 && instanceof_expression_tail(b, l + 1)) {
+      else if (g < 8 && instanceof_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, INSTANCEOF_EXPRESSION, r, true, null);
       }
@@ -7772,6 +7798,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // mb_nl assignment_expression_rvalue
+  private static boolean assignment_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "assignment_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && assignment_expression_rvalue(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // single_tuple_assignment | multi_tuple_assignment
   public static boolean tuple_assignment_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tuple_assignment_expression")) return false;
@@ -7826,131 +7863,222 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '||' mb_nl
+  // mb_nl ('||') mb_nl
   private static boolean lor_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "lor_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_LOR);
+    r = mb_nl(b, l + 1);
+    r = r && lor_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '&&' mb_nl
+  // ('||')
+  private static boolean lor_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "lor_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_LOR);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('&&') mb_nl
   private static boolean land_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "land_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_LAND);
+    r = mb_nl(b, l + 1);
+    r = r && land_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '|' mb_nl
+  // ('&&')
+  private static boolean land_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "land_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_LAND);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('|') mb_nl
   private static boolean bor_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "bor_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_BOR);
+    r = mb_nl(b, l + 1);
+    r = r && bor_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '^' mb_nl
+  // ('|')
+  private static boolean bor_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "bor_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_BOR);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('^') mb_nl
   private static boolean xor_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "xor_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_XOR);
+    r = mb_nl(b, l + 1);
+    r = r && xor_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '&' mb_nl
+  // ('^')
+  private static boolean xor_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "xor_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_XOR);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('&') mb_nl
   private static boolean band_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "band_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_BAND);
+    r = mb_nl(b, l + 1);
+    r = r && band_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // <<equalityOperator>> mb_nl
+  // ('&')
+  private static boolean band_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "band_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_BAND);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl <<equalityOperator>> mb_nl
   private static boolean equality_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "equality_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = equalityOperator(b, l + 1);
+    r = mb_nl(b, l + 1);
+    r = r && equalityOperator(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '<=>' mb_nl
+  // mb_nl ('<=>') mb_nl
   private static boolean compare_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compare_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_COMPARE);
+    r = mb_nl(b, l + 1);
+    r = r && compare_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '=~' mb_nl
+  // ('<=>')
+  private static boolean compare_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compare_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_COMPARE);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('=~') mb_nl
   private static boolean regex_find_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "regex_find_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_REGEX_FIND);
+    r = mb_nl(b, l + 1);
+    r = r && regex_find_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '==~' mb_nl
+  // ('=~')
+  private static boolean regex_find_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "regex_find_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_REGEX_FIND);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('==~') mb_nl
   private static boolean regex_match_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "regex_match_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_REGEX_MATCH);
+    r = mb_nl(b, l + 1);
+    r = r && regex_match_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // relational_operator mb_nl
+  // ('==~')
+  private static boolean regex_match_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "regex_match_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_REGEX_MATCH);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl relational_operator mb_nl
   private static boolean relational_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "relational_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = relational_operator(b, l + 1);
+    r = mb_nl(b, l + 1);
+    r = r && relational_operator(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // mb_not ('in') mb_nl
+  // mb_nl mb_not ('in') mb_nl
   private static boolean in_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "in_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = mb_not(b, l + 1);
-    r = r && in_expression_0_1(b, l + 1);
+    r = mb_nl(b, l + 1);
+    r = r && mb_not(b, l + 1);
+    r = r && in_expression_0_2(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // ('in')
-  private static boolean in_expression_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "in_expression_0_1")) return false;
+  private static boolean in_expression_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "in_expression_0_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_IN);
@@ -7958,43 +8086,67 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // 'as' mb_nl type_element
+  // mb_nl instanceof_expression_tail
+  private static boolean instanceof_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instanceof_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && instanceof_expression_tail(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl ('as') mb_nl type_element
   private static boolean as_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "as_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, KW_AS);
+    r = mb_nl(b, l + 1);
+    r = r && as_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     r = r && type_element(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // shift_sign mb_nl
+  // ('as')
+  private static boolean as_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "as_expression_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, KW_AS);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // mb_nl shift_sign mb_nl
   private static boolean shift_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "shift_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = shift_sign(b, l + 1);
+    r = mb_nl(b, l + 1);
+    r = r && shift_sign(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // ('..' | '..<') mb_nl
+  // mb_nl ('..' | '..<') mb_nl
   private static boolean range_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "range_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = range_expression_0_0(b, l + 1);
+    r = mb_nl(b, l + 1);
+    r = r && range_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // '..' | '..<'
-  private static boolean range_expression_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "range_expression_0_0")) return false;
+  private static boolean range_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "range_expression_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_RANGE);
@@ -8025,20 +8177,21 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('*' | '/' | '%') mb_nl
+  // mb_nl ('*' | '/' | '%') mb_nl
   private static boolean multiplicative_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "multiplicative_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = multiplicative_expression_0_0(b, l + 1);
+    r = mb_nl(b, l + 1);
+    r = r && multiplicative_expression_0_1(b, l + 1);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // '*' | '/' | '%'
-  private static boolean multiplicative_expression_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "multiplicative_expression_0_0")) return false;
+  private static boolean multiplicative_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "multiplicative_expression_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_STAR);

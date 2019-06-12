@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.google.gson.Gson
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
@@ -107,11 +107,11 @@ class CompilationPartsUtil {
                        "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
       return
     }
-
-    String branch = System.getProperty('intellij.platform.vcs.branch')
+    String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
+    String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
     if (StringUtil.isEmptyOrSpaces(branch)) {
       messages.warning("Unable to determine current git branch, assuming 'master'. \n" +
-                       "Please set 'intellij.platform.vcs.branch' system property")
+                       "Please set '$intellijCompileArtifactsBranchProperty' system property")
       branch = 'master'
     }
 
@@ -519,7 +519,7 @@ class CompilationPartsUtil {
 
   private static void pack(BuildMessages messages, AntBuilder ant, PackAndUploadContext ctx, boolean incremental) {
     messages.block("Packing $ctx.name") {
-      if (SystemInfoRt.isUnix) {
+      if (SystemInfo.isUnix) {
         def task = new ExecTask()
         task.project = ant.project
         task.executable = "zip"

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
@@ -37,7 +23,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,12 +61,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
   @NotNull
   private static final          Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE   =
-    ContainerUtilRt.newHashMap();
+    new HashMap<>();
   @NotNull private static final Collection<Set<ArrangementSettingsToken>>                    MUTEXES             =
-    ContainerUtilRt.newArrayList();
+    new ArrayList<>();
 
-  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER = ContainerUtil.newHashSet();
-  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH = ContainerUtil.newHashSet();
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_ORDER = new HashSet<>();
+  private static final Set<ArrangementSettingsToken> TYPES_WITH_DISABLED_NAME_MATCH = new HashSet<>();
 
   static {
     Set<ArrangementSettingsToken> visibilityModifiers = ContainerUtilRt.newHashSet(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
@@ -97,9 +82,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
     MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
-    MODIFIERS_BY_TYPE.put(GETTER, ContainerUtilRt.newHashSet());
-    MODIFIERS_BY_TYPE.put(SETTER, ContainerUtilRt.newHashSet());
-    MODIFIERS_BY_TYPE.put(OVERRIDDEN, ContainerUtilRt.newHashSet());
+    MODIFIERS_BY_TYPE.put(GETTER, new HashSet<>());
+    MODIFIERS_BY_TYPE.put(SETTER, new HashSet<>());
+    MODIFIERS_BY_TYPE.put(OVERRIDDEN, new HashSet<>());
     MODIFIERS_BY_TYPE.put(INIT_BLOCK, ContainerUtilRt.newHashSet(STATIC));
 
     TYPES_WITH_DISABLED_ORDER.add(INIT_BLOCK);
@@ -107,7 +92,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     TYPES_WITH_DISABLED_NAME_MATCH.add(INIT_BLOCK);
   }
 
-  private static final Map<ArrangementSettingsToken, List<ArrangementSettingsToken>> GROUPING_RULES = ContainerUtilRt.newLinkedHashMap();
+  private static final Map<ArrangementSettingsToken, List<ArrangementSettingsToken>> GROUPING_RULES =
+    new LinkedHashMap<>();
 
   static {
     GROUPING_RULES.put(GETTERS_AND_SETTERS, Collections.emptyList());
@@ -130,7 +116,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
 
   static {
     List<ArrangementGroupingRule> groupingRules = ContainerUtilRt.newArrayList(new ArrangementGroupingRule(GETTERS_AND_SETTERS));
-    List<StdArrangementMatchRule> matchRules = ContainerUtilRt.newArrayList();
+    List<StdArrangementMatchRule> matchRules = new ArrayList<>();
     ArrangementSettingsToken[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
     for (ArrangementSettingsToken modifier : visibility) {
       and(matchRules, FIELD, STATIC, FINAL, modifier);
@@ -156,7 +142,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     and(matchRules, CLASS, STATIC);
     and(matchRules, CLASS);
 
-    List<StdArrangementRuleAliasToken> aliasTokens = ContainerUtilRt.newArrayList();
+    List<StdArrangementRuleAliasToken> aliasTokens = new ArrayList<>();
     aliasTokens.add(VISIBILITY);
     DEFAULT_SETTINGS = StdArrangementExtendableSettings.createByMatchRules(groupingRules, matchRules, aliasTokens);
   }
@@ -164,7 +150,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
 
   @NotNull
-  private static Set<ArrangementSettingsToken> concat(@NotNull Set<ArrangementSettingsToken> base, ArrangementSettingsToken... modifiers) {
+  private static Set<ArrangementSettingsToken> concat(@NotNull Set<? extends ArrangementSettingsToken> base, ArrangementSettingsToken... modifiers) {
     Set<ArrangementSettingsToken> result = ContainerUtilRt.newHashSet(base);
     Collections.addAll(result, modifiers);
     return result;

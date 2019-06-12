@@ -130,8 +130,8 @@ public class VersionComparatorUtil {
       return 1;
     }
 
-    ver1 = ver1.toLowerCase();
-    ver2 = ver2.toLowerCase();
+    ver1 = ver1.toLowerCase(Locale.ENGLISH);
+    ver2 = ver2.toLowerCase(Locale.ENGLISH);
 
     final List<String> s1 = splitVersionString(ver1);
     final List<String> s2 = splitVersionString(ver2);

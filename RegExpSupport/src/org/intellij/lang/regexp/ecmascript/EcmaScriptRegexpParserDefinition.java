@@ -24,6 +24,7 @@ public class EcmaScriptRegexpParserDefinition extends RegExpParserDefinition {
   private final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.OCTAL_NO_LEADING_ZERO,
                                                                     RegExpCapability.DANGLING_METACHARACTERS,
                                                                     RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS,
+                                                                    RegExpCapability.PROPERTY_VALUES,
                                                                     RegExpCapability.MAX_OCTAL_377);
 
   @Override

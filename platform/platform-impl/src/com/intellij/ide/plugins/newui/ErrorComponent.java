@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -24,16 +23,11 @@ public class ErrorComponent {
   private static final String KEY = "EnableCallback";
 
   @NotNull
-  public static JComponent create(@NotNull JPanel panel, boolean tinyFont, @Nullable Object constraints) {
+  public static JComponent create(@NotNull JPanel panel, @Nullable Object constraints) {
     JEditorPane editorPane = new JEditorPane();
-    panel.add(tinyFont ? PluginManagerConfigurableNew.installTiny(editorPane) : editorPane, constraints);
+    panel.add(editorPane, constraints);
 
-    editorPane.setEditable(false);
-    editorPane.setFocusable(false);
-    editorPane.setOpaque(false);
-    editorPane.setBorder(null);
-    editorPane.setContentType("text/html");
-    editorPane.setCaret(EmptyCaret.INSTANCE);
+    convertToLabel(editorPane);
 
     HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
     StyleSheet sheet = kit.getStyleSheet();
@@ -54,6 +48,15 @@ public class ErrorComponent {
     return editorPane;
   }
 
+  public static void convertToLabel(@NotNull JEditorPane editorPane) {
+    editorPane.setEditable(false);
+    editorPane.setFocusable(false);
+    editorPane.setOpaque(false);
+    editorPane.setBorder(null);
+    editorPane.setContentType("text/html");
+    editorPane.setCaret(EmptyCaret.INSTANCE);
+  }
+
   public static void show(@NotNull JComponent errorComponent,
                           @NotNull String message,
                           @Nullable String action,
@@ -68,13 +71,12 @@ public class ErrorComponent {
 
   @NotNull
   public static JComponent show(@NotNull JPanel panel,
-                                boolean tinyFont,
                                 @Nullable Object constraints,
                                 @Nullable JComponent errorComponent,
                                 @NotNull String message,
                                 @Nullable String action,
                                 @Nullable Runnable enableCallback) {
-    JComponent component = errorComponent == null ? create(panel, tinyFont, constraints) : errorComponent;
+    JComponent component = errorComponent == null ? create(panel, constraints) : errorComponent;
     show(component, message, action, enableCallback);
     return component;
   }

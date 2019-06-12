@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -30,14 +29,15 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -46,7 +46,7 @@ public final class ServiceManagerImpl implements Disposable {
 
   static void registerServices(@NotNull List<ServiceDescriptor> services,
                                @NotNull IdeaPluginDescriptor pluginDescriptor,
-                               @NotNull ComponentManagerEx componentManager) {
+                               @NotNull ComponentManager componentManager) {
     MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
     for (ServiceDescriptor descriptor : services) {
       // Allow to re-define service implementations in plugins.
@@ -66,9 +66,9 @@ public final class ServiceManagerImpl implements Disposable {
     }
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   public static void processAllDescriptors(@NotNull Consumer<? super ServiceDescriptor> consumer, @NotNull ComponentManager componentManager) {
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
       List<ServiceDescriptor> serviceDescriptors;
       if (componentManager instanceof Application) {
@@ -81,8 +81,15 @@ public final class ServiceManagerImpl implements Disposable {
         serviceDescriptors = pluginDescriptor.getModuleServices();
       }
 
-      for (ServiceDescriptor serviceDescriptor : serviceDescriptors) {
-        consumer.accept(serviceDescriptor);
+      serviceDescriptors.forEach(consumer);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void processProjectDescriptors(@NotNull BiConsumer<? super ServiceDescriptor, ? super PluginDescriptor> consumer) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getLoadedPlugins()) {
+      for (ServiceDescriptor serviceDescriptor : ((IdeaPluginDescriptorImpl)plugin).getProjectServices()) {
+        consumer.accept(serviceDescriptor, plugin);
       }
     }
   }
@@ -90,7 +97,6 @@ public final class ServiceManagerImpl implements Disposable {
   @NotNull
   public static List<String> getImplementationClassNames(@NotNull ComponentManager componentManager, @NotNull String prefix) {
     List<String> result = new ArrayList<>();
-    //noinspection TestOnlyProblems
     processAllDescriptors(serviceDescriptor -> {
       String implementation = serviceDescriptor.getImplementation();
       if (!StringUtil.isEmpty(implementation) && implementation.startsWith(prefix)) {
@@ -167,10 +173,10 @@ public final class ServiceManagerImpl implements Disposable {
     private ComponentAdapter myDelegate;
     private final PluginDescriptor myPluginDescriptor;
     private final ServiceDescriptor myDescriptor;
-    private final ComponentManagerEx myComponentManager;
+    private final ComponentManager myComponentManager;
     private volatile Object myInitializedComponentInstance;
 
-    MyComponentAdapter(@NotNull ServiceDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManagerEx componentManager) {
+    MyComponentAdapter(@NotNull ServiceDescriptor descriptor, @NotNull PluginDescriptor pluginDescriptor, @NotNull ComponentManager componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;
@@ -217,12 +223,14 @@ public final class ServiceManagerImpl implements Disposable {
 
         // heavy to prevent storages from flushing and blocking FS
         try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("Creating service '" + implementation + "'")) {
-          Runnable runnable = () -> myInitializedComponentInstance = createAndInitialize(container);
-          if (ProgressIndicatorProvider.getGlobalProgressIndicator() != null) {
-            ProgressManager.getInstance().executeNonCancelableSection(runnable);
+          if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+            myInitializedComponentInstance = createAndInitialize(container);
           }
           else {
-            runnable.run();
+            //noinspection CodeBlock2Expr
+            ProgressManager.getInstance().executeNonCancelableSection(() -> {
+              myInitializedComponentInstance = createAndInitialize(container);
+            });
           }
           return myInitializedComponentInstance;
         }
@@ -237,7 +245,7 @@ public final class ServiceManagerImpl implements Disposable {
         Disposer.register(myComponentManager, (Disposable)instance);
       }
 
-      myComponentManager.initializeComponent(instance, true);
+      myComponentManager.initializeComponent(instance, myDescriptor);
       ParallelActivity.SERVICE.record(startTime, instance.getClass(), DefaultPicoContainer.getActivityLevel(container));
       return instance;
     }

@@ -43,7 +43,7 @@ public class GitChangesParser {
                                    @NotNull List<VcsFileStatusInfo> statusInfos,
                                    @NotNull String hash,
                                    @NotNull Date date,
-                                   @Nullable String parentsHash) throws VcsException {
+                                   @Nullable String parentsHash) {
     GitRevisionNumber thisRevision = new GitRevisionNumber(hash, date);
     GitRevisionNumber parentRevision = parentsHash == null ? null : new GitRevisionNumber(parentsHash);
 
@@ -59,11 +59,11 @@ public class GitChangesParser {
                                     @NotNull VirtualFile vcsRoot,
                                     @NotNull VcsRevisionNumber thisRevision,
                                     @Nullable VcsRevisionNumber parentRevision,
-                                    @NotNull VcsFileStatusInfo statusInfo) throws VcsException {
+                                    @NotNull VcsFileStatusInfo statusInfo) {
     final ContentRevision before;
     final ContentRevision after;
     final String path = statusInfo.getFirstPath();
-    final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false);
+    final FilePath filePath = GitContentRevision.createPath(vcsRoot, path);
 
     FileStatus status;
     switch (statusInfo.getType()) {
@@ -85,7 +85,7 @@ public class GitChangesParser {
       case MOVED:
         status = FileStatus.MODIFIED;
         String secondPath = statusInfo.getSecondPath();
-        final FilePath filePathAfterRename = secondPath == null ? filePath : GitContentRevision.createPath(vcsRoot, secondPath, false);
+        final FilePath filePathAfterRename = secondPath == null ? filePath : GitContentRevision.createPath(vcsRoot, secondPath);
         before = GitContentRevision.createRevision(filePath, parentRevision, project);
         after = GitContentRevision.createRevision(filePathAfterRename, thisRevision, project);
         break;

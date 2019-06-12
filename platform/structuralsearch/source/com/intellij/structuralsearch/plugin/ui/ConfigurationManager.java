@@ -65,7 +65,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
    * Stores configurations at the application level. Before the configurations where stored in the workspace file.
    * @param configurations
    */
-  private void migrate(List<Configuration> configurations) {
+  private void migrate(List<? extends Configuration> configurations) {
     if (configurations.isEmpty()) {
       return;
     }
@@ -107,13 +107,13 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     configurations.remove(configuration);
   }
 
-  public static void writeConfigurations(@NotNull Element element, @NotNull Collection<Configuration> configurations) {
+  public static void writeConfigurations(@NotNull Element element, @NotNull Collection<? extends Configuration> configurations) {
     writeConfigurations(element, configurations, Collections.emptyList());
   }
 
   private static void writeConfigurations(@NotNull Element element,
-                                          @NotNull Collection<Configuration> configurations,
-                                          @NotNull Collection<Configuration> historyConfigurations) {
+                                          @NotNull Collection<? extends Configuration> configurations,
+                                          @NotNull Collection<? extends Configuration> historyConfigurations) {
     for (final Configuration configuration : configurations) {
       configuration.getMatchOptions().setScope(null);
       saveConfiguration(element, configuration);
@@ -132,13 +132,13 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return infoElement;
   }
 
-  public static void readConfigurations(@NotNull Element element, @NotNull Collection<Configuration> configurations) {
+  public static void readConfigurations(@NotNull Element element, @NotNull Collection<? super Configuration> configurations) {
     readConfigurations(element, configurations, new SmartList<>());
   }
 
   private static void readConfigurations(@NotNull Element element,
-                                         @NotNull Collection<Configuration> configurations,
-                                         @NotNull Collection<Configuration> historyConfigurations) {
+                                         @NotNull Collection<? super Configuration> configurations,
+                                         @NotNull Collection<? super Configuration> historyConfigurations) {
     for (final Element pattern : element.getChildren()) {
       final Configuration config = readConfiguration(pattern);
       if (config == null) continue;
@@ -200,12 +200,12 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
 
   @Nullable
-  private static Configuration findConfigurationByName(Collection<Configuration> configurations, final String name) {
+  private static Configuration findConfigurationByName(Collection<? extends Configuration> configurations, final String name) {
     return configurations.stream().filter(config -> config.getName().equals(name)).findFirst().orElse(null);
   }
 
   @Nullable
-  private static Configuration findConfiguration(@NotNull Collection<Configuration> configurations, Configuration configuration) {
+  private static Configuration findConfiguration(@NotNull Collection<? extends Configuration> configurations, Configuration configuration) {
     return configurations.stream()
       .filter(c -> {
         if (configuration instanceof ReplaceConfiguration) {
@@ -242,8 +242,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   public static boolean showSaveTemplateAsDialog(@NotNull Configuration newConfiguration,
                                                  @NotNull Project project,
-                                                 @NotNull Predicate<String> nameExistsPredicate,
-                                                 @NotNull Consumer<Configuration> namedConfigurationConsumer) {
+                                                 @NotNull Predicate<? super String> nameExistsPredicate,
+                                                 @NotNull Consumer<? super Configuration> namedConfigurationConsumer) {
     String name = showInputDialog(newConfiguration.getName(), project);
     while (name != null && nameExistsPredicate.test(name)) {
       final int answer =

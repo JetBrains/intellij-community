@@ -392,4 +392,12 @@ class Test88 {
     assert !('finalize' in myFixture.lookupElementStrings)
   }
 
+  void "test only importable suggestions in import"() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.addClass("package com.foo; public class Comments { public static final int B = 2; }")
+    myFixture.configureByText("a.java", "import com.<caret>x.y;\n" +
+                                        "import static java.util.stream.Collectors.joining;")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['foo']
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -39,7 +39,7 @@ import java.util.jar.Attributes;
  */
 public class RemoteConnectionBuilder {
   private static final Logger LOG = Logger.getInstance(RemoteConnectionBuilder.class);
-  
+
   private final int myTransport;
   private final boolean myServer;
   private final String myAddress;
@@ -73,7 +73,7 @@ public class RemoteConnectionBuilder {
     myQuiet = true;
     return this;
   }
-  
+
   public RemoteConnection create(JavaParameters parameters) throws ExecutionException {
     if (myCheckValidity) {
       checkTargetJPDAInstalled(parameters);

@@ -26,7 +26,7 @@ public class VcsCustomizableActionGroupProvider extends CustomizableActionGroupP
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
     registrar.addCustomizableActionGroup(VcsActions.VCS_OPERATIONS_POPUP, "VCS Operations Popup");
-    registrar.addCustomizableActionGroup(ActionPlaces.CHANGES_VIEW_TOOLBAR, "Local Changes Toolbar");
+    registrar.addCustomizableActionGroup(ActionPlaces.CHANGES_VIEW_TOOLBAR, "VCS Local Changes Toolbar");
     registrar.addCustomizableActionGroup(VcsActions.VCS_LOG_CHANGES_BROWSER_TOOLBAR, "VCS Log Changes Browser Toolbar");
   }
 }

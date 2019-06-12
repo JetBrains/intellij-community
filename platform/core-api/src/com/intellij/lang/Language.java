@@ -7,9 +7,10 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ public abstract class Language extends UserDataHolderBase {
   };
 
   protected Language(@NotNull String ID) {
-    this(ID, ArrayUtil.EMPTY_STRING_ARRAY);
+    this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   protected Language(@NotNull String ID, @NotNull String... mimeTypes) {
@@ -68,7 +69,7 @@ public abstract class Language extends UserDataHolderBase {
     }
     myBaseLanguage = baseLanguage;
     myID = ID;
-    myMimeTypes = mimeTypes.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : mimeTypes;
+    myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);
@@ -153,7 +154,12 @@ public abstract class Language extends UserDataHolderBase {
 
   @Nullable
   public LanguageFileType getAssociatedFileType() {
-    final FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
+    return FileTypeRegistry.getInstance().findFileTypeByLanguage(this);
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public LanguageFileType findMyFileType(FileType[] types) {
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == this) {
         return (LanguageFileType)fileType;
@@ -166,6 +172,7 @@ public abstract class Language extends UserDataHolderBase {
     }
     return null;
   }
+
 
   @Nullable
   public Language getBaseLanguage() {

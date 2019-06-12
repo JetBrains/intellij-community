@@ -34,7 +34,7 @@ class MigrateGetterNameSetting {
 
   private final AtomicReference<Boolean> myGlobalValue = new AtomicReference<>();
 
-  void askUserIfNeed(final OverriddenUsageInfo info, final String newMethodName, final PsiType migrationReturnType) {
+  void askUserIfNeeded(final OverriddenUsageInfo info, final String newMethodName, final PsiType migrationReturnType) {
     final Boolean globalValue = myGlobalValue.get();
     if (globalValue == null) {
       final String currentName = ((PsiMethod)info.getElement()).getName();

@@ -11,7 +11,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -473,7 +472,7 @@ public class CompileDriver {
 
       if (_status != ExitStatus.UP_TO_DATE && _status != ExitStatus.CANCELLED) {
         // have to refresh in case of errors too, because run configuration may be set to ignore errors
-        Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPathsEx.getOutputPaths(affectedModules));
+        Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules));
         if (!affectedRoots.isEmpty()) {
           ProgressIndicator indicator = compileContext.getProgressIndicator();
           indicator.setText("Synchronizing output directories...");
@@ -704,7 +703,7 @@ public class CompileDriver {
     }
   }
 
-  private void showCyclicModulesHaveDifferentLanguageLevel(Set<Module> modulesInChunk) {
+  private void showCyclicModulesHaveDifferentLanguageLevel(Set<? extends Module> modulesInChunk) {
     Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
@@ -714,7 +713,7 @@ public class CompileDriver {
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private void showCyclicModulesHaveDifferentJdksError(Set<Module> modulesInChunk) {
+  private void showCyclicModulesHaveDifferentJdksError(Set<? extends Module> modulesInChunk) {
     Module firstModule = ContainerUtil.getFirstItem(modulesInChunk);
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
@@ -724,7 +723,7 @@ public class CompileDriver {
     showConfigurationDialog(moduleNameToSelect, null);
   }
 
-  private static String getModulesString(Collection<Module> modulesInChunk) {
+  private static String getModulesString(Collection<? extends Module> modulesInChunk) {
     return StringUtil.join(modulesInChunk, module->"\""+module.getName()+"\"", "\n");
   }
 

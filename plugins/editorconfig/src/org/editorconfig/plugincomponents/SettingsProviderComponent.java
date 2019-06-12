@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValue;
@@ -64,12 +63,7 @@ public class SettingsProviderComponent extends SimpleModificationTracker {
       });
       file.putUserData(CACHED_PAIRS, cache);
     }
-    List<OutPair> result = cache.getValue();
-    String error = Utils.configValueForKey(result, ERROR);
-    if (!StringUtil.isEmpty(error)) {
-      Utils.invalidConfigMessage(project, error, "", filePath);
-    }
-    return result;
+    return cache.getValue();
   }
 
   public Set<String> getRootDirs(final Project project) {

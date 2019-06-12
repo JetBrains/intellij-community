@@ -36,14 +36,14 @@ class ModuleVcsDetector(private val myProject: Project,
   }
 
   private inner class MyModulesListener : ModuleRootListener, ModuleListener {
-    private val myMappingsForRemovedModules: MutableList<Pair<String, VcsDirectoryMapping>> = mutableListOf()
+    private val myMappingsForRemovedModules: MutableList<VcsDirectoryMapping> = mutableListOf()
 
     override fun beforeRootsChange(event: ModuleRootEvent) {
       myMappingsForRemovedModules.clear()
     }
 
     override fun rootsChanged(event: ModuleRootEvent) {
-      myMappingsForRemovedModules.forEach { (_, mapping) -> myVcsManager.removeDirectoryMapping(mapping) }
+      myMappingsForRemovedModules.forEach { mapping -> myVcsManager.removeDirectoryMapping(mapping) }
       // the check calculates to true only before user has done any change to mappings, i.e. in case modules are detected/added automatically
       // on start etc (look inside)
       if (myVcsManager.needAutodetectMappings()) {
@@ -62,6 +62,8 @@ class ModuleVcsDetector(private val myProject: Project,
   }
 
   private fun autoDetectVcsMappings(tryMapPieces: Boolean) {
+    if (myVcsManager.haveDefaultMapping() != null) return
+
     val roots = ModuleManager.getInstance(myProject).modules.flatMap { it.rootManager.contentRoots.asIterable() }.distinct()
     val rootVcses = roots.mapNotNull { root -> myVcsManager.findVersioningVcs(root)?.let { root to it } }
     // this case is only for project <-> one vcs.
@@ -73,37 +75,34 @@ class ModuleVcsDetector(private val myProject: Project,
         // here we put the project <-> vcs mapping, and removing all inside-project-roots mappings
         // (i.e. keeping all other mappings)
         val rootPaths = roots.map { it.path }.toSet()
-        val redundantMappings = myVcsManager.directoryMappings.filter { it.directory in rootPaths }
+        val additionalMappings = myVcsManager.directoryMappings.filter { it.directory !in rootPaths }
 
-        myVcsManager.setAutoDirectoryMapping("", vcs.name)
-        redundantMappings.forEach { myVcsManager.removeDirectoryMapping(it) }
-        myVcsManager.cleanupMappings()
+        myVcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(vcs.name))
       }
     }
     else if (tryMapPieces) {
-      rootVcses.forEach { (root, vcs) -> myVcsManager.setAutoDirectoryMapping(root.path, vcs.name) }
-      myVcsManager.cleanupMappings()
+      val newMappings = rootVcses.map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
+      myVcsManager.setAutoDirectoryMappings(myVcsManager.directoryMappings + newMappings)
     }
   }
 
   private fun autoDetectModuleVcsMapping(module: Module) {
-    var mappingsUpdated = false
+    if (myVcsManager.haveDefaultMapping() != null) return
+
+    val newMappings = mutableListOf<VcsDirectoryMapping>()
     for (file in module.rootManager.contentRoots) {
       val vcs = myVcsManager.findVersioningVcs(file)
-      if (vcs != null && vcs !== myVcsManager.getVcsFor(file, module)) {
-        myVcsManager.setAutoDirectoryMapping(file.path, vcs.name)
-        mappingsUpdated = true
+      if (vcs != null && vcs !== myVcsManager.getVcsFor(file)) {
+        newMappings.add(VcsDirectoryMapping(file.path, vcs.name))
       }
     }
-    if (mappingsUpdated) {
-      myVcsManager.cleanupMappings()
+    if (newMappings.isNotEmpty()) {
+      myVcsManager.setAutoDirectoryMappings(myVcsManager.directoryMappings + newMappings)
     }
   }
 
-  private fun getMappings(module: Module): List<Pair<String, VcsDirectoryMapping>> {
-    val moduleName = module.name
+  private fun getMappings(module: Module): List<VcsDirectoryMapping> {
     return module.rootManager.contentRoots
-      .mapNotNull { root -> myVcsManager.directoryMappings.firstOrNull { it.systemIndependentPath() == root.path } }
-      .map { moduleName to it }
+      .mapNotNull { root -> myVcsManager.directoryMappings.firstOrNull { it.directory == root.path } }
   }
 }

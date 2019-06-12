@@ -38,7 +38,7 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
             PsiParameter targetParameter = UastUtils.getParameterForArgument(call, expression);
-            if (!checkTestDataFileAnnotationPresent(targetParameter)) {
+            if (targetParameter == null || !targetParameter.hasAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME)) {
               return PsiReference.EMPTY_ARRAY;
             }
 
@@ -59,19 +59,6 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
           }
         }, PsiReferenceRegistrar.DEFAULT_PRIORITY
       );
-  }
-
-  private static boolean checkTestDataFileAnnotationPresent(@Nullable PsiParameter targetParameter) {
-    if (targetParameter == null) {
-      return false;
-    }
-    PsiAnnotation[] annotations = targetParameter.getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      if (TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME.equals(annotation.getQualifiedName())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable

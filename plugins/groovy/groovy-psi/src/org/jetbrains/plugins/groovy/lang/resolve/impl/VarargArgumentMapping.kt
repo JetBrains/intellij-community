@@ -3,10 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
 import com.intellij.util.containers.ComparatorUtil.min
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
-import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.util.init
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
@@ -83,12 +80,24 @@ class VarargArgumentMapping(
 
   private fun varargApplicability(parameterType: PsiType?, varargs: Collection<Argument>, context: PsiElement): Applicability {
     for (vararg in varargs) {
-      val argumentAssignability = argumentApplicability(parameterType, vararg, context)
+      val argumentAssignability = argumentApplicability(parameterType, vararg.runtimeType, context)
       if (argumentAssignability != Applicability.applicable) {
         return argumentAssignability
       }
     }
     return Applicability.applicable
+  }
+
+  override fun highlightingApplicabilities(substitutor: PsiSubstitutor): Applicabilities {
+    val (positional, varargs) = mapping ?: return emptyMap()
+
+    val positionalApplicabilities = highlightApplicabilities(positional, substitutor,  context)
+    val parameterType = parameterType(varargType, substitutor, false)
+    val varargApplicabilities = varargs.associate {
+      it to ApplicabilityData(parameterType, argumentApplicability(parameterType, it.type, context))
+    }
+
+    return positionalApplicabilities + varargApplicabilities
   }
 
   val varargs: Collection<Argument>

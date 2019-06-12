@@ -200,7 +200,7 @@ public class PlaybackRunner implements Disposable {
     includeScript(myScript, getScriptDir(), myCommands, 0);
   }
 
-  private void includeScript(String scriptText, File scriptDir, ArrayList<PlaybackCommand> commandList, int line) {
+  private void includeScript(String scriptText, File scriptDir, ArrayList<? super PlaybackCommand> commandList, int line) {
     final StringTokenizer tokens = new StringTokenizer(scriptText, "\n");
     while (tokens.hasMoreTokens()) {
       final String eachLine = tokens.nextToken();

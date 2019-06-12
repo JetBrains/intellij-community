@@ -26,11 +26,19 @@ import java.io.File
 /**
  * Builds a data structure specifying content (files, their content, sub-directories, archives) of a directory. It can be used to either check
  * that a given directory matches this specification or to generate files in a directory accordingly to the specification.
- *
- * @author nik
  */
 inline fun directoryContent(content: DirectoryContentBuilder.() -> Unit): DirectoryContentSpec {
   val builder = DirectoryContentBuilderImpl(DirectorySpec())
+  builder.content()
+  return builder.result
+}
+
+/**
+ * Builds a data structure specifying content (files, their content, sub-directories, archives) of a zip file. It can be used to either check
+ * that a given zip file matches this specification or to generate a zip file accordingly to the specification.
+ */
+inline fun zipFile(content: DirectoryContentBuilder.() -> Unit): DirectoryContentSpec {
+  val builder = DirectoryContentBuilderImpl(ZipSpec())
   builder.content()
   return builder.result
 }

@@ -2,9 +2,14 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
+import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewGroupingContributor;
@@ -16,9 +21,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -27,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +49,17 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.RUN_DASHBOARD_POPUP
 public class RunConfigurationsServiceViewContributor
   implements ServiceViewGroupingContributor<RunConfigurationsServiceViewContributor.RunConfigurationContributor, RunDashboardGroup> {
   private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
-    new SimpleServiceViewDescriptor("Run Configurations", AllIcons.RunConfigurations.Application);
+    new SimpleServiceViewDescriptor("Run Dashboard", AllIcons.Actions.Execute) {
+      @Override
+      public ActionGroup getToolbarActions() {
+        return RunConfigurationsServiceViewContributor.getToolbarActions(null);
+      }
+
+      @Override
+      public ActionGroup getPopupActions() {
+        return RunConfigurationsServiceViewContributor.getPopupActions();
+      }
+    };
   private static final RunDashboardGroupingRule TYPE_GROUPING_RULE = new ConfigurationTypeDashboardGroupingRule();
 
   @NotNull
@@ -56,7 +74,8 @@ public class RunConfigurationsServiceViewContributor
     RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(project);
     return ContainerUtil.map(runDashboardManager.getRunConfigurations(),
                              value -> new RunConfigurationContributor(
-                               new RunConfigurationNode(project, value, runDashboardManager.getCustomizers(value.first, value.second))));
+                               new RunConfigurationNode(project, value,
+                                                        runDashboardManager.getCustomizers(value.getSettings(), value.getDescriptor()))));
   }
 
   @NotNull
@@ -78,6 +97,18 @@ public class RunConfigurationsServiceViewContributor
     presentationData.setPresentableText(group.getName());
     presentationData.setIcon(group.getIcon());
     return new ServiceViewDescriptor() {
+      @Nullable
+      @Override
+      public String getId() {
+        if (group instanceof RunDashboardGroupImpl) {
+          Object value = ((RunDashboardGroupImpl)group).getValue();
+          if (value instanceof ConfigurationType) {
+            return ((ConfigurationType)value).getId();
+          }
+        }
+        return group.getName();
+      }
+
       @Override
       public JComponent getContentComponent() {
         return null;
@@ -138,17 +169,41 @@ public class RunConfigurationsServiceViewContributor
   }
 
   private static class RunConfigurationServiceViewDescriptor implements ServiceViewDescriptor {
-    private final RunConfigurationNode node;
-    private boolean selected;
+    private static final Key<Boolean> SELECTION_QUERIED = Key.create("ServiceViewContentSelectionQueried");
 
-    private RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
+    private final RunConfigurationNode node;
+
+    RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
       this.node = node;
+    }
+
+    @Nullable
+    @Override
+    public String getId() {
+      RunConfiguration configuration = node.getConfigurationSettings().getConfiguration();
+      return configuration.getType().getId() + "/" + configuration.getName();
     }
 
     @Override
     public JComponent getContentComponent() {
       Content content = node.getContent();
-      return content == null ? createEmptyContent() : content.getManager().getComponent();
+      if (content == null) return createEmptyContent();
+
+      ContentManager contentManager = content.getManager();
+      return contentManager == null ? null : contentManager.getComponent();
+    }
+
+    @NotNull
+    @Override
+    public ItemPresentation getContentPresentation() {
+      Content content = node.getContent();
+      if (content != null) {
+        return new PresentationData(content.getDisplayName(), null, content.getIcon(), null);
+      }
+      else {
+        RunConfiguration configuration = node.getConfigurationSettings().getConfiguration();
+        return new PresentationData(configuration.getName(), null, configuration.getIcon(), null);
+      }
     }
 
     @Override
@@ -178,15 +233,21 @@ public class RunConfigurationsServiceViewContributor
 
     @Override
     public void onNodeSelected() {
-      selected = true;
       Content content = node.getContent();
-      ContentManager contentManager = content == null ? null : content.getManager();
+      if (content == null) return;
+
+      content.putUserData(SELECTION_QUERIED, Boolean.TRUE);
+      ContentManager contentManager = content.getManager();
       if (contentManager == null || content == contentManager.getSelectedContent()) return;
 
       // Invoke content selection change later after currently selected content lost a focus.
       SwingUtilities.invokeLater(() -> {
         // Selected node may changed, we do not need to select content if it doesn't correspond currently selected node.
-        if (contentManager.isDisposed() || contentManager.getIndexOfContent(content) == -1 || !selected) return;
+        if (contentManager.isDisposed() ||
+            contentManager.getIndexOfContent(content) == -1 ||
+            Boolean.TRUE != content.getUserData(SELECTION_QUERIED)) {
+          return;
+        }
 
         contentManager.setSelectedContent(content);
       });
@@ -194,29 +255,37 @@ public class RunConfigurationsServiceViewContributor
 
     @Override
     public void onNodeUnselected() {
-      selected = false;
       Content content = node.getContent();
-      ContentManager contentManager = content == null ? null : content.getManager();
+      if (content == null) return;
+
+      content.putUserData(SELECTION_QUERIED, Boolean.FALSE);
+      ContentManager contentManager = content.getManager();
       if (contentManager == null || content != contentManager.getSelectedContent()) return;
 
       // Invoke content selection change later after currently selected content correctly restores its state,
       // since RunnerContentUi performs restoring later after addNotify call chain.
       SwingUtilities.invokeLater(() -> {
         // Selected node may changed, we do not need to remove content from selection if it corresponds currently selected node.
-        if (contentManager.isDisposed() || !contentManager.isSelected(content) || selected) return;
+        if (contentManager.isDisposed() ||
+            !contentManager.isSelected(content) ||
+            Boolean.TRUE == content.getUserData(SELECTION_QUERIED)) {
+          return;
+        }
 
         contentManager.removeFromSelection(content);
       });
     }
 
+    @Nullable
     @Override
-    public boolean handleDoubleClick(@NotNull MouseEvent event) {
+    public Navigatable getNavigatable() {
       for (RunDashboardCustomizer customizer : node.getCustomizers()) {
-        if (customizer.handleDoubleClick(event, node)) {
-          return true;
+        Navigatable navigatable = customizer.getNavigatable(node);
+        if (navigatable != null) {
+          return navigatable;
         }
       }
-      return false;
+      return null;
     }
 
     @Nullable
@@ -224,6 +293,14 @@ public class RunConfigurationsServiceViewContributor
     public Object getPresentationTag(Object fragment) {
       Map<Object, Object> links = node.getUserData(NODE_LINKS);
       return links == null ? null : links.get(fragment);
+    }
+
+    @Nullable
+    @Override
+    public Runnable getRemover() {
+      RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
+      RunManager runManager = RunManager.getInstance(settings.getConfiguration().getProject());
+      return runManager.hasSettings(settings) ? () -> runManager.removeConfiguration(settings) : null;
     }
   }
 
@@ -257,15 +334,8 @@ public class RunConfigurationsServiceViewContributor
     public ServiceViewDescriptor getServiceDescriptor(@NotNull AbstractTreeNode service) {
       return new ServiceViewDescriptor() {
         @Override
-        public JComponent getContentComponent() {
-          return null;
-        }
-
-        @Override
         public ActionGroup getToolbarActions() {
-          DefaultActionGroup actionGroup = new DefaultActionGroup();
-          actionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
-          return actionGroup;
+          return RunConfigurationsServiceViewContributor.getToolbarActions(null);
         }
 
         @Override
@@ -279,9 +349,31 @@ public class RunConfigurationsServiceViewContributor
           return service.getPresentation();
         }
 
+        @Nullable
         @Override
-        public DataProvider getDataProvider() {
+        public String getId() {
+          ItemPresentation presentation = getPresentation();
+          String text = presentation.getPresentableText();
+          if (!StringUtil.isEmpty(text)) {
+            return text;
+          }
+          if (presentation instanceof PresentationData) {
+            List<PresentableNodeDescriptor.ColoredFragment> fragments = ((PresentationData)presentation).getColoredText();
+            if (!fragments.isEmpty()) {
+              StringBuilder result = new StringBuilder();
+              for (PresentableNodeDescriptor.ColoredFragment fragment : fragments) {
+                result.append(fragment.getText());
+              }
+              return result.toString();
+            }
+          }
           return null;
+        }
+
+        @Nullable
+        @Override
+        public Runnable getRemover() {
+          return service instanceof RunDashboardNode ? ((RunDashboardNode)service).getRemover() : null;
         }
       };
     }

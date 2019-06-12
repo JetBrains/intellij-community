@@ -114,7 +114,7 @@ public class GeneralCommandLine implements UserDataHolder {
     myRedirectErrorStream = original.myRedirectErrorStream;
     myInputFile = original.myInputFile;
     // this is intentional memory waste, to avoid warning suppression. We should not copy UserData, but can't suppress a warning for a single field
-    myUserData = ContainerUtil.newHashMap();
+    myUserData = new HashMap<>();
   }
 
   @NotNull
@@ -396,7 +396,7 @@ public class GeneralCommandLine implements UserDataHolder {
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
         if (exeFile != null) {
-          LOG.info(exePath + " => " + exeFile);
+          LOG.debug(exePath + " => " + exeFile);
           exePath = exeFile.getPath();
         }
       }
@@ -502,7 +502,7 @@ public class GeneralCommandLine implements UserDataHolder {
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     if (myUserData == null) {
       if (value == null) return;
-      myUserData = ContainerUtil.newHashMap();
+      myUserData = new HashMap<>();
     }
     myUserData.put(key, value);
   }

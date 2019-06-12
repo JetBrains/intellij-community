@@ -33,7 +33,7 @@ import java.util.*
 internal class BuilderCompletion(private val expectedType: PsiClassType, private val expectedClass: PsiClass, private val place: PsiElement) {
   fun suggestBuilderVariants(): List<LookupElement> {
     val result = ArrayList<LookupElement>()
-    for (builderClass in expectedClass.innerClasses.filter { it.name?.contains("Builder") == true }) {
+    for (builderClass in expectedClass.innerClasses.filter { looksLikeBuilder(it) }) {
       for (buildMethods in methodsReturning(expectedClass, builderClass, true)) {
         for (createMethods in methodsReturning(builderClass, expectedClass, false)) {
           createBuilderCall(buildMethods, createMethods)?.let { result.add(it) }
@@ -91,3 +91,4 @@ private fun positionCaret(context: InsertionContext) {
   context.editor.caretModel.moveToOffset(if (hasParams) (argRange.startOffset + argRange.endOffset) / 2 else argRange.endOffset)
 }
 
+fun looksLikeBuilder(clazz: PsiClass?) = clazz?.name?.contains("Builder") == true

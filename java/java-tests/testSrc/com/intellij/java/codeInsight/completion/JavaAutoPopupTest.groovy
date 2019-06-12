@@ -615,6 +615,7 @@ public interface Test {
 
     @Override
     void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+      assert !ApplicationManager.application.dispatchThread
       result.runRemainingContributors(parameters, true)
       Thread.sleep 500
     }
@@ -1810,18 +1811,6 @@ ita<caret>
     myFixture.configureByText 'a.java', 'class Foo {{ int a42; a<caret> }}'
     type '4'
     assert lookup
-  }
-
-  void "test don't close lookup when starting a new line"() {
-    myFixture.configureByText 'a.java', 'class Foo {{ "abc"<caret> }}'
-    type '.'
-    assert lookup
-    edt {
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE)
-      assert lookup
-      assert lookup.lookupStart == myFixture.editor.caretModel.offset
-      assert myFixture.editor.document.text.contains('\n')
-    }
   }
 
 }

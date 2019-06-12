@@ -6,7 +6,7 @@ import com.intellij.model.SymbolResolveResult;
 import com.intellij.model.SymbolService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +119,7 @@ public interface PsiReference extends SymbolReference {
    */
   @NotNull
   default Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   /**

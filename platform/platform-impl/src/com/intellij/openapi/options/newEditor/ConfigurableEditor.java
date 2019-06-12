@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -29,6 +29,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,7 +72,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       if (myConfigurable != null) {
         ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
-        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(getConfigurableEventId(myConfigurable), myConfigurable.getClass());
+        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(myConfigurable);
       }
     }
   };
@@ -235,18 +237,20 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     return true;
   }
 
-  final ActionCallback select(final Configurable configurable) {
+  @NotNull
+  final Promise<? super Object> select(final Configurable configurable) {
     assert !myDisposed : "Already disposed";
     ActionCallback callback = myCardPanel.select(configurable, false);
-    callback.doWhenDone(() -> {
-      myConfigurable = configurable;
-      updateCurrent(configurable, false);
-      postUpdateCurrent(configurable);
-      if (configurable != null) {
-        FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(getConfigurableEventId(configurable), configurable.getClass());
-      }
-    });
-    return callback;
+    callback
+      .doWhenDone(() -> {
+        myConfigurable = configurable;
+        updateCurrent(configurable, false);
+        postUpdateCurrent(configurable);
+        if (configurable != null) {
+          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable);
+        }
+      });
+    return Promises.toPromise(callback);
   }
 
   final boolean setError(ConfigurationException exception) {
@@ -314,18 +318,12 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (configurable != null) {
       try {
         configurable.apply();
-        final String key = getConfigurableEventId(configurable);
-        FeatureUsageUiEventsKt.getUiEventLogger().logApplyConfigurable(key, configurable.getClass());
+        FeatureUsageUiEventsKt.getUiEventLogger().logApplyConfigurable(configurable);
       }
       catch (ConfigurationException exception) {
         return exception;
       }
     }
     return null;
-  }
-
-  @NotNull
-  private static String getConfigurableEventId(@NotNull Configurable configurable) {
-    return "ide.settings." + ConvertUsagesUtil.escapeDescriptorName(StringUtil.notNullize(configurable.getDisplayName()));
   }
 }

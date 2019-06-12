@@ -50,7 +50,7 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
   var start = 0
   while (start < this.size) {
     val sub = this.subList(start, Math.min(start + eachSize, this.size))
-    if (!sub.isEmpty()) result += sub
+    if (sub.isNotEmpty()) result += sub
     start += eachSize
   }
   return result

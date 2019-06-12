@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
@@ -21,8 +21,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.SimpleListCellRenderer;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "DevKit";
+    return DevKitBundle.message("create.description.file.family.name");
   }
 
   @Override
@@ -101,16 +101,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
       if (editor == null) return;
       JBPopupFactory.getInstance()
                     .createPopupChooserBuilder(roots)
-                    .setRenderer(new ColoredListCellRenderer<VirtualFile>() {
-                      @Override
-                      protected void customizeCellRenderer(@NotNull JList list,
-                                                           VirtualFile value,
-                                                           int index,
-                                                           boolean selected,
-                                                           boolean hasFocus) {
-                        append(value.getPath());
-                      }
-                    })
+                    .setRenderer(SimpleListCellRenderer.create("", VirtualFile::getPath))
                     .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
                     .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
                     .setItemChosenCallback((root) -> ApplicationManager.getApplication().runWriteAction(() -> createDescription(root)))

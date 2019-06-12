@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -71,7 +71,7 @@ public class PluginInstaller {
     List<String> hosts = ContainerUtil.newSmartList();
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
-    Map<PluginId, IdeaPluginDescriptor> allPlugins = ContainerUtil.newHashMap();
+    Map<PluginId, IdeaPluginDescriptor> allPlugins = new HashMap<>();
     for (String host : hosts) {
       try {
         List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, indicator);
@@ -226,7 +226,7 @@ public class PluginInstaller {
       synchronized (ourLock) {
         downloader.install();
       }
-      pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
+      pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
       if (!toDisable.isNull()) {
         pluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
       }

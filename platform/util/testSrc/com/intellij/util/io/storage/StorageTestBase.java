@@ -1,63 +1,33 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.rules.TempDirectory;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class StorageTestBase extends TestCase {
+public abstract class StorageTestBase {
+  @Rule public TempDirectory tempDir = new TempDirectory();
+
   protected Storage myStorage;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myStorage = createStorage(getFileName());
+  @Before
+  public void setUpStorage() throws IOException {
+    myStorage = createStorage(new File(tempDir.getRoot(), "test-storage").getPath());
   }
 
   @NotNull
-  protected Storage createStorage(String fileName) throws IOException {
+  protected Storage createStorage(@NotNull String fileName) throws IOException {
     return new Storage(fileName);
   }
 
-  protected String getFileName() {
-    return FileUtil.getTempDirectory() + File.separatorChar + getName();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Disposer.dispose(myStorage);
-      AbstractStorage.deleteFiles(getFileName());
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
-  protected void appendNBytes(final int r, final int len) throws IOException {
-    DataOutputStream out = new DataOutputStream(myStorage.appendStream(r));
-    for (int i = 0; i < len; i++) {
-      out.write(0);
-    }
-    myStorage.readBytes(r);
+  @After
+  public void tearDown() {
+    Disposer.dispose(myStorage);
   }
 }

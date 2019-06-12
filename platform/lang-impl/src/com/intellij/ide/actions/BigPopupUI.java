@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -13,6 +14,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -99,7 +101,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      size.height = Integer.max(JBUI.scale(29), size.height);
+      size.height = Integer.max(JBUIScale.scale(29), size.height);
       return size;
     }
 
@@ -151,6 +153,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
     addToTop(topPanel);
     addToCenter(suggestionsPanel);
+
+    MnemonicHelper.init(this);
   }
 
   protected void addListDataListener(@NotNull AbstractListModel<Object> model) {
@@ -215,7 +219,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     hintLabel.setBackground(JBUI.CurrentTheme.BigPopup.advertiserBackground());
     hintLabel.setOpaque(true);
     Dimension size = hintLabel.getPreferredSize();
-    size.height = JBUI.scale(17);
+    size.height = JBUIScale.scale(17);
     hintLabel.setPreferredSize(size);
     return hintLabel;
   }

@@ -49,10 +49,11 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
 
-@State(name = "DockManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-
-public class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
-
+@State(name = "DockManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
+public final class DockManagerImpl extends DockManager implements PersistentStateComponent<Element> {
   private final Project myProject;
 
   private final Map<String, DockContainerFactory> myFactories = new HashMap<>();
@@ -74,7 +75,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
   private Element myLoadedState;
 
-  public DockManagerImpl(Project project) {
+  public DockManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 

@@ -5,14 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
-import com.intellij.util.ui.JBUI
-import java.awt.*
-import java.awt.Frame.MAXIMIZED_BOTH
-import java.awt.Frame.MAXIMIZED_VERT
+import com.intellij.util.ui.JBFont
+import java.awt.Font
+import java.awt.Frame
+import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
-import java.util.ArrayList
-import javax.swing.*
+import java.util.*
+import javax.swing.Action
+import javax.swing.JFrame
+import javax.swing.JMenu
+import javax.swing.JSeparator
 
 open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
     private val myIconifyAction: Action = CustomFrameAction("Minimize", AllIcons.Windows.MinimizeSmall) { iconify() }
@@ -78,7 +81,7 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         myCloseAction.isEnabled = true
 
         buttonPanes.updateVisibility()
-        setCustomDecorationHitTestSpots()
+        updateCustomDecorationHitTestSpots()
     }
 
     override fun addMenuItems(menu: JMenu) {
@@ -91,29 +94,14 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         menu.add(JSeparator())
 
         val closeMenuItem = menu.add(myCloseAction)
-        closeMenuItem.font = JBUI.Fonts.label().deriveFont(Font.BOLD)
+        closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
     }
 
-    override fun getHitTestSpots(): ArrayList<Rectangle> {
-        val hitTestSpots = ArrayList<Rectangle>()
+    override fun getHitTestSpots(): ArrayList<RelativeRectangle> {
+        val hitTestSpots = ArrayList<RelativeRectangle>()
 
-        val iconRect = RelativeRectangle(productIcon).getRectangleOn(this)
-        val buttonsRect = RelativeRectangle(buttonPanes.getView()).getRectangleOn(this)
-
-        buttonsRect.x -= HIT_TEST_RESIZE_GAP
-
-        val state = frame.extendedState
-        iconRect.width = (iconRect.width * 1.5).toInt()
-
-        if (state != MAXIMIZED_VERT && state != MAXIMIZED_BOTH) {
-            buttonsRect.y += HIT_TEST_RESIZE_GAP
-            buttonsRect.height -= HIT_TEST_RESIZE_GAP
-        } else {
-            buttonsRect.width += HIT_TEST_RESIZE_GAP
-        }
-
-        hitTestSpots.add(iconRect)
-        hitTestSpots.add(buttonsRect)
+        hitTestSpots.add(RelativeRectangle(productIcon))
+        hitTestSpots.add(RelativeRectangle(buttonPanes.getView()))
         return hitTestSpots
     }
 }

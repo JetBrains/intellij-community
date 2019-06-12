@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.connection
 
 import com.intellij.execution.ExecutionException
@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.connectRetrying
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
@@ -128,9 +127,9 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
     return rejectedPromise("No tabs to inspect")
   }
 
-  val result = org.jetbrains.concurrency.AsyncPromise<T>()
+  val result = AsyncPromise<T>()
   ApplicationManager.getApplication().invokeLater {
-    val model = ContainerUtil.newArrayList(targets)
+    val model = targets.toMutableList()
     val builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
       .setRenderer(

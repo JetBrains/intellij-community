@@ -15,44 +15,19 @@
  */
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.util.RemoveAnnotationFix;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class InjectionNotApplicable extends LocalInspectionTool {
-  @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return PatternValidator.LANGUAGE_INJECTION;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Injection Annotation not applicable";
-  }
 
   @Override
   @NotNull
@@ -96,10 +71,4 @@ public class InjectionNotApplicable extends LocalInspectionTool {
     holder.registerProblem(annotation, "Language Injection is only applicable to elements of type String", new RemoveAnnotationFix(this));
   }
 
-  @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "InjectionNotApplicable";
-  }
 }

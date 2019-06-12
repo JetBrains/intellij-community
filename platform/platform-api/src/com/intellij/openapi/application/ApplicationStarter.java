@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.CliResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.Future;
 
 /**
  * This extension point allows to run custom [command-line] application based on IDEA platform
@@ -34,7 +37,7 @@ public interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  void premain(String[] args);
+  default void premain(String[] args) { }
 
   /**
    * <p>Called when application has been initialized. Invoked in event dispatch thread.</p>
@@ -53,9 +56,9 @@ public interface ApplicationStarter {
 
   /**
    * Applications that are capable of processing command-line arguments within a running IDE instance
-   * should return {@code true} from this method and implement {@link #processExternalCommandLine}.
+   * should return {@code true} from this method and implement {@link #processExternalCommandLineAsync}.
    *
-   * @see #processExternalCommandLine
+   * @see #processExternalCommandLineAsync
    */
   default boolean canProcessExternalCommandLine() {
     return false;
@@ -71,7 +74,8 @@ public interface ApplicationStarter {
   }
 
   /** @see #canProcessExternalCommandLine */
-  default void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
-    throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLine()`");
+  @NotNull
+  default Future<? extends CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+    throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLineAsync()`");
   }
 }

@@ -47,7 +47,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
     restoreDefault(myElements);
   }
 
-  private static void restoreDefault(final List<PipelineElement> elements) {
+  private static void restoreDefault(final List<? super PipelineElement> elements) {
     elements.clear();
     String guavaIterables = "com.google.common.collect.Iterables";
     elements.add(new PipelineElement(guavaIterables, "transform", PseudoLambdaReplaceTemplate.MAP));

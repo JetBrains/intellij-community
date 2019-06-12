@@ -56,7 +56,7 @@ public abstract class ClassFileRepr extends Proto {
     return myUsages.add(usage);
   }
 
-  protected abstract void updateClassUsages(DependencyContext context, Set<UsageRepr.Usage> s);
+  protected abstract void updateClassUsages(DependencyContext context, Set<? super UsageRepr.Usage> s);
 
   @Override
   public void toStream(DependencyContext context, PrintStream stream) {

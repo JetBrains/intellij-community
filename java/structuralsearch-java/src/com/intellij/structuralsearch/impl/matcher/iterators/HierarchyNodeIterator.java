@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
+import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Set;
  */
 public class HierarchyNodeIterator extends NodeIterator {
   private int index;
-  private final ArrayList<PsiElement> remaining;
+  private final List<PsiElement> remaining;
   private boolean objectTaken;
   private boolean firstElementTaken;
   private final boolean acceptClasses;
@@ -23,66 +24,54 @@ public class HierarchyNodeIterator extends NodeIterator {
   private final boolean acceptFirstElement;
 
   private void build(PsiElement current, Set<PsiElement> visited) {
+    if (current == null) return;
 
-    if (current!=null) {
-      final String str = current instanceof PsiClass ? ((PsiClass)current).getName():current.getText();
+    final String text = current instanceof PsiClass ? ((PsiClass)current).getName() : current.getText();
 
-      if (MatchUtils.compareWithNoDifferenceToPackage(str,"Object")) {
-        if(objectTaken) return;
-        objectTaken = true;
+    if (MatchUtils.compareWithNoDifferenceToPackage(text, "Object")) {
+      if(objectTaken) return;
+      objectTaken = true;
+    }
+
+    PsiElement element = current instanceof PsiReference ? ((PsiReference)current).resolve() : current;
+    if (element instanceof PsiClass) {
+      if (visited.contains(element)) return;
+      final PsiClass clazz = (PsiClass)element;
+
+      if (acceptInterfaces || !clazz.isInterface()) visited.add(element);
+
+      if (firstElementTaken || acceptFirstElement) remaining.add(clazz);
+      firstElementTaken = true;
+
+      if (clazz instanceof PsiAnonymousClass) {
+        build(((PsiAnonymousClass)clazz).getBaseClassReference(),visited);
+        return;
       }
 
-      PsiElement element = MatchUtils.getReferencedElement(current);
+      if (acceptClasses) {
+        processClasses(clazz.getExtendsList(), visited);
 
-      if (element instanceof PsiClass) {
-        if (visited.contains(element)) return;
-        final PsiClass clazz = (PsiClass)element;
-
-        if (acceptInterfaces || !clazz.isInterface() ) visited.add(element);
-
-        if (!firstElementTaken && acceptFirstElement || firstElementTaken) remaining.add(clazz);
-        firstElementTaken = true;
-
-        if (clazz instanceof PsiAnonymousClass) {
-          build(((PsiAnonymousClass)clazz).getBaseClassReference(),visited);
-          return;
+        if (!objectTaken) {
+          build(PsiClassImplUtil.getSuperClass(clazz), visited);
         }
-
-        if (acceptClasses) {
-          processClasses(clazz, visited);
-
-          if (!objectTaken) {
-            build(PsiClassImplUtil.getSuperClass(clazz), visited);
-          }
-        }
-
-        if (acceptInterfaces) {
-          final PsiReferenceList implementsList = clazz.getImplementsList();
-
-          if (implementsList != null) {
-            final PsiElement[] implementsListElements = implementsList.getReferenceElements();
-
-            for (PsiElement anImplementsList : implementsListElements) {
-              build(anImplementsList,visited);
-            }
-          }
-
-          if (!acceptClasses) processClasses(clazz, visited);
-        }
-      } else {
-        remaining.add(current);
       }
+
+      if (acceptInterfaces) {
+        processClasses(clazz.getImplementsList(), visited);
+
+        if (!acceptClasses) processClasses(clazz.getExtendsList(), visited);
+      }
+    } else {
+      remaining.add(current);
     }
   }
 
-  private void processClasses(final PsiClass clazz, final Set<PsiElement> visited) {
-    final PsiReferenceList clazzExtendsList = clazz.getExtendsList();
-    final PsiElement[] extendsList = (clazzExtendsList != null)?clazzExtendsList.getReferenceElements():null;
-
-    if (extendsList != null) {
-      for (PsiElement anExtendsList : extendsList) {
-        build(anExtendsList,visited);
-      }
+  private void processClasses(PsiReferenceList referenceList, Set<PsiElement> visited) {
+    if (referenceList == null) {
+      return;
+    }
+    for (PsiJavaCodeReferenceElement referenceElement : referenceList.getReferenceElements()) {
+      build(referenceElement, visited);
     }
   }
 
@@ -91,14 +80,10 @@ public class HierarchyNodeIterator extends NodeIterator {
   }
 
   public HierarchyNodeIterator(PsiElement reference, boolean acceptClasses, boolean acceptInterfaces, boolean acceptFirstElement) {
-    remaining = new ArrayList<>();
+    remaining = new SmartList<>();
     this.acceptClasses = acceptClasses;
     this.acceptInterfaces = acceptInterfaces;
     this.acceptFirstElement = acceptFirstElement;
-
-    if (reference instanceof PsiIdentifier) {
-      reference = reference.getParent();
-    }
 
     build(reference, new HashSet<>());
   }
@@ -115,7 +100,7 @@ public class HierarchyNodeIterator extends NodeIterator {
 
   @Override
   public void advance() {
-    if (index!=remaining.size()) {
+    if (index != remaining.size()) {
       ++index;
     }
   }

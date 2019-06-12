@@ -32,6 +32,8 @@ import java.util.List;
  * mode being suddenly on and off. To avoid executing a read action in "dumb" mode, please use {@link #runReadActionInSmartMode} or
  * {@link com.intellij.openapi.application.NonBlockingReadAction#inSmartMode}.
  *
+ * More information about dumb mode could be found here: {@link IndexNotReadyException}
+ *
  * @author peter
  */
 public abstract class DumbService {
@@ -47,6 +49,8 @@ public abstract class DumbService {
   public abstract ModificationTracker getModificationTracker();
 
   /**
+   * To avoid race conditions use it only in EDT thread or inside read-action. See documentation for this class {@link DumbService}
+   *
    * @return whether the IDE is in dumb mode, which means that right now indexes are updated in the background.
    * The IDE offers only limited functionality at such times, e.g., plain text file editing and version control operations.
    */
@@ -203,7 +207,7 @@ public abstract class DumbService {
    * @see #isDumbAware(Object)
    */
   @NotNull
-  public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
+  public <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
     if (isDumb()) {
       final ArrayList<T> result = new ArrayList<>(collection.size());
       for (T element : collection) {

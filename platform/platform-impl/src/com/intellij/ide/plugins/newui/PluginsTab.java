@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -17,11 +17,13 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -62,12 +64,13 @@ public abstract class PluginsTab {
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
     List<CellPluginComponent> selection = panel.getSelection();
-    myDetailsPage.showPlugin(selection.size() == 1 ? selection.get(0) : null);
+    int size = selection.size();
+    myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   };
 
   @NotNull
   public JComponent createPanel() {
-    createSearchTextField();
+    createSearchTextField(100);
 
     myCardPanel = new MultiPanel() {
       @Override
@@ -76,11 +79,6 @@ public abstract class PluginsTab {
         EventHandler.addGlobalAction(mySearchTextField, new CustomShortcutSet(KeyStroke.getKeyStroke("meta alt F")),
                                      () -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
                                        () -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true)));
-      }
-
-      @Override
-      public ActionCallback select(Integer key, boolean now) {
-        return super.select(key, now);    // TODO: Auto-generated method stub
       }
 
       @Override
@@ -99,19 +97,25 @@ public abstract class PluginsTab {
     listPanel.add(mySearchTextField, BorderLayout.NORTH);
     listPanel.add(myCardPanel);
 
-    OnePixelSplitter splitter = new OnePixelSplitter();
+    OnePixelSplitter splitter = new OnePixelSplitter(false, 0.45f) {
+      @Override
+      protected Divider createDivider() {
+        Divider divider = super.createDivider();
+        divider.setBackground(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR);
+        return divider;
+      }
+    };
     splitter.setFirstComponent(listPanel);
     splitter.setSecondComponent(myDetailsPage = createDetailsPanel(mySearchListener));
-    splitter.setProportion(0.45f);
+
+    mySearchPanel = createSearchPanel(mySelectionListener);
 
     myCardPanel.select(0, true);
-
-    mySearchPanel = createSearchPanel(mySelectionListener, mySearchTextField);
 
     return splitter;
   }
 
-  protected void createSearchTextField() {
+  protected void createSearchTextField(int flyDelay) {
     mySearchTextField = new PluginSearchTextField() {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent event) {
@@ -181,7 +185,7 @@ public abstract class PluginsTab {
       protected void textChanged(@NotNull DocumentEvent e) {
         if (!mySearchTextField.isSkipDocumentEvents()) {
           mySearchUpdateAlarm.cancelAllRequests();
-          mySearchUpdateAlarm.addRequest(this::searchOnTheFly, 100, ModalityState.stateForComponent(mySearchTextField));
+          mySearchUpdateAlarm.addRequest(this::searchOnTheFly, flyDelay, ModalityState.stateForComponent(mySearchTextField));
         }
       }
 
@@ -202,8 +206,8 @@ public abstract class PluginsTab {
     mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
-    editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(6));
-    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUI.scale(-1));
+    editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
@@ -219,20 +223,40 @@ public abstract class PluginsTab {
   protected abstract PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener);
 
   @NotNull
-  protected abstract JComponent createPluginsPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener);
+  protected abstract JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
-  protected abstract void updateMainSelection(@NotNull Consumer<PluginsGroupComponent> selectionListener);
+  protected abstract void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
   @NotNull
-  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<PluginsGroupComponent> selectionListener,
-                                                         @NotNull PluginSearchTextField searchTextField);
+  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+
+  @Nullable
+  public String getSearchQuery() {
+    if (mySearchPanel == null || mySearchPanel.isEmpty()) {
+      return null;
+    }
+    String query = mySearchPanel.getQuery();
+    return query.isEmpty() ? null : query;
+  }
+
+  public void setSearchQuery(@Nullable String query) {
+    mySearchTextField.setTextIgnoreEvents(query);
+    mySearchTextField.requestFocus();
+    if (query == null) {
+      hideSearchPanel();
+    }
+    else {
+      showSearchPanel(query);
+    }
+  }
 
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {
       myCardPanel.select(1, true);
-      myDetailsPage.showPlugin(null);
+      myDetailsPage.showPlugin(null, false);
     }
     mySearchPanel.setQuery(query);
+    mySearchTextField.addCurrentTextToHistory();
   }
 
   public void hideSearchPanel() {

@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.SystemInfo;
@@ -25,6 +26,8 @@ import java.beans.PropertyChangeListener;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
+  private static final int TEXT_ARROW_SPACE = 1;
+
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
   private int myHorizontalTextAlignment = SwingConstants.CENTER;
 
@@ -52,6 +55,12 @@ public class ActionButtonWithText extends ActionButton {
       }
     });
     updateMnemonic(0, myPresentation.getMnemonic());
+    UIUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
+  }
+
+  @Override
+  protected Icon getFallbackIcon(boolean enabled) {
+    return EmptyIcon.ICON_0;
   }
 
   private void updateMnemonic(int lastMnemonic, int mnemonic) {
@@ -81,10 +90,6 @@ public class ActionButtonWithText extends ActionButton {
 
     Icon icon = getIcon();
     int position = horizontalTextPosition();
-    if ((icon == null || icon instanceof EmptyIcon) && myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-      icon = AllIcons.General.LinkDropTriangle;
-      position = SwingConstants.LEFT;
-    }
 
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = new Rectangle(0, 0, Short.MAX_VALUE, Short.MAX_VALUE);
@@ -105,6 +110,9 @@ public class ActionButtonWithText extends ActionButton {
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
     rv.width += Math.max(basicSize.height - rv.height, 0);
+    if (shallPaintDownArrow()) {
+      rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
+    }
 
     rv.width = Math.max(rv.width, basicSize.width);
     rv.height = Math.max(rv.height, basicSize.height);
@@ -127,11 +135,9 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
-    int position = horizontalTextPosition();
-    if ((icon == null || icon instanceof EmptyIcon) && myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-      icon = AllIcons.General.LinkDropTriangle;
-      position = SwingConstants.LEFT;
-    }
+    Icon arrowIcon = shallPaintDownArrow() ? AllIcons.General.LinkDropTriangle : null;
+
+    UISettings.setupAntialiasing(g);
 
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = getButtonRect();
@@ -141,19 +147,29 @@ public class ActionButtonWithText extends ActionButton {
     Rectangle textRect = new Rectangle();
     String text = SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
-                                                     SwingConstants.CENTER, position,
+                                                     SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
+    if (arrowIcon != null) {
+      int alignment = horizontalTextAlignment();
+      int dx = alignment == SwingConstants.CENTER ? arrowIcon.getIconWidth() / 2 - 2:
+               alignment == SwingConstants.RIGHT ? arrowIcon.getIconWidth() :
+               0;
+      iconRect.x -= dx;
+      textRect.x -= dx;
+    }
     ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
     look.paintIconAt(g, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
-    UISettings.setupAntialiasing(g);
     g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
-    UIUtilities.drawStringUnderlineCharAt(this, g, text,
-                                          getMnemonicCharIndex(text),
-                                          textRect.x,
-                                              textRect.y + fm.getAscent());
+    UIUtilities.drawStringUnderlineCharAt(this, g, text, getMnemonicCharIndex(text),
+                                          textRect.x, textRect.y + fm.getAscent());
+    if (arrowIcon != null) {
+      int x = Math.max(iconRect.x + iconRect.width, textRect.x + textRect.width) + JBUI.scale(TEXT_ARROW_SPACE);
+      int y = textRect.y + (textRect.height - arrowIcon.getIconHeight()) / 2 + 1;
+      arrowIcon.paintIcon(this, g, x, y);
+    }
   }
 
   protected Rectangle getButtonRect() {
@@ -189,7 +205,8 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   protected int iconTextSpace() {
-    return (getIcon() instanceof EmptyIcon || getIcon() == null) ? 0 : ICON_TEXT_SPACE;
+    Icon icon = getIcon();
+    return icon instanceof EmptyIcon || icon == null ? 0 : JBUI.scale(ICON_TEXT_SPACE);
   }
 
   private int getMnemonicCharIndex(String text) {

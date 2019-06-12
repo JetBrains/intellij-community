@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -11,6 +11,7 @@ import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -82,6 +83,14 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
   private static final CallMatcher COLLECTORS_TO_LIST = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList").parameterCount(0);
   private static final CallMatcher MAP_ENTRY_SET = instanceCall(JAVA_UTIL_MAP, "entrySet").parameterCount(0);
+  private static final CallMatcher STREAM_TAKE_WHILE =
+    instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "takeWhile").parameterCount(1).withLanguageLevelAtLeast(
+      LanguageLevel.JDK_1_9);
+  private static final CallMatcher STREAM_ITERATE = anyOf(
+    staticCall(JAVA_UTIL_STREAM_STREAM, "iterate").parameterCount(2),
+    staticCall(JAVA_UTIL_STREAM_INT_STREAM, "iterate").parameterCount(2),
+    staticCall(JAVA_UTIL_STREAM_LONG_STREAM, "iterate").parameterCount(2),
+    staticCall(JAVA_UTIL_STREAM_DOUBLE_STREAM, "iterate").parameterCount(2));
 
   private static final CallMapper<CallChainSimplification> CALL_TO_FIX_MAPPER = new CallMapper<>(
     ReplaceCollectionStreamFix.handler(),
@@ -101,7 +110,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     JoiningStringsFix.handler(),
     ReplaceWithCollectorsJoiningFix.handler(),
     EntrySetMapFix.handler(),
-    CollectorToListSize.handler()
+    CollectorToListSize.handler(),
+    IterateTakeWhileFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
@@ -1773,7 +1783,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     static final CallMatcher COLLECTOR_JOINING = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining")
       .parameterCount(0);
     static final CallMatcher COLLECTOR_JOINING_DELIMITER = staticCall(JAVA_UTIL_STREAM_COLLECTORS, "joining")
-      .parameterTypes("java.lang.CharSequence");
+      .parameterTypes(JAVA_LANG_CHAR_SEQUENCE);
 
     @Override
     public String getName() {
@@ -1826,7 +1836,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (ARRAYS_STREAM.matches(qualifier) || 
             (COLLECTION_STREAM.matches(qualifier) && ExpressionUtils.getEffectiveQualifier(qualifier.getMethodExpression()) != null)) {
           PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
-          if (InheritanceUtil.isInheritor(elementType, "java.lang.CharSequence")) {
+          if (InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHAR_SEQUENCE)) {
             return new JoiningStringsFix();
           }
         }
@@ -1911,11 +1921,11 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         if (PsiUtil.skipParenthesizedExprDown(argumentExpressions[1]) != call) return null;
         PsiExpression delimiter = argumentExpressions[0];
         if (delimiter == null) return null;
-        if(!InheritanceUtil.isInheritor(delimiter.getType(), "java.lang.CharSequence")) return null;
+        if(!InheritanceUtil.isInheritor(delimiter.getType(), JAVA_LANG_CHAR_SEQUENCE)) return null;
         PsiMethodCallExpression stream = getQualifierMethodCall(call);
         if (stream == null) return null;
         PsiType elementType = StreamApiUtil.getStreamElementType(stream.getType());
-        if (!InheritanceUtil.isInheritor(elementType, "java.lang.CharSequence")) return null;
+        if (!InheritanceUtil.isInheritor(elementType, JAVA_LANG_CHAR_SEQUENCE)) return null;
         return new Context(maybeJoinCall, delimiter, argument);
       }
     }
@@ -2106,6 +2116,39 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
         if (!COLLECTION_SIZE_CHECK.test(nextCall)) return null;
         return new CollectorToListSize("size".equals(nextCall.getMethodExpression().getReferenceName()));
+      });
+    }
+  }
+
+  private static class IterateTakeWhileFix implements CallChainSimplification {
+    @Override
+    public String getName() {
+      return "Replace with three-arg 'iterate()'";
+    }
+
+    @Override
+    public String getMessage() {
+      return "Can be replaced with three-arg 'iterate()'";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+      if (!STREAM_ITERATE.test(qualifierCall)) return null;
+      CommentTracker ct = new CommentTracker();
+      PsiExpression predicate = call.getArgumentList().getExpressions()[0];
+      PsiExpressionList argList = qualifierCall.getArgumentList();
+      argList.addAfter(ct.markUnchanged(predicate), argList.getExpressions()[0]);
+      return ct.replaceAndRestoreComments(call, qualifierCall);
+    }
+
+    public static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(STREAM_TAKE_WHILE, call -> {
+        PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        if (STREAM_ITERATE.test(qualifierCall)) {
+          return new IterateTakeWhileFix();
+        }
+        return null;
       });
     }
   }

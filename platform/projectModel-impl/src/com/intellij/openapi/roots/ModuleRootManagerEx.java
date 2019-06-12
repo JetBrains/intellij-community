@@ -4,11 +4,17 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public abstract class ModuleRootManagerEx extends ModuleRootManager {
 
   @NotNull
   public abstract ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor);
+
+  @TestOnly
+  public abstract long getModificationCountForTests();
+
+  public abstract void dropCaches();
 
   public static ModuleRootManagerEx getInstanceEx(@NotNull Module module) {
     return (ModuleRootManagerEx) module.getComponent(ModuleRootManager.class);

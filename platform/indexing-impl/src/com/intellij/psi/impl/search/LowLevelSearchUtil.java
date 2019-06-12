@@ -18,7 +18,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
@@ -154,14 +154,14 @@ public class LowLevelSearchUtil {
     TextRange range = scope.getTextRange();
     if (range == null) {
       LOG.error("Element " + scope + " of class " + scope.getClass() + " has null range");
-      return ArrayUtil.EMPTY_INT_ARRAY;
+      return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
       diagnoseInvalidRange(scope, file, viewProvider, buffer, range);
-      return ArrayUtil.EMPTY_INT_ARRAY;
+      return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
     int[] offsets = getTextOccurrences(buffer, startOffset, endOffset, searcher, progress);
@@ -193,23 +193,21 @@ public class LowLevelSearchUtil {
                                            FileViewProvider viewProvider,
                                            CharSequence buffer,
                                            TextRange range) {
-    StringBuilder msg = new StringBuilder()
-      .append("Range for element: '").append(scope).append("' = ").append(range)
-      .append(" is out of file '").append(file).append("' range: ").append(file.getTextRange())
-      .append("; file contents length: ").append(buffer.length())
-      .append("\n file provider: ").append(viewProvider);
+    String msg = "Range for element: '" + scope + "' = " + range + " is out of file '" + file + "' range: " + file.getTextRange();
+    msg += "; file contents length: " + buffer.length();
+    msg += "\n file provider: " + viewProvider;
     Document document = viewProvider.getDocument();
     if (document != null) {
-      msg.append("\n committed=").append(PsiDocumentManager.getInstance(file.getProject()).isCommitted(document));
+      msg += "\n committed=" + PsiDocumentManager.getInstance(file.getProject()).isCommitted(document);
     }
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile root = viewProvider.getPsi(language);
-      msg.append("\n root ").append(language).append(" length=").append(root.getTextLength());
-      if (root instanceof PsiFileImpl) {
-        msg.append("; contentsLoaded=").append(((PsiFileImpl)root).isContentsLoaded());
-      }
+      //noinspection StringConcatenationInLoop
+      msg += "\n root " + language + " length=" + root.getTextLength() + (root instanceof PsiFileImpl
+                                                                          ? "; contentsLoaded=" + ((PsiFileImpl)root).isContentsLoaded() : "");
     }
-    LOG.error(msg.toString());
+
+    LOG.error(msg);
   }
 
   // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))

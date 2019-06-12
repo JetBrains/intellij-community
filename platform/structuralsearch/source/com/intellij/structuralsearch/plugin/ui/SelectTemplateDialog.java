@@ -210,22 +210,6 @@ public class SelectTemplateDialog extends DialogWrapper {
     }
   }
 
-  private void setPatternFromNode(DefaultMutableTreeNode node) {
-    if (node == null) return;
-    final Object userObject = node.getUserObject();
-    final Configuration configuration;
-
-    // root could be without search template
-    if (userObject instanceof Configuration) {
-      configuration = (Configuration)userObject;
-    }
-    else {
-      configuration = null;
-    }
-
-    showPatternPreviewFromConfiguration(configuration);
-  }
-
   private void showPatternPreviewFromConfiguration(@Nullable final Configuration configuration) {
     if (configuration == null) {
       myCardLayout.show(myPreviewPanel, SELECT_TEMPLATE_CARD);

@@ -26,11 +26,12 @@ import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.vcs.commit.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -252,7 +253,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   @Override
   public Dimension getMinimumSize() {
     Dimension minimumSize = super.getMinimumSize();
-    return new Dimension(Math.max(minimumSize.width, JBUI.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUI.scale(MIN_SIZE)));
+    return new Dimension(Math.max(minimumSize.width, JBUIScale.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUIScale.scale(MIN_SIZE)));
   }
 
   @Override
@@ -269,7 +270,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     protected void onDetailsLoaded(@NotNull List<? extends VcsCommitMetadata> detailsList) {
       List<CommitId> ids = ContainerUtil.map(detailsList,
                                              detail -> new CommitId(detail.getId(), detail.getRoot()));
-      Set<String> unResolvedHashes = ContainerUtil.newHashSet();
+      Set<String> unResolvedHashes = new HashSet<>();
       List<CommitPresentation> presentations = ContainerUtil.map(detailsList,
                                                                  detail -> buildPresentation(myLogData.getProject(), detail,
                                                                                              unResolvedHashes));
@@ -291,7 +292,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       rebuildCommitPanels(selection);
       List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
+        List<Collection<VcsRef>> result = new ArrayList<>();
         for (Integer row : currentSelection) {
           result.add(myGraphTable.getModel().getRefsAtRow(row));
         }

@@ -38,7 +38,7 @@ public class OpenInSceneBuilderAction extends AnAction {
     String pathToSceneBuilder = info.path;
 
     if (SystemInfo.isMac) {
-      pathToSceneBuilder += "/Contents/MacOS/"; 
+      pathToSceneBuilder += "/Contents/MacOS/";
       if (new File(pathToSceneBuilder, OLD_LAUNCHER).exists()) {
         pathToSceneBuilder += OLD_LAUNCHER;
       } else {

@@ -17,6 +17,10 @@ import java.util.Map;
 public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
   private final Map<Class<?>, Object> myDefaultBeans = new THashMap<>();
 
+  /**
+   * @deprecated Use {@link com.intellij.configurationStore.XmlSerializer#serialize(Object)} instead of creating own filter.
+   */
+  @Deprecated
   public SkipDefaultValuesSerializationFilters() { }
 
   public SkipDefaultValuesSerializationFilters(Object... defaultBeans) {

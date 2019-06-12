@@ -7,7 +7,7 @@ package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -32,7 +32,7 @@ public class JBZipEntry implements Cloneable {
   private long size = -1;     // uncompressed size of entry data
   private long csize = -1;    // compressed size of entry data
   private int method = -1;    // compression method
-  private byte[] extra = ArrayUtil.EMPTY_BYTE_ARRAY;   // optional extra field data for entry
+  private byte[] extra = ArrayUtilRt.EMPTY_BYTE_ARRAY;   // optional extra field data for entry
   private String comment;     // optional comment string for entry
 
   private int internalAttributes = 0;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
@@ -28,7 +26,7 @@ import java.util.*;
  */
 public class FontInfo {
   private static final Logger LOG = Logger.getInstance(FontInfo.class);
-  
+
   private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
   private static final Font DUMMY_FONT = new Font(null);
 
@@ -116,21 +114,21 @@ public class FontInfo {
              (style == -1 || style == getFontStyle(normalizedName));
     };
     List<File> files = new ArrayList<>();
-    
+
     File[] userFiles = new File(System.getProperty("user.home"), "Library/Fonts").listFiles(filter);
     if (userFiles != null) files.addAll(Arrays.asList(userFiles));
-    
+
     File[] localFiles = new File("/Library/Fonts").listFiles(filter);
     if (localFiles != null) files.addAll(Arrays.asList(localFiles));
-    
+
     if (files.isEmpty()) return null;
-    
+
     if (style == Font.PLAIN) {
       // prefer font containing 'regular' in its name
       List<File> regulars = ContainerUtil.filter(files, file -> file.getName().toLowerCase(Locale.getDefault()).contains("regular"));
       if (!regulars.isEmpty()) return Collections.min(regulars, BY_NAME);
     }
-    
+
     return Collections.min(files, BY_NAME);
   }
 

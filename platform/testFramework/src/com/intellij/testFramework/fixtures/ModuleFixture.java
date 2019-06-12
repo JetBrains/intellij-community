@@ -17,10 +17,12 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
 public interface ModuleFixture extends IdeaTestFixture {
+  @NotNull
   Module getModule();
 }

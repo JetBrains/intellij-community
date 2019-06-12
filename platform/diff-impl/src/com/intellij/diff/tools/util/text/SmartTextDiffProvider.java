@@ -117,7 +117,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                @NotNull CharSequence text2,
                                                @NotNull LineOffsets lineOffsets1,
                                                @NotNull LineOffsets lineOffsets2,
-                                               @Nullable List<Range> linesRanges,
+                                               @Nullable List<? extends Range> linesRanges,
                                                @NotNull IgnorePolicy ignorePolicy,
                                                @NotNull HighlightPolicy highlightPolicy,
                                                @NotNull ProgressIndicator indicator) {
@@ -135,7 +135,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
                                                            @NotNull CharSequence text2,
                                                            @NotNull LineOffsets lineOffsets1,
                                                            @NotNull LineOffsets lineOffsets2,
-                                                           @Nullable List<Range> linesRanges,
+                                                           @Nullable List<? extends Range> linesRanges,
                                                            @NotNull HighlightPolicy highlightPolicy,
                                                            @NotNull ProgressIndicator indicator) {
     InnerFragmentsPolicy fragmentsPolicy = highlightPolicy.getFragmentsPolicy();

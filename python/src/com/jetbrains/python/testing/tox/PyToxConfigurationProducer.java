@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.Location;
@@ -25,7 +25,7 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
   }
 
   @Override
-  public boolean isConfigurationFromContext(final PyToxConfiguration configuration, final ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull final PyToxConfiguration configuration, @NotNull final ConfigurationContext context) {
     final Location<?> location = context.getLocation();
     if (location == null) {
       return false;
@@ -46,9 +46,9 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(final PyToxConfiguration configuration,
-                                                  final ConfigurationContext context,
-                                                  final Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(@NotNull final PyToxConfiguration configuration,
+                                                  @NotNull final ConfigurationContext context,
+                                                  @NotNull final Ref<PsiElement> sourceElement) {
     final PsiFile file = sourceElement.get().getContainingFile();
     if (file == null) {
       return false;
@@ -57,7 +57,7 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
     final String envName = PyToxTestLocator.getEnvNameFromElement(file);
     if (envName != null) {
       configuration.setRunOnlyEnvs(envName);
-      configuration.setName(String.format("Tox: run on %s", envName));
+      configuration.setName(String.format("tox: run on %s", envName));
       return true;
     }
 
@@ -68,7 +68,7 @@ public final class PyToxConfigurationProducer extends LazyRunConfigurationProduc
     }
     configuration.setWorkingDirectory(directory.getVirtualFile().getCanonicalPath());
     if (TOX_FILE_NAME.equals(file.getName())) {
-      configuration.setName("Tox");
+      configuration.setName("tox");
       return true;
     }
     return false;

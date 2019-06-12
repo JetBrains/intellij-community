@@ -293,6 +293,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     return new AnActionButton[]{copyButton, pasteButton};
   }
 
+  @NotNull
   public static Map<String, String> parseEnvsFromText(String content) {
     Map<String, String> result = new LinkedHashMap<>();
     if (content != null && content.contains("=")) {

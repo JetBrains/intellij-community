@@ -43,7 +43,7 @@ class UastReferenceRegistrarTest : LightCodeInsightFixtureTestCase() {
 
     psiReferenceRegistrar.registerUastReferenceProvider(
       { _, _ -> invocationCount++; true },
-      uastLiteralReferenceProvider { _, _ -> PsiReference.EMPTY_ARRAY }
+      uastInjectionHostReferenceProvider { _, _ -> PsiReference.EMPTY_ARRAY }
     )
 
     myFixture.addClass("""

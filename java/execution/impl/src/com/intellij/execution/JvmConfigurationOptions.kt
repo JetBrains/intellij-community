@@ -11,7 +11,7 @@ abstract class JvmConfigurationOptions : ModuleBasedConfigurationOptions() {
   @get:OptionTag("VM_PARAMETERS")
   var vmParameters: String? by string()
 
-  @get:OptionTag("ALTERNATIVE_JRE_PATH")
+  @get:OptionTag("ALTERNATIVE_JRE_PATH", converter = AlternativeJrePathConverter::class)
   var alternativeJrePath: String? by string()
 
   @get:OptionTag("ALTERNATIVE_JRE_PATH_ENABLED")

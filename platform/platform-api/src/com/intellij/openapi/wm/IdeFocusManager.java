@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,8 +17,11 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * This class receives focus requests, manages the, and delegates to the awt focus subsystem. All focus requests
- * should be done through this class. For example, to request focus on a component:
+ * This class receives focus requests, manages the, and delegates to the AWT focus subsystem.
+ * <p>
+ * <em>All focus requests should be done through this class.</em>
+ * <p>
+ * For example, to request focus on a component:
  * <pre>
  *   IdeFocusManager.getInstance(project).requestFocus(comp, true);
  * </pre>
@@ -26,14 +29,13 @@ import java.awt.*;
  * <pre>
  *   comp.requestFocus();
  * </pre>
- *
+ * <p>
  * This class is also responsible for delivering key events while focus transferring is in progress.
  * <p>
  * {@code IdeFocusManager} instance can be received per project or the global instance. The preferred way is
  * to use instance {@code IdeFocusManager.getInstance(project)}. If no project instance is available, then
  * {@code IdeFocusManager.getGlobalInstance()} can be used.
  */
-
 public abstract class IdeFocusManager implements FocusRequestor {
 
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
@@ -41,44 +43,47 @@ public abstract class IdeFocusManager implements FocusRequestor {
   }
 
   /**
-   * Finds most suitable component to request focus to. For instance you may pass a JPanel instance,
-   * this method will traverse into it's children to find focusable component
+   * Finds most suitable component to request focus to. For instance, you may pass a JPanel instance,
+   * this method will traverse into its children to find focusable component.
+   *
    * @return suitable component to focus
    */
   @Nullable
   public abstract JComponent getFocusTargetFor(@NotNull final JComponent comp);
 
-
   /**
-   * Executes given runnable after all focus activities are finished
+   * Executes given runnable after all focus activities are finished.
    */
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
   /**
-   * Executes given runnable after all focus activities are finished, immediately or later with the given modality state
+   * Executes given runnable after all focus activities are finished, immediately or later with the given modality state.
    */
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality);
 
   /**
-   * Executes given runnable after all focus activities are finished
+   * Executes given runnable after all focus activities are finished.
    */
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
 
   /**
-   * Finds focused component among descendants of the given component. Descendants may be in child popups and windows
+   * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
    */
   @Nullable
   public abstract Component getFocusedDescendantFor(final Component comp);
 
+  /**
+   * @deprecated use {@link #typeAheadUntil(ActionCallback, String)} instead
+   */
   @Deprecated
-  // use #typeAheadUntil(ActionCallback, String) instead
   public void typeAheadUntil(ActionCallback done) {
     typeAheadUntil(done, "No cause has been provided");
   }
 
   /**
-   * Aggregates all key events until given callback object is processed
+   * Aggregates all key events until given callback object is processed.
+   *
    * @param done action callback
    */
   public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
@@ -90,44 +95,44 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract ActionCallback requestDefaultFocus(boolean forced);
 
   /**
-   * Reports of focus transfer is enabled right now. It can be disabled if app is inactive. In this case
-   * all focus requests will be either postponed or executed only if {@code FocusCommand} can be executed on an inaactive app.
-   * @see com.intellij.openapi.wm.FocusCommand#canExecuteOnInactiveApp()
+   * Reports of focus transfer is enabled right now. It can be disabled if the app is inactive. In this case
+   * all focus requests will be either postponed or executed if {@code FocusCommand} can be executed on an inactive app.
    */
   public abstract boolean isFocusTransferEnabled();
 
   /**
-   * Enables or disables typeahead
-   * @see #typeAheadUntil(com.intellij.openapi.util.ActionCallback)
+   * Enables or disables typeahead.
+   *
+   * @see #typeAheadUntil(ActionCallback)
    */
   public abstract void setTypeaheadEnabled(boolean enabled);
 
   /**
-   * Computes effective focus owner
+   * Computes effective focus owner.
    */
   public abstract Component getFocusOwner();
 
   /**
-   * Runs runnable for which {@code DataContext} will no be computed from the current focus owner,
-   * but used the given one
+   * Runs runnable for which {@code DataContext} will not be computed from the current focus owner,
+   * but using given one.
    */
   public abstract void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable);
 
   /**
-   * Returns last focused component for the given {@code IdeFrame}
+   * Returns last focused component for the given {@code IdeFrame}.
    */
   @Nullable
   public abstract Component getLastFocusedFor(@Nullable IdeFrame frame);
 
   /**
-   * Returns last focused {@code IdeFrame}
+   * Returns last focused {@code IdeFrame}.
    */
   @Nullable
   public abstract IdeFrame getLastFocusedFrame();
 
   /**
-   * Put the container window to front. May not execute of the app is inactive or under some other conditions. This
-   * is the preferred way to finding the container window and unconditionally calling {@code window.toFront()}
+   * Put the container window to front. May not execute if the app is inactive or under some other conditions. This
+   * is the preferred way to finding the container window and unconditionally calling {@code window.toFront()}.
    */
   public abstract void toFront(JComponent c);
 
@@ -206,7 +211,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
     IdeFocusManager fm = null;
 
     Application app = ApplicationManager.getApplication();
-    if (app != null && app.hasComponent(IdeFocusManager.class)) {
+    if (app != null) {
       fm = app.getComponent(IdeFocusManager.class);
     }
 
@@ -217,5 +222,4 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
     return fm;
   }
-
 }

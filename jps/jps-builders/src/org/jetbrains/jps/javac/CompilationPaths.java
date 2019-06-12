@@ -19,7 +19,11 @@ public class CompilationPaths {
   private final Collection<File> myModulePath;
   private final Collection<File> mySourcePath;
 
-  public CompilationPaths(Collection<File> platformClasspath, Collection<File> classpath, Collection<File> upgradeModulePath, Collection<File> modulePath, Collection<File> sourcePath) {
+  public CompilationPaths(Collection<? extends File> platformClasspath,
+                          Collection<? extends File> classpath,
+                          Collection<? extends File> upgradeModulePath,
+                          Collection<? extends File> modulePath,
+                          Collection<? extends File> sourcePath) {
     myPlatformClasspath = constCollection(platformClasspath);
     myClasspath = constCollection(classpath);
     myUpgradeModulePath = constCollection(upgradeModulePath);
@@ -27,7 +31,7 @@ public class CompilationPaths {
     mySourcePath = constCollection(sourcePath);
   }
 
-  private static <T> Collection<T> constCollection(Collection<T> col) {
+  private static <T> Collection<T> constCollection(Collection<? extends T> col) {
     return col == null || col.isEmpty()? Collections.emptyList() : Collections.unmodifiableCollection(col);
   }
 
@@ -66,11 +70,11 @@ public class CompilationPaths {
     Builder setSourcePath(Collection<File> path);
   }
 
-  public static CompilationPaths create(@Nullable Collection<File> platformCp,
-                                        @Nullable Collection<File> cp,
-                                        @Nullable Collection<File> upgradeModCp,
-                                        @Nullable Collection<File> modulePath,
-                                        @Nullable Collection<File> sourcePath) {
+  public static CompilationPaths create(@Nullable Collection<? extends File> platformCp,
+                                        @Nullable Collection<? extends File> cp,
+                                        @Nullable Collection<? extends File> upgradeModCp,
+                                        @Nullable Collection<? extends File> modulePath,
+                                        @Nullable Collection<? extends File> sourcePath) {
     return new CompilationPaths(platformCp, cp, upgradeModCp, modulePath, sourcePath);
   }
 

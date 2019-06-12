@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -41,7 +41,7 @@ public class IdeaMenuUI extends BasicMenuUI{
   }
 
   public IdeaMenuUI() {
-    myMaxGutterIconWidth = JBUI.scale(18);
+    myMaxGutterIconWidth = JBUIScale.scale(18);
 
     if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF()) {
       if (myAquaSelectedBackgroundPainter == null) myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
@@ -173,7 +173,7 @@ public class IdeaMenuUI extends BasicMenuUI{
     }
     if (arrowIcon != null){
       if (SystemInfo.isMac) {
-        ourArrowIconRect.y += JBUI.scale(1);
+        ourArrowIconRect.y += JBUIScale.scale(1);
       }
 
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){

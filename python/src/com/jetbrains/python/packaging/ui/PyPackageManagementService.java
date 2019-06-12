@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.Lists;
@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
@@ -41,9 +41,9 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   private static String buildHtmlStylePrefix() {
     // Shamelessly copied from Plugin Manager dialog
-    final int fontSize = JBUI.scale(12);
-    final int m1 = JBUI.scale(2);
-    final int m2 = JBUI.scale(5);
+    final int fontSize = JBUIScale.scale(12);
+    final int m1 = JBUIScale.scale(2);
+    final int m2 = JBUIScale.scale(5);
     return String.format("<html><head>" +
                          "    <style type=\"text/css\">" +
                          "        p {" +
@@ -53,7 +53,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
                          "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
                          fontSize, m1, m1, fontSize, m2, m2);
   }
-  
+
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   @NotNull private final Project myProject;

@@ -15,24 +15,19 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
+ * @deprecated please implement {@link FileNameMatcher} directly and define {@link #acceptsCharSequence(CharSequence)} there.
  */
+@Deprecated
 public abstract class FileNameMatcherEx implements FileNameMatcher {
-  @Override
-  public boolean accept(@NonNls @NotNull String fileName) {
-    return acceptsCharSequence(fileName);
-  }
-
-  public abstract boolean acceptsCharSequence(@NotNull CharSequence fileName);
-  
+  /**
+   * @deprecated call {@link #acceptsCharSequence(CharSequence)} instead
+   */
+  @Deprecated
   public static boolean acceptsCharSequence(@NotNull FileNameMatcher matcher, @NotNull CharSequence fileName) {
-    if (matcher instanceof FileNameMatcherEx) {
-      return ((FileNameMatcherEx)matcher).acceptsCharSequence(fileName);
-    }
-    return matcher.accept(fileName.toString());
+    return matcher.acceptsCharSequence(fileName);
   }
 }

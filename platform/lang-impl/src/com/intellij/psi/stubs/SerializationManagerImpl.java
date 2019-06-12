@@ -20,16 +20,15 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.ObjIntConsumer;
 
 /*
  * @author max
@@ -39,22 +38,24 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile;
+  private final boolean myUnmodifiable;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
-  private AbstractStringEnumerator myNameStorage;
+  private PersistentStringEnumerator myNameStorage;
   private StubSerializationHelper myStubSerializationHelper;
 
   public SerializationManagerImpl() {
-    this(new File(PathManager.getIndexRoot(), "rep.names"));
+    this(new File(PathManager.getIndexRoot(), "rep.names"), false);
   }
 
-  public SerializationManagerImpl(@NotNull File nameStorageFile) {
+  public SerializationManagerImpl(@NotNull File nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myFile.getParentFile().mkdirs();
+    myUnmodifiable = unmodifiable;
     try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
       myNameStorage = new PersistentStringEnumerator(myFile, true);
-      myStubSerializationHelper = new StubSerializationHelper(myNameStorage, this);
+      myStubSerializationHelper = new StubSerializationHelper(myNameStorage, unmodifiable, this);
     }
     catch (IOException e) {
       nameStorageCrashed();
@@ -83,10 +84,13 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
         }
 
         StubSerializationHelper prevHelper = myStubSerializationHelper;
+        if (myUnmodifiable) {
+          LOG.error("Data provided by unmodifiable serialization manager can be invalid after repair");
+        }
 
         IOUtil.deleteAllFilesStartingWith(myFile);
         myNameStorage = new PersistentStringEnumerator(myFile, true);
-        myStubSerializationHelper = new StubSerializationHelper(myNameStorage, this);
+        myStubSerializationHelper = new StubSerializationHelper(myNameStorage, myUnmodifiable, this);
         myStubSerializationHelper.copyFrom(prevHelper);
       }
       catch (IOException e) {
@@ -173,5 +177,27 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
       LOG.info(e);
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public void reSerialize(@NotNull InputStream inStub,
+                          @NotNull OutputStream outStub,
+                          @NotNull SerializationManager newSerializationManager) throws IOException {
+    initSerializers();
+    newSerializationManager.initSerializers();
+    myStubSerializationHelper.reSerializeStub(new DataInputStream(inStub),
+                                              new DataOutputStream(outStub),
+                                              ((SerializationManagerImpl)newSerializationManager).myStubSerializationHelper);
+  }
+
+  @TestOnly
+  public void acceptSerializerId(ObjIntConsumer<? super String> consumer) throws IOException {
+    myNameStorage.traverseAllRecords(new PersistentEnumeratorBase.RecordsProcessor() {
+      @Override
+      public boolean process(int record) throws IOException {
+        consumer.accept(myNameStorage.valueOf(record), record);
+        return true;
+      }
+    });
   }
 }

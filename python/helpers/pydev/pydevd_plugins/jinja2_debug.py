@@ -1,6 +1,6 @@
 import traceback
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_name
-from _pydevd_bundle.pydevd_constants import get_thread_id, STATE_SUSPEND, dict_iter_items, dict_keys, JINJA2_SUSPEND
+from _pydevd_bundle.pydevd_constants import get_current_thread_id, STATE_SUSPEND, dict_iter_items, dict_keys, JINJA2_SUSPEND
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_ADD_EXCEPTION_BREAK
 from _pydevd_bundle import pydevd_vars
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_file
@@ -8,9 +8,9 @@ from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, FCode
 
 class Jinja2LineBreakpoint(LineBreakpoint):
 
-    def __init__(self, file, line, condition, func_name, expression):
+    def __init__(self, file, line, condition, func_name, expression, hit_condition=None, is_logpoint=False):
         self.file = file
-        LineBreakpoint.__init__(self, line, condition, func_name, expression)
+        LineBreakpoint.__init__(self, line, condition, func_name, expression, hit_condition=hit_condition, is_logpoint=is_logpoint)
 
     def is_triggered(self, template_frame_file, template_frame_line):
         return self.file == template_frame_file and self.line == template_frame_line
@@ -19,10 +19,10 @@ class Jinja2LineBreakpoint(LineBreakpoint):
         return "Jinja2LineBreakpoint: %s-%d" %(self.file, self.line)
 
 
-def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name):
+def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name, hit_condition=None, is_logpoint=False):
     result = None
     if type == 'jinja2-line':
-        breakpoint = Jinja2LineBreakpoint(file, line, condition, func_name, expression)
+        breakpoint = Jinja2LineBreakpoint(file, line, condition, func_name, expression, hit_condition=hit_condition, is_logpoint=is_logpoint)
         if not hasattr(pydb, 'jinja2_breakpoints'):
             _init_plugin_breaks(pydb)
         result = breakpoint, pydb.jinja2_breakpoints
@@ -34,7 +34,6 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'jinja2_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.jinja2_exception_break[exception] = True
-        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
         return True
     return False
 
@@ -74,7 +73,7 @@ def _suspend_jinja2(pydb, thread, frame, cmd=CMD_SET_BREAK, message=None):
     if frame.f_lineno is None:
         return None
 
-    pydevd_vars.add_additional_frame_by_id(get_thread_id(thread), {id(frame): frame})
+    pydevd_vars.add_additional_frame_by_id(get_current_thread_id(thread), {id(frame): frame})
     pydb.set_suspend(thread, cmd)
 
     thread.additional_info.suspend_type = JINJA2_SUSPEND

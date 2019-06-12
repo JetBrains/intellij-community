@@ -2,8 +2,9 @@
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.find.findUsages.JavaFindUsagesHandler;
-import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.*;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -17,6 +18,7 @@ import com.intellij.psi.search.PsiReferenceProcessorAdapter;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -65,6 +67,27 @@ public class FindUsagesTest extends PsiTestCase{
     PsiMethod method = anInterface.getMethods()[0];
     final Collection<PsiMethod> overriders = OverridingMethodsSearch.search(method).findAll();
     assertEquals(1, overriders.size());
+  }
+
+  public void testSiblingFindUsages() {
+    PsiClass xv = myJavaFacade.findClass("XValueContainerNode", GlobalSearchScope.allScope(myProject));
+    PsiMethod method = xv.findMethodsByName("setObsolete", false)[0];
+
+    FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager()
+      .getFindUsagesHandler(method, FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
+
+    PsiElement[] elements = handler.getPrimaryElements();
+    int[] count = {0};
+    for (PsiElement element : elements) {
+      handler.processElementUsages(element, info -> {
+        count[0]++;
+        PsiClass containing = PsiTreeUtil.getParentOfType(info.getElement(), PsiClass.class);
+        assertEquals("Use", containing.getName());
+
+        return true;
+      }, handler.getFindUsagesOptions());
+    }
+    assertEquals(1, count[0]);
   }
 
   public void testProtectedMethodInPackageLocalClass() {

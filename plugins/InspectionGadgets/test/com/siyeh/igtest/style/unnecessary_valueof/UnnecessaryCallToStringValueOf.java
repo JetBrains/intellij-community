@@ -83,4 +83,9 @@ public class UnnecessaryCallToStringValueOf {
     String s2 = "long: " + <warning descr="Unnecessary 'Long.toString()' call">Long.toString</warning>(System.nanoTime());
     String s3 = "float: " + <warning descr="Unnecessary 'Float.toString()' call">Float.toString</warning>(1.0f+2.0f+3.0f);
   }
+
+  void threeArgAppend() {
+    new StringBuilder().append(String.valueOf(Math.random()), 0, 3);
+  }
+
 }

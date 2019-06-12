@@ -28,6 +28,7 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,9 +58,10 @@ public class ExecutionNode extends CachingSimpleNode {
   private static final Icon NODE_ICON_DEFAULT = ICON_16;
   private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.FS();
 
-  private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>(); //ContainerUtil.newSmartList();
+  private final Collection<ExecutionNode> myChildrenList = new ConcurrentLinkedDeque<>();
   private final AtomicInteger myErrors = new AtomicInteger();
   private final AtomicInteger myWarnings = new AtomicInteger();
+  private final AtomicInteger myInfos = new AtomicInteger();
   private long startTime;
   private long endTime;
   @Nullable
@@ -164,6 +166,7 @@ public class ExecutionNode extends CachingSimpleNode {
     myChildrenList.clear();
     myErrors.set(0);
     myWarnings.set(0);
+    myInfos.set(0);
     myResult = null;
     cleanUpCache();
   }
@@ -226,6 +229,16 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public boolean isRunning() {
     return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
+  }
+
+  public boolean hasWarnings() {
+    return myWarnings.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.WARNING);
+  }
+
+  public boolean hasInfos() {
+    return myInfos.get() > 0 ||
+           (myResult instanceof MessageEventResult && ((MessageEventResult)myResult).getKind() == MessageEvent.Kind.INFO);
   }
 
   public boolean isFailed() {
@@ -293,25 +306,15 @@ public class ExecutionNode extends CachingSimpleNode {
     else if (kind == MessageEvent.Kind.WARNING) {
       myWarnings.incrementAndGet();
     }
+    else if (kind == MessageEvent.Kind.INFO) {
+      myInfos.incrementAndGet();
+    }
   }
 
-  ExecutionNode copy(ExecutionNode parent) {
-    ExecutionNode copy = new ExecutionNode(myProject, parent);
-    copy.startTime = startTime;
-    copy.endTime = endTime;
-    copy.myTitle = myTitle;
-    copy.myTooltip = myTooltip;
-    copy.myHint = myHint;
-    copy.myResult = myResult;
-    copy.myAutoExpandNode = myAutoExpandNode;
-    copy.myNavigatable = myNavigatable;
-    copy.myPreferredIconValue = myPreferredIconValue;
-    copy.myErrors.set(myErrors.get());
-    copy.myWarnings.set(myWarnings.get());
-    copy.myFilter = myFilter;
-    copy.myName = myName;
-    copy.myClosedIcon = myClosedIcon;
-    return copy;
+  @Nullable
+  @ApiStatus.Experimental
+  ExecutionNode findFirstChild(@NotNull Predicate<? super ExecutionNode> filter) {
+    return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
   private String getCurrentHint() {
@@ -322,7 +325,8 @@ public class ExecutionNode extends CachingSimpleNode {
       if (hint == null) {
         hint = "";
       }
-      hint += (getParent() == null ? isRunning() ? "  " : "  with " : " (");
+      SimpleNode parent = getParent();
+      hint += parent == null || parent.getParent() == null ? (isRunning() ? "  " : " with ") : " ";
       if (errors > 0) {
         hint += (errors + " " + StringUtil.pluralize("error", errors));
         if (warnings > 0) {
@@ -331,9 +335,6 @@ public class ExecutionNode extends CachingSimpleNode {
       }
       if (warnings > 0) {
         hint += (warnings + " " + StringUtil.pluralize("warning", warnings));
-      }
-      if (getParent() != null) {
-        hint += ")";
       }
     }
     return hint;

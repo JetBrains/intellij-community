@@ -78,11 +78,11 @@ public class GridCellImpl implements GridCell {
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        return new UiDecoration(null, JBTabsFactory.getUseNewTabs()? JBUI.insets(4, 5, 4, 9) : new Insets(1, -1, 1, -1));
+        return new UiDecoration(null, JBTabsFactory.getUseNewTabs()? JBUI.insets(4, 8, 4, 9) : new Insets(1, -1, 1, -1));
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(!JBTabsFactory.getUseNewTabs()).setFocusCycle(false).setPaintFocus(true)
-      .setTabDraggingEnabled(true).setSideComponentOnTabs(false);
+      .setTabDraggingEnabled(context.isMoveToGridActionEnabled()).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       @Override
@@ -450,6 +450,11 @@ public class GridCellImpl implements GridCell {
 
   private static class GridCellTabs extends JBEditorTabs {
     private final ViewContextEx myContext;
+
+    @Override
+    protected JBTabPainter createTabPainter() {
+      return JBTabPainter.getDEBUGGER();
+    }
 
     private GridCellTabs(ViewContextEx context, GridImpl container) {
       super(context.getProject(), context.getActionManager(), context.getFocusManager(), container);

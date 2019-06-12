@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -46,7 +46,7 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
@@ -230,6 +230,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @NotNull
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     return Collections.emptyList();
   }
@@ -348,7 +353,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       // Cannot do anything if we have already single branch and we cannot restore flow due to non-terminal breaks
       return allBranches.size() != 1 || BreakConverter.from(statement) != null;
     }
-    // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either 
+    // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
     return (allBranches.size() <= 2 &&
            !allBranches.stream().allMatch(branch -> branch == labelStatement || branch.isDefaultCase())) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
@@ -574,11 +579,14 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     if (PsiUtil.canBeOverridden(method)) return;
 
     NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
-    if (info == null || info.getNullability() != Nullability.NULLABLE || !info.getAnnotation().isPhysical()) return;
+    if (info == null || info.getNullability() != Nullability.NULLABLE) return;
 
-    PsiJavaCodeReferenceElement annoName = info.getAnnotation().getNameReferenceElement();
+    PsiAnnotation annotation = info.getAnnotation();
+    if (!annotation.isPhysical() || alsoAppliesToInternalSubType(annotation, method)) return;
+
+    PsiJavaCodeReferenceElement annoName = annotation.getNameReferenceElement();
     assert annoName != null;
-    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(info.getAnnotation()) +
+    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(annotation) +
                  " method '" + method.getName() + "' always returns a non-null value";
     LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method)};
     if (holder.isOnTheFly()) {
@@ -591,10 +599,15 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     holder.registerProblem(annoName, msg, fixes);
   }
 
-  private static void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
+  private static boolean alsoAppliesToInternalSubType(PsiAnnotation annotation, PsiMethod method) {
+    return AnnotationTargetUtil.isTypeAnnotation(annotation) && method.getReturnType() instanceof PsiArrayType;
+  }
+
+  private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(call -> {
       String message = getContractMessage(JavaMethodContractUtil.getMethodCallContracts(call));
-      reporter.registerProblem(getElementToHighlight(call), message);
+      LocalQuickFix causeFix = reporter.isOnTheFly() ? createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType()) : null;
+      reporter.registerProblem(getElementToHighlight(call), message, causeFix);
     });
   }
 
@@ -682,14 +695,18 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     reporter.registerProblem(toHighlight, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
-  private static void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
+  private void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     for (TypeCastInstruction instruction : visitor.getClassCastExceptionInstructions()) {
       PsiTypeCastExpression typeCast = instruction.getExpression();
       PsiExpression operand = typeCast.getOperand();
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
-      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()));
+      List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, reporter.isOnTheFly()));
+      if (reporter.isOnTheFly()) {
+        fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
+      }
+      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
@@ -708,7 +725,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         reportConstantBoolean(reporter, psiAnchor, true);
       }
     }
-    else if (psiAnchor != null && 
+    else if (psiAnchor != null &&
              (!(psiAnchor instanceof PsiExpression) || PsiImplUtil.getSwitchLabel((PsiExpression)psiAnchor) == null) &&
              !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
@@ -887,7 +904,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         final String text = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
-        reporter.registerProblem(expr, text);
+        reporter.registerProblem(expr, text, createNPEFixes(expr, expr, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
         final String defaultNullable = manager.getDefaultNullable();
@@ -898,7 +915,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         final LocalQuickFix[] fixes =
           PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
           ? LocalQuickFix.EMPTY_ARRAY
-          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls()))};
+          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtilRt.toStringArray(manager.getNotNulls()))};
         reporter.registerProblem(expr, text, fixes);
       }
     }

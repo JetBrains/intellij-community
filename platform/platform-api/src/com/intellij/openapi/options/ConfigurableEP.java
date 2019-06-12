@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -38,6 +39,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
    * It is highly recommended specifying the display name in XML to improve UI responsiveness.
    */
   @Attribute("displayName")
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String displayName;
 
   /**
@@ -45,6 +47,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
    * This is another way to specify the {@link #displayName display name}.
    */
   @Attribute("key")
+  @Nls(capitalization = Nls.Capitalization.Title)
   public String key;
 
   /**

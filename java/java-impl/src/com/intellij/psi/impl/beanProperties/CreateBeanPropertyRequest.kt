@@ -10,7 +10,7 @@ import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PropertyUtilBase.getAccessorName
 
-internal class CreateBeanPropertyRequest(
+class CreateBeanPropertyRequest(
   project: Project,
   propertyName: String,
   propertyKind: PropertyKind,

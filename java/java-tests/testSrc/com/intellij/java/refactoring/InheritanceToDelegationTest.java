@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -20,7 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -37,30 +23,30 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
   }
 
   public void testSimpleInsertion() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   public void testSimpleGenerics() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   public void testSuperCalls() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   public void testGetter() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0, 1}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
   public void testSubClass() {
     doTest(
-      createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true,
-          true));
+      createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true,
+                          true));
   }
 
   public void testSubClassNoMethods() {
     doTest(
-      createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, true));
+      createPerformAction("A", "myDelegate", "MyDelegatedBase", "DelegatedBase", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
   public void testInterfaces() {
@@ -68,64 +54,64 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
   }
 
   public void testInnerClass() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   public void testAbstractBase() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   public void testAbstractBase1() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, false, false));
+    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
   public void testHierarchy() {
-    doTest(createPerformAction("X", "myDelegate", "MyBase", "Base", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, false, false));
+    doTest(createPerformAction("X", "myDelegate", "MyBase", "Base", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
   public void testOverridenMethods() {
-    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
+    doTest(createPerformAction("A", "myDelegate", "MyBase", "Base", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
   public void testAnnotations() {
-    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   public void testInnerClassForInterface() {
     doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
-        new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
+                               new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
   public void testInnerClassForInterfaceAbstract() {
     doTest(createPerformAction("A", "myBaseInterface", "MyBaseInterface", "BaseInterface",
-        new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
+                               new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
   public void testSubinterface() {
-    doTest(createPerformAction("A", "myDelegate", "MyJ", "J", new int[0], ArrayUtil.EMPTY_STRING_ARRAY, true, true));
+    doTest(createPerformAction("A", "myDelegate", "MyJ", "J", new int[0], ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
   public void testInterfaceDelegation() {
-    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{0}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
+    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{0}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
   // IDEADEV-19675
   public void testInterfaceImplicitImplementation() {
-    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, true));
+    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, true));
   }
 
   // IDEADEV-19699
   public void testMultipleInterfaceDelegation() {
-    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf2", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+    doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf2", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   public void testScr20557() {
     doTest(createPerformAction2("xxx.SCR20557", "myResultSet", "MyResultSet", "java.sql.ResultSet",
-        new String[]{"getDate"}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
+                                new String[]{"getDate"}, ArrayUtilRt.EMPTY_STRING_ARRAY, false, false));
   }
 
   public void testTypeParametersSubstitution() {
-     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   private ThrowableRunnable<Exception> createPerformAction(

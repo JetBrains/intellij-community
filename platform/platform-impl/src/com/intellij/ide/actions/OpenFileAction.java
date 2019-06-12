@@ -9,7 +9,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -39,12 +38,8 @@ import java.util.List;
 public class OpenFileAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project eventProject = e.getProject();
-    ApplicationManager.getApplication().invokeLater(() -> prepareFileChooserAndOpen(eventProject));
-  }
-
-  private void prepareFileChooserAndOpen(final Project eventProject) {
-    final boolean showFiles = eventProject != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
+    final Project project = e.getProject();
+    final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
     final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
 
     VirtualFile toSelect = null;
@@ -54,15 +49,15 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
     descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles);
 
-    FileChooser.chooseFiles(descriptor, eventProject, toSelect != null ? toSelect : getPathToSelect(), files -> {
+    FileChooser.chooseFiles(descriptor, project, toSelect != null ? toSelect : getPathToSelect(), files -> {
       for (VirtualFile file : files) {
         if (!descriptor.isFileSelectable(file)) {
           String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
-          Messages.showInfoMessage(eventProject, message, IdeBundle.message("title.cannot.open.project"));
+          Messages.showInfoMessage(project, message, IdeBundle.message("title.cannot.open.project"));
           return;
         }
       }
-      doOpenFile(eventProject, files);
+      doOpenFile(project, files);
     });
   }
 
@@ -83,7 +78,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
   }
 
-  private static void doOpenFile(@Nullable Project project, @NotNull List<VirtualFile> result) {
+  private static void doOpenFile(@Nullable Project project, @NotNull List<? extends VirtualFile> result) {
     for (VirtualFile file : result) {
       if (file.isDirectory()) {
         Project openedProject;

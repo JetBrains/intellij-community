@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiClass;
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 
 import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_KEY;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_TYPE_KEY;
 
 public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsContributor {
 
@@ -30,7 +30,7 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsCont
                                 @NotNull PsiClass clazz,
                                 @NotNull String name,
                                 @NotNull PsiElement place,
-                                @NotNull Processor<PsiElement> processor) {
+                                @NotNull Processor<? super PsiElement> processor) {
     GrLightMethodBuilder res;
 
     // ()
@@ -39,19 +39,19 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsCont
 
     // (Closure)
     res = createMethod(name, clazz, place);
-    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, FQN);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, FQN);
     if (!processor.process(res)) return false;
 
     // (Object, Closure)
     res = createMethod(name, clazz, place);
     res.addParameter("value", JAVA_LANG_OBJECT);
-    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, FQN);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, FQN);
     if (!processor.process(res)) return false;
 
     // (Map, Closure)
     res = createMethod(name, clazz, place);
     res.addParameter("attributes", JAVA_UTIL_MAP);
-    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, FQN);
+    res.addAndGetParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, FQN);
     if (!processor.process(res)) return false;
 
     // (Map)
@@ -60,7 +60,7 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsCont
     res = createMethod(name, clazz, place);
     res.addParameter("attributes", JAVA_UTIL_MAP);
     res.addOptionalParameter("value", JAVA_LANG_OBJECT);
-    res.addAndGetOptionalParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, FQN);
+    res.addAndGetOptionalParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, FQN);
     for (GrReflectedMethod method : res.getReflectedMethods()) {
       if (!processor.process(method)) return false;
     }
@@ -71,7 +71,7 @@ public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsCont
     res = createMethod(name, clazz, place);
     res.addParameter("value", JAVA_LANG_OBJECT);
     res.addOptionalParameter("attributes", JAVA_UTIL_MAP);
-    res.addAndGetOptionalParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_KEY, FQN);
+    res.addAndGetOptionalParameter("body", GROOVY_LANG_CLOSURE).putUserData(DELEGATES_TO_TYPE_KEY, FQN);
     for (GrReflectedMethod method : res.getReflectedMethods()) {
       if (!processor.process(method)) return false;
     }

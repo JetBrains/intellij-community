@@ -7,11 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.registry.Registry
-
-fun useInterlaguageActions(): Boolean = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("ide.interlanguage.fixes")
 
 val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
 
@@ -41,13 +37,6 @@ fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationReq
 
 fun createModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> =
   createActions { it.createChangeModifierActions(target, request) }
-
-@Deprecated("use createModifierActions(JvmModifiersOwner, ChangeModifierRequest)")
-fun createModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> {
-  return createActions {
-    it.createChangeModifierActions(target, request)
-  }
-}
 
 fun createAddFieldActions(target: JvmClass, request: CreateFieldRequest): List<IntentionAction> =
   createActions { it.createAddFieldActions(target, request) }

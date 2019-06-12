@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.google.common.collect.Sets;
@@ -62,7 +62,8 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
   }
 
   @Override
-  public boolean isConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration configuration, ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration configuration,
+                                            @NotNull ConfigurationContext context) {
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
     final PsiElement element = location.getPsiElement();
@@ -112,10 +113,9 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
 
 
   @Override
-  protected boolean setupConfigurationFromContext(AbstractPythonLegacyTestRunConfiguration<T> configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
-    if (context == null) return false;
+  protected boolean setupConfigurationFromContext(@NotNull AbstractPythonLegacyTestRunConfiguration<T> configuration,
+                                                  @NotNull ConfigurationContext context,
+                                                  @NotNull Ref<PsiElement> sourceElement) {
     final Location location = context.getLocation();
     if (location == null || !isAvailable(location)) return false;
     PsiElement element = location.getPsiElement();
@@ -224,7 +224,7 @@ abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPy
       roots.addAll(PyUtil.getSourceRoots(module));
     }
     Collections.addAll(roots, ProjectRootManager.getInstance(project).getContentRoots());
-    return name.toLowerCase().contains("test") || roots.contains(virtualFile);
+    return StringUtil.toLowerCase(name).contains("test") || roots.contains(virtualFile);
   }
 
   protected boolean isAvailable(@NotNull final Location location) {

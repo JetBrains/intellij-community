@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.*;
@@ -51,11 +37,11 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -135,9 +121,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       @Override
       protected Transferable createTransferable(JComponent c) {
         OrderEntry entry = getSelectedEntry();
-        if (entry == null) return null;
-        String text = entry.getPresentableName();
-        return new TextTransferable(text);
+        if (entry == null) {
+          return null;
+        }
+        return new TextTransferable(entry.getPresentableName());
       }
 
       @Override
@@ -319,7 +306,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void setFixedColumnWidth(final int columnIndex, String sampleText) {
     final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
     final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUI.scale(4);
+    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUIScale.scale(4);
     column.setPreferredWidth(width);
     column.setMinWidth(width);
     column.setResizable(false);

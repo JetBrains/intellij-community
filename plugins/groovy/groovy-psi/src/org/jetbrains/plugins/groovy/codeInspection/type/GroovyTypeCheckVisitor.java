@@ -15,6 +15,10 @@ import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.BinaryExpressionHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrConstructorInvocationHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrEnumConstantHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrNewExpressionHighlighter;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -58,13 +62,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
-import static org.jetbrains.plugins.groovy.codeInspection.type.ImplKt.processConstructor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyExpressionUtil.isFake;
 
@@ -389,7 +390,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   private void checkNamedArgumentsType(@NotNull CallInfo<?> info) {
-    GroovyPsiElement rawCall = info.getCall();
+    checkNamedArgumentsType(info.getCall());
+  }
+
+  private void checkNamedArgumentsType(@NotNull GroovyPsiElement rawCall) {
     if (!(rawCall instanceof GrCall)) return;
     GrCall call = (GrCall)rawCall;
 
@@ -429,32 +433,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'"
         );
       }
-    }
-  }
-
-  private void checkOperator(@NotNull CallInfo<? extends GrBinaryExpression> info) {
-    if (hasErrorElements(info.getCall())) return;
-
-    GroovyResolveResult[] results = info.multiResolve();
-    GroovyResolveResult resolveResult = info.advancedResolve();
-
-    if (isOperatorWithSimpleTypes(info.getCall(), resolveResult)) return;
-
-    if (!checkCannotInferArgumentTypes(info)) return;
-
-    if (resolveResult.getElement() != null) {
-      checkMethodApplicability(resolveResult, true, info);
-    }
-    else if (results.length > 0) {
-      for (GroovyResolveResult result : results) {
-        if (!checkMethodApplicability(result, false, info)) return;
-      }
-
-      registerError(
-        info.getElementToHighlight(),
-        ProblemHighlightType.GENERIC_ERROR,
-        GroovyBundle.message("method.call.is.ambiguous")
-      );
     }
   }
 
@@ -534,7 +512,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     final ConversionResult result = TypesUtil.canAssign(expectedType, actualType, context, position);
     if (result == ConversionResult.OK) return;
 
-    final List<LocalQuickFix> fixes = ContainerUtil.newArrayList();
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     {
       fixes.add(new GrCastFix(expectedType, expression));
       final String varName = getLValueVarName(toHighlight);
@@ -719,13 +697,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     final GroovyCallReference reference = newExpression.getConstructorReference();
     if (reference == null) return;
-
-    final GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
-    if (processConstructor(reference, newExpression.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+    if (new GrNewExpressionHighlighter(newExpression, reference, myHighlightSink).highlight()) {
       return;
     }
 
-    checkNamedArgumentsType(info);
+    checkNamedArgumentsType(newExpression);
   }
 
   @Override
@@ -733,13 +709,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitEnumConstant(enumConstant);
     if (hasErrorElements(enumConstant) || hasErrorElements(enumConstant.getArgumentList())) return;
 
-    final GrEnumConstantInfo info = new GrEnumConstantInfo(enumConstant);
-    final GroovyCallReference reference = enumConstant.getConstructorReference();
-    if (processConstructor(reference, enumConstant.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+    if (new GrEnumConstantHighlighter(enumConstant, myHighlightSink).highlight()) {
       return;
     }
 
-    checkNamedArgumentsType(info);
+    checkNamedArgumentsType(enumConstant);
   }
 
   @Override
@@ -747,14 +721,12 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitConstructorInvocation(invocation);
     if (hasErrorElements(invocation) || hasErrorElements(invocation.getArgumentList())) return;
 
-    final GrConstructorInvocationInfo info = new GrConstructorInvocationInfo(invocation);
-    final GroovyCallReference reference = invocation.getConstructorReference();
-    if (processConstructor(reference, invocation.getArgumentList(), info.getElementToHighlight(), myHighlightSink)) {
+    if (new GrConstructorInvocationHighlighter(invocation, myHighlightSink).highlight()) {
       return;
     }
-    checkNamedArgumentsType(info);
+    checkNamedArgumentsType(invocation);
   }
-  
+
   @Override
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
@@ -794,8 +766,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitBinaryExpression(@NotNull GrBinaryExpression binary) {
     super.visitBinaryExpression(binary);
-    if (isFake(binary)) return;
-    checkOperator(new GrBinaryExprInfo(binary));
+    GroovyCallReference reference = binary.getReference();
+    if (reference == null) return;
+    new BinaryExpressionHighlighter(binary, reference, myHighlightSink).highlight();
   }
 
   @Override
@@ -851,7 +824,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitMethod(method);
 
     final PsiTypeParameter[] parameters = method.getTypeParameters();
-    final Map<PsiTypeParameter, PsiType> map = ContainerUtil.newHashMap();
+    final Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     for (PsiTypeParameter parameter : parameters) {
       final PsiClassType[] types = parameter.getSuperTypes();
       final PsiType bound = PsiIntersectionType.createIntersection(types);

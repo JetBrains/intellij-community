@@ -37,12 +37,12 @@ public class JavaNonCodeSearchElementDescriptionProvider implements ElementDescr
       PsiMember member = (PsiMember)element;
       String name = member.getName();
       if (name == null) return null;
-      if (!ncdLocation.isNonJava()) {
-        return name;
+      if (ncdLocation.isNonJava()) {
+        PsiClass containingClass = member.getContainingClass();
+        if (containingClass == null || containingClass.getQualifiedName() == null) return null;
+        return containingClass.getQualifiedName() + "." + name;
       }
-      PsiClass containingClass = member.getContainingClass();
-      if (containingClass == null || containingClass.getQualifiedName() == null) return null;
-      return containingClass.getQualifiedName() + "." + name;
+      return name;
     }
     return null;
   }

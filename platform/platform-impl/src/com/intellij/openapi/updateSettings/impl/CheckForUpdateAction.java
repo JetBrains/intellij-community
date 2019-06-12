@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class CheckForUpdateAction extends AnAction implements DumbAware {
@@ -17,7 +16,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
       e.getPresentation().setEnabledAndVisible(true);
     }
     else {
-      e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu || !ActionPlaces.isMainMenuOrShortcut(e.getPlace()));
+      e.getPresentation().setVisible(!ActionPlaces.isMacSystemMenuAction(e));
     }
 
     if (!UpdateSettings.getInstance().isPlatformUpdateEnabled()) {

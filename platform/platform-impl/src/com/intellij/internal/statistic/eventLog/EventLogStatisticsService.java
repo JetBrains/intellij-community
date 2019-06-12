@@ -1,12 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,6 +63,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
     final LogEventFilter filter = settings.getEventFilter();
     try {
+      int failed = 0;
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
@@ -76,6 +76,7 @@ public class EventLogStatisticsService implements StatisticsService {
           }
           decorator.failed(recordRequest);
           toRemove.add(file);
+          failed++;
           continue;
         }
 
@@ -86,7 +87,7 @@ public class EventLogStatisticsService implements StatisticsService {
             .tuner(connection -> connection.setRequestProperty("Content-Encoding", "gzip"))
             .connect(request -> {
               final BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
-              try (OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(out))) {
+              try (OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(out), StandardCharsets.UTF_8)) {
                 LogEventSerializer.INSTANCE.toString(recordRequest, writer);
               }
               request.write(out.toByteArray());
@@ -99,6 +100,7 @@ public class EventLogStatisticsService implements StatisticsService {
           toRemove.add(file);
         }
         catch (HttpRequests.HttpStatusException e) {
+          failed++;
           decorator.failed(recordRequest);
           if (e.getStatusCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
             toRemove.add(file);
@@ -109,6 +111,7 @@ public class EventLogStatisticsService implements StatisticsService {
           }
         }
         catch (Exception e) {
+          failed++;
           if (LOG.isTraceEnabled()) {
             LOG.trace(file.getName() + " -> " + e.getMessage());
           }
@@ -116,6 +119,7 @@ public class EventLogStatisticsService implements StatisticsService {
       }
 
       cleanupFiles(toRemove);
+      EventLogSystemLogger.logFilesSend(config.getRecorderId(), logs.size(), size, failed);
       return decorator.toResult();
     }
     catch (Exception e) {
@@ -179,7 +183,7 @@ public class EventLogStatisticsService implements StatisticsService {
     return Collections.emptyList();
   }
 
-  private static void cleanupFiles(@NotNull List<File> toRemove) {
+  private static void cleanupFiles(@NotNull List<? extends File> toRemove) {
     for (File file : toRemove) {
       if (!file.delete()) {
         LOG.warn("Failed deleting event log: " + file.getName());
@@ -189,11 +193,6 @@ public class EventLogStatisticsService implements StatisticsService {
         LOG.trace("Removed sent log: " + file.getName());
       }
     }
-  }
-
-  @Override
-  public Notification createNotification(@NotNull String groupDisplayId, @Nullable NotificationListener listener) {
-    return null;
   }
 
   private static class EventLogCounterResultDecorator implements EventLogResultDecorator {

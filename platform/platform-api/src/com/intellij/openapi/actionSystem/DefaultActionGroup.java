@@ -310,8 +310,8 @@ public class DefaultActionGroup extends ActionGroup {
       if (action == null) {
         LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + i);
       }
-      if (action instanceof ActionStub) {
-        action = unStub(e, (ActionStub)action);
+      if (action instanceof ActionStubBase) {
+        action = unStub(e, (ActionStubBase)action);
         if (action == null) {
           LOG.error("Can't unstub " + mySortedChildren.get(i));
         }
@@ -329,8 +329,8 @@ public class DefaultActionGroup extends ActionGroup {
       if (action == null) {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
       }
-      else if (action instanceof ActionStub) {
-        action = unStub(e, (ActionStub)action);
+      else if (action instanceof ActionStubBase) {
+        action = unStub(e, (ActionStubBase)action);
         if (action == null) {
           LOG.error("Can't unstub " + pair);
         }
@@ -350,7 +350,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   @Nullable
-  private AnAction unStub(@Nullable AnActionEvent e, @NotNull ActionStub stub) {
+  private AnAction unStub(@Nullable AnActionEvent e, @NotNull ActionStubBase stub) {
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
     try {
       AnAction action = actionManager.getAction(stub.getId());
@@ -358,7 +358,7 @@ public class DefaultActionGroup extends ActionGroup {
         LOG.error("Null child action in group " + this + " of class " + getClass() + ", id=" + stub.getId());
         return null;
       }
-      replace(stub, action);
+      replace((AnAction)stub, action);
       return action;
     }
     catch (ProcessCanceledException ex) {

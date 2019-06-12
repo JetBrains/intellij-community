@@ -10,15 +10,20 @@ import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diff.impl.mergeTool.MergeVersion
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileTooBigException
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
@@ -31,15 +36,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
+import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
@@ -64,12 +70,14 @@ open class MultipleFileMergeDialog(
 
   private var unresolvedFiles = files.toMutableList()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
-  val processedFiles: MutableList<VirtualFile> = mutableListOf<VirtualFile>()
+  val processedFiles: MutableList<VirtualFile> = mutableListOf()
   private lateinit var table: TreeTable
   private lateinit var acceptYoursButton: JButton
   private lateinit var acceptTheirsButton: JButton
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
+
+  private val descriptionLabel = Label("Loading merge details...")
 
   private var groupByDirectory: Boolean = false
     get() = when {
@@ -104,6 +112,14 @@ open class MultipleFileMergeDialog(
     }.installOn(table)
 
     TableSpeedSearch(table, Convertor { (it as? VirtualFile)?.name })
+
+    val modalityState = ModalityState.stateForComponent(descriptionLabel)
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
+      runInEdt(modalityState) {
+        descriptionLabel.text = description
+      }
+    }
   }
 
   private fun selectFirstFile() {
@@ -111,27 +127,20 @@ open class MultipleFileMergeDialog(
       table.selectionModel.setSelectionInterval(0, 0)
     }
     else {
-      table.tree.selectionPath = TreeUtil.getFirstLeafNodePath(table.tree)
+      TreeUtil.promiseSelectFirstLeaf(table.tree)
     }
   }
 
   override fun createCenterPanel(): JComponent {
     return panel(LCFlags.disableMagic) {
-      val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
-      if (!description.isBlank()) {
-        row {
-          label(description)
-        }
+      row {
+        descriptionLabel()
       }
 
       row {
-        scrollPane(MyTable(tableModel).also {
+        scrollPane(MergeConflictsTreeTable(tableModel).also {
           table = it
-          it.tree.isRootVisible = false
           it.setTreeCellRenderer(virtualFileRenderer)
-          if (tableModel.columnCount > 1) {
-            it.setShowColumns(true)
-          }
           it.rowHeight = virtualFileRenderer.preferredSize.height
         }, growX, growY, pushX, pushY)
 
@@ -149,7 +158,7 @@ open class MultipleFileMergeDialog(
               showMergeDialog()
             }
           }
-          mergeAction.putValue(DialogWrapper.DEFAULT_ACTION, java.lang.Boolean.TRUE)
+          mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
           createJButtonForAction(mergeAction).also {
             it.text = "Merge..."
             mergeButton = it
@@ -195,45 +204,6 @@ open class MultipleFileMergeDialog(
     override fun getTooltipText() = base.tooltipText ?: columnName
   }
 
-  private class MyTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
-
-    init {
-      getTableHeader().reorderingAllowed = false
-    }
-
-    override fun doLayout() {
-      if (getTableHeader().resizingColumn == null) {
-        updateColumnSizes()
-      }
-      super.doLayout()
-    }
-
-    private fun updateColumnSizes() {
-      for ((index, columnInfo) in tableModel.columns.withIndex()) {
-        val column = columnModel.getColumn(index)
-        columnInfo.maxStringValue?.let {
-          val width = calcColumnWidth(it, columnInfo)
-          column.preferredWidth = width
-        }
-      }
-
-      var size = width
-      val fileColumn = 0
-      for (i in 0 until tableModel.columns.size) {
-        if (i == fileColumn) continue
-        size -= columnModel.getColumn(i).preferredWidth
-      }
-
-      columnModel.getColumn(fileColumn).preferredWidth = Math.max(size, JBUI.scale(200))
-    }
-
-    private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
-      val columnName = StringUtil.shortenTextWithEllipsis(columnInfo.name, 15, 7, true)
-      return Math.max(getFontMetrics(font).stringWidth(maxStringValue),
-                      getFontMetrics(tableHeader.font).stringWidth(columnName)) + columnInfo.additionalWidth
-    }
-  }
-
   private fun toggleGroupByDirectory(state: Boolean) {
     groupByDirectory = state
     val firstSelectedFile = getSelectedFiles().firstOrNull()
@@ -245,10 +215,10 @@ open class MultipleFileMergeDialog(
   }
 
   private fun updateTree() {
-    val factory = if (project != null && groupByDirectory)
-      ChangesGroupingSupport.getFactory(project, ChangesGroupingSupport.DIRECTORY_GROUPING)
-    else
-      NoneChangesGroupingFactory
+    val factory = when {
+      project != null && groupByDirectory -> ChangesGroupingSupport.getFactory(project, ChangesGroupingSupport.DIRECTORY_GROUPING)
+      else -> NoneChangesGroupingFactory
+    }
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
     tableModel.setRoot(model.root as TreeNode)
     TreeUtil.expandAll(table.tree)
@@ -293,44 +263,52 @@ open class MultipleFileMergeDialog(
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
 
-    if (!beforeResolve(files)) {
-      return
-    }
-
-    try {
-      if (mergeSession is MergeSessionEx) {
-        mergeSession.acceptFilesRevisions(files, resolution)
-
-        for (file in files) {
-          checkMarkModifiedProject(file)
+    ProgressManager.getInstance().run(object : Task.Modal(project, "Resolving Conflicts...", false) {
+      override fun run(indicator: ProgressIndicator) {
+        if (!beforeResolve(files)) {
+          return
         }
 
-        markFilesProcessed(files, resolution)
-      }
-      else {
-        for (file in files) {
-          resolveFileViaContent(file, resolution)
-          checkMarkModifiedProject(file)
-          markFileProcessed(file, resolution)
+        try {
+          if (mergeSession is MergeSessionEx) {
+            mergeSession.acceptFilesRevisions(files, resolution)
+
+            for (file in files) {
+              checkMarkModifiedProject(file)
+            }
+
+            markFilesProcessed(files, resolution)
+          }
+          else {
+            for (file in files) {
+              val data = mergeProvider.loadRevisions(file)
+              ApplicationManager.getApplication().invokeAndWait({
+                  resolveFileViaContent(file, resolution, data)
+              }, indicator.modalityState)
+              checkMarkModifiedProject(file)
+              markFileProcessed(file, resolution)
+            }
+          }
+        }
+        catch (e: Exception) {
+          LOG.warn(e)
+          ApplicationManager.getApplication().invokeAndWait({
+            Messages.showErrorDialog(contentPanel, "Error saving merged data: " + e.message)
+          }, indicator.modalityState)
         }
       }
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-      Messages.showErrorDialog(contentPanel, "Error saving merged data: " + e.message)
-    }
+    })
 
     updateModelFromFiles()
   }
 
-  private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution) {
+  @CalledInAwt
+  private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution, data: MergeData) {
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException("File is read-only: " + file.presentableName)
     }
 
     val isCurrent = resolution == MergeSession.Resolution.AcceptedYours
-    val data = mergeProvider.loadRevisions(file)
-
     writeCommandAction(project).withName("Accept " + if (isCurrent) "Yours" else "Theirs").run<Exception> {
       if (isCurrent) {
         file.setBinaryContent(data.CURRENT)
@@ -388,27 +366,28 @@ open class MultipleFileMergeDialog(
     }
 
     for (file in files) {
-      val mergeData: MergeData
+      val conflictData: ConflictData
       try {
-        mergeData = mergeProvider.loadRevisions(file)
+        conflictData = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ConflictData, VcsException> {
+          val mergeData = mergeProvider.loadRevisions(file)
+
+          val leftTitle = mergeDialogCustomizer.getLeftPanelTitle(file)
+          val baseTitle = mergeDialogCustomizer.getCenterPanelTitle(file)
+          val rightTitle = mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
+          val title = mergeDialogCustomizer.getMergeWindowTitle(file)
+
+          ConflictData(mergeData, title, listOf(leftTitle, baseTitle, rightTitle))
+        }, "Loading Revisions...", true, project)
       }
       catch (ex: VcsException) {
         Messages.showErrorDialog(contentPanel, "Error loading revisions to merge: " + ex.message)
         break
       }
 
-      if (mergeData.CURRENT == null || mergeData.LAST == null || mergeData.ORIGINAL == null) {
-        Messages.showErrorDialog(contentPanel, "Error loading revisions to merge")
-        break
-      }
-
-      val leftTitle = mergeDialogCustomizer.getLeftPanelTitle(file)
-      val baseTitle = mergeDialogCustomizer.getCenterPanelTitle(file)
-      val rightTitle = mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
-      val title = mergeDialogCustomizer.getMergeWindowTitle(file)
-
+      val mergeData = conflictData.mergeData
       val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
-      val contentTitles = listOf(leftTitle, baseTitle, rightTitle)
+      val contentTitles = conflictData.contentTitles
+      val title = conflictData.title
 
       val callback = { result: MergeResult ->
         val document = FileDocumentManager.getInstance().getCachedDocument(file)
@@ -416,7 +395,9 @@ open class MultipleFileMergeDialog(
         checkMarkModifiedProject(file)
 
         if (result != MergeResult.CANCEL) {
-          markFileProcessed(file, getSessionResolution(result))
+          ProgressManager.getInstance().runProcessWithProgressSynchronously({
+            markFileProcessed(file, getSessionResolution(result))
+          }, "Resolving Conflicts...", true, project, contentPanel)
         }
       }
 
@@ -456,7 +437,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun checkMarkModifiedProject(file: VirtualFile) {
-    MergeVersion.MergeDocumentVersion.reportProjectFileChangeIfNeeded(project, file)
+    MergeUtil.reportProjectFileChangeIfNeeded(project, file)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? = table
@@ -466,4 +447,7 @@ open class MultipleFileMergeDialog(
     private val LOG = Logger.getInstance(MultipleFileMergeDialog::class.java)
   }
 
+  private data class ConflictData(val mergeData: MergeData,
+                                  val title: String,
+                                  val contentTitles: List<String>)
 }

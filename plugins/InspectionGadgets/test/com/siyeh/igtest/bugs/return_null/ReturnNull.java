@@ -45,4 +45,14 @@ class B implements A<Void> {
             }
         };
     }
+
+    static <T extends @Nullable CharSequence> void nnn(T t) {
+        System.out.println(t.length()); // correctly understands that t is nullable and warns
+        java.util.function.Function<String, T> f = s  -> null; // should not warn here
+    }
+}
+class Test {
+    void foo() {
+        Function<String, @Nullable String> f = s  -> null;
+    }
 }

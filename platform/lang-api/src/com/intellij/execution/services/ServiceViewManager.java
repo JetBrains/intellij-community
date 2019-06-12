@@ -14,5 +14,5 @@ public interface ServiceViewManager {
   }
 
   @NotNull
-  Promise<Void> selectNode(Object node, boolean activate, boolean focus);
+  Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus);
 }

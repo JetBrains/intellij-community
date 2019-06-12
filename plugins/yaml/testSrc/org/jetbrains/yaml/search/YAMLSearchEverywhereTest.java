@@ -61,7 +61,7 @@ public class YAMLSearchEverywhereTest extends LightPlatformCodeInsightFixtureTes
     StringBuilder builder = new StringBuilder();
     for (String request : requests) {
       addRequestToResult(builder, request);
-      ContributorSearchResult<YAMLKeyNavigationItem> result = contributor.search(request, true, null, new MockProgressIndicator(), 15);
+      ContributorSearchResult<YAMLKeyNavigationItem> result = contributor.search(request, new MockProgressIndicator(), 15);
       for (YAMLKeyNavigationItem item : result.getItems()) {
         item.navigate(true);
         PsiElement element = myFixture.getElementAtCaret();

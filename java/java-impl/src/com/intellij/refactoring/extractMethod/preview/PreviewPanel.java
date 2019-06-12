@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.IdeBundle;
@@ -18,10 +18,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usages.impl.UsageModelTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.DialogUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -173,7 +173,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     private boolean myModified; // Accessed in EDT
 
     ButtonsPanel(@NotNull Project project) {
-      super(new FlowLayout(FlowLayout.LEFT, JBUI.scale(8), 0));
+      super(new FlowLayout(FlowLayout.LEFT, JBUIScale.scale(8), 0));
       myProject = project;
 
       myRefactorButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.refactor"));

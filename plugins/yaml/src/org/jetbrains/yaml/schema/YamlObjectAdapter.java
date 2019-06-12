@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -89,7 +89,7 @@ public class YamlObjectAdapter implements JsonObjectValueAdapter {
   @NotNull
   private List<JsonPropertyAdapter> computeChildAdapters() {
     Collection<YAMLKeyValue> keyValues = myObject.getKeyValues();
-    List<JsonPropertyAdapter> adapters = ContainerUtil.newArrayListWithCapacity(keyValues.size());
+    List<JsonPropertyAdapter> adapters = new ArrayList<>(keyValues.size());
     for (YAMLKeyValue value : keyValues) {
       if (addPropertiesFromReferencedObject(adapters, value)) continue;
       adapters.add(new YamlPropertyAdapter(value));

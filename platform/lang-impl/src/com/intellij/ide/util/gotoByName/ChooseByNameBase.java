@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -57,6 +57,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
@@ -111,8 +112,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   JScrollPane myListScrollPane; // Located in the layered pane
   private final SmartPointerListModel<Object> myListModel = new SmartPointerListModel<>();
   protected final JList<Object> myList = new JBList<>(myListModel);
-  private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
-  private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
+  private final List<Pair<String, Integer>> myHistory = new ArrayList<>();
+  private final List<Pair<String, Integer>> myFuture = new ArrayList<>();
 
   protected ChooseByNamePopupComponent.Callback myActionListener;
 
@@ -447,7 +448,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myTextFieldPanel.add(myTextField);
     Font editorFont = EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
-    myTextField.putClientProperty("caretWidth", JBUI.scale(EditorUtil.getDefaultCaretWidth()));
+    myTextField.putClientProperty("caretWidth", JBUIScale.scale(EditorUtil.getDefaultCaretWidth()));
 
     if (checkBoxName != null) {
       if (myCheckBoxShortcut != null) {
@@ -1193,7 +1194,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       String commonPrefix = null;
       if (!list.isEmpty()) {
         for (String name : list) {
-          final String string = name.toLowerCase();
+          final String string = StringUtil.toLowerCase(name);
           if (commonPrefix == null) {
             commonPrefix = string;
           }
@@ -1211,7 +1212,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
         for (int i = 1; i < list.size(); i++) {
           final String string = list.get(i).substring(0, commonPrefix.length());
           if (!string.equals(commonPrefix)) {
-            commonPrefix = commonPrefix.toLowerCase();
+            commonPrefix = StringUtil.toLowerCase(commonPrefix);
             break;
           }
         }
@@ -1361,7 +1362,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
         int count = elements.size();
         if (count > lastCount) {
-          setElementsToList(mySelectionPolicy, ContainerUtil.newArrayList(elements));
+          setElementsToList(mySelectionPolicy, new ArrayList<>(elements));
           if (currentChosenInfo != null) {
             mySelectionPolicy = PreserveSelection.INSTANCE;
           }
@@ -1467,7 +1468,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   @NotNull
   private static String patternToLowerCase(@NotNull String pattern) {
-    return pattern.toLowerCase(Locale.US);
+    return StringUtil.toLowerCase(pattern);
   }
 
   @Override

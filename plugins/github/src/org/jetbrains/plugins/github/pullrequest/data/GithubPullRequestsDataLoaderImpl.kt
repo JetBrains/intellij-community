@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.google.common.cache.CacheBuilder
@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
@@ -29,10 +28,7 @@ internal class GithubPullRequestsDataLoaderImpl(private val project: Project,
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
     .removalListener<Long, GithubPullRequestDataProviderImpl> {
-      runInEdt {
-        Disposer.dispose(it.value)
-        invalidationEventDispatcher.multicaster.providerChanged(it.key)
-      }
+      runInEdt { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
     }
     .maximumSize(5)
     .build<Long, GithubPullRequestDataProviderImpl>()

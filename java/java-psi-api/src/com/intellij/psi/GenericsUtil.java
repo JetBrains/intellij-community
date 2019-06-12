@@ -307,8 +307,10 @@ public class GenericsUtil {
     if (refClass instanceof PsiAnonymousClass) {
       type = ((PsiAnonymousClass)refClass).getBaseClassType();
     }
-    if (type instanceof PsiCapturedWildcardType) {
-      type = ((PsiCapturedWildcardType)type).getUpperBound();
+    PsiType deepComponentType = type.getDeepComponentType();
+    if (deepComponentType instanceof PsiCapturedWildcardType) {
+      type = PsiTypesUtil.createArrayType(((PsiCapturedWildcardType)deepComponentType).getUpperBound(),
+                                          type.getArrayDimensions());
     }
     PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
       @Override

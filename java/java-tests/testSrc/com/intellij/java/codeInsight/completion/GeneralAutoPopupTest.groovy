@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionAutoPopupTestCase
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.InjectedLanguagePlaces
 import com.intellij.psi.LanguageInjector
@@ -61,5 +62,28 @@ class GeneralAutoPopupTest extends CompletionAutoPopupTestCase {
     
     assert injectorCalled
     assert !lookup
+  }
+
+  void "test don't close lookup when starting a new line after dot"() {
+    myFixture.configureByText 'a.java', 'class Foo {{ "abc"<caret> }}'
+    type '.'
+    assert lookup
+    edt {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE)
+      assert lookup
+      assert lookup.lookupStart == myFixture.editor.caretModel.offset
+      assert myFixture.editor.document.text.contains('\n')
+    }
+  }
+
+  void "test close lookup when starting a new line after having typed an identifier manually"() {
+    myFixture.configureByText 'a.java', 'class Foo { int a, ab; { new Foo()<caret> }}'
+    type '.a'
+    assert lookup
+    edt {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE)
+      assert !lookup
+      assert myFixture.editor.document.text.contains('\n')
+    }
   }
 }

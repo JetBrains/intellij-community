@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -27,6 +27,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -36,7 +37,10 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.history.FileHistoryUtil;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.MergedChange;
+import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -49,9 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -72,9 +75,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   @NotNull private final VcsLogUiProperties.PropertiesChangeListener myListener;
 
-  @NotNull private final Set<VirtualFile> myRoots = ContainerUtil.newHashSet();
-  @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
-  @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
+  @NotNull private final Set<VirtualFile> myRoots = new HashSet<>();
+  @NotNull private final List<Change> myChanges = new ArrayList<>();
+  @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new HashMap<>();
   @Nullable private Collection<FilePath> myAffectedPaths;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
@@ -151,13 +154,23 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     );
   }
 
-  public void resetSelectedDetails() {
+  private void updateModel(@NotNull Runnable update) {
     myChanges.clear();
     myChangesToParents.clear();
     myRoots.clear();
-    myViewer.setEmptyText("");
+
+    update.run();
+
     myViewer.rebuildTree();
     myDispatcher.getMulticaster().onModelUpdated();
+  }
+
+  public void resetSelectedDetails() {
+    updateModel(() -> myViewer.setEmptyText(""));
+  }
+
+  public void showText(@NotNull Consumer<StatusText> statusTextConsumer) {
+    updateModel(() -> statusTextConsumer.accept(myViewer.getEmptyText()));
   }
 
   public void setAffectedPaths(@Nullable Collection<FilePath> paths) {
@@ -166,24 +179,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   }
 
   public void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    setSelectedDetails(detailsList, false);
-  }
-
-  private void setSelectedDetails(@NotNull List<? extends VcsFullCommitDetails> detailsList, boolean showBigCommits) {
-    myChanges.clear();
-    myChangesToParents.clear();
-    myRoots.clear();
-
-    if (detailsList.isEmpty()) {
-      myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
-    }
-    else {
-      int maxSize = VcsLogUtil.getMaxSize(detailsList);
-      if (maxSize > VcsLogUtil.getShownChangesLimit() && !showBigCommits) {
-        String commitText = detailsList.size() == 1 ? "This commit" : "One of the selected commits";
-        String sizeText = getSizeText(maxSize);
-        myViewer.getEmptyText().setText(commitText + " has " + sizeText + " changes").
-          appendSecondaryText("Show anyway", VcsLogUiUtil.getLinkAttributes(), e -> setSelectedDetails(detailsList, true));
+    updateModel(() -> {
+      if (detailsList.isEmpty()) {
+        myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
       }
       else {
         myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
@@ -205,37 +203,26 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
                                   e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
           }
           else {
-            myViewer.setEmptyText("");
+            setEmptyAffectedText();
           }
         }
         else {
           myChanges.addAll(VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges));
-          myViewer.setEmptyText("");
+          setEmptyAffectedText();
         }
       }
-    }
-
-    myViewer.rebuildTree();
-    myDispatcher.getMulticaster().onModelUpdated();
+    });
   }
 
-  @NotNull
-  private static String getSizeText(int maxSize) {
-    if (maxSize < 1000) {
-      return String.valueOf(maxSize);
+  private void setEmptyAffectedText() {
+    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) {
+      myViewer.setEmptyText("");
     }
-    DecimalFormat format = new DecimalFormat("#.#");
-    format.setRoundingMode(RoundingMode.FLOOR);
-    if (maxSize < 10_000) {
-      return format.format(maxSize / 1000.0) + "K";
+    else {
+      myViewer.getEmptyText().setText("No changes that affect selected filters.").
+        appendSecondaryText("Show all changes", VcsLogUiUtil.getLinkAttributes(),
+                            e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
-    else if (maxSize < 1_000_000) {
-      return (maxSize / 1000) + "K";
-    }
-    else if (maxSize < 10_000_000) {
-      return format.format(maxSize / 1_000_000.0) + "M";
-    }
-    return (maxSize / 1_000_000) + "M";
   }
 
   @NotNull
@@ -248,7 +235,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @Override
   protected DefaultTreeModel buildTreeModel() {
     Collection<Change> changes = collectAffectedChanges(myChanges);
-    Map<CommitId, Collection<Change>> changesToParents = ContainerUtil.newHashMap();
+    Map<CommitId, Collection<Change>> changesToParents = new HashMap<>();
     for (Map.Entry<CommitId, Set<Change>> entry : myChangesToParents.entrySet()) {
       changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
     }
@@ -273,7 +260,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   @NotNull
   private Collection<Change> collectAffectedChanges(@NotNull Collection<Change> changes) {
-    if (!isShowOnlyAffected() || myAffectedPaths == null) return changes;
+    if (!isShowOnlyAffectedSelected() || myAffectedPaths == null) return changes;
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(myAffectedPaths, filePath -> {
       if (filePath.isDirectory()) {
         return FileHistoryUtil.affectsDirectory(change, filePath);
@@ -290,7 +277,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
            myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
   }
 
-  private boolean isShowOnlyAffected() {
+  private boolean isShowOnlyAffectedSelected() {
     return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
            myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }
@@ -345,7 +332,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     if (!(userObject instanceof Change)) return null;
     Change change = (Change)userObject;
 
-    Map<Key, Object> context = ContainerUtil.newHashMap();
+    Map<Key, Object> context = new HashMap<>();
     if (!(change instanceof MergedChange)) {
       putRootTagIntoChangeContext(change, context);
     }

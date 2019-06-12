@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.paint;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.paint.ImageComparator.AASmootherComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -43,7 +42,8 @@ public abstract class AbstractPainter2DTest {
 
   private void testGolden(ImageComparator comparator, int scale, boolean jreHiDPIEnabled) {
     overrideJreHiDPIEnabled(jreHiDPIEnabled);
-    JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : scale);
+    float scale1 = jreHiDPIEnabled ? 1 : scale;
+    JBUIScale.setUserScaleFactor(scale1);
 
     BufferedImage image = supplyGraphics(scale, getImageSize().width, getImageSize().height, this::paint);
 
@@ -57,7 +57,7 @@ public abstract class AbstractPainter2DTest {
     BufferedImage image = new BufferedImage((int)ceil(width * scale), (int)ceil(height * scale), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
     try {
-      double gScale = UIUtil.isJreHiDPIEnabled() ? scale : 1;
+      double gScale = JreHiDpiUtil.isJreHiDPIEnabled() ? scale : 1;
       g.scale(gScale, gScale);
       g.setColor(Color.white);
       g.fillRect(0, 0, image.getWidth(), image.getHeight());
@@ -83,13 +83,14 @@ public abstract class AbstractPainter2DTest {
   }
 
   protected static void compare(BufferedImage img1, BufferedImage img2, ImageComparator comparator, double scale) {
-    comparator.compareAndAssert(img1, img2, "images mismatch: JreHiDPIEnabled=" + UIUtil.isJreHiDPIEnabled() + "; scale=" + scale + "; ");
+    comparator.compareAndAssert(img1, img2, "images mismatch: JreHiDPIEnabled=" +
+                                            JreHiDpiUtil.isJreHiDPIEnabled() + "; scale=" + scale + "; ");
   }
 
   private String getGoldenImagePath(int scale) {
     return PlatformTestUtil.getPlatformTestDataPath() +
            "ui/paint/" + getGoldenImageName() +
-           (scale > 1 && UIUtil.isJreHiDPIEnabled() ? "_hd@" : "@") +
+           (scale > 1 && JreHiDpiUtil.isJreHiDPIEnabled() ? "_hd@" : "@") +
            scale + "x.png";
   }
 

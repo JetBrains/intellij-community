@@ -112,7 +112,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     scheduleRevisionsUpdate(null);
   }
 
-  protected void scheduleRevisionsUpdate(@Nullable final Consumer<T> configRunnable) {
+  protected void scheduleRevisionsUpdate(@Nullable final Consumer<? super T> configRunnable) {
     doScheduleUpdate(UPDATE_REVS, () -> {
       synchronized (myModel) {
         if (configRunnable != null) configRunnable.consume(myModel);
@@ -242,7 +242,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     });
   }
 
-  private void doScheduleUpdate(int id, final Computable<Runnable> update) {
+  private void doScheduleUpdate(int id, final Computable<? extends Runnable> update) {
     myUpdateQueue.queue(new Update(HistoryDialog.this, id) {
       @Override
       public boolean canEat(Update update1) {

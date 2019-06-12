@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.breadcrumbs;
 
 import com.intellij.json.JsonBundle;
@@ -10,7 +11,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,7 +60,7 @@ public class JsonBreadcrumbsProvider implements BreadcrumbsProvider {
   @Override
   public List<? extends Action> getContextActions(@NotNull PsiElement element) {
     JsonQualifiedNameKind[] values = JsonQualifiedNameKind.values();
-    List<Action> actions = ContainerUtil.newArrayListWithCapacity(values.length);
+    List<Action> actions = new ArrayList<>(values.length);
     for (JsonQualifiedNameKind kind: values) {
       actions.add(new AbstractAction(JsonBundle.message("json.copy.to.clipboard", kind.toString())) {
         @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -278,7 +278,7 @@ public class DfaPsiUtil {
 
     PsiMethod[] constructors = containingClass.getConstructors();
     if (constructors.length == 0) return false;
-    
+
     for (PsiMethod method : constructors) {
       if (!getNotNullInitializedFields(method, containingClass).contains(field)) {
         return false;
@@ -289,16 +289,16 @@ public class DfaPsiUtil {
 
   private static Set<PsiField> getNotNullInitializedFields(final PsiMethod constructor, final PsiClass containingClass) {
     if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return Collections.emptySet();
-    
+
     final PsiCodeBlock body = constructor.getBody();
     if (body == null) return Collections.emptySet();
-    
+
     return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<Set<PsiField>>() {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
-        final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
+        final Map<PsiField, Boolean> map = new HashMap<>();
         final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, null) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
@@ -356,7 +356,7 @@ public class DfaPsiUtil {
           }
         };
         final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
-        Set<PsiField> notNullFields = ContainerUtil.newHashSet();
+        Set<PsiField> notNullFields = new HashSet<>();
         if (rc == RunnerResult.OK) {
           for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {
             if (entry.getValue()) {
@@ -389,7 +389,7 @@ public class DfaPsiUtil {
       @NotNull
       @Override
       public Result<MultiMap<PsiField, PsiExpression>> compute() {
-        final Set<String> fieldNames = ContainerUtil.newHashSet();
+        final Set<String> fieldNames = new HashSet<>();
         for (PsiField field : psiClass.getFields()) {
           ContainerUtil.addIfNotNull(fieldNames, field.getName());
         }

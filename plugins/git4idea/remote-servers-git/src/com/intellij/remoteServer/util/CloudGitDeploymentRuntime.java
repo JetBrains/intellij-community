@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +22,7 @@ import com.intellij.remoteServer.agent.util.CloudGitApplication;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.Semaphore;
 import git4idea.GitUtil;
 import git4idea.actions.GitInit;
@@ -46,21 +46,19 @@ import java.util.List;
  * @author michael.golubev
  */
 public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
-
   private static final Logger LOG = Logger.getInstance(CloudGitDeploymentRuntime.class);
 
   private static final String COMMIT_MESSAGE = "Deploy";
 
   private static final CommitSession NO_COMMIT = new CommitSession() {
     @Override
-    public void execute(Collection<Change> changes, String commitMessage) {
-
+    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
     }
   };
 
   private static final List<CommitExecutor> ourCommitExecutors = Arrays.asList(
     new CommitExecutor() {
-
+      @NotNull
       @Nls
       @Override
       public String getActionText() {
@@ -74,12 +72,13 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
       @NotNull
       @Override
-      public CommitSession createCommitSession() {
+      public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
         return CommitSession.VCS_COMMIT;
       }
     },
     new CommitExecutorBase() {
 
+      @NotNull
       @Nls
       @Override
       public String getActionText() {
@@ -88,7 +87,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
       @NotNull
       @Override
-      public CommitSession createCommitSession() {
+      public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
         return NO_COMMIT;
       }
 
@@ -352,7 +351,6 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   protected void refreshApplicationRepository() {
     Project project = getProject();
     GitInit.refreshAndConfigureVcsMappings(project, getRepositoryRoot(), getRepositoryRootFile().getAbsolutePath());
-    GitUtil.proposeUpdateGitignore(project, getRepositoryRoot());
   }
 
   protected void pushApplication(@NotNull CloudGitApplication application) throws ServerRuntimeException {
@@ -472,7 +470,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       repositoryUrls.addAll(remote.getUrls());
     }
 
-    return getAgentTaskExecutor().execute(() -> getDeployment().findApplication4Repository(ArrayUtil.toStringArray(repositoryUrls)));
+    return getAgentTaskExecutor().execute(() -> getDeployment().findApplication4Repository(ArrayUtilRt.toStringArray(repositoryUrls)));
   }
 
   public class CloneJob {

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil.isInheritor
@@ -104,11 +105,9 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     }
     val clazz = parent.resolveClassFqn(facade, scope)
     if (clazz != null) {
-      val p = facade.findPackage(qname)
-      if (isQualified && p == null) {
-        log.error("Found a class '${clazz.qualifiedName}' but not a package '$qname'")
+      return facade.findPackage(qname) ?: object : PsiPackageImpl(manager, qname) {
+        override fun isValid(): Boolean = !manager.isDisposed
       }
-      return p
     }
   }
 

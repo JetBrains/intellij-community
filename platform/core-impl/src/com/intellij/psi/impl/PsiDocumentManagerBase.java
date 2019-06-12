@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -942,7 +942,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {
-    return !virtualFile.getFileType().isBinary() && !myProject.isDisposed();
+    return !myProject.isDisposed() && !virtualFile.getFileType().isBinary();
   }
 
   public static boolean checkConsistency(@NotNull PsiFile psiFile, @NotNull Document document) {
@@ -1058,7 +1058,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private static class UncommittedInfo {
     private final FrozenDocument myFrozen;
-    private final List<DocumentEvent> myEvents = ContainerUtil.newArrayList();
+    private final List<DocumentEvent> myEvents = new ArrayList<>();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = ContainerUtil.newConcurrentMap();
 
     private UncommittedInfo(@NotNull DocumentImpl original) {

@@ -7,7 +7,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -34,6 +37,21 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   @NotNull
   public List<T> getExtensionList() {
     return getPoint(null).getExtensionList();
+  }
+
+  public void forEachExtensionSafe(Consumer<T> consumer) {
+    getPoint(null).forEachExtensionSafe(consumer);
+  }
+
+  @NotNull
+  public List<T> getExtensionsIfPointIsRegistered() {
+    return getExtensionsIfPointIsRegistered(null);
+  }
+
+  @NotNull
+  public List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
+    ExtensionPoint<T> point = Extensions.getArea(areaInstance).getExtensionPointIfRegistered(getName());
+    return point == null ? Collections.emptyList() : point.getExtensionList();
   }
 
   @NotNull
@@ -114,5 +132,11 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   @ApiStatus.Experimental
   public Iterable<T> getIterable() {
     return getIterable(null);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void processWithPluginDescriptor(@NotNull BiConsumer<T, PluginDescriptor> consumer) {
+    (((ExtensionPointImpl<T>)getPoint(null))).processWithPluginDescriptor(consumer);
   }
 }

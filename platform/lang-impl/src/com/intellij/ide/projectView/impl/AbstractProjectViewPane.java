@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -43,6 +43,7 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -169,7 +170,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
    */
   @NotNull
   public String[] getSubIds(){
-    return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @NotNull
@@ -296,6 +297,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     return result;
+  }
+
+  public boolean isAutoScrollEnabledFor(@NotNull VirtualFile file) {
+    return true;
   }
 
   @Override
@@ -492,10 +497,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public final void restoreExpandedPaths(){
-    if (myTreeStateRestored.getAndSet(true)) return;
+    if (myTree == null || myTreeStateRestored.getAndSet(true)) return;
     TreeState treeState = myReadTreeState.get(getSubId());
-    if (myTree != null && treeState != null && !treeState.isEmpty()) {
+    if (treeState != null && !treeState.isEmpty()) {
       treeState.applyTo(myTree);
+    }
+    else if (myTree.isSelectionEmpty()) {
+      TreeUtil.promiseSelectFirst(myTree).onSuccess(myTree::expandPath);
     }
   }
 
@@ -527,7 +535,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @NotNull
   public PsiDirectory[] getSelectedDirectories() {
-    List<PsiDirectory> directories = ContainerUtil.newArrayList();
+    List<PsiDirectory> directories = new ArrayList<>();
     for (PsiDirectoryNode node : getSelectedNodes(PsiDirectoryNode.class)) {
       PsiDirectory directory = node.getValue();
       if (directory != null) {

@@ -7,11 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
+import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -19,9 +21,9 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +34,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -158,8 +161,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       child = createChild(nameId, id, delegate, attributes, isEmptyDirectory);
 
       addChild(child);
-
-      ((PersistentFSImpl)ourPersistence).incStructuralModificationCount();
     }
 
     if (!child.isDirectory()) {
@@ -213,8 +214,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                             @NotNull NewVirtualFileSystem delegate,
                                             @NotNull FileAttributes attributes,
                                             boolean isEmptyDirectory) {
+    int nameId = FileNameCache.storeName(name);
     synchronized (myData) {
-      return createChild(FileNameCache.storeName(name), id, delegate, attributes, isEmptyDirectory);
+      return createChild(nameId, id, delegate, attributes, isEmptyDirectory);
     }
   }
 
@@ -477,11 +479,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
-        assert info.id > 0 : info;
-        FileAttributes attributes = info.attributes;
-        String name = info.name;
-        boolean isEmptyDirectory = info.children != null && info.children.length == 0;
-        VirtualFileSystemEntry file = createChild(name, info.id, getFileSystem(), attributes, isEmptyDirectory);
+        assert info.getId() > 0 : info;
+        FileAttributes attributes = info.getFileAttributes();
+        boolean isEmptyDirectory = info.getChildren() != null && info.getChildren().length == 0;
+        VirtualFileSystemEntry file;
+        synchronized (myData) {
+          file = createChild(info.getNameId(), info.getId(), getFileSystem(), attributes, isEmptyDirectory);
+        }
         addChild(file);
         fileCreated.consume(file, info);
       }
@@ -493,7 +497,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     // optimization: when there are many children, it's cheaper to
     // merge sorted added and existing lists just like in merge sort
     final boolean caseSensitive = getFileSystem().isCaseSensitive();
-    Comparator<ChildInfo> pairComparator = (p1, p2) -> compareNames(p1.name, p2.name, caseSensitive);
+    Comparator<ChildInfo> pairComparator = (p1, p2) -> compareNames(p1.getName(), p2.getName(), caseSensitive);
     added.sort(pairComparator);
 
     synchronized (myData) {
@@ -502,20 +506,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
-        assert info.id > 0 : info;
-        FileAttributes attributes = info.attributes;
-        String name = info.name;
-        boolean isEmptyDirectory = info.children != null && info.children.length == 0;
-        myData.removeAdoptedName(name);
-        VirtualFileSystemEntry file = createChild(name, info.id, getFileSystem(), attributes, isEmptyDirectory);
+        assert info.getId() > 0 : info;
+        FileAttributes attributes = info.getFileAttributes();
+        boolean isEmptyDirectory = info.getChildren() != null && info.getChildren().length == 0;
+        myData.removeAdoptedName(info.getName());
+        VirtualFileSystemEntry file = createChild(info.getNameId(), info.getId(), getFileSystem(), attributes, isEmptyDirectory);
         fileCreated.consume(file, info);
       }
       List<ChildInfo> existingChildren = new AbstractList<ChildInfo>() {
         @Override
         public ChildInfo get(int index) {
           int id = oldIds[index];
-          CharSequence name = ObjectUtils.assertNotNull(mySegment.vfsData.getNameByFileId(id));
-          return new ChildInfo(id, name.toString(), null, null, null/*irrelevant here*/);
+          int nameId = mySegment.vfsData.getNameId(id);
+          return new ChildInfoImpl(id, nameId, null, null, null/*irrelevant here*/);
         }
 
         @Override
@@ -523,7 +526,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return oldIds.length;
         }
       };
-      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, nextInfo -> mergedIds.add(nextInfo.id));
+      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, nextInfo -> mergedIds.add(nextInfo.getId()));
       myData.myChildrenIds = mergedIds.toNativeArray();
 
       if (markAllChildrenLoaded) {
@@ -586,7 +589,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
       if (o != newIds.length) {
-        newIds = o == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
+        newIds = o == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
       }
       myData.myChildrenIds = newIds;
 

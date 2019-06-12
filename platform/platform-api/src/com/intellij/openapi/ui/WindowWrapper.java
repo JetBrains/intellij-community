@@ -28,7 +28,7 @@ public interface WindowWrapper extends Disposable {
 
   void setTitle(@Nullable String title);
 
-  void setImages(@Nullable List<Image> images);
+  void setImages(@Nullable List<? extends Image> images);
 
   void close();
 }

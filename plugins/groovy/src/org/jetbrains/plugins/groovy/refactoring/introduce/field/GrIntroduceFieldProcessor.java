@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -22,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +119,7 @@ public class GrIntroduceFieldProcessor {
 
     if (mySettings.replaceAllOccurrences()) {
       GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
-      ArrayList<PsiElement> result = ContainerUtil.newArrayList();
+      ArrayList<PsiElement> result = new ArrayList<>();
       for (PsiElement occurrence : myContext.getOccurrences()) {
         result.add(replaceOccurrence(field, occurrence, targetClass));
       }
@@ -277,7 +264,7 @@ public class GrIntroduceFieldProcessor {
     LOG.assertTrue(name != null, scope.getText());
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myContext.getProject());
     final GrMethod
-      constructor = factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", scope);
+      constructor = factory.createConstructorFromText(name, ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY, "{}", scope);
     if (scope instanceof GroovyScriptClass) constructor.getModifierList().setModifierProperty(GrModifier.DEF, true);
     return (PsiMethod)scope.add(constructor);
   }
@@ -387,7 +374,7 @@ public class GrIntroduceFieldProcessor {
     if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) modifiers.add(modifier);
     if (mySettings.declareFinal()) modifiers.add(PsiModifier.FINAL);
 
-    final String[] arr_modifiers = ArrayUtil.toStringArray(modifiers);
+    final String[] arr_modifiers = ArrayUtilRt.toStringArray(modifiers);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myContext.getProject());
     if (targetClass instanceof GroovyScriptClass) {
       return factory.createVariableDeclaration(arr_modifiers, ((GrExpression)null), type, name);

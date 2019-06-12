@@ -176,7 +176,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final String filePath = virtualFile.getPath();
 
 
-    List<Trinity<String, String, GroovyDslScript>> supers = ContainerUtil.newArrayList();
+    List<Trinity<String, String, GroovyDslScript>> supers = new ArrayList<>();
     final Project project = scriptFile.getProject();
     for (GroovyDslScript script : getDslScripts(project)) {
       final MultiMap staticInfo = script.getStaticInfo();
@@ -268,14 +268,14 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static List<VirtualFile> getGdslFiles(final Project project) {
-    final List<VirtualFile> result = ContainerUtil.newArrayList();
+    final List<VirtualFile> result = new ArrayList<>();
     result.addAll(bundledGdslFiles.getValue());
     result.addAll(getProjectGdslFiles(project));
     return result;
   }
 
   private static final NotNullLazyValue<List<VirtualFile>> bundledGdslFiles = NotNullLazyValue.createValue(() -> {
-    final List<VirtualFile> result = ContainerUtil.newArrayList();
+    final List<VirtualFile> result = new ArrayList<>();
     for (File file : getBundledScriptFolders()) {
       if (file.exists()) {
         File[] children = file.listFiles();
@@ -295,7 +295,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   });
 
   private static List<VirtualFile> getProjectGdslFiles(Project project) {
-    final List<VirtualFile> result = ContainerUtil.newArrayList();
+    final List<VirtualFile> result = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 

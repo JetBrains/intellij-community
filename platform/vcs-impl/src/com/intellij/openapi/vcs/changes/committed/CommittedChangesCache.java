@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -633,7 +633,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
 
     @Override
-    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<RepositoryLocation> in) {
+    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<? extends RepositoryLocation> in) {
       return myVcsZipper.groupLocations(in);
     }
 
@@ -753,7 +753,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     if (myPendingUpdateCount == 0) {
       notifyIncomingChangesUpdated(myNewIncomingChanges);
       if (incomingChangesConsumer != null) {
-        incomingChangesConsumer.consume(ContainerUtil.newArrayList(myNewIncomingChanges));
+        incomingChangesConsumer.consume(new ArrayList<>(myNewIncomingChanges));
       }
       myNewIncomingChanges.clear();
     }

@@ -24,10 +24,11 @@ import org.jetbrains.intellij.build.ProductProperties
  */
 @CompileStatic
 class VmOptionsGenerator {
-  private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
+  private static final String COMMON_VM_OPTIONS = "-XX:+UseG1GC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                           "-Dsun.io.useCanonPrefixCache=false -Djava.net.preferIPv4Stack=true " +
                                           "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
-                                          "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
+                                          "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow " +
+                                          "-Djdk.attach.allowAttachSelf"
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)

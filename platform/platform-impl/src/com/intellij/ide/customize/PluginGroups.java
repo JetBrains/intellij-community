@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 public class PluginGroups {
   static final String CORE = "Core";
   private static final int MAX_DESCR_LENGTH = 55;
-  
+
   public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
   final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
@@ -41,7 +41,7 @@ public class PluginGroups {
   private Runnable myLoadingCallback = null;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadDescriptors(null, ContainerUtil.newArrayList());
+    myAllPlugins = PluginManagerCore.loadDescriptors(new ArrayList<>());
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
       protected List<IdeaPluginDescriptor> doInBackground() throws Exception {
@@ -120,7 +120,7 @@ public class PluginGroups {
       "com.intellij.vaadin",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
-      "Struts:StrutsAssistant,com.intellij.struts2",
+      "Struts:com.intellij.struts2",
       "com.intellij.hibernate",
       "Spring:com.intellij.spring.batch," +
       "com.intellij.spring.data," +
@@ -198,13 +198,13 @@ public class PluginGroups {
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)
-    tree.put("Swing", Pair.create(PlatformImplIcons.Swing, Arrays.asList(
+    tree.put("Swing", Pair.create(PlatformImplIcons.Swing, Collections.singletonList(
       "com.intellij.uiDesigner"//TODO JavaFX?
     )));
     tree.put("Android", Pair.create(PlatformImplIcons.Android, Arrays.asList(
       "org.jetbrains.android",
       "com.intellij.android-designer")));
-    tree.put("Database Tools", Pair.create(PlatformImplIcons.DatabaseTools, Arrays.asList(
+    tree.put("Database Tools", Pair.create(PlatformImplIcons.DatabaseTools, Collections.singletonList(
       "com.intellij.database"
     )));
     tree.put("Other Tools", Pair.create(PlatformImplIcons.OtherTools, Arrays.asList(
@@ -219,7 +219,7 @@ public class PluginGroups {
       "org.jetbrains.plugins.yaml",
       "XSLT and XPath:XPathView,XSLT-Debugger"
     )));
-    tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Arrays.asList("DevKit")));
+    tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Collections.singletonList("DevKit")));
 
     initFeaturedPlugins(featuredPlugins);
   }
@@ -276,7 +276,7 @@ public class PluginGroups {
                         "Tools Integration:Integration with JetBrains TeamCity - innovative solution for continuous integration and build management:Jetbrains TeamCity Plugin");
   }
 
-  private void initIfNeed() {
+  private void initIfNeeded() {
     if (myInitialized) return;
     myInitialized = true;
     for (Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
@@ -307,22 +307,22 @@ public class PluginGroups {
   }
 
   Map<String, Pair<Icon, List<String>>> getTree() {
-    initIfNeed();
+    initIfNeeded();
     return myTree;
   }
 
   Map<String, String> getFeaturedPlugins() {
-    initIfNeed();
+    initIfNeeded();
     return myFeaturedPlugins;
   }
 
   public String getDescription(String group) {
-    initIfNeed();
+    initIfNeeded();
     return myDescriptions.get(group);
   }
 
   public List<IdSet> getSets(String group) {
-    initIfNeed();
+    initIfNeeded();
     return myGroups.get(group);
   }
 
@@ -359,12 +359,12 @@ public class PluginGroups {
   }
 
   boolean isPluginEnabled(String pluginId) {
-    initIfNeed();
+    initIfNeeded();
     return !myDisabledPluginIds.contains(pluginId);
   }
 
   IdSet getSet(String pluginId) {
-    initIfNeed();
+    initIfNeeded();
     for (List<IdSet> sets : myGroups.values()) {
       for (IdSet set : sets) {
         for (String id : set.getIds()) {
@@ -386,7 +386,7 @@ public class PluginGroups {
   }
 
   void setPluginEnabledWithDependencies(final String pluginId, boolean enabled) {
-    initIfNeed();
+    initIfNeeded();
     Set<String> ids = new HashSet<>();
     collectInvolvedIds(pluginId, enabled, ids);
     Set<IdSet> sets = new HashSet<>();
@@ -409,7 +409,7 @@ public class PluginGroups {
     }
   }
 
-  private void collectInvolvedIds(final String pluginId, boolean toEnable, Set<String> ids) {
+  private void collectInvolvedIds(final String pluginId, boolean toEnable, Set<? super String> ids) {
     ids.add(pluginId);
     if (toEnable) {
       for (String id : getNonOptionalDependencies(pluginId)) {

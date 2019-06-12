@@ -5,7 +5,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
@@ -34,7 +34,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
   @Override
   public GrFieldStub createStub(@NotNull GrEnumConstant psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);
-    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtil.EMPTY_STRING_ARRAY,
+    return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, ArrayUtilRt.EMPTY_STRING_ARRAY,
                            GroovyStubElementTypes.ENUM_CONSTANT, GrFieldStub.buildFlags(psi), null);
   }
 

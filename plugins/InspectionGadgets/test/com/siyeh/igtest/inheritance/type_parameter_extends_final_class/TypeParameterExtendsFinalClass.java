@@ -54,4 +54,10 @@ class RedundantWildcardBug {
    */
   private static final class Range<C> {
   }
+
+  enum X {
+    A {}// remove braces and the warning on `T extends X` will appear
+  }
+  List<<warning descr="Wildcard type argument '?' extends implicitly final enum 'X'">?</warning> extends X> list;
+  <<warning descr="Type parameter 'T' extends implicitly final enum 'X'">T</warning> extends X> void test(T ob) { }
 }

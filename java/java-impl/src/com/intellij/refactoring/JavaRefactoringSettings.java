@@ -16,16 +16,16 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   // properties should be public in order to get saved by DefaultExternalizable implementation
 
   //public boolean RENAME_PREVIEW_USAGES = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = true;
-  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = true;
+  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = false;
+  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = false;
+  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = false;
+  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = false;
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = true;
 
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = true;
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_CLASS = true;
-  public boolean RENAME_SEARCH_FOR_TEXT_FOR_METHOD = true;
-  public boolean RENAME_SEARCH_FOR_TEXT_FOR_FIELD = true;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_METHOD = false;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_FIELD = false;
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = true;
 
   //public boolean ENCAPSULATE_FIELDS_PREVIEW_USAGES = true;

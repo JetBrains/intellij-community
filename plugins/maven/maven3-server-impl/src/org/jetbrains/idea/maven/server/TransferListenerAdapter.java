@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.ExceptionUtilRt;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.transfer.TransferEvent;
 import org.eclipse.aether.transfer.TransferListener;
@@ -50,10 +51,10 @@ public class TransferListenerAdapter implements TransferListener {
   @Override
   public void transferInitiated(TransferEvent event) {
     checkCanceled();
-
     try {
+      String eventString = formatResourceName(event);
       myIndicator.setIndeterminate(true);
-      myIndicator.setText2(formatResourceName(event));
+      myIndicator.setText2(eventString);
     }
     catch (RemoteException e) {
       throw new RuntimeRemoteException(e);
@@ -66,7 +67,7 @@ public class TransferListenerAdapter implements TransferListener {
   }
 
   @Override
-  public void transferProgressed(TransferEvent event) throws TransferCancelledException {
+  public void transferProgressed(TransferEvent event) {
     checkCanceled();
 
     TransferResource r = event.getResource();
@@ -111,7 +112,6 @@ public class TransferListenerAdapter implements TransferListener {
     try {
       myIndicator.setText2("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
       myIndicator.setIndeterminate(true);
-
       Maven3ServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
     }
     catch (RemoteException e) {

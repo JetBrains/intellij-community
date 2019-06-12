@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
-import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -21,13 +20,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumMap;
-import java.util.Map;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     PsiFile containingFile = ref.getContainingFile();
+    if (containingFile instanceof PsiJavaCodeReferenceCodeFragment &&
+        !((PsiJavaCodeReferenceCodeFragment)containingFile).isClassesAccepted()) {
+      return;
+    }
     if (PsiUtil.isModuleFile(containingFile)) {
       OrderEntryFix.registerFixes(registrar, ref);
       registrar.register(new CreateServiceImplementationClassFix(ref));
@@ -88,41 +89,20 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
   @NotNull
   private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
-    final Collection<IntentionAction> result = new ArrayList<>();
-
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
-    final VariableKind kind = getKind(styleManager, refExpr) ;
-
-    if (JvmElementActionFactories.useInterlaguageActions()) {
-      result.addAll(CreateFieldFromUsage.generateActions(refExpr));
-      if (!refExpr.isQualified()) {
-        IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
-        result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
-        IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
-        result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
-      }
-      return result;
-    }
-
-    final Map<VariableKind, IntentionAction> map = new EnumMap<>(VariableKind.class);
-    map.put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
-    map.put(VariableKind.STATIC_FINAL_FIELD, new CreateConstantFieldFromUsageFix(refExpr));
+    final Collection<IntentionAction> result = new ArrayList<>(CreateFieldFromUsage.generateActions(refExpr));
     if (!refExpr.isQualified()) {
-      map.put(VariableKind.LOCAL_VARIABLE, new CreateLocalFromUsageFix(refExpr));
-      map.put(VariableKind.PARAMETER, new CreateParameterFromUsageFix(refExpr));
+      final VariableKind kind = getKind(refExpr);
+      IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
+      result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
+      IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
+      result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
     }
-
-    if (map.containsKey(kind)) {
-      map.put(kind, PriorityIntentionActionWrapper.highPriority(map.get(kind)));
-    }
-
-    result.add(new CreateEnumConstantFromUsageFix(refExpr));
-    result.addAll(map.values());
     return result;
   }
 
   @Nullable
-  private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager, @NotNull PsiReferenceExpression refExpr) {
+  private static VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
     final String reference = refExpr.getText();
 
     if (StringUtil.isUpperCase(reference)) {

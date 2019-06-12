@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.NodeType;
 import org.intellij.lang.xpath.psi.XPathElementVisitor;
@@ -37,7 +38,7 @@ public class XPathNodeTypeTestImpl extends XPathFunctionCallImpl implements XPat
 
     @Override
     public NodeType getNodeType() {
-        return NodeType.valueOf(getFunctionName().replace('-', '_').toUpperCase());
+        return NodeType.valueOf(StringUtil.toUpperCase(getFunctionName().replace('-', '_')));
     }
 
     @Override
