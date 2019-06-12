@@ -14,18 +14,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class ShLiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
-  public void testBashShebang() {
-    doTest("sh<caret>", "#!/usr/bin/env sh\n");
-  }
-
-  public void testShShebang() {
-    doTest("sh<caret>", "#!/usr/bin/env sh\n");
-  }
-
-  public void testZshShebang() {
-    doTest("zsh<caret>", "#!/usr/bin/env zsh\n");
-  }
-
   public void testForiExpression() {
     doTest("fori<caret>", "for i in {1..5} ; do\n    \ndone");
   }

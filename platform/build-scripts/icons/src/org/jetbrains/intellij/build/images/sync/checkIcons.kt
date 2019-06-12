@@ -43,7 +43,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
       }
       catch (e: Throwable) {
         val investigator = Investigator(DEFAULT_INVESTIGATOR)
-        assignInvestigation(investigator, emptyList())
+        assignInvestigation(investigator)
         if (context.notifySlack) callSafely {
           notifySlackChannel(investigator, context)
         }
@@ -52,8 +52,6 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
       if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
         createReviewForDev(context)?.also {
           context.createdReviews = listOf(it)
-          assignInvestigation(Investigator(triggeredBy().email),
-                              context.createdReviews.map(Review::url))
         }
       }
     }

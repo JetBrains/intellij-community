@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.openapi.diagnostic.LogUtil;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -25,7 +26,7 @@ public class TokenSet {
   private final short myShift;
   private final short myMax;
   private final long[] myWords;
-  @Nullable private final IElementType.Predicate myOrCondition;
+  private final @Nullable IElementType.Predicate myOrCondition;
   private volatile IElementType[] myTypes;
 
   private TokenSet(short shift, short max, @Nullable IElementType.Predicate orCondition) {
@@ -192,7 +193,7 @@ public class TokenSet {
     IElementType.Predicate conjunction =
       orConditions.isEmpty() ? null :
       orConditions.size() == 1 ? orConditions.get(0) :
-      t -> a.myOrCondition.matches(t) && b.myOrCondition.matches(t);
+      t -> Objects.requireNonNull(a.myOrCondition).matches(t) && Objects.requireNonNull(b.myOrCondition).matches(t);
     TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax), conjunction);
     for (int i = 0; i < newSet.myWords.length; i++) {
       final int ai = newSet.myShift - a.myShift + i;
@@ -225,8 +226,7 @@ public class TokenSet {
     private final IElementType.Predicate[] myComponents;
 
     OrPredicate(List<IElementType.Predicate> components) {
-      myComponents = components
-        .stream()
+      myComponents = components.stream()
         .flatMap(p -> p instanceof OrPredicate ? Arrays.stream(((OrPredicate)p).myComponents) : Stream.of(p))
         .distinct()
         .toArray(IElementType.Predicate[]::new);
@@ -234,12 +234,7 @@ public class TokenSet {
 
     @Override
     public boolean matches(@NotNull IElementType t) {
-      for (IElementType.Predicate component : myComponents) {
-        if (component.matches(t)) {
-          return true;
-        }
-      }
-      return false;
+      return Arrays.stream(myComponents).anyMatch(component -> component.matches(t));
     }
   }
 }

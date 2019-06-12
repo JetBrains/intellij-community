@@ -742,7 +742,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     assert document instanceof DocumentImpl : document;
     UncommittedInfo info = myUncommittedInfos.get(document);
     if (info != null) {
-      return new ArrayList<>(info.myEvents);
+      //noinspection unchecked
+      return (List<DocumentEvent>)info.myEvents.clone();
     }
     return Collections.emptyList();
 
@@ -1058,7 +1059,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private static class UncommittedInfo {
     private final FrozenDocument myFrozen;
-    private final List<DocumentEvent> myEvents = new ArrayList<>();
+    private final ArrayList<DocumentEvent> myEvents = new ArrayList<>();
     private final ConcurrentMap<DocumentWindow, DocumentWindow> myFrozenWindows = ContainerUtil.newConcurrentMap();
 
     private UncommittedInfo(@NotNull DocumentImpl original) {

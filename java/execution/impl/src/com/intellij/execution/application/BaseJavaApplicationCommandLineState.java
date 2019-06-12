@@ -18,14 +18,14 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase&CommonJavaRunConfigurationParameters> extends JavaCommandLineState {
-  protected final T myConfiguration;
+  @NotNull protected final T myConfiguration;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
     super(environment);
     myConfiguration = configuration;
   }
 
-  protected void setupJavaParameters(JavaParameters params) throws ExecutionException {
+  protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
     JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
     for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
@@ -53,6 +53,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     return super.createCommandLine().withInput(InputRedirectAware.getInputFile(myConfiguration));
   }
 
+  @NotNull
   protected T getConfiguration() {
     return myConfiguration;
   }

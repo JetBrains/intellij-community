@@ -70,7 +70,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
         }
 
         @Override
-        public void init(@NotNull String filePath, @Nullable ProgressIndicator indicator) {
+        public void init(@Nullable ProgressIndicator indicator) {
           super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
           MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
@@ -101,8 +101,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
     @Override
     void init(Project project) {
-      ProjectImpl p = (ProjectImpl)project;
-      p.init("", null);
+      ((ProjectImpl)project).init(null);
     }
   };
   private static final int DEFAULT_HASH_CODE = 4; // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.

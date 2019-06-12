@@ -96,15 +96,15 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
   public void testInferredAnnoGutter() {
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
                    "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
-                   "<i>@Contract('null,_,_->null')</i> \n" +
-                   "public static Throwable <b>createWithCause</b>(Class clazz,\n String message,\n Throwable cause)</html>");
+                   "<b><i>@Contract('null,_,_->null')</i></b> \n" +
+                   "Throwable <b>createWithCause</b>(Class,\n String,\n Throwable)</html>");
   }
 
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
                    "<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
-                   "<i>@Contract(pure = true)</i> \n" +
-                   "public <b>String</b>(@NotNull String var1)</html>");
+                   "<b><i>@Contract(pure = true)</i></b> \n" +
+                   "<b>String</b>(<b>@NotNull</b> String)</html>");
   }
 
   private void checkHasGutter(String className, String expectedText) {

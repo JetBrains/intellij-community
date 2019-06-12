@@ -5,11 +5,19 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Restarter;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,15 +27,16 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class WindowsDefenderChecker {
   private static final Logger LOG = Logger.getInstance(WindowsDefenderChecker.class);
 
   private static final Pattern WINDOWS_ENV_VAR_PATTERN = Pattern.compile("%([^%]+?)%");
   private static final Pattern WINDOWS_DEFENDER_WILDCARD_PATTERN = Pattern.compile("[?*]");
+  private static final int WMIC_COMMAND_TIMEOUT_MS = 10000;
   private static final int POWERSHELL_COMMAND_TIMEOUT_MS = 10000;
   private static final int MAX_POWERSHELL_STDERR_LENGTH = 500;
+  private static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
 
   public enum RealtimeScanningStatus {
     SCANNING_DISABLED,
@@ -41,6 +50,7 @@ public class WindowsDefenderChecker {
 
   public static class CheckResult {
     public final RealtimeScanningStatus status;
+
     // Value in the map is true if the path is excluded, false otherwise
     public final Map<Path, Boolean> pathStatus;
 
@@ -50,9 +60,27 @@ public class WindowsDefenderChecker {
     }
   }
 
+  public boolean isVirusCheckIgnored(Project project) {
+    return PropertiesComponent.getInstance().isTrueValue(IGNORE_VIRUS_CHECK) ||
+           PropertiesComponent.getInstance(project).isTrueValue(IGNORE_VIRUS_CHECK);
+  }
+
   public CheckResult checkWindowsDefender(@NotNull Project project) {
+    final Boolean windowsDefenderActive = isWindowsDefenderActive();
+    if (windowsDefenderActive == null || !windowsDefenderActive) {
+      return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
+    }
+
     RealtimeScanningStatus scanningStatus = getRealtimeScanningEnabled();
     if (scanningStatus == RealtimeScanningStatus.SCANNING_ENABLED) {
+      final Collection<String> processes = getExcludedProcesses();
+      final String binaryName = Restarter.getCurrentProcessExecutableName();
+      if (binaryName != null && processes != null &&
+          processes.contains(StringUtil.substringAfterLast(binaryName.toLowerCase(), "\\")) &&
+          processes.contains("java.exe")) {
+        return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
+      }
+
       List<Pattern> excludedPatterns = getExcludedPatterns();
       if (excludedPatterns != null) {
         Map<Path, Boolean> pathStatuses = checkPathsExcluded(getImportantPaths(project), excludedPatterns);
@@ -62,7 +90,46 @@ public class WindowsDefenderChecker {
     return new CheckResult(scanningStatus, Collections.emptyMap());
   }
 
+  private static Boolean isWindowsDefenderActive() {
+    try {
+      ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(
+        "wmic", "/Namespace:\\\\root\\SecurityCenter2", "Path", "AntivirusProduct", "Get", "displayName,productState"
+      ), WMIC_COMMAND_TIMEOUT_MS);
+      if (output.getExitCode() == 0) {
+        return parseWindowsDefenderProductState(output);
+      }
+      else {
+        LOG.warn("wmic Windows Defender check exited with status " + output.getExitCode() + ": " +
+                 StringUtil.first(output.getStderr(), MAX_POWERSHELL_STDERR_LENGTH, false));
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn("wmic Windows Defender check failed", e);
+    }
+    return null;
+  }
+
+  private static Boolean parseWindowsDefenderProductState(ProcessOutput output) {
+    final String[] lines = StringUtil.splitByLines(output.getStdout());
+    for (String line : lines) {
+      if (line.startsWith("Windows Defender")) {
+        final String productStateString = StringUtil.substringAfterLast(line, " ");
+        int productState;
+        try {
+          productState = Integer.parseInt(productStateString);
+          return (productState & 0x1000) != 0;
+        }
+        catch (NumberFormatException e) {
+          LOG.info("Unexpected wmic output format: " + line);
+          return null;
+        }
+      }
+    }
+    return false;
+  }
+
   /** Runs a powershell command to list the paths that are excluded from realtime scanning by Windows Defender. These
+   *
    * paths can contain environment variable references, as well as wildcards ('?', which matches a single character, and
    * '*', which matches any sequence of characters (but cannot match multiple nested directories; i.e., "foo\*\bar" would
    * match foo\baz\bar but not foo\baz\quux\bar)). The behavior of wildcards with respect to case-sensitivity is undocumented.
@@ -70,39 +137,43 @@ public class WindowsDefenderChecker {
    */
   @Nullable
   private static List<Pattern> getExcludedPatterns() {
-    try {
-      ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(
-        "powershell", "-inputformat", "none", "-outputformat", "text", "-NonInteractive", "-Command", "Get-MpPreference | select -ExpandProperty \"ExclusionPath\""), POWERSHELL_COMMAND_TIMEOUT_MS);
-      if (output.getExitCode() == 0) {
-        return output.getStdoutLines(true).stream().map(path -> wildcardsToRegex(expandEnvVars(path))).collect(Collectors.toList());
-      } else {
-        LOG.warn("Windows Defender exclusion path check exited with status " + output.getExitCode() + ": " +
-                 StringUtil.first(output.getStderr(), MAX_POWERSHELL_STDERR_LENGTH, false));
-      }
-    } catch (ExecutionException e) {
-      LOG.warn("Windows Defender exclusion path check failed", e);
-    }
-    return null;
+    final Collection<String> paths = getWindowsDefenderProperty("ExclusionPath");
+    if (paths == null) return null;
+    return ContainerUtil.map(paths, path -> wildcardsToRegex(expandEnvVars(path)));
   }
 
+  @Nullable
+  private static Collection<String> getExcludedProcesses() {
+    final Collection<String> processes = getWindowsDefenderProperty("ExclusionProcess");
+    if (processes == null) return null;
+    return ContainerUtil.map(processes, process -> process.toLowerCase());
+  }
 
   /** Runs a powershell command to determine whether realtime scanning is enabled or not. */
   @NotNull
   private static RealtimeScanningStatus getRealtimeScanningEnabled() {
+    final Collection<String> output = getWindowsDefenderProperty("DisableRealtimeMonitoring");
+    if (output == null) return RealtimeScanningStatus.ERROR;
+    if (output.size() > 0 && output.iterator().next().startsWith("False")) return RealtimeScanningStatus.SCANNING_ENABLED;
+    return RealtimeScanningStatus.SCANNING_DISABLED;
+  }
+
+  @Nullable
+  private static Collection<String> getWindowsDefenderProperty(final String propertyName) {
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(
-        "powershell", "-inputformat", "none", "-outputformat", "text", "-NonInteractive", "-Command", "Get-MpPreference | select -ExpandProperty \"DisableRealtimeMonitoring\""), POWERSHELL_COMMAND_TIMEOUT_MS);
+        "powershell", "-inputformat", "none", "-outputformat", "text", "-NonInteractive", "-Command",
+        "Get-MpPreference | select -ExpandProperty \"" + propertyName + "\""), POWERSHELL_COMMAND_TIMEOUT_MS);
       if (output.getExitCode() == 0) {
-        if (output.getStdout().startsWith("False")) return RealtimeScanningStatus.SCANNING_ENABLED;
-        return RealtimeScanningStatus.SCANNING_DISABLED;
+        return output.getStdoutLines();
       } else {
-        LOG.warn("Windows Defender realtime scanning status check exited with status " + output.getExitCode() + ": " +
+        LOG.warn("Windows Defender " + propertyName + " check exited with status " + output.getExitCode() + ": " +
                  StringUtil.first(output.getStderr(), MAX_POWERSHELL_STDERR_LENGTH, false));
       }
     } catch (ExecutionException e) {
-      LOG.warn("Windows Defender realtime scanning status check failed", e);
+      LOG.warn("Windows Defender " + propertyName + " check failed", e);
     }
-    return RealtimeScanningStatus.ERROR;
+    return null;
   }
 
   /** Returns a list of paths that might impact build performance if Windows Defender were configured to scan them. */
@@ -196,11 +267,42 @@ public class WindowsDefenderChecker {
     return result;
   }
 
+  public void configureActions(Project project, WindowsDefenderNotification notification) {
+    notification.addAction(new WindowsDefenderFixAction(notification.getPaths()));
 
-  @NotNull
-  public static String getNotificationTextForNonExcludedPaths(@NotNull Map<Path, Boolean> pathStatuses) {
-    StringBuilder sb = new StringBuilder();
-    pathStatuses.entrySet().stream().filter(entry -> !entry.getValue()).forEach(entry -> sb.append("<br/>" + entry.getKey()));
-    return sb.toString();
+    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        PropertiesComponent.getInstance().setValue(IGNORE_VIRUS_CHECK, "true");
+      }
+    });
+    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again.this.project")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        PropertiesComponent.getInstance(project).setValue(IGNORE_VIRUS_CHECK, "true");
+      }
+    });
+
+  }
+
+  public String getConfigurationInstructionsUrl() {
+    // TODO Provide a better article
+    return "https://intellij-support.jetbrains.com/hc/en-us/articles/360005028939-Slow-startup-on-Windows-splash-screen-appears-in-more-than-20-seconds";
+  }
+
+  public boolean runExcludePathsCommand(Project project, Collection<Path> paths) {
+    try {
+      ExecUtil.sudoAndGetOutput(new GeneralCommandLine("powershell", "-Command", "Add-MpPreference", "-ExclusionPath",
+                                                       StringUtil.join(paths, (path) -> StringUtil.wrapWithDoubleQuote(path.toString()), ",")), "");
+      return true;
+    }
+    catch (IOException | ExecutionException e) {
+      UIUtil.invokeLaterIfNeeded(() ->
+       Messages.showErrorDialog(project, DiagnosticBundle.message("virus.scanning.fix.failed", e.getMessage()),
+                                DiagnosticBundle.message("virus.scanning.fix.title")));
+    }
+    return false;
   }
 }
