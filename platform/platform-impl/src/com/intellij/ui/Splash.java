@@ -168,7 +168,11 @@ public final class Splash extends Window {
   private void paintSlides(@NotNull Graphics g) {
     for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
       if (progressSlide.slide.getProgressRation() <= myProgress) {
+        if(progressSlide.isDrawn)
+          continue;
+
         StartupUiUtil.drawImage(g, progressSlide.image, 0, 0, null);
+        progressSlide.isDrawn = true;
       }
     }
   }
@@ -228,4 +232,6 @@ final class ProgressSlideAndImage {
     this.slide = slide;
     this.image = image;
   }
+
+  boolean isDrawn = false;
 }
