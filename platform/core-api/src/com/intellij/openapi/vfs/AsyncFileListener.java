@@ -17,8 +17,9 @@ import java.util.List;
  *
  * <h3>Migration of synchronous listeners:</h3>
  *
- * Synchronous listeners have two parts: "before" and "after", observing the state of the system before a VFS change. Since asynchronous
- * listeners are executed before applying VFS events, they're more easily suited to "before" event processing.<p></p>
+ * Synchronous listeners have two flavours: "before" and "after"; observing the state of the system before and after a VFS change, respectively.
+ * Since asynchronous listeners are executed before applying VFS events, they're more easily suited to "before" event processing. Note that
+ * not all synchronous listeners need to be migrated, only those that might take noticeable time.<p></p>
  *
  * To migrate a "before"-handler, you need to split the listener into two parts: one that analyzes the events but has no side effects,
  * and one which actually modifies some other subsystem's state based on these events. The first part then goes into {@link #prepareChange},
@@ -31,11 +32,12 @@ import java.util.List;
  * In this case the check can go into {@link #prepareChange}, and the action based on it &mdash; into {@link ChangeApplier#afterVfsChange()}.
  * <p></p>
  *
- * Otherwise you can just move the whole "after"-processing into {@link ChangeApplier#afterVfsChange()}. But make it as
- * fast as possible to shorten the UI freezes.<p></p>
+ * When you migrate a listener with both "before" and "after" parts, you can try to just move the whole "after"-processing into
+ * {@link ChangeApplier#afterVfsChange()}. But make it as fast as possible to shorten the UI freezes.<p></p>
  *
- * If possible, consider moving heavy processing into background threads and/or
- * performing it lazily. Note that it'll likely need a consistent model of the world, probably with the help of
+ * If possible, consider moving heavy processing into background threads and/or performing it lazily.
+ * There's no general solution, each "after" event processing should be evaluated separately considering the needs and contracts
+ * of each specific subsystem it serves. Note that it'll likely need a consistent model of the world, probably with the help of
  * {@link com.intellij.openapi.application.ReadAction#nonBlocking} (and note that other changes might happen after yours, and
  * the state of the system can change when your asynchronous handler starts). This might also
  * introduce a discrepancy in the world when the VFS is already changed but other subsystems aren't, and this discrepancy
