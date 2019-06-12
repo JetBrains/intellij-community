@@ -40,13 +40,8 @@ class RestoreReferencesDialog extends DialogWrapper {
   private JList myList;
   private Object[] mySelectedElements = PsiClass.EMPTY_ARRAY;
   private boolean myContainsClassesOnly = true;
-  private JBLabel myExplanationLabel;
 
   RestoreReferencesDialog(final Project project, final Object[] elements) {
-    this(project, elements, true);
-  }
-
-  RestoreReferencesDialog(final Project project, final Object[] elements, boolean preselect) {
     super(project, true);
     myNamedElements = elements;
     for (Object element : elements) {
@@ -63,9 +58,7 @@ class RestoreReferencesDialog extends DialogWrapper {
     }
     init();
 
-    if (preselect) {
-      myList.setSelectionInterval(0, myNamedElements.length - 1);
-    }
+    myList.setSelectionInterval(0, myNamedElements.length - 1);
   }
 
   @Override
@@ -83,10 +76,9 @@ class RestoreReferencesDialog extends DialogWrapper {
     myList.setCellRenderer(new FQNameCellRenderer());
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
 
-    myExplanationLabel = new JBLabel(myContainsClassesOnly ?
-                                     CodeInsightBundle.message("dialog.paste.on.import.text") :
-                                     CodeInsightBundle.message("dialog.paste.on.import.text2"), SMALL, BRIGHTER);
-    panel.add(myExplanationLabel, BorderLayout.NORTH);
+    panel.add(new JBLabel(myContainsClassesOnly ?
+                          CodeInsightBundle.message("dialog.paste.on.import.text") :
+                          CodeInsightBundle.message("dialog.paste.on.import.text2"), SMALL, BRIGHTER), BorderLayout.NORTH);
 
     final JPanel buttonPanel = new JPanel(new VerticalFlowLayout());
     final JButton okButton = new JButton(CommonBundle.getOkButtonText());
@@ -100,9 +92,6 @@ class RestoreReferencesDialog extends DialogWrapper {
     return panel;
   }
 
-  public void setExplanation(String explanation) {
-    myExplanationLabel.setText(explanation);
-  }
 
   @Override
   protected String getDimensionServiceKey(){

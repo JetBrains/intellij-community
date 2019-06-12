@@ -13,14 +13,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.List;
 
 public class CreateEditorConfigAction extends AnAction implements DumbAware {
@@ -52,17 +52,18 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
           final VirtualFile dirVFile = dir.getVirtualFile();
           File outputFile = getOutputFile(dirVFile);
           if (!outputFile.exists()) {
-            VirtualFile target = ApplicationManager.getApplication().runWriteAction(
-              (Computable<VirtualFile>)() -> export(dirVFile, outputFile, project, settings,
-                                                    dialog.isRoot(),
-                                                    dialog.isCommentProperties(),
-                                                    dialog.getLanguages(),
-                                                    dialog.getPropertyKinds()));
-            if (target != null) {
-              OpenFileAction.openFile(target, project);
-              PsiFile psiFile = getPsiFile(project, target);
-              if (psiFile != null) {
-                view.selectElement(psiFile);
+            if (export(outputFile, project, settings,
+                       dialog.isRoot(),
+                       dialog.isCommentProperties(),
+                       dialog.getLanguages(),
+                       dialog.getPropertyKinds())) {
+              VirtualFile outputVFile = VfsUtil.findFileByIoFile(outputFile, true);
+              if (outputVFile != null) {
+                OpenFileAction.openFile(outputVFile, project);
+                PsiFile psiFile = getPsiFile(project, outputVFile);
+                if (psiFile != null) {
+                  view.selectElement(psiFile);
+                }
               }
             }
           }
@@ -108,35 +109,31 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
     return new File(dir.getPath() + File.separator + ".editorconfig");
   }
 
-  @Nullable
-  private VirtualFile export(@NotNull VirtualFile outputDir,
-                             @NotNull File outputFile,
-                             @NotNull Project project,
-                             @NotNull CodeStyleSettings settings,
-                             boolean isRoot,
-                             boolean commentOutProperties,
-                             @NotNull List<Language> languages,
-                             @NotNull EditorConfigPropertyKind... propertyKinds) {
-    try {
-      VirtualFile target = outputDir.createChildData(this, outputFile.getName());
-      try (EditorConfigSettingsWriter settingsWriter =
-             new EditorConfigSettingsWriter(project, target.getOutputStream(this), settings, isRoot, commentOutProperties)
-               .forLanguages(languages)
-               .forPropertyKinds(propertyKinds)) {
+  private static boolean export(@NotNull File outputFile,
+                                @NotNull Project project,
+                                @NotNull CodeStyleSettings settings,
+                                boolean isRoot,
+                                boolean commentOutProperties,
+                                @NotNull List<Language> languages,
+                                @NotNull EditorConfigPropertyKind... propertyKinds) {
+    try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+      try (
+        EditorConfigSettingsWriter settingsWriter =
+          new EditorConfigSettingsWriter(project, outputStream, settings, isRoot, commentOutProperties)
+            .forLanguages(languages)
+            .forPropertyKinds(propertyKinds)) {
         settingsWriter.writeSettings();
-        return target;
+        return true;
       }
     }
     catch (Exception e) {
-      notifyFailed(e);
-      return null;
+      LOG.warn(e);
+      Notifications.Bus.notify(
+        new Notification(EditorConfigNotifier.GROUP_DISPLAY_ID, "EditorConfig Creation Failed", e.getMessage(),
+                         NotificationType.ERROR));
+      return false;
     }
   }
 
-  private static void notifyFailed(@NotNull Exception e) {
-    LOG.warn(e);
-    Notifications.Bus.notify(
-      new Notification(EditorConfigNotifier.GROUP_DISPLAY_ID, "EditorConfig Creation Failed", e.getMessage(),
-                       NotificationType.ERROR));
-  }
+
 }

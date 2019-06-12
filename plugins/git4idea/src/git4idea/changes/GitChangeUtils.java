@@ -3,6 +3,7 @@ package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -21,6 +22,7 @@ import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +72,28 @@ public class GitChangeUtils {
     if (sc.hasMoreData()) {
       throw new IllegalStateException("Unknown file status: " + sc.line());
     }
+  }
+
+  public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
+    final Collection<String> result = new ArrayList<>();
+
+    while (s.hasMoreData()) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      if ("CADUMR".indexOf(s.peek()) == -1) {
+        // exit if there is no next character
+        break;
+      }
+      assert 'M' != s.peek() : "Moves are not yet handled";
+      String[] tokens = s.line().split("\t");
+      String path = tokens[tokens.length - 1];
+      path = rootPath + File.separator + GitUtil.unescapePath(path);
+      path = FileUtil.toSystemDependentName(path);
+      result.add(path);
+    }
+    return result;
   }
 
   /**
@@ -184,6 +208,17 @@ public class GitChangeUtils {
     handler.endOptions();
     handler.setSilent(true);
     return handler;
+  }
+
+  /**
+   * Check if the exception means that HEAD is missing for the current repository.
+   *
+   * @param e the exception to examine
+   * @return true if the head is missing
+   */
+  public static boolean isHeadMissing(final VcsException e) {
+    @NonNls final String errorText = "fatal: bad revision 'HEAD'\n";
+    return e.getMessage().equals(errorText);
   }
 
   /**
@@ -463,6 +498,12 @@ public class GitChangeUtils {
       handler = getDiffHandler(project, root, diffRange, null, reverse, detectRenames);
     }
     return Git.getInstance().runCommand(handler).getOutputOrThrow();
+  }
+
+  @NotNull
+  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    return getDiffOutput(project, root, diffRange, dirtyPaths, false, true);
   }
 
 

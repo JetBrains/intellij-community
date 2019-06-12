@@ -1,14 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -311,6 +308,34 @@ class StubSerializationHelper {
     return tempBuffer.size() == 0 ? ArrayUtilRt.EMPTY_BYTE_ARRAY : tempBuffer.toByteArray();
   }
 
+  private static class ByteArrayInterner {
+    private static final TObjectHashingStrategy<byte[]> BYTE_ARRAY_STRATEGY = new TObjectHashingStrategy<byte[]>() {
+      @Override
+      public int computeHashCode(byte[] object) {
+        return Arrays.hashCode(object);
+      }
+
+      @Override
+      public boolean equals(byte[] o1, byte[] o2) {
+        return Arrays.equals(o1, o2);
+      }
+    };
+    private final TObjectIntHashMap<byte[]> arrayToStart = new TObjectIntHashMap<>(BYTE_ARRAY_STRATEGY);
+    final BufferExposingByteArrayOutputStream joinedBuffer = new BufferExposingByteArrayOutputStream();
+
+    int internBytes(byte[] bytes) {
+      if (bytes.length == 0) return 0;
+
+      int start = arrayToStart.get(bytes);
+      if (start == 0) {
+        start = joinedBuffer.size() + 1; // should be positive
+        arrayToStart.put(bytes, start);
+        joinedBuffer.write(bytes, 0, bytes.length);
+      }
+      return start;
+    }
+  }
+
   private byte[] readByteArray(StubInputStream inputStream) throws IOException {
     int length = DataInputOutputUtil.readINT(inputStream);
     if (length == 0) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
@@ -330,17 +355,6 @@ class StubSerializationHelper {
 
   String intern(String str) {
     return myStringInterner.get(str);
-  }
-
-  void reSerializeStub(@NotNull DataInputStream inStub,
-                       @NotNull DataOutputStream outStub,
-                       @NotNull StubSerializationHelper newSerializationHelper) throws IOException {
-    IntEnumerator currentSerializerEnumerator = IntEnumerator.read(inStub);
-    currentSerializerEnumerator.dump(outStub, id -> {
-      String name = myIdToName.get(id);
-      return name == null ? 0 : newSerializationHelper.myNameToId.get(name);
-    });
-    StreamUtil.copyStreamContent(inStub, outStub);
   }
 
   @SuppressWarnings("unchecked")
@@ -409,6 +423,59 @@ class StubSerializationHelper {
       String s = intern(IOUtil.readUTFFast(buffer, stream));
       enumerator.myStrings.add(s);
       ++i;
+    }
+  }
+
+  private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
+    private final TObjectIntHashMap<String> myEnumerates;
+    private final ArrayList<String> myStrings = new ArrayList<>();
+
+    FileLocalStringEnumerator(boolean forSavingStub) {
+      myEnumerates = forSavingStub ? new TObjectIntHashMap<>() : null;
+    }
+
+    @Override
+    public int enumerate(@Nullable String value) {
+      if (value == null) return 0;
+      assert myEnumerates != null; // enumerate possible only when writing stub
+      int i = myEnumerates.get(value);
+      if (i == 0) {
+        myEnumerates.put(value, i = myStrings.size() + 1);
+        myStrings.add(value);
+      }
+      return i;
+    }
+
+    @Override
+    public String valueOf(int idx) {
+      if (idx == 0) return null;
+      return myStrings.get(idx - 1);
+    }
+
+    private void write(@NotNull DataOutputStream stream) throws IOException {
+      assert myEnumerates != null;
+      DataInputOutputUtil.writeINT(stream, myStrings.size());
+      byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+      for(String s: myStrings) {
+        IOUtil.writeUTFFast(buffer, stream, s);
+      }
+    }
+
+    @Override
+    public void markCorrupted() {
+    }
+
+    @Override
+    public void close() throws IOException {
+    }
+
+    @Override
+    public boolean isDirty() {
+      return false;
+    }
+
+    @Override
+    public void force() {
     }
   }
 }
