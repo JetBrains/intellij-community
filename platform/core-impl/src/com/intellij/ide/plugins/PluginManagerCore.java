@@ -1492,7 +1492,7 @@ public class PluginManagerCore {
 
     List<String> errors = new ArrayList<>();
     IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(errors);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!isUnitTestMode) {
       checkEssentialPluginsAreAvailable(pluginDescriptors);
     }
 
