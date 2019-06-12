@@ -151,7 +151,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return 0;
   }
 
-  private class MyIntentionAction implements IntentionActionWithOptions, Iconable {
+  private class MyIntentionAction extends AbstractEmptyIntentionAction implements IntentionActionWithOptions, Iconable {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
@@ -163,16 +163,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       if (myGearLabel.getIcon() != null) {
         myOptions.add(new MySettingsOption(myGearLabel));
       }
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myOptions.get(0).invoke(project, editor, file);
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return myOptions.get(0).startInWriteAction();
     }
 
     @NotNull

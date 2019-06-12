@@ -49,8 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static com.intellij.testFramework.UsefulTestCase.*;
 
 public class VfsUtilTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory myTempDir = new TempDirectory();
@@ -109,7 +108,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     VirtualFile child = vDir.findChild(" ");
     assertNull(child);
 
-    assertThat(vDir.getChildren()).isEmpty();
+    assertEmpty(vDir.getChildren());
   }
 
   @Test
@@ -383,13 +382,13 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertTrue(dir2.mkdirs());
 
       VirtualFile vDir = VfsUtil.findFileByIoFile(tempDir, true);
-      assertThat(vDir.getChildren()).hasSize(2);
+      assertSize(2, vDir.getChildren());
       VirtualFile vDir1 = vDir.getChildren()[0];
       VirtualFile vDir2 = vDir.getChildren()[1];
       assertEquals(dir1.getName(), vDir1.getName());
 
-      assertThat(vDir1.getChildren()).isEmpty();
-      assertThat(vDir2.getChildren()).isEmpty();
+      assertEmpty(vDir1.getChildren());
+      assertEmpty(vDir2.getChildren());
 
       assertTrue(new File(dir1, "a.txt").createNewFile());
       assertTrue(new File(dir2, "a.txt").createNewFile());
@@ -410,7 +409,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
           assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
           vDir2.refresh(false, true, () -> log.add("modal finished"));
-          assertThat(vDir2.getChildren()).hasSize(1);
+          assertSize(1, vDir2.getChildren());
         }
       }));
 
@@ -419,9 +418,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         UIUtil.dispatchAllInvocationEvents();
       }
 
-      assertThat(vDir1.getChildren()).hasSize(1);
-      assertThat(vDir2.getChildren()).hasSize(1);
-      assertThat(log).containsExactly("modal finished", "non-modal finished");
+      assertSize(1, vDir1.getChildren());
+      assertSize(1, vDir2.getChildren());
+      assertOrderedEquals(log, "modal finished", "non-modal finished");
     });
   }
 }

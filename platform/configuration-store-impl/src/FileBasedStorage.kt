@@ -46,8 +46,7 @@ open class FileBasedStorage(file: Path,
   var file = file
     private set
 
-  protected open val configuration: FileBasedStorageConfiguration
-    get() = defaultFileBasedStorageConfiguration
+  protected open val configuration: FileBasedStorageConfiguration = defaultFileBasedStorageConfiguration
 
   init {
     val app = ApplicationManager.getApplication()
@@ -58,7 +57,7 @@ open class FileBasedStorage(file: Path,
 
   protected open val isUseXmlProlog = false
 
-  final override val isUseVfsForWrite: Boolean
+  override val isUseVfsForWrite: Boolean
     get() = configuration.isUseVfsForWrite
 
   private val isUseUnixLineSeparator: Boolean

@@ -91,10 +91,5 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
     public int compareTo(@NotNull HighlightingRule rule) {
       return myWeigh.compareTo(rule.myWeigh);
     }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
   }
 }

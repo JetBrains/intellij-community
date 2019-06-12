@@ -41,7 +41,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
     init()
   }
 
-  internal fun init() : Boolean {
+  internal fun init() {
     var indexesRoot = findPrebuiltIndicesRoot()
     try {
       if (indexesRoot != null && indexesRoot.exists()) {
@@ -61,7 +61,6 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
       myPrebuiltIndexStorage = null
       LOG.warn("Prebuilt indices can't be loaded at " + indexesRoot!!, e)
     }
-    return myPrebuiltIndexStorage != null
   }
 
   fun get(fileContent: FileContent): Value? {

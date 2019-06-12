@@ -32,14 +32,9 @@ public interface StartupActivity {
   ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
 
   /**
-   * Executed some time after startup on a background thread with no visible progress indicator. Such activities may produce
-   * notifications but should not be used for any work that needs to be otherwise visible to users (including work that consumes
-   * CPU over a noticeable period of time).
-   *
-   * Such activities are run regardless of the current indexing mode and should not be used for any work that requires access
-   * to indices. The current project may get disposed while the activity is running, and the activity may not be interrupted
-   * immediately when this happens, so if you need to access other components, you're responsible for doing this in a
-   * thread-safe way (e.g. by taking a read action to collect all the state you need).
+   * Executed some time after startup on a background thread with no progress indicator. Such activities may produce notifications
+   * but should not be used for any work that needs to be otherwise visible to users. Such activities are run regardless
+   * of the current indexing mode and should not be used for any work that requires access to indices.
    */
   ExtensionPointName<StartupActivity> BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.backgroundPostStartupActivity");
 

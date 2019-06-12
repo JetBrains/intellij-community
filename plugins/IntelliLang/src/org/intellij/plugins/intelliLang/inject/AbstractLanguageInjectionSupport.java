@@ -35,7 +35,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
-import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -143,20 +142,14 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   protected static BaseInjection showDefaultInjectionUI(final Project project, BaseInjection injection) {
     final BaseInjectionPanel panel = new BaseInjectionPanel(injection, project);
     panel.reset();
-    String dimensionServiceKey = "#org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionDialog";
-    LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(injection.getSupportId());
-    String helpId = support instanceof AbstractLanguageInjectionSupport ? ((AbstractLanguageInjectionSupport)support).getHelpId() : null;
-    return showEditInjectionDialog(project, panel, dimensionServiceKey, helpId) ? injection : null;
-  }
-
-  protected static boolean showEditInjectionDialog(@NotNull Project project,
-                                                   @NotNull AbstractInjectionPanel panel,
-                                                   @Nullable String dimensionServiceKey, @Nullable String helpId) {
     final DialogBuilder builder = new DialogBuilder(project);
-    builder.setHelpId(helpId);
+    LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(injection.getSupportId());
+    if (support instanceof AbstractLanguageInjectionSupport) {
+      builder.setHelpId(((AbstractLanguageInjectionSupport)support).getHelpId());
+    }
     builder.addOkAction();
     builder.addCancelAction();
-    builder.setDimensionServiceKey(dimensionServiceKey);
+    builder.setDimensionServiceKey("#org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionDialog");
     builder.setCenterPanel(panel.getComponent());
     builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
     builder.setOkOperation(() -> {
@@ -170,7 +163,10 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
         Messages.showErrorDialog(project, message, "Unable to Save");
       }
     });
-    return builder.show() == DialogWrapper.OK_EXIT_CODE;
+    if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
+      return injection;
+    }
+    return null;
   }
 
   @Override

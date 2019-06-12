@@ -8,7 +8,6 @@ import gnu.trove.TIntIntHashMap;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.function.IntUnaryOperator;
 
 class IntEnumerator {
   private final TIntIntHashMap myEnumerates;
@@ -40,30 +39,17 @@ class IntEnumerator {
   }
 
   void dump(DataOutputStream stream) throws IOException {
-    dump(stream, IntUnaryOperator.identity());
-  }
-
-  void dump(DataOutputStream stream, IntUnaryOperator idRemapping) throws IOException {
+    assert myEnumerates != null;
     DataInputOutputUtil.writeINT(stream, myIds.size());
-    IOException[] exception = new IOException[1];
     myIds.forEach(id -> {
       try {
-        int remapped = idRemapping.applyAsInt(id);
-        if (remapped == 0) {
-          exception[0] = new IOException("remapping is not found for " + id);
-          return false;
-        }
-        DataInputOutputUtil.writeINT(stream, remapped);
+        DataInputOutputUtil.writeINT(stream, id);
       }
       catch (IOException e) {
-        exception[0] = e;
-        return false;
+        throw new RuntimeException(e);
       }
       return true;
     });
-    if (exception[0] != null) {
-      throw exception[0];
-    }
   }
 
   static IntEnumerator read(DataInputStream stream) throws IOException {

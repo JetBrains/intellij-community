@@ -21,8 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.intellij.openapi.util.text.StringUtil.isNotNegativeNumber;
-
 /**
  * Holds <a href="http://semver.org">Semantic Version</a>.
  */
@@ -153,15 +151,13 @@ public final class SemVer implements Comparable<SemVer> {
 
       CharSequence segment1 = new CharSequenceSubSequence(pre1, start1, end1);
       CharSequence segment2 = new CharSequenceSubSequence(pre2, start2, end2);
-      if (isNotNegativeNumber(segment1)) {
-        if (!isNotNegativeNumber(segment2)) {
-          // According to SemVer specification numeric segments has lower precedence
-          // than non-numeric segments
+      if (isNumeric(segment1)) {
+        if (!isNumeric(segment2)) {
           return -1;
         }
         diff = compareNumeric(segment1, segment2);
       }
-      else if (isNotNegativeNumber(segment2)) {
+      else if (isNumeric(segment2)) {
         return 1;
       }
       else {
@@ -188,10 +184,21 @@ public final class SemVer implements Comparable<SemVer> {
     int length1 = segment1.length();
     int length2 = segment2.length();
     int diff = Integer.compare(length1, length2);
-    for (int i = 0; i < length1 && diff == 0; i++) {
+    for (int i = 0; i <= length1 && diff == 0; i++) {
       diff = segment1.charAt(i) - segment2.charAt(i);
     }
     return diff;
+  }
+
+  private static boolean isNumeric(CharSequence segment) {
+    int length = segment.length();
+    for (int i = 0; i < length; i++) {
+      int ch = segment.charAt(i);
+      if (ch < '0' || ch > '9') {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable

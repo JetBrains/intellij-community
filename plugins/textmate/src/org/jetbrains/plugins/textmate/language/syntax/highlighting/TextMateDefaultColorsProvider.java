@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.highlighting;
 
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -33,9 +32,6 @@ public final class TextMateDefaultColorsProvider {
     Pair.create("markup.italic", ITALIC),
     Pair.create("markup.underline", UNDERLINE),
     Pair.create("markup.heading", HEADING),
-    Pair.create("markup.changed", DiffColors.DIFF_MODIFIED),
-    Pair.create("markup.inserted", DiffColors.DIFF_INSERTED),
-    Pair.create("markup.deleted", DiffColors.DIFF_DELETED),
     Pair.create("comment", DefaultLanguageHighlighterColors.LINE_COMMENT),
     Pair.create("comment.line", DefaultLanguageHighlighterColors.LINE_COMMENT),
     Pair.create("comment.block", DefaultLanguageHighlighterColors.BLOCK_COMMENT),
