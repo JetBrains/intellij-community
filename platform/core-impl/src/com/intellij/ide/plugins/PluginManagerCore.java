@@ -1492,7 +1492,9 @@ public class PluginManagerCore {
 
     List<String> errors = new ArrayList<>();
     IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(errors);
-    checkEssentialPluginsAreAvailable(pluginDescriptors);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      checkEssentialPluginsAreAvailable(pluginDescriptors);
+    }
 
     Class callerClass = ReflectionUtil.findCallerClass(1);
     assert callerClass != null;
