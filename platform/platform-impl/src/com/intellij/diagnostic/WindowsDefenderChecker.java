@@ -27,6 +27,7 @@ public class WindowsDefenderChecker {
 
   private static final Pattern WINDOWS_ENV_VAR_PATTERN = Pattern.compile("%([^%]+?)%");
   private static final Pattern WINDOWS_DEFENDER_WILDCARD_PATTERN = Pattern.compile("[?*]");
+  private static final int WMIC_COMMAND_TIMEOUT_MS = 10000;
   private static final int POWERSHELL_COMMAND_TIMEOUT_MS = 10000;
   private static final int MAX_POWERSHELL_STDERR_LENGTH = 500;
 
@@ -53,6 +54,11 @@ public class WindowsDefenderChecker {
   }
 
   public CheckResult checkWindowsDefender(@NotNull Project project) {
+    final Boolean windowsDefenderActive = isWindowsDefenderActive();
+    if (windowsDefenderActive == null || !windowsDefenderActive) {
+      return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
+    }
+
     RealtimeScanningStatus scanningStatus = getRealtimeScanningEnabled();
     if (scanningStatus == RealtimeScanningStatus.SCANNING_ENABLED) {
       final Collection<String> processes = getExcludedProcesses();
@@ -70,6 +76,44 @@ public class WindowsDefenderChecker {
       }
     }
     return new CheckResult(scanningStatus, Collections.emptyMap());
+  }
+
+  private static Boolean isWindowsDefenderActive() {
+    try {
+      ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(
+        "wmic", "/Namespace:\\\\root\\SecurityCenter2", "Path", "AntivirusProduct", "Get", "displayName,productState"
+      ), WMIC_COMMAND_TIMEOUT_MS);
+      if (output.getExitCode() == 0) {
+        return parseWindowsDefenderProductState(output);
+      }
+      else {
+        LOG.warn("wmic Windows Defender check exited with status " + output.getExitCode() + ": " +
+                 StringUtil.first(output.getStderr(), MAX_POWERSHELL_STDERR_LENGTH, false));
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn("wmic Windows Defender check failed", e);
+    }
+    return null;
+  }
+
+  private static Boolean parseWindowsDefenderProductState(ProcessOutput output) {
+    final String[] lines = StringUtil.splitByLines(output.getStdout());
+    for (String line : lines) {
+      if (line.startsWith("Windows Defender")) {
+        final String productStateString = StringUtil.substringAfterLast(line, " ");
+        int productState;
+        try {
+          productState = Integer.parseInt(productStateString);
+          return (productState & 0x1000) != 0;
+        }
+        catch (NumberFormatException e) {
+          LOG.info("Unexpected wmic output format: " + line);
+          return null;
+        }
+      }
+    }
+    return false;
   }
 
   /** Runs a powershell command to list the paths that are excluded from realtime scanning by Windows Defender. These
