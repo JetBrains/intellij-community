@@ -4,9 +4,9 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +36,16 @@ public interface ExternalFormatProcessor {
   TextRange format(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly);
 
   /**
+   * Indents the line.
+   *
+   * @param source the source file with code
+   * @param lineStartOffset the offset of the indented line
+   * @return the indentation String or null if nothing to be changed
+   */
+  @Nullable
+  String indent(@NotNull PsiFile source, int lineStartOffset);
+
+  /**
    * @return the unique id for external formatter
    */
   @NonNls
@@ -59,6 +69,29 @@ public interface ExternalFormatProcessor {
     return EP_NAME.getExtensionList().stream().filter(efp -> externalFormatterId.equals(efp.getId())).findFirst();
   }
 
+  @Nullable
+  static ExternalFormatProcessor activeExternalFormatProcessor(@NotNull PsiFile source) {
+    for (ExternalFormatProcessor efp : EP_NAME.getExtensionList()) {
+      if (efp.activeForFile(source)) {
+        return efp;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Indents the line.
+   *
+   * @param source the source file with code
+   * @param lineStartOffset the offset of the indented line
+   * @return the range after indentation or null if nothing to be changed
+   */
+  @Nullable
+  static String indentLine(@NotNull PsiFile source, int lineStartOffset) {
+    ExternalFormatProcessor efp = activeExternalFormatProcessor(source);
+    return efp != null ? efp.indent(source, lineStartOffset) : null;
+  }
+
   /**
    * @param source the source file with code
    * @param range the range for formatting
@@ -67,12 +100,8 @@ public interface ExternalFormatProcessor {
    */
   @Nullable
   static TextRange formatRangeInFile(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly) {
-    for (ExternalFormatProcessor efp : EP_NAME.getExtensionList()) {
-      if (efp.activeForFile(source)) {
-        return efp.format(source, range, canChangeWhiteSpacesOnly);
-      }
-    }
-    return null;
+    ExternalFormatProcessor efp = activeExternalFormatProcessor(source);
+    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly) : null;
   }
 
   /**
@@ -93,7 +122,14 @@ public interface ExternalFormatProcessor {
         PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
         if (!elementToFormat.isValid()) {
           final PsiElement elementAtStart = file.findElementAt(rangeAfterFormat.getStartOffset());
+          final PsiElement elementAtEnd = file.findElementAt(rangeAfterFormat.getEndOffset() - 1);
           if (elementAtStart != null) {
+            if (elementAtEnd != null) {
+              PsiElement parent = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
+              if (parent != null) {
+                return parent;
+              }
+            }
             return elementAtStart;
           }
         }

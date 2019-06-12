@@ -2850,18 +2850,13 @@ public class StringUtil extends StringUtilRt {
     int length1 = s1.length();
     int length2 = s2.length();
     int i = 0;
-    int j = 0;
-    for (; i < length1 && j < length2; i++, j++) {
-      int diff = compare(s1.charAt(i), s2.charAt(j), ignoreCase);
+    for (; i < length1 && i < length2; i++) {
+      int diff = compare(s1.charAt(i), s2.charAt(i), ignoreCase);
       if (diff != 0) {
         return diff;
       }
     }
-    if (i < length1) return +1;
-    if (j < length2) return -1;
-    if (length1 != length2) return length1 - length2;
-
-    return ignoreCase ? compare(s1, s2, false) : 0;
+    return length1 - length2;
   }
 
   @Contract(pure = true)

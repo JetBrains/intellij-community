@@ -36,8 +36,8 @@ public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
   private static final String JAVAFX_BASE = "javafx.base";
 
   @Override
-  public <T extends RunConfigurationBase> void updateJavaParameters(T configuration,
-                                                                    JavaParameters params,
+  public <T extends RunConfigurationBase> void updateJavaParameters(@NotNull T configuration,
+                                                                    @NotNull JavaParameters params,
                                                                     RunnerSettings runnerSettings) {
     if (!(configuration instanceof ModuleRunProfile) || !(configuration instanceof CommonJavaRunConfigurationParameters)) return;
 

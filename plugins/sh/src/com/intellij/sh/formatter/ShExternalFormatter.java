@@ -55,6 +55,12 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     return range;
   }
 
+  @Nullable
+  @Override
+  public String indent(@NotNull PsiFile source, int lineStartOffset) {
+    return null;
+  }
+
   private void doFormat(@NotNull Project project, @Nullable VirtualFile file) {
     if (file == null || !file.exists()) return;
 
