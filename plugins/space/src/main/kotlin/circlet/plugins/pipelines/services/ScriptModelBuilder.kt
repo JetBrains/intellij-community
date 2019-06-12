@@ -14,6 +14,10 @@ import org.slf4j.event.*
 import org.slf4j.helpers.*
 import runtime.reactive.*
 import java.io.*
+import java.io.PrintWriter
+import java.io.StringWriter
+
+
 
 class ScriptModelBuilder {
     companion object : KLogging()
@@ -62,7 +66,9 @@ class ScriptModelBuilder {
         }
         catch (e: Exception)
         {
-            logger.error("${e.message}. ${e.printStackTrace()}")
+            val errors = StringWriter()
+            e.printStackTrace(PrintWriter(errors))
+            logger.error("${e.message}. $errors")
             return createEmptyScriptViewModel(lifetime)
         }
     }
