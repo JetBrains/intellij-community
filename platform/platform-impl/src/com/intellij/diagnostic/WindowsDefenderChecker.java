@@ -5,6 +5,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +36,7 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10000;
   private static final int POWERSHELL_COMMAND_TIMEOUT_MS = 10000;
   private static final int MAX_POWERSHELL_STDERR_LENGTH = 500;
+  private static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
 
   public enum RealtimeScanningStatus {
     SCANNING_DISABLED,
@@ -53,6 +58,11 @@ public class WindowsDefenderChecker {
       this.status = status;
       this.pathStatus = pathStatus;
     }
+  }
+
+  public boolean isVirusCheckIgnored(Project project) {
+    return PropertiesComponent.getInstance().isTrueValue(IGNORE_VIRUS_CHECK) ||
+           PropertiesComponent.getInstance(project).isTrueValue(IGNORE_VIRUS_CHECK);
   }
 
   public CheckResult checkWindowsDefender(@NotNull Project project) {
@@ -257,8 +267,24 @@ public class WindowsDefenderChecker {
     return result;
   }
 
-  public void configureActions(WindowsDefenderNotification notification) {
+  public void configureActions(Project project, WindowsDefenderNotification notification) {
     notification.addAction(new WindowsDefenderFixAction(notification.getPaths()));
+
+    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        PropertiesComponent.getInstance().setValue(IGNORE_VIRUS_CHECK, "true");
+      }
+    });
+    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again.this.project")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        PropertiesComponent.getInstance(project).setValue(IGNORE_VIRUS_CHECK, "true");
+      }
+    });
+
   }
 
   public String getConfigurationInstructionsUrl() {
