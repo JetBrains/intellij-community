@@ -258,6 +258,12 @@ public class FileUtilHeavyTest {
   }
 
   @Test
+  public void deletingNonExistentFile() throws IOException {
+    File missing = new File(tempDir.getRoot(), "missing");
+    FileUtil.delete(missing.toPath());
+  }
+
+  @Test
   public void testToCanonicalPathSymLinksAware() throws IOException {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
