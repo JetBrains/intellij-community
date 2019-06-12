@@ -59,7 +59,7 @@ public class GitIndexUtil {
   }
 
   @NotNull
-  public static List<StagedFile> listStaged(@NotNull GitRepository repository, @NotNull Collection<FilePath> filePaths) throws VcsException {
+  public static List<StagedFile> listStaged(@NotNull GitRepository repository, @NotNull Collection<? extends FilePath> filePaths) throws VcsException {
     List<StagedFile> result = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
@@ -91,7 +91,7 @@ public class GitIndexUtil {
 
   @NotNull
   public static List<StagedFileOrDirectory> listTree(@NotNull GitRepository repository,
-                                                     @NotNull Collection<FilePath> filePath,
+                                                     @NotNull Collection<? extends FilePath> filePath,
                                                      @NotNull VcsRevisionNumber revision) throws VcsException {
     List<StagedFileOrDirectory> result = new ArrayList<>();
     VirtualFile root = repository.getRoot();

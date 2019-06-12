@@ -155,8 +155,8 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   private void checkIfFileWasTouchedAndFindParentsInBackground(@NotNull final FilePath filePath,
                                                                @NotNull final GitFileRevision rev,
                                                                @NotNull final Collection<String> parentHashes,
-                                                               @Nullable final List<VcsFileRevision> revisions,
-                                                               @NotNull final Consumer<MergeCommitPreCheckInfo> resultHandler) {
+                                                               @Nullable final List<? extends VcsFileRevision> revisions,
+                                                               @NotNull final Consumer<? super MergeCommitPreCheckInfo> resultHandler) {
     new Task.Backgroundable(myProject, "Loading changes...", true) {
       private MergeCommitPreCheckInfo myInfo;
 
@@ -187,7 +187,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   private Collection<GitFileRevision> findParentRevisions(@NotNull GitRepository repository,
                                                           @NotNull GitFileRevision currentRevision,
                                                           @NotNull Collection<String> parentHashes,
-                                                          @Nullable List<VcsFileRevision> revisions) throws VcsException {
+                                                          @Nullable List<? extends VcsFileRevision> revisions) throws VcsException {
     // currentRevision is a merge revision.
     // the file could be renamed in one of the branches, i.e. the name in one of the parent revisions may be different from the name
     // in currentRevision. It can be different even in both parents, but it would a rename-rename conflict, and we don't handle such anyway.
@@ -203,7 +203,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   private GitFileRevision createParentRevision(@NotNull GitRepository repository,
                                                @NotNull GitFileRevision currentRevision,
                                                @NotNull String parentHash,
-                                               @Nullable List<VcsFileRevision> revisions) throws VcsException {
+                                               @Nullable List<? extends VcsFileRevision> revisions) throws VcsException {
     if (revisions != null) {
       for (VcsFileRevision revision : revisions) {
         if (((GitFileRevision)revision).getHash().equals(parentHash)) {
@@ -235,7 +235,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   }
 
   private void showPopup(@NotNull AnActionEvent event, @NotNull GitFileRevision rev, @NotNull FilePath filePath,
-                         @NotNull Collection<GitFileRevision> parents) {
+                         @NotNull Collection<? extends GitFileRevision> parents) {
     ActionGroup parentActions = createActionGroup(rev, filePath, parents);
     DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Choose parent to compare", parentActions, dataContext,
@@ -260,7 +260,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   @NotNull
   private ActionGroup createActionGroup(@NotNull GitFileRevision rev,
                                         @NotNull FilePath filePath,
-                                        @NotNull Collection<GitFileRevision> parents) {
+                                        @NotNull Collection<? extends GitFileRevision> parents) {
     Collection<AnAction> actions = new ArrayList<>(2);
     for (GitFileRevision parent : parents) {
       actions.add(createParentAction(rev, filePath, parent));

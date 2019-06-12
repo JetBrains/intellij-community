@@ -180,7 +180,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
                       @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
-                      @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                      @Nullable ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       List<FilePatch> patches = null;
       VcsException exception = null;
       try {

@@ -41,7 +41,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @NotNull private final Map<GitRepository, String> myDeletedTagTips = new HashMap<>();
 
   GitDeleteTagOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
-                        @NotNull Collection<GitRepository> repositories, @NotNull String tagName) {
+                        @NotNull Collection<? extends GitRepository> repositories, @NotNull String tagName) {
     super(project, git, uiHandler, repositories);
     myTagName = tagName;
     myNotifier = VcsNotifier.getInstance(myProject);

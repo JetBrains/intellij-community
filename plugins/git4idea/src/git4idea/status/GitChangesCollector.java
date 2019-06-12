@@ -159,7 +159,7 @@ class GitChangesCollector {
     return ContainerUtil.map(allPaths, VcsUtil::getFilePath);
   }
 
-  private void addToPaths(FilePath pathToAdd, List<String> paths) {
+  private void addToPaths(FilePath pathToAdd, List<? super String> paths) {
     VcsRoot fileRoot = myVcsManager.getVcsRootObjectFor(pathToAdd);
     if (fileRoot != null && fileRoot.getVcs() != null && myVcs.equals(fileRoot.getVcs()) && myVcsRoot.equals(fileRoot.getPath())) {
       paths.add(pathToAdd.getPath());
@@ -183,7 +183,7 @@ class GitChangesCollector {
   }
 
   // calls 'git status' and parses the output, feeding myChanges.
-  private void collectChanges(Collection<FilePath> dirtyPaths) throws VcsException {
+  private void collectChanges(Collection<? extends FilePath> dirtyPaths) throws VcsException {
     GitLineHandler handler = statusHandler(dirtyPaths);
     String output = myGit.runCommand(handler).getOutputOrThrow();
     parseOutput(output, handler);
@@ -194,7 +194,7 @@ class GitChangesCollector {
     myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
   }
 
-  private GitLineHandler statusHandler(Collection<FilePath> dirtyPaths) {
+  private GitLineHandler statusHandler(Collection<? extends FilePath> dirtyPaths) {
     GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);

@@ -243,15 +243,15 @@ public class ShelvedChangesViewManager implements Disposable {
       super(ShelvedChangesViewManager.this.myProject, myTree.getGrouping());
     }
 
-    public void setShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists) {
+    public void setShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists) {
       createShelvedListsWithChangesNode(shelvedLists, myRoot);
     }
 
-    public void setDeletedShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists) {
+    public void setDeletedShelvedLists(@NotNull List<? extends ShelvedChangeList> shelvedLists) {
       createShelvedListsWithChangesNode(shelvedLists, createTagNode("Recently Deleted"));
     }
 
-    private void createShelvedListsWithChangesNode(@NotNull List<ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
+    private void createShelvedListsWithChangesNode(@NotNull List<? extends ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
       shelvedLists.forEach(changeList -> {
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
         requireNonNull(changeList.getChanges()).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);

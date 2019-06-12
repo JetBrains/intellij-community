@@ -87,8 +87,8 @@ public class GitFileHistory {
     myStartingRevision = revision;
   }
 
-  private void load(@NotNull Consumer<GitFileRevision> consumer,
-                    @NotNull Consumer<VcsException> exceptionConsumer,
+  private void load(@NotNull Consumer<? super GitFileRevision> consumer,
+                    @NotNull Consumer<? super VcsException> exceptionConsumer,
                     String... parameters) {
     GitLogParser<GitLogFullRecord> logParser = GitLogParser.createDefaultParser(myProject, GitLogParser.NameStatus.STATUS,
                                                                                 HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL,
@@ -198,8 +198,8 @@ public class GitFileHistory {
   public static void loadHistory(@NotNull Project project,
                                  @NotNull FilePath path,
                                  @Nullable VcsRevisionNumber startingFrom,
-                                 @NotNull Consumer<GitFileRevision> consumer,
-                                 @NotNull Consumer<VcsException> exceptionConsumer,
+                                 @NotNull Consumer<? super GitFileRevision> consumer,
+                                 @NotNull Consumer<? super VcsException> exceptionConsumer,
                                  String... parameters) {
     try {
       VirtualFile repositoryRoot = GitUtil.getRepositoryForFile(project, path).getRoot();
@@ -256,9 +256,9 @@ public class GitFileHistory {
     @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
     @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>();
     @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>();
-    @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
+    @NotNull private final Consumer<? super GitFileRevision> myRevisionConsumer;
 
-    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer) {
+    GitLogRecordConsumer(@NotNull Consumer<? super GitFileRevision> revisionConsumer) {
       myRevisionConsumer = revisionConsumer;
     }
 
@@ -276,7 +276,7 @@ public class GitFileHistory {
       myFirstCommit.set(record.getHash());
 
       myRevisionConsumer.consume(createGitFileRevision(record));
-      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      List<? extends VcsFileStatusInfo> statusInfos = record.getStatusInfos();
       if (statusInfos.isEmpty()) {
         // can safely be empty, for example, for simple merge commits that don't change anything.
         return;
@@ -293,7 +293,7 @@ public class GitFileHistory {
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
       Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
       Collection<String> parents = Arrays.asList(record.getParentsHashes());
-      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      List<? extends VcsFileStatusInfo> statusInfos = record.getStatusInfos();
       boolean deleted = !statusInfos.isEmpty() && statusInfos.get(0).getType() == Change.Type.DELETED;
       return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
                                  record.getFullMessage(),

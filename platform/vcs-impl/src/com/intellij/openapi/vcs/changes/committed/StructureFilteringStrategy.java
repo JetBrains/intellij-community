@@ -64,7 +64,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void setFilterBase(List<CommittedChangeList> changeLists) {
+  public void setFilterBase(List<? extends CommittedChangeList> changeLists) {
     // todo cycle here
     if (myUI == null) {
       myUI = new MyUI();
@@ -89,15 +89,15 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void appendFilterBase(List<CommittedChangeList> changeLists) {
+  public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
     myUI.append(changeLists);
   }
 
   @Override
   @NotNull
-  public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
+  public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
     if (mySelection.size() == 0) {
-      return changeLists;
+      return ContainerUtil.immutableList(changeLists);
     }
     final ArrayList<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList list : changeLists) {

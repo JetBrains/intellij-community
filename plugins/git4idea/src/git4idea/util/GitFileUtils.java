@@ -79,7 +79,7 @@ public class GitFileUtils {
     Git.getInstance().runCommand(handler).throwOnError();
   }
 
-  public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+  public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     deleteFiles(project, root, files, "--cached");
     updateUntrackedFilesHolderOnFileRemove(project, root, files);
@@ -112,7 +112,7 @@ public class GitFileUtils {
   }
 
   private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
-                                                             @NotNull Collection<VirtualFile> removedFiles) {
+                                                             @NotNull Collection<? extends VirtualFile> removedFiles) {
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root.getPresentableUrl());
@@ -126,7 +126,7 @@ public class GitFileUtils {
   }
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                              @NotNull Collection<FilePath> files) throws VcsException {
+                              @NotNull Collection<? extends FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       addPaths(project, root, paths, false);
     }
@@ -134,7 +134,7 @@ public class GitFileUtils {
   }
 
   public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
-                                   @NotNull Collection<FilePath> files) throws VcsException {
+                                   @NotNull Collection<? extends FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       addPaths(project, root, paths, true);
     }
@@ -142,7 +142,7 @@ public class GitFileUtils {
   }
 
   @NotNull
-  private static Collection<VirtualFile> getVirtualFilesFromFilePaths(@NotNull Collection<FilePath> paths) {
+  private static Collection<VirtualFile> getVirtualFilesFromFilePaths(@NotNull Collection<? extends FilePath> paths) {
     Collection<VirtualFile> files = new ArrayList<>(paths.size());
     for (FilePath path : paths) {
       VirtualFile file = path.getVirtualFile();

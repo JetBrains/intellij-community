@@ -147,9 +147,9 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     return ContainerUtil.mapNotNull(urls, (NullableFunction<String, R>)s -> ContainerUtil.find(repositories, repository -> s.equals(repository.getPresentableUrl())));
   }
 
-  protected abstract void checkout(@NotNull String taskName, @NotNull List<R> repos, @Nullable Runnable callInAwtLater);
+  protected abstract void checkout(@NotNull String taskName, @NotNull List<? extends R> repos, @Nullable Runnable callInAwtLater);
 
-  protected abstract void checkoutAsNewBranch(@NotNull String name, @NotNull List<R> repositories);
+  protected abstract void checkoutAsNewBranch(@NotNull String name, @NotNull List<? extends R> repositories);
 
   @Nullable
   protected abstract String getActiveBranch(R repository);
@@ -157,7 +157,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   @NotNull
   protected abstract Iterable<TaskInfo> getAllBranches(@NotNull R repository);
 
-  protected abstract void mergeAndClose(@NotNull String branch, @NotNull List<R> repositories);
+  protected abstract void mergeAndClose(@NotNull String branch, @NotNull List<? extends R> repositories);
 
   protected abstract boolean hasBranch(@NotNull R repository, @NotNull TaskInfo name);
 }

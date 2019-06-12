@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -233,10 +234,10 @@ class GitBranchPopupActions {
     @NotNull private final GitVcsSettings myGitVcsSettings;
     @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
-    LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+    LocalBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
       myProject = project;
-      myRepositories = repositories;
+      myRepositories = ContainerUtil.immutableList(repositories);
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
@@ -329,10 +330,10 @@ class GitBranchPopupActions {
 
     private static class CheckoutAction extends DumbAwareAction {
       private final Project myProject;
-      private final List<GitRepository> myRepositories;
+      private final List<? extends GitRepository> myRepositories;
       private final String myBranchName;
 
-      CheckoutAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+      CheckoutAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
         super("Checkout");
         myProject = project;
         myRepositories = repositories;
@@ -348,10 +349,10 @@ class GitBranchPopupActions {
 
     private static class CheckoutAsNewBranch extends DumbAwareAction {
       private final Project myProject;
-      private final List<GitRepository> myRepositories;
+      private final List<? extends GitRepository> myRepositories;
       private final String myBranchName;
 
-      CheckoutAsNewBranch(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+      CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
         super("Checkout As...");
         myProject = project;
         myRepositories = repositories;
@@ -372,10 +373,10 @@ class GitBranchPopupActions {
 
     private static class RenameBranchAction extends DumbAwareAction {
       @NotNull private final Project myProject;
-      @NotNull private final List<GitRepository> myRepositories;
+      @NotNull private final List<? extends GitRepository> myRepositories;
       @NotNull private final String myCurrentBranchName;
 
-      RenameBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String currentBranchName) {
+      RenameBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String currentBranchName) {
         super("Rename...");
         myProject = project;
         myRepositories = repositories;
@@ -404,10 +405,10 @@ class GitBranchPopupActions {
 
     private static class DeleteAction extends DumbAwareAction {
       private final Project myProject;
-      private final List<GitRepository> myRepositories;
+      private final List<? extends GitRepository> myRepositories;
       private final String myBranchName;
 
-      DeleteAction(Project project, List<GitRepository> repositories, String branchName) {
+      DeleteAction(Project project, List<? extends GitRepository> repositories, String branchName) {
         super("Delete");
         myProject = project;
         myRepositories = repositories;
@@ -424,7 +425,7 @@ class GitBranchPopupActions {
 
   static class CurrentBranchActions extends LocalBranchActions {
     CurrentBranchActions(@NotNull Project project,
-                         @NotNull List<GitRepository> repositories,
+                         @NotNull List<? extends GitRepository> repositories,
                          @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
       super(project, repositories, branchName, selectedRepository);
@@ -445,12 +446,12 @@ class GitBranchPopupActions {
   static class RemoteBranchActions extends BranchActionGroup {
 
     private final Project myProject;
-    private final List<GitRepository> myRepositories;
+    private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     @NotNull private final GitBranchManager myGitBranchManager;
 
-    RemoteBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+    RemoteBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                         @NotNull GitRepository selectedRepository) {
 
       myProject = project;
@@ -486,10 +487,10 @@ class GitBranchPopupActions {
 
     private static class CheckoutRemoteBranchAction extends DumbAwareAction {
       private final Project myProject;
-      private final List<GitRepository> myRepositories;
+      private final List<? extends GitRepository> myRepositories;
       private final String myRemoteBranchName;
 
-      CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories,
+      CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                         @NotNull String remoteBranchName) {
         super("Checkout As...");
         myProject = project;
@@ -517,10 +518,10 @@ class GitBranchPopupActions {
 
     private static class RemoteDeleteAction extends DumbAwareAction {
       private final Project myProject;
-      private final List<GitRepository> myRepositories;
+      private final List<? extends GitRepository> myRepositories;
       private final String myBranchName;
 
-      RemoteDeleteAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+      RemoteDeleteAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
         super("Delete");
         myProject = project;
         myRepositories = repositories;
@@ -543,12 +544,12 @@ class GitBranchPopupActions {
   private static class CompareAction extends DumbAwareAction {
 
     private final Project myProject;
-    private final List<GitRepository> myRepositories;
+    private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
     private final GitRepository mySelectedRepository;
 
-    CompareAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
-                         @NotNull GitRepository selectedRepository) {
+    CompareAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
+                  @NotNull GitRepository selectedRepository) {
       super("Compare with Current");
       myProject = project;
       myRepositories = repositories;
@@ -576,10 +577,10 @@ class GitBranchPopupActions {
   private static class ShowDiffWithBranchAction extends DumbAwareAction {
 
     private final Project myProject;
-    private final List<GitRepository> myRepositories;
+    private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
 
-    ShowDiffWithBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+    ShowDiffWithBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
       super("Show Diff with Working Tree");
       myProject = project;
       myRepositories = repositories;
@@ -601,12 +602,12 @@ class GitBranchPopupActions {
   private static class MergeAction extends DumbAwareAction {
 
     private final Project myProject;
-    private final List<GitRepository> myRepositories;
+    private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
     private final boolean myLocalBranch;
 
-    MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
-                       boolean localBranch) {
+    MergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
+                boolean localBranch) {
       super("Merge into Current");
       myProject = project;
       myRepositories = repositories;
@@ -638,10 +639,10 @@ class GitBranchPopupActions {
 
   private static class RebaseAction extends DumbAwareAction {
     private final Project myProject;
-    private final List<GitRepository> myRepositories;
+    private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
 
-    RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+    RebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
       super("Rebase Current onto Selected");
       myProject = project;
       myRepositories = repositories;
@@ -670,10 +671,10 @@ class GitBranchPopupActions {
 
   private static class CheckoutWithRebaseAction extends DumbAwareAction {
     private final Project myProject;
-    private final List<GitRepository> myRepositories;
+    private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
 
-    CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+    CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
       super("Checkout and Rebase onto Current");
       myProject = project;
       myRepositories = repositories;
@@ -698,11 +699,11 @@ class GitBranchPopupActions {
 
   static class TagActions extends BranchActionGroup {
     private final Project myProject;
-    private final List<GitRepository> myRepositories;
+    private final List<? extends GitRepository> myRepositories;
     private final String myTagName;
     private final GitRepository mySelectedRepository;
 
-    TagActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String tagName,
+    TagActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String tagName,
                @NotNull GitRepository selectedRepository) {
       myProject = project;
       myRepositories = repositories;
@@ -722,10 +723,10 @@ class GitBranchPopupActions {
 
     private static class DeleteTagAction extends DumbAwareAction {
       private final Project myProject;
-      private final List<GitRepository> myRepositories;
+      private final List<? extends GitRepository> myRepositories;
       private final String myTagName;
 
-      DeleteTagAction(Project project, List<GitRepository> repositories, String tagName) {
+      DeleteTagAction(Project project, List<? extends GitRepository> repositories, String tagName) {
         super("Delete");
         myProject = project;
         myRepositories = repositories;
@@ -741,7 +742,7 @@ class GitBranchPopupActions {
   }
 
   @NotNull
-  private static String getCurrentBranchPresentation(@NotNull Collection<GitRepository> repositories) {
+  private static String getCurrentBranchPresentation(@NotNull Collection<? extends GitRepository> repositories) {
     Set<String> currentBranches = map2Set(repositories,
                                           repo -> notNull(repo.getCurrentBranchName(),
                                                           getShortHash(notNull(repo.getCurrentRevision()))));
