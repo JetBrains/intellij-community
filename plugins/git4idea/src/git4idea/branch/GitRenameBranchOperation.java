@@ -36,7 +36,7 @@ public class GitRenameBranchOperation extends GitBranchOperation {
                                   @NotNull GitBranchUiHandler uiHandler,
                                   @NotNull String currentName,
                                   @NotNull String newName,
-                                  @NotNull List<GitRepository> repositories) {
+                                  @NotNull List<? extends GitRepository> repositories) {
     super(project, git, uiHandler, repositories);
     myCurrentName = currentName;
     myNewName = newName;

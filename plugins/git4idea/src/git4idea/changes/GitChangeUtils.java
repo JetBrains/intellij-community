@@ -63,7 +63,7 @@ public class GitChangeUtils {
                                   @Nullable GitRevisionNumber thisRevision,
                                   GitRevisionNumber parentRevision,
                                   String s,
-                                  Collection<Change> changes,
+                                  Collection<? super Change> changes,
                                   final Set<String> ignoreNames) throws VcsException {
     StringScanner sc = new StringScanner(s);
     parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes, ignoreNames);
@@ -89,7 +89,7 @@ public class GitChangeUtils {
                                    @Nullable GitRevisionNumber thisRevision,
                                    @Nullable GitRevisionNumber parentRevision,
                                    StringScanner s,
-                                   Collection<Change> changes,
+                                   Collection<? super Change> changes,
                                    final Set<String> ignoreNames) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
@@ -220,7 +220,7 @@ public class GitChangeUtils {
 
   @Nullable
   public static Hash commitExists(final Project project, final VirtualFile root, final String anyReference,
-                                  List<VirtualFile> paths, final String... parameters) {
+                                  List<? extends VirtualFile> paths, final String... parameters) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters(parameters);
@@ -324,7 +324,7 @@ public class GitChangeUtils {
                                            @NotNull VirtualFile root,
                                            @Nullable String oldRevision,
                                            @Nullable String newRevision,
-                                           @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+                                           @Nullable Collection<? extends FilePath> dirtyPaths) throws VcsException {
     return getDiff(project, root, oldRevision, newRevision, dirtyPaths, true);
   }
 
@@ -333,7 +333,7 @@ public class GitChangeUtils {
                                             @NotNull VirtualFile root,
                                             @Nullable String oldRevision,
                                             @Nullable String newRevision,
-                                            @Nullable Collection<FilePath> dirtyPaths,
+                                            @Nullable Collection<? extends FilePath> dirtyPaths,
                                             boolean detectRenames) throws VcsException {
     LOG.assertTrue(oldRevision != null || newRevision != null, "Both old and new revisions can't be null");
     String range;
@@ -419,7 +419,7 @@ public class GitChangeUtils {
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                          @NotNull VirtualFile root,
                                                          @NotNull String oldRevision,
-                                                         @Nullable Collection<FilePath> dirtyPaths,
+                                                         @Nullable Collection<? extends FilePath> dirtyPaths,
                                                          boolean reverse) throws VcsException {
     return getDiffWithWorkingDir(project, root, oldRevision, dirtyPaths, reverse, true);
   }
@@ -428,7 +428,7 @@ public class GitChangeUtils {
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                           @NotNull VirtualFile root,
                                                           @NotNull String oldRevision,
-                                                          @Nullable Collection<FilePath> dirtyPaths,
+                                                          @Nullable Collection<? extends FilePath> dirtyPaths,
                                                           boolean reverse,
                                                           boolean detectRenames) throws VcsException {
     String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse, detectRenames);
@@ -453,7 +453,7 @@ public class GitChangeUtils {
   private static String getDiffOutput(@NotNull Project project,
                                       @NotNull VirtualFile root,
                                       @NotNull String diffRange,
-                                      @Nullable Collection<FilePath> dirtyPaths,
+                                      @Nullable Collection<? extends FilePath> dirtyPaths,
                                       boolean reverse,
                                       boolean detectRenames)
     throws VcsException {
@@ -470,7 +470,7 @@ public class GitChangeUtils {
   private static GitLineHandler getDiffHandler(@NotNull Project project,
                                                  @NotNull VirtualFile root,
                                                  @NotNull String diffRange,
-                                                 @Nullable Collection<FilePath> dirtyPaths,
+                                                 @Nullable Collection<? extends FilePath> dirtyPaths,
                                                  boolean reverse,
                                                  boolean detectRenames) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.DIFF);

@@ -19,7 +19,7 @@ public class ShelfFileProcessorUtil {
   public static void savePatchFile(@Nullable Project project,
                                    @NotNull File patchFile,
                                    List<? extends FilePatch> patches,
-                                   @Nullable List<PatchEP> extensions,
+                                   @Nullable List<? extends PatchEP> extensions,
                                    @NotNull CommitContext context) throws IOException {
     try (Writer writer = new OutputStreamWriter(new FileOutputStream(patchFile), StandardCharsets.UTF_8)) {
       UnifiedDiffWriter.write(project, patches, writer, "\n", chooseNotNull(extensions, UnifiedDiffWriter.getPatchExtensions(project)), context);

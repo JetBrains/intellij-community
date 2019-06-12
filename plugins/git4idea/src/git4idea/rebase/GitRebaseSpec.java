@@ -52,7 +52,7 @@ public class GitRebaseSpec {
   @NotNull
   public static GitRebaseSpec forNewRebase(@NotNull Project project,
                                            @NotNull GitRebaseParams params,
-                                           @NotNull Collection<GitRepository> repositories,
+                                           @NotNull Collection<? extends GitRepository> repositories,
                                            @NotNull ProgressIndicator indicator) {
     GitUtil.updateRepositories(repositories);
     Map<GitRepository, String> initialHeadPositions = findInitialHeadPositions(repositories, params.getBranch());
@@ -147,7 +147,7 @@ public class GitRebaseSpec {
   }
 
   @NotNull
-  private static Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<GitRepository> repositories,
+  private static Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<? extends GitRepository> repositories,
                                                                      @Nullable final String branchToCheckout) {
     return ContainerUtil.map2Map(repositories, repository -> {
       String currentRevision = findCurrentRevision(repository, branchToCheckout);
@@ -177,7 +177,7 @@ public class GitRebaseSpec {
   }
 
   @NotNull
-  private static Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<GitRepository> repositories) {
+  private static Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<? extends GitRepository> repositories) {
     return ContainerUtil.map2Map(repositories, repository -> {
       String currentBranchName = repository.getCurrentBranchName();
       LOG.debug("Current branch in [" + repository.getRoot().getName() + "] is [" + currentBranchName + "]");

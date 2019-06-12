@@ -481,7 +481,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     setAutoDirectoryMappings(ContainerUtil.append(myMappings.getDirectoryMappings(), new VcsDirectoryMapping(path, activeVcsName)));
   }
 
-  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
+  public void setAutoDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
     myMappings.setDirectoryMappings(mappings);
     myMappings.cleanupMappings();
   }

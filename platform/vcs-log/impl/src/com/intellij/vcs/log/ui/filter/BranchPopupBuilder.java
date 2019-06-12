@@ -17,11 +17,11 @@ import java.util.*;
 
 public abstract class BranchPopupBuilder {
   @NotNull protected final VcsLogDataPack myDataPack;
-  @Nullable private final Collection<VirtualFile> myVisibleRoots;
+  @Nullable private final Collection<? extends VirtualFile> myVisibleRoots;
   @Nullable private final List<? extends List<String>> myRecentItems;
 
   protected BranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
-                               @Nullable Collection<VirtualFile> visibleRoots,
+                               @Nullable Collection<? extends VirtualFile> visibleRoots,
                                @Nullable List<? extends List<String>> recentItems) {
     myDataPack = dataPack;
     myVisibleRoots = visibleRoots;
@@ -48,7 +48,7 @@ public abstract class BranchPopupBuilder {
   }
 
   private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack,
-                                      @Nullable Collection<VirtualFile> visibleRoots,
+                                      @Nullable Collection<? extends VirtualFile> visibleRoots,
                                       @Nullable List<? extends List<String>> recentItems) {
     Groups filteredGroups = new Groups();
     Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();

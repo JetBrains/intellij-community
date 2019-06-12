@@ -199,7 +199,7 @@ public class GitPushOperation {
   }
 
   @NotNull
-  private Collection<VirtualFile> findRootsWithMergeCommits(@NotNull Collection<GitRepository> rootsToSearch) {
+  private Collection<VirtualFile> findRootsWithMergeCommits(@NotNull Collection<? extends GitRepository> rootsToSearch) {
     return ContainerUtil.mapNotNull(rootsToSearch, repo -> {
       PushSpec<GitPushSource, GitPushTarget> pushSpec = myPushSpecs.get(repo);
       if (pushSpec == null) { // repository is not selected to be pushed, but can be rebased
@@ -271,7 +271,7 @@ public class GitPushOperation {
   }
 
   @NotNull
-  private Map<GitRepository, GitPushRepoResult> push(@NotNull List<GitRepository> repositories) {
+  private Map<GitRepository, GitPushRepoResult> push(@NotNull List<? extends GitRepository> repositories) {
     Map<GitRepository, GitPushRepoResult> results = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
@@ -313,7 +313,7 @@ public class GitPushOperation {
   }
 
   @Nullable
-  private static GitPushNativeResult getBranchResult(@NotNull List<GitPushNativeResult> results) {
+  private static GitPushNativeResult getBranchResult(@NotNull List<? extends GitPushNativeResult> results) {
     return ContainerUtil.find(results, result -> result.getSourceRef().startsWith("refs/heads/"));
   }
 
@@ -400,7 +400,7 @@ public class GitPushOperation {
   }
 
   @Nullable
-  private PushUpdateSettings showDialogAndGetExitCode(@NotNull final Set<GitRepository> repositories,
+  private PushUpdateSettings showDialogAndGetExitCode(@NotNull final Set<? extends GitRepository> repositories,
                                                       @NotNull final PushUpdateSettings initialSettings,
                                                       final boolean rebaseOverMergeProblemDetected) {
     Ref<PushUpdateSettings> updateSettings = Ref.create();
@@ -427,7 +427,7 @@ public class GitPushOperation {
   }
 
   @NotNull
-  protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
+  protected GitUpdateResult update(@NotNull Collection<? extends GitRepository> rootsToUpdate,
                                    @NotNull UpdateMethod updateMethod,
                                    boolean checkForRebaseOverMergeProblem) {
     GitUpdateProcess updateProcess = new GitUpdateProcess(myProject, myProgressIndicator,

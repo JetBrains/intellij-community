@@ -75,7 +75,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
 
   @Override
   public VcsAbstractHistorySession createFromCachedData(Boolean aBoolean,
-                                                        @NotNull List<VcsFileRevision> revisions,
+                                                        @NotNull List<? extends VcsFileRevision> revisions,
                                                         @NotNull FilePath filePath,
                                                         VcsRevisionNumber currentRevision) {
     return createSession(filePath, revisions, currentRevision);

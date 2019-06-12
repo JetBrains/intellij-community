@@ -1083,7 +1083,7 @@ public class GitUtil {
   }
 
   @NotNull
-  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<GitRepository> repositories) {
+  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<? extends GitRepository> repositories) {
     Map<GitRepository, Hash> result = new LinkedHashMap<>();
     for (GitRepository repository : repositories) {
       String currentRevision = repository.getCurrentRevision();

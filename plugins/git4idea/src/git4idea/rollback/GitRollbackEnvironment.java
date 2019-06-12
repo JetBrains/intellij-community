@@ -168,7 +168,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @param files The array of files to revert.
    * @throws VcsException Id it breaks.
    */
-  public void revert(final VirtualFile root, final List<FilePath> files) throws VcsException {
+  public void revert(final VirtualFile root, final List<? extends FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
       handler.addParameters("HEAD");
@@ -186,7 +186,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @param toUnversioned passed true if the file will be unversioned after unindexing, i.e. it was added before the revert operation.
    * @throws VcsException if there is a problem with running git
    */
-  private void unindex(final VirtualFile root, final List<FilePath> files, boolean toUnversioned) throws VcsException {
+  private void unindex(final VirtualFile root, final List<? extends FilePath> files, boolean toUnversioned) throws VcsException {
     GitFileUtils.deletePaths(myProject, root, files, "--cached", "-f");
 
     if (toUnversioned) {
@@ -209,7 +209,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @param file       a file to register
    * @param exceptions the list of exceptions to update
    */
-  private void registerFile(Map<VirtualFile, List<FilePath>> files, FilePath file, List<VcsException> exceptions) {
+  private void registerFile(Map<VirtualFile, List<FilePath>> files, FilePath file, List<? super VcsException> exceptions) {
     try {
       VirtualFile root = GitUtil.getRepositoryForFile(myProject, file).getRoot();
       List<FilePath> paths = files.computeIfAbsent(root, key -> new ArrayList<>());

@@ -30,14 +30,14 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
 
   @NotNull protected final Project myProject;
   @NotNull protected final VirtualFile myRoot;
-  @NotNull protected final Consumer<List<R>> myConsumer;
+  @NotNull protected final Consumer<? super List<R>> myConsumer;
 
   @NotNull private final MultiMap<String, R> myHashToRecord = MultiMap.createLinked();
   @Nullable private String myLastHash = null;
 
   protected GitLogRecordCollector(@NotNull Project project,
                                   @NotNull VirtualFile root,
-                                  @NotNull Consumer<List<R>> consumer) {
+                                  @NotNull Consumer<? super List<R>> consumer) {
     myProject = project;
     myRoot = root;
     myConsumer = consumer;
@@ -115,7 +115,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
   @NotNull
   private static <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
                                                                                @NotNull VirtualFile root,
-                                                                               @NotNull Collection<R> records)
+                                                                               @NotNull Collection<? extends R> records)
     throws VcsException {
     Set<String> hashes = new HashSet<>();
 

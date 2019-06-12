@@ -72,7 +72,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
    */
   @NotNull
   static Choice show(@NotNull Project project,
-                     @NotNull List<Change> changes,
+                     @NotNull List<? extends Change> changes,
                      @NotNull Collection<String> paths,
                      @NotNull String operationTitle,
                      @Nullable String forceButtonTitle) {

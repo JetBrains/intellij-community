@@ -144,7 +144,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   /**
    * Adds several files to the list of untracked.
    */
-  public void add(@NotNull Collection<VirtualFile> files) {
+  public void add(@NotNull Collection<? extends VirtualFile> files) {
     synchronized (myDefinitelyUntrackedFiles) {
       myDefinitelyUntrackedFiles.addAll(files);
     }

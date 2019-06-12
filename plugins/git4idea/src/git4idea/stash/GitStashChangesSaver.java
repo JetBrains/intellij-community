@@ -48,7 +48,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
+  protected void save(@NotNull Collection<? extends VirtualFile> rootsToSave) throws VcsException {
     LOG.info("saving " + rootsToSave);
 
     for (VirtualFile root : rootsToSave) {
@@ -124,10 +124,10 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private static class UnstashConflictResolver extends GitConflictResolver {
 
-    private final Set<VirtualFile> myStashedRoots;
+    private final Set<? extends VirtualFile> myStashedRoots;
 
     UnstashConflictResolver(@NotNull Project project, @NotNull Git git,
-                                   @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
+                            @NotNull Set<? extends VirtualFile> stashedRoots, @Nullable Params params) {
       super(project, stashedRoots, makeParamsOrUse(params, project));
       myStashedRoots = stashedRoots;
     }
