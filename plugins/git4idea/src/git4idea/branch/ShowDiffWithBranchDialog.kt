@@ -44,7 +44,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
     }
     mainPanel.setEmptyText("")
 
-    val modalityState = ModalityState.stateForComponent(mainPanel)
+    val modalityState = ModalityState.stateForComponent(rootPane)
     ApplicationManager.getApplication().executeOnPooledThread {
       val result = loadDiff()
 
