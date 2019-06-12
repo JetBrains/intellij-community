@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
@@ -59,55 +60,52 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   private void handleInputFocusMovement(LogicalPosition position, boolean caret) {
+    if (position.column == 0) {
+      return;
+    }
     final Configuration configuration = editor.getUserData(CURRENT_CONFIGURATION_KEY);
     if (configuration == null) {
       return;
     }
-    checkModelValidity();
-    final int offset = editor.logicalPositionToOffset(position);
     final Document document = editor.getDocument();
-    final int length = document.getTextLength();
-    final CharSequence elements = document.getCharsSequence();
+    final int lineCount = document.getLineCount();
+    if (position.line >= lineCount) {
+      return;
+    }
+    final int lineStart = document.getLineStartOffset(position.line);
+    final int lineEnd = document.getLineEndOffset(position.line);
+    final CharSequence patternText = document.getCharsSequence().subSequence(lineStart, lineEnd);
 
-    int start = offset-1;
-    while(start >=0 && Character.isJavaIdentifierPart(elements.charAt(start)) && elements.charAt(start)!='$') start--;
-
-    String text = "";
-    String variableName = null;
-    int end = -1;
-    if (start >= 0 && elements.charAt(start) == '$') {
-      end = offset;
-
-      while (end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end) != '$') end++;
-      if (end < length && elements.charAt(end) == '$') {
-        variableName = elements.subSequence(start + 1, end).toString();
-
-        if (variables.contains(variableName)) {
-          final NamedScriptableDefinition variable = configuration.findVariable(variableName);
-          text = getShortParamString(variable, !editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()));
-          final boolean replacementVariable =
-            variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
-          final String currentVariableName = replacementVariable
-                              ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
-                              : variableName;
-          if (myCurrentVariableCallback != null) {
-            if (caret) {
-              myCurrentVariableCallback.accept(currentVariableName);
-              caret = false;
-            }
-          }
-          else {
-            configuration.setCurrentVariableName(currentVariableName);
-          }
+    final TextRange variableRange = TemplateImplUtil.findVariableAtOffset(patternText, position.column);
+    if (variableRange == null) {
+      if (caret) {
+        if (myCurrentVariableCallback != null) {
+          myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
         }
+        configuration.setCurrentVariableName(Configuration.CONTEXT_VAR_NAME);
       }
+      return;
     }
-    if (myCurrentVariableCallback != null && caret) {
-      myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
+    final String variableName = variableRange.subSequence(patternText).toString();
+    final NamedScriptableDefinition variable = configuration.findVariable(variableName);
+    final String filterText =
+      getShortParamString(variable, !editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()));
+    final boolean replacementVariable =
+      variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
+    final String currentVariableName = replacementVariable
+                                       ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
+                                       : variableName;
+    if (caret) {
+      if (myCurrentVariableCallback != null) {
+        myCurrentVariableCallback.accept(currentVariableName);
+      }
+      configuration.setCurrentVariableName(currentVariableName);
     }
-
-    if (variableName != null && !text.isEmpty()) {
-        showTooltip(editor, start, end + 1, text);
+    if (!filterText.isEmpty()) {
+      final LogicalPosition toolTipPosition =
+        new LogicalPosition(position.line, variableRange.getStartOffset() +
+                                           ((variableRange.getEndOffset() - variableRange.getStartOffset()) >> 1));
+      showTooltip(editor, toolTipPosition, filterText);
     }
   }
 
@@ -115,7 +113,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     final Document document = editor.getDocument();
     if (modificationTimeStamp != document.getModificationStamp()) {
       variables.clear();
-      variables.addAll(TemplateImplUtil.parseVariables(document.getCharsSequence()).keySet());
+      variables.addAll(TemplateImplUtil.parseVariableNames(document.getCharsSequence()));
       modificationTimeStamp = document.getModificationStamp();
       updateEditorInlays();
     }
@@ -226,28 +224,17 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     buf.append(str);
   }
 
-  private static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text) {
+  private static void showTooltip(@NotNull Editor editor, LogicalPosition position, @NotNull String text) {
     if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips") && Registry.is("ssr.use.new.search.dialog")) {
       return;
     }
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    final Point left = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
-    final int documentLength = editor.getDocument().getTextLength();
-    if (end >= documentLength) end = documentLength;
-    final Point right = editor.logicalPositionToXY(editor.offsetToLogicalPosition(end));
+    final Point point = editor.logicalPositionToXY(position);
+    point.y += editor.getLineHeight();
 
-    final Point bestPoint = new Point(left.x + (right.x - left.x) / 2, right.y + editor.getLineHeight() / 2);
-
-    if (visibleArea.x > bestPoint.x) {
-      bestPoint.x = visibleArea.x;
-    }
-    else if (visibleArea.x + visibleArea.width < bestPoint.x) {
-      bestPoint.x = visibleArea.x + visibleArea.width - 5;
-    }
-
-    final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint,
+    final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), point,
                                                 editor.getComponent().getRootPane().getLayeredPane());
-    final HintHint hint = new HintHint(editor, bestPoint)
+    final HintHint hint = new HintHint(editor, point)
       .setAwtTooltip(true)
       .setShowImmediately(true);
     TooltipController.getInstance().showTooltip(editor, p, text, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
