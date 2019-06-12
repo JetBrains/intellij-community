@@ -122,6 +122,10 @@ public class CompareBranchesDiffPanel extends JPanel {
                                   swapSides ? currentBranchText : otherBranchText));
   }
 
+  public void setEmptyText(@NotNull String text) {
+    myChangesBrowser.getViewer().setEmptyText(text);
+  }
+
   private class MyChangesBrowser extends SimpleChangesBrowser {
     MyChangesBrowser(@NotNull Project project, @NotNull List<? extends Change> changes) {
       super(project, false, true);
