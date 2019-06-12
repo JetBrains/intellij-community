@@ -261,6 +261,7 @@ public class FileUtilHeavyTest {
   public void deletingNonExistentFile() throws IOException {
     File missing = new File(tempDir.getRoot(), "missing");
     FileUtil.delete(missing.toPath());
+    assertTrue(FileUtil.delete(missing));
   }
 
   @Test
