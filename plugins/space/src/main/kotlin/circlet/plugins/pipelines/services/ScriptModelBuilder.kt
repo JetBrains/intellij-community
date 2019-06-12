@@ -20,14 +20,25 @@ class ScriptModelBuilder {
 
     fun build(lifetime: Lifetime, project: Project, logBuildData: LogData): ScriptViewModel {
 
+        val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
+        events.change.forEach(lifetime) {
+            val ev = it.index
+            val prefix = if (ev.level == Level.ERROR) "Error: " else ""
+            logBuildData.add("${prefix}${ev.message}")
+        }
+        val logger = SubstituteLogger("ScriptModelBuilderLogger", events, false)
+
         val basePath = project.basePath
         if (basePath == null) {
+            logger.info("Can't build model for default project")
             return createEmptyScriptViewModel(lifetime)
         }
 
-        val expectedFile = File(basePath, "Circlet.kts")
+        val expectedFileName = "Circlet.kts"
+        val expectedFile = File(basePath, expectedFileName)
         if (!expectedFile.exists())
         {
+            logger.info("Can't build model for default project")
             return createEmptyScriptViewModel(lifetime)
         }
 
@@ -35,11 +46,7 @@ class ScriptModelBuilder {
         {
             val automationSettingsComponent = application.getComponent<CircletAutomationSettingsComponent>()
             val path = normalizePath(automationSettingsComponent.state.kotlincFolderPath)
-            val events = ObservableQueue.mutable<SubstituteLoggingEvent>()
-            events.change.forEach(lifetime) {
-                logBuildData.add(it.index.message)
-            }
-            val logger = SubstituteLogger("ScriptModelBuilderLogger", events, false)
+
             val kotlinCompilerPath = KotlinCompilerFinder(logger)
                 .find(if (path.endsWith('/')) path else "$path/")
 
@@ -55,7 +62,7 @@ class ScriptModelBuilder {
         }
         catch (e: Exception)
         {
-            logger.error(e)
+            logger.error("${e.message}. ${e.printStackTrace()}")
             return createEmptyScriptViewModel(lifetime)
         }
     }
