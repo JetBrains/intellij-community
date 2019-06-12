@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.branch.GitBranchWorker;
 import git4idea.commands.Git;
@@ -25,6 +24,7 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
