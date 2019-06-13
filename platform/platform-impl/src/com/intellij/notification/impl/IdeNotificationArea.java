@@ -13,19 +13,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -219,27 +216,30 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
+      Graphics2D g2 = (Graphics2D)g;
       UISettings.setupAntialiasing(g);
 
       Font originalFont = g.getFont();
       Color originalColor = g.getColor();
       g.setFont(myFont);
 
-      int center = getIconWidth() - myWidth;
-      x += (center % 2 == 0 ? center - 1 : center) / 2;
-      y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
+      FontMetrics fm = SwingUtilities2.getFontMetrics((JComponent)c, g);
+      boolean isTwoChar = myStr.length() == 2;
 
-      int length = myStr.length();
-      if (SystemInfo.isMac || (SystemInfo.isWindows && length == 2)) {
-        x += JBUIScale.scale(1);
+      float center = getIconWidth() - fm.stringWidth(myStr) + (isTwoChar ? JBUIScale.scale(1) : 0);
+      float textX = x + center / 2;
+      float textY = y + SimpleColoredComponent.getTextBaseLine(fm, getIconHeight());
+
+      if (!JreHiDpiUtil.isJreHiDPI(g2)) {
+        textX = (float)Math.floor(textX);
       }
 
       g.setColor(myTextColor);
-      g.drawString(myStr.substring(0, 1), x, y);
+      g2.drawString(myStr.substring(0, 1), textX, textY);
 
-      if (length == 2) {
-        x += g.getFontMetrics().charWidth(myStr.charAt(0)) - JBUIScale.scale(1);
-        g.drawString(myStr.substring(1), x, y);
+      if (isTwoChar) {
+        textX += fm.charWidth(myStr.charAt(0)) - JBUIScale.scale(1);
+        g2.drawString(myStr.substring(1), textX, textY);
       }
 
       g.setFont(originalFont);
