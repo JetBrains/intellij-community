@@ -103,7 +103,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
               "intellij.java.jps.javacRefScanner8"])
 
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
-    productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
