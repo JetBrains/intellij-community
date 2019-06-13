@@ -15,13 +15,15 @@
  */
 package com.siyeh.ipp.modifiers;
 
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
-import org.intellij.lang.annotations.Language;
 
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * @author Bas Leijdekkers
@@ -34,15 +36,35 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   public void testEnumConstructor() { assertIntentionNotAvailable(); }
   public void testLocalClass() { assertIntentionNotAvailable(); }
   public void testMethod() { doTestWithChooser("private"); }
-  public void testMethod2() { doTestWithChooser("\\(package-private\\)"); }
+  public void testMethod2() { doTestWithChooser("(package-private)"); }
   public void testAnnotatedMember() { doTestWithChooser("private"); }
   public void testClass() { doTestWithChooser("protected"); }
-  public void testInDefaultPackage() {
-    doTest("Make package-private");
+  public void testInDefaultPackage() { doTest("Make package-private"); }
+
+  public void testTypeParameter() {
+    doTestWithChooser("protected");
   }
 
-  void doTestWithChooser(@Language("RegExp") String wanted) {
-    UiInterceptors.register(new ChooserInterceptor(Arrays.asList("public", "protected", "(package-private)", "private"), wanted));
+  public void testAccessConflict() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    try {
+      doTestWithChooser("protected");
+      fail("Must have an exception");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals(
+        "method <b><code>fooooooo()</code></b> will have incompatible access privileges with overriding method <b><code>Y.fooooooo()</code></b>",
+        e.getMessage());
+    }
+  }
+
+  public void testAccessConflictIgnore() {
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTestWithChooser("protected"));
+  }
+
+  void doTestWithChooser(String wanted) {
+    UiInterceptors
+      .register(new ChooserInterceptor(Arrays.asList("public", "protected", "(package-private)", "private"), Pattern.quote(wanted)));
     doTest();
   }
 
