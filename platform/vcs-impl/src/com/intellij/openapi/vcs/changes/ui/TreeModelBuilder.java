@@ -315,11 +315,11 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       final String branchName = switchedRoots.get(vf);
       insertChangeNode(vf, rootsHeadNode, createChangeNode(change, new ChangeNodeDecorator() {
         @Override
-        public void decorate(Change change1, SimpleColoredComponent component, boolean isShowFlatten) {
+        public void decorate(@NotNull Change change1, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
         }
 
         @Override
-        public void preDecorate(Change change1, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+        public void preDecorate(@NotNull Change change1, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
           renderer.append("[" + branchName + "] ", SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
         }
       }));

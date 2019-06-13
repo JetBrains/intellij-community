@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.VcsBundle;
@@ -27,7 +27,7 @@ public class RemoteStatusChangeNodeDecorator implements ChangeNodeDecorator {
   }
 
   @Override
-  public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
+  public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
     final boolean state = myRemoteRevisionsCache.isUpToDate(change);
     if (myListState != null) myListState.report(myIdx, state);
     if (!state) {
@@ -37,6 +37,6 @@ public class RemoteStatusChangeNodeDecorator implements ChangeNodeDecorator {
   }
 
   @Override
-  public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+  public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
   }
 }

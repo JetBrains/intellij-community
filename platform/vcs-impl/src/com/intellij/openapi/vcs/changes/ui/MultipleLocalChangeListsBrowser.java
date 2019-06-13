@@ -371,7 +371,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     private final ChangeNodeDecorator myRemoteRevisionsDecorator = RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator();
 
     @Override
-    public void decorate(Change change, SimpleColoredComponent renderer, boolean isShowFlatten) {
+    public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent renderer, boolean isShowFlatten) {
       PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
       if (tracker != null) {
         List<LocalRange> ranges = tracker.getRanges();
@@ -388,7 +388,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
 
     @Override
-    public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean isShowFlatten) {
+    public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean isShowFlatten) {
       myRemoteRevisionsDecorator.preDecorate(change, renderer, isShowFlatten);
     }
   }
