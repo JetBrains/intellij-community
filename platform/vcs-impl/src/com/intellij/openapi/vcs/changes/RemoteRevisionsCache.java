@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +33,7 @@ public class RemoteRevisionsCache implements VcsListener {
 
   private final ProjectLevelVcsManager myVcsManager;
 
-  private final RemoteStatusChangeNodeDecorator myChangeDecorator;
+  @NotNull private final RemoteStatusChangeNodeDecorator myChangeDecorator;
   private final Project myProject;
   private final Object myLock;
   private final Map<String, RemoteDifferenceStrategy> myKinds;
@@ -186,6 +186,7 @@ public class RemoteRevisionsCache implements VcsListener {
     }
   }
 
+  @NotNull
   public RemoteStatusChangeNodeDecorator getChangesNodeDecorator() {
     return myChangeDecorator;
   }

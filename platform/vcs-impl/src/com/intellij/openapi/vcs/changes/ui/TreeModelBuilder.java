@@ -138,7 +138,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                                       @NotNull Collection<? extends ChangeList> changeLists,
                                                       boolean skipSingleDefaultChangelist) {
     return new TreeModelBuilder(project, grouping)
-      .setChangeLists(changeLists, skipSingleDefaultChangelist)
+      .setChangeLists(changeLists, skipSingleDefaultChangelist, null)
       .build();
   }
 
@@ -197,7 +197,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists, boolean skipSingleDefaultChangeList) {
+  public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists,
+                                         boolean skipSingleDefaultChangeList,
+                                         @Nullable Function<ChangeNodeDecorator, ChangeNodeDecorator> changeDecoratorProvider) {
     assert myProject != null;
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
@@ -219,7 +221,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
       for (int i = 0; i < changes.size(); i++) {
         Change change = changes.get(i);
-        RemoteStatusChangeNodeDecorator decorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
+        RemoteStatusChangeNodeDecorator baseDecorator = new RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, i);
+        ChangeNodeDecorator decorator = changeDecoratorProvider != null ? changeDecoratorProvider.apply(baseDecorator) : baseDecorator;
         insertChangeNode(change, changesParent, createChangeNode(change, decorator));
       }
     }
@@ -233,7 +236,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     return ((LocalChangeList) single).isBlank();
   }
 
-  protected ChangesBrowserNode createChangeNode(Change change, ChangeNodeDecorator decorator) {
+  @NotNull
+  protected ChangesBrowserNode createChangeNode(@NotNull Change change, @Nullable ChangeNodeDecorator decorator) {
     return new ChangesBrowserChangeNode(myProject, change, decorator);
   }
 

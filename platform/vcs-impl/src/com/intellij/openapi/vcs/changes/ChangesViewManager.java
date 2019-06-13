@@ -46,10 +46,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.commit.ChangesViewCommitPanel;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflow;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import com.intellij.vcs.commit.CommitWorkflowManager;
+import com.intellij.vcs.commit.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +63,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
@@ -221,6 +219,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   @NotNull
+  private Function<ChangeNodeDecorator, ChangeNodeDecorator> getChangeDecoratorProvider() {
+    return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, () -> isAllowExcludeFromCommit());
+  }
+
+  @NotNull
   private SimpleToolWindowPanel createChangeViewComponent() {
     ActionToolbar changesToolbar = createChangesToolbar();
     addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
@@ -365,7 +368,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
 
       TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-        .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"))
+        .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"), getChangeDecoratorProvider())
         .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
         .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
         .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
