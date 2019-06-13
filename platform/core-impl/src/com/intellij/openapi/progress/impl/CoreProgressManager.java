@@ -625,15 +625,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   final void updateShouldCheckCanceled() {
-    boolean hasCanceledIndicator;
     synchronized (threadsUnderIndicator) {
-      hasCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
+      CheckCanceledHook hook = createCheckCanceledHook();
+      boolean hasCanceledIndicator = !threadsUnderCanceledIndicator.isEmpty();
+      ourCheckCanceledHook = hook;
+      ourCheckCanceledBehavior = hook == null && !hasCanceledIndicator ? CheckCanceledBehavior.NONE :
+                                 hasCanceledIndicator && ENABLED ? CheckCanceledBehavior.INDICATOR_PLUS_HOOKS :
+                                 CheckCanceledBehavior.ONLY_HOOKS;
     }
-    CheckCanceledHook hook = createCheckCanceledHook();
-    ourCheckCanceledHook = hook;
-    ourCheckCanceledBehavior = hook == null && !hasCanceledIndicator ? CheckCanceledBehavior.NONE :
-                               hasCanceledIndicator && ENABLED ? CheckCanceledBehavior.INDICATOR_PLUS_HOOKS :
-                               CheckCanceledBehavior.ONLY_HOOKS;
   }
 
   @Nullable
