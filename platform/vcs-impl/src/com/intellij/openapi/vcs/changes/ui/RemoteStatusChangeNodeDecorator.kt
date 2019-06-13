@@ -1,42 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 
-public class RemoteStatusChangeNodeDecorator implements ChangeNodeDecorator {
-  private final RemoteRevisionsCache myRemoteRevisionsCache;
-  private final ChangeListRemoteState myListState;
-  private final int myIdx;
+class RemoteStatusChangeNodeDecorator @JvmOverloads constructor(
+  private val remoteRevisionsCache: RemoteRevisionsCache,
+  private val listState: ChangeListRemoteState? = null,
+  private val index: Int = -1
+) : ChangeNodeDecorator {
 
-  public RemoteStatusChangeNodeDecorator(@NotNull RemoteRevisionsCache remoteRevisionsCache) {
-    this(remoteRevisionsCache, null, -1);
-  }
+  override fun decorate(change: Change, component: SimpleColoredComponent, isShowFlatten: Boolean) {
+    val isUpToDate = remoteRevisionsCache.isUpToDate(change)
 
-  public RemoteStatusChangeNodeDecorator(@NotNull RemoteRevisionsCache remoteRevisionsCache,
-                                         @Nullable ChangeListRemoteState listRemoteState,
-                                         int idx) {
-    myRemoteRevisionsCache = remoteRevisionsCache;
-    myListState = listRemoteState;
-    myIdx = idx;
-  }
-
-  @Override
-  public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
-    final boolean state = myRemoteRevisionsCache.isUpToDate(change);
-    if (myListState != null) myListState.report(myIdx, state);
-    if (!state) {
-      component.append(" ");
-      component.append(VcsBundle.message("change.nodetitle.change.is.outdated"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+    listState?.report(index, isUpToDate)
+    if (!isUpToDate) {
+      component.append(" ").append(message("change.nodetitle.change.is.outdated"), SimpleTextAttributes.ERROR_ATTRIBUTES)
     }
   }
 
-  @Override
-  public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
-  }
+  override fun preDecorate(change: Change, renderer: ChangesBrowserNodeRenderer, showFlatten: Boolean) = Unit
 }
