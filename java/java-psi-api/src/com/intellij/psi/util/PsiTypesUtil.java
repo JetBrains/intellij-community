@@ -327,7 +327,7 @@ public class PsiTypesUtil {
   }
 
   /**
-   *  Not compliant to specification, use {@link PsiTypesUtil#isDenotableType(PsiType, PsiElement)} instead
+   * @deprecated not compliant to specification, use {@link PsiTypesUtil#isDenotableType(PsiType, PsiElement)} instead
    */
   @Deprecated
   public static boolean isDenotableType(@Nullable PsiType type) {
