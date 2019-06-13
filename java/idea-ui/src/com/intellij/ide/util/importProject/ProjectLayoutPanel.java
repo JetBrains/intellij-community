@@ -240,15 +240,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
       final Collection<? extends DetectedProjectRoot> sourceRoots = moduleDescriptor.getSourceRoots();
       if (sourceRoots.size() > 0) {
-        builder.append(" [");
-        for (Iterator<? extends DetectedProjectRoot> it = sourceRoots.iterator(); it.hasNext();) {
-          DetectedProjectRoot root = it.next();
-          builder.append(root.getDirectory().getName());
-          if (it.hasNext()) {
-            builder.append(",");
-          }
+        StringJoiner joiner = new StringJoiner(",", " [", "]");
+        for (DetectedProjectRoot root : sourceRoots) {
+          joiner.add(root.getDirectory().getName());
         }
-        builder.append("]");
+        builder.append(joiner);
       }
       return builder.toString();
     }
