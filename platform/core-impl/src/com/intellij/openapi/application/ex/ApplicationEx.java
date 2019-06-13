@@ -54,6 +54,9 @@ public interface ApplicationEx extends Application {
 
   void setSaveAllowed(boolean value);
 
+  /**
+   * @deprecated use {@link #setSaveAllowed(boolean)} with {@code false}
+   */
   @Deprecated
   default void doNotSave() {
     setSaveAllowed(false);
