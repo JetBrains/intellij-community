@@ -998,8 +998,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return file.getFileType() instanceof UnknownFileType;
     }
 
-    if (file instanceof LightVirtualFile && type.equals(((LightVirtualFile)file).getAssignedFileType())) {
-      return true;
+    if (file instanceof LightVirtualFile) {
+      FileType assignedFileType = ((LightVirtualFile)file).getAssignedFileType();
+      if (assignedFileType != null) {
+        return type.equals(assignedFileType);
+      }
     }
 
     if (type instanceof FileTypeIdentifiableByVirtualFile) {
