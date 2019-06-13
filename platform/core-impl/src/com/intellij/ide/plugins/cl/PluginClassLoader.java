@@ -216,7 +216,7 @@ public final class PluginClassLoader extends UrlClassLoader {
       try {
         c = _findClass(name);
       }
-      catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
+      catch (LinkageError e) {
         throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
       }
       if (c != null) {
