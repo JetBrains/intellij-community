@@ -25,14 +25,12 @@ import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.ex.ExclusionState;
-import com.intellij.openapi.vcs.ex.LocalRange;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -40,6 +38,7 @@ import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
-import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
@@ -263,8 +261,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   protected DefaultTreeModel buildTreeModel() {
-    MyChangeNodeDecorator decorator = new MyChangeNodeDecorator();
-
+    PartialCommitChangeNodeDecorator decorator =
+      new PartialCommitChangeNodeDecorator(myProject, RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator());
     TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
     builder.setChanges(myChanges, decorator);
     builder.setUnversioned(myUnversioned);
@@ -366,33 +364,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     ChangesBrowserUnversionedFilesNode unversionedFilesNode = (ChangesBrowserUnversionedFilesNode)node.get();
     return unversionedFilesNode.isManyFiles();
   }
-
-  private class MyChangeNodeDecorator implements ChangeNodeDecorator {
-    private final ChangeNodeDecorator myRemoteRevisionsDecorator = RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator();
-
-    @Override
-    public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent renderer, boolean isShowFlatten) {
-      PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
-      if (tracker != null) {
-        List<LocalRange> ranges = tracker.getRanges();
-        if (ranges != null) {
-          int rangesToCommit = ContainerUtil.count(ranges, it -> it.getChangelistId().equals(myChangeList.getId()) && !it.isExcludedFromCommit());
-          if (rangesToCommit != 0 && rangesToCommit != ranges.size()) {
-            renderer.append(String.format(spaceAndThinSpace() + "%s of %s changes", rangesToCommit, ranges.size()),
-                            SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-          }
-        }
-      }
-
-      myRemoteRevisionsDecorator.decorate(change, renderer, isShowFlatten);
-    }
-
-    @Override
-    public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean isShowFlatten) {
-      myRemoteRevisionsDecorator.preDecorate(change, renderer, isShowFlatten);
-    }
-  }
-
 
   private class ChangeListChooser extends JPanel {
     private final static int MAX_NAME_LEN = 35;
