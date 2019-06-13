@@ -409,13 +409,33 @@ public class PluginManagerCore {
     if (className.startsWith("java.") || className.startsWith("javax.") || className.startsWith("kotlin.") || className.startsWith("groovy.")) {
       return null;
     }
-
-    for (IdeaPluginDescriptor descriptor : getPlugins()) {
-      if (hasLoadedClass(className, descriptor.getPluginClassLoader())) {
-        return descriptor.getPluginId();
-      }
+    IdeaPluginDescriptor result = null;
+    for (IdeaPluginDescriptor o : getPlugins()) {
+      if (!hasLoadedClass(className, o.getPluginClassLoader())) continue;
+      result = o;
+      break;
     }
-    return null;
+    if (result == null) return null;
+
+    // return if the found plugin is not "core" or the package is obviously "core"
+    if (!result.getPluginId().getIdString().equals(CORE_PLUGIN_ID) ||
+        className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
+        className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
+        className.startsWith("git4idea.") || className.startsWith("com.android.")) {
+      return result.getPluginId();
+    }
+    // otherwise we need to check plugins with use-idea-classloader="true"
+    String root = PathManager.getResourceRoot(result.getPluginClassLoader(), "/" + className.replace('.', '/') + ".class");
+    if (root == null) return null;
+    for (IdeaPluginDescriptor o : getPlugins()) {
+      if (!o.getUseIdeaClassLoader()) continue;
+      File path = o.getPath();
+      String pluginPath = path == null ? null : FileUtil.toSystemIndependentName(path.getPath());
+      if (pluginPath == null || !root.startsWith(pluginPath)) continue;
+      result = o;
+      break;
+    }
+    return result.getPluginId();
   }
 
   private static boolean hasLoadedClass(@NotNull String className, ClassLoader loader) {
