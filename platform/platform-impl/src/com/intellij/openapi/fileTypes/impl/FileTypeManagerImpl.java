@@ -993,6 +993,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
+    if (type instanceof UnknownFileType) {
+      // a file has unknown file type if none of file type detectors matched it
+      return file.getFileType() instanceof UnknownFileType;
+    }
+
+    if (file instanceof LightVirtualFile && type.equals(((LightVirtualFile)file).getAssignedFileType())) {
+      return true;
+    }
+
     if (type instanceof FileTypeIdentifiableByVirtualFile) {
       return ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file);
     }
