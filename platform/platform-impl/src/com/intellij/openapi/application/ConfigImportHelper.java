@@ -9,6 +9,7 @@ import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -101,7 +102,7 @@ public final class ConfigImportHelper {
    * Simple check by file type, content is not checked.
    */
   public static boolean isSettingsFile(@NotNull VirtualFile file) {
-    return ArchiveFileType.INSTANCE.equals(file.getFileType());
+    return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
 
   public static boolean isValidSettingsFile(@NotNull File file) {
