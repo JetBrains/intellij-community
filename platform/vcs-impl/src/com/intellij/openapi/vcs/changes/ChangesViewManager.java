@@ -108,7 +108,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
 
-  private PreviewDiffSplitterComponent mySplitterComponent;
+  private PreviewDiffSplitterComponent myDiffPreviewSplitter;
 
   @NotNull private final TreeSelectionListener myTsl;
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
@@ -203,15 +203,21 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         Disposer.register(myContent, myCommitPanel);
 
         myCommitPanelSplitter.setSecondComponent(myCommitPanel);
+        myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
       }
     }
     else if (myCommitPanel != null) {
+      myDiffPreviewSplitter.setAllowExcludeFromCommit(false);
       myCommitPanelSplitter.setSecondComponent(null);
       Disposer.dispose(myCommitPanel);
 
       myCommitPanel = null;
       myCommitWorkflowHandler = null;
     }
+  }
+
+  public boolean isAllowExcludeFromCommit() {
+    return myCommitWorkflowHandler != null;
   }
 
   @NotNull
@@ -231,8 +237,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentPanel.addToCenter(myCommitPanelSplitter);
 
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                                           myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+    myDiffPreviewSplitter = new PreviewDiffSplitterComponent(myContentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                                             myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
     myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
     myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
@@ -257,7 +263,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       }
     };
     myProgressLabel = simplePanel();
-    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
+    panel.setContent(simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel));
     registerShortcuts(panel);
     return panel;
   }
@@ -393,8 +399,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private void updatePreview(boolean fromModelRefresh) {
-    if (mySplitterComponent != null) {
-      mySplitterComponent.updatePreview(fromModelRefresh);
+    if (myDiffPreviewSplitter != null) {
+      myDiffPreviewSplitter.updatePreview(fromModelRefresh);
     }
   }
 
@@ -557,7 +563,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private class ToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      mySplitterComponent.setDetailsOn(state);
+      myDiffPreviewSplitter.setDetailsOn(state);
       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
     }
 
