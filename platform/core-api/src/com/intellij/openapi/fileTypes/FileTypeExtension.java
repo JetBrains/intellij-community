@@ -53,7 +53,10 @@ public class FileTypeExtension<T> extends KeyedExtensionCollector<T, FileType> {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     Map<FileType, T> result = new HashMap<>();
     for (KeyedLazyInstance<T> extension : extensions) {
-      result.put(FileTypeRegistry.getInstance().findFileTypeByName(extension.getKey()), extension.getInstance());
+      FileType fileType = FileTypeRegistry.getInstance().findFileTypeByName(extension.getKey());
+      if (fileType != null) {
+        result.put(fileType, extension.getInstance());
+      }
     }
     return result;
   }
