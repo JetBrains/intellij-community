@@ -34,7 +34,8 @@ public enum ProblemHighlightType {
 
   /**
    * Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#INFO} severity level.
-   * use #WEAK_WARNING instead
+   *
+   * @deprecated use {@link #WEAK_WARNING} instead
    */
   @Deprecated
   INFO,
