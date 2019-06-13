@@ -723,28 +723,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                         @NotNull NotificationCenterPanel centerPanel,
                                         int gap,
                                         @NotNull HoverAdapter hoverAdapter) {
-    NotificationActionPanel actionPanel = new NotificationActionPanel(gap);
+    NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseActionsDirection());
     centerPanel.addActionPanel(actionPanel);
 
     List<AnAction> actions = notification.getActions();
 
-    if (actions.size() > 2) {
-      DropDownAction action = new DropDownAction(notification.getDropDownText(), new LinkListener<Void>() {
-        @Override
-        public void linkSelected(LinkLabel link, Void ignored) {
-          NotificationActionPanel parent = (NotificationActionPanel)link.getParent();
-          DefaultActionGroup group = new DefaultActionGroup();
-          for (LinkLabel<AnAction> actionLink : parent.actionLinks) {
-            if (!actionLink.isVisible()) {
-              group.add(actionLink.getLinkData());
-            }
-          }
-          showPopup(link, group);
-        }
-      });
-      Notification.setDataProvider(notification, action);
-      action.setVisible(false);
-      actionPanel.addGroupedActionsLink(action);
+    if (actions.size() > 2 && notification.getCollapseActionsDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
+      addDropDownAction(notification, actionPanel);
     }
 
     for (AnAction action : actions) {
@@ -757,6 +742,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         }, action));
     }
+
+    if (actions.size() > 2 && notification.getCollapseActionsDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
+      addDropDownAction(notification, actionPanel);
+    }
+
     AnAction helpAction = notification.getContextHelpAction();
     if (helpAction != null) {
       Presentation presentation = helpAction.getTemplatePresentation();
@@ -773,6 +763,26 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     hoverAdapter.addSource(actionPanel);
+  }
+
+  private static void addDropDownAction(@NotNull Notification notification,
+                                        NotificationActionPanel actionPanel) {
+    DropDownAction action = new DropDownAction(notification.getDropDownText(), new LinkListener<Void>() {
+      @Override
+      public void linkSelected(LinkLabel link, Void ignored) {
+        NotificationActionPanel parent = (NotificationActionPanel)link.getParent();
+        DefaultActionGroup group = new DefaultActionGroup();
+        for (LinkLabel<AnAction> actionLink : parent.actionLinks) {
+          if (!actionLink.isVisible()) {
+            group.add(actionLink.getLinkData());
+          }
+        }
+        showPopup(link, group);
+      }
+    });
+    Notification.setDataProvider(notification, action);
+    action.setVisible(false);
+    actionPanel.addGroupedActionsLink(action);
   }
 
   private static class HoverAdapter extends MouseAdapter implements MouseMotionListener {
@@ -1144,10 +1154,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   private static class NotificationActionPanel extends NonOpaquePanel {
     private final List<LinkLabel<AnAction>> actionLinks = new ArrayList<>();
+    private final Notification.CollapseActionsDirection collapseActionsDirection;
     private DropDownAction groupedActionsLink;
 
-    private NotificationActionPanel(int gap) {
+    private NotificationActionPanel(int gap, Notification.CollapseActionsDirection direction) {
       super(new HorizontalLayout(gap, SwingConstants.CENTER));
+      collapseActionsDirection = direction;
     }
 
     public void addGroupedActionsLink(DropDownAction action) {
@@ -1288,26 +1300,25 @@ public class NotificationsManagerImpl extends NotificationsManager {
         if (myActionPanel.actionLinks.size() > 2) {
           myActionPanel.groupedActionsLink.setVisible(false);
           for (LinkLabel<AnAction> link : myActionPanel.actionLinks) {
-            if (link.isVisible()) {
-              break;
-            }
             link.setVisible(true);
           }
           myActionPanel.doLayout();
 
+          boolean keepRightmost = myActionPanel.collapseActionsDirection == Notification.CollapseActionsDirection.KEEP_RIGHTMOST;
+          int collapseStart = keepRightmost ? 0 : myActionPanel.actionLinks.size() - 1;
+          int collapseDelta = keepRightmost ? 1 : -1;
+          int collapseIndex = collapseStart;
           if (myActionPanel.getPreferredSize().width > width) {
             myActionPanel.groupedActionsLink.setVisible(true);
-            myActionPanel.actionLinks.get(0).setVisible(false);
-            myActionPanel.actionLinks.get(1).setVisible(false);
+            myActionPanel.actionLinks.get(collapseIndex).setVisible(false);
+            collapseIndex += collapseDelta;
+            myActionPanel.actionLinks.get(collapseIndex).setVisible(false);
+            collapseIndex += collapseDelta;
             myActionPanel.doLayout();
-            for (int i = 2; i < myActionPanel.actionLinks.size(); i++) {
-              if (myActionPanel.getPreferredSize().width > width) {
-                myActionPanel.actionLinks.get(i).setVisible(false);
-                myActionPanel.doLayout();
-              }
-              else {
-                break;
-              }
+            while (myActionPanel.getPreferredSize().width > width && collapseIndex >= 0 && collapseIndex < myActionPanel.actionLinks.size()) {
+              myActionPanel.actionLinks.get(collapseIndex).setVisible(false);
+              collapseIndex += collapseDelta;
+              myActionPanel.doLayout();
             }
           }
         }
