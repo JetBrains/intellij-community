@@ -532,7 +532,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
 
     @Override
-    public boolean isIncluded(Object change) {
+    public boolean isIncluded(@NotNull Object change) {
       return myStateHolder.isIncluded(change);
     }
 
@@ -548,17 +548,17 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
 
     @Override
-    public void includeChanges(Collection<?> changes) {
+    public void includeChanges(@NotNull Collection<?> changes) {
       myStateHolder.includeElements(changes);
     }
 
     @Override
-    public void excludeChanges(Collection<?> changes) {
+    public void excludeChanges(@NotNull Collection<?> changes) {
       myStateHolder.excludeElements(changes);
     }
 
     @Override
-    protected void toggleChanges(Collection<?> changes) {
+    protected void toggleChanges(@NotNull Collection<?> changes) {
       myStateHolder.toggleElements(changes);
     }
 

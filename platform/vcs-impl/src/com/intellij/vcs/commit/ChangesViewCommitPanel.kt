@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ChangesViewManager
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
@@ -33,7 +34,6 @@ import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupSh
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.ContainerUtil.canonicalStrategy
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -112,7 +112,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     buildLayout()
 
     with(changesView) {
-      setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY)
+      setInclusionModel(DefaultInclusionModel(ChangeListChange.HASHING_STRATEGY))
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
       isShowCheckboxes = true
     }
@@ -248,7 +248,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
       isShowCheckboxes = false
       setInclusionListener(null)
       clearInclusion()
-      setInclusionHashingStrategy(canonicalStrategy())
+      setInclusionModel(null)
     }
   }
 

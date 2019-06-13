@@ -609,7 +609,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected void toggleChanges(Collection<?> changes) {
+    protected void toggleChanges(@NotNull Collection<?> changes) {
       List<AbstractFilePatchInProgress.PatchChange> patchChanges =
         ContainerUtil.findAll(changes, AbstractFilePatchInProgress.PatchChange.class);
 
