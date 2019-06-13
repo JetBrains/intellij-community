@@ -4,10 +4,10 @@ package com.intellij.diagnostic
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.notification.impl.NotificationFullContent
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -48,8 +48,8 @@ class WindowsDefenderCheckerActivity : StartupActivity {
 class WindowsDefenderNotification(text: String, val paths: Collection<Path>) :
   Notification("System Health",  "", text, NotificationType.WARNING), NotificationFullContent
 
-class WindowsDefenderFixAction(val paths: Collection<Path>) : AnAction("Fix...") {
-  override fun actionPerformed(e: AnActionEvent) {
+class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction("Fix...") {
+  override fun actionPerformed(e: AnActionEvent, notification: Notification) {
     val rc = Messages.showDialog(
       e.project,
       DiagnosticBundle.message("virus.scanning.fix.explanation", ApplicationNamesInfo.getInstance().fullProductName,
@@ -64,7 +64,7 @@ class WindowsDefenderFixAction(val paths: Collection<Path>) : AnAction("Fix...")
       null)
     when (rc) {
       0 -> {
-        Notification.get(e).expire()
+        notification.expire()
         ApplicationManager.getApplication().executeOnPooledThread {
           if (WindowsDefenderChecker.getInstance().runExcludePathsCommand(e.project, paths)) {
             UIUtil.invokeLaterIfNeeded {
