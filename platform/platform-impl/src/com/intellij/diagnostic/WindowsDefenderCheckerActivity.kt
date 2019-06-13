@@ -36,10 +36,11 @@ class WindowsDefenderCheckerActivity : StartupActivity {
         nonExcludedPaths
       )
       notification.isImportant = true
+      notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
       windowsDefenderChecker.configureActions(project, notification)
 
       app.invokeLater {
-        Notifications.Bus.notify(notification)
+        notification.notify(project)
       }
     }
   }
