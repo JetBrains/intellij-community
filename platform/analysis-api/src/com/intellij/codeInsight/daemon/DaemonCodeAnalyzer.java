@@ -23,6 +23,9 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void settingsChanged();
 
+  /**
+   * @deprecated Does nothing, unused, keeping alive for outdated plugins sake only. Please use {@code} (nothing) instead.
+   */
   @Deprecated
   public abstract void updateVisibleHighlighters(@NotNull Editor editor);
 
