@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command;
 
 import com.intellij.openapi.Disposable;
@@ -54,9 +54,9 @@ public abstract class CommandProcessor {
                                       @Nullable Document document);
 
   /**
-   * @param shouldRecordCommandForActiveDocument false if the action is not supposed to be recorded into the currently open document's history.
+   * @param shouldRecordCommandForActiveDocument {@code false} if the action is not supposed to be recorded into the currently open document's history.
    *                                             Examples of such actions: Create New File, Change Project Settings etc.
-   *                                             Default is true.
+   *                                             Default is {@code true}.
    */
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,
@@ -99,13 +99,13 @@ public abstract class CommandProcessor {
   public abstract void addAffectedFiles(@Nullable Project project, @NotNull VirtualFile... files);
 
   /**
-   * Use {@link CommandListener#TOPIC}
+   * @deprecated use {@link CommandListener#TOPIC}
    */
   @Deprecated
   public abstract void addCommandListener(@NotNull CommandListener listener);
 
   /**
-   * Use {@link CommandListener#TOPIC}
+   * @deprecated use {@link CommandListener#TOPIC}
    */
   @Deprecated
   public void addCommandListener(@NotNull CommandListener listener, @NotNull Disposable parentDisposable) {
@@ -113,7 +113,7 @@ public abstract class CommandProcessor {
   }
 
   /**
-   * Use {@link CommandListener#TOPIC}
+   * @deprecated use {@link CommandListener#TOPIC}
    */
   @Deprecated
   public abstract void removeCommandListener(@NotNull CommandListener listener);
