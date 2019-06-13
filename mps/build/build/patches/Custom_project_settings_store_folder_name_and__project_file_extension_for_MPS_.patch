@@ -19,12 +19,12 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision 782aa6d2584226815098329a0e91da298d6a08f3)
+--- community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision d0887c50c6360fdcf83766976b338b9494c7c669)
 +++ community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision )
 @@ -108,7 +108,8 @@
-   protected suspend fun setPath(filePath: String, isRefreshVfs: Boolean) {
      val storageManager = storageManager
      val fs = LocalFileSystem.getInstance()
+     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
 -    if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
 +    // MPS Hack: do not hack ProjectFileType, but make *.mpr file be project file
 +    if (filePath.endsWith("mpr"/*ProjectFileType.DEFAULT_EXTENSION*/)) {
