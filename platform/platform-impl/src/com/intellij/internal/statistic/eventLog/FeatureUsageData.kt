@@ -11,6 +11,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -36,6 +37,7 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
+  private val LOG = Logger.getInstance(FeatureUsageData::class.java)
   private var data: MutableMap<String, Any> = HashMap()
 
   companion object {
@@ -217,8 +219,12 @@ class FeatureUsageData {
   }
 
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
-    if (ApplicationManager.getApplication().isUnitTestMode || !platformDataKeys.contains(key)) data[key] = value
+    if (!ApplicationManager.getApplication().isUnitTestMode && platformDataKeys.contains(key)) {
+      LOG.warn("Collectors should not reuse platform keys: $key")
+      return this
+    }
 
+    data[key] = value
     return this
   }
 
