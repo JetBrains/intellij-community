@@ -512,31 +512,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       expandAction.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
     }
 
-    final CenteredLayoutWithActions layout = new CenteredLayoutWithActions(text, layoutData);
-    JPanel centerPanel = new NonOpaquePanel(layout) {
-      @Override
-      protected void paintChildren(Graphics g) {
-        super.paintChildren(g);
-        Component title = layout.getTitle();
-
-        if (title != null && layoutData.showActions != null && layoutData.showActions.compute()) {
-          int width = layoutData.configuration.allActionsOffset;
-          int x = getWidth() - width - JBUIScale.scale(5);
-          int y = layoutData.configuration.topSpaceHeight;
-
-          int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
-
-          g.setColor(layoutData.fillColor);
-          g.fillRect(x, y, width, height);
-
-          width = layoutData.configuration.beforeGearSpace;
-          x -= width;
-          ((Graphics2D)g)
-            .setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(layoutData.fillColor, 0.2), x + width, y, layoutData.fillColor));
-          g.fillRect(x, y, width, height);
-        }
-      }
-    };
+    NotificationCenterPanel centerPanel = new NotificationCenterPanel(text, layoutData);
     content.add(centerPanel, BorderLayout.CENTER);
 
     if (notification.hasTitle()) {
@@ -545,15 +521,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
       title.setText(NotificationsUtil.buildHtml(notification, titleStyle, false, null, null));
       title.setOpaque(false);
       title.setForeground(layoutData.textColor);
-      centerPanel.add(title, BorderLayout.NORTH);
+      centerPanel.addTitle(title);
     }
 
     if (expandAction != null) {
-      centerPanel.add(expandAction, BorderLayout.EAST);
+      centerPanel.addExpandAction(expandAction);
     }
 
     if (notification.hasContent()) {
-      centerPanel.add(layoutData.welcomeScreen ? text : pane, BorderLayout.CENTER);
+      centerPanel.addContent(layoutData.welcomeScreen ? text : pane);
     }
 
     if (!layoutData.welcomeScreen) {
@@ -649,7 +625,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, layout.getTitle(), layoutData, notification.getGroupId()));
+        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId()));
     }
 
     Disposer.register(parentDisposable, balloon);
@@ -744,11 +720,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void createActionPanel(@NotNull final Notification notification,
-                                        @NotNull JPanel centerPanel,
+                                        @NotNull NotificationCenterPanel centerPanel,
                                         int gap,
                                         @NotNull HoverAdapter hoverAdapter) {
-    JPanel actionPanel = new NonOpaquePanel(new HorizontalLayout(gap, SwingConstants.CENTER));
-    centerPanel.add(BorderLayout.SOUTH, actionPanel);
+    NotificationActionPanel actionPanel = new NotificationActionPanel(gap);
+    centerPanel.addActionPanel(actionPanel);
 
     List<AnAction> actions = notification.getActions();
 
@@ -756,13 +732,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
       DropDownAction action = new DropDownAction(notification.getDropDownText(), new LinkListener<Void>() {
         @Override
         public void linkSelected(LinkLabel link, Void ignored) {
-          Container parent = link.getParent();
-          int size = parent.getComponentCount();
+          NotificationActionPanel parent = (NotificationActionPanel)link.getParent();
           DefaultActionGroup group = new DefaultActionGroup();
-          for (int i = 1; i < size; i++) {
-            Component component = parent.getComponent(i);
-            if (!component.isVisible()) {
-              group.add(((LinkLabel<AnAction>)component).getLinkData());
+          for (LinkLabel<AnAction> actionLink : parent.actionLinks) {
+            if (!actionLink.isVisible()) {
+              group.add(actionLink.getLinkData());
             }
           }
           showPopup(link, group);
@@ -770,13 +744,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
       });
       Notification.setDataProvider(notification, action);
       action.setVisible(false);
-      actionPanel.add(action);
+      actionPanel.addGroupedActionsLink(action);
     }
 
     for (AnAction action : actions) {
       Presentation presentation = action.getTemplatePresentation();
-      actionPanel.add(
-        HorizontalLayout.LEFT,
+      actionPanel.addActionLink(
         new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
           public void linkSelected(LinkLabel aSource, AnAction action) {
@@ -789,7 +762,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       Presentation presentation = helpAction.getTemplatePresentation();
       ContextHelpLabel helpLabel = new ContextHelpLabel(presentation.getText(), presentation.getDescription());
       helpLabel.setForeground(UIUtil.getLabelDisabledForeground());
-      actionPanel.add(HorizontalLayout.LEFT, helpLabel);
+      actionPanel.addContextHelpLabel(helpLabel);
     }
 
     Insets hover = JBUI.insets(8, 5, 8, 7);
@@ -1111,12 +1084,93 @@ public class NotificationsManagerImpl extends NotificationsManager {
     return 0;
   }
 
+  private static class NotificationCenterPanel extends NonOpaquePanel {
+    private final CenteredLayoutWithActions myLayout;
+    private final BalloonLayoutData myLayoutData;
+
+    private NotificationCenterPanel(JEditorPane text, BalloonLayoutData layoutData) {
+      super(new CenteredLayoutWithActions(text, layoutData));
+      myLayout = (CenteredLayoutWithActions) getLayout();
+      myLayoutData = layoutData;
+    }
+
+    public void addTitle(JLabel title) {
+      add(title, BorderLayout.NORTH);
+      myLayout.myTitleComponent = title;
+    }
+
+    public Component getTitle() {
+      return myLayout.getTitle();
+    }
+
+    public void addExpandAction(LinkLabel<Void> action) {
+      add(action, BorderLayout.EAST);
+      myLayout.myExpandAction = action;
+    }
+
+    public void addContent(JComponent component) {
+      add(component, BorderLayout.CENTER);
+      myLayout.myCenteredComponent = component;
+    }
+
+    public void addActionPanel(NotificationActionPanel panel) {
+      add(panel, BorderLayout.SOUTH);
+      myLayout.myActionPanel = panel;
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      super.paintChildren(g);
+      Component title = myLayout.getTitle();
+
+      if (title != null && myLayoutData.showActions != null && myLayoutData.showActions.compute()) {
+        int width = myLayoutData.configuration.allActionsOffset;
+        int x = getWidth() - width - JBUIScale.scale(5);
+        int y = myLayoutData.configuration.topSpaceHeight;
+
+        int height = title instanceof JEditorPane ? getFirstLineHeight((JEditorPane)title) : title.getHeight();
+
+        g.setColor(myLayoutData.fillColor);
+        g.fillRect(x, y, width, height);
+
+        width = myLayoutData.configuration.beforeGearSpace;
+        x -= width;
+        ((Graphics2D)g)
+          .setPaint(new GradientPaint(x, y, ColorUtil.withAlpha(myLayoutData.fillColor, 0.2), x + width, y, myLayoutData.fillColor));
+        g.fillRect(x, y, width, height);
+      }
+    }
+  }
+
+  private static class NotificationActionPanel extends NonOpaquePanel {
+    private final List<LinkLabel<AnAction>> actionLinks = new ArrayList<>();
+    private DropDownAction groupedActionsLink;
+
+    private NotificationActionPanel(int gap) {
+      super(new HorizontalLayout(gap, SwingConstants.CENTER));
+    }
+
+    public void addGroupedActionsLink(DropDownAction action) {
+      add(action);
+      groupedActionsLink = action;
+    }
+
+    public void addActionLink(LinkLabel<AnAction> label) {
+      add(HorizontalLayout.LEFT, label);
+      actionLinks.add(label);
+    }
+
+    public void addContextHelpLabel(ContextHelpLabel label) {
+      add(HorizontalLayout.LEFT, label);
+    }
+  }
+
   private static class CenteredLayoutWithActions extends BorderLayout {
     private final JEditorPane myText;
     private final BalloonLayoutData myLayoutData;
-    private Component myTitleComponent;
+    private JLabel myTitleComponent;
     private Component myCenteredComponent;
-    private JPanel myActionPanel;
+    private NotificationActionPanel myActionPanel;
     private Component myExpandAction;
 
     CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
@@ -1136,27 +1190,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
         return myCenteredComponent;
       }
       return null;
-    }
-
-    @Override
-    public void addLayoutComponent(Component comp, Object constraints) {
-      if (BorderLayout.NORTH.equals(constraints)) {
-        myTitleComponent = comp;
-      }
-      else if (BorderLayout.CENTER.equals(constraints)) {
-        myCenteredComponent = comp;
-      }
-      else if (BorderLayout.SOUTH.equals(constraints)) {
-        myActionPanel = (JPanel)comp;
-      }
-      else if (BorderLayout.EAST.equals(constraints)) {
-        myExpandAction = comp;
-      }
-    }
-
-    @Override
-    public void addLayoutComponent(String name, Component comp) {
-      addLayoutComponent(comp, name);
     }
 
     @Override
@@ -1252,29 +1285,24 @@ public class NotificationsManagerImpl extends NotificationsManager {
         int expandWidth = myExpandAction == null || myLayoutData.showMinSize ? 0 : myExpandAction.getPreferredSize().width;
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
-        int components = myActionPanel.getComponentCount();
-        Component lastComponent = myActionPanel.getComponent(components - 1);
-        if (lastComponent instanceof DropDownAction || lastComponent instanceof ContextHelpLabel) {
-          components--;
-        }
-        if (components > 2) {
-          myActionPanel.getComponent(0).setVisible(false);
-          for (int i = 1; i < components; i++) {
-            Component component = myActionPanel.getComponent(i);
-            if (component.isVisible()) {
+        if (myActionPanel.actionLinks.size() > 2) {
+          myActionPanel.groupedActionsLink.setVisible(false);
+          for (LinkLabel<AnAction> link : myActionPanel.actionLinks) {
+            if (link.isVisible()) {
               break;
             }
-            component.setVisible(true);
+            link.setVisible(true);
           }
           myActionPanel.doLayout();
+
           if (myActionPanel.getPreferredSize().width > width) {
-            myActionPanel.getComponent(0).setVisible(true);
-            myActionPanel.getComponent(1).setVisible(false);
-            myActionPanel.getComponent(2).setVisible(false);
+            myActionPanel.groupedActionsLink.setVisible(true);
+            myActionPanel.actionLinks.get(0).setVisible(false);
+            myActionPanel.actionLinks.get(1).setVisible(false);
             myActionPanel.doLayout();
-            for (int i = 3; i < components - 1; i++) {
+            for (int i = 2; i < myActionPanel.actionLinks.size(); i++) {
               if (myActionPanel.getPreferredSize().width > width) {
-                myActionPanel.getComponent(i).setVisible(false);
+                myActionPanel.actionLinks.get(i).setVisible(false);
                 myActionPanel.doLayout();
               }
               else {
