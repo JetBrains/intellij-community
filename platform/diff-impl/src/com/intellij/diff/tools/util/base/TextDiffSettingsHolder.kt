@@ -54,8 +54,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
   }
 
   class TextDiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
-                                              private val PLACE_SETTINGS: PlaceSettings) {
-    constructor() : this(SharedSettings(), PlaceSettings())
+                                              private val PLACE_SETTINGS: PlaceSettings,
+                                              val place: String?) {
+    constructor() : this(SharedSettings(), PlaceSettings(), null)
 
     fun addListener(listener: Listener, disposable: Disposable) {
       PLACE_SETTINGS.eventDispatcher.addListener(listener, disposable)
@@ -135,7 +136,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       @JvmStatic fun getSettings(): TextDiffSettings = getSettings(null)
       @JvmStatic fun getSettings(place: String?): TextDiffSettings = service<TextDiffSettingsHolder>().getSettings(place)
       internal fun getDefaultSettings(place: String): TextDiffSettings =
-        TextDiffSettings(SharedSettings(), service<TextDiffSettingsHolder>().defaultPlaceSettings(place))
+        TextDiffSettings(SharedSettings(), service<TextDiffSettingsHolder>().defaultPlaceSettings(place), place)
     }
 
     interface Listener : EventListener {
@@ -147,7 +148,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
   fun getSettings(place: String?): TextDiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
     val placeSettings = myState.PLACES_MAP.getOrPut(placeKey) { defaultPlaceSettings(placeKey) }
-    return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings)
+    return TextDiffSettings(myState.SHARED_SETTINGS, placeSettings, placeKey)
   }
 
   private fun copyStateWithoutDefaults(): State {
