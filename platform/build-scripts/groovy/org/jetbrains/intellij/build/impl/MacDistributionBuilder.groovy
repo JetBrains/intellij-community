@@ -113,14 +113,26 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       }
       else {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
-          if (buildContext.bundledJreManager.doBundleSecondJre()) {
+          // With second JRE
+          def jreManager = buildContext.bundledJreManager
+          if (jreManager.doBundleSecondJre()) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties,
-                                          macZipPath, buildContext.bundledJreManager.findSecondBundledJreArchiveForMac(), true)
+                                          macZipPath,
+                                          jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(), jreManager.secondJreSuffix())
           }
-          File jreArchive = buildContext.bundledJreManager.findJreArchive('osx')
+          // With first aka main JRE
+          File jreArchive = jreManager.findJreArchive('osx')
           if (jreArchive.file) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties,
-                                          macZipPath, jreArchive.absolutePath, false)
+                                          macZipPath, jreArchive.absolutePath, jreManager.isBundledJreModular(), "")
+          }
+          else {
+            buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
+          }
+          // Without JRE
+          if (buildContext.options.buildDmgWithoutBundledJre) {
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties,
+                                          macZipPath, null, false, "-no-jdk")
           }
           buildContext.ant.delete(file: macZipPath)
         }
