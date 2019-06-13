@@ -266,7 +266,7 @@ public abstract class DialogWrapper {
    * when we do not have a project to figure out which window
    * is more suitable as an owner for the dialog.
    * <p/>
-   * Instead, use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
+   * @deprecated use {@link DialogWrapper#DialogWrapper(Project, boolean, boolean)}
    */
   @Deprecated
   protected DialogWrapper(boolean canBeParent, boolean applicationModalIfPossible) {
@@ -827,7 +827,7 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
 
-  /** Dialogs with no parents are discouraged. */
+  /** @deprecated Dialogs with no parents are discouraged. */
   @Deprecated
   @NotNull
   protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
@@ -1421,18 +1421,27 @@ public abstract class DialogWrapper {
     }
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
+  /**
+   * @deprecated unused
+   */
   @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   protected boolean isSouthStrictedToPreferredSize() {
@@ -1753,7 +1762,7 @@ public abstract class DialogWrapper {
     return 0L;
   }
 
-  /** deprecated pointless (equals {@link #isOK} */
+  /** @deprecated unused (equals {@link #isOK}) */
   @Deprecated
   public boolean isToDispatchTypeAhead() {
     return isOK();

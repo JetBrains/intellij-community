@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm;
 
@@ -38,14 +38,14 @@ public abstract class ToolWindowManager {
    * @exception IllegalArgumentException if the same window is already installed or one
    * of the parameters is {@code null}.
    * @return tool window
-   * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+   * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
    */
   @Deprecated
   @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor);
 
   /**
-  * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+  * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
   @Deprecated
   @NotNull
@@ -55,7 +55,7 @@ public abstract class ToolWindowManager {
                                                 @NotNull Disposable parentDisposable);
 
   /**
-  * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+  * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
   @Deprecated
   @NotNull
@@ -65,7 +65,7 @@ public abstract class ToolWindowManager {
                                                 @NotNull Disposable parentDisposable,
                                                 boolean canWorkInDumbMode);
   /**
-  * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+  * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
   @Deprecated
   @NotNull

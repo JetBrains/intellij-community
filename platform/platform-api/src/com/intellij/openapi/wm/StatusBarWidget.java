@@ -46,6 +46,9 @@ public interface StatusBarWidget extends Disposable {
     @NotNull
     String getText();
 
+    /**
+     * @deprecated unused
+     */
     @NotNull
     @Deprecated
     default String getMaxPossibleText() { return ""; }
@@ -60,6 +63,9 @@ public interface StatusBarWidget extends Disposable {
     @Nullable
     String getSelectedValue();
 
+    /**
+     * @deprecated unused
+     */
     @NotNull
     @Deprecated
     default String getMaxValue() { return ""; }
