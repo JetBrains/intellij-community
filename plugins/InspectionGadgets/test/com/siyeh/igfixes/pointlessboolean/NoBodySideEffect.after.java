@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 class C {
-    {
-        while (
-                <caret>true
-          )
-    }
+  {
+    int a = 0;
+      while (tru<caret>e) {
+          a++;
+          if (true) break;
+      }
+  }
 }
