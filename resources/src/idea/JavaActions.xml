@@ -310,7 +310,6 @@
 
     <action id="ChangesView.GroupBy.Module" text="Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
       <add-to-group group-id="ChangesView.GroupBy"/>
-      <keyboard-shortcut first-keystroke="control alt M" keymap="$default"/>
     </action>
 
     <group id="JavaGenerateGroup1">
