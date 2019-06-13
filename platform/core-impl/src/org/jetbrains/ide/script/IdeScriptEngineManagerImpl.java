@@ -3,22 +3,22 @@ package org.jetbrains.ide.script;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ClassLoaderUtil;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.script.*;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -30,24 +30,10 @@ import java.util.concurrent.Future;
 class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManager.class);
 
-  private final Future<Pair<ScriptEngineManager, List<EngineInfo>>> myStateFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+  private final Future<Map<EngineInfo, ScriptEngineFactory>> myStateFuture = AppExecutorUtil.getAppExecutorService().submit(() -> {
     long start = System.currentTimeMillis();
     try {
-      return ClassLoaderUtil.runWithClassLoader(AllPluginsLoader.INSTANCE, (Computable<Pair<ScriptEngineManager, List<EngineInfo>>>)() -> {
-        ScriptEngineManager manager = new ScriptEngineManager();
-        List<EngineInfo> infos = new ArrayList<>();
-        for (ScriptEngineFactory factory : manager.getEngineFactories()) {
-          PluginId pluginId = PluginManagerCore.getPluginByClassName(factory.getClass().getName());
-          infos.add(new EngineInfo(factory.getEngineName(),
-                                factory.getEngineVersion(),
-                                factory.getLanguageName(),
-                                factory.getLanguageVersion(),
-                                factory.getExtensions(),
-                                factory.getClass().getName(),
-                                pluginId));
-        }
-        return Pair.create(manager, ContainerUtil.immutableList(infos));
-      });
+      return calcFactories();
     }
     finally {
       long end = System.currentTimeMillis();
@@ -58,41 +44,43 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @NotNull
   @Override
   public List<EngineInfo> getEngineInfos() {
-    return getState().second;
+    return ContainerUtil.newArrayList(getFactories().keySet());
   }
 
   @Nullable
   @Override
   public IdeScriptEngine getEngine(@NotNull EngineInfo engineInfo, @Nullable ClassLoader loader) {
-    ScriptEngineManager manager = getState().first;
     ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
-    for (ScriptEngineFactory factory : manager.getEngineFactories()) {
-      if (factory.getClass().getName().equals(engineInfo.factoryClass)) {
-        return ClassLoaderUtil.runWithClassLoader(l, (Computable<IdeScriptEngine>)() -> {
-          ScriptEngine engine = factory.getScriptEngine();
-          engine.setBindings(manager.getBindings(), ScriptContext.GLOBAL_SCOPE);
-          return createIdeScriptEngine(engine);
-        });
-      }
+    ScriptEngineFactory engineFactory = getFactories().get(engineInfo);
+    if (engineFactory == null) return null;
+    return ClassLoaderUtil.computeWithClassLoader(l, () -> {
+      ScriptEngine engine = engineFactory.getScriptEngine();
+      return createIdeScriptEngine(engine);
+    });
+  }
+
+  @Nullable
+  @Override
+  public IdeScriptEngine getEngineByName(@NotNull String engineName, @Nullable ClassLoader loader) {
+    Map<EngineInfo, ScriptEngineFactory> state = getFactories();
+    for (EngineInfo info : state.keySet()) {
+      if (!info.engineName.equals(engineName)) continue;
+      return ClassLoaderUtil.computeWithClassLoader(loader, () ->
+        createIdeScriptEngine(state.get(info).getScriptEngine()));
     }
     return null;
   }
 
   @Nullable
   @Override
-  public IdeScriptEngine getEngineByName(@NotNull String language, @Nullable ClassLoader loader) {
-    ScriptEngineManager manager = getState().first;
-    ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
-    return ClassLoaderUtil.runWithClassLoader(l, (Computable<IdeScriptEngine>)() ->
-      createIdeScriptEngine(manager.getEngineByName(language)));
-  }
-
-  @Nullable
-  @Override
   public IdeScriptEngine getEngineByFileExtension(@NotNull String extension, @Nullable ClassLoader loader) {
-    ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
-    return ClassLoaderUtil.runWithClassLoader(l, (Computable<IdeScriptEngine>)() ->
-      createIdeScriptEngine(getState().first.getEngineByExtension(extension)));
+    Map<EngineInfo, ScriptEngineFactory> state = getFactories();
+    for (EngineInfo info : state.keySet()) {
+      if (!info.fileExtensions.contains(extension)) continue;
+      return ClassLoaderUtil.computeWithClassLoader(loader, () ->
+        createIdeScriptEngine(state.get(info).getScriptEngine()));
+    }
+    return null;
   }
 
   @Override
@@ -101,15 +89,33 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   @NotNull
-  private Pair<ScriptEngineManager, List<EngineInfo>> getState() {
-    Pair<ScriptEngineManager, List<EngineInfo>> state = null;
+  private Map<EngineInfo, ScriptEngineFactory> getFactories() {
+    Map<EngineInfo, ScriptEngineFactory> state = null;
     try {
       state = myStateFuture.get();
     }
     catch (Exception e) {
       LOG.error(e);
     }
-    return ObjectUtils.notNull(state);
+    return state != null ? state : Collections.emptyMap();
+  }
+
+  @NotNull
+  private static Map<EngineInfo, ScriptEngineFactory> calcFactories() {
+    return JBIterable.<ScriptEngineFactory>empty()
+      .append(new ScriptEngineManager().getEngineFactories()) // bundled factories from java modules (Nashorn)
+      .append(new ScriptEngineManager(AllPluginsLoader.INSTANCE).getEngineFactories()) // from plugins (Kotlin)
+      .unique(o -> o.getClass().getName())
+      .toMap(factory -> {
+        PluginId pluginId = PluginManagerCore.getPluginByClassName(factory.getClass().getName());
+        return new EngineInfo(factory.getEngineName(),
+                              factory.getEngineVersion(),
+                              factory.getLanguageName(),
+                              factory.getLanguageVersion(),
+                              factory.getExtensions(),
+                              factory.getClass().getName(),
+                              pluginId);
+      }, o -> o);
   }
 
   @Nullable
@@ -201,8 +207,8 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
 
     @Override
-    public Object eval(@NotNull final String script) throws IdeScriptException {
-      return ClassLoaderUtil.runWithClassLoader(myLoader, (ThrowableComputable<Object, IdeScriptException>)() -> {
+    public Object eval(@NotNull String script) throws IdeScriptException {
+      return ClassLoaderUtil.computeWithClassLoader(myLoader, () -> {
         try {
           return myEngine.eval(script);
         }
