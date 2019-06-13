@@ -1312,7 +1312,7 @@
     </action>
     <group id="TodoMainGroup" text="TODO">
       <add-to-group group-id="Other.KeymapGroup"/>
-      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup">
+      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" popup="true">
         <separator text="Group By"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>
