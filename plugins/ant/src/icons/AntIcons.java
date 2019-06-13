@@ -31,24 +31,24 @@ public final class AntIcons {
   /** @deprecated to be removed in IDEA 2020 - use AntIcons.Build */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon AntInstallation = AntIcons.Build;
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Information */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Message = load("/general/information.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Properties */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Properties = load("/actions/properties.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Target */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Target = load("/nodes/target.svg", com.intellij.icons.AllIcons.class);
 }

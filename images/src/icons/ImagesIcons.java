@@ -29,6 +29,6 @@ public final class ImagesIcons {
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Graph.Grid */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon ToggleGrid = load("/graph/grid.svg", com.intellij.icons.AllIcons.class);
 }
