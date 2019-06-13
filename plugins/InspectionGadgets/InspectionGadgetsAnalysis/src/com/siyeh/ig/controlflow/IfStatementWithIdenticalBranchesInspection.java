@@ -50,7 +50,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Highlight when last common statement is call", this, "myHighlightWhenLastStatementIsCall");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call"), this, "myHighlightWhenLastStatementIsCall");
   }
 
   @NotNull
@@ -72,7 +72,23 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
               if (!isOnTheFly) return;
               highlightType = ProblemHighlightType.INFORMATION;
             }
-            holder.registerProblem(result.myElementToHighlight, result.myMessage, highlightType, result.myFix);
+            LocalQuickFix[] fixes;
+            if (myHighlightWhenLastStatementIsCall) {
+              fixes = new LocalQuickFix[]{
+                new SetInspectionOptionFix(
+                  IfStatementWithIdenticalBranchesInspection.this,
+                  "myHighlightWhenLastStatementIsCall",
+                  InspectionsBundle.message("inspection.common.if.parts.disable.highlight.tail.call"),
+                  false
+                ),
+                result.myFix
+              };
+            } else {
+              fixes = new LocalQuickFix[] {
+                result.myFix
+              };
+            }
+            holder.registerProblem(result.myElementToHighlight, result.myMessage, highlightType, fixes);
           }
         }
       }
