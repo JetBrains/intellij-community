@@ -217,8 +217,8 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     public String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
         if (!isEmpty(myReadOnlyReason)) return myReadOnlyReason;
-        StringBuilder buf = new StringBuilder();
         if (myReadonlyFiles.length > 1) {
+          StringBuilder buf = new StringBuilder();
           for (VirtualFile file : myReadonlyFiles) {
             buf.append('\n');
             buf.append(file.getPresentableUrl());

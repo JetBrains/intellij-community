@@ -1057,18 +1057,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static String getLink(String title, String url) {
-    StringBuilder result = new StringBuilder();
     String hostname = getHostname(url);
     if (hostname == null) {
       return null;
     }
 
-    result.append("<a href='");
-    result.append(url);
-    result.append("'>`");
-    result.append(title).append("` on ").append(hostname);
-    result.append("</a>");
-    return result.toString();
+    return "<a href='" + url + "'>`" + title + "` on " + hostname + "</a>";
   }
 
   static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
