@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -57,7 +58,7 @@ public class CompareBranchesDiffPanel extends JPanel {
   private final String myCurrentBranchName;
   private final DvcsCompareSettings myVcsSettings;
 
-  private CommitCompareInfo myCompareInfo;
+  @Nullable private CommitCompareInfo myCompareInfo;
 
   private final JEditorPane myLabel;
   private final MyChangesBrowser myChangesBrowser;
@@ -106,11 +107,13 @@ public class CompareBranchesDiffPanel extends JPanel {
   }
 
   private void refreshView() {
-    boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
-    updateLabelText();
-    List<Change> diff = myCompareInfo.getTotalDiff();
-    if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
-    myChangesBrowser.setChangesToDisplay(diff);
+    if (myCompareInfo != null) {
+      boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+      updateLabelText();
+      List<Change> diff = myCompareInfo.getTotalDiff();
+      if (swapSides) diff = DvcsBranchUtil.swapRevisions(diff);
+      myChangesBrowser.setChangesToDisplay(diff);
+    }
   }
 
   private void updateLabelText() {
@@ -188,7 +191,9 @@ public class CompareBranchesDiffPanel extends JPanel {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            ((LocalCommitCompareInfo)myCompareInfo).copyChangesFromBranch(changes, swapSides);
+            if (myCompareInfo != null) {
+              ((LocalCommitCompareInfo)myCompareInfo).copyChangesFromBranch(changes, swapSides);
+            }
           }
           catch (VcsException err) {
             ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myProject, err.getMessage(), "Can't Copy Changes"));
