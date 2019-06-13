@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author peter
@@ -42,32 +43,30 @@ public class TypePresentationServiceImpl extends TypePresentationService {
 
   @Nullable
   private Icon getIcon(Class type, Object o) {
-    Set<PresentationTemplate> templates = mySuperClasses.get(type);
-    for (PresentationTemplate template : templates) {
-      Icon icon = template.getIcon(o, 0);
-      if (icon != null) return icon;
-    }
-    return null;
+    return findFirst(type, template -> template.getIcon(o, 0));
   }
 
   @Nullable
   @Override
   public String getTypePresentableName(Class type) {
-    Set<PresentationTemplate> templates = mySuperClasses.get(type);
-    for (PresentationTemplate template : templates) {
-      String typeName = template.getTypeName();
-      if (typeName != null) return typeName;
-    }
-    return getDefaultTypeName(type);
+    String typeName = findFirst(type, template -> template.getTypeName());
+    return typeName != null ? typeName : getDefaultTypeName(type);
   }
 
   @Nullable
   @Override
   public String getTypeName(Object o) {
-    Set<PresentationTemplate> templates = mySuperClasses.get(o.getClass());
+    return findFirst(o.getClass(), template -> template.getTypeName(o));
+  }
+
+  @Nullable
+  private <T> T findFirst(Class<?> clazz, Function<PresentationTemplate, T> f) {
+    Set<PresentationTemplate> templates = mySuperClasses.get(clazz);
     for (PresentationTemplate template : templates) {
-      String typeName = template.getTypeName(o);
-      if (typeName != null) return typeName;
+      T result = f.apply(template);
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
