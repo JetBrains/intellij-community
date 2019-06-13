@@ -29,6 +29,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -808,14 +809,18 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private void checkLaterThreadsAreUnblocked() {
-    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-      if (isAnyPrioritizedThreadBlocked()) {
-        checkLaterThreadsAreUnblocked();
-      }
-      else {
-        restorePrioritizing();
-      }
-    }, 5, TimeUnit.MILLISECONDS);
+    try {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+        if (isAnyPrioritizedThreadBlocked()) {
+          checkLaterThreadsAreUnblocked();
+        }
+        else {
+          restorePrioritizing();
+        }
+      }, 5, TimeUnit.MILLISECONDS);
+    }
+    catch (RejectedExecutionException ignore) {
+    }
   }
 
   private void stopAllPrioritization() {
