@@ -91,10 +91,6 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
         cc.value.growX()
       }
 
-      component is JPasswordField -> {
-        applyGrowPolicy(cc.value, GrowPolicy.SHORT_TEXT)
-      }
-
       component is JTextField && component.columns != 0 ->
         return
 
