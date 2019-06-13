@@ -17,7 +17,10 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
@@ -357,11 +360,13 @@ public final class IdeaApplication {
 
       List<String> commandLineArgs = args == null || args.length == 0 ? Collections.emptyList() : Arrays.asList(args);
 
-      Ref<Boolean> willOpenProject = new Ref<>(Boolean.FALSE);
       Activity appFrameCreatedActivity = frameInitActivity.startChild("call appFrameCreated");
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
-      lifecyclePublisher.appFrameCreated(commandLineArgs, willOpenProject);
+      lifecyclePublisher.appFrameCreated(commandLineArgs);
       appFrameCreatedActivity.end();
+
+      // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
+      boolean willOpenProject = !commandLineArgs.isEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart();
 
       // Temporary check until the jre implementation has been checked and bundled
       if (Registry.is("ide.popup.enablePopupType")) {
@@ -370,7 +375,7 @@ public final class IdeaApplication {
 
       LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
 
-      if (!willOpenProject.get() || JetBrainsProtocolHandler.getCommand() != null) {
+      if (!willOpenProject || JetBrainsProtocolHandler.getCommand() != null) {
         WelcomeFrame.showNow(SplashManager.getHideTask());
         lifecyclePublisher.welcomeScreenDisplayed();
       }
@@ -381,8 +386,10 @@ public final class IdeaApplication {
 
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = ourPerformProjectLoad ? loadProjectFromExternalCommandLine(commandLineArgs) : null;
-        // The appStarting callback in RecentProjectsManagerBase will reopen the last project
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
+        if (projectFromCommandLine == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+          RecentProjectsManager.getInstance().reopenLastProjectOnStart();
+        }
 
         //noinspection SSBasedInspection
         EventQueue.invokeLater(PluginManager::reportPluginError);
