@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
@@ -75,7 +76,7 @@ public class PatchFileType implements FileType {
   }
 
   public static boolean isPatchFile(@Nullable VirtualFile vFile) {
-    return vFile != null && vFile.getFileType() == StdFileTypes.PATCH;
+    return vFile != null && FileTypeRegistry.getInstance().isFileOfType(vFile, StdFileTypes.PATCH);
   }
 
   public static boolean isPatchFile(@NotNull File file) {

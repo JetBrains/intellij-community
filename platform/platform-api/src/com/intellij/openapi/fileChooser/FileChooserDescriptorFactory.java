@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfo;
@@ -44,7 +45,7 @@ public class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
-    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(file -> file.getFileType() == fileType);
+    return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(final String extension) {
@@ -65,7 +66,7 @@ public class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileOrFolderDescriptor(final FileType fileType) {
-    return new FileChooserDescriptor(true, true, false, false, false, false).withFileFilter(file -> file.getFileType() == fileType);
+    return new FileChooserDescriptor(true, true, false, false, false, false).withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType));
   }
 
   /**

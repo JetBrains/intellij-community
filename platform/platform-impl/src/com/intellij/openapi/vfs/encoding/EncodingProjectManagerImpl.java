@@ -10,6 +10,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -373,7 +374,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
   @Override
   public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
-    return virtualFile.getFileType() == StdFileTypes.PROPERTIES && myNative2AsciiForPropertiesFiles;
+    return FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.PROPERTIES) && myNative2AsciiForPropertiesFiles;
   }
 
   @Override

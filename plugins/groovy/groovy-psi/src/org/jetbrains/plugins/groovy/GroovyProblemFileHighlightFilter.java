@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -24,6 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class GroovyProblemFileHighlightFilter implements Condition<VirtualFile> {
   @Override
   public boolean value(VirtualFile virtualFile) {
-    return virtualFile.getFileType() == GroovyFileType.GROOVY_FILE_TYPE;
+    return FileTypeRegistry.getInstance().isFileOfType(virtualFile, GroovyFileType.GROOVY_FILE_TYPE);
   }
 }
