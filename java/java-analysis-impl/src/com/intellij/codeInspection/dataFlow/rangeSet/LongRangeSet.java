@@ -2100,12 +2100,10 @@ public abstract class LongRangeSet {
 
     @Override
     public String toString() {
-      StringBuilder sb = new StringBuilder("{");
+      StringJoiner sb = new StringJoiner(", ", "{", "}");
       for (int i = 0; i < myRanges.length; i += 2) {
-        if (i > 0) sb.append(", ");
-        sb.append(LongRangeSet.toString(myRanges[i], myRanges[i + 1]));
+        sb.add(LongRangeSet.toString(myRanges[i], myRanges[i + 1]));
       }
-      sb.append("}");
       return sb.toString();
     }
   }
