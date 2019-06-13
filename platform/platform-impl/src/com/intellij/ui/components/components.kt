@@ -296,6 +296,26 @@ fun textFieldWithBrowseButton(project: Project?,
   return component
 }
 
+@JvmOverloads
+fun textFieldWithBrowseButton(project: Project?,
+                              browseDialogTitle: String,
+                              textField: JTextField,
+                              fileChooserDescriptor: FileChooserDescriptor,
+                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+  val component = TextFieldWithBrowseButton(textField)
+  installFileCompletionAndBrowseDialog(
+    project = project,
+    component = component,
+    textField = component.textField,
+    browseDialogTitle = browseDialogTitle,
+    fileChooserDescriptor = fileChooserDescriptor,
+    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
+    fileChosen = fileChosen
+  )
+  return component
+}
+
+
 val JPasswordField.chars: CharSequence?
   get() {
     val doc = document
