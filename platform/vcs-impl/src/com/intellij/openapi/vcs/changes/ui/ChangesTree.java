@@ -497,16 +497,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myIncludedChanges.addAll(oldInclusion);
   }
 
-  /**
-   * Usually, this method should be called before tree is initialized via `rebuildTree`
-   * to set nodes, that are included "by default".
-   * This will allow to preselect first included node via `resetTreeState`.
-   * <p>
-   * No listener supposed to be called
-   */
   public void setIncludedChanges(@NotNull Collection<?> changes) {
     myIncludedChanges.clear();
     myIncludedChanges.addAll(changes);
+    notifyInclusionListener();
     repaint();
   }
 
