@@ -436,8 +436,8 @@ public class TreeState implements JDOMExternalizable {
   }
 
   /**
-   * Temporary solution to resolve simultaneous expansions with async tree model.
-   * Not that the specified consumer must resolve async promise at the end.
+   * @deprecated Temporary solution to resolve simultaneous expansions with async tree model.
+   * Note that the specified consumer must resolve async promise at the end.
    */
   @Deprecated
   public static void expand(@NotNull JTree tree, @NotNull Consumer<? super AsyncPromise<Void>> consumer) {

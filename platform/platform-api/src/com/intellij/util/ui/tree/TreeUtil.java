@@ -316,8 +316,7 @@ public final class TreeUtil {
   }
 
   /**
-   * @see #promiseSelectFirstLeaf
-   * @deprecated
+   * @deprecated use {@link #promiseSelectFirstLeaf}
    */
   @Deprecated
   @NotNull

@@ -85,7 +85,7 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
   }
 
   /**
-   * Temporary solution to support icons in the text component for different L&F.
+   * @deprecated Temporary solution to support icons in the text component for different L&F.
    * This method replaces non-supported UI with Darcula UI.
    *
    * @param ui an object to paint this text component

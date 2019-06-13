@@ -50,6 +50,9 @@ public class PlatformDataKeys extends CommonDataKeys {
    */
   public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
 
+  /**
+   * @deprecated see {@link com.intellij.diff.tools.util.DiffDataKeys}
+   */
   @Deprecated
   public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create("diffViewer");
 

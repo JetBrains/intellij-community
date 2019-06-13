@@ -37,6 +37,9 @@ public class AsyncProcessIcon extends AnimatedIcon {
     super(name, icons, passive, CYCLE_LENGTH);
   }
 
+  /**
+   * @deprecated no effect
+   */
   @Deprecated
   public AsyncProcessIcon setUseMask(boolean useMask) {
     return this;
