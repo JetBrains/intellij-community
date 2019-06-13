@@ -297,7 +297,7 @@
 
     <group id="ChangesView.CommitToolbar">
       <action id="Vcs.ToggleAmendCommitMode" icon="AllIcons.Actions.Amend" text="Amend Commit"
-              description="Merge this commit with the previous one"
+              description="Modify the latest commit of the current branch"
               class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
       <action id="ChangesView.ShowCommitOptions" text="Show Commit Options"
               class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
