@@ -38,6 +38,9 @@ public abstract class ActionsCollector {
    */
   public abstract void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context);
 
+  /**
+   * @deprecated use {@link #record(Project, AnAction, AnActionEvent, Language)} instead
+   */
   @Deprecated
   public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event) {
     record(project, action, event, null);
