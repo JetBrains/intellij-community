@@ -1100,7 +1100,7 @@ public class FSRecords {
         if (!(parent instanceof VirtualDirectoryImpl)) {
           return null;
         }
-        VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).findChildById(childId);
+        VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).doFindChildById(childId);
         if (child instanceof VirtualDirectoryImpl) {
           VirtualFileSystemEntry old = idToDirCache.putIfAbsent(childId, child);
           if (old != null) child = old;
