@@ -75,7 +75,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
     // Android Studio: restore the update channel to its default for Canary and Beta.
     ChannelStatus defaultUpdateChannel = ChannelStatus.fromCode(new UpdateOptions().getUpdateChannelType());
     if (eap && current != defaultUpdateChannel && ConfigImportHelper.isConfigImported()) {
-      mySettings.setSelectedChannelStatus(defaultUpdateChannel);
+      settings.setSelectedChannelStatus(defaultUpdateChannel);
       LOG.info(String.format("channel set to '%s'", defaultUpdateChannel.getCode()));
     }
 
