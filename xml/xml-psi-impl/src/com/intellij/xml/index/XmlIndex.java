@@ -16,6 +16,7 @@
 package com.intellij.xml.index;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,7 +71,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull final VirtualFile file) {
-        return XmlFileType.INSTANCE.equals(file.getFileType()) && "xsd".equals(file.getExtension());
+        return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) && "xsd".equals(file.getExtension());
       }
     };
   }
