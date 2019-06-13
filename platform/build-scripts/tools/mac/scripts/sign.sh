@@ -48,7 +48,7 @@ find "$APP_DIRECTORY" -name '*.jar' \
     mkdir jarfolder
     filename="${file##*/}"
     log "Filename: $filename"
-    cp "$file" jarfolder && (cd jarfolder && jar xf $filename && rm $filename)
+    cp "$file" jarfolder && (cd jarfolder && jar xf "$filename" && rm "$filename")
 
     find jarfolder \
       -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "jattach" \) \
@@ -70,7 +70,6 @@ for f in \
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \
       -type f -exec codesign --timestamp \
-      --force \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;
   fi
