@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -23,16 +23,14 @@ public abstract class PsiFileFactory {
   }
 
   /**
-   * Please use {@link #createFileFromText(String, FileType, CharSequence)} instead,
-   * since file type detecting by file extension becomes vulnerable when file type mappings are changed.
-   * <p/>
    * Creates a file from the specified text.
    *
    * @param name the name of the file to create (the extension of the name determines the file type).
    * @param text the text of the file to create.
    * @return the created file.
-   * @throws IncorrectOperationException
-   *          if the file type with specified extension is binary.
+   * @throws IncorrectOperationException if the file type with specified extension is binary.
+   * @deprecated Please use {@link #createFileFromText(String, FileType, CharSequence)} instead,
+   * since file type detecting by file extension becomes vulnerable when file type mappings are changed.
    */
   @Deprecated
   @NotNull
