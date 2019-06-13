@@ -35,25 +35,25 @@ public final class TasksCoreIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Bug = load("/icons/pivotal/bug.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Chore = load("/icons/pivotal/chore.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Feature = load("/icons/pivotal/feature.png");
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    @ScheduledForRemoval
+    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Release = load("/icons/pivotal/release.png");
 
   }
@@ -70,24 +70,24 @@ public final class TasksCoreIcons {
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Resume */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon AutoMode = load("/actions/resume.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.StartDebugger */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Bug = load("/actions/startDebugger.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Feature = load("/nodes/favorite.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Github = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
 }

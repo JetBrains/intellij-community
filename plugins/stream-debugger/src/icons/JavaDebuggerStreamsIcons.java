@@ -25,6 +25,6 @@ public final class JavaDebuggerStreamsIcons {
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Console */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Tab = load("/debugger/console.svg", com.intellij.icons.AllIcons.class);
 }

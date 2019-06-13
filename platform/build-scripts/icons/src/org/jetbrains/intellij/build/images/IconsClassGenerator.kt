@@ -320,7 +320,7 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
       append(answer, "@Deprecated", level)
     }
     if (image.scheduledForRemoval) {
-      append(answer, "@ScheduledForRemoval", level)
+      append(answer, """@ScheduledForRemoval(inVersion = "2020.1")""", level)
     }
 
     val sourceRoot = image.sourceRoot

@@ -26,18 +26,18 @@ public final class TasksIcons {
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Feature = load("/nodes/favorite.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.FileTypes.Any_type */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Other = load("/fileTypes/any_type.svg", com.intellij.icons.AllIcons.class);
 
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.FileTypes.Unknown */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon Unknown = load("/fileTypes/unknown.svg", com.intellij.icons.AllIcons.class);
 }
