@@ -12,7 +12,6 @@ import com.intellij.openapi.application.constraints.Expiration
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import kotlinx.coroutines.Runnable
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
 
@@ -30,12 +29,12 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   constructor(modality: ModalityState) : this(modality, emptyArray(), emptyArray(), emptySet())
 
   private class MyExecutor(private val modality: ModalityState) : Executor {
-    override fun execute(command: Runnable?) {
+    override fun execute(command: Runnable) {
       if (ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)) {
-        command!!.run()
+        command.run()
       }
       else {
-        ApplicationManager.getApplication().invokeLater(command!!, modality)
+        ApplicationManager.getApplication().invokeLater(command, modality)
       }
     }
   }
