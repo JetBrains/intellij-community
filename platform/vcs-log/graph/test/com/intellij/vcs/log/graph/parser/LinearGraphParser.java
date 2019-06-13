@@ -52,8 +52,8 @@ public class LinearGraphParser {
         switch (type) {
           case USUAL:
           case DOTTED:
+            assert nodeIdToNodeIndex.containsKey(pairEdge.first);
             int downNodeIndex = nodeIdToNodeIndex.get(pairEdge.first);
-            assert downNodeIndex != 0;
             edge = GraphEdge.createNormalEdge(graphNode.getNodeIndex(), downNodeIndex, type);
             break;
 
