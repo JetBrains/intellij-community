@@ -668,7 +668,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.IfMayBeConditionalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IfStatementWithIdenticalBranches" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="if.statement.with.identical.branches.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WEAK WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.siyeh.ig.controlflow.IfStatementWithIdenticalBranchesInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="IfStatementWithTooManyBranches" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="if.statement.with.too.many.branches.display.name" groupBundle="messages.InspectionsBundle"
