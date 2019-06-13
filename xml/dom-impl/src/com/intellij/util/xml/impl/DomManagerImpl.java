@@ -4,6 +4,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
@@ -160,7 +161,7 @@ public final class DomManagerImpl extends DomManager {
           return false;
         }
 
-        if (!file.isDirectory() && StdFileTypes.XML == file.getFileType()) {
+        if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML)) {
           final PsiFile psiFile = getCachedPsiFile(file);
           if (psiFile != null && StdFileTypes.XML.equals(psiFile.getFileType()) && psiFile instanceof XmlFile) {
             final DomFileElementImpl domElement = getCachedFileElement((XmlFile)psiFile);

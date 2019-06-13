@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -276,8 +277,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   public static boolean isSupportedFileType(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return true;
-    if (virtualFile.getFileType() == StdFileTypes.JAVA) return true;
-    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
+    if (FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.JAVA)) return true;
+    if (FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.XML) && !ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
     final String extension = virtualFile.getExtension();
     if ("groovy".equals(extension) || "kt".equals(extension)) return true;
     return false;

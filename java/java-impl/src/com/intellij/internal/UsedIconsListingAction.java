@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -112,7 +113,7 @@ public class UsedIconsListingAction extends AnAction {
       new DelegatingGlobalSearchScope(GlobalSearchScope.projectScope(project)) {
         @Override
         public boolean contains(@NotNull VirtualFile file) {
-          return super.contains(file) && file.getFileType() == XmlFileType.INSTANCE && index.isInSource(file);
+          return super.contains(file) && FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) && index.isInSource(file);
         }
       },
 

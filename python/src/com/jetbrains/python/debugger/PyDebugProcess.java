@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -886,7 +887,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       final Project project = getSession().getProject();
       if (document != null) {
-        if (file.getFileType() == PythonFileType.INSTANCE) {
+        if (FileTypeRegistry.getInstance().isFileOfType(file, PythonFileType.INSTANCE)) {
           int breakpointLine = position.getLine();
           if (breakpointLine < document.getLineCount()) {
             PsiElement psiElement = XDebuggerUtil.getInstance().

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -424,7 +425,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
-      if (myFile.getFileType() == UnknownFileType.INSTANCE) {
+      if (FileTypeRegistry.getInstance().isFileOfType(myFile, UnknownFileType.INSTANCE)) {
         return new UnknownFileTypeDiffRequest(myFile, getName());
       }
 

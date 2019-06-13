@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -187,7 +188,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
       VirtualFile file = fileClass.getOriginalElement().getContainingFile().getVirtualFile();
       if (file != null) {
         ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(aClass.getProject());
-        if (file.getFileType() == StdFileTypes.CLASS) {
+        if (FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.CLASS)) {
           // compiled class; looking for the right .class file (inner class 'A.B' is "contained" in 'A.class', but we need 'A$B.class')
           String classFileName = StringUtil.getShortName(jvmClassName) + ".class";
           if (index.isInLibraryClasses(file)) {
