@@ -22,7 +22,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -282,11 +281,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     boolean succeed = false;
     try {
       project.registerComponents();
-      IProjectStore stateStore = project.getStateStore();
-      stateStore.setPath(filePath, true);
-      if (template != null) {
-        stateStore.loadProjectFromTemplate(template);
-      }
+      project.getStateStore().setPath(filePath, true, template);
       project.init(indicator);
       succeed = true;
     }

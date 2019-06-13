@@ -36,8 +36,6 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getWorkspaceFilePath();
 
-  void loadProjectFromTemplate(@NotNull Project project);
-
   void clearStorages();
 
   boolean isOptimiseTestLoadSpeed();
@@ -68,5 +66,5 @@ public interface IProjectStore extends IComponentStore {
   @SystemIndependent
   String getDirectoryStorePathOrBase();
 
-  void setPath(@NotNull @SystemIndependent String path, boolean isRefreshVfsNeeded);
+  void setPath(@NotNull @SystemIndependent String path, boolean isRefreshVfsNeeded, @Nullable Project template);
 }
