@@ -37,17 +37,9 @@ class MacDmgBuilder {
 
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
                               MacHostProperties macHostProperties, String macZipPath,
-                              String jreArchivePath, boolean isSecondJre) {
+                              String jreArchivePath, boolean isJreModular, String suffix) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    if (jreArchivePath != null) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, isSecondJre)
-    }
-    else {
-      buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
-    }
-    if (buildContext.options.buildDmgWithoutBundledJre) {
-      dmgBuilder.doSignAndBuildDmg(macZipPath, null, false)
-    }
+    dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, isJreModular, suffix)
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
@@ -106,17 +98,11 @@ class MacDmgBuilder {
     return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
   }
 
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, boolean isSecondJre) {
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, boolean isJreModular, String suffix) {
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
-    def jreManager = buildContext.bundledJreManager
-    String suffix = "-no-jdk", javaExePath = null
-    if (isSecondJre) {
-      suffix = jreManager.secondJreSuffix()
-      javaExePath = getJavaExePath(jreArchivePath, jreManager.isSecondBundledJreModular())
-    }
-    else if (jreArchivePath != null) {
-      suffix = ""
-      javaExePath = getJavaExePath(jreArchivePath, jreManager.isBundledJreModular())
+    String javaExePath = null
+    if (jreArchivePath != null) {
+      javaExePath = getJavaExePath(jreArchivePath, isJreModular)
     }
     def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.dmg$suffix").absolutePath
     MacDistributionBuilder.generateProductJson(buildContext, productJsonDir, javaExePath)
