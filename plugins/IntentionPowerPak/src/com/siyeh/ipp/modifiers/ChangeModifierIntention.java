@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -155,7 +156,9 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       }
       range = TextRange.from(pos, 0);
     }
-    editor.getCaretModel().moveToOffset(range.getStartOffset());
+    CaretModel model = editor.getCaretModel();
+    RangeMarker cursorMarker = document.createRangeMarker(model.getOffset(), model.getOffset());
+    model.moveToOffset(range.getStartOffset());
     StartMarkAction markAction;
     try {
       markAction = StartMarkAction.start(editor, project, getFamilyName());
@@ -187,12 +190,14 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.dispose();
+          model.moveToOffset(cursorMarker.getStartOffset());
           if (!event.isOk()) {
             FinishMarkAction.finish(project, editor, markAction);
             updater.undoChange(true);
           }
         }
       })
+      .setNamerForFiltering(AccessModifier::toString)
       .setItemChosenCallback(t -> {
         updater.undoChange(false);
         PsiDocumentManager.getInstance(project).commitDocument(document);
