@@ -60,6 +60,12 @@ public class TypePresentationServiceImpl extends TypePresentationService {
   }
 
   @Nullable
+  @Override
+  public String getObjectName(Object o) {
+    return findFirst(o.getClass(), template -> template.getName(o));
+  }
+
+  @Nullable
   private <T> T findFirst(Class<?> clazz, Function<PresentationTemplate, T> f) {
     Set<PresentationTemplate> templates = mySuperClasses.get(clazz);
     for (PresentationTemplate template : templates) {
