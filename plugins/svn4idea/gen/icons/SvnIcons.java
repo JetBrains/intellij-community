@@ -38,6 +38,6 @@ public final class SvnIcons {
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Unknown */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon IntegrationStatusUnknown = load("/nodes/unknown.svg", com.intellij.icons.AllIcons.class);
 }

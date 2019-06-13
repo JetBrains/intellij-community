@@ -25,6 +25,6 @@ public final class XsltDebuggerIcons {
   /** @deprecated to be removed in IDEA 2020 - use AllIcons.ObjectBrowser.FlattenPackages */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon FilterWhitespace = load("/objectBrowser/flattenPackages.svg", com.intellij.icons.AllIcons.class);
 }

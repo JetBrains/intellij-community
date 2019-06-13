@@ -21,6 +21,6 @@ public final class TerminalIcons {
   /** @deprecated to be removed in IDEA 2020 */
   @SuppressWarnings("unused")
   @Deprecated
-  @ScheduledForRemoval
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final Icon OpenTerminal = load("/icons/OpenTerminal.png");
 }
