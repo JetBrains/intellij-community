@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
@@ -48,8 +49,4 @@ interface CommitMessageUi : TextAccessor {
 
 interface CommitExecutorListener : EventListener {
   fun executorCalled(executor: CommitExecutor?)
-}
-
-interface InclusionListener : EventListener {
-  fun inclusionChanged()
 }

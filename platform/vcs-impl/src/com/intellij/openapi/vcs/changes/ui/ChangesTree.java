@@ -5,7 +5,6 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -21,6 +20,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.InclusionListener;
+import com.intellij.openapi.vcs.changes.InclusionModel;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
@@ -29,14 +30,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +67,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
 
-  @NotNull private TObjectHashingStrategy<Object> myInclusionHashingStrategy = ContainerUtil.canonicalStrategy();
-  @NotNull private Set<Object> myIncludedChanges = new THashSet<>(myInclusionHashingStrategy);
+  @NotNull private InclusionModel myInclusionModel = new DefaultInclusionModel();
+  @NotNull private final InclusionListener myInclusionModelListener = () -> {
+    notifyInclusionListener();
+    repaint();
+  };
+  @Nullable private Runnable myTreeInclusionListener;
+
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myKeepTreeState = false;
 
@@ -81,7 +84,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NonNls public static final String GROUP_BY_ACTION_GROUP = "ChangesView.GroupBy";
 
-  @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
   @NotNull private TreeExpander myTreeExpander = new MyTreeExpander();
 
@@ -96,6 +98,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
+    myInclusionModel.addInclusionListener(myInclusionModelListener);
 
     setRootVisible(false);
     setShowsRootHandles(true);
@@ -260,10 +263,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     addTreeSelectionListener(listener);
     if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
-  }
-
-  public void setInclusionListener(@Nullable Runnable runnable) {
-    myInclusionListener = runnable;
   }
 
   public void setDoubleClickHandler(@NotNull final Runnable doubleClickHandler) {
@@ -483,64 +482,59 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return (ChangesBrowserNode<?>)getModel().getRoot();
   }
 
-  protected void notifyInclusionListener() {
-    if (myInclusionListener != null) {
-      myInclusionListener.run();
-    }
+  @NotNull
+  public InclusionModel getInclusionModel() {
+    return myInclusionModel;
   }
 
+  public void setInclusionModel(@Nullable InclusionModel inclusionModel) {
+    myInclusionModel.removeInclusionListener(myInclusionModelListener);
+    myInclusionModel = inclusionModel != null ? inclusionModel : NullInclusionModel.INSTANCE;
+    myInclusionModel.addInclusionListener(myInclusionModelListener);
+  }
 
-  public void setInclusionHashingStrategy(@NotNull TObjectHashingStrategy<Object> strategy) {
-    myInclusionHashingStrategy = strategy;
-    Set<Object> oldInclusion = myIncludedChanges;
-    myIncludedChanges = new THashSet<>(strategy);
-    myIncludedChanges.addAll(oldInclusion);
+  public void setInclusionListener(@Nullable Runnable runnable) {
+    myTreeInclusionListener = runnable;
+  }
+
+  protected void notifyInclusionListener() {
+    if (myTreeInclusionListener != null) {
+      myTreeInclusionListener.run();
+    }
   }
 
   public void setIncludedChanges(@NotNull Collection<?> changes) {
-    myIncludedChanges.clear();
-    myIncludedChanges.addAll(changes);
-    notifyInclusionListener();
-    repaint();
+    getInclusionModel().setInclusion(changes);
   }
 
   public void clearInclusion() {
-    myIncludedChanges.clear();
-    notifyInclusionListener();
-    repaint();
+    getInclusionModel().clearInclusion();
   }
 
   public void retainInclusion(@NotNull Collection<?> changes) {
-    if (myIncludedChanges.retainAll(changes)) {
-      notifyInclusionListener();
-      repaint();
-    }
+    getInclusionModel().retainInclusion(changes);
   }
 
-  public void includeChange(final Object change) {
+  public void includeChange(@NotNull Object change) {
     includeChanges(Collections.singleton(change));
   }
 
-  public void includeChanges(final Collection<?> changes) {
-    myIncludedChanges.addAll(changes);
-    notifyInclusionListener();
-    repaint();
+  public void includeChanges(@NotNull Collection<?> changes) {
+    getInclusionModel().addInclusion(changes);
   }
 
-  public void excludeChange(final Object change) {
+  public void excludeChange(@NotNull Object change) {
     excludeChanges(Collections.singleton(change));
   }
 
-  public void excludeChanges(final Collection<?> changes) {
-    myIncludedChanges.removeAll(changes);
-    notifyInclusionListener();
-    repaint();
+  public void excludeChanges(@NotNull Collection<?> changes) {
+    getInclusionModel().removeInclusion(changes);
   }
 
-  protected void toggleChanges(final Collection<?> changes) {
+  protected void toggleChanges(@NotNull Collection<?> changes) {
     boolean hasExcluded = false;
     for (Object value : changes) {
-      if (!myIncludedChanges.contains(value)) {
+      if (!isIncluded(value)) {
         hasExcluded = true;
         break;
       }
@@ -555,16 +549,16 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public boolean isInclusionEmpty() {
-    return myIncludedChanges.isEmpty();
+    return getInclusionModel().isInclusionEmpty();
   }
 
-  public boolean isIncluded(final Object change) {
-    return myIncludedChanges.contains(change);
+  public boolean isIncluded(@NotNull Object change) {
+    return getInclusionModel().getInclusionState(change) != State.NOT_SELECTED;
   }
 
   @NotNull
   public Set<Object> getIncludedSet() {
-    return new THashSet<>(myIncludedChanges, myInclusionHashingStrategy);
+    return getInclusionModel().getInclusion();
   }
 
   public void expandAll() {
@@ -707,7 +701,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     boolean hasExcluded = false;
 
     for (Object change : getUserObjectsUnder(node)) {
-      if (myIncludedChanges.contains(change)) {
+      if (isIncluded(change)) {
         hasIncluded = true;
       }
       else {
