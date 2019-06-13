@@ -2,75 +2,81 @@
 package git4idea
 
 import com.google.common.collect.HashMultiset
-import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.addBoolIfDiffers
+import com.intellij.internal.statistic.beans.addEnumIfDiffers
+import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.utils.getBooleanUsage
-import com.intellij.internal.statistic.utils.getCountingUsage
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.URLUtil
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
-import git4idea.config.GitVersion
 import git4idea.repo.GitRemote
+import java.util.*
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
+  override fun getGroupId(): String = "git.configuration"
+  override fun getVersion(): Int = 2
 
-  override fun getUsages(project: Project): Set<UsageDescriptor> {
+  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
+    val set = HashSet<MetricEvent>()
+
     val repositoryManager = GitUtil.getRepositoryManager(project)
-    val settings = GitVcsSettings.getInstance(project)
-    val appSettings = GitVcsApplicationSettings.getInstance()
     val repositories = repositoryManager.repositories
-    val usages = hashSetOf<UsageDescriptor>()
 
-    usages.add(UsageDescriptor("config.repo.sync." + settings.syncSetting.name, 1))
-    usages.add(UsageDescriptor("config.update.type." + settings.updateMethod.name, 1))
-    usages.add(UsageDescriptor("config.save.policy." + settings.updateChangesPolicy().name, 1))
-    usages.add(getBooleanUsage("config.ssh", appSettings.isUseIdeaSsh))
+    val appSettings = GitVcsApplicationSettings.getInstance()
+    val defaultAppSettings = GitVcsApplicationSettings()
 
-    usages.add(getBooleanUsage("config.push.autoupdate", settings.autoUpdateIfPushRejected()))
-    usages.add(getBooleanUsage("config.push.update.all.roots", settings.shouldUpdateAllRootsIfPushRejected()))
-    usages.add(getBooleanUsage("config.cherry-pick.autocommit", appSettings.isAutoCommitOnCherryPick))
-    usages.add(getBooleanUsage("config.warn.about.crlf", settings.warnAboutCrlf()))
-    usages.add(getBooleanUsage("config.warn.about.detached", settings.warnAboutDetachedHead()))
+    val settings = GitVcsSettings.getInstance(project)
+    val defaultSettings = GitVcsSettings(defaultAppSettings)
 
-    usages.add(versionUsage(GitVcs.getInstance(project).version))
+    addEnumIfDiffers(set, settings, defaultSettings, { it.syncSetting }, "repo.sync")
+    addEnumIfDiffers(set, settings, defaultSettings, { it.updateMethod }, "update.type")
+    addEnumIfDiffers(set, settings, defaultSettings, { it.updateChangesPolicy() }, "save.policy")
+    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isUseIdeaSsh }, "use.builtin.ssh")
+
+    addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, "push.autoupdate")
+    addBoolIfDiffers(set, settings, defaultSettings, { it.shouldUpdateAllRootsIfPushRejected() }, "push.update.all.roots")
+    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isAutoCommitOnCherryPick }, "cherrypick.autocommit")
+    addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, "warn.about.crlf")
+    addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutDetachedHead() }, "warn.about.detached")
+
+    val version = GitVcs.getInstance(project).version
+    set.add(newMetric("executable", FeatureUsageData().addData("version", version.presentation).addData("type", version.type.name)))
 
     for (repository in repositories) {
       val branches = repository.branches
-      usages.add(getCountingUsage("data.local.branches.count", branches.localBranches.size, listOf(0, 1, 2, 5, 8, 15, 30, 50)))
-      usages.add(getCountingUsage("data.remote.branches.count", branches.remoteBranches.size, listOf(0, 1, 2, 5, 8, 15, 30, 100)))
-      usages.add(getCountingUsage("data.remotes.in.project", repository.remotes.size, listOf(0, 1, 2, 5)))
 
-      val servers = repository.remotes.mapNotNull(this::getRemoteServerType).toCollection(HashMultiset.create())
-      for (serverName in servers) {
-        usages.add(getCountingUsage("data.remote.servers." + serverName, servers.count(serverName), listOf(0, 1, 2, 3, 5)))
+      val metric = newMetric("repository")
+      metric.data.addData("local_branches", branches.localBranches.size)
+      metric.data.addData("remote_branches", branches.remoteBranches.size)
+      metric.data.addData("remotes", repository.remotes.size)
+
+      val remoteTypes = HashMultiset.create<String>(repository.remotes.mapNotNull { getRemoteServerType(it) })
+      for (remoteType in remoteTypes) {
+        metric.data.addData("remote_$remoteType", remoteTypes.count(remoteType))
       }
+
+      set.add(metric)
     }
 
-    return usages
+    return set
   }
 
-  private fun versionUsage(version: GitVersion): UsageDescriptor {
-    val data = FeatureUsageData().addData("version", version.presentation).addData("type", version.type.name)
-    return UsageDescriptor("version", 1, data)
-  }
+  companion object {
+    private fun getRemoteServerType(remote: GitRemote): String? {
+      val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()
 
-  override fun getGroupId(): String {
-    return "vcs.git.settings"
-  }
+      if (hosts.contains("github.com")) return "github"
+      if (hosts.contains("gitlab.com")) return "gitlab"
+      if (hosts.contains("bitbucket.org")) return "bitbucket"
 
-  private fun getRemoteServerType(remote: GitRemote): String? {
-    val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()
+      if (remote.urls.any { it.contains("github") }) return "github_custom"
+      if (remote.urls.any { it.contains("gitlab") }) return "gitlab_custom"
+      if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket_custom"
 
-    if (hosts.contains("github.com")) return "github.com"
-    if (hosts.contains("gitlab.com")) return "gitlab.com"
-    if (hosts.contains("bitbucket.org")) return "bitbucket.org"
-
-    if (remote.urls.any { it.contains("github") }) return "github.custom"
-    if (remote.urls.any { it.contains("gitlab") }) return "gitlab.custom"
-    if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket.custom"
-
-    return null
+      return null
+    }
   }
 }
