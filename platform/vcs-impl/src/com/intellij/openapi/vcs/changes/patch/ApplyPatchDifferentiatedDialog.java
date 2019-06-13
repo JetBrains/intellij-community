@@ -957,7 +957,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class MyChangeNodeDecorator implements ChangeNodeDecorator {
     @Override
-    public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
+    public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
       if (change instanceof AbstractFilePatchInProgress.PatchChange) {
         final AbstractFilePatchInProgress.PatchChange patchChange = (AbstractFilePatchInProgress.PatchChange)change;
         final AbstractFilePatchInProgress patchInProgress = patchChange.getPatchInProgress();
@@ -995,7 +995,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
+    public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
     }
   }
 
