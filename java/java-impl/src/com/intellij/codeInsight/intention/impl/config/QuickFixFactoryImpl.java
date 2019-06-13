@@ -922,19 +922,22 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     return new SameErasureButDifferentMethodsFix(method, superMethod);
   }
-  
+
+  @NotNull
   @Override
   public IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases) {
     return new CreateMissingSwitchBranchesFix(switchBlock, missingCases);
   } 
-  
+
+  @NotNull
   @Override
   public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, String message) {
     return new CreateDefaultBranchFix(switchBlock, message);
   }
 
+  @Nullable
   @Override
-  public IntentionAction createCollapseAnnotationsFix(PsiAnnotation annotation) {
+  public IntentionAction createCollapseAnnotationsFix(@NotNull PsiAnnotation annotation) {
     return CollapseAnnotationsFix.from(annotation);
   }
 }
