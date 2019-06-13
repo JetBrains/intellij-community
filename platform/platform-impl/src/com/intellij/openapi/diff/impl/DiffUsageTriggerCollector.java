@@ -2,30 +2,33 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.diff.DiffTool;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DiffUsageTriggerCollector {
 
-  private static void trigger(@NotNull String feature) {
-    FUCounterUsageLogger.getInstance().logEvent("vcs.diff.trigger", feature);
+  private static void trigger(@NotNull String eventId, @NotNull FeatureUsageData data) {
+    FUCounterUsageLogger.getInstance().logEvent("vcs.diff.trigger", eventId, data);
   }
 
-  public static void trigger(@NotNull String feature, @NotNull Enum value) {
-    trigger(feature + "." + value.name());
+  public static void trigger(@NotNull String feature, @NotNull Enum value, @Nullable String place) {
+    FeatureUsageData data = new FeatureUsageData()
+      .addData("value", value.name())
+      .addData("diff_place", StringUtil.notNullize(place, "unknown"));
+
+    trigger(feature, data);
   }
 
-  public static void trigger(@NotNull String feature, @NotNull DiffTool diffTool) {
-    trigger(feature + "." + getDiffToolName(diffTool));
-  }
+  public static void trigger(@NotNull String feature, @NotNull DiffTool diffTool, @Nullable String place) {
+    FeatureUsageData data = new FeatureUsageData()
+      .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(diffTool.getClass()))
+      .addData("value", diffTool.getName())
+      .addData("diff_place", StringUtil.notNullize(place, "unknown"));
 
-  @NotNull
-  private static String getDiffToolName(@NotNull DiffTool diffTool) {
-    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(diffTool.getClass());
-    if (pluginInfo.isDevelopedByJetBrains()) return diffTool.getName();
-    if (pluginInfo.isSafeToReport()) return "third.party." + pluginInfo.getId();
-    return "third.party.other";
+    trigger(feature, data);
   }
 }
