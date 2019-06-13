@@ -423,7 +423,8 @@ public class PluginManagerCore {
     if (!result.getPluginId().getIdString().equals(CORE_PLUGIN_ID) ||
         className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
         className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
-        className.startsWith("git4idea.") || className.startsWith("com.android.")) {
+        className.startsWith("com.android.") ||
+        className.startsWith("git4idea.") || className.startsWith("org.angularjs.")) {
       return result.getPluginId();
     }
     // otherwise we need to check plugins with use-idea-classloader="true"
