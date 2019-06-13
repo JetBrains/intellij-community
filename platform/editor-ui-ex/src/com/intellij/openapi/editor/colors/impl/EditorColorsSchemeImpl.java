@@ -97,14 +97,6 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       if (color != null && color != INHERITED_COLOR_MARKER) {
         return color;
       }
-
-      ColorKey fallbackKey = key.getFallbackColorKey();
-      if (fallbackKey != null) {
-        color = getFallbackColor(fallbackKey);
-        if (color != null) {
-          return color;
-        }
-      }
     }
     return myParentScheme.getColor(key);
   }
