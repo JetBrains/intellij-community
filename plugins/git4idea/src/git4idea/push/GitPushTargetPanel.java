@@ -68,6 +68,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @NotNull private final GitPushSupport myPushSupport;
   @NotNull private final GitRepository myRepository;
+  @NotNull private final GitPushSource mySource;
   @NotNull private final Git myGit;
 
   @NotNull private final VcsEditableTextComponent myTargetRenderer;
@@ -82,8 +83,16 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private boolean myEventFromRemoteChooser;
 
   public GitPushTargetPanel(@NotNull GitPushSupport support, @NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
+    this(support, repository, support.getSource(repository), defaultTarget);
+  }
+
+  public GitPushTargetPanel(@NotNull GitPushSupport support,
+                            @NotNull GitRepository repository,
+                            @NotNull GitPushSource source,
+                            @Nullable GitPushTarget defaultTarget) {
     myPushSupport = support;
     myRepository = repository;
+    mySource = source;
     myGit = Git.getInstance();
     myProject = myRepository.getProject();
 
@@ -183,7 +192,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       @Override
       public void onSuccess() {
         if (myResult.success()) {
-          updateComponents(myPushSupport.getDefaultTarget(myRepository));
+          updateComponents(myPushSupport.getDefaultTarget(myRepository, mySource));
           if (myFireOnChangeAction != null) {
             myFireOnChangeAction.run();
           }

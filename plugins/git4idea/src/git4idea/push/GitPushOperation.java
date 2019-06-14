@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -143,7 +144,7 @@ public class GitPushOperation {
 
         if (!result.rejected.isEmpty()) {
 
-          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected)) break;
+          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected) || pushingNotCurrentBranch(result.rejected)) break;
 
           // propose to update if rejected
           if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
@@ -220,6 +221,14 @@ public class GitPushOperation {
       assert currentBranch != null;
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
       return trackInfo == null || !trackInfo.getRemoteBranch().getFullName().equals(entry.getValue().getTargetBranch());
+    });
+  }
+
+  private static boolean pushingNotCurrentBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
+    return ContainerUtil.exists(rejected.entrySet(), entry -> {
+      GitRepository repository = entry.getKey();
+      String currentBranch = Objects.requireNonNull(repository.getCurrentBranch()).getFullName();
+      return !StringUtil.equals(currentBranch, entry.getValue().getSourceBranch());
     });
   }
 

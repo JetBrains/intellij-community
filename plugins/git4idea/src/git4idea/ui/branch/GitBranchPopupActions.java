@@ -15,11 +15,9 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.ui.BranchActionGroup;
-import com.intellij.dvcs.ui.LightActionGroup;
-import com.intellij.dvcs.ui.NewBranchAction;
-import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
+import com.intellij.dvcs.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -36,6 +34,7 @@ import git4idea.GitProtectedBranchesKt;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
 import git4idea.config.GitVcsSettings;
+import git4idea.push.GitPushSource;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -46,10 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
@@ -296,6 +292,8 @@ class GitBranchPopupActions {
         new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
         new Separator(),
+        new PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits()),
+        new Separator(),
         new RenameBranchAction(myProject, myRepositories, myBranchName),
         new DeleteAction(myProject, myRepositories, myBranchName)
       };
@@ -368,6 +366,37 @@ class GitBranchPopupActions {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
         }
+      }
+    }
+
+    private static class PushBranchAction extends DumbAwareAction implements CustomIconProvider {
+      private final Project myProject;
+      private final List<GitRepository> myRepositories;
+      private final String myBranchName;
+      private final boolean myHasCommitsToPush;
+
+      PushBranchAction(@NotNull Project project,
+                       @NotNull List<GitRepository> repositories,
+                       @NotNull String branchName,
+                       boolean hasCommitsToPush) {
+        super("Push...");
+        myProject = project;
+        myRepositories = repositories;
+        myBranchName = branchName;
+        myHasCommitsToPush = hasCommitsToPush;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        GitLocalBranch localBranch = myRepositories.get(0).getBranches().findLocalBranch(myBranchName);
+        assert localBranch != null;
+        new VcsPushDialog(myProject, myRepositories, myRepositories, null, GitPushSource.create(localBranch)).show();
+      }
+
+      @Nullable
+      @Override
+      public Icon getRightIcon() {
+        return myHasCommitsToPush ? DvcsImplIcons.Outgoing : null;
       }
     }
 

@@ -73,10 +73,12 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
     return new HgPushOptionsPanel();
   }
 
-  @Override
   @NotNull
-  public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {
-    return new HgPushTargetPanel(repository, defaultTarget);
+  @Override
+  public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository,
+                                                     @NotNull HgPushSource source,
+                                                     @Nullable HgTarget defaultTarget) {
+    return new HgPushTargetPanel(repository, source, defaultTarget);
   }
 
   @Override

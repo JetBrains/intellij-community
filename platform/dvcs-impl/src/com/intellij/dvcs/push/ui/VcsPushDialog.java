@@ -3,6 +3,7 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -47,9 +48,17 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   public VcsPushDialog(@NotNull Project project,
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
+    this(project, VcsRepositoryManager.getInstance(project).getRepositories(), selectedRepositories, currentRepo, null);
+  }
+
+  public VcsPushDialog(@NotNull Project project,
+                       Collection<? extends Repository> allRepos, @NotNull List<? extends Repository> selectedRepositories,
+                       @Nullable Repository currentRepo, @Nullable PushSource pushSource) {
     super(project, true, (Registry.is("ide.perProjectModality")) ? IdeModalityType.PROJECT : IdeModalityType.IDE);
     myProject = project;
-    myController = new PushController(project, this, selectedRepositories, currentRepo);
+    myController =
+      new PushController(project, this, allRepos, selectedRepositories, currentRepo,
+                         pushSource);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
 

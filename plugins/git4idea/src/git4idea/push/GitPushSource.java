@@ -40,7 +40,7 @@ public abstract class GitPushSource implements PushSource {
     return getPresentation();
   }
 
-  private static class OnBranch extends GitPushSource {
+  static class OnBranch extends GitPushSource {
     @NotNull private final GitLocalBranch myBranch;
 
     private OnBranch(@NotNull GitLocalBranch branch) {
@@ -60,7 +60,7 @@ public abstract class GitPushSource implements PushSource {
     }
   }
 
-  private static class DetachedHead extends GitPushSource {
+  static class DetachedHead extends GitPushSource {
     @NotNull private final String myRevision;
 
     DetachedHead(@NotNull String revision) {
