@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.google.common.jimfs.Jimfs;
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
@@ -242,7 +242,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void nioDeletion() throws IOException {
-    try (FileSystem fs = Jimfs.newFileSystem()) {
+    try (FileSystem fs = MemoryFileSystemBuilder.newEmpty().build(FileUtilHeavyTest.class.getSimpleName())) {
       Path dir = Files.createDirectory(fs.getPath("dir"));
       Path file1 = Files.createFile(fs.getPath("dir", "file1"));
       Path file2 = Files.createFile(fs.getPath("dir", "file2"));
