@@ -18,4 +18,12 @@ public class MavenUtilTest extends MavenTestCase {
                                                                 "</settings>");
     assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
   }
+
+  public void testFindLocalRepoWithoutXmls() throws IOException {
+    VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                "<settings>" +
+                                                                "  <localRepository>mytestpath</localRepository>" +
+                                                                "</settings>");
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+  }
 }
