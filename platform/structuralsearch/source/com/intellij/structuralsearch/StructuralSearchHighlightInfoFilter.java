@@ -3,6 +3,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
@@ -18,6 +19,9 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
   public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
     if (file == null) {
       return true;
+    }
+    if (highlightInfo.getSeverity() != HighlightSeverity.ERROR) {
+      return false;
     }
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) {
