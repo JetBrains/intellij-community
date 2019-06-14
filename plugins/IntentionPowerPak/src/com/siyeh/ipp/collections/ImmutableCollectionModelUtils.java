@@ -195,7 +195,7 @@ class ImmutableCollectionModelUtils {
       String[] names = getNameSuggestions(call, type);
       if (names.length == 0) return;
       String name = names[0];
-      PsiDeclarationStatement declaration = createDeclaration(name, type, model, statement);
+      PsiDeclarationStatement declaration = createDeclaration(name, type, call, model, statement);
       if (declaration == null) return;
       PsiVariable declaredVariable = (PsiVariable)declaration.getDeclaredElements()[0];
       PsiElement anchor = addUpdates(name, model, declaration);
@@ -211,6 +211,7 @@ class ImmutableCollectionModelUtils {
     @Nullable
     private PsiDeclarationStatement createDeclaration(@NotNull String name,
                                                       @NotNull PsiType type,
+                                                      @NotNull PsiMethodCallExpression call,
                                                       @NotNull ImmutableCollectionModel model,
                                                       @NotNull PsiStatement usage) {
       String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : model.myCall.getText());
@@ -218,7 +219,7 @@ class ImmutableCollectionModelUtils {
       PsiType rhsType = initializer.getType();
       if (rhsType == null) return null;
       if (!TypeUtils.areConvertible(type, rhsType)) {
-        type = ExpectedTypeUtils.findExpectedType(model.myCall, false);
+        type = ExpectedTypeUtils.findExpectedType(call, false);
       }
       if (type == null) return null;
       PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(name, type, initializer);
