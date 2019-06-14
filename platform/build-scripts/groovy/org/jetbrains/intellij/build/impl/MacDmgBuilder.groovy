@@ -37,9 +37,9 @@ class MacDmgBuilder {
 
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer,
                               MacHostProperties macHostProperties, String macZipPath,
-                              String jreArchivePath, boolean isJreModular, String suffix) {
+                              String jreArchivePath, boolean isJreModular, String suffix, boolean notarize) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
-    dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, isJreModular, suffix)
+    dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath, isJreModular, suffix, notarize)
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
@@ -98,7 +98,7 @@ class MacDmgBuilder {
     return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
   }
 
-  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, boolean isJreModular, String suffix) {
+  private void doSignAndBuildDmg(String macZipPath, String jreArchivePath, boolean isJreModular, String suffix, boolean notarize) {
     def zipRoot = MacDistributionBuilder.getZipRoot(buildContext, customizer)
     String javaExePath = null
     if (jreArchivePath != null) {
@@ -121,7 +121,7 @@ class MacDmgBuilder {
     }
 
     ftpAction("mkdir") {}
-    signMacZip(sitFile, jreArchivePath)
+    signMacZip(sitFile, jreArchivePath, notarize)
     buildDmg(targetName)
   }
 
@@ -169,7 +169,7 @@ class MacDmgBuilder {
     }
   }
 
-  private def signMacZip(File targetFile, String jreArchivePath) {
+  private def signMacZip(File targetFile, String jreArchivePath, boolean notarize) {
     buildContext.messages.block("Signing ${targetFile.name}") {
       buildContext.messages.progress("Uploading ${targetFile} to ${macHostProperties.host}")
       ftpAction("put") {
@@ -194,7 +194,7 @@ class MacDmgBuilder {
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
                            (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
-                           "no" // set to 'yes' to enable notarization
+                           notarize ? "yes" : "no"
       ]
       if (jreArchivePath != null) {
         args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
