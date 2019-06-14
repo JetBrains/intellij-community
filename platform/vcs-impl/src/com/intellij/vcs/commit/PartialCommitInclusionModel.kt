@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.convertExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.ui.ThreeStateCheckBox
-import java.util.stream.Stream
 
 class PartialCommitInclusionModel(
   private val project: Project,
@@ -32,7 +31,7 @@ class PartialCommitInclusionModel(
     Disposer.register(this, stateHolder)
   }
 
-  override fun getInclusion(): Set<Any> = stateHolder.includedSet
+  override fun getInclusion(): Set<Any> = stateHolder.getIncludedSet()
   override fun getInclusionState(item: Any): ThreeStateCheckBox.State = convertExclusionState(stateHolder.getExclusionState(item))
   override fun isInclusionEmpty(): Boolean = getInclusion().isEmpty()
 
@@ -51,7 +50,7 @@ class PartialCommitInclusionModel(
   override fun dispose() = Unit
 
   private inner class StateHolder : PartiallyExcludedFilesStateHolder<Any>(project, changeList.id) {
-    override fun getTrackableElementsStream(): Stream<out Any> = changeList.changes.stream()
+    override val trackableElements: Sequence<Any> get() = changeList.changes.asSequence()
 
     override fun findElementFor(tracker: PartialLocalLineStatusTracker): Any? =
       changeList.changes.find { tracker.virtualFile == PartialChangesUtil.getVirtualFile(it) }
