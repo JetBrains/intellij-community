@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -81,7 +82,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
   private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     Project project = catchSection.getProject();
-    WriteCommandAction.runWriteCommandAction(project, () -> {
+    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.exception.to.existing.catch.family"), null, () -> {
       if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
@@ -204,5 +205,10 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       return false;
     }
     return newException.isAssignableFrom(catchType);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }
