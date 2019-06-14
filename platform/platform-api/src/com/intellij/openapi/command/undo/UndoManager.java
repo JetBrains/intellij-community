@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see com.intellij.openapi.command.impl.UndoProvider
+ */
 public abstract class UndoManager {
   public static final Key<Document> ORIGINAL_DOCUMENT = new Key<>("ORIGINAL_DOCUMENT");
 
@@ -36,18 +39,24 @@ public abstract class UndoManager {
   }
 
   public abstract void undoableActionPerformed(@NotNull UndoableAction action);
+
   public abstract void nonundoableActionPerformed(@NotNull DocumentReference ref, boolean isGlobal);
 
   public abstract boolean isUndoInProgress();
+
   public abstract boolean isRedoInProgress();
 
   public abstract void undo(@Nullable FileEditor editor);
+
   public abstract void redo(@Nullable FileEditor editor);
+
   public abstract boolean isUndoAvailable(@Nullable FileEditor editor);
+
   public abstract boolean isRedoAvailable(@Nullable FileEditor editor);
 
   @NotNull
   public abstract Pair<String, String> getUndoActionNameAndDescription(FileEditor editor);
+
   @NotNull
   public abstract Pair<String, String> getRedoActionNameAndDescription(FileEditor editor);
 }
