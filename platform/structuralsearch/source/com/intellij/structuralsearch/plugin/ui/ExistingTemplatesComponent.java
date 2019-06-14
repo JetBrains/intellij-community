@@ -56,10 +56,10 @@ public class ExistingTemplatesComponent {
     patternTreeModel = new DefaultTreeModel(root);
     patternTree = createTree(patternTreeModel);
 
+    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
     for (Configuration info : StructuralSearchUtil.getPredefinedTemplates()) {
       getOrCreateCategoryNode(root, SPLIT.split(info.getCategory())).add(new DefaultMutableTreeNode(info, false));
     }
-    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
 
     TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
