@@ -266,8 +266,7 @@
     <editorNotificationProvider implementation="git4idea.conflicts.MergeConflictResolveUtil$NotificationProvider"/>
 
     <!-- Git ignore lang -->
-    <fileTypeFactory
-        implementation="git4idea.ignore.GitIgnoreFileTypeFactory"/>
+    <fileType language="GitIgnore" extensions="gitignore" fieldName="INSTANCE" name="GitIgnore file" implementationClass="git4idea.ignore.lang.GitIgnoreFileType"/>
     <lang.parserDefinition language="GitIgnore"
                            implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
     <codeInsight.lineMarkerProvider language="GitIgnore"
