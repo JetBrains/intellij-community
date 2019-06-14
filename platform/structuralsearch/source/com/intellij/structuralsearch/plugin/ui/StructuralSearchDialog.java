@@ -74,7 +74,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.textCompletion.TextCompletionUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -884,8 +883,8 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   Balloon myBalloon = null;
-  void reportMessage(String message, boolean error, JComponent component) {
-    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
+  void reportMessage(@Nullable String message, boolean error, @NotNull JComponent component) {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (myBalloon != null) myBalloon.hide();
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
@@ -903,7 +902,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
       myBalloon.showInCenterOf(component);
       Disposer.register(myDisposable, myBalloon);
-    });
+    }, ModalityState.stateForComponent(component));
   }
 
   void securityCheck() {
@@ -993,7 +992,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       securityCheck();
     }
     catch (JDOMException e) {
-      ApplicationManager.getApplication().invokeLater(() -> reportMessage(e.getMessage(), false, myOptionsToolbar));
+      reportMessage(e.getMessage(), false, myOptionsToolbar);
     }
     return true;
   }
