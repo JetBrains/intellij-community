@@ -33,6 +33,10 @@ public interface RefFile extends RefElement {
     return getElement();
   }
 
+
+  /**
+   * @deprecated use {@link #getPsiElement()}
+   */
   @Deprecated
   @Override
   default PsiFile getElement() {
