@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
@@ -113,26 +114,28 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       }
       else {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
+          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
           // With second JRE
           def jreManager = buildContext.bundledJreManager
           if (jreManager.doBundleSecondJre()) {
-            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties,
-                                          macZipPath,
-                                          jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(), jreManager.secondJreSuffix())
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(),
+                                          jreManager.secondJreSuffix(),
+                                          false) // Disabled because JBR 8 cannot be notarized successfully
           }
           // With first aka main JRE
           File jreArchive = jreManager.findJreArchive('osx')
           if (jreArchive.file) {
-            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties,
-                                          macZipPath, jreArchive.absolutePath, jreManager.isBundledJreModular(), "")
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          jreArchive.absolutePath, jreManager.isBundledJreModular(), "", notarize)
           }
           else {
             buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
           }
           // Without JRE
           if (buildContext.options.buildDmgWithoutBundledJre) {
-            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties,
-                                          macZipPath, null, false, "-no-jdk")
+            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                          null, false, "-no-jdk", notarize)
           }
           buildContext.ant.delete(file: macZipPath)
         }
