@@ -668,6 +668,9 @@
     <postStartupActivity implementation="com.intellij.diagnostic.GenerateJarAccessLogActivity" order="last"/>
     <postStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="last"/>
 
+    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.MemorySizeConfigurator"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.MemorySizeConfiguratorService"/>
+
     <httpRequestHandler implementation="com.intellij.ide.FavIconHttpRequestHandler" order="last"/>
   </extensions>
 </idea-plugin>
