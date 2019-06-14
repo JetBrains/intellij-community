@@ -221,8 +221,8 @@ public class SelectTemplateDialog extends DialogWrapper {
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
     UIUtil.setContent(searchPatternEditor, matchOptions.getSearchPattern());
-
     searchPatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+    SubstitutionShortInfoHandler.retrieve(searchPatternEditor).updateEditorInlays();
 
     if (replace) {
       String replacement = configuration instanceof ReplaceConfiguration
@@ -231,6 +231,7 @@ public class SelectTemplateDialog extends DialogWrapper {
 
       UIUtil.setContent(replacePatternEditor, replacement);
       replacePatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+      SubstitutionShortInfoHandler.retrieve(replacePatternEditor).updateEditorInlays();
     }
   }
 
