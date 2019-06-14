@@ -35,7 +35,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
@@ -597,7 +596,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
         super.updateExclusionStates();
 
         MyChangesBrowserTreeList.this.notifyInclusionListener();
-        TreeUtil.invalidateCacheAndRepaint(MyChangesBrowserTreeList.this.getUI());
+        MyChangesBrowserTreeList.this.repaint();
       }
     }
   }
