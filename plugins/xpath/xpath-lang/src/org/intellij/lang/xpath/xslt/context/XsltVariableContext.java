@@ -117,6 +117,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
             if (template == null || template.getMatchExpression() == null) return false;
 
             final XPathVariable t = reference.resolve();
+            if (t == null) return false;
             final PsiReference[] references = element.getReferences();
             for (PsiReference r : references) {
                 if (r.isReferenceTo(t)) return true;
