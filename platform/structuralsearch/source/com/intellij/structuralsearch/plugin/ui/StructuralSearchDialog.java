@@ -992,7 +992,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       securityCheck();
     }
     catch (JDOMException e) {
-      reportMessage(e.getMessage(), false, myOptionsToolbar);
+      reportMessage(SSRBundle.message("import.template.script.corrupted") + '\n' + e.getMessage(), false, myOptionsToolbar);
     }
     return true;
   }
