@@ -58,6 +58,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   @Override
   public HgPushSource getSource(@NotNull HgRepository repository) {
     String localBranch = repository.getCurrentBranchName();
+    assert localBranch != null;
     return new HgPushSource(localBranch);
   }
 
