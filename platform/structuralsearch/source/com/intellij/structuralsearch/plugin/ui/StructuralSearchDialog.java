@@ -185,6 +185,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       @Override
       public void projectClosing(@NotNull Project project) {
         close(CANCEL_EXIT_CODE);
+        ProjectManager.getInstance().removeProjectManagerListener(searchContext.getProject(), this);
       }
     });
   }
