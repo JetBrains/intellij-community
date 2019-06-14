@@ -44,7 +44,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   private interface Lazy {
     TokenSet CALL_TYPES = TokenSet.create(METHOD_CALL_EXPRESSION, NEW_EXPRESSION, ANONYMOUS_CLASS);
     TIntHashSet WHITE_SPACE_OR_EOL_SYMBOLS = new TIntHashSet(new int[]{' ', '\n', '\r', '\t', '\f'});
-    TIntHashSet STOP_SYMBOLS = new TIntHashSet(new int[]{'(', ',', ')', '/'}); // stop at slash, bracket, сomma
+    TIntHashSet STOP_SYMBOLS = new TIntHashSet(new int[]{'(', ',', ')', '/'}); // stop at slash, bracket, comma
   }
   private final boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
                                         !ApplicationManager.getApplication().isUnitTestMode();
