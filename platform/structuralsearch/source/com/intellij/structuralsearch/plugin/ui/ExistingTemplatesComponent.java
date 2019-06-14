@@ -114,8 +114,6 @@ public class ExistingTemplatesComponent {
       .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
       .createPanel();
 
-    new JPanel(new BorderLayout());
-
     configureSelectTemplateAction(patternTree);
 
     historyModel = new CollectionListModel<>();
@@ -273,9 +271,8 @@ public class ExistingTemplatesComponent {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Configuration value, int index, boolean selected, boolean focus) {
-      final Color background = (selected && !focus) ?
-                               UIUtil.getListUnfocusedSelectionBackground() : UIUtil.getListBackground(selected);
-      final Color foreground = UIUtil.getListForeground(selected);
+      final Color background = UIUtil.getListBackground(selected, focus);
+      final Color foreground = UIUtil.getListForeground(selected, focus);
       setPaintFocusBorder(false);
       SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.getName(), SimpleTextAttributes.STYLE_PLAIN,
                                  foreground, background, this);
@@ -308,8 +305,8 @@ public class ExistingTemplatesComponent {
       final Object userObject = treeNode.getUserObject();
       if (userObject == null) return;
 
-      Color background = UIUtil.getTreeBackground(selected, hasFocus);
-      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
+      final Color background = UIUtil.getTreeBackground(selected, hasFocus);
+      final Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;
