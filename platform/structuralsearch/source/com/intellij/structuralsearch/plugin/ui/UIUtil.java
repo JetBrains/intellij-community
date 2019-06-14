@@ -9,6 +9,7 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -59,7 +60,7 @@ public class UIUtil {
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
   public static final NotificationGroup SSR_NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup(SSRBundle.message("structural.search.title"), ToolWindowId.FIND);
+    new NotificationGroup(SSRBundle.message("structural.search.title"), NotificationDisplayType.STICKY_BALLOON, true, ToolWindowId.FIND);
 
   @NonNls public static final String TEXT = "TEXT";
   @NonNls public static final String TEXT_HIERARCHY = "TEXT HIERARCHY";
