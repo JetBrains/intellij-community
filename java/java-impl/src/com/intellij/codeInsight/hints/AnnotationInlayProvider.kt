@@ -4,8 +4,10 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
+import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
+import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.ui.layout.*
+import com.intellij.util.SmartList
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
@@ -24,6 +27,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                                sink: InlayHintsSink): InlayHintsCollector? {
     val project = file.project
     return object : FactoryInlayHintsCollector(editor) {
+      val presentations = mutableListOf<InlayPresentation>()
+
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
@@ -39,14 +44,14 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
             val nameReferenceElement = it.nameReferenceElement
             if (nameReferenceElement != null && element.modifierList != null &&
                 (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(it))) {
-              val offset = element.modifierList!!.textRange.startOffset
-              val presentation = createPresentation(it, element)
-              when (element) {
-                is PsiMethod -> sink.addBlockElement(offset, false, true, 0, presentation)
-                else -> sink.addInlineElement(offset, true, presentation)
-              }
+              presentations.add(createPresentation(it, element))
             }
           }
+          val offset = element.modifierList!!.textRange.startOffset
+          if (presentations.isNotEmpty()) {
+            sink.addInlineElement(offset, false, SequencePresentation(SmartList(presentations)))
+          }
+          presentations.clear()
         }
         return true
       }
