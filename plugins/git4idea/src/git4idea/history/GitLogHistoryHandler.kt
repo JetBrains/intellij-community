@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFileHistoryHandler
@@ -29,7 +30,13 @@ class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHand
     h.endOptions()
     h.addRelativePaths(filePath)
 
-    val recordBuilder = DefaultGitLogFullRecordBuilder()
+    val recordBuilder = object : DefaultGitLogFullRecordBuilder() {
+      override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
+        if (type == Change.Type.MOVED) {
+          super.addPath(type, firstPath, secondPath)
+        }
+      }
+    }
     val parser = GitLogParser.PathsParser(GitLogParser.NameStatus.STATUS, recordBuilder)
     h.addLineListener { line, outputType -> if (outputType == ProcessOutputTypes.STDOUT) parser.parseLine(line) }
     Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError()
