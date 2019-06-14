@@ -22,6 +22,15 @@ class JavaQuoteTest extends LightCodeInsightFixtureTestCase {
   void testSingleInComment() { doTest '/* <caret> */', '/* \'<caret> */', "'" as char }
   void testSingleInStringAfterEscape() { doTest ''' split(text, '\\<caret>); ''', ''' split(text, '\\'<caret>); ''', "'" as char }
 
+  void testTextBlock() { doTest ' ""<caret> ', ' """\n<caret>""" ' }
+  void testDoubleQuoteInTextBlock() { doTest ' """ <caret> """ ', ' """ "<caret> """ ' }
+  void testSingleQuoteInTextBlock() { doTest ' """ <caret> """ ', ' """ \'<caret> """ ', "'" as char }
+  void testTextBlockClosing() {
+    doTest ' """.<caret>""" ', ' """."<caret>"" '
+    doTest ' """."<caret>"" ', ' """.""<caret>" '
+    doTest ' """.""<caret>" ', ' """."""<caret> '
+  }
+
   private void doTest(String before, String after, char c = '"') {
     myFixture.configureByText("a.java", "class C {{\n  ${before}\n}}")
     EditorActionManager.instance.typedAction.actionPerformed(editor, c, (editor as EditorEx).dataContext)
