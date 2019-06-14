@@ -11,6 +11,7 @@ import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.siyeh.ig.psiutils.ExpressionUtils
+import org.intellij.lang.annotations.Language
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -90,9 +91,29 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     get() = "Method chains"
 
   override val previewText: String?
-    get() = "class Main {\n  public static void main(String[] args) {\n    new A()\n      .b()\n      .a()\n      .b()\n      .c();\n  }\n}" +
-            "\n\nclass A{\n  B b() {return null;}\n  C c() {return null;}\n}\n\nclass B {\n  A a() {return null;}\n  C c() {return null;}\n}" +
-            "\n\nclass C {\n\n  B b() {return null;}\n  A a() {return null;}\n}\n\n"
+    @Language("JAVA")
+    get() = """class Main {
+  void layout(A a) {
+    a
+     .b()
+     .a()
+     .b()
+     .c();
+  }
+  interface A {
+    B b();
+    C c();
+  }
+  interface B {
+    A a();
+    C c();
+  }
+  interface C {
+    B b();
+    A a();
+  }
+}
+"""
 
 
   private fun isFirstCall(call: PsiMethodCallExpression, editor: Editor): Boolean {
