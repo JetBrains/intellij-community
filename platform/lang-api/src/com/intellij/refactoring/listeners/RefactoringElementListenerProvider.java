@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,19 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Refactorings invoke {@link #getListener(com.intellij.psi.PsiElement)} of registered
+ * Refactorings invoke {@link #getListener(PsiElement)} of registered
  * {@linkplain RefactoringElementListenerProvider} before particular element is subjected to refactoring.
+ *
  * @author dsl
  */
 public interface RefactoringElementListenerProvider {
-  ExtensionPointName<RefactoringElementListenerProvider> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.elementListenerProvider");
+
+  ExtensionPointName<RefactoringElementListenerProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.refactoring.elementListenerProvider");
 
   /**
-   *
    * Should return a listener for particular element. Invoked in read action.
    */
-  @Nullable RefactoringElementListener getListener(PsiElement element);
+  @Nullable
+  RefactoringElementListener getListener(PsiElement element);
 }
