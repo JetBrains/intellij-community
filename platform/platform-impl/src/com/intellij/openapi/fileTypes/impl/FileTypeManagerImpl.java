@@ -1005,8 +1005,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    if (type instanceof FileTypeIdentifiableByVirtualFile) {
-      return ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file);
+    if (type instanceof FileTypeIdentifiableByVirtualFile &&
+        ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file)) {
+      return true;
     }
 
     return getFileTypeByFileName(file.getNameSequence()) == type;
