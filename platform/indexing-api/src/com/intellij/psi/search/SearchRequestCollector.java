@@ -112,8 +112,8 @@ public class SearchRequestCollector {
     return null;
   }
 
-  /** use {@link #searchWord(String, SearchScope, short, boolean, PsiElement)}
-   * instead
+  /**
+   * @deprecated use {@link #searchWord(String, SearchScope, short, boolean, PsiElement)}
    */
   @Deprecated
   public void searchWord(@NotNull String word,

@@ -153,9 +153,15 @@ public class NanoXmlUtil {
     return result.toString();
   }
 
+  /**
+   * @deprecated left for API compatibility
+   */
   @Deprecated
   public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
-    // used externally
+
+    /**
+     * @deprecated left for API compatibility
+     */
     @Deprecated
     protected static void stop() throws ParserStoppedXmlException {
       throw ParserStoppedXmlException.INSTANCE;
