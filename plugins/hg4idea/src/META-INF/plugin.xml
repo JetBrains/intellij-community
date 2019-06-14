@@ -42,8 +42,7 @@
     <ignoredFileContentProvider implementation="org.zmlx.hg4idea.ignore.HgIgnoredFileContentProvider"/>
 
     <!-- HG ignore lang -->
-    <fileTypeFactory
-        implementation="org.zmlx.hg4idea.ignore.HgIgnoreFileTypeFactory"/>
+    <fileType language="HgIgnore" extensions="hgignore" fieldName="INSTANCE" name="HgIgnore file" implementationClass="org.zmlx.hg4idea.ignore.lang.HgIgnoreFileType"/>
     <lang.parserDefinition language="HgIgnore"
                            implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
     <codeInsight.lineMarkerProvider language="HgIgnore"
