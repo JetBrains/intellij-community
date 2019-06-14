@@ -350,7 +350,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   /**
-   *  We're inheriting method now in order to support accessibility, but you
+   * @deprecated We're inheriting method now in order to support accessibility, but you
    * should <b>NOT</b> call this method if you have an {@linkplain EditorComponentImpl}
    * and you're looking for the real document.
    */

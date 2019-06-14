@@ -26,7 +26,7 @@ import java.awt.*;
  * and always assumes right-to-left.
  * 
  * @author max
- * @deprecated {@link com.intellij.ui.components.JBScrollPane.Flip}
+ * @deprecated use {@link com.intellij.ui.components.JBScrollPane.Flip}
  */
 @Deprecated
 public class LeftHandScrollbarLayout extends ScrollPaneLayout {
