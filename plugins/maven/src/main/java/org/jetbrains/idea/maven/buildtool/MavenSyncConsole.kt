@@ -4,13 +4,14 @@ package org.jetbrains.idea.maven.buildtool
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.EventResult
+import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -27,6 +28,9 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun startImport(syncView: BuildProgressListener) {
+    if (started) {
+      return
+    }
     started = true
     finished = false
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
@@ -85,9 +89,8 @@ class MavenSyncConsole(private val myProject: Project) {
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
     val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
     startTask(mySyncId, umbrellaString)
-    startTask(umbrellaString, errorString)
-    addText(umbrellaString, umbrellaString, false)
-    completeTask(umbrellaString, errorString, FailureResultImpl())
+    mySyncView.onEvent(mySyncId, MessageEventImpl(umbrellaString, MessageEvent.Kind.ERROR, "Error", errorString, errorString))
+    addText(mySyncId, errorString, false)
   }
 
   @Synchronized
@@ -140,7 +143,7 @@ class MavenSyncConsole(private val myProject: Project) {
   private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) {
     val downloadString = SyncBundle.message("${keyPrefix}.download")
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
-    if (stackTrace != null) {
+    if (stackTrace != null && Registry.`is`("maven.spy.events.debug")) {
       addText(downloadArtifactString, stackTrace, false)
     }
     else {
