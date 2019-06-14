@@ -140,6 +140,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ShortcutFilter = load("/actions/shortcutFilter.svg");
     /** 16x16 */ public static final Icon Show = load("/actions/show.svg");
     /** 16x16 */ public static final Icon ShowAsTree = load("/actions/showAsTree.svg");
+    /** 16x16 */ public static final Icon ShowCode = load("/actions/showCode.svg");
     /** 16x16 */ public static final Icon ShowHiddens = load("/actions/showHiddens.svg");
     /** 16x16 */ public static final Icon ShowImportStatements = load("/actions/showImportStatements.svg");
     /** 16x16 */ public static final Icon ShowReadAccess = load("/actions/showReadAccess.svg");
