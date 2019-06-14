@@ -8,29 +8,37 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 public class VcsLogUsageTriggerCollector {
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action) {
-    triggerUsage(e, action.getClass().getName());
+    triggerUsage(e, action, null);
   }
 
-  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull String text) {
-    triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null, e);
+  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action, @Nullable Consumer<FeatureUsageData> configurator) {
+    triggerUsage("action.called", data -> {
+      addContext(data, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
+      data.addInputEvent(e);
+      data.addData("class", action.getClass().getName());
+      if (configurator != null) configurator.accept(data);
+    });
   }
 
-  public static void triggerUsage(@NotNull String text) {
-    triggerUsage(text, "", null);
+  public static void triggerUsage(@NotNull String text, boolean isFromHistory, @Nullable Consumer<FeatureUsageData> configurator) {
+    triggerUsage(text, data -> {
+      addContext(data, isFromHistory);
+      if (configurator != null) configurator.accept(data);
+    });
   }
 
-  public static void triggerUsage(@NotNull String text, boolean isFromHistory, @Nullable AnActionEvent e) {
-    triggerUsage(text, isFromHistory ? "history" : "log", e);
+  public static void triggerUsage(@NotNull String text, @Nullable Consumer<FeatureUsageData> configurator) {
+    FeatureUsageData data = new FeatureUsageData();
+    if (configurator != null) configurator.accept(data);
+    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", text, data);
   }
 
-  private static void triggerUsage(@NotNull String text, @NotNull String context, @Nullable AnActionEvent event) {
-    FeatureUsageData featureUsageData = new FeatureUsageData().addData("context", context);
-    if (event != null) {
-      featureUsageData.addInputEvent(event);
-    }
-    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", text, featureUsageData);
+  private static void addContext(@NotNull FeatureUsageData data, boolean isFromHistory) {
+    data.addData("context", isFromHistory ? "history" : "log");
   }
 }

@@ -32,7 +32,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    VcsLogUsageTriggerCollector.triggerUsage(e, this)
+    triggerUsage(e)
 
     val ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI) as AbstractVcsLogUi
     val rows = getRowsToJump(ui)
@@ -58,12 +58,16 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
       val text = getActionText(ui.table.model.getCommitMetadata(row))
       object : DumbAwareAction(text, "Navigate to $text", null) {
         override fun actionPerformed(e: AnActionEvent) {
-          VcsLogUsageTriggerCollector.triggerUsage(e, "Go to ${if (parent) "Parent" else "Child"} Commit.Select from Popup")
+          triggerUsage(e)
           ui.jumpToRow(row)
         }
       }
     }
     return DefaultActionGroup(actions)
+  }
+
+  private fun DumbAwareAction.triggerUsage(e: AnActionEvent) {
+    VcsLogUsageTriggerCollector.triggerUsage(e, this) { data -> data.addData("parent.commit", parent) }
   }
 
   private fun getActionText(commitMetadata: VcsCommitMetadata): String {

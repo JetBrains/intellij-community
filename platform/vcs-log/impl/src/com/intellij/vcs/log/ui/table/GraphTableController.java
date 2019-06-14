@@ -209,20 +209,25 @@ public class GraphTableController {
 
   private void performRootColumnAction() {
     if (myColorManager.hasMultiplePaths() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
-      VcsLogUsageTriggerCollector.triggerUsage("RootColumnClick");
+      triggerClick("root.column");
       myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
     }
   }
 
   private static void triggerElementClick(@NotNull PrintElement printElement) {
     if (printElement instanceof NodePrintElement) {
-      VcsLogUsageTriggerCollector.triggerUsage("GraphNodeClick");
+      triggerClick("node");
     }
     else if (printElement instanceof EdgePrintElement) {
       if (((EdgePrintElement)printElement).hasArrow()) {
-        VcsLogUsageTriggerCollector.triggerUsage("GraphArrowClick");
+        triggerClick("arrow");
       }
     }
+  }
+
+  private static void triggerClick(@NotNull String target) {
+    VcsLogUsageTriggerCollector.triggerUsage("table.clicked",
+                                             data -> data.addData("target", target));
   }
 
   protected int getColumnLeftXCoordinate(int viewColumnIndex) {
