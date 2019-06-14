@@ -692,9 +692,9 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public Collection<TaskData> findProjectTasks(@NotNull Project project,
-                                               @NotNull ProjectSystemId systemId,
-                                               @NotNull String projectPath) {
+  public static Collection<TaskData> findProjectTasks(@NotNull Project project,
+                                                      @NotNull ProjectSystemId systemId,
+                                                      @NotNull String projectPath) {
     AbstractExternalSystemSettings settings = getSettings(project, systemId);
     ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
     if (linkedProjectSettings == null) return Collections.emptyList();
