@@ -177,7 +177,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
       Class<? extends AnAction> actionClass = anAction.getClass();
-      setIconFromClass(actionClass, actionClass.getClassLoader(), iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
+      ClassLoader classLoader = actionClass.getClassLoader();
+
+      if (stub.getPluginId() != null) {
+        final IdeaPluginDescriptor plugin = PluginManager.getPlugin(stub.getPluginId());
+        if (plugin != null) {
+          classLoader = plugin.getPluginClassLoader();
+        }
+      }
+
+      setIconFromClass(actionClass, classLoader, iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
     }
   }
 
