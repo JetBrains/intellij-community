@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
@@ -69,7 +70,7 @@ class RootCellRenderer extends SimpleColoredRenderer implements TableCellRendere
           int availableWidth = ((VcsLogGraphTable)table).getRootColumn().getWidth() -
                                VcsLogUiUtil.getHorizontalTextPadding(this);
           text = VcsLogUiUtil.shortenTextToFit(text, getFontMetrics(VcsLogGraphTable.getTableFont()),
-                                               availableWidth, 0, "\u2026");
+                                               availableWidth, 0, StringUtil.ELLIPSIS);
           append(text);
         }
       }
