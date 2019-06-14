@@ -153,6 +153,9 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     return false;
   }
 
+  /**
+   * @deprecated use {@link #allowWriting(Iterable)}
+   */
   @Deprecated
   public static void allowWriting(VirtualFile... allowedFiles) {
     allowWriting(Arrays.asList(allowedFiles));

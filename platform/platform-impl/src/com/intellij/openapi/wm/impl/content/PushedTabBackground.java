@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
@@ -26,6 +22,9 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @deprecated unused
+ */
 @Deprecated
 @ScheduledForRemoval(inVersion = "2020.1")
 public class PushedTabBackground {

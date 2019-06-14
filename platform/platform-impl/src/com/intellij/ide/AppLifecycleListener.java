@@ -19,7 +19,7 @@ public interface AppLifecycleListener {
   Topic<AppLifecycleListener> TOPIC = Topic.create("Application lifecycle notifications", AppLifecycleListener.class);
 
   /**
-   * Called before an application frame is shown.
+   * @deprecated use {@link #appFrameCreated(List)}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -27,6 +27,9 @@ public interface AppLifecycleListener {
     appFrameCreated(commandLineArgs);
   }
 
+  /**
+   * Called before an application frame is shown.
+   */
   default void appFrameCreated(@NotNull List<String> commandLineArgs) {
   }
 

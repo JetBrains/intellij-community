@@ -41,6 +41,9 @@ public class TextPanel extends JComponent implements Accessible {
     myPrefHeight = label.getPreferredSize().height;
   }
 
+  /**
+   * @deprecated no effect
+   */
   @Deprecated
   public void resetColor() {
   }
@@ -177,7 +180,9 @@ public class TextPanel extends JComponent implements Accessible {
       }
     }
 
-    // arrows are not painted anymore
+    /**
+     * @deprecated arrows are not painted anymore
+     */
     @Deprecated
     protected boolean shouldPaintArrows() {
       return false;
