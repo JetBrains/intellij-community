@@ -497,10 +497,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myTreeInclusionListener = runnable;
   }
 
-  protected void notifyInclusionListener() {
-    if (myTreeInclusionListener != null) {
-      myTreeInclusionListener.run();
-    }
+  private void notifyInclusionListener() {
+    if (myTreeInclusionListener != null) myTreeInclusionListener.run();
   }
 
   public void setIncludedChanges(@NotNull Collection<?> changes) {
@@ -533,8 +531,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   protected void toggleChanges(@NotNull Collection<?> changes) {
     boolean hasExcluded = false;
-    for (Object value : changes) {
-      if (!isIncluded(value)) {
+    for (Object item : changes) {
+      if (getInclusionModel().getInclusionState(item) != State.SELECTED) {
         hasExcluded = true;
         break;
       }
@@ -695,16 +693,22 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
   }
 
-
-  protected State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+  @NotNull
+  private State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
-    for (Object change : getUserObjectsUnder(node)) {
-      if (isIncluded(change)) {
+    for (Object item : getUserObjectsUnder(node)) {
+      State state = getInclusionModel().getInclusionState(item);
+
+      if (state == State.SELECTED) {
         hasIncluded = true;
       }
+      else if (state == State.NOT_SELECTED) {
+        hasExcluded = true;
+      }
       else {
+        hasIncluded = true;
         hasExcluded = true;
       }
     }
