@@ -25,7 +25,6 @@ import com.intellij.ui.HintHint;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +59,6 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   private void handleInputFocusMovement(LogicalPosition position, boolean caret) {
-    if (position.column == 0) {
-      return;
-    }
     final Configuration configuration = editor.getUserData(CURRENT_CONFIGURATION_KEY);
     if (configuration == null) {
       return;
@@ -146,7 +142,6 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     final StringBuilder buf = new StringBuilder();
 
-    final String inactiveTextColor = ColorUtil.toHtmlColor(UIUtil.getInactiveTextColor());
     final String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor());
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
@@ -166,8 +161,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
                                       constraint.isInvertRegExp() ? 1 : 0,
                                       StringUtil.escapeXmlEntities(constraint.getRegExp()),
                                       constraint.isWholeWordsOnly() ? 1 : 0,
-                                      constraint.isWithinHierarchy() ? 1 : 0,
-                                      inactiveTextColor));
+                                      constraint.isWithinHierarchy() ? 1 : 0));
       }
       else if (constraint.isWithinHierarchy()) {
         append(buf, SSRBundle.message("hierarchy.tooltip.message"));
@@ -181,8 +175,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                       constraint.isInvertExprType() ? 1 : 0,
                                       StringUtil.escapeXmlEntities(constraint.getNameOfExprType()),
-                                      constraint.isExprTypeWithinHierarchy() ? 1 : 0,
-                                      inactiveTextColor));
+                                      constraint.isExprTypeWithinHierarchy() ? 1 : 0));
       }
 
       constraint.getNameOfFormalArgType();
@@ -190,8 +183,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? 1 : 0,
                                       StringUtil.escapeXmlEntities(constraint.getNameOfFormalArgType()),
-                                      constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0,
-                                      inactiveTextColor));
+                                      constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0));
       }
 
       if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
