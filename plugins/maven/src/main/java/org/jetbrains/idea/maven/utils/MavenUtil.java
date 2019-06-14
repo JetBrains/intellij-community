@@ -107,7 +107,7 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
-  public static final Namespace SETTINGS_NAMESPACE = Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0");
+
 
 
 
@@ -743,7 +743,12 @@ public class MavenUtil {
   @Nullable
   public static String getRepositoryFromSettings(final File file) {
     try {
-      Element repository = JDOMUtil.load(file).getChild("localRepository", SETTINGS_NAMESPACE);
+      Element fileElement = JDOMUtil.load(file);
+      Element repository = fileElement.getChild("localRepository");
+      if (repository == null) {
+        repository = fileElement.getChild("localRepository", Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.0.0"));
+      }
+
       if (repository == null) {
         return null;
       }
