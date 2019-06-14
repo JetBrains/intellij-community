@@ -54,12 +54,14 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
     val bytes = BufferExposingByteArrayOutputStream()
     serializationManager.serialize(stub, bytes)
 
-    return SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
+    val tree = SerializedStubTree(bytes.internalBuffer, bytes.size(), stub)
+    tree.indexTree()
+    return tree
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
     return PersistentHashMap(File("$stubsStorageFilePath.input"),
-                             HashCodeDescriptor.instance, StubTreeExternalizer())
+                             HashCodeDescriptor.instance, FullStubExternalizer())
   }
 
   open fun buildStubForFile(fileContent: FileContentImpl,
@@ -79,7 +81,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
   // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
   try {
-    val stubExternalizer = StubTreeExternalizer()
+    val stubExternalizer = FullStubExternalizer()
 
     val storageFile = File(stubsFilePath, "$stubsFileName.input")
     if (storageFile.exists()) {
