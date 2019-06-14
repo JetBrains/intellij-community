@@ -447,10 +447,14 @@ public class MethodCandidateInfo extends CandidateInfo{
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, this, parent, policy,
                             myLanguageLevel);
     };
-    PsiSubstitutor substitutor = !includeReturnConstraint
-                                 ? ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable)
-                                 : computable.compute();
-    return ObjectUtils.assertNotNull(substitutor);
+    if (!includeReturnConstraint) {
+      return myArgumentList == null
+             ? PsiSubstitutor.EMPTY
+             : ObjectUtils.assertNotNull(ourOverloadGuard.doPreventingRecursion(myArgumentList, false, computable));
+    }
+    else {
+      return computable.compute();
+    }
   }
 
   public boolean isRawSubstitution() {
