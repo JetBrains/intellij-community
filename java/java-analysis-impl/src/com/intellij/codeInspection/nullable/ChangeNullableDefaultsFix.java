@@ -21,13 +21,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class ChangeNullableDefaultsFix implements LocalQuickFix {
   private final NullableNotNullManager myManager;
   private final String myNotNullName;
   private final String myNullableName;
 
-  ChangeNullableDefaultsFix(PsiAnnotation notNull, PsiAnnotation nullable, NullableNotNullManager manager) {
+  ChangeNullableDefaultsFix(@Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, @NotNull NullableNotNullManager manager) {
     myNotNullName = notNull != null ? notNull.getQualifiedName() : null;
     myNullableName = nullable != null ? nullable.getQualifiedName() : null;
     myManager = manager;
