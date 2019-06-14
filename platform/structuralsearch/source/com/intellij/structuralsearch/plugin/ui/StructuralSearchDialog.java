@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -907,26 +908,23 @@ public class StructuralSearchDialog extends DialogWrapper {
 
   void securityCheck() {
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    int scripts = 0;
     for (String name : matchOptions.getVariableConstraintNames()) {
       final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
-      if (showSecurityMessage(constraint)) return;
+      if (constraint.getScriptCodeConstraint().length() > 2) scripts++;
     }
     final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
     if (replaceOptions != null) {
       for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
-        if (showSecurityMessage(variableDefinition)) return;
+        if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
       }
     }
-  }
-
-  private boolean showSecurityMessage(NamedScriptableDefinition constraint) {
-    if (constraint.getScriptCodeConstraint().length() <= 2) {
-      return false;
+    if (scripts > 0) {
+      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.WARNING)
+        .setTitle(SSRBundle.message("import.template.script.warning.title"))
+        .setContent(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts))
+        .notify(mySearchContext.getProject());
     }
-    EdtInvocationManager.getInstance().invokeLater(
-      () -> reportMessage(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName()),
-                          false, myOptionsToolbar));
-    return true;
   }
 
   public void showFilterPanel(String variableName) {
