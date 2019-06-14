@@ -7,6 +7,9 @@
 # Ignore libraries because they are copied & modified by ant script
 /.idea/libraries
 
+# Ignore artifacts because they are copied & modified by ant script
+/.idea/artifacts
+
 # Ignore modules.xml because it is copied & modified by ant script
 /.idea/modules.xml
 
