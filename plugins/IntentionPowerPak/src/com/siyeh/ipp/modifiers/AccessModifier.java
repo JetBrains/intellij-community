@@ -76,6 +76,6 @@ enum AccessModifier {
 
   @Override
   public String toString() {
-    return this == PACKAGE_LOCAL ? "(package-private)" : toPsiModifier();
+    return this == PACKAGE_LOCAL ? "package-private" : toPsiModifier();
   }
 }
