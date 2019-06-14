@@ -385,6 +385,6 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return "Inline to Anonymous Class";
+    return RefactoringBundle.message("inline.to.anonymous.refactoring");
   }
 }
