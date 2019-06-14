@@ -19,6 +19,9 @@ function log() {
 #immediately exit script with an error if a command fails
 set -euo pipefail
 
+# Cleanup files left from previous sign attempt (if any)
+find "$APP_DIRECTORY" -name '*.cstemp' -exec rm '{}' \;
+
 log "Signing libraries and executables..."
 # -perm +111 searches for executables
 for f in \
