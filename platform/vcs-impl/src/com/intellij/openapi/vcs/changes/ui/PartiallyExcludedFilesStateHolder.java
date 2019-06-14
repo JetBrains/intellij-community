@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
@@ -170,12 +170,6 @@ public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable
     }
   }
 
-
-  public boolean isIncluded(@NotNull T element) {
-    ExclusionState trackerState = getExclusionState(element);
-    return trackerState != ExclusionState.ALL_EXCLUDED;
-  }
-
   @NotNull
   public Set<T> getIncludedSet() {
     HashSet<T> set = new HashSet<>(myIncludedElements);
@@ -233,23 +227,5 @@ public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable
     myIncludedElements.removeAll(elements);
 
     updateExclusionStates();
-  }
-
-  public void toggleElements(@NotNull Collection<? extends T> elements) {
-    boolean hasExcluded = false;
-    for (T element : elements) {
-      ExclusionState exclusionState = getExclusionState(element);
-      if (exclusionState != ExclusionState.ALL_INCLUDED) {
-        hasExcluded = true;
-        break;
-      }
-    }
-
-    if (hasExcluded) {
-      includeElements(elements);
-    }
-    else {
-      excludeElements(elements);
-    }
   }
 }
