@@ -36,7 +36,7 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
   public void testEnumConstructor() { assertIntentionNotAvailable(); }
   public void testLocalClass() { assertIntentionNotAvailable(); }
   public void testMethod() { doTestWithChooser("private"); }
-  public void testMethod2() { doTestWithChooser("(package-private)"); }
+  public void testMethod2() { doTestWithChooser("package-private"); }
   public void testAnnotatedMember() { doTestWithChooser("private"); }
   public void testClass() { doTestWithChooser("protected"); }
   public void testInDefaultPackage() { doTest("Make package-private"); }
@@ -64,7 +64,7 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
 
   void doTestWithChooser(String wanted) {
     UiInterceptors
-      .register(new ChooserInterceptor(Arrays.asList("public", "protected", "(package-private)", "private"), Pattern.quote(wanted)));
+      .register(new ChooserInterceptor(Arrays.asList("public", "protected", "package-private", "private"), Pattern.quote(wanted)));
     doTest();
   }
 
