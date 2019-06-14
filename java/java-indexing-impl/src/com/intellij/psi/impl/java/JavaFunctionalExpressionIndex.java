@@ -353,13 +353,18 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @NotNull
   @Override
   public ID<FunctionalExpressionKey, Map<Integer, FunExprOccurrence>> getName() {
     return INDEX_ID;
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 
   @NotNull
