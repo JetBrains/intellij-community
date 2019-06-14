@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.lambdaToExplicit;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
@@ -8,6 +11,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
@@ -19,24 +23,38 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 class LambdaAndExplicitMethodPair {
   static final LambdaAndExplicitMethodPair[] INFOS = {
-    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent", "putIfAbsent", 1, "V", false, "k"),
-    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseGet", "orElse", 0, "T", true),
-    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_INT, "orElseGet", "orElse", 0, "int", true),
-    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_LONG, "orElseGet", "orElse", 0, "long", true),
-    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_DOUBLE, "orElseGet", "orElse", 0, "double", true),
-    new LambdaAndExplicitMethodPair(OptionalUtil.GUAVA_OPTIONAL, "or", "*", 0, "T", true),
-    new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNull", "*", 1, JAVA_LANG_STRING, true),
-    new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNullElseGet", "requireNonNullElse", 1, "T", true),
-    new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(?!Timeout).*|fail", "*", -1, JAVA_LANG_STRING, true),
-    new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(True|False)", "*", 0, JAVA_LANG_STRING, true),
-    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_ARRAYS, "setAll", "fill", 1, null, true, "i")
+    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent", "putIfAbsent", 1, "V", "k") {
+      @Override
+      boolean isLambdaCall(PsiMethodCallExpression lambdaCall, PsiLambdaExpression lambda) {
+        return !ExpressionUtils.isVoidContext(lambdaCall) &&
+               super.isLambdaCall(lambdaCall, lambda) &&
+               DfaUtil.inferLambdaNullability(lambda) != Nullability.NOT_NULL;
+      }
+
+      @Override
+      PsiExpression getLambdaCandidateFromExplicitCall(PsiMethodCallExpression explicitCall) {
+        if (!ExpressionUtils.isVoidContext(explicitCall)) return null;
+        PsiExpression expr = super.getLambdaCandidateFromExplicitCall(explicitCall);
+        if (expr != null && NullabilityUtil.getExpressionNullability(expr, true) != Nullability.NOT_NULL) return null;
+        return expr;
+      }
+    },
+    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseGet", "orElse", 0, "T"),
+    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_INT, "orElseGet", "orElse", 0, "int"),
+    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_LONG, "orElseGet", "orElse", 0, "long"),
+    new LambdaAndExplicitMethodPair(OptionalUtil.OPTIONAL_DOUBLE, "orElseGet", "orElse", 0, "double"),
+    new LambdaAndExplicitMethodPair(OptionalUtil.GUAVA_OPTIONAL, "or", "*", 0, "T"),
+    new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNull", "*", 1, JAVA_LANG_STRING),
+    new LambdaAndExplicitMethodPair("java.util.Objects", "requireNonNullElseGet", "requireNonNullElse", 1, "T"),
+    new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(?!Timeout).*|fail", "*", -1, JAVA_LANG_STRING),
+    new LambdaAndExplicitMethodPair("org.junit.jupiter.api.Assertions", "assert(True|False)", "*", 0, JAVA_LANG_STRING),
+    new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_ARRAYS, "setAll", "fill", 1, null, "i")
   };
   private final @NotNull String myClass;
   private final @NotNull Pattern myLambdaMethod;
   private final @NotNull String myExplicitMethod;
   private final int myParameterIndex;
   private final @Nullable String myExplicitParameterType;
-  private final boolean myCanUseReturnValue;
   private final @NotNull String[] myDefaultLambdaParameters;
 
   /**
@@ -46,28 +64,24 @@ class LambdaAndExplicitMethodPair {
    *                              accepting constant instead of lambda argument (all other args must be the same)
    * @param index                 index of lambda argument, zero-based, or -1 to denote the last argument
    * @param explicitParameterType type of explicit parameter (null if explicit -> lambda conversion is not applicable)
-   * @param canUseReturnValue     true if method return value does not depend on whether lambda or constant version is used
    */
   LambdaAndExplicitMethodPair(@NotNull String aClass,
                               @NotNull @RegExp String lambdaMethod,
                               @NotNull String explicitMethod,
                               int index,
                               @Nullable String explicitParameterType,
-                              boolean canUseReturnValue,
                               @NotNull String... defaultLambdaParameters) {
     myClass = aClass;
     myLambdaMethod = Pattern.compile(lambdaMethod);
     myExplicitMethod = explicitMethod;
     myParameterIndex = index;
     myExplicitParameterType = explicitParameterType;
-    myCanUseReturnValue = canUseReturnValue;
     myDefaultLambdaParameters = defaultLambdaParameters.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : defaultLambdaParameters;
   }
 
   boolean isLambdaCall(PsiMethodCallExpression lambdaCall, PsiLambdaExpression lambda) {
     String name = lambdaCall.getMethodExpression().getReferenceName();
     if (name == null || !myLambdaMethod.matcher(name).matches()) return false;
-    if (!myCanUseReturnValue && !(lambdaCall.getParent() instanceof PsiExpressionStatement)) return false;
     PsiExpression[] args = lambdaCall.getArgumentList().getExpressions();
     if (args.length == 0) return false;
     int index = myParameterIndex == -1 ? args.length - 1 : myParameterIndex;
@@ -91,7 +105,6 @@ class LambdaAndExplicitMethodPair {
     else if (!myExplicitMethod.equals(name)) {
       return null;
     }
-    if (!myCanUseReturnValue && !(explicitCall.getParent() instanceof PsiExpressionStatement)) return null;
     PsiExpression[] args = explicitCall.getArgumentList().getExpressions();
     if (args.length == 0) return null;
     int index = myParameterIndex == -1 ? args.length - 1 : myParameterIndex;
