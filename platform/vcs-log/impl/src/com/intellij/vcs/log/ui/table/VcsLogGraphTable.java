@@ -276,7 +276,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void resetColumnWidth(int column) {
-    VcsLogUsageTriggerCollector.triggerUsage("ColumnWidthReset");
+    VcsLogUsageTriggerCollector.triggerUsage("column.reset", null);
     if (CommonUiProperties.getColumnWidth(myProperties, column) != -1) {
       CommonUiProperties.saveColumnWidth(myProperties, column, -1);
     }
