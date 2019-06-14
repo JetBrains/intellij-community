@@ -45,9 +45,15 @@ class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHand
   }
 
   private inner class RenamesCollector(private val commandLine: String) : DefaultGitLogFullRecordBuilder() {
+    private var unexpectedStatusReported: Boolean = false
+
     override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
       if (type == Change.Type.MOVED) {
         super.addPath(type, firstPath, secondPath)
+      }
+      else if (!unexpectedStatusReported) {
+        unexpectedStatusReported = true
+        LOG.error("Unexpected change $type $firstPath $secondPath in the output of [$commandLine]")
       }
     }
 
