@@ -24,8 +24,6 @@ import java.util.List;
 
 public class EliminateParenthesesIntention extends BaseElementAtCaretIntentionAction {
 
-  private boolean myStartInWriteAction = false;
-
   private static final Pass<PsiParenthesizedExpression> ELIMINATE_CALLBACK = new Pass<PsiParenthesizedExpression>() {
     @Override
     public void pass(@NotNull PsiParenthesizedExpression expression) {
@@ -53,16 +51,9 @@ public class EliminateParenthesesIntention extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return myStartInWriteAction;
-  }
-
-  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(element);
-    if (possibleInnerExpressions == null || possibleInnerExpressions.isEmpty()) return false;
-    myStartInWriteAction = possibleInnerExpressions.size() == 1;
-    return true;
+    return possibleInnerExpressions != null && !possibleInnerExpressions.isEmpty();
   }
 
   @Override

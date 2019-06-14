@@ -139,7 +139,7 @@ public abstract class AbstractNumberConversionIntention implements IntentionActi
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 
   /**
