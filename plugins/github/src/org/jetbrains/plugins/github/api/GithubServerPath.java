@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +23,9 @@ public class GithubServerPath {
   public static final String DEFAULT_HOST = "github.com";
   public static final GithubServerPath DEFAULT_SERVER = new GithubServerPath(DEFAULT_HOST);
   private static final String API_PREFIX = "api.";
-  private static final String ENTERPRISE_API_SUFFIX = "/api/v3";
+  private static final String API_SUFFIX = "/api";
+  private static final String ENTERPRISE_API_V3_SUFFIX = "/v3";
+  private static final String GRAPHQL_SUFFIX = "/graphql";
 
   @Attribute("useHttp")
   @Nullable private final Boolean myUseHttp;
@@ -122,7 +124,20 @@ public class GithubServerPath {
       builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
     }
     else {
-      builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(ENTERPRISE_API_SUFFIX);
+      builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(API_SUFFIX)
+        .append(ENTERPRISE_API_V3_SUFFIX);
+    }
+    return builder.toString();
+  }
+
+  @NotNull
+  public String toGraphQLUrl() {
+    StringBuilder builder = new StringBuilder(getSchemaUrlPart());
+    if (myHost.equalsIgnoreCase(DEFAULT_HOST)) {
+      builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(GRAPHQL_SUFFIX);
+    }
+    else {
+      builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(API_SUFFIX).append(GRAPHQL_SUFFIX);
     }
     return builder.toString();
   }

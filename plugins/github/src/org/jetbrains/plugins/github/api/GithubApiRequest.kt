@@ -4,14 +4,19 @@ package org.jetbrains.plugins.github.api
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
+import org.jetbrains.plugins.github.api.data.graphql.GHGQLQueryRequest
+import org.jetbrains.plugins.github.api.data.graphql.GHGQLResponse
+import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import java.io.IOException
 
 /**
  * Represents an API request with strictly defined response type
  */
-sealed class GithubApiRequest<T>(val url: String) {
+sealed class GithubApiRequest<out T>(val url: String) {
   var operationName: String? = null
   abstract val acceptMimeType: String?
+
+  open val tokenHeaderType = GithubApiRequestExecutor.TokenHeaderType.TOKEN
 
   protected val headers = mutableMapOf<String, String>()
   val additionalHeaders: Map<String, String>
@@ -88,14 +93,14 @@ sealed class GithubApiRequest<T>(val url: String) {
   abstract class Head<T> @JvmOverloads constructor(url: String,
                                                    override val acceptMimeType: String? = null) : GithubApiRequest<T>(url)
 
-  abstract class WithBody<T>(url: String) : GithubApiRequest<T>(url) {
+  abstract class WithBody<out T>(url: String) : GithubApiRequest<T>(url) {
     abstract val body: String?
     abstract val bodyMimeType: String
   }
 
-  abstract class Post<T> @JvmOverloads constructor(override val bodyMimeType: String,
-                                                   url: String,
-                                                   override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
+  abstract class Post<out T> @JvmOverloads constructor(override val bodyMimeType: String,
+                                                       url: String,
+                                                       override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
     companion object {
       inline fun <reified T> json(url: String, body: Any): Post<T> = Json(url, body, T::class.java)
     }
@@ -107,6 +112,28 @@ sealed class GithubApiRequest<T>(val url: String) {
         get() = GithubApiContentHelper.toJson(bodyObject)
 
       override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
+    }
+
+    open class GQLQuery<out T>(url: String,
+                               private val queryName: String,
+                               private val variablesObject: Any,
+                               private val clazz: Class<out T>)
+      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
+
+      override val tokenHeaderType = GithubApiRequestExecutor.TokenHeaderType.BEARER
+
+      override val body: String
+        get() {
+          val query = GHGQLQueryLoader.loadQuery(queryName)
+          val request = GHGQLQueryRequest(query, variablesObject)
+          return GithubApiContentHelper.toJson(request, true)
+        }
+
+      override fun extractResult(response: GithubApiResponse): T {
+        val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
+        if (result.data != null) return result.data
+        else throw GithubConfusingException(result.errors.toString())
+      }
     }
   }
 
@@ -121,7 +148,6 @@ sealed class GithubApiRequest<T>(val url: String) {
 
     open class Json<T>(url: String, private val bodyObject: Any?, private val clazz: Class<T>)
       : Put<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
-
       init {
         if (bodyObject == null) headers["Content-Length"] = "0"
       }
@@ -134,7 +160,6 @@ sealed class GithubApiRequest<T>(val url: String) {
 
     open class JsonList<T>(url: String, private val bodyObject: Any?, private val clazz: Class<T>)
       : Put<List<T>>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
-
       init {
         if (bodyObject == null) headers["Content-Length"] = "0"
       }
@@ -168,7 +193,6 @@ sealed class GithubApiRequest<T>(val url: String) {
 
     open class Json<T>(url: String, private val bodyObject: Any? = null, private val clazz: Class<T>)
       : Delete<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
-
       init {
         if (bodyObject == null) headers["Content-Length"] = "0"
       }
@@ -193,6 +217,13 @@ sealed class GithubApiRequest<T>(val url: String) {
       return response.readBody(ThrowableConvertor {
         @Suppress("UNCHECKED_CAST")
         GithubApiContentHelper.readJsonObject(it, GithubSearchResult::class.java, clazz) as GithubSearchResult<T>
+      })
+    }
+
+    private fun <T> parseGQLResponse(response: GithubApiResponse, clazz: Class<out T>): GHGQLResponse<out T> {
+      return response.readBody(ThrowableConvertor {
+        @Suppress("UNCHECKED_CAST")
+        GithubApiContentHelper.readJsonObject(it, GHGQLResponse::class.java, clazz, gqlNaming = true) as GHGQLResponse<T>
       })
     }
   }

@@ -11,14 +11,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubFullPath
-import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.GithubResponsePage
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.data.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
+import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQuery
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
@@ -37,33 +34,33 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
                                                 private val requestExecutor: GithubApiRequestExecutor,
                                                 private val serverPath: GithubServerPath,
                                                 private val repoPath: GithubFullPath)
-  : GithubPullRequestsListLoader, ListModel<GithubSearchedIssue>, GithubPullRequestSearchQueryHolder, Disposable {
+  : GithubPullRequestsListLoader, ListModel<GHPullRequestShort>, GithubPullRequestSearchQueryHolder, Disposable {
 
-  private var initialRequest = GithubApiRequests.Search.Issues.get(serverPath, buildQuery(null))
-  private var lastFuture = CompletableFuture.completedFuture(GithubResponsePage.empty<GithubSearchedIssue>(initialRequest.url))
+  override var searchQuery: GithubPullRequestSearchQuery
+    by Delegates.observable(GithubPullRequestSearchQuery(emptyList())) { _, _, _ ->
+      reset()
+    }
+
+  private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
+    GHGQLRequests.PullRequest.search(serverPath, buildQuery(searchQuery), p)
+  })
+  private var lastFuture = CompletableFuture.completedFuture(emptyList<GHPullRequestShort>())
   private var progressIndicator = NonReusableEmptyProgressIndicator()
 
   override var loading: Boolean by Delegates.observable(false) { _, _, _ ->
     loadingStateChangeEventDispatcher.multicaster.eventOccurred()
   }
 
-  private val listModelDelegate = CollectionListModel<GithubSearchedIssue>()
+  private val listModelDelegate = CollectionListModel<GHPullRequestShort>()
 
   override var error: Throwable? by Delegates.observable<Throwable?>(null) { _, _, _ ->
     errorChangeEventDispatcher.multicaster.eventOccurred()
   }
-  private var hasNext = true
 
   override var outdated: Boolean by Delegates.observable(false) { _, _, newValue ->
     if (newValue) sizeChecker.stop()
     outdatedStateEventDispatcher.multicaster.eventOccurred()
   }
-
-  override var searchQuery: GithubPullRequestSearchQuery
-    by Delegates.observable(GithubPullRequestSearchQuery(emptyList())) { _, _, _ ->
-      initialRequest = GithubApiRequests.Search.Issues.get(serverPath, buildQuery(searchQuery))
-      reset()
-    }
 
   private val loadingStateChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   private val errorChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
@@ -85,21 +82,20 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
     }
   }
 
-  override fun canLoadMore() = !loading && (hasNext || error != null)
+  override fun canLoadMore() = !loading && (loader.hasNext || error != null)
 
   override fun loadMore() {
     val indicator = progressIndicator
     if (canLoadMore()) {
       loading = true
-      requestLoadMore(indicator).handleOnEdt { responsePage, error ->
+      requestLoadMore(indicator).handleOnEdt { list, error ->
         if (indicator.isCanceled) return@handleOnEdt
         when {
           error != null && !GithubAsyncUtil.isCancellation(error) -> {
             this.error = if (error is CompletionException) error.cause!! else error
           }
-          responsePage != null -> {
-            listModelDelegate.add(responsePage.items)
-            hasNext = responsePage.hasNext
+          list != null -> {
+            listModelDelegate.add(list)
             sizeChecker.start()
           }
         }
@@ -108,27 +104,25 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
     }
   }
 
-  private fun requestLoadMore(indicator: ProgressIndicator): CompletableFuture<GithubResponsePage<GithubSearchedIssue>> {
+  private fun requestLoadMore(indicator: ProgressIndicator): CompletableFuture<List<GHPullRequestShort>> {
     lastFuture = lastFuture.thenApplyAsync {
-      it.nextLink?.let { url ->
-        progressManager.runProcess(Computable { requestExecutor.execute(indicator, GithubApiRequests.Search.Issues.get(url)) }, indicator)
-      } ?: GithubResponsePage.empty()
+      progressManager.runProcess(Computable { loader.loadNext(indicator) }, indicator)
     }
     return lastFuture
   }
 
-  override fun getElementAt(index: Int): GithubSearchedIssue = listModelDelegate.getElementAt(index)
+  override fun getElementAt(index: Int): GHPullRequestShort = listModelDelegate.getElementAt(index)
   override fun getSize(): Int = listModelDelegate.size
 
   override fun reset() {
+    loader.reset()
     lastFuture = lastFuture.handle { _, _ ->
-      GithubResponsePage.empty<GithubSearchedIssue>(initialRequest.url)
+      listOf<GHPullRequestShort>()
     }
 
     progressIndicator.cancel()
     progressIndicator = NonReusableEmptyProgressIndicator()
     error = null
-    hasNext = true
     loading = false
     outdated = false
     sizeChecker.stop()
