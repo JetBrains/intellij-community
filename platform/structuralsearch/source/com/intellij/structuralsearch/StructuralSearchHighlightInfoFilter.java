@@ -20,9 +20,6 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
     if (file == null) {
       return true;
     }
-    if (highlightInfo.getSeverity() != HighlightSeverity.ERROR) {
-      return false;
-    }
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) {
       return true;
@@ -30,6 +27,9 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
     final String contextId = document.getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID);
     if (contextId == null) {
       return true;
+    }
+    if (highlightInfo.getSeverity() != HighlightSeverity.ERROR) {
+      return false;
     }
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
     if (profile == null) {
