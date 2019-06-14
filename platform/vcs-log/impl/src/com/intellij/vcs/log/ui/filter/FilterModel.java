@@ -64,7 +64,7 @@ abstract class FilterModel<Filter> {
   }
 
   protected static void triggerFilterSet(@NotNull String name) {
-    VcsLogUsageTriggerCollector.triggerUsage("filter.set", false,
+    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.FILTER_SET, false,
                                              data -> data.addData("filter_name", name));
   }
 

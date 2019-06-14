@@ -226,7 +226,7 @@ public class GraphTableController {
   }
 
   private static void triggerClick(@NotNull String target) {
-    VcsLogUsageTriggerCollector.triggerUsage("table.clicked",
+    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TABLE_CLICKED,
                                              data -> data.addData("target", target));
   }
 

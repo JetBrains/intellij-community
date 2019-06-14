@@ -77,7 +77,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
   }
 
   private fun triggerFileHistoryUsage(paths: Collection<FilePath>, hash: Hash?) {
-    VcsLogUsageTriggerCollector.triggerUsage("history.shown") { data ->
+    VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.HISTORY_SHOWN) { data ->
       val kind = if (paths.size > 1) "multiple" else if (paths.first().isDirectory) "folder" else "file"
       data.addData("kind", kind).addData("has.revision", hash != null)
     }
