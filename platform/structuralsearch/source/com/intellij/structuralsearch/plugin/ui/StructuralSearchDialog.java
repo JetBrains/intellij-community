@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -231,6 +232,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         }
 
         TextCompletionUtil.installCompletionHint(editor);
+        EditorMouseHoverPopupControl.disablePopups(editor);
         editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
