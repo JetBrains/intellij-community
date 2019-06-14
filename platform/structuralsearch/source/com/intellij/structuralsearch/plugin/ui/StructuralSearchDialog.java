@@ -302,7 +302,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
       }
       myFilterPanel.setValid(compiledPattern != null);
-    });
+    }, ModalityState.stateForComponent(myFilterPanel.getComponent()));
   }
 
   private Configuration createConfiguration(Configuration template) {
@@ -785,6 +785,9 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   void removeMatchHighlights() {
+    if (myEditConfigOnly) {
+      return;
+    }
     final Editor editor = myEditor;
     if (editor == null) {
       return;
@@ -801,6 +804,9 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   void addMatchHighlights() {
+    if (myEditConfigOnly) {
+      return;
+    }
     if (myDoingOkAction) {
       removeMatchHighlights();
     }
