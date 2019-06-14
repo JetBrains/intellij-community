@@ -346,7 +346,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
         MavenBuildEventProcessor eventProcessor =
           new MavenBuildEventProcessor(getProject(), getProject().getBasePath(), buildView, descriptor, taskId);
-        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
+        processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
         buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler));
         return buildView;
       }
@@ -413,10 +413,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
 
-  private class MavenHandlerFilterSpyWrapper extends ProcessHandler {
+  private static class MavenHandlerFilterSpyWrapper extends ProcessHandler {
     private final ProcessHandler myOriginalHandler;
 
-    public MavenHandlerFilterSpyWrapper(ProcessHandler original) {
+    MavenHandlerFilterSpyWrapper(ProcessHandler original) {
 
       myOriginalHandler = original;
     }
