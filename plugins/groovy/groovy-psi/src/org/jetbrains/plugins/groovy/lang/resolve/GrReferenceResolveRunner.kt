@@ -93,7 +93,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     clazz?.let { return it }
   }
 
-  // We are in `сom.foo` from `com.foo.bar.Baz`.
+  // We are in `com.foo` from `com.foo.bar.Baz`.
   // Go up and find if any parent resolves to a class => this expression is a package reference.
   // This expression may also be a class reference, and this is handled in [resolveUnqualifiedType].
   for (parent in strictParents()) {
