@@ -3,6 +3,7 @@ package com.intellij.openapi.application.constraints
 
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.ContinuationInterceptor
@@ -10,6 +11,7 @@ import kotlin.coroutines.ContinuationInterceptor
 /**
  * @author eldar
  */
+@ApiStatus.Experimental
 interface ConstrainedExecution<E : ConstrainedExecution<E>> {
   /**
    * Use the returned dispatcher to run coroutines using the standard [withContext], [launch] and [async].
