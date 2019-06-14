@@ -567,7 +567,7 @@ class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      String description = String.format("Compare commits in %1$s and %2$s, and the file tree in %1$s and its current state",
+      String description = String.format("Show commits in %1$s that are missing in %2$s",
                                          getBranchPresentation(myBranchName),
                                          getCurrentBranchPresentation(myRepositories));
       e.getPresentation().setDescription(description);
@@ -594,7 +594,7 @@ class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      String description = String.format("Compare the file tree in %1$s and its current state", getBranchPresentation(myBranchName));
+      String description = String.format("Compare the current working tree with the tree in %1$s", getBranchPresentation(myBranchName));
       e.getPresentation().setDescription(description);
     }
   }
