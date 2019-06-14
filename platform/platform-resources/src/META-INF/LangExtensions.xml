@@ -860,7 +860,6 @@
 
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.ActionTracer"/>
-    <uiDebuggerExtension implementation="com.intellij.openapi.util.objectTree.DisposerDebugger"/>
 
     <applicationService serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
