@@ -8,6 +8,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public class VcsLogUsageTriggerCollector {
@@ -17,7 +18,7 @@ public class VcsLogUsageTriggerCollector {
   }
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action, @Nullable Consumer<FeatureUsageData> configurator) {
-    triggerUsage("action.called", data -> {
+    triggerUsage(VcsLogEvent.ACTION_CALLED, data -> {
       addContext(data, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
       data.addInputEvent(e);
       data.addData("class", action.getClass().getName());
@@ -25,20 +26,34 @@ public class VcsLogUsageTriggerCollector {
     });
   }
 
-  public static void triggerUsage(@NotNull String text, boolean isFromHistory, @Nullable Consumer<FeatureUsageData> configurator) {
-    triggerUsage(text, data -> {
+  public static void triggerUsage(@NotNull VcsLogEvent event, boolean isFromHistory, @Nullable Consumer<FeatureUsageData> configurator) {
+    triggerUsage(event, data -> {
       addContext(data, isFromHistory);
       if (configurator != null) configurator.accept(data);
     });
   }
 
-  public static void triggerUsage(@NotNull String text, @Nullable Consumer<FeatureUsageData> configurator) {
+  public static void triggerUsage(@NotNull VcsLogEvent event, @Nullable Consumer<FeatureUsageData> configurator) {
     FeatureUsageData data = new FeatureUsageData();
     if (configurator != null) configurator.accept(data);
-    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", text, data);
+    FUCounterUsageLogger.getInstance().logEvent("vcs.log.trigger", event.getId(), data);
   }
 
   private static void addContext(@NotNull FeatureUsageData data, boolean isFromHistory) {
     data.addData("context", isFromHistory ? "history" : "log");
+  }
+
+  public enum VcsLogEvent {
+    ACTION_CALLED,
+    FILTER_SET,
+    TABLE_CLICKED,
+    COLUMN_RESET,
+    HISTORY_SHOWN,
+    TAB_NAVIGATED;
+
+    @NotNull
+    String getId() {
+      return name().toLowerCase(Locale.ENGLISH).replace('_', '.');
+    }
   }
 }
