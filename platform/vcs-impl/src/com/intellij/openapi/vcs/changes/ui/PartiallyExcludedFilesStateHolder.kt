@@ -1,231 +1,131 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.ex.ExclusionState;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ex.ExclusionState
+import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import gnu.trove.THashSet
+import org.jetbrains.annotations.CalledInAwt
+import java.util.*
 
-import java.util.*;
-import java.util.stream.Stream;
+abstract class PartiallyExcludedFilesStateHolder<T>(project: Project, private var myChangelistId: String) : Disposable {
+  protected val myUpdateQueue =
+    MergingUpdateQueue(PartiallyExcludedFilesStateHolder::class.java.name, 300, true, MergingUpdateQueue.ANY_COMPONENT, this)
 
-public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable {
-  @NotNull protected final MergingUpdateQueue myUpdateQueue =
-    new MergingUpdateQueue(PartiallyExcludedFilesStateHolder.class.getName(), 300, true, MergingUpdateQueue.ANY_COMPONENT, this);
+  private val myIncludedElements = THashSet<T>()
+  private val myTrackerExclusionStates = HashMap<T, ExclusionState>()
 
-  private final Set<T> myIncludedElements = new THashSet<>();
-  private final Map<T, ExclusionState> myTrackerExclusionStates = new HashMap<>();
-
-  @NotNull private String myChangelistId;
-
-  public PartiallyExcludedFilesStateHolder(@NotNull Project project, @NotNull String changelistId) {
-    myChangelistId = changelistId;
-
-    PartialLocalLineStatusTracker.Listener trackerListener = new MyTrackerListener();
-    MyTrackerManagerListener trackerManagerListener = new MyTrackerManagerListener(trackerListener, this);
-    trackerManagerListener.install(project);
+  init {
+    MyTrackerManagerListener().install(project)
   }
 
-  @Override
-  public void dispose() {
-  }
+  override fun dispose() = Unit
 
+  protected abstract val trackableElements: Sequence<T>
+  protected abstract fun findElementFor(tracker: PartialLocalLineStatusTracker): T?
+  protected abstract fun findTrackerFor(element: T): PartialLocalLineStatusTracker?
 
-  @NotNull
-  protected abstract Stream<? extends T> getTrackableElementsStream();
+  private val trackers
+    get() = trackableElements.mapNotNull { element -> findTrackerFor(element)?.let { tracker -> element to tracker } }
 
-  @Nullable
-  protected abstract T findElementFor(@NotNull PartialLocalLineStatusTracker tracker);
-
-  @Nullable
-  protected abstract PartialLocalLineStatusTracker findTrackerFor(@NotNull T element);
-
-  @NotNull
-  private Stream<Pair<T, PartialLocalLineStatusTracker>> getTrackersStream() {
-    return getTrackableElementsStream().<Pair<T, PartialLocalLineStatusTracker>>map(element -> {
-      PartialLocalLineStatusTracker tracker = findTrackerFor(element);
-      if (tracker != null) {
-        return Pair.create(element, tracker);
-      }
-      else {
-        return null;
-      }
-    }).filter(Objects::nonNull);
-  }
-
-
-  public void setChangelistId(@NotNull String changelistId) {
-    myChangelistId = changelistId;
-    updateExclusionStates();
+  fun setChangelistId(changelistId: String) {
+    myChangelistId = changelistId
+    updateExclusionStates()
   }
 
   @CalledInAwt
-  public void updateExclusionStates() {
-    myTrackerExclusionStates.clear();
+  open fun updateExclusionStates() {
+    myTrackerExclusionStates.clear()
 
-    getTrackersStream().forEach(pair -> {
-      T element = pair.first;
-      PartialLocalLineStatusTracker tracker = pair.second;
-      ExclusionState state = tracker.getExcludedFromCommitState(myChangelistId);
-      if (state != ExclusionState.NO_CHANGES) myTrackerExclusionStates.put(element, state);
-    });
-  }
-
-  @NotNull
-  public ExclusionState getExclusionState(@NotNull T element) {
-    ExclusionState exclusionState = myTrackerExclusionStates.get(element);
-    if (exclusionState != null) return exclusionState;
-    return myIncludedElements.contains(element) ? ExclusionState.ALL_INCLUDED
-                                                : ExclusionState.ALL_EXCLUDED;
-  }
-
-  private void scheduleExclusionStatesUpdate() {
-    myUpdateQueue.queue(new Update("updateExcludedFromCommit") {
-      @Override
-      public void run() {
-        updateExclusionStates();
-      }
-    });
-  }
-
-
-  private class MyTrackerListener extends PartialLocalLineStatusTracker.ListenerAdapter {
-    @Override
-    public void onExcludedFromCommitChange(@NotNull PartialLocalLineStatusTracker tracker) {
-      scheduleExclusionStatesUpdate();
-    }
-
-    @Override
-    public void onChangeListMarkerChange(@NotNull PartialLocalLineStatusTracker tracker) {
-      scheduleExclusionStatesUpdate();
+    trackers.forEach { (element, tracker) ->
+      val state = tracker.getExcludedFromCommitState(myChangelistId)
+      if (state != ExclusionState.NO_CHANGES) myTrackerExclusionStates[element] = state
     }
   }
 
-  private class MyTrackerManagerListener extends LineStatusTrackerManager.ListenerAdapter {
-    @NotNull private final PartialLocalLineStatusTracker.Listener myTrackerListener;
-    @NotNull private final Disposable myDisposable;
+  fun getExclusionState(element: T): ExclusionState =
+    myTrackerExclusionStates[element] ?: if (element in myIncludedElements) ExclusionState.ALL_INCLUDED else ExclusionState.ALL_EXCLUDED
 
-    MyTrackerManagerListener(@NotNull PartialLocalLineStatusTracker.Listener listener, @NotNull Disposable disposable) {
-      myTrackerListener = listener;
-      myDisposable = disposable;
-    }
+  private fun scheduleExclusionStatesUpdate() {
+    myUpdateQueue.queue(Update.create("updateExcludedFromCommit") { updateExclusionStates() })
+  }
+
+  private inner class MyTrackerListener : PartialLocalLineStatusTracker.ListenerAdapter() {
+    override fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) = scheduleExclusionStatesUpdate()
+    override fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) = scheduleExclusionStatesUpdate()
+  }
+
+  private inner class MyTrackerManagerListener : LineStatusTrackerManager.ListenerAdapter() {
+    private val trackerListener = MyTrackerListener()
+    private val disposable get() = this@PartiallyExcludedFilesStateHolder
 
     @CalledInAwt
-    public void install(@NotNull Project project) {
-      LineStatusTrackerManager.getInstanceImpl(project).addTrackerListener(this, myDisposable);
-      for (LineStatusTracker<?> tracker : LineStatusTrackerManager.getInstanceImpl(project).getTrackers()) {
-        if (tracker instanceof PartialLocalLineStatusTracker) {
-          PartialLocalLineStatusTracker partialTracker = (PartialLocalLineStatusTracker)tracker;
+    fun install(project: Project) {
+      with(LineStatusTrackerManager.getInstanceImpl(project)) {
+        addTrackerListener(this@MyTrackerManagerListener, disposable)
+        getTrackers().filterIsInstance<PartialLocalLineStatusTracker>().forEach { it.addListener(trackerListener, disposable) }
+      }
+    }
 
-          partialTracker.addListener(myTrackerListener, myDisposable);
+    override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
+      if (tracker !is PartialLocalLineStatusTracker) return
+
+      findElementFor(tracker)?.let { element -> tracker.setExcludedFromCommit(element !in myIncludedElements) }
+      tracker.addListener(trackerListener, disposable)
+    }
+
+    override fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
+      if (tracker !is PartialLocalLineStatusTracker) return
+
+      findElementFor(tracker)?.let { element ->
+        myTrackerExclusionStates -= element
+
+        val exclusionState = tracker.getExcludedFromCommitState(myChangelistId)
+        if (exclusionState != ExclusionState.NO_CHANGES) {
+          if (exclusionState != ExclusionState.ALL_EXCLUDED) myIncludedElements += element else myIncludedElements -= element
         }
-      }
-    }
 
-    @Override
-    public void onTrackerAdded(@NotNull LineStatusTracker<?> tracker) {
-      if (tracker instanceof PartialLocalLineStatusTracker) {
-        PartialLocalLineStatusTracker partialTracker = (PartialLocalLineStatusTracker)tracker;
-
-        T element = findElementFor(partialTracker);
-        if (element != null) {
-          partialTracker.setExcludedFromCommit(!myIncludedElements.contains(element));
-        }
-
-        partialTracker.addListener(myTrackerListener, myDisposable);
-      }
-    }
-
-    @Override
-    public void onTrackerRemoved(@NotNull LineStatusTracker<?> tracker) {
-      if (tracker instanceof PartialLocalLineStatusTracker) {
-        PartialLocalLineStatusTracker partialTracker = (PartialLocalLineStatusTracker)tracker;
-
-        T element = findElementFor(partialTracker);
-        if (element != null) {
-          myTrackerExclusionStates.remove(element);
-
-          ExclusionState exclusionState = partialTracker.getExcludedFromCommitState(myChangelistId);
-          if (exclusionState != ExclusionState.NO_CHANGES) {
-            if (exclusionState != ExclusionState.ALL_EXCLUDED) {
-              myIncludedElements.add(element);
-            }
-            else {
-              myIncludedElements.remove(element);
-            }
-          }
-
-          scheduleExclusionStatesUpdate();
-        }
+        scheduleExclusionStatesUpdate()
       }
     }
   }
 
-  @NotNull
-  public Set<T> getIncludedSet() {
-    HashSet<T> set = new HashSet<>(myIncludedElements);
-
-    for (Map.Entry<T, ExclusionState> entry : myTrackerExclusionStates.entrySet()) {
-      T element = entry.getKey();
-      ExclusionState trackerState = entry.getValue();
-
-      if (trackerState == ExclusionState.ALL_EXCLUDED) {
-        set.remove(element);
-      }
-      else {
-        set.add(element);
-      }
+  fun getIncludedSet(): Set<T> {
+    val set = HashSet(myIncludedElements)
+    myTrackerExclusionStates.forEach { (element, state) ->
+      if (state == ExclusionState.ALL_EXCLUDED) set -= element else set += element
     }
-
-    return set;
+    return set
   }
 
-  public void setIncludedElements(@NotNull Collection<? extends T> elements) {
-    HashSet<T> set = new HashSet<>(elements);
-    getTrackersStream().forEach(pair -> {
-      T element = pair.first;
-      PartialLocalLineStatusTracker tracker = pair.second;
-      tracker.setExcludedFromCommit(!set.contains(element));
-    });
-
-    myIncludedElements.clear();
-    myIncludedElements.addAll(elements);
-
-    updateExclusionStates();
-  }
-
-  public void includeElements(@NotNull Collection<? extends T> elements) {
-    for (T element : elements) {
-      PartialLocalLineStatusTracker tracker = findTrackerFor(element);
-      if (tracker != null) {
-        tracker.setExcludedFromCommit(false);
-      }
+  fun setIncludedElements(elements: Collection<T>) {
+    val set = HashSet(elements)
+    trackers.forEach { (element, tracker) ->
+      tracker.setExcludedFromCommit(element !in set)
     }
 
-    myIncludedElements.addAll(elements);
+    myIncludedElements.clear()
+    myIncludedElements += elements
 
-    updateExclusionStates();
+    updateExclusionStates()
   }
 
-  public void excludeElements(@NotNull Collection<? extends T> elements) {
-    for (T element : elements) {
-      PartialLocalLineStatusTracker tracker = findTrackerFor(element);
-      if (tracker != null) {
-        tracker.setExcludedFromCommit(true);
-      }
-    }
+  fun includeElements(elements: Collection<T>) {
+    elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(false) }
+    myIncludedElements += elements
 
-    myIncludedElements.removeAll(elements);
+    updateExclusionStates()
+  }
 
-    updateExclusionStates();
+  fun excludeElements(elements: Collection<T>) {
+    elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(true) }
+    myIncludedElements -= elements
+
+    updateExclusionStates()
   }
 }

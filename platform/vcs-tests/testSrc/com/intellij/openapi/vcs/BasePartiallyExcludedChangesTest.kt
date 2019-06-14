@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.changes.ui.PartiallyExcludedFilesStateHolder
 import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
-import java.util.stream.Stream
 
 abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTest() {
   protected lateinit var stateHolder: MyStateHolder
@@ -25,7 +24,7 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
       Disposer.register(testRootDisposable, this)
     }
 
-    override fun getTrackableElementsStream(): Stream<FilePath> = paths.stream()
+    override val trackableElements: Sequence<FilePath> get() = paths.asSequence()
 
     override fun findElementFor(tracker: PartialLocalLineStatusTracker): FilePath? {
       return paths.find { it.virtualFile == tracker.virtualFile }
@@ -73,7 +72,7 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
 
   protected fun assertIncluded(vararg paths: String) {
     val expected = paths.toFilePaths().toSet()
-    val actual = stateHolder.includedSet
+    val actual = stateHolder.getIncludedSet()
     assertSameElements(actual.map { it.name }, expected.map { it.name })
     assertSameElements(actual, expected)
   }
