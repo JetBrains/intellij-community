@@ -758,7 +758,9 @@ public class StructuralSearchDialog extends DialogWrapper {
           return null;
         }
         catch (MalformedPatternException ex) {
-          reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          if (!ex.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
+            reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          }
           return null;
         }
       }
@@ -770,7 +772,9 @@ public class StructuralSearchDialog extends DialogWrapper {
       final String message = isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
-      reportMessage(message, true, mySearchCriteriaEdit);
+      if (!e.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
+        reportMessage(message, true, mySearchCriteriaEdit);
+      }
       return null;
     }
     catch (UnsupportedPatternException e) {

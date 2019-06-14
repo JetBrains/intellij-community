@@ -11,7 +11,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -656,10 +655,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     @Override
     public void visitErrorElement(PsiErrorElement element) {
       super.visitErrorElement(element);
-      if (Registry.is("ssr.in.editor.problem.highlighting") && Registry.is("ssr.use.new.search.dialog") &&
-          !ApplicationManager.getApplication().isUnitTestMode()) {
-        return;
-      }
       final PsiElement parent = element.getParent();
       final String errorDescription = element.getErrorDescription();
       if (parent instanceof PsiClass && "Identifier expected".equals(errorDescription)) {
@@ -685,7 +680,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           return;
         }
       }
-      throw new MalformedPatternException(errorDescription);
+      throw new MalformedPatternException(element);
     }
 
     void setCurrent(PsiElement current) {
