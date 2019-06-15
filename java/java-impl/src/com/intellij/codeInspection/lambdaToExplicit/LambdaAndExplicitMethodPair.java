@@ -26,9 +26,9 @@ class LambdaAndExplicitMethodPair {
     new LambdaAndExplicitMethodPair(CommonClassNames.JAVA_UTIL_MAP, "computeIfAbsent", "putIfAbsent", 1, "V", "k") {
       @Override
       boolean isLambdaCall(PsiMethodCallExpression lambdaCall, PsiLambdaExpression lambda) {
-        return !ExpressionUtils.isVoidContext(lambdaCall) &&
+        return ExpressionUtils.isVoidContext(lambdaCall) &&
                super.isLambdaCall(lambdaCall, lambda) &&
-               DfaUtil.inferLambdaNullability(lambda) != Nullability.NOT_NULL;
+               DfaUtil.inferLambdaNullability(lambda) == Nullability.NOT_NULL;
       }
 
       @Override
