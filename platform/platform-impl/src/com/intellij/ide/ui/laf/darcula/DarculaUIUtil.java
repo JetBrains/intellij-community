@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -29,11 +30,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Locale;
 
-import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
-import static com.intellij.util.ui.MacUIUtil.MAC_FILL_BORDER;
-import static javax.swing.SwingConstants.EAST;
-import static javax.swing.SwingConstants.WEST;
 
 /**
  * @author Konstantin Bulenkov
@@ -73,7 +70,7 @@ public class DarculaUIUtil {
       }
     };
 
-    abstract public void setGraphicsColor(Graphics2D g, boolean focused);
+    public abstract void setGraphicsColor(Graphics2D g, boolean focused);
   }
 
   /**
@@ -161,9 +158,9 @@ public class DarculaUIUtil {
     g.fill(path);
   }
 
-  public static boolean isCurrentEventShiftDownEvent() {
+  private static boolean isCurrentEventShiftDownEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-    return (event instanceof KeyEvent && ((KeyEvent)event).isShiftDown());
+    return event instanceof KeyEvent && ((KeyEvent)event).isShiftDown();
   }
 
   /**
@@ -172,10 +169,10 @@ public class DarculaUIUtil {
    */
   public static int getPatchedNextVisualPositionFrom(JTextComponent t, int pos, int direction) {
     if (!isCurrentEventShiftDownEvent()) {
-      if (direction == WEST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionEnd() == pos) {
+      if (direction == SwingConstants.WEST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionEnd() == pos) {
         return t.getSelectionStart();
       }
-      if (direction == EAST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionStart() == pos) {
+      if (direction == SwingConstants.EAST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionStart() == pos) {
         return t.getSelectionEnd();
       }
     }
@@ -230,7 +227,7 @@ public class DarculaUIUtil {
       else {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
-          if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
+          if (c.isOpaque() || c instanceof JComponent && ((JComponent)c).getClientProperty(MacUIUtil.MAC_FILL_BORDER) == Boolean.TRUE) {
             g2.setColor(UIUtil.getPanelBackground());
             g2.fillRect(x, y, width, height);
           }
@@ -311,7 +308,8 @@ public class DarculaUIUtil {
         Rectangle r = new Rectangle(x, y, width, height);
         boolean isCellRenderer = isTableCellEditor(c);
 
-        if (ComponentUtil.getParentOfType((Class<? extends Wrapper>)Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+        if (ComponentUtil.getParentOfType((Class<? extends Wrapper>)Wrapper.class, c) != null && TextFieldWithPopupHandlerUI
+          .isSearchFieldWithHistoryPopup(c)) {
           JBInsets.removeFrom(r, JBInsets.create(2, 0));
         }
 
@@ -380,9 +378,7 @@ public class DarculaUIUtil {
       if (ComponentUtil.getParentOfType((Class<? extends ComboBoxCompositeEditor>)ComboBoxCompositeEditor.class, c) != null) {
         return JBUI.emptyInsets().asUIResource();
       }
-      else {
-        return (isTableCellEditor(c) ? JBUI.insets(1) : isComboBoxEditor(c) ? JBInsets.create(1, 6) : JBInsets.create(4, 6)).asUIResource();
-      }
+      return (isTableCellEditor(c) ? JBUI.insets(1) : isComboBoxEditor(c) ? JBInsets.create(1, 6) : JBInsets.create(4, 6)).asUIResource();
     }
 
     @Nullable
@@ -437,21 +433,20 @@ public class DarculaUIUtil {
   public static final JBValue ARROW_BUTTON_WIDTH = new JBValue.Float(23);
   public static final JBValue LW = new JBValue.Float(1);
   public static final JBValue BW = new JBValue.UIInteger("Component.focusWidth", 2);
-  public static final JBValue CELL_EDITOR_BW = new JBValue.UIInteger("CellEditor.border.width", 2);
+  private static final JBValue CELL_EDITOR_BW = new JBValue.UIInteger("CellEditor.border.width", 2);
   public static final JBValue BUTTON_ARC = new JBValue.UIInteger("Button.arc", 6);
   public static final JBValue COMPONENT_ARC = new JBValue.UIInteger("Component.arc", 5);
 
   /**
-   * @deprecated use {@code LW.get()} instead
+   * @deprecated use {@link #LW}.get() instead
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public static float lw(Graphics2D g2) {
     return JBUIScale.scale(1.0f);
   }
 
   /**
-   * @deprecated use {@code BW.get()} instead
+   * @deprecated use {@link #BW}.get() instead
    */
   @Deprecated
   public static float bw() {
@@ -459,7 +454,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @deprecated use {@code COMPONENT_ARC.getFloat()} instead
+   * @deprecated use {@link #COMPONENT_ARC}.getFloat() instead
    */
   @Deprecated
   public static float arc() {
@@ -467,7 +462,7 @@ public class DarculaUIUtil {
   }
 
   /**
-   * @deprecated use {@code BUTTON_ARC.get()} instead
+   * @deprecated use {@link #BUTTON_ARC}.get() instead
    */
   @Deprecated
   public static float buttonArc() {

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T extends Disposable> {
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
@@ -33,9 +32,7 @@ public final class ObjectTree<T extends Disposable> {
 
   final Object treeLock = new Object();
 
-  private final AtomicLong myModification = new AtomicLong(0);
-
-  ObjectNode<T> getNode(@NotNull T object) {
+  private ObjectNode<T> getNode(@NotNull T object) {
     return myObject2NodeMap.get(object);
   }
 
@@ -105,16 +102,12 @@ public final class ObjectTree<T extends Disposable> {
 
   @NotNull
   private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
-    final ObjectNode<T> newNode = new ObjectNode<>(this, parentNode, object, getNextModification());
+    final ObjectNode<T> newNode = new ObjectNode<>(this, parentNode, object);
     if (parentNode == null) {
       myRootObjects.add(object);
     }
     putNode(object, newNode);
     return newNode;
-  }
-
-  private long getNextModification() {
-    return myModification.incrementAndGet();
   }
 
   public final void executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
@@ -134,10 +127,7 @@ public final class ObjectTree<T extends Disposable> {
         }
       }
       else {
-        ObjectNode<T> parent;
-        synchronized (treeLock) {
-          parent = node.getParent();
-        }
+        ObjectNode<T> parent = node.getParent();
         List<Throwable> exceptions = new SmartList<>();
         node.execute(action, exceptions);
         if (parent != null) {
