@@ -11,9 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class VcsLogUsageTriggerCollector {
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action) {
-    String name = action.getClass().getName();
-    if (name.contains(".")) name = name.substring(name.lastIndexOf(".") + 1);
-    triggerUsage(e, name);
+    triggerUsage(e, action.getClass().getName());
   }
 
   public static void triggerUsage(@NotNull AnActionEvent e, @NotNull String text) {
