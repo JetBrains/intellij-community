@@ -263,7 +263,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   private fun rebase(onto: String) {
-    GitTestingRebaseProcess(project, GitRebaseParams(onto), allRepositories).rebase()
+    GitTestingRebaseProcess(project, GitRebaseParams(vcs.version, onto), allRepositories).rebase()
   }
 
   private fun abortOngoingRebase() {
