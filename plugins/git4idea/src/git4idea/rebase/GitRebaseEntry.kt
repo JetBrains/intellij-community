@@ -13,54 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.rebase;
+package git4idea.rebase
 
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.text.StringUtil
 
-import java.util.Locale;
+private val LOG = logger<GitRebaseEntry>()
 
-/**
- * The entry for rebase editor
- */
-class GitRebaseEntry {
-  private static final Logger LOG = Logger.getInstance(GitRebaseEntry.class);
+internal class GitRebaseEntry(var action: Action, val commit: String, val subject: String) {
 
-  @NotNull private final String myCommit;
-  @NotNull private final String mySubject;
-  @NotNull private Action myAction;
+  constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
 
-  GitRebaseEntry(@NotNull String action, @NotNull String commit, @NotNull String subject) {
-    this(Action.fromString(action), commit, subject);
-  }
-
-  GitRebaseEntry(@NotNull Action action, @NotNull String commit, @NotNull String subject) {
-    myCommit = commit;
-    mySubject = subject;
-    myAction = action;
-  }
-
-  @NotNull
-  public String getCommit() {
-    return myCommit;
-  }
-
-  @NotNull
-  public String getSubject() {
-    return mySubject;
-  }
-
-  @NotNull
-  public Action getAction() {
-    return myAction;
-  }
-
-  public void setAction(@NotNull Action action) {
-    myAction = action;
-  }
-
-  public enum Action {
+  enum class Action(private val text: String, val mnemonic: Char) {
     PICK("pick", 'p'),
     EDIT("edit", 'e'),
     SKIP("skip", 's'),
@@ -68,31 +32,21 @@ class GitRebaseEntry {
     REWORD("reword", 'r'),
     FIXUP("fixup", 'f');
 
-    @NotNull private final String myText;
-    private final char myMnemonic;
-
-    Action(@NotNull String text, char mnemonic) {
-      myText = text;
-      myMnemonic = mnemonic;
+    override fun toString(): String {
+      return text
     }
 
-    public char getMnemonic() {
-      return myMnemonic;
-    }
+    companion object {
 
-    @Override
-    public String toString() {
-      return myText;
-    }
+      internal fun fromString(actionName: String): Action {
+        try {
+          return valueOf(StringUtil.toUpperCase(actionName))
+        }
+        catch (e: IllegalArgumentException) {
+          LOG.error(e)
+          return PICK
+        }
 
-    @NotNull
-    static Action fromString(@NonNls @NotNull String actionName) {
-      try {
-        return valueOf(actionName.toUpperCase(Locale.ENGLISH));
-      }
-      catch (IllegalArgumentException e) {
-        LOG.error(e);
-        return PICK;
       }
     }
   }
