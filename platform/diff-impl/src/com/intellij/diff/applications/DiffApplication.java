@@ -26,12 +26,15 @@ import com.intellij.ide.CliResult;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class DiffApplication extends DiffApplicationBase {
@@ -65,9 +68,18 @@ public class DiffApplication extends DiffApplicationBase {
     SimpleDiffRequestChain chain = new SimpleDiffRequestChain(request);
     chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
 
-    DiffDialogHints dialogHints = project != null ? DiffDialogHints.DEFAULT : DiffDialogHints.MODAL;
-    DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
-    
-    return CliResult.ok();
+    if (project != null) {
+      CompletableFuture<CliResult> future = new CompletableFuture<>();
+      Runnable resultCallback = () -> future.complete(new CliResult(0, null));
+
+      DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.FRAME, null,
+                                                        wrapper -> UIUtil.runWhenWindowClosed(wrapper.getWindow(), resultCallback));
+      DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
+      return future;
+    }
+    else {
+      DiffManagerEx.getInstance().showDiffBuiltin(null, chain, DiffDialogHints.MODAL);
+      return CliResult.ok();
+    }
   }
 }
