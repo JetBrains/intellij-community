@@ -36,7 +36,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 
   override fun createCenterPanel(): JComponent? {
     mainPanel = CompareBranchesDiffPanel(project, GitVcsSettings.getInstance(project), branchName, currentBranchName)
-    UIUtil.setEnabled(mainPanel, false, true)
+    mainPanel.disableControls()
 
     val loadingPanel = JBLoadingPanel(BorderLayout(), disposable).apply {
       startLoading()
@@ -56,7 +56,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
             is LoadingResult.Success -> {
               mainPanel.setCompareInfo(result.compareInfo)
               mainPanel.setEmptyText("No differences")
-              UIUtil.setEnabled(mainPanel, true, true)
+              mainPanel.enableControls()
             }
             is LoadingResult.Error -> Messages.showErrorDialog(rootPane, result.error)
           }

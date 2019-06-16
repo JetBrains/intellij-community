@@ -129,6 +129,14 @@ public class CompareBranchesDiffPanel extends JPanel {
     myChangesBrowser.getViewer().setEmptyText(text);
   }
 
+  public void disableControls() {
+    myLabel.setEnabled(false);
+  }
+
+  public void enableControls() {
+    myLabel.setEnabled(true);
+  }
+
   @NotNull
   public JComponent getPreferredFocusComponent() {
     return myChangesBrowser.getPreferredFocusedComponent();
