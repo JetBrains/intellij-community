@@ -15,38 +15,33 @@
  */
 package git4idea.rebase
 
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.text.StringUtil
-
-private val LOG = logger<GitRebaseEntry>()
-
 internal class GitRebaseEntry(var action: Action, val commit: String, val subject: String) {
 
   constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
 
-  enum class Action(private val text: String, val mnemonic: Char) {
-    PICK("pick", 'p'),
-    EDIT("edit", 'e'),
-    SKIP("skip", 's'),
-    SQUASH("squash", 'q'),
-    REWORD("reword", 'r'),
-    FIXUP("fixup", 'f');
+  sealed class Action(val name: String, val mnemonic: Char) {
+    object PICK: Action("pick", 'p')
+    object EDIT: Action("edit", 'e')
+    object SKIP: Action("skip", 's')
+    object SQUASH: Action("squash", 'q')
+    object REWORD: Action("reword", 'r')
+    object FIXUP: Action("fixup", 'f')
+
+    class Other(name: String): Action(name, '?')
 
     override fun toString(): String {
-      return text
+      return name
     }
 
     companion object {
+      @JvmStatic
+      val knownActions = listOf(PICK, EDIT, SKIP, SQUASH, REWORD, FIXUP)
+
+      @JvmStatic
+      fun getKnownActionsArray() : Array<Action> = knownActions.toTypedArray()
 
       internal fun fromString(actionName: String): Action {
-        try {
-          return valueOf(StringUtil.toUpperCase(actionName))
-        }
-        catch (e: IllegalArgumentException) {
-          LOG.error(e)
-          return PICK
-        }
-
+        return knownActions.find { it.name == actionName } ?: Other(actionName)
       }
     }
   }
