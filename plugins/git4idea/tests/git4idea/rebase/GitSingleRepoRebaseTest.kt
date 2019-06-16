@@ -443,7 +443,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
                                                   list
                                                 },
                                                 plainTextEditor = { it })
-    GitTestingRebaseProcess(project, GitRebaseParams.editCommits("HEAD^", rebaseEditor, false), repo).rebase()
+    GitTestingRebaseProcess(project, GitRebaseParams.editCommits(vcs.version, "HEAD^", rebaseEditor, false), repo).rebase()
 
     assertNotNull("Didn't get any rebase entries", receivedEntries)
     assertEquals("Rebase entries parsed incorrectly", listOf(GitRebaseEntry.Action.PICK), receivedEntries!!.map { it.action })
@@ -514,7 +514,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   private fun rebaseInteractively(revision: String = "master") {
-    GitTestingRebaseProcess(project, GitRebaseParams(null, null, revision, true, false), repo).rebase()
+    GitTestingRebaseProcess(project, GitRebaseParams(vcs.version, null, null, revision, true, false), repo).rebase()
   }
 
   fun `test checkout with rebase`() {
@@ -539,7 +539,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   private fun simpleParams(newBase: String): GitRebaseParams {
-    return GitRebaseParams(newBase)
+    return GitRebaseParams(vcs.version, newBase)
   }
 
   internal fun file(path: String) = repo.file(path)
