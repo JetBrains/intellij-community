@@ -52,13 +52,8 @@ class GitRebaseEntry {
     return myAction;
   }
 
-  public void setAction(final Action action) {
-    if (action == null) {
-      LOG.error("The action must not be null");
-    }
-    else {
-      myAction = action;
-    }
+  public void setAction(@NotNull Action action) {
+    myAction = action;
   }
 
   public enum Action {
