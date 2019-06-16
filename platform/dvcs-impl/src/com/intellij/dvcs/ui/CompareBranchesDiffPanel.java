@@ -129,6 +129,11 @@ public class CompareBranchesDiffPanel extends JPanel {
     myChangesBrowser.getViewer().setEmptyText(text);
   }
 
+  @NotNull
+  public JComponent getPreferredFocusComponent() {
+    return myChangesBrowser.getPreferredFocusedComponent();
+  }
+
   private class MyChangesBrowser extends SimpleChangesBrowser {
     MyChangesBrowser(@NotNull Project project, @NotNull List<? extends Change> changes) {
       super(project, false, true);
