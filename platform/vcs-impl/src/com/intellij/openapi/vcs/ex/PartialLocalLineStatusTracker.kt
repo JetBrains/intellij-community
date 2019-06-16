@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -464,8 +465,15 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@ChangelistsLocalLineStatusTracker)
     }
 
-    private fun mergeExcludedFromCommitRanges(ranges: List<DocumentTracker.Block>): Boolean {
-      if (ranges.isEmpty()) return false
+    private fun mergeExcludedFromCommitRanges(ranges: List<Block>): Boolean {
+      if (ranges.isEmpty()) {
+        if (getApplication().isUnitTestMode) return false
+
+        val marker = currentMarker ?: defaultMarker
+        val changeListBlocks = blocks.filter { it.marker == marker }
+        // only include if all changed blocks from this change list are included
+        return changeListBlocks.isEmpty() || changeListBlocks.any { it.excludedFromCommit }
+      }
       return ranges.all { it.excludedFromCommit }
     }
   }
@@ -856,7 +864,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
 
   protected data class MyBlockData(var marker: ChangeListMarker? = null,
-                                   var excludedFromCommit: Boolean = false
+                                   var excludedFromCommit: Boolean = !getApplication().isUnitTestMode
   ) : LineStatusTrackerBase.BlockData()
 
   override fun createBlockData(): BlockData = MyBlockData()
