@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 
 /**
- * Use {@link DefinitionsScopedSearch} instead
+ * @deprecated Use {@link DefinitionsScopedSearch} instead
  */
-@Deprecated()
+@Deprecated
 public class DefinitionsSearch extends ExtensibleQueryFactory<PsiElement, PsiElement> {
   public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsSearch");
   public static DefinitionsSearch INSTANCE = new DefinitionsSearch();

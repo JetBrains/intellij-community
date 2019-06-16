@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -184,6 +185,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       @Override
       public void projectClosing(@NotNull Project project) {
         close(CANCEL_EXIT_CODE);
+        ProjectManager.getInstance().removeProjectManagerListener(searchContext.getProject(), this);
       }
     });
   }
@@ -231,6 +233,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         }
 
         TextCompletionUtil.installCompletionHint(editor);
+        EditorMouseHoverPopupControl.disablePopups(editor);
         editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
         editor.setEmbeddedIntoDialogWrapper(true);
         return editor;
@@ -757,7 +760,9 @@ public class StructuralSearchDialog extends DialogWrapper {
           return null;
         }
         catch (MalformedPatternException ex) {
-          reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          if (!ex.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
+            reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), true, myReplaceCriteriaEdit);
+          }
           return null;
         }
       }
@@ -769,7 +774,9 @@ public class StructuralSearchDialog extends DialogWrapper {
       final String message = isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
-      reportMessage(message, true, mySearchCriteriaEdit);
+      if (!e.isErrorElement || !Registry.is("ssr.in.editor.problem.highlighting")) {
+        reportMessage(message, true, mySearchCriteriaEdit);
+      }
       return null;
     }
     catch (UnsupportedPatternException e) {

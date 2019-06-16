@@ -28,10 +28,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
@@ -684,7 +681,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Thread[] NO_THREADS = new Thread[0];
   private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
   private volatile Thread[] myEffectivePrioritizedThreads = NO_THREADS;
-  private volatile int myDeprioritizations = 0;
+  private int myDeprioritizations = 0;
   private final Object myPrioritizationLock = ObjectUtils.sentinel("myPrioritizationLock");
   private volatile long myPrioritizingStarted = 0;
 
@@ -736,7 +733,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @ApiStatus.Internal
   public void suppressPrioritizing() {
     synchronized (myPrioritizationLock) {
-      if (++myDeprioritizations == 100) {
+      if (++myDeprioritizations == 100 + ForkJoinPool.getCommonPoolParallelism() * 2) {
         Attachment attachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
         attachment.setIncluded(true);
         LOG.error("A suspiciously high nesting of suppressPrioritizing, forgot to call restorePrioritizing?", attachment);

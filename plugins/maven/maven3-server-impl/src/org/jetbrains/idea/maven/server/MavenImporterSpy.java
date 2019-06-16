@@ -67,7 +67,7 @@ public class MavenImporterSpy extends AbstractEventSpy {
   }
 
   private static String toString(Artifact artifact) {
-    return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion();
+    return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier() + ":" + artifact.getVersion();
   }
 
   public void setIndicator(MavenServerProgressIndicator indicator) {

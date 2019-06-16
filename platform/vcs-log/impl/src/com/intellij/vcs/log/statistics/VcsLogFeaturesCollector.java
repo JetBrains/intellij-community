@@ -44,7 +44,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         addEnumUsage(properties, defaultProperties, usages, "sort", BEK_SORT_TYPE);
 
-        if (ui.getColorManager().isMultipleRoots()) {
+        if (ui.getColorManager().hasMultiplePaths()) {
           addBooleanUsage(properties, defaultProperties, usages, "roots", CommonUiProperties.SHOW_ROOT_NAMES);
         }
 

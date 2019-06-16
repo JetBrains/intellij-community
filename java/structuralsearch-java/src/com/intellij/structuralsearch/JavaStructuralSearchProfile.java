@@ -9,9 +9,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -19,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -436,9 +435,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @NotNull
   @Override
   public PsiCodeFragment createCodeFragment(Project project, String text, String contextId) {
-    return MEMBER_CONTEXT.getId().equals(contextId)
-           ? JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(text, null, true)
-           : JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(text, null, true);
+    final PsiCodeFragmentImpl fragment =
+      MEMBER_CONTEXT.getId().equals(contextId)
+      ? (PsiCodeFragmentImpl)JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(text, null, true)
+      : (PsiCodeFragmentImpl)JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(text, null, true);
+    fragment.setIntentionActionsFilter(intentionAction -> false);
+    return fragment;
   }
 
   @Override
@@ -485,9 +487,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   @Override
   public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {
     if (!Registry.is("ssr.in.editor.problem.highlighting")) {
-      return false;
-    }
-    if (highlightInfo.getSeverity() != HighlightSeverity.ERROR && highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
       return false;
     }
 
@@ -656,10 +655,6 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     @Override
     public void visitErrorElement(PsiErrorElement element) {
       super.visitErrorElement(element);
-      if (Registry.is("ssr.in.editor.problem.highlighting") && Registry.is("ssr.use.new.search.dialog") &&
-          !ApplicationManager.getApplication().isUnitTestMode()) {
-        return;
-      }
       final PsiElement parent = element.getParent();
       final String errorDescription = element.getErrorDescription();
       if (parent instanceof PsiClass && "Identifier expected".equals(errorDescription)) {
@@ -685,7 +680,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           return;
         }
       }
-      throw new MalformedPatternException(errorDescription);
+      throw new MalformedPatternException(element);
     }
 
     void setCurrent(PsiElement current) {

@@ -11,6 +11,7 @@ import java.util.Map;
 /**
  * @deprecated not used after file traversal rewrite to NIO
  */
+@Deprecated
 public class FSCache {
 
   public static final FSCache NO_CACHE = new FSCache() {

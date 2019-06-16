@@ -16,7 +16,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -423,12 +422,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return null;
   }
 
+  /**
+   * @deprecated use {@link #showFrame(Runnable)}
+   */
   @Deprecated
   public void showFrame() {
     showFrame(null);
   }
 
-  // this method is called when there is some opened project (IDE will not open Welcome Frame, but project)
+  /**
+   * This method is called when there is some opened project (IDE will not open Welcome Frame, but project)
+   */
   public IdeFrame showFrame(@Nullable Runnable beforeSetVisible) {
     final IdeFrameImpl frame = new IdeFrameImpl();
     myProjectToFrame.put(null, frame);

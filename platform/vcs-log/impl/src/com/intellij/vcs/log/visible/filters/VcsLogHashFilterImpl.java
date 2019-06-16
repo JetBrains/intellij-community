@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Objects;
 
-@ApiStatus.Internal
 class VcsLogHashFilterImpl implements VcsLogHashFilter {
   @NotNull private final Collection<String> myHashes;
 

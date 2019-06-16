@@ -16,12 +16,11 @@ import org.jetbrains.annotations.Nullable;
 public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler, MultiCharQuoteHandler {
   private final TokenSet myConcatenableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
   private final TokenSet myAppropriateElementTypeForLiteral = TokenSet.orSet(
-    ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET,
-    TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL, JavaTokenType.RAW_STRING_LITERAL,
-                    JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET, JavaTokenType.RBRACE));
+    ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, ElementType.TEXT_LITERALS,
+    TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET, JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL, JavaTokenType.RAW_STRING_LITERAL);
+    super(ElementType.TEXT_LITERALS);
   }
 
   @Override
@@ -42,6 +41,10 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
 
   @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
+    if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      int start = iterator.getStart(), end = iterator.getEnd();
+      return end - start >= 5 && offset >= end - 3;
+    }
     boolean closingQuote = super.isClosingQuote(iterator, offset);
     if (closingQuote) {
       // check escape next
@@ -86,7 +89,11 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @Nullable
   @Override
   public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
-    if (iterator.getTokenType() == JavaTokenType.RAW_STRING_LITERAL) {
+    IElementType tokenType = iterator.getTokenType();
+    if (tokenType == JavaTokenType.TEXT_BLOCK_LITERAL && offset == iterator.getStart() + 3) {
+      return "\"\"\"";
+    }
+    if (tokenType == JavaTokenType.RAW_STRING_LITERAL) {
       CharSequence text = iterator.getDocument().getImmutableCharSequence();
       int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicksSequence(text.subSequence(iterator.getStart(), offset));
       if (isOpeningQuote(iterator, offset - leadingTicsSequence)) {
@@ -101,7 +108,13 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
 
   @Override
   public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull CharSequence closingQuote) {
-    editor.getDocument().insertString(offset, " " + closingQuote);
-    editor.getSelectionModel().setSelection(offset, offset + 1);
+    if (closingQuote.charAt(0) == '`') {
+      editor.getDocument().insertString(offset, " " + closingQuote);
+      editor.getSelectionModel().setSelection(offset, offset + 1);
+    }
+    else {
+      editor.getDocument().insertString(offset, "\n" + closingQuote);
+      editor.getCaretModel().moveToOffset(offset + 1);
+    }
   }
 }

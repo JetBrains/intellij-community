@@ -11,9 +11,18 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
   private final MavenBuildEventProcessor myEventParser;
+  private final boolean myProcessText;
   private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
 
-  public BuildToolConsoleProcessAdapter(MavenBuildEventProcessor eventParser) {myEventParser = eventParser;}
+
+  /**
+   * @param eventParser
+   * @param processText to be removed after IDEA-216278
+   */
+  public BuildToolConsoleProcessAdapter(MavenBuildEventProcessor eventParser, @Deprecated boolean processText) {
+    myEventParser = eventParser;
+    myProcessText = processText;
+  }
 
   @Override
   public void startNotified(@NotNull ProcessEvent event) {
@@ -22,7 +31,9 @@ public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
 
   @Override
   public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-    myDecoder.escapeText(event.getText(), outputType, myEventParser);
+    if (myProcessText) {
+      myDecoder.escapeText(event.getText(), outputType, myEventParser);
+    }
   }
 
   @Override

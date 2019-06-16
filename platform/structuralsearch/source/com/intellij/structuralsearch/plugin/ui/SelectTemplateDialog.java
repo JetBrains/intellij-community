@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
@@ -9,6 +10,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -221,15 +224,22 @@ public class SelectTemplateDialog extends DialogWrapper {
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
     UIUtil.setContent(searchPatternEditor, matchOptions.getSearchPattern());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
+    if (profile != null) {
+      TemplateEditorUtil.setHighlighter(searchPatternEditor, UIUtil.getTemplateContextType(profile));
+    }
     searchPatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
     SubstitutionShortInfoHandler.retrieve(searchPatternEditor).updateEditorInlays();
 
     if (replace) {
-      String replacement = configuration instanceof ReplaceConfiguration
-                    ? configuration.getReplaceOptions().getReplacement()
-                    : configuration.getMatchOptions().getSearchPattern();
+      final String replacement = configuration instanceof ReplaceConfiguration
+                                 ? configuration.getReplaceOptions().getReplacement()
+                                 : configuration.getMatchOptions().getSearchPattern();
 
       UIUtil.setContent(replacePatternEditor, replacement);
+      if (profile != null) {
+        TemplateEditorUtil.setHighlighter(replacePatternEditor, UIUtil.getTemplateContextType(profile));
+      }
       replacePatternEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
       SubstitutionShortInfoHandler.retrieve(replacePatternEditor).updateEditorInlays();
     }

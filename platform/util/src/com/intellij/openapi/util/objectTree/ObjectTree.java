@@ -22,8 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class ObjectTree<T extends Disposable> {
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
 
-  private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet(); // guarded by treeLock
   private final Map<T, ObjectNode<T>> myObject2NodeMap = ContainerUtil.newIdentityTroveMap(); // guarded by treeLock
@@ -88,8 +86,6 @@ public final class ObjectTree<T extends Disposable> {
       checkWasNotAddedAlready(parentNode, childNode);
 
       parentNode.addChild(childNode);
-
-      fireRegistered(childNode.getObject());
     }
   }
 
@@ -253,51 +249,10 @@ public final class ObjectTree<T extends Disposable> {
     return Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
   }
 
-  @TestOnly
-  public boolean isEmpty() {
-    synchronized (treeLock) {
-      return myRootObjects.isEmpty();
-    }
-  }
-
-  @NotNull
-  Set<T> getRootObjects() {
-    synchronized (treeLock) {
-      return myRootObjects;
-    }
-  }
-
-  void addListener(@NotNull ObjectTreeListener listener) {
-    myListeners.add(listener);
-  }
-
-  void removeListener(@NotNull ObjectTreeListener listener) {
-    myListeners.remove(listener);
-  }
-
-  private void fireRegistered(@NotNull T object) {
-    for (ObjectTreeListener each : myListeners) {
-      each.objectRegistered(object);
-    }
-  }
-
-  void fireExecuted(@NotNull T object) {
-    for (ObjectTreeListener each : myListeners) {
-      each.objectExecuted(object);
-    }
-    rememberDisposedTrace(object);
-  }
-
-  private void rememberDisposedTrace(@NotNull T object) {
+  void rememberDisposedTrace(@NotNull T object) {
     synchronized (treeLock) {
       Throwable trace = ourTopmostDisposeTrace.get();
       myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
-    }
-  }
-
-  int size() {
-    synchronized (treeLock) {
-      return myObject2NodeMap.size();
     }
   }
 
@@ -310,7 +265,4 @@ public final class ObjectTree<T extends Disposable> {
     }
   }
 
-  long getModification() {
-    return myModification.get();
-  }
 }

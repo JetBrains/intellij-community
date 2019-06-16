@@ -1487,6 +1487,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
   public static class MyContentPanel extends JPanel implements DataProvider {
     @Nullable private DataProvider myDataProvider;
 
+    /**
+     * @deprecated use {@link MyContentPanel#MyContentPanel(PopupBorder)}
+     */
     @Deprecated
     public MyContentPanel(final boolean resizable, final PopupBorder border, boolean drawMacCorner) {
       this(border);

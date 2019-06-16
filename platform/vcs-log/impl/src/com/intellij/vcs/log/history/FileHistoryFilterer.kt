@@ -226,13 +226,6 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
   }
 
-  private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
-
-  private fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
-    val filter = getStructureFilter(filters) ?: return null
-    return filter.files.singleOrNull()
-  }
-
   private fun getHash(filters: VcsLogFilterCollection): Hash? {
     val fileHistoryFilter = getStructureFilter(filters) as? VcsLogFileHistoryFilter
     if (fileHistoryFilter != null) {
@@ -242,9 +235,16 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
     return revisionFilter?.heads?.singleOrNull()?.hash
   }
-
+  
   companion object {
     private val LOG = Logger.getInstance(FileHistoryFilterer::class.java)
+
+    private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
+
+    fun getFilePath(filters: VcsLogFilterCollection): FilePath? {
+      val filter = getStructureFilter(filters) ?: return null
+      return filter.files.singleOrNull()
+    }
 
     @JvmStatic
     fun createFilters(path: FilePath,

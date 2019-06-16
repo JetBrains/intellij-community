@@ -1,42 +1,32 @@
-package com.intellij.vcs.log.data;
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
-@ApiStatus.Internal
-public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
+class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   @NotNull private final List<String> myBranches;
   @NotNull private final List<Pattern> myPatterns;
 
   @NotNull private final List<String> myExcludedBranches;
   @NotNull private final List<Pattern> myExcludedPatterns;
 
-  public VcsLogBranchFilterImpl(@NotNull List<String> branches,
-                                @NotNull List<Pattern> patterns,
-                                @NotNull List<String> excludedBranches,
-                                @NotNull List<Pattern> excludedPatterns) {
+  VcsLogBranchFilterImpl(@NotNull List<String> branches,
+                         @NotNull List<Pattern> patterns,
+                         @NotNull List<String> excludedBranches,
+                         @NotNull List<Pattern> excludedPatterns) {
     myBranches = branches;
     myPatterns = patterns;
     myExcludedBranches = excludedBranches;
     myExcludedPatterns = excludedPatterns;
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromBranchPatterns(Collection, Set)} or
-   * {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromBranch(String)}
-   */
-  @Deprecated
-  public VcsLogBranchFilterImpl(@NotNull Collection<String> branches, @NotNull Collection<String> excludedBranches) {
-    myBranches = new ArrayList<>(branches);
-    myPatterns = new ArrayList<>();
-    myExcludedBranches = new ArrayList<>(excludedBranches);
-    myExcludedPatterns = new ArrayList<>();
   }
 
   @NotNull

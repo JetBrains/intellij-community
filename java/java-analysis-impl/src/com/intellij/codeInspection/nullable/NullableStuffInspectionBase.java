@@ -419,23 +419,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                      Annotated annotated,
                                                      NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
     if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
-      final PsiAnnotation notNull = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
-      final PsiAnnotation nullable = AnnotationUtil.findAnnotation(field, manager.getNullables());
-      final PsiAnnotation annotation;
       String message = "Not \'";
-      if (annotated.isDeclaredNullable) {
-        message += nullable.getQualifiedName();
-        annotation = nullable;
-      } else {
-        message += notNull.getQualifiedName();
-        annotation = notNull;
-      }
+      PsiAnnotation annotation = Objects.requireNonNull(annotated.isDeclaredNullable ? annotated.nullable : annotated.notNull);
+      message += annotation.getQualifiedName();
       message += "\' but \'" + anno + "\' would be used for code generation.";
       final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
       holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                              message,
                              ProblemHighlightType.WEAK_WARNING,
-                             new ChangeNullableDefaultsFix(notNull, nullable, manager));
+                             new ChangeNullableDefaultsFix(annotated.notNull, annotated.nullable, manager));
       return false;
     }
     return true;
