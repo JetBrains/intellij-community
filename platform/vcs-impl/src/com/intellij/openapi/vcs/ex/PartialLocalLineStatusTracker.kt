@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
@@ -56,6 +56,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun getExcludedFromCommitState(changelistId: String): ExclusionState
 
   fun setExcludedFromCommit(isExcluded: Boolean)
+  fun setExcludedFromCommit(changelistId: String, isExcluded: Boolean)
   fun setExcludedFromCommit(range: Range, isExcluded: Boolean)
   fun setExcludedFromCommit(lines: BitSet, isExcluded: Boolean)
 
@@ -114,7 +115,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   private var hasUndoInCommand: Boolean = false
 
-  private var shouldInitializeWithExcludedFromCommit: Boolean = false
+  private val initialExcludeState = mutableMapOf<ChangeListMarker, Boolean>()
 
   private val undoableActions: WeakList<MyUndoableAction> = WeakList()
 
@@ -455,11 +456,9 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     override fun onUnfreeze() {
       super.onUnfreeze()
 
-      if (shouldInitializeWithExcludedFromCommit) {
-        shouldInitializeWithExcludedFromCommit = false
-        for (block in blocks) {
-          block.excludedFromCommit = true
-        }
+      if (initialExcludeState.isNotEmpty()) {
+        blocks.forEach { block -> initialExcludeState[block.marker]?.let { block.excludedFromCommit = it } }
+        initialExcludeState.clear()
       }
 
       if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@ChangelistsLocalLineStatusTracker)
@@ -678,9 +677,14 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   override fun setExcludedFromCommit(isExcluded: Boolean) {
-    setExcludedFromCommit({ true }, isExcluded)
+    affectedChangeLists.forEach { setExcludedFromCommit(it, isExcluded) }
+  }
 
-    if (!isOperational() || !isExcluded) shouldInitializeWithExcludedFromCommit = isExcluded
+  override fun setExcludedFromCommit(changelistId: String, isExcluded: Boolean) {
+    val marker = ChangeListMarker(changelistId)
+    setExcludedFromCommit({ it.marker == marker }, isExcluded)
+
+    if (!isOperational()) initialExcludeState[marker] = isExcluded
   }
 
   override fun setExcludedFromCommit(range: Range, isExcluded: Boolean) {

@@ -407,7 +407,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
                              @NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       BitSet selectedLines = getLocalSelectedLines(selectedChanges);
 
-      tracker.setExcludedFromCommit(true);
+      tracker.setExcludedFromCommit(myChangelistId, true);
       tracker.setExcludedFromCommit(selectedLines, false);
 
       rediff();
@@ -542,7 +542,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       PartialLocalLineStatusTracker tracker = getPartialTracker();
       if (tracker != null && tracker.isValid()) {
         ExclusionState exclusionState = tracker.getExcludedFromCommitState(myChangelistId);
-        getPartialTracker().setExcludedFromCommit(exclusionState == ExclusionState.ALL_INCLUDED);
+        getPartialTracker().setExcludedFromCommit(myChangelistId, exclusionState == ExclusionState.ALL_INCLUDED);
         refresh();
         rediff();
       }
