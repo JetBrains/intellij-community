@@ -31,8 +31,11 @@ class ChangesViewCommitWorkflowHandler(
   private val changeListManager = ChangeListManager.getInstance(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
 
+  private val inclusionModel = PartialCommitInclusionModel(project)
+
   init {
     Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
+    Disposer.register(this, inclusionModel)
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
@@ -40,6 +43,8 @@ class ChangesViewCommitWorkflowHandler(
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
+    ui.inclusionModel = inclusionModel
+    Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
@@ -89,6 +94,8 @@ class ChangesViewCommitWorkflowHandler(
       val activeChanges = changeListManager.defaultChangeList.changes
       knownActiveChanges = knownActiveChanges.intersect(activeChanges)
     }
+
+    inclusionModel.changeLists = changeLists
   }
 
   fun setCommitState(items: Collection<Any>, force: Boolean) {

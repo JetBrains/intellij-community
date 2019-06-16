@@ -14,9 +14,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
@@ -112,7 +112,6 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     buildLayout()
 
     with(changesView) {
-      setInclusionModel(DefaultInclusionModel(ChangeListChange.HASHING_STRATEGY))
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
       isShowCheckboxes = true
     }
@@ -224,6 +223,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   override fun getIncludedUnversionedFiles(): List<VirtualFile> =
     includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
 
+  override var inclusionModel: InclusionModel?
+    get() = changesView.inclusionModel
+    set(value) {
+      changesView.setInclusionModel(value)
+    }
+
   override fun isInclusionEmpty(): Boolean = changesView.isInclusionEmpty
   override fun getInclusion(): Set<Any> = changesView.includedSet
   override fun clearInclusion() = changesView.clearInclusion()
@@ -247,8 +252,6 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     with(changesView) {
       isShowCheckboxes = false
       setInclusionListener(null)
-      clearInclusion()
-      setInclusionModel(null)
     }
   }
 

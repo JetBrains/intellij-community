@@ -51,6 +51,7 @@ import java.util.Optional;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
+import static com.intellij.util.containers.ContainerUtil.immutableSingletonList;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
@@ -95,7 +96,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       }
     }
 
-    myInclusionModel = new PartialCommitInclusionModel(myProject, myChangeList);
+    myInclusionModel = new PartialCommitInclusionModel(myProject);
     Disposer.register(this, myInclusionModel);
     getViewer().setInclusionModel(myInclusionModel);
     Disposer.register(myInclusionModel, () -> getViewer().setInclusionModel(null));
@@ -225,7 +226,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     updateDisplayedChanges();
     if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.run();
 
-    myInclusionModel.setChangeList(myChangeList);
+    myInclusionModel.setChangeLists(immutableSingletonList(myChangeList));
   }
 
   @Override

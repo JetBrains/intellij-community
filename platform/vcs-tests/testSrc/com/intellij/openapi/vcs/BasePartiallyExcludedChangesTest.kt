@@ -16,7 +16,7 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
     stateHolder.updateExclusionStates()
   }
 
-  protected inner class MyStateHolder : PartiallyExcludedFilesStateHolder<FilePath>(getProject(), DEFAULT.asListNameToId()) {
+  protected inner class MyStateHolder : PartiallyExcludedFilesStateHolder<FilePath>(getProject()) {
     val paths = HashSet<FilePath>()
 
     init {
@@ -26,7 +26,9 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
 
     override val trackableElements: Sequence<FilePath> get() = paths.asSequence()
 
-    override fun findElementFor(tracker: PartialLocalLineStatusTracker): FilePath? {
+    override fun getChangeListId(element: FilePath): String = DEFAULT.asListNameToId()
+
+    override fun findElementFor(tracker: PartialLocalLineStatusTracker, changeListId: String): FilePath? {
       return paths.find { it.virtualFile == tracker.virtualFile }
     }
 

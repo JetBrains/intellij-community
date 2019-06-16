@@ -3,11 +3,13 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.vcs.changes.InclusionModel
 
 interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   var isDefaultCommitActionEnabled: Boolean
   fun setCustomCommitActions(actions: List<AnAction>)
 
+  var inclusionModel: InclusionModel?
   // TODO Looks better to create "interface ItemInclusionModel" to which ChangesTree will delegate
   //  And just pass such model to CommitWorkflowUi instead of adding include-related methods to CommitWorkflowUi directly
   fun isInclusionEmpty(): Boolean
