@@ -26,28 +26,32 @@ import java.util.Locale;
  */
 class GitRebaseEntry {
   private static final Logger LOG = Logger.getInstance(GitRebaseEntry.class);
-  private final String myCommit;
-  private final String mySubject;
-  private Action myAction;
 
-  GitRebaseEntry(String action, final String commit, final String subject) {
+  @NotNull private final String myCommit;
+  @NotNull private final String mySubject;
+  @NotNull private Action myAction;
+
+  GitRebaseEntry(@NotNull String action, @NotNull String commit, @NotNull String subject) {
     this(Action.fromString(action), commit, subject);
   }
 
-  GitRebaseEntry(Action action, String commit, String subject) {
+  GitRebaseEntry(@NotNull Action action, @NotNull String commit, @NotNull String subject) {
     myCommit = commit;
     mySubject = subject;
     myAction = action;
   }
 
+  @NotNull
   public String getCommit() {
     return myCommit;
   }
 
+  @NotNull
   public String getSubject() {
     return mySubject;
   }
 
+  @NotNull
   public Action getAction() {
     return myAction;
   }
