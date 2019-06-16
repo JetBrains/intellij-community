@@ -10,38 +10,38 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class TextMateLexerDataStorage extends ShortBasedStorage {
-  private final TObjectIntHashMap<TextMateElementType> tokenTypesMap;
+  private final TObjectIntHashMap<TextMateElementType> tokenTypeMap;
   private final List<TextMateElementType> tokenTypes;
 
   public TextMateLexerDataStorage() {
     this(new TObjectIntHashMap<>(), new SmartList<>());
   }
 
-  private TextMateLexerDataStorage(@NotNull TObjectIntHashMap<TextMateElementType> tokenTypesMap,
+  private TextMateLexerDataStorage(@NotNull TObjectIntHashMap<TextMateElementType> tokenTypeMap,
                                    @NotNull List<TextMateElementType> tokenTypes) {
     super();
-    this.tokenTypesMap = tokenTypesMap;
+    this.tokenTypeMap = tokenTypeMap;
     this.tokenTypes = tokenTypes;
   }
 
   private TextMateLexerDataStorage(@NotNull short[] data,
-                                   @NotNull TObjectIntHashMap<TextMateElementType> tokenTypesMap,
+                                   @NotNull TObjectIntHashMap<TextMateElementType> tokenTypeMap,
                                    @NotNull List<TextMateElementType> tokenTypes) {
     super(data);
-    this.tokenTypesMap = tokenTypesMap;
+    this.tokenTypeMap = tokenTypeMap;
     this.tokenTypes = tokenTypes;
   }
 
   @Override
   public int packData(IElementType tokenType, int state, boolean isRestartableState) {
     if (tokenType instanceof TextMateElementType) {
-      synchronized (tokenTypesMap) {
-        if (tokenTypesMap.contains(tokenType)) {
-          return tokenTypesMap.get((TextMateElementType)tokenType);
+      synchronized (tokenTypeMap) {
+        if (tokenTypeMap.contains(tokenType)) {
+          return tokenTypeMap.get((TextMateElementType)tokenType);
         }
         int data = tokenTypes.size() + 1;
         tokenTypes.add((TextMateElementType)tokenType);
-        tokenTypesMap.put((TextMateElementType)tokenType, data);
+        tokenTypeMap.put((TextMateElementType)tokenType, data);
         return isRestartableState ? data : -data;
       }
     }
@@ -55,11 +55,11 @@ public class TextMateLexerDataStorage extends ShortBasedStorage {
 
   @Override
   public DataStorage copy() {
-    return new TextMateLexerDataStorage(myData, tokenTypesMap, tokenTypes);
+    return new TextMateLexerDataStorage(myData, tokenTypeMap, tokenTypes);
   }
 
   @Override
   public DataStorage createStorage() {
-    return new TextMateLexerDataStorage(tokenTypesMap, tokenTypes);
+    return new TextMateLexerDataStorage(tokenTypeMap, tokenTypes);
   }
 }
