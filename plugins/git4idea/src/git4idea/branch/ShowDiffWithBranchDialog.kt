@@ -71,7 +71,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 
   override fun getDimensionServiceKey(): String = "ShowDiffWithBranchDialog"
 
-  override fun getPreferredFocusedComponent(): JComponent = mainPanel
+  override fun getPreferredFocusedComponent(): JComponent = mainPanel.preferredFocusComponent
 
   private fun loadDiff() : LoadingResult {
     try {
