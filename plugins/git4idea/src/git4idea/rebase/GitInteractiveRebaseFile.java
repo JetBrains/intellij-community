@@ -87,7 +87,7 @@ class GitInteractiveRebaseFile {
     String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
     try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(myFile), encoding))) {
       for (GitRebaseEntry e : entries) {
-        if (e.getAction() != GitRebaseEntry.Action.SKIP) {
+        if (e.getAction() != GitRebaseEntry.Action.SKIP.INSTANCE) {
           out.println(e.getAction().toString() + " " + e.getCommit() + " " + e.getSubject());
         }
       }

@@ -75,8 +75,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     });
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
-    actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()).withClickCount(1));
-    actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()));
+    actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.getKnownActionsArray()).withClickCount(1));
+    actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.getKnownActionsArray()));
 
     List<AnAction> actions = generateSelectRebaseActionActions();
     for (AnAction action : actions) {
@@ -130,13 +130,13 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       return;
     }
     int i = 0;
-    while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.SKIP) {
+    while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.SKIP.INSTANCE) {
       i++;
     }
     if (i < entries.size()) {
       GitRebaseEntry.Action action = entries.get(i).getAction();
-      if (action == GitRebaseEntry.Action.SQUASH || action == GitRebaseEntry.Action.FIXUP) {
-        setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.name())), myCommitsTable);
+      if (action == GitRebaseEntry.Action.SQUASH.INSTANCE || action == GitRebaseEntry.Action.FIXUP.INSTANCE) {
+        setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.getName())), myCommitsTable);
         setOKActionEnabled(false);
         return;
       }
@@ -158,7 +158,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @NotNull
   private List<AnAction> generateSelectRebaseActionActions() {
-    return ContainerUtil.map(GitRebaseEntry.Action.values(), SetActionAction::new);
+    return ContainerUtil.map(GitRebaseEntry.Action.getKnownActions(), SetActionAction::new);
   }
 
   @Override
