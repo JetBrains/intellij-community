@@ -48,6 +48,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -762,7 +763,8 @@ class LineStatusTrackerManager(
 
         private fun resetExcludedFromCommit() {
           runInEdt {
-            if (!project.isDisposed) getInstanceImpl(project).resetExcludedFromCommitMarkers()
+            // TODO Move this to SingleChangeListCommitWorkflow
+            if (!project.isDisposed && !panel.isNonModalCommit) getInstanceImpl(project).resetExcludedFromCommitMarkers()
           }
         }
       }
