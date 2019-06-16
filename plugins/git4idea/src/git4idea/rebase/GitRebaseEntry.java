@@ -25,30 +25,11 @@ import java.util.Locale;
  * The entry for rebase editor
  */
 class GitRebaseEntry {
-  /**
-   * the logger
-   */
-  private static final Logger log = Logger.getInstance(GitRebaseEntry.class.getName());
-  /**
-   * The commit hash
-   */
+  private static final Logger LOG = Logger.getInstance(GitRebaseEntry.class);
   private final String myCommit;
-  /**
-   * The commit comment subject line
-   */
   private final String mySubject;
-  /**
-   * The action associated with the entry
-   */
   private Action myAction;
 
-  /**
-   * The constructor
-   *
-   * @param action
-   * @param commit  the commit hash
-   * @param subject the commit subject
-   */
   GitRebaseEntry(String action, final String commit, final String subject) {
     this(Action.fromString(action), commit, subject);
   }
@@ -59,65 +40,34 @@ class GitRebaseEntry {
     myAction = action;
   }
 
-  /**
-   * @return the commit hash
-   */
   public String getCommit() {
     return myCommit;
   }
 
-  /**
-   * @return the commit subject
-   */
   public String getSubject() {
     return mySubject;
   }
 
-  /**
-   * @return the action associated with the commit
-   */
   public Action getAction() {
     return myAction;
   }
 
-  /**
-   * @param action a new action to set
-   */
   public void setAction(final Action action) {
     if (action == null) {
-      log.error("The action must not be null");
+      LOG.error("The action must not be null");
     }
     else {
       myAction = action;
     }
   }
 
-
-  /**
-   * The action associated with the commit
-   */
   public enum Action {
-    /**
-     * the pick action
-     */
     PICK("pick", 'p'),
-    /**
-     * the edit action, the user will be offered to alter commit
-     */
     EDIT("edit", 'e'),
-    /**
-     * the skip action
-     */
     SKIP("skip", 's'),
-    /**
-     * the squash action (for two or more commits)
-     */
     SQUASH("squash", 'q'),
-
     REWORD("reword", 'r'),
-
     FIXUP("fixup", 'f');
-
 
     @NotNull private final String myText;
     private final char myMnemonic;
@@ -142,7 +92,7 @@ class GitRebaseEntry {
         return valueOf(actionName.toUpperCase(Locale.ENGLISH));
       }
       catch (IllegalArgumentException e) {
-        log.error(e);
+        LOG.error(e);
         return PICK;
       }
     }
