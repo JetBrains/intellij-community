@@ -24,6 +24,7 @@ import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.history.FileHistoryVisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -128,6 +129,12 @@ public class VisiblePack implements VcsLogDataPack {
 
   @NotNull
   public FilePath getFilePath(int index) {
+    if (FileHistoryVisiblePack.hasPathsInformation(this)) {
+      FilePath path = FileHistoryVisiblePack.filePathOrDefault(this, myVisibleGraph.getRowInfo(index).getCommit());
+      if (path != null) {
+        return path;
+      }
+    }
     return VcsUtil.getFilePath(getRoot(index));
   }
 }

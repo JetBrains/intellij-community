@@ -31,7 +31,7 @@ class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, c
               commitsToPaths: Map<Int, MaybeDeletedFilePath>) : this(dataPack, graph, canRequestMore, filters, FileHistory(commitsToPaths))
 
   override fun getFilePath(rowIndex: Int): FilePath {
-    return filePath(visibleGraph.getRowInfo(rowIndex).commit) ?: FileHistoryFilterer.getFilePath(filters)!!
+    return filePathOrDefault(visibleGraph.getRowInfo(rowIndex).commit)!!
   }
 
   companion object {
@@ -45,7 +45,18 @@ class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, c
       get() = fileHistory.commitsToPathsMap
 
     @JvmStatic
+    fun VcsLogDataPack.hasPathsInformation(): Boolean {
+      if (this !is VisiblePack) return false
+      return this.getAdditionalData<Any>() is FileHistory
+    }
+
+    @JvmStatic
     fun VcsLogDataPack.filePath(commit: Int): FilePath? = this.commitsToPathsMap[commit]?.filePath
+
+    @JvmStatic
+    fun VcsLogDataPack.filePathOrDefault(commit: Int): FilePath? {
+      return this.commitsToPathsMap[commit]?.filePath ?: FileHistoryFilterer.getFilePath(filters)
+    }
 
     @JvmStatic
     fun VcsLogDataPack.isDeletedInCommit(commit: Int): Boolean = this.commitsToPathsMap[commit]?.deleted ?: false
