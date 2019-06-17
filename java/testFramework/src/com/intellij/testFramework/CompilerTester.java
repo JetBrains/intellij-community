@@ -38,7 +38,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.io.FileTreePrinterKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,8 +204,7 @@ public class CompilerTester {
         Path configDir = Paths.get(PathManager.getConfigPath());
         Path macroFilePath = configDir.resolve("options").resolve(JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME);
         if (!Files.exists(macroFilePath)) {
-          String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros +
-                           "\n\n File listing:" + FileTreePrinterKt.getDirectoryTree(configDir);
+          String message = "File " + macroFilePath + " doesn't exist, but user macros defined: " + userMacros;
           // todo find out who deletes this file during tests
           LOG.warn(message);
 
