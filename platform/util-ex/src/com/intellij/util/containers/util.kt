@@ -180,3 +180,31 @@ fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
   return (this as java.util.Collection<E>).toArray(empty)
 }
+
+/**
+ * Given a collection of elements S returns collection of minimal elements M as ordered by [comparator].
+ *
+ * Let S = M ∪ R; M ∩ R = ∅. Then:
+ * - ∀ m1 ∈ M, ∀ m2 ∈ M : m1 = m2;
+ * - ∀ m ∈ M, ∀ r ∈ R : m < r.
+ */
+fun <T> Collection<T>.minimalElements(comparator: Comparator<in T>): Collection<T> {
+  if (isEmpty() || size == 1) return this
+  val result = SmartList<T>()
+  for (item in this) {
+    if (result.isEmpty()) {
+      result.add(item)
+    }
+    else {
+      val comparison = comparator.compare(result[0], item)
+      if (comparison > 0) {
+        result.clear()
+        result.add(item)
+      }
+      else if (comparison == 0) {
+        result.add(item)
+      }
+    }
+  }
+  return result
+}
