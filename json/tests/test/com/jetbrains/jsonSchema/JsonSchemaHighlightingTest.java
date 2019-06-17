@@ -1162,4 +1162,14 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                 "  }\n" +
                 "}");
   }
+
+  public void testCaseInsensitive() throws Exception {
+    doTest("{\n" +
+           "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+           "  \"additionalProperties\": {\n" +
+           "    \"x-intellij-case-insensitive\": true,\n" +
+           "    \"enum\": [\"aa\", \"bb\"]\n" +
+           "  }\n" +
+           "}", "{\"q\": \"aA\", \"r\": \"Bb\", \"s\": <warning>\"aB\"</warning>}");
+  }
 }
