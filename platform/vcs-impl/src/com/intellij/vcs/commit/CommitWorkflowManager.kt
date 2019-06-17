@@ -40,7 +40,8 @@ internal class CommitWorkflowManager(private val project: Project) {
     if (isNonModalCommit.asBoolean()) return true
     if (!appSettings.COMMIT_FROM_LOCAL_CHANGES) return false
 
-    return vcsManager.allActiveVcss.all { it.type == VcsType.distributed }
+    val activeVcses = vcsManager.allActiveVcss
+    return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }
   }
 
   private fun subscribeToChanges() {
@@ -52,7 +53,7 @@ internal class CommitWorkflowManager(private val project: Project) {
       override fun settingsChanged() = updateWorkflow()
     })
 
-    VCS_CONFIGURATION_CHANGED.subscribe(project, VcsListener { runInEdt { updateWorkflow() } })
+    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdt { updateWorkflow() } })
   }
 
   companion object {
