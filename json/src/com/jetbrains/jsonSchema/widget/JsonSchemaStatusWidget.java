@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,15 +47,22 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private static final String JSON_SCHEMA_BAR_OTHER_FILES = "Schema: ";
   private static final String JSON_SCHEMA_TOOLTIP = "JSON Schema: ";
   private static final String JSON_SCHEMA_TOOLTIP_OTHER_FILES = "Validated by JSON Schema: ";
-  private final JsonSchemaService myService;
+  private final NotNullLazyValue<JsonSchemaService> myServiceLazy;
   private static final String ID = "JSONSchemaSelector";
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
 
   JsonSchemaStatusWidget(Project project) {
     super(project);
-    myService = JsonSchemaService.Impl.get(project);
-    myService.registerRemoteUpdateCallback(myUpdateCallback);
-    myService.registerResetAction(myUpdateCallback);
+    myServiceLazy = NotNullLazyValue.createValue(() -> {
+      JsonSchemaService myService = JsonSchemaService.Impl.get(project);
+      myService.registerRemoteUpdateCallback(myUpdateCallback);
+      myService.registerResetAction(myUpdateCallback);
+      return myService;
+    });
+  }
+
+  private JsonSchemaService getService() {
+    return myServiceLazy.getValue();
   }
 
   private final Runnable myUpdateCallback = () -> { update(); myIsNotified.set(false); };
@@ -113,7 +121,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
 
-    Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
+    JsonSchemaService service = getService();
+    Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);
     if (schemaFiles.size() == 0) {
       return getNoSchemaState();
     }
@@ -121,7 +130,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (schemaFiles.size() != 1) {
       final List<VirtualFile> userSchemas = new ArrayList<>();
       if (hasConflicts(userSchemas, file)) {
-        MyWidgetState state = new MyWidgetState(createMessage(schemaFiles, myService,
+        MyWidgetState state = new MyWidgetState(createMessage(schemaFiles, service,
                                                                                                      "<br/>", "There are several JSON Schemas mapped to this file:<br/>",
                                                                                                      ""),
                                                 schemaFiles.size() + " schemas (!)", true);
@@ -136,7 +145,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     VirtualFile schemaFile = schemaFiles.iterator().next();
-    schemaFile = ((JsonSchemaServiceImpl)myService).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
+    schemaFile = ((JsonSchemaServiceImpl)service).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
 
     String tooltip = isJsonFile ? JSON_SCHEMA_TOOLTIP : JSON_SCHEMA_TOOLTIP_OTHER_FILES;
     String bar = isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES;
@@ -165,7 +174,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return state;
     }
 
-    JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
+    JsonSchemaFileProvider provider = service.getSchemaProvider(schemaFile);
     if (provider != null) {
       final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas();
       final String remoteSource = provider.getRemoteSource();
@@ -205,7 +214,9 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
-    return schemaFile != null && myService.isSchemaFile(schemaFile) && myService.isApplicableToFile(schemaFile);
+    if (schemaFile == null) return false;
+    JsonSchemaService service = getService();
+    return service.isSchemaFile(schemaFile) && service.isApplicableToFile(schemaFile);
   }
 
   @Nullable
@@ -284,7 +295,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @NotNull
   private ListPopup doCreatePopup(@NotNull VirtualFile virtualFile, @NotNull Project project, boolean showOnlyEdit) {
-    return JsonSchemaStatusPopup.createPopup(myService, project, virtualFile, showOnlyEdit);
+    return JsonSchemaStatusPopup.createPopup(getService(), project, virtualFile, showOnlyEdit);
   }
 
   @Override
@@ -328,8 +339,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   public void dispose() {
-    myService.unregisterRemoteUpdateCallback(myUpdateCallback);
-    myService.unregisterResetAction(myUpdateCallback);
+    getService().unregisterRemoteUpdateCallback(myUpdateCallback);
+    getService().unregisterResetAction(myUpdateCallback);
     super.dispose();
   }
 
@@ -360,7 +371,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   private boolean hasConflicts(@NotNull Collection<VirtualFile> files, @NotNull VirtualFile file) {
-    List<JsonSchemaFileProvider> providers = ((JsonSchemaServiceImpl)myService).getProvidersForFile(file);
+    List<JsonSchemaFileProvider> providers = ((JsonSchemaServiceImpl)getService()).getProvidersForFile(file);
     for (JsonSchemaFileProvider provider : providers) {
       if (provider.getSchemaType() != SchemaType.userSchema) continue;
       VirtualFile schemaFile = provider.getSchemaFile();
