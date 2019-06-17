@@ -1506,16 +1506,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
     if (element == null) {
-      for (CustomFileTypeFactory factory : CustomFileTypeFactory.EP_NAME.getExtensions()) {
-        type = factory.createFileType(typeElement);
-        if (type != null) {
-          break;
-        }
-      }
-
-      if (type == null) {
-        type = new UserBinaryFileType();
-      }
+      type = new UserBinaryFileType();
     }
     else {
       SyntaxTable table = AbstractFileType.readSyntaxTable(element);
