@@ -7,8 +7,10 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.simple.SimpleDiffChange;
 import com.intellij.diff.tools.simple.SimpleDiffViewer;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.util.DiffGutterRenderer;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Range;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -377,7 +379,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @Override
     protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       boolean hasExcluded = ContainerUtil.or(selectedChanges, MySimpleDiffChange::isExcludedFromCommit);
-      return selectedChanges.isEmpty() || !hasExcluded ? "Exclude Lines from Commit" : "Include Lines into Commit";
+      return !selectedChanges.isEmpty() && !hasExcluded ? "Exclude Lines from Commit" : "Include Lines into Commit";
     }
 
     @Override
