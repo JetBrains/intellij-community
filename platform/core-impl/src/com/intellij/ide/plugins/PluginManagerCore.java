@@ -1064,9 +1064,7 @@ public class PluginManagerCore {
       checkDependants(pluginDescriptor, idToDescriptorMap::get, pluginId -> {
         if (!idToDescriptorMap.containsKey(pluginId)) {
           pluginDescriptor.setEnabled(false);
-          if (!pluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX)) {
-            if (pluginDescriptor.isImplementationDetail()) return true;
-
+          if (!pluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX) && !pluginDescriptor.isImplementationDetail()) {
             faultyDescriptors.add(pluginId.getIdString());
             disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
             String name = pluginDescriptor.getName();
