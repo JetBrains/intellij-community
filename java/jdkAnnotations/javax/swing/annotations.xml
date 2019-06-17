@@ -394,6 +394,9 @@
   <item name="javax.swing.JTree java.awt.Rectangle getPathBounds(javax.swing.tree.TreePath)">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
+  <item name="javax.swing.JTree javax.swing.tree.TreePath getSelectionPath()">
+    <annotation name="org.jetbrains.annotations.Nullable"/>
+  </item>
   <item name="javax.swing.JTree javax.swing.tree.TreePath getPathForLocation(int, int)">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
