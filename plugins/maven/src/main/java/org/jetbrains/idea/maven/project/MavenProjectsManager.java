@@ -108,6 +108,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
+  private final SyncViewManager mySyncViewManager;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
@@ -126,6 +127,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
+    mySyncViewManager = ServiceManager.getService(myProject, SyncViewManager.class);
   }
 
   @Override
@@ -869,19 +871,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
-
-    AtomicBoolean disposed = new AtomicBoolean(false);
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (myProject.isDisposed()) {
-        disposed.set(true);
-        return;
-      }
-      getSyncConsole().startImport(ServiceManager.getService(myProject, SyncViewManager.class), fromAutoImport);
-    });
-    if (disposed.get()) {
-      return Promises.cancelledPromise();
-    }
-
+    getSyncConsole().startImport(mySyncViewManager, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> completeMavenSyncOnImportCompletion(console));
