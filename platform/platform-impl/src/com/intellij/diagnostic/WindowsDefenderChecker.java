@@ -288,8 +288,7 @@ public class WindowsDefenderChecker {
   }
 
   public String getConfigurationInstructionsUrl() {
-    // TODO Provide a better article
-    return "https://intellij-support.jetbrains.com/hc/en-us/articles/360005028939-Slow-startup-on-Windows-splash-screen-appears-in-more-than-20-seconds";
+    return "https://intellij-support.jetbrains.com/hc/en-us/articles/360006298560";
   }
 
   public boolean runExcludePathsCommand(Project project, Collection<Path> paths) {
