@@ -42,7 +42,7 @@ def read_sequence_from_sock(sock):
             result.append(str)
 
         except (socket.error, IOError) as e:
-            print "I/O error({0}): {1} ({2})".format(e.errno, e.strerror, e)
+            print("I/O error({0}): {1} ({2})".format(e.errno, e.strerror, e))
             traceback.print_exception(*sys.exc_info())
             return result
     return result
