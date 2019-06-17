@@ -37,9 +37,21 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
     }
   }
 
-  override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
+  override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean, singleTab : Boolean) {
     val color = (tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
+    val drawUnderline = !singleTab || theme.underlineSingleTab
+    if (!drawUnderline) {
+      // We have to replace 'thick' underline marker with thin 'border' line
+      when (position) {
+        JBTabsPosition.top -> rect.height -= borderThickness
+        JBTabsPosition.bottom -> rect.y += borderThickness
+        JBTabsPosition.left -> rect.width -= borderThickness
+        JBTabsPosition.right -> {
+          rect.x += borderThickness
+        }
+      }
 
+    }
     color?.let {
       g.fill2DRect(rect, it)
     }
@@ -49,9 +61,10 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
         g.fill2DRect(rect, it)
       }
     }
-
-    val underline = underlineRectangle(position, rect, theme.underlineHeight)
-    g.fill2DRect(underline, if(active) theme.underlineColor else theme.inactiveUnderlineColor)
+    if (drawUnderline) {
+      val underline = underlineRectangle(position, rect, theme.underlineHeight)
+      g.fill2DRect(underline, if (active && (!singleTab || theme.underlineSingleTab)) theme.underlineColor else theme.inactiveUnderlineColor)
+    }
   }
 
   override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {

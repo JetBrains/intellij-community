@@ -32,18 +32,18 @@ interface JBTabPainter {
   fun fillBackground(g: Graphics2D, rect: Rectangle)
 
   fun paintTab(position: JBTabsPosition,
-                        g: Graphics2D,
-                        bounds: Rectangle,
-                        borderThickness: Int,
-                        tabColor: Color?,
-                        hovered: Boolean)
+               g: Graphics2D,
+               bounds: Rectangle,
+               borderThickness: Int,
+               tabColor: Color?,
+               hovered: Boolean)
 
   fun paintSelectedTab(position: JBTabsPosition,
-                                g: Graphics2D,
-                                rect: Rectangle,
-                                borderThickness: Int,
-                                tabColor: Color?,
-                                active: Boolean,
-                                hovered: Boolean)
-
+                       g: Graphics2D,
+                       rect: Rectangle,
+                       borderThickness: Int,
+                       tabColor: Color?,
+                       active: Boolean,
+                       hovered: Boolean,
+                       singleTab: Boolean)
 }

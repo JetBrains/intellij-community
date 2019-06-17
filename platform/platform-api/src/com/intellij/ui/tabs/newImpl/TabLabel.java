@@ -499,7 +499,7 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     if (isSelected) {
       painter
         .paintSelectedTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isActiveTabs(myInfo),
-                          myTabs.isHoveredTab(this));
+                          myTabs.isHoveredTab(this), myTabs.getVisibleInfos().size() == 1);
     }
     else {
       painter.paintTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isHoveredTab(this));

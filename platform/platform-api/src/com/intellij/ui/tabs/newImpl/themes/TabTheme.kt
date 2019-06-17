@@ -17,6 +17,8 @@ interface TabTheme {
   val hoverInactiveBackground: Color?
   val underlinedTabInactiveBackground: Color?
   val underlinedTabInactiveForeground: Color?
+  val underlineSingleTab: Boolean
+    get() = true
 }
 
 open class DefaultTabTheme : TabTheme {
@@ -96,4 +98,6 @@ class DebuggerTabTheme : DefaultTabTheme() {
     get() = JBUI.CurrentTheme.DebuggerTabs.underlineHeight()
   override val underlinedTabBackground: Color?
     get() = JBUI.CurrentTheme.DebuggerTabs.underlinedTabBackground()
+  override val underlineSingleTab: Boolean
+    get() = false
 }
