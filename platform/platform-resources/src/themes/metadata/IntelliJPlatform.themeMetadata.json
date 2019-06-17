@@ -15,27 +15,12 @@
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
     {
-      "key": "CompletionPopup.background"
-    },
-    {
       "key": "CompletionPopup.foreground",
       "description": "Gray text at the right border. Completion suggestions foreground is Label.foreground."
     },
     {
-      "key": "CompletionPopup.infoForeground",
-      "description": "Gray info text after each completion suggestion (not the gray text on the right)"
-    },
-    {
-      "key": "CompletionPopup.matchForeground",
-      "description": "The string in the completion suggestions list that matches the entered string "
-    },
-    {
-      "key": "CompletionPopup.matchSelectionForeground",
-      "description": "The string in the completion suggestions list that matches the entered string when selected"
-    },
-    {
-      "key": "CompletionPopup.nonFocusedState",
-      "description": "Show completion popup as grayed-out until focused. Boolean. Default is \"true\""
+      "key": "CompletionPopup.nonFocusedMask",
+      "description": "Color mask with alpha to draw over not focused completion list"
     },
     {
       "key": "CompletionPopup.selectionBackground"
@@ -45,12 +30,6 @@
     },
     {
       "key": "CompletionPopup.selectionInactiveBackground"
-    },
-    {
-      "key": "CompletionPopup.selectionInactiveInfoForeground"
-    },
-    {
-      "key": "CompletionPopup.selectionInfoForeground"
     },
     {
       "key": "Counter.background",
