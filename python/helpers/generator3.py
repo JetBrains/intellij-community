@@ -497,6 +497,29 @@ def read_required_gen_version_file():
     return result
 
 
+class GenerationStatus(object):
+    FAILED = 'FAILED'
+    """
+    Either generation of a skeleton was attempted and failed or cache markers and/or .blacklist indicate that
+    it was impossible to generate it for the current version of the generator last time.
+    """
+
+    GENERATED = 'GENERATED'
+    """
+    Skeleton was successfully generated anew and copied both to the cache and a per-sdk skeletons directory.
+    """
+
+    COPIED = 'COPIED'
+    """
+    Skeleton was successfully copied from the cache to a per-sdk skeletons directory.
+    """
+
+    UP_TO_DATE = 'UP_TO_DATE'
+    """
+    Existing skeleton is up to date and, therefore, wasn't touched.
+    """
+
+
 # command-line interface
 # noinspection PyBroadException
 def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
@@ -520,7 +543,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
         # At the moment this is actually enforced on Java-side
         if is_standalone_mode() and not should_update_skeleton(sdk_skeletons_dir, name, mod_file_name):
-            return True
+            return GenerationStatus.UP_TO_DATE
 
         if should_update_skeleton(mod_cache_dir, name, mod_file_name):
             note('Updating cache for %s at %r', name, mod_cache_dir)
@@ -578,10 +601,12 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                                         sdk_dir=sdk_skeletons_dir)
                         finally:
                             action("closing %r", mod_cache_dir)
+            return GenerationStatus.GENERATED
         else:
             # Copy entire skeletons directory if nothing needs to be updated
             say('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
             copy_skeletons(mod_cache_dir, sdk_skeletons_dir, get_module_origin(mod_file_name, name))
+            return GenerationStatus.COPIED
     except:
         exctype, value = sys.exc_info()[:2]
         msg = "Failed to process %r while %s: %s"
@@ -592,8 +617,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                 import traceback
                 traceback.print_exc(file=sys.stderr)
             raise
-        return False
-    return True
+        return GenerationStatus.FAILED
 
 
 def get_module_origin(mod_path, mod_qname):
@@ -738,7 +762,12 @@ if __name__ == "__main__":
             names.remove('__main__')  # we don't want ourselves processed
         ok = True
         for name in names:
-            ok = process_one(name, None, True, subdir) and ok
+            status = process_one(name, None, True, subdir)
+            # Assume that if a skeleton for one built-in module was copied, all of them were copied.
+            if status == GenerationStatus.COPIED:
+                break
+            elif status == GenerationStatus.FAILED:
+                ok = False
         if not ok:
             sys.exit(1)
 
@@ -780,7 +809,7 @@ if __name__ == "__main__":
             # We take module name from import statement
             name = get_namespace_by_name(name)
 
-        if not process_one(name, mod_file_name, False, subdir):
+        if process_one(name, mod_file_name, False, subdir) == GenerationStatus.FAILED:
             sys.exit(1)
 
     say("Generation completed in %d ms", timer.elapsed())
