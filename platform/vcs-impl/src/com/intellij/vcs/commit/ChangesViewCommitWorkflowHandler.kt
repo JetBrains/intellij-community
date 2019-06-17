@@ -65,12 +65,11 @@ class ChangesViewCommitWorkflowHandler(
   private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !isCommitEmpty()
 
   override fun vcsesChanged() {
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
-    updateDefaultCommitActionEnabled()
-
     initCommitHandlers()
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
 
+    updateDefaultCommitActionEnabled()
+    ui.defaultCommitActionName = getCommitActionName()
     ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
@@ -140,7 +139,7 @@ class ChangesViewCommitWorkflowHandler(
   fun activate(): Boolean = ui.activate()
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
-    ui.showCommitOptions(ensureCommitOptions(), isFromToolbar, dataContext)
+    ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
 
   override fun inclusionChanged() {
     val inclusion = inclusionModel.getInclusion()
@@ -180,6 +179,8 @@ class ChangesViewCommitWorkflowHandler(
 
       workflow.clearCommitContext()
       initCommitHandlers()
+
+      ui.defaultCommitActionName = getCommitActionName() // to remove "Amend" prefix if any
     }
   }
 }

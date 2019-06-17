@@ -200,8 +200,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     pathToSelect?.let { selectPath(changesView, it, false) }
   }
 
-  override fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel { defaultCommitActionName }.apply {
+  override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
+    val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
       isFocusCycleRoot = true
 
