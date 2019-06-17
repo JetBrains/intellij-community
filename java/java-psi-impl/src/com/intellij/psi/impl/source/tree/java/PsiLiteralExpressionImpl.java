@@ -224,8 +224,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public boolean isValidHost() {
-    IElementType type = getLiteralElementType();
-    return type == JavaTokenType.CHARACTER_LITERAL || ElementType.STRING_LITERALS.contains(type);
+    return ElementType.TEXT_LITERALS.contains(getLiteralElementType());
   }
 
   @Override
