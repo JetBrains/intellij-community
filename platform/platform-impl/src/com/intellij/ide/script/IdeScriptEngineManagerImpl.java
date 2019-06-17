@@ -3,6 +3,9 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -53,10 +56,7 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     ClassLoader l = ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE);
     ScriptEngineFactory engineFactory = getFactories().get(engineInfo);
     if (engineFactory == null) return null;
-    return ClassLoaderUtil.computeWithClassLoader(l, () -> {
-      ScriptEngine engine = engineFactory.getScriptEngine();
-      return createIdeScriptEngine(engine);
-    });
+    return ClassLoaderUtil.computeWithClassLoader(l, () -> createIdeScriptEngine(engineFactory));
   }
 
   @Nullable
@@ -65,8 +65,7 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     Map<EngineInfo, ScriptEngineFactory> state = getFactories();
     for (EngineInfo info : state.keySet()) {
       if (!info.engineName.equals(engineName)) continue;
-      return ClassLoaderUtil.computeWithClassLoader(loader, () ->
-        createIdeScriptEngine(state.get(info).getScriptEngine()));
+      return ClassLoaderUtil.computeWithClassLoader(loader, () -> createIdeScriptEngine(state.get(info)));
     }
     return null;
   }
@@ -77,8 +76,7 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     Map<EngineInfo, ScriptEngineFactory> state = getFactories();
     for (EngineInfo info : state.keySet()) {
       if (!info.fileExtensions.contains(extension)) continue;
-      return ClassLoaderUtil.computeWithClassLoader(loader, () ->
-        createIdeScriptEngine(state.get(info).getScriptEngine()));
+      return ClassLoaderUtil.computeWithClassLoader(loader, () -> createIdeScriptEngine(state.get(info)));
     }
     return null;
   }
@@ -119,12 +117,18 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   @Nullable
-  private static IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngine engine) {
-    if (engine == null) return null;
-    return redirectOutputToLog(new EngineImpl(engine));
+  private static IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngineFactory scriptEngineFactory) {
+    if (scriptEngineFactory == null) return null;
+    EngineImpl wrapper = new EngineImpl(scriptEngineFactory.getScriptEngine());
+    redirectOutputToLog(wrapper);
+
+    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(scriptEngineFactory.getClass());
+    String eventId = pluginInfo.isSafeToReport() ? scriptEngineFactory.getClass().getName() : "third.party";
+    FUCounterUsageLogger.getInstance().logEvent("ide.script.engine", eventId);
+    return wrapper;
   }
 
-  private static IdeScriptEngine redirectOutputToLog(IdeScriptEngine engine) {
+  private static void redirectOutputToLog(@NotNull IdeScriptEngine engine) {
     class Log extends Writer {
       final boolean error;
       Log(boolean error) {this.error = error;}
@@ -139,7 +143,6 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
     engine.setStdOut(new Log(false));
     engine.setStdErr(new Log(true));
-    return engine;
   }
 
   static class EngineImpl implements IdeScriptEngine {
