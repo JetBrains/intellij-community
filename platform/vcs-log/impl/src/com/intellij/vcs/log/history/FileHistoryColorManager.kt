@@ -4,7 +4,7 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogDataPack
-import com.intellij.vcs.log.history.FileHistoryVisiblePack.Companion.filePaths
+import com.intellij.vcs.log.history.FileHistoryPaths.filePaths
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcsUtil.VcsFileUtil
@@ -31,7 +31,7 @@ class FileHistoryColorManager(private val root: VirtualFile,
       for (path in pathsFromPack) {
         if (!newPaths.contains(path)) newPaths.add(path)
       }
-      
+
       baseColorManager = VcsLogColorManagerImpl(newPaths)
     }
   }

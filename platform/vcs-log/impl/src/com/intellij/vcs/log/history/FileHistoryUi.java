@@ -125,14 +125,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   public FilePath getPathInCommit(@NotNull Hash hash) {
     if (myPath.isDirectory()) return myPath;
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
-    return FileHistoryVisiblePack.filePath(myVisiblePack, commitIndex);
+    return FileHistoryPaths.filePath(myVisiblePack, commitIndex);
   }
 
   private boolean isFileDeletedInCommit(@NotNull Hash hash) {
     if (myPath.isDirectory()) return false;
 
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
-    return FileHistoryVisiblePack.isDeletedInCommit(myVisiblePack, commitIndex);
+    return FileHistoryPaths.isDeletedInCommit(myVisiblePack, commitIndex);
   }
 
   @NotNull
