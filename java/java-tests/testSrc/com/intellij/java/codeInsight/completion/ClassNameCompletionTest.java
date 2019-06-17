@@ -296,6 +296,11 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     doJavaTest('\n');
   }
 
+  public void testNoInnerInaccessibleClass() {
+    myFixture.addClass("package foo; interface Intf { interface InnerInterface {} }");
+    doAntiTest();
+  }
+
   private void doJavaTest(char toType) {
     final String path = "/nameCompletion/java";
     myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");
