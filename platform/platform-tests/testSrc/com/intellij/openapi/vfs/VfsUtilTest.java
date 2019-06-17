@@ -371,6 +371,30 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     }
   }
 
+  @Test
+  public void asyncRefreshInModalTransactionCompletesWithinIt() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      File temp = myTempDir.newFolder();
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+      assertThat(vTemp.getChildren()).isEmpty();
+
+      assertTrue(new File(temp, "x.txt").createNewFile());
+
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          assertFalse(ApplicationManager.getApplication().isDispatchThread());
+
+          Semaphore semaphore = new Semaphore(1);
+          vTemp.refresh(true, true, semaphore::up);
+          assertTrue(semaphore.waitFor(10_000));
+          assertThat(vTemp.getChildren()).hasSize(1);
+        }
+      }));
+
+    });
+  }
+
   @Test(timeout = 20_000)
   public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh() {
     EdtTestUtil.runInEdtAndWait(() -> {
