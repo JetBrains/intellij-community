@@ -60,6 +60,21 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-34945
+  public void testOverridingFinalMethodWithoutQualifiedName() {
+    doTestByText("from typing_extensions import final\n" +
+                 "def output():\n" +
+                 "    class Output:\n" +
+                 "        @final\n" +
+                 "        def foo(self):\n" +
+                 "            pass\n" +
+                 "    return Output\n" +
+                 "r = output()\n" +
+                 "class SubClass(r):\n" +
+                 "    def <warning descr=\"'Output.foo' is marked as '@final' and should not be overridden\">foo</warning>(self):\n" +
+                 "        pass");
+  }
+
+  // PY-34945
   public void testOverridingOverloadedFinalMethod() {
     doMultiFileTest();
 

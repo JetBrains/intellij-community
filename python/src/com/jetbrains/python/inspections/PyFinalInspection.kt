@@ -67,9 +67,12 @@ class PyFinalInspection : PyInspection() {
       if (cls != null) {
         PySuperMethodsSearch
           .search(node, myTypeEvalContext)
-          .firstOrNull { it is PyFunction && isFinal(it) }
+          .asSequence()
+          .filterIsInstance<PyFunction>()
+          .firstOrNull { isFinal(it) }
           ?.let {
-            registerProblem(node.nameIdentifier, "'${(it as PyFunction).qualifiedName}' is marked as '@final' and should not be overridden")
+            val qualifiedName = it.qualifiedName ?: it.containingClass?.name + "." + it.name
+            registerProblem(node.nameIdentifier, "'$qualifiedName' is marked as '@final' and should not be overridden")
           }
 
         if (!PyiUtil.isInsideStub(node)) {
