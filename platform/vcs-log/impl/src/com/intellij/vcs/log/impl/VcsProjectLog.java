@@ -24,11 +24,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -50,8 +50,8 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final VcsLogTabsProperties myUiProperties;
   @NotNull private final VcsLogTabsManager myTabsManager;
 
-  @NotNull
-  private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
+  @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
+  @NotNull private final Disposable myMappingChangesDisposable = Disposer.newDisposable();
   private int myRecreatedLogCount = 0;
 
   public VcsProjectLog(@NotNull Project project,
@@ -61,6 +61,12 @@ public class VcsProjectLog implements Disposable {
     myMessageBus = messageBus;
     myUiProperties = uiProperties;
     myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
+
+    Disposer.register(this, myMappingChangesDisposable);
+  }
+
+  private void subscribeToMappingsChanges() {
+    myMessageBus.connect(myMappingChangesDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::recreateLog);
   }
 
   @Nullable
@@ -209,8 +215,7 @@ public class VcsProjectLog implements Disposable {
       VcsProjectLog projectLog = getInstance(project);
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        MessageBusConnection connection = project.getMessageBus().connect(project);
-        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
+        projectLog.subscribeToMappingsChanges();
         if (projectLog.hasDvcsRoots()) {
           projectLog.createLog(false);
         }
