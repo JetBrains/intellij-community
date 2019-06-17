@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
 /**
  * @author Dmitry Batkovich
  */
-public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTestCase {
+public class CustomResourceBundleTest extends BasePlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {

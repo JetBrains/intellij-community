@@ -23,14 +23,14 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlPropertiesTest extends BasePlatformTestCase {
 
   public void testXmlProperties() {
     myFixture.configureByFile("foo.xml");

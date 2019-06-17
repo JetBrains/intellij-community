@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.plugins.textmate.configuration.BundleConfigBean;
@@ -23,7 +23,7 @@ import static com.intellij.util.containers.ContainerUtil.newHashSet;
  * So use HACKED extensions in your tests.
  * <p/>
  */
-public abstract class TextMateAcceptanceTestCase extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
   private static final Set<String> loadingBundles = newHashSet(TestUtil.MARKDOWN_TEXTMATE, TestUtil.HTML, TestUtil.LATEX, TestUtil.PHP, TestUtil.BAT, TestUtil.JAVASCRIPT);
 
   @Override

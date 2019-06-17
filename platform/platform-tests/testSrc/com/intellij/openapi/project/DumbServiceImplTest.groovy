@@ -17,7 +17,7 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull
 /**
  * @author peter
  */
-class DumbServiceImplTest extends LightPlatformCodeInsightFixtureTestCase {
+class DumbServiceImplTest extends BasePlatformTestCase {
 
   void "test runWhenSmart is executed synchronously in smart mode"() {
     int invocations = 0

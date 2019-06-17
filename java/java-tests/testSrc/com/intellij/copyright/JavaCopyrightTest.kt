@@ -2,11 +2,11 @@
 package com.intellij.copyright
 
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightFactory
 
-class JavaCopyrightTest : LightPlatformCodeInsightFixtureTestCase() {
+class JavaCopyrightTest : BasePlatformTestCase() {
   fun testMultipleCopyrightsInOneFile() {
     myFixture.configureByText(JavaFileType.INSTANCE,
                               """

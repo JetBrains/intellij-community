@@ -3,7 +3,7 @@ package com.intellij.testFramework.fixtures;
 
 /**
  * @deprecated Use {@link LightJavaCodeInsightFixtureTestCase} for Java-dependent tests,
- * {@link LightPlatformCodeInsightFixtureTestCase} for non-Java dependent tests
+ * {@link BasePlatformTestCase} for non-Java dependent tests
  */
 public abstract class LightCodeInsightFixtureTestCase extends LightJavaCodeInsightFixtureTestCase {
 }

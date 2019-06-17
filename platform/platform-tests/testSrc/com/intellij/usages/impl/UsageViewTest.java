@@ -33,7 +33,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
@@ -48,7 +48,7 @@ import javax.swing.tree.TreeNode;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
+public class UsageViewTest extends BasePlatformTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
     // sick and tired of hunting tests leaking documents
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();

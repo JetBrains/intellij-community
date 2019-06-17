@@ -17,9 +17,9 @@ package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-public abstract class SpellcheckerInspectionTestCase extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class SpellcheckerInspectionTestCase extends BasePlatformTestCase {
   @Override
   protected boolean isCommunity() {
     return true;

@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-public abstract class YAMLPasteTest extends LightPlatformCodeInsightFixtureTestCase {
+public abstract class YAMLPasteTest extends BasePlatformTestCase {
   private static final String ZERO_INDENT_SAMPLE = "key1:\n" +
                                                    "  subKey: val1\n" +
                                                    "\n" +

@@ -20,13 +20,13 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class ResourceBundleEditorInsertManagerTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ResourceBundleEditorInsertManagerTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

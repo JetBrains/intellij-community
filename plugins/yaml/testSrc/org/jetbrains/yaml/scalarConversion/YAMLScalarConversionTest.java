@@ -9,7 +9,7 @@ import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.yaml.YAMLParserDefinition;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.impl.YAMLPlainTextImpl;
@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public class YAMLScalarConversionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLScalarConversionTest extends BasePlatformTestCase {
   
   @Override
   protected String getTestDataPath() {

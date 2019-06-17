@@ -6,12 +6,12 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author peter
  */
-public class NextPrevWordTest extends LightPlatformCodeInsightFixtureTestCase {
+public class NextPrevWordTest extends BasePlatformTestCase {
 
   public void testNextWordFromPreLastPosition() {
     myFixture.configureByText("a.txt", "<foo<caret>>");
