@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.application.options.CodeStyle
@@ -15,7 +15,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
 import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.IncorrectOperationException
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
@@ -3426,7 +3425,7 @@ enum Foo {
     doMethodTest(
       "        for (Object o : new Object[]{}) {\n" +
       "/*\n" +
-      "        *\n" +
+      "        *\t\n" +
       " \t\t\t\t\t            */\n" +
       "        }\n",
       "for (Object o : new Object[]{}) {\n" +
