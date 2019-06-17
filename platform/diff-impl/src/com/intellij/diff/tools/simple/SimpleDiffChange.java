@@ -231,17 +231,6 @@ public class SimpleDiffChange {
   }
 
   //
-  // Change applying
-  //
-
-  public boolean isSelectedByLine(int line, @NotNull Side side) {
-    int line1 = getStartLine(side);
-    int line2 = getEndLine(side);
-
-    return DiffUtil.isSelectedByLine(line, line1, line2);
-  }
-
-  //
   // Helpers
   //
 
