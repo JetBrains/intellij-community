@@ -8,11 +8,11 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AbstractMethodWithMissingImplementationsInspectionTest extends LightInspectionTestCase {
+public class AbstractMethodWithMissingImplementationsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAbstractMethodWithMissingImplementations() {
     doTest();

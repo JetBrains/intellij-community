@@ -3,9 +3,9 @@ package org.editorconfig.language
 
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
 import com.intellij.testFramework.PlatformTestUtil.expandAll
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class EditorConfigStructureViewTest : LightCodeInsightFixtureTestCase() {
+class EditorConfigStructureViewTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath() =
     "/plugins/editorconfig/testData/org/editorconfig/language/structureview/"
 

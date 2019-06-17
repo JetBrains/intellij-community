@@ -6,10 +6,10 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class PropertiesFileRenameReferenceTest extends LightCodeInsightFixtureTestCase {
+public class PropertiesFileRenameReferenceTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

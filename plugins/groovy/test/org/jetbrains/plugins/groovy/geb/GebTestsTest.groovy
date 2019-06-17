@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.geb
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_1_6
 
-class GebTestsTest extends LightCodeInsightFixtureTestCase {
+class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final TestLibrary LIB_GEB = new RepositoryTestLibrary(
     'org.codehaus.geb:geb-core:0.7.2',

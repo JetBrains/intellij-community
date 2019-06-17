@@ -16,13 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("CollectionAddedToSelf")
-public class CollectionAddedToSelfInspectionTest extends LightInspectionTestCase {
+public class CollectionAddedToSelfInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new CollectionAddedToSelfInspection();

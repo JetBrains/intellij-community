@@ -16,14 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousSystemArraycopyInspectionTest extends LightInspectionTestCase {
+public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspectionTestCase {
 
   public void testStaticImport() {
     doTest("import static java.lang.System.arraycopy;" +

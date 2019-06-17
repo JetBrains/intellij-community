@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi.resolve;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,7 +26,7 @@ import com.intellij.psi.impl.include.FileIncludeManager;
 /**
  * @author cdr
  */
-public class FilePathResolveTest extends CodeInsightTestCase{
+public class FilePathResolveTest extends JavaCodeInsightTestCase {
   private static final String BASE_PATH = "/psi/resolve/filePath/";
 
   public void testC1() throws Exception{

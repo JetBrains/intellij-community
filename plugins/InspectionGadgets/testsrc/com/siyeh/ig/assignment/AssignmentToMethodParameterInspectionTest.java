@@ -1,12 +1,12 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author bas
  */
-public class AssignmentToMethodParameterInspectionTest extends LightInspectionTestCase {
+public class AssignmentToMethodParameterInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAssignmentToMethodParameterMissesCompoundAssign() {
     myFixture.enableInspections(new AssignmentToMethodParameterInspection());

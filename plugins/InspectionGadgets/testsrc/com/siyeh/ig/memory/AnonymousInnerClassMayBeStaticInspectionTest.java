@@ -16,13 +16,13 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AnonymousInnerClassMayBeStaticInspectionTest extends LightInspectionTestCase {
+public class AnonymousInnerClassMayBeStaticInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAnonymousInnerClassMayBeStatic() { doTest(); }
 

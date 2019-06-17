@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * @author peter
  */
 @SkipSlowTestLocally
-public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
+public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {

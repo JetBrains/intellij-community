@@ -17,13 +17,13 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.generation.GenerateDelegateHandler;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
-public class DelegateMethodsTest extends LightCodeInsightTestCase {
+public class DelegateMethodsTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/delegateMethods/";
 
   @NotNull

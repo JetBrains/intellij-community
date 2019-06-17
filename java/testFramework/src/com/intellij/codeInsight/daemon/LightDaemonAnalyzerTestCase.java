@@ -16,7 +16,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.HighlightTestInfo;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import gnu.trove.TIntArrayList;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCase {
+public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTestCase {
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
 
   @Override

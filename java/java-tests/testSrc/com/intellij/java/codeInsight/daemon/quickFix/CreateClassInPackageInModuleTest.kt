@@ -6,12 +6,12 @@ package com.intellij.java.codeInsight.daemon.quickFix
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix
 import com.intellij.psi.PsiJavaFile
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class CreateClassInPackageInModuleTest : LightCodeInsightFixtureTestCase() {
+class CreateClassInPackageInModuleTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testExportsMissingDir() = doTestMissingDir("exports")
   fun testOpensMissingDir() = doTestMissingDir("opens")

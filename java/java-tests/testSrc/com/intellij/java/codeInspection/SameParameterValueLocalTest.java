@@ -19,9 +19,9 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.psi.PsiModifier;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class SameParameterValueLocalTest extends InspectionTestCase {
+public class SameParameterValueLocalTest extends JavaInspectionTestCase {
   private final SameParameterValueInspection myGlobalTool = new SameParameterValueInspection();
   private LocalInspectionTool myTool = myGlobalTool.getSharedLocalInspectionTool();
 

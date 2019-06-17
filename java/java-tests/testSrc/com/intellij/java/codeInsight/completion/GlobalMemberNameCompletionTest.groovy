@@ -23,14 +23,14 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.ClassConditionKey
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
 @CompileStatic
-class GlobalMemberNameCompletionTest extends LightCodeInsightFixtureTestCase {
+class GlobalMemberNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testMethodName() throws Exception {
     myFixture.addClass("""

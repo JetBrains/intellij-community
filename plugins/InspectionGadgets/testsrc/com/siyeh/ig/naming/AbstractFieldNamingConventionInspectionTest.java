@@ -2,9 +2,9 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public abstract class AbstractFieldNamingConventionInspectionTest extends LightInspectionTestCase {
+public abstract class AbstractFieldNamingConventionInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected Class<? extends InspectionProfileEntry> getInspectionClass() {
     return FieldNamingConventionInspection.class;

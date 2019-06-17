@@ -16,13 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NullArgumentToVariableArgMethodInspectionTest extends LightInspectionTestCase {
+public class NullArgumentToVariableArgMethodInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNullArgumentToVariableArgMethod() {
     doTest();

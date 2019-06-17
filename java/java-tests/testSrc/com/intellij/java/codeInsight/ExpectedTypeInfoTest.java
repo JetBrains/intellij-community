@@ -21,10 +21,10 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ExpectedTypeInfoTest extends LightCodeInsightTestCase {
+public class ExpectedTypeInfoTest extends LightJavaCodeInsightTestCase {
   public void testIntersectStrictStrict1() {
     ExpectedTypeInfo info1 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_STRICTLY);
     ExpectedTypeInfo info2 = createInfo("java.lang.Exception", ExpectedTypeInfo.TYPE_STRICTLY);

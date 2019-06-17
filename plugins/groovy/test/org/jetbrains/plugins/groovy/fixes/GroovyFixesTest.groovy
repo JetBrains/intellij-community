@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.fixes
 
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection
 import org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
-class GroovyFixesTest extends LightCodeInsightFixtureTestCase {
+class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testSuppressForIfStatement() throws Throwable {
     myFixture.enableInspections new GroovyConstantIfStatementInspection()

@@ -6,9 +6,9 @@ import com.intellij.codeInspection.visibility.VisibilityInspection
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class Java9AccessCanBeTightenedTest : LightCodeInsightFixtureTestCase() {
+class Java9AccessCanBeTightenedTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/java9AccessCanBeTightened/"
 

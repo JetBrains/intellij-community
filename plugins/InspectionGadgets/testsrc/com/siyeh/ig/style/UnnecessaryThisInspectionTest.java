@@ -1,9 +1,9 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class UnnecessaryThisInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimpleField() {
     doTest("class A {" +

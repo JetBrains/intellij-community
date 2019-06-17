@@ -1,7 +1,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Etienne Studer
  * @author Hamlet D'Arcy
  */
-public class PointlessNullCheckInspectionTest extends LightInspectionTestCase {
+public class PointlessNullCheckInspectionTest extends LightJavaInspectionTestCase {
 
   public void testPointlessNullCheck() {
     doTest();

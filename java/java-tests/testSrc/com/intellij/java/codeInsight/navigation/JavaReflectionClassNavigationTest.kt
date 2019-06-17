@@ -17,7 +17,7 @@ package com.intellij.java.codeInsight.navigation
 
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
@@ -74,7 +74,7 @@ class Java9ReflectionClassNavigationTest : JavaReflectionClassNavigationTestBase
   }
 }
 
-abstract class JavaReflectionClassNavigationTestBase : LightCodeInsightFixtureTestCase() {
+abstract class JavaReflectionClassNavigationTestBase : LightJavaCodeInsightFixtureTestCase() {
   protected fun doTest(className: String, usageFormatter: (String) -> String = { "Class.forName(\"$it\")" }) {
     val caretPos = className.indexOf("<caret>")
     val atCaret: String

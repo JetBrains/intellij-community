@@ -20,13 +20,13 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlText
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
 import org.jetbrains.plugins.groovy.GroovyLanguage
 /**
  * @author peter
  */
-class InjectedGroovyTest extends LightCodeInsightFixtureTestCase {
+class InjectedGroovyTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testTabMethodParentheses() {
     myFixture.configureByText("a.xml", """<groovy>

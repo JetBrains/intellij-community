@@ -17,13 +17,13 @@ package com.siyeh.ig.javabeans;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousGetterSetterInspectionTest extends LightInspectionTestCase {
+public class SuspiciousGetterSetterInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSuspiciousGetterSetter() {
     final JavaCodeStyleSettings settings =

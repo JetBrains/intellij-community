@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
+class GroovyActionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + 'groovy/actions/'
 

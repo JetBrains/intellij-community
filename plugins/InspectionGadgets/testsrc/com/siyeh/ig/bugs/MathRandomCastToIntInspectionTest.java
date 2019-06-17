@@ -16,13 +16,13 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MathRandomCastToIntInspectionTest extends LightInspectionTestCase {
+public class MathRandomCastToIntInspectionTest extends LightJavaInspectionTestCase {
 
   public void testMathRandomCastToInt() {
     doTest();

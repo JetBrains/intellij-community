@@ -19,12 +19,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsightFixtureTestCase {
+public class RedundantLambdaParameterTypeInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String ourIntentionName = "Remove redundant parameter types";
 
   @Override

@@ -3,11 +3,11 @@ package com.intellij.java.codeInsight.editorActions
 
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class JavaQuoteTest extends LightCodeInsightFixtureTestCase {
+class JavaQuoteTest extends LightJavaCodeInsightFixtureTestCase {
   void testDouble1() { doTest '<caret>', '"<caret>"' }
   void testDouble2() { doTest '<caret>""', '"<caret>"""' }
   void testDoubleClosing() { doTest '"<caret>"', '""<caret>' }

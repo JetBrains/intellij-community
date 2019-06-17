@@ -16,9 +16,9 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class ErrorRethrownInspectionTest extends LightInspectionTestCase {
+public class ErrorRethrownInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doStatementTest("try {" +

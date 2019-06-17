@@ -7,11 +7,11 @@ import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
+class XmlLiveTemplateTest extends LightJavaCodeInsightFixtureTestCase {
 
   private TemplateState getState() {
     TemplateManagerImpl.getTemplateState(myFixture.getEditor())

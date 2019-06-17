@@ -25,7 +25,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -41,7 +41,7 @@ import java.util.regex.Pattern
 /**
  * @author peter
  */
-abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
+abstract class GroovyFormatterTestCase extends LightJavaCodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase")
   private static final String OPTION_START = "<option>"
   private static final String OPTION_END = "</option>"

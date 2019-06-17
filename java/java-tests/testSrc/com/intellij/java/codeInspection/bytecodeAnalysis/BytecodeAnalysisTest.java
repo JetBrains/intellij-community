@@ -18,7 +18,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisTest extends LightCodeInsightFixtureTestCase {
+public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String PACKAGE_NAME = "bytecodeAnalysis";
   private static final String EXPECT_NOT_NULL = PACKAGE_NAME + ".ExpectNotNull";
   private static final String EXPECT_CONTRACT = PACKAGE_NAME + ".ExpectContract";

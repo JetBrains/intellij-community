@@ -17,13 +17,13 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class WrongPropertyKeyValueDelimiterInspectionTest extends LightCodeInsightFixtureTestCase {
+public class WrongPropertyKeyValueDelimiterInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull
   @Override

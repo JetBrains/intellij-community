@@ -8,14 +8,14 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public abstract class FacetTestCase extends PsiTestCase {
+public abstract class FacetTestCase extends JavaPsiTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {

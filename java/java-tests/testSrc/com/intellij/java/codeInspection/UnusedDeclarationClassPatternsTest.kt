@@ -20,9 +20,9 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.codeInspection.reference.RefClass
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
+class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testClassPattern() {
     val unusedDeclarationInspection = UnusedDeclarationInspection(true)

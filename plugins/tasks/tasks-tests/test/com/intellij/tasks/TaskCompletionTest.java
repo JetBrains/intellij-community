@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 
 import java.util.Arrays;
@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
+public class TaskCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public TaskCompletionTest() {
     //    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");

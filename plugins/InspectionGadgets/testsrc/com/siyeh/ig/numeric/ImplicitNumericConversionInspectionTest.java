@@ -1,10 +1,10 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ImplicitNumericConversionInspectionTest extends LightInspectionTestCase {
+public class ImplicitNumericConversionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testImplicitNumericConversion() {
     doTest();

@@ -21,7 +21,7 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.WaitFor;
@@ -34,7 +34,7 @@ import java.io.IOException;
 
 @SuppressWarnings("ConstantConditions")
 @SkipSlowTestLocally
-public class PsiEventsTest extends PsiTestCase {
+public class PsiEventsTest extends JavaPsiTestCase {
   private VirtualFile myPrjDir1;
   private VirtualFile myPrjDir2;
   private VirtualFile mySrcDir1;

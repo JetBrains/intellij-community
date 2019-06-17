@@ -18,12 +18,12 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BlockMarkerCommentsInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Batkovich
  */
-public class BlockMarkerCommentsTest extends LightCodeInsightFixtureTestCase {
+public class BlockMarkerCommentsTest extends LightJavaCodeInsightFixtureTestCase {
 
   private BlockMarkerCommentsInspection myInspection;
 

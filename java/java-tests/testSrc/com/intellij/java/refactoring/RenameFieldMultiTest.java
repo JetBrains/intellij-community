@@ -5,9 +5,9 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class RenameFieldMultiTest extends LightCodeInsightFixtureTestCase {
+public class RenameFieldMultiTest extends LightJavaCodeInsightFixtureTestCase {
    @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/renameField/multi/";

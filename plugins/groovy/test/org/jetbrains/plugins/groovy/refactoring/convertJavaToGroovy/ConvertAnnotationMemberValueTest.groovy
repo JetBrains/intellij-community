@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertJavaToGroovy
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiJavaFile
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.AnnotationArgConverter
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.AnnotationArgConverter
 /**
  * Created by Max Medvedev on 8/19/13
  */
-class ConvertAnnotationMemberValueTest extends LightCodeInsightFixtureTestCase {
+class ConvertAnnotationMemberValueTest extends LightJavaCodeInsightFixtureTestCase {
   void testSimpleExpression1() {
     doTest('1 + 1', '1 + 1')
   }

@@ -20,14 +20,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 
 /**
  * @author mike
  */
 @PlatformTestCase.WrapInCommand
-public class GenerateJavadocTest extends LightCodeInsightTestCase {
+public class GenerateJavadocTest extends LightJavaCodeInsightTestCase {
   public void test1() { doTest(); }
   public void test2() { doTest(); }
   public void test3() { doTest(); }

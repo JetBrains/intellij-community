@@ -19,9 +19,9 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class SurroundAutoCloseableActionTest extends LightCodeInsightFixtureTestCase {
+public class SurroundAutoCloseableActionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/surroundAutoCloseable/";

@@ -19,14 +19,14 @@ import com.intellij.codeInsight.editorActions.PasteHandler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author Denis Zhdanov
  */
 @CompileStatic
-class BlockIndentOnPasteTest extends LightCodeInsightFixtureTestCase {
+class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testJavaBlockDecreasedIndentOnTwoLinesPasting() {
     def before = '''\

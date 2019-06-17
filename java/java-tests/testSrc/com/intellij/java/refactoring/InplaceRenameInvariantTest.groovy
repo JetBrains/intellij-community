@@ -7,14 +7,14 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
-import com.intellij.testFramework.LightCodeInsightTestCase
+import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import groovy.transform.CompileStatic
 
 /**
  * User: anna
  */
 @CompileStatic
-class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
+class InplaceRenameInvariantTest extends LightJavaCodeInsightTestCase {
   void "test start caret position"() {
     def text = """\
      class <caret>Test {

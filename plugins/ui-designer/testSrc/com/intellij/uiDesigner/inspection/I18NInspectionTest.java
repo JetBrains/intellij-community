@@ -18,11 +18,11 @@ package com.intellij.uiDesigner.inspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.uiDesigner.i18n.I18nFormInspection;
 
-public class I18NInspectionTest extends InspectionTestCase {
+public class I18NInspectionTest extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("ui-designer") + "/testData/inspection";

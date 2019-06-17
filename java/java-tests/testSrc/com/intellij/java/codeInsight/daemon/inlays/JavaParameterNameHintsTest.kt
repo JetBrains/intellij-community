@@ -21,10 +21,10 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Inlay
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
-class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
+class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun tearDown() {
     val default = ParameterNameHintsSettings()

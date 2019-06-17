@@ -17,12 +17,12 @@ package com.intellij.java.codeInsight.editorActions;
 
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class JavaDetectableIndentsTest extends LightCodeInsightTestCase {
+public class JavaDetectableIndentsTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/editorActions/detectableIndents/";
 
   public void testSpaceIndent() {

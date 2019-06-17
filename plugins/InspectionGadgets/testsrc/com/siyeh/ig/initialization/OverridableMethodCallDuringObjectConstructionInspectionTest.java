@@ -16,14 +16,13 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OverridableMethodCallDuringObjectConstructionInspectionTest extends LightInspectionTestCase {
+public class OverridableMethodCallDuringObjectConstructionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testOverridableMethodCallDuringObjectConstruction() {
     doTest();

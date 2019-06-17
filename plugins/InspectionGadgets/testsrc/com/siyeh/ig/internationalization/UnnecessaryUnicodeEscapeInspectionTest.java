@@ -20,14 +20,14 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 import java.nio.charset.Charset;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryUnicodeEscapeInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryUnicodeEscapeInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryUnicodeEscape() {
     myFixture.configureByFile(getTestName(false) + ".java");

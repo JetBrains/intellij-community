@@ -18,7 +18,7 @@ package com.intellij.java.refactoring;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTestCase {
+public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

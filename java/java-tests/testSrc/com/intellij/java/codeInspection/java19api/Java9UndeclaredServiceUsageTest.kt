@@ -6,13 +6,13 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 /**
  * @author Pavel.Dolgov
  */
-class Java9UndeclaredServiceUsageTest : LightCodeInsightFixtureTestCase() {
+class Java9UndeclaredServiceUsageTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
   private val message = InspectionsBundle.message("inspection.undeclared.service.usage.message", "com.example.MyService")

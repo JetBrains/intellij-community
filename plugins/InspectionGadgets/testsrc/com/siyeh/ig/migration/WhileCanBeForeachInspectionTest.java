@@ -2,10 +2,10 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class WhileCanBeForeachInspectionTest extends LightInspectionTestCase {
+public class WhileCanBeForeachInspectionTest extends LightJavaInspectionTestCase {
 
   public void testWhileCanBeForeach() {
     doTest();

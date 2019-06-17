@@ -18,9 +18,9 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public abstract class AbstractUnusedDeclarationTest extends InspectionTestCase {
+public abstract class AbstractUnusedDeclarationTest extends JavaInspectionTestCase {
   protected UnusedDeclarationInspection myTool;
   protected GlobalInspectionToolWrapper myToolWrapper;
 

@@ -20,14 +20,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
+class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCase {
   void testConstructorAtOffset() {
     doConstructorTest()
   }

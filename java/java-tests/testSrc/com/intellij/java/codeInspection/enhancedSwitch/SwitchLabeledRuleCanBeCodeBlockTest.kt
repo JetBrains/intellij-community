@@ -7,12 +7,12 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.enhancedSwitch.SwitchLabeledRuleCanBeCodeBlockInspection
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class SwitchLabeledRuleCanBeCodeBlockTest : LightCodeInsightFixtureTestCase() {
+class SwitchLabeledRuleCanBeCodeBlockTest : LightJavaCodeInsightFixtureTestCase() {
   val inspection = SwitchLabeledRuleCanBeCodeBlockInspection()
 
   override fun setUp() {
@@ -23,7 +23,7 @@ class SwitchLabeledRuleCanBeCodeBlockTest : LightCodeInsightFixtureTestCase() {
     currentProfile.setErrorLevel(HighlightDisplayKey.find(inspection.shortName), HighlightDisplayLevel.WARNING, project)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_12
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/switchLabeledRuleCanBeCodeBlock"
 

@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 
 import java.io.File;
 import java.util.Arrays;
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  *  @author dsl
  */
-public class LibraryOrderTest extends PsiTestCase {
+public class LibraryOrderTest extends JavaPsiTestCase {
 
   public void test1() {
     setupPaths();

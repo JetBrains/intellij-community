@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected LookupElement[] myItems;
 
   @NotNull

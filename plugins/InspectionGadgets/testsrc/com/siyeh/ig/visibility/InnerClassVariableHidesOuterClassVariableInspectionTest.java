@@ -16,13 +16,13 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InnerClassVariableHidesOuterClassVariableInspectionTest extends LightInspectionTestCase {
+public class InnerClassVariableHidesOuterClassVariableInspectionTest extends LightJavaInspectionTestCase {
 
   public void testInnerClassVariableHidesOuterClassVariable() {
     doTest();

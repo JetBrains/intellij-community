@@ -2,10 +2,10 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ExcessiveRangeCheckInspectionTest extends LightInspectionTestCase {
+public class ExcessiveRangeCheckInspectionTest extends LightJavaInspectionTestCase {
 
   public void testExcessiveRangeCheck() {
     doTest();

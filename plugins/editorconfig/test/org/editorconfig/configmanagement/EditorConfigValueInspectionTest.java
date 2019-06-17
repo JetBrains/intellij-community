@@ -2,12 +2,12 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.editorconfig.Utils;
 import org.editorconfig.language.codeinsight.inspections.EditorConfigValueCorrectnessInspection;
 import org.jetbrains.annotations.Nullable;
 
-public class EditorConfigValueInspectionTest extends LightInspectionTestCase {
+public class EditorConfigValueInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected void setUp() throws Exception {

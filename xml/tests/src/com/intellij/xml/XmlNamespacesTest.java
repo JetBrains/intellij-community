@@ -24,12 +24,12 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
+public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   public void testUnusedNamespaces() {
     doUnusedDeclarationTest(
       "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" <warning descr=\"Namespace declaration is never used\">xmlns:xsi=\"http://www.w3.org/2001/XMLSc<caret>hema-instance\"</warning>/>",

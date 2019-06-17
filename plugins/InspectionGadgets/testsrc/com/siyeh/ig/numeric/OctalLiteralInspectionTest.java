@@ -16,10 +16,10 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class OctalLiteralInspectionTest extends LightInspectionTestCase {
+public class OctalLiteralInspectionTest extends LightJavaInspectionTestCase {
 
   public void testOctalRecognition() {
     doTest();

@@ -18,14 +18,14 @@ package org.jetbrains.uast.test.env
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.UastVisitor
 
-abstract class AbstractUastFixtureTest : LightCodeInsightFixtureTestCase() {
+abstract class AbstractUastFixtureTest : LightJavaCodeInsightFixtureTestCase() {
 
   abstract fun getVirtualFile(testName: String): VirtualFile
   abstract fun check(testName: String, file: UFile)

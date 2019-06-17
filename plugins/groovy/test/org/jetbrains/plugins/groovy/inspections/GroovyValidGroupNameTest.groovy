@@ -16,14 +16,14 @@
 package org.jetbrains.plugins.groovy.inspections
 
 import com.intellij.testFramework.InspectionTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 
 /**
  * @author Sergey Evdokimov
  */
-class GroovyValidGroupNameTest extends LightCodeInsightFixtureTestCase {
+class GroovyValidGroupNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testGroupNamesIsSame() {
     def tools = InspectionTestUtil.instantiateTools([UnusedDefInspection, UnnecessaryLocalVariableInspection])

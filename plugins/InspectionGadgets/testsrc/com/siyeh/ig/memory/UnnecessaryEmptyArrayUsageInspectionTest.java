@@ -2,10 +2,10 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryEmptyArrayUsageInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryEmptyArrayUsageInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryEmptyArrayUsage() { doTest(); }
 

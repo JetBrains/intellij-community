@@ -17,11 +17,11 @@ package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTestCase {
+public class Interface8MethodsHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/interfaceMethods";
 
   public void testStaticMethod() { doTest(); }

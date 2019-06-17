@@ -35,7 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.SkipSlowTestLocally
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 
@@ -46,7 +46,7 @@ import java.util.concurrent.Future
  * @author peter
  */
 @SkipSlowTestLocally
-class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
+class StubAstSwitchTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test modifying file with stubs via VFS"() {
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject('Foo.java', 'class Foo {}')

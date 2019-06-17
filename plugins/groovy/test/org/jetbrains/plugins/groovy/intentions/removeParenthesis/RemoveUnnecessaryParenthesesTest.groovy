@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.groovy.intentions.removeParenthesis
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 @CompileStatic
-class RemoveUnnecessaryParenthesesTest extends LightCodeInsightFixtureTestCase {
+class RemoveUnnecessaryParenthesesTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final String INTENTION_NAME = GroovyIntentionsBundle.message("remove.parentheses.from.method.call.intention.name")
 

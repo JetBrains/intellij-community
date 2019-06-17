@@ -6,12 +6,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.createTest.JavaTestGenerator;
 
 import java.util.List;
 
-public class GenerateMissedTestsTest extends LightCodeInsightFixtureTestCase {
+public class GenerateMissedTestsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testConflictingObjectNames() {
     PsiClass srcClass = myFixture.addClass("public class Source { @Override public int hashCode() { return 0;}}");
     PsiClass targetClass = ((PsiJavaFile)myFixture.configureByText("MyTest.java", "public class MyTest {}")).getClasses()[0];

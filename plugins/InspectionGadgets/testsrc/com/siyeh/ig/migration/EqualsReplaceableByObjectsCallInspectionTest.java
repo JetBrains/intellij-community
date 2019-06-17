@@ -20,13 +20,13 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsReplaceableByObjectsCallInspectionTest extends LightInspectionTestCase {
+public class EqualsReplaceableByObjectsCallInspectionTest extends LightJavaInspectionTestCase {
   private EqualsReplaceableByObjectsCallInspection myInspection = new EqualsReplaceableByObjectsCallInspection();
 
   @Override

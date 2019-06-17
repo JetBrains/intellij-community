@@ -2,14 +2,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("NonAtomicOperationOnVolatileField")
-public class NonAtomicOperationOnVolatileFieldInspectionTest extends LightInspectionTestCase {
+public class NonAtomicOperationOnVolatileFieldInspectionTest extends LightJavaInspectionTestCase {
 
   public void testWriteToDifferentInstance() {
     doTest("class A {\n" +

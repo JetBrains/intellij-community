@@ -17,13 +17,13 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LoopConditionNotUpdatedInsideLoopInspectionTest extends LightInspectionTestCase {
+public class LoopConditionNotUpdatedInsideLoopInspectionTest extends LightJavaInspectionTestCase {
 
   public void testLoopConditionNotUpdatedInsideLoop() {
     doTest();

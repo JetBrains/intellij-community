@@ -17,11 +17,11 @@ package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
+public class JUnit5MalformedRepeatedTest extends LightJavaInspectionTestCase {
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

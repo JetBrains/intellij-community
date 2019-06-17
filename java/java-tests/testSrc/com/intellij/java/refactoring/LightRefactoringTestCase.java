@@ -15,7 +15,7 @@
  */
 package com.intellij.java.refactoring;
 
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public abstract class LightRefactoringTestCase extends LightCodeInsightTestCase{
+public abstract class LightRefactoringTestCase extends LightJavaCodeInsightTestCase {
 }

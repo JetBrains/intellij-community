@@ -3,9 +3,9 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.psi.PsiModifier;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class SameParameterValueInspectionKtTest extends InspectionTestCase {
+public class SameParameterValueInspectionKtTest extends JavaInspectionTestCase {
   private final SameParameterValueInspection myGlobalTool = new SameParameterValueInspection();
 
   @Override

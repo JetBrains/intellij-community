@@ -16,13 +16,13 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightInspectionTestCase {
+public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightJavaInspectionTestCase {
 
   public void testAbstractMethodOverridesAbstractMethod() {
     doTest();

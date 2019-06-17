@@ -3,14 +3,14 @@ package com.intellij.java.psi.resolve
 
 
 import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
 @CompileStatic
-class LightResolveClassTest extends LightCodeInsightFixtureTestCase {
+class LightResolveClassTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test no loading for star imported class when named import matches"() {
     def unnamedFile = myFixture.addFileToProject('unnamed/Bar.java', 'package unnamed; public class Bar {}') as PsiFileImpl

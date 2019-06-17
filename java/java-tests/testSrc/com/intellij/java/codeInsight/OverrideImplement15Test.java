@@ -31,7 +31,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +44,7 @@ import java.util.List;
 /**
  * @author ven
  */
-public class OverrideImplement15Test extends LightCodeInsightTestCase {
+public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   private static final String BASE_DIR = "/codeInsight/overrideImplement/";
 
   @Override

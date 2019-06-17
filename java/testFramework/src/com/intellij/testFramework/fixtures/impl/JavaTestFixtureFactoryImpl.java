@@ -55,5 +55,5 @@ public class JavaTestFixtureFactoryImpl extends JavaTestFixtureFactory {
     }
   }
 
-  private static final LightProjectDescriptor ourJavaProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_1_6;
+  private static final LightProjectDescriptor ourJavaProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_1_6;
 }

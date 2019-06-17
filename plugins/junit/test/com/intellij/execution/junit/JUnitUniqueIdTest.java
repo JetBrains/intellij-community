@@ -5,9 +5,9 @@ import com.intellij.execution.testframework.sm.FileUrlProvider;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class JUnitUniqueIdTest extends LightCodeInsightFixtureTestCase {
+public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
   public void testValidateUniqueId() {
     PsiFile file = myFixture.addFileToProject("some.txt", "");
     SMTestProxy proxy = new SMTestProxy("test1", false, "file://" + file.getVirtualFile().getPath());

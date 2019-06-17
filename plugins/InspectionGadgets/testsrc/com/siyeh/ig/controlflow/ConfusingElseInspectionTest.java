@@ -16,13 +16,13 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConfusingElseInspectionTest extends LightInspectionTestCase {
+public class ConfusingElseInspectionTest extends LightJavaInspectionTestCase {
   private ConfusingElseInspection myInspection = new ConfusingElseInspection();
 
   @Override

@@ -19,9 +19,9 @@ package com.intellij.java.codeInsight.defaultAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public abstract class DefaultActionTestCase extends LightCodeInsightTestCase {
+public abstract class DefaultActionTestCase extends LightJavaCodeInsightTestCase {
   protected void performAction(char c) {
     EditorActionManager actionManager = EditorActionManager.getInstance();
     TypedAction action = actionManager.getTypedAction();

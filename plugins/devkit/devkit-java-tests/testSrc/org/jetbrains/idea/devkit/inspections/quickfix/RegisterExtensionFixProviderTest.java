@@ -18,14 +18,14 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 /**
  * @author Dmitry Avdeev
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registerExtensionFix")
-public class RegisterExtensionFixProviderTest extends LightCodeInsightFixtureTestCase {
+public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   public void setUp() throws Exception {

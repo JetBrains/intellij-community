@@ -20,14 +20,14 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
 /**
  * @author Maxim.Medvedev
  */
-abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
+abstract class GrIntentionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected final String myHint
   private final Class<? extends LocalInspectionTool>[] myInspections
 

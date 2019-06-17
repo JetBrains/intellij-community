@@ -16,13 +16,13 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConditionalCanBePushedInsideExpressionInspectionTest extends LightInspectionTestCase {
+public class ConditionalCanBePushedInsideExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testConditionalCanBePushedInsideExpression() {
     doTest();

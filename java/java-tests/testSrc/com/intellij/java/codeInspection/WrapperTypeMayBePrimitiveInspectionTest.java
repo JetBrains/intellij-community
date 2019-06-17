@@ -4,9 +4,9 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.WrapperTypeMayBePrimitiveInspection;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class WrapperTypeMayBePrimitiveInspectionTest extends LightInspectionTestCase {
+public class WrapperTypeMayBePrimitiveInspectionTest extends LightJavaInspectionTestCase {
   public void testTypeMayBePrimitive() {
     doTest();
   }

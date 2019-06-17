@@ -25,7 +25,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NotNull
 
@@ -33,7 +33,7 @@ import static com.intellij.codeInsight.Nullability.*
 /**
  * @author peter
  */
-abstract class NullityInferenceFromSourceTestCase extends LightCodeInsightFixtureTestCase {
+abstract class NullityInferenceFromSourceTestCase extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

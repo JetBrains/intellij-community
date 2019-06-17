@@ -4,9 +4,9 @@ package com.intellij.java.codeInsight.template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class TemplateBuilderTest extends LightCodeInsightFixtureTestCase {
+public class TemplateBuilderTest extends LightJavaCodeInsightFixtureTestCase {
   public void testRunInlineTemplate() {
     TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
     myFixture.configureByText("a.java", "class A {\n" +

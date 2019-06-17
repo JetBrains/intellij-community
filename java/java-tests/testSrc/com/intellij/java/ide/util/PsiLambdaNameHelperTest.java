@@ -19,11 +19,11 @@ import com.intellij.ide.util.PsiLambdaNameHelper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.Collection;
 
-public class PsiLambdaNameHelperTest extends LightCodeInsightFixtureTestCase {
+public class PsiLambdaNameHelperTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNames() {
     final PsiClass aClass = myFixture.addClass("class Test {\n" +
                                                "    Runnable r = () -> {\n" +

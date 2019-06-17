@@ -16,12 +16,12 @@
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Max Medvedev
  */
-class GroovyFoldingTest extends LightCodeInsightFixtureTestCase {
+class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
   private String configure(String text) {
     myFixture.configureByText('____________a_______________.groovy', text)
     CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor)

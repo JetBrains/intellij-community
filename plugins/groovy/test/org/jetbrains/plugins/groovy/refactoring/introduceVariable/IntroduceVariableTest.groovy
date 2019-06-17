@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable
 
 import com.intellij.psi.PsiType
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
-class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
+class IntroduceVariableTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

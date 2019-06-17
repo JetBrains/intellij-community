@@ -19,9 +19,9 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue;
 import com.intellij.codeInspection.unusedReturnValue.UnusedReturnValueLocalInspection;
 import com.intellij.psi.PsiModifier;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.JavaInspectionTestCase;
 
-public class UnusedReturnValueLocalTest extends InspectionTestCase {
+public class UnusedReturnValueLocalTest extends JavaInspectionTestCase {
   private UnusedReturnValue myGlobal = new UnusedReturnValue();
   private UnusedReturnValueLocalInspection myTool = new UnusedReturnValueLocalInspection(myGlobal);
 

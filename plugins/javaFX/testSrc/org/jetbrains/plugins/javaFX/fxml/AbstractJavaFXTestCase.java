@@ -23,12 +23,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
-public abstract class AbstractJavaFXTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class AbstractJavaFXTestCase extends LightJavaCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {

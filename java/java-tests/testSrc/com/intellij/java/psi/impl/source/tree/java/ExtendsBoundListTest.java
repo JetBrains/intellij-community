@@ -18,12 +18,12 @@ package com.intellij.java.psi.impl.source.tree.java;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  *  @author dsl
  */
-public class ExtendsBoundListTest extends LightCodeInsightTestCase {
+public class ExtendsBoundListTest extends LightJavaCodeInsightTestCase {
   public void testRemoveBoundFromFront() {
     final PsiTypeParameter typeParameter = getTypeParameter();
     WriteCommandAction.runWriteCommandAction(null, () -> typeParameter.getExtendsList().getReferenceElements()[0].delete());

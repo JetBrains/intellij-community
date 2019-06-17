@@ -16,14 +16,13 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class FloatingPointEqualityInspectionTest extends LightInspectionTestCase {
+public class FloatingPointEqualityInspectionTest extends LightJavaInspectionTestCase {
 
   public void testFloatingPointEquality() { doTest(); }
 

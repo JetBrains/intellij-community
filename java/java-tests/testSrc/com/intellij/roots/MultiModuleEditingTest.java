@@ -34,7 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class MultiModuleEditingTest extends ModuleTestCase {
+public class MultiModuleEditingTest extends JavaModuleTestCase {
 
   private static final String TEST_PATH = PathManagerEx.getTestDataPath() +
                                           "/moduleRootManager/multiModuleEditing".replace('/', File.separatorChar);

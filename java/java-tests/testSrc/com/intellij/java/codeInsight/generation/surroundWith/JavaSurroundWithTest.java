@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Denis Zhdanov
  */
-public class JavaSurroundWithTest extends LightCodeInsightTestCase {
+public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
 
   @SuppressWarnings({"UnusedDeclaration"})

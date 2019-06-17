@@ -8,12 +8,12 @@ import com.intellij.psi.impl.PropertyIndexValue
 import com.intellij.psi.util.PropertyMemberType
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.indexing.IndexingDataKeys
 import kotlin.test.assertNotEquals
 
-class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
+class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   // getter field test
 

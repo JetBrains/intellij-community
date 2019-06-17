@@ -5,12 +5,12 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class JavaWebReferenceTest extends LightCodeInsightFixtureTestCase {
+public class JavaWebReferenceTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testReferenceInComment() {
     List<WebReference> references = getReferences("// http://foo\n" +
