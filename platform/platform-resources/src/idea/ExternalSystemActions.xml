@@ -22,10 +22,6 @@
               icon="AllIcons.General.Settings">
       </action>
 
-      <action id="ExternalSystem.ToggleAutoImport"
-              class="com.intellij.openapi.externalSystem.action.ToggleAutoImportAction">
-      </action>
-
       <action id="ExternalSystem.OpenTasksActivationManager"
               class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
       </action>
@@ -112,8 +108,6 @@
 
     <group id="ExternalSystemView.ProjectMenu" popup="true">
       <reference ref="ExternalSystemView.BaseProjectMenu"/>
-      <separator/>
-      <reference id="ExternalSystem.ToggleAutoImport"/>
       <separator/>
       <reference id="ExternalSystem.OpenTasksActivationManager"/>
     </group>
