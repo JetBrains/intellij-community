@@ -18,7 +18,7 @@ package com.intellij.editor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ import java.io.File;
 /**
  * @author Rustam Vishnyakov
  */
-public class XmlEditorTest extends LightCodeInsightTestCase {
+public class XmlEditorTest extends LightJavaCodeInsightTestCase {
   private String getTestFilePath(boolean isOriginal) {
     return "/xml/tests/testData/editor/" + getTestName(true) + (isOriginal ? ".xml" : "_after.xml") ;
   }

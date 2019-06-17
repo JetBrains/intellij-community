@@ -9,7 +9,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensions
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByPsiClass;
 
 @TestDataPath("$CONTENT_ROOT/testData/util/extensionLocator")
-public class ExtensionLocatorTest extends LightCodeInsightFixtureTestCase {
+public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

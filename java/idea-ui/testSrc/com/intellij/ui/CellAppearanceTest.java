@@ -12,14 +12,14 @@ import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.roots.ui.util.ValidFileCellAppearance;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Iterator;
 
-public class CellAppearanceTest extends ModuleTestCase {
+public class CellAppearanceTest extends JavaModuleTestCase {
   private OrderEntryAppearanceService myService;
 
   @Override

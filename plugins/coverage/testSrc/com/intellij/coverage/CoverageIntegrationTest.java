@@ -24,7 +24,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
-import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.util.containers.hash.HashMap;
 
 import java.io.File;
@@ -34,7 +34,7 @@ import java.util.Map;
  * @author yole
  */
 @ExcludeFromTestDiscovery
-public class CoverageIntegrationTest extends ModuleTestCase {
+public class CoverageIntegrationTest extends JavaModuleTestCase {
   private static String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("coverage") + "/testData/simple";
   }

@@ -10,7 +10,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -19,7 +19,7 @@ import org.junit.Assert;
 
 import java.util.*;
 
-public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
+public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase {
   public void testFromCompletion() {
     @Language("JAVA")
     String text = "public class Foo {\n" +

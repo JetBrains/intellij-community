@@ -15,13 +15,13 @@
  */
 package com.intellij.java.codeInsight.colors
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.ColorIcon
 
 /**
  * @author Konstantin Bulenkov
  */
-class JavaColorProviderTest : LightCodeInsightFixtureTestCase() {
+class JavaColorProviderTest : LightJavaCodeInsightFixtureTestCase() {
   @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()

@@ -16,14 +16,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryConstructorInspectionTest extends LightInspectionTestCase {
+public class UnnecessaryConstructorInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessaryConstructor() { doTest(); }
 

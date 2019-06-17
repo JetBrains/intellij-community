@@ -16,13 +16,13 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class IndexOfReplaceableByContainsInspectionTest extends LightInspectionTestCase {
+public class IndexOfReplaceableByContainsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIndexOfReplaceableByContains() {
     doTest();

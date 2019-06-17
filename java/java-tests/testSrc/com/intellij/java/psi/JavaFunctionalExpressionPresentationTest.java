@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -30,7 +30,7 @@ import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFunctionalExpressionPresentationTest extends CodeInsightTestCase {
+public class JavaFunctionalExpressionPresentationTest extends JavaCodeInsightTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();

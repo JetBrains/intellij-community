@@ -2,13 +2,13 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 import static com.intellij.codeInsight.template.impl.TemplateManagerImpl.setTemplateTesting
 
 @CompileStatic
-class CreatePropertyFromUsageTemplateTest extends LightCodeInsightFixtureTestCase {
+class CreatePropertyFromUsageTemplateTest extends LightJavaCodeInsightFixtureTestCase {
 
   void 'test template from getter'() {
     myFixture.configureByText "_.java", '''\

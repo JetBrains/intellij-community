@@ -5,12 +5,12 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class DuplicateExpressionsFixTest : LightCodeInsightFixtureTestCase() {
+class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
   val inspection = DuplicateExpressionsInspection()
 
   override fun setUp() {

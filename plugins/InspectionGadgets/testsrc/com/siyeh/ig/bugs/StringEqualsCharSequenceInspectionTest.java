@@ -17,7 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("StringEqualsCharSequence")
-public class StringEqualsCharSequenceInspectionTest extends LightInspectionTestCase {
+public class StringEqualsCharSequenceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doMemberTest("boolean m(String s, CharSequence cs) {" +

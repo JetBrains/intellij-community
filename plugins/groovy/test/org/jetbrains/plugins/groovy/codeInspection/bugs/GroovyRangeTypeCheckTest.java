@@ -9,7 +9,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyRangeTypeCheckTest extends LightCodeInsightFixtureTestCase {
+public class GroovyRangeTypeCheckTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "groovy/inspections/rangeTypeCheck";

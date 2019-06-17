@@ -17,14 +17,14 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("SuspiciousToArrayCall")
-public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase {
+public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCast() {
     doMemberTest("public void testThis(java.util.List l) {" +

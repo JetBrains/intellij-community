@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 
@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvid
  * @author peter
  */
 @CompileStatic
-class GroovyDocumentationTest extends LightCodeInsightFixtureTestCase {
+class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testGenericMethod() {
     myFixture.configureByText 'a.groovy', '''

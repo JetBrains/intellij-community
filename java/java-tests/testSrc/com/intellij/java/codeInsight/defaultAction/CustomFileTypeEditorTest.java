@@ -28,14 +28,14 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 import static com.intellij.testFramework.EditorTestUtil.BACKSPACE_FAKE_CHAR;
 
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
+public class CustomFileTypeEditorTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/defaultAction/customFileType/";
 
   private void _testBlockNavigation(String test, String ext) {

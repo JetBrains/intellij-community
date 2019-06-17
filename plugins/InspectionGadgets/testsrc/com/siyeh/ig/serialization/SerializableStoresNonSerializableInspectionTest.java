@@ -16,12 +16,12 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SerializableStoresNonSerializableInspectionTest extends LightInspectionTestCase {
+public class SerializableStoresNonSerializableInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
     return new SerializableStoresNonSerializableInspection();

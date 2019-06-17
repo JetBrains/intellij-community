@@ -17,14 +17,14 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
+public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameInplace/";
 
   @NotNull

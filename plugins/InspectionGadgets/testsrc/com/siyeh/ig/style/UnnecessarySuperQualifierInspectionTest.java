@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessarySuperQualifierInspectionTest extends LightInspectionTestCase {
+public class UnnecessarySuperQualifierInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUnnecessarySuperQualifier() {
     doTest();

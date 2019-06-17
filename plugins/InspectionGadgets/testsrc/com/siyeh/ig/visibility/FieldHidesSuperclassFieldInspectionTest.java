@@ -16,13 +16,13 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class FieldHidesSuperclassFieldInspectionTest extends LightInspectionTestCase {
+public class FieldHidesSuperclassFieldInspectionTest extends LightJavaInspectionTestCase {
 
   public void testFieldHidesSuperclassField() {
     doTest();

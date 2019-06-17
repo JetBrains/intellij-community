@@ -3,13 +3,13 @@ package com.intellij.sh.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ShKeywordCompletionTest extends LightCodeInsightFixtureTestCase {
+public class ShKeywordCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testIfCompletion() {
     myFixture.configureByText("a.sh", "if<caret>");
     myFixture.completeBasic();

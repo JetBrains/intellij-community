@@ -16,7 +16,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -25,7 +25,7 @@ import java.io.IOException;
 /**
  * @author max
  */
-public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
+public class ArrayIndexOutOfBoundsTest extends JavaPsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ArrayIndexOutOfBoundsTest");
   private VirtualFile myProjectRoot;
 

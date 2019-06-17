@@ -5,9 +5,9 @@ package com.intellij.java.codeInsight.daemon.quickFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.actions.*
 import com.intellij.psi.PsiJvmModifiersOwner
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class CreateAnnotationTest : LightCodeInsightFixtureTestCase() {
+class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun createAnnotationAction(modifierListOwner: PsiJvmModifiersOwner, annotationRequest: AnnotationRequest): IntentionAction =
     createAddAnnotationActions(modifierListOwner, annotationRequest).single()

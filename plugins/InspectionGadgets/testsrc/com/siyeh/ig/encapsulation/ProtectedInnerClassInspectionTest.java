@@ -1,10 +1,10 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class ProtectedInnerClassInspectionTest extends LightInspectionTestCase {
+public class ProtectedInnerClassInspectionTest extends LightJavaInspectionTestCase {
 
   @Nullable
   @Override

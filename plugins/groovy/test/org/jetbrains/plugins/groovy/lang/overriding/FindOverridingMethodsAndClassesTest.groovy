@@ -11,13 +11,13 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
  */
-class FindOverridingMethodsAndClassesTest extends LightCodeInsightFixtureTestCase {
+class FindOverridingMethodsAndClassesTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     TestUtils.testDataPath + "overriding/findOverridingMethodsAndClasses"

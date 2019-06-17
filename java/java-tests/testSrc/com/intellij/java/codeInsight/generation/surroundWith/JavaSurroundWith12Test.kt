@@ -6,14 +6,11 @@ import com.intellij.java.codeInsight.folding.JavaFoldingTestCase
 import com.intellij.lang.LanguageSurrounders
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.surroundWith.Surrounder
-import com.intellij.psi.PsiElement
-import com.intellij.testFramework.LightCodeInsightTestCase
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.containers.ContainerUtil
 
-class JavaSurroundWith12Test : LightCodeInsightTestCase() {
+class JavaSurroundWith12Test : LightJavaCodeInsightTestCase() {
 
   private val BASE_PATH = "/codeInsight/generation/surroundWith/java12/"
 

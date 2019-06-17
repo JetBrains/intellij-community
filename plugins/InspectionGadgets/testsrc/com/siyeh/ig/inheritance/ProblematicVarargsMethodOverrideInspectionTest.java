@@ -16,12 +16,12 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ProblematicVarargsMethodOverrideInspectionTest extends LightInspectionTestCase {
+public class ProblematicVarargsMethodOverrideInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("class One {" +

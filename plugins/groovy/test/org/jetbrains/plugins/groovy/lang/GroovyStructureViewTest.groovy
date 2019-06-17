@@ -17,14 +17,14 @@ package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.ide.util.InheritedMembersNodeProvider
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
 /**
  * @author peter
  */
-class GroovyStructureViewTest extends LightCodeInsightFixtureTestCase {
+class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testSyntheticMethods() {
     myFixture.configureByText 'a.groovy', '''

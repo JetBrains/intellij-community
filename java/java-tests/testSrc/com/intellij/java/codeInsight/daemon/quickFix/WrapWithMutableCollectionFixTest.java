@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class WrapWithMutableCollectionFixTest extends LightQuickFixParameterizedTestCase {
@@ -19,7 +19,7 @@ public class WrapWithMutableCollectionFixTest extends LightQuickFixParameterized
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
   }
 
   @Override

@@ -8,10 +8,10 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiVariable;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ImplicitCloserTest extends LightInspectionTestCase {
+public class ImplicitCloserTest extends LightJavaInspectionTestCase {
   private static final ImplicitResourceCloser NAME_RESOURCE_CLOSER = new ImplicitResourceCloser() {
     @Override
     public boolean isSafelyClosed(@NotNull PsiVariable variable) {

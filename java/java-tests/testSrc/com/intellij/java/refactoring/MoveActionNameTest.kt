@@ -4,12 +4,12 @@ package com.intellij.java.refactoring
 import com.intellij.JavaTestUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.refactoring.move.MoveHandler
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author yole
  */
-class MoveActionNameTest : LightCodeInsightFixtureTestCase() {
+class MoveActionNameTest : LightJavaCodeInsightFixtureTestCase() {
   private val TEST_ROOT = "/refactoring/moveActionName/"
 
   override fun getTestDataPath(): String {

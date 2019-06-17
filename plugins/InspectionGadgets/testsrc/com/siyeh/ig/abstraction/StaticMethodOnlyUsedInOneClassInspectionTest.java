@@ -16,14 +16,13 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class StaticMethodOnlyUsedInOneClassInspectionTest extends LightInspectionTestCase {
+public class StaticMethodOnlyUsedInOneClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testStaticMethodOnlyUsedInOneClass() {
     doTest();

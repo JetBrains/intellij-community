@@ -16,13 +16,13 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LoggingConditionDisagreesWithLogStatementInspectionTest extends LightInspectionTestCase {
+public class LoggingConditionDisagreesWithLogStatementInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String[] getEnvironmentClasses() {

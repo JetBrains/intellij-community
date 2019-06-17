@@ -2,13 +2,13 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OnDemandImportInspectionTest extends LightInspectionTestCase {
+public class OnDemandImportInspectionTest extends LightJavaInspectionTestCase {
 
   public void testOnDemandImport() {
     doTest();

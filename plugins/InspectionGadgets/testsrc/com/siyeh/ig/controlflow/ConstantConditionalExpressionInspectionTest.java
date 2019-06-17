@@ -16,12 +16,12 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConstantConditionalExpressionInspectionTest extends LightInspectionTestCase {
+public class ConstantConditionalExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testParentheses() {
     doStatementTest("int i = /*'((true)) ? 1 : 2' can be simplified to '1'*/((true)) ? 1 : 2/**/;");

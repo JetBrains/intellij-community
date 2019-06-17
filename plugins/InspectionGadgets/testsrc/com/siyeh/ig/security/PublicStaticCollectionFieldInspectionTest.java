@@ -16,14 +16,13 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class PublicStaticCollectionFieldInspectionTest extends LightInspectionTestCase {
+public class PublicStaticCollectionFieldInspectionTest extends LightJavaInspectionTestCase {
 
   public void testPublicStaticCollectionField() {
     doTest();

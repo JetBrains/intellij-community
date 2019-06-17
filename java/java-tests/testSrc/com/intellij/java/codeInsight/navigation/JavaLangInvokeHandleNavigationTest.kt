@@ -18,7 +18,7 @@ package com.intellij.java.codeInsight.navigation
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.intellij.lang.annotations.MagicConstant
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls
 /**
  * @author Pavel.Dolgov
  */
-class JavaLangInvokeHandleNavigationTest : LightCodeInsightFixtureTestCase() {
+class JavaLangInvokeHandleNavigationTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testVirtual1() = doTest("m1", VIRTUAL)
   fun testVirtual2() = doTest("m2", VIRTUAL)

@@ -3,9 +3,9 @@ package com.intellij.java.codeInsight.navigation
 
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiReference
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class AtomicFieldUpdaterNavigationTest : LightCodeInsightFixtureTestCase() {
+class AtomicFieldUpdaterNavigationTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
 

@@ -15,13 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.intentions
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
-class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
+class CreateFieldFromParameterTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     "${TestUtils.testDataPath}intentions/createFieldFromParameter/"

@@ -16,10 +16,10 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 
-class MethodChainHintsTest: LightCodeInsightFixtureTestCase() {
+class MethodChainHintsTest: LightJavaCodeInsightFixtureTestCase() {
   fun check(@Language("Java") text: String) {
     myFixture.configureByText("A.java", text)
     myFixture.testInlays({ (it.renderer as PresentationRenderer).presentation.toString() }, { it.renderer is PresentationRenderer })

@@ -16,14 +16,14 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("AtomicFieldUpdaterNotStaticFinal")
-public class AtomicFieldUpdaterNotStaticFinalInspectionTest extends LightInspectionTestCase {
+public class AtomicFieldUpdaterNotStaticFinalInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doTest("import java.util.concurrent.atomic.AtomicLongFieldUpdater;" +

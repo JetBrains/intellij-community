@@ -26,13 +26,13 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.*;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
 /**
  * @author mike
  */
-public class XmlTextTest extends LightCodeInsightTestCase {
+public class XmlTextTest extends LightJavaCodeInsightTestCase {
   public void testInsertAtOffset() {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       @Language("XML")

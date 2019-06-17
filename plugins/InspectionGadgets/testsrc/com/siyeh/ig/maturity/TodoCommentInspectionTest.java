@@ -17,10 +17,10 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.TodoCommentInspection;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class TodoCommentInspectionTest extends LightInspectionTestCase {
+public class TodoCommentInspectionTest extends LightJavaInspectionTestCase {
 
   public void testNoDuplicates() {
     doTest("class A {\n" +

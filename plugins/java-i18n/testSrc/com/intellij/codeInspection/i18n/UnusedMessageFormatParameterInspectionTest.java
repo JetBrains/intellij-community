@@ -2,9 +2,9 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class UnusedMessageFormatParameterInspectionTest extends LightCodeInsightFixtureTestCase {
+public class UnusedMessageFormatParameterInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   private void doTest() {
     myFixture.enableInspections(new UnusedMessageFormatParameterInspection());

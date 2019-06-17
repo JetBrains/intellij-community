@@ -15,13 +15,13 @@
  */
 package org.jetbrains.java.generate.inspection;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassHasNoToStringMethodInspectionTest extends LightCodeInsightFixtureTestCase {
+public class ClassHasNoToStringMethodInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testBasic() {
     doTest("class <warning descr=\"Class 'X' does not override 'toString()' method\">X</warning> {" +

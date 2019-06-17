@@ -22,9 +22,8 @@ import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +33,7 @@ import java.io.File;
  * @author spleaner
  */
 @SuppressWarnings({"ALL"})
-public class XmlSmartEnterTest extends LightCodeInsightTestCase {
+public class XmlSmartEnterTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/smartEnter";
   private LookupElement[] myItems;
 

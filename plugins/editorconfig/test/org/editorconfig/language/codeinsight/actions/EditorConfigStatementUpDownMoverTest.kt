@@ -3,9 +3,9 @@ package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class EditorConfigStatementUpDownMoverTest : LightCodeInsightFixtureTestCase() {
+class EditorConfigStatementUpDownMoverTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath() =
     "/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/moveUpDown/"
 

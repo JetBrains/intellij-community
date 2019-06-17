@@ -16,12 +16,12 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SystemOutErrInspectionTest extends LightInspectionTestCase {
+public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doStatementTest("/*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(\"debugging\");");

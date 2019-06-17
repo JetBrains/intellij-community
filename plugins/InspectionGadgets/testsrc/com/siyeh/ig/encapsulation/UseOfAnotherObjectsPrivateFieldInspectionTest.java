@@ -4,13 +4,13 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UseOfAnotherObjectsPrivateFieldInspectionTest extends LightInspectionTestCase {
+public class UseOfAnotherObjectsPrivateFieldInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUseOfAnotherObjectsPrivateField() {
     doTest();

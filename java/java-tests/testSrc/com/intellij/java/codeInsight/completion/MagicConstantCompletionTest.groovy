@@ -18,7 +18,7 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.psi.PsiClass
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 
@@ -26,7 +26,7 @@ import org.intellij.lang.annotations.Language
  * @author peter
  */
 @CompileStatic
-class MagicConstantCompletionTest extends LightCodeInsightFixtureTestCase {
+class MagicConstantCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test in method argument"() {
     addModifierList()

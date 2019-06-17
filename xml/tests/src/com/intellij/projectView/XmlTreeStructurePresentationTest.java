@@ -4,9 +4,9 @@ package com.intellij.projectView;
 import com.intellij.ide.structureView.impl.xml.XmlTagTreeElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
-public class XmlTreeStructurePresentationTest extends LightCodeInsightTestCase {
+public class XmlTreeStructurePresentationTest extends LightJavaCodeInsightTestCase {
   public void test() {
     String attributes = "attr1=\"value1\" arre2=\"value2\"";
     final String tagPresentation = "a " + attributes;

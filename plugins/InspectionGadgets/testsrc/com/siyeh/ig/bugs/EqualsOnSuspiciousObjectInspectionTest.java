@@ -17,11 +17,11 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored"})
-public class EqualsOnSuspiciousObjectInspectionTest extends LightInspectionTestCase {
+public class EqualsOnSuspiciousObjectInspectionTest extends LightJavaInspectionTestCase {
   public void testEqualsOnSuspiciousObject() { doTest(); }
 
   @Override

@@ -10,14 +10,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ven
  */
-public class ModifyAnnotationsTest extends PsiTestCase {
+public class ModifyAnnotationsTest extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

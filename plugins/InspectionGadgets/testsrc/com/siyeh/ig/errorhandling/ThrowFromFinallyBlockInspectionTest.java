@@ -16,13 +16,13 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowFromFinallyBlockInspectionTest extends LightInspectionTestCase {
+public class ThrowFromFinallyBlockInspectionTest extends LightJavaInspectionTestCase {
 
   public void testThrowFromFinallyBlock() {
     doTest();

@@ -8,12 +8,12 @@ import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class CyclicDependenciesTest extends LightCodeInsightFixtureTestCase {
+public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/dependencies/cycle/";

@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -17,7 +17,7 @@ import java.io.File;
 /**
  * @author max
  */
-public class SameSourceRootInTwoModulesTest extends PsiTestCase {
+public class SameSourceRootInTwoModulesTest extends JavaPsiTestCase {
   private VirtualFile myPrjDir1;
   private VirtualFile mySrcDir1;
   private VirtualFile myPackDir;

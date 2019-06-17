@@ -4,10 +4,10 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class LightResolveTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class LightResolveTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected PsiReference findReferenceAtCaret(@NotNull String filePath) {
     PsiFile file = myFixture.configureByFile(filePath);
     return file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());

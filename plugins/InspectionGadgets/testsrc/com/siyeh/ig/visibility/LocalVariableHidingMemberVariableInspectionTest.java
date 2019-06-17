@@ -16,10 +16,10 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class LocalVariableHidingMemberVariableInspectionTest extends LightInspectionTestCase {
+public class LocalVariableHidingMemberVariableInspectionTest extends LightJavaInspectionTestCase {
 
   public void testLocalVariableHidingMemberVariable() {
     doTest();

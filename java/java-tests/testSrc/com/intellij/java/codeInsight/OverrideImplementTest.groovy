@@ -13,12 +13,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author ven
  */
-class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
+class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/overrideImplement"

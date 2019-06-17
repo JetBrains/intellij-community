@@ -5,11 +5,11 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class StringBufferReplaceableByStringInspectionTest extends LightInspectionTestCase {
+public class StringBufferReplaceableByStringInspectionTest extends LightJavaInspectionTestCase {
 
   public void testStringBufferReplaceableByString() {
     doTest();

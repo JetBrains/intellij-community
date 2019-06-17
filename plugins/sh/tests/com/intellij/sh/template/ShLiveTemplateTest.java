@@ -10,9 +10,9 @@ import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class ShLiveTemplateTest extends LightCodeInsightFixtureTestCase {
+public class ShLiveTemplateTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testForiExpression() {
     doTest("fori<caret>", "for i in {1..5} ; do\n    \ndone");

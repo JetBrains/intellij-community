@@ -21,14 +21,14 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * Is assumed to contain tests that include more than one refactoring into the processing.
  * 
  * @author Denis Zhdanov
  */
-public class SequentialRefactoringTest extends LightCodeInsightTestCase {
+public class SequentialRefactoringTest extends LightJavaCodeInsightTestCase {
 
   public void testFormattingAfterInlineExtractMethod() throws PrepareFailedException {
     String text =

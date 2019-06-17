@@ -2,13 +2,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class CompletionAutoPopupTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected CompletionAutoPopupTester myTester;
 
   @Override

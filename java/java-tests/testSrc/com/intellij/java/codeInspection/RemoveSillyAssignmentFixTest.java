@@ -19,12 +19,12 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RemoveSillyAssignmentFixTest extends LightCodeInsightFixtureTestCase {
+public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testRemoveCompleteAssignment() { doTest(); }
   public void testKeepReference() { doTest(); }

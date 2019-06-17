@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -25,7 +25,7 @@ import java.util.List;
  * @author cdr
  */
 @PlatformTestCase.WrapInCommand
-public class PropertiesCharsetTest extends CodeInsightTestCase {
+public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
   private boolean myOldIsNative;
   private Charset myOldCs;
   private Charset myOldCharset;

@@ -15,7 +15,7 @@
  */
 package com.intellij.java.codeInsight
 
-import com.intellij.codeInsight.CodeInsightTestCase
+import com.intellij.codeInsight.JavaCodeInsightTestCase
 import com.intellij.ide.actions.CopyReferenceAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.JavaModuleType
@@ -26,7 +26,7 @@ import com.intellij.testFramework.PsiTestUtil
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class CopyReferenceActionFilesTest extends CodeInsightTestCase {
+class CopyReferenceActionFilesTest extends JavaCodeInsightTestCase {
   VirtualFile additionalRoot
 
   @Override

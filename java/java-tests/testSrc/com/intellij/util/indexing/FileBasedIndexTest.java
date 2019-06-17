@@ -3,13 +3,13 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.text.CharArrayCharSequence;
 
 /**
  * @author Dmitry Avdeev
  */
-public class FileBasedIndexTest extends LightCodeInsightFixtureTestCase {
+public class FileBasedIndexTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testSurviveOnFileTypeChange() {
     myFixture.configureByText("Foo.java", "class Foo { String bar; }");

@@ -17,13 +17,13 @@ package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ArrayUtil
 
 /**
  * @author peter
  */
-class MakeInferredAnnotationExplicitTest extends LightCodeInsightFixtureTestCase {
+class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test contract and notNull"() {
     myFixture.configureByText 'a.java', '''

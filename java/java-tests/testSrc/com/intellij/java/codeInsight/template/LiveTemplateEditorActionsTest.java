@@ -9,10 +9,10 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class LiveTemplateEditorActionsTest extends LightCodeInsightFixtureTestCase {
+public class LiveTemplateEditorActionsTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {

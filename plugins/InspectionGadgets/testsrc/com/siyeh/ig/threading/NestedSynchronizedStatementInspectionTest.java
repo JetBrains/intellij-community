@@ -16,9 +16,9 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
-public class NestedSynchronizedStatementInspectionTest extends LightInspectionTestCase {
+public class NestedSynchronizedStatementInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected LocalInspectionTool getInspection() {

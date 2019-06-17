@@ -16,10 +16,10 @@
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class PointlessBitwiseExpressionInspectionTest extends LightInspectionTestCase {
+public class PointlessBitwiseExpressionInspectionTest extends LightJavaInspectionTestCase {
 
   public void testPointlessBitwiseExpression() {
     doTest();

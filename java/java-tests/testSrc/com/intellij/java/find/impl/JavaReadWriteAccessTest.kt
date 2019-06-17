@@ -20,9 +20,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiNameValuePair
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class JavaReadWriteAccessTest : LightCodeInsightFixtureTestCase() {
+class JavaReadWriteAccessTest : LightJavaCodeInsightFixtureTestCase() {
   fun testWriteAnnotationsMethodExplicitCall() {
     val anno = myFixture.addClass("@interface Anno {String value() default \"\";}")
     val detector = ReadWriteAccessDetector.findDetector(anno.methods[0])

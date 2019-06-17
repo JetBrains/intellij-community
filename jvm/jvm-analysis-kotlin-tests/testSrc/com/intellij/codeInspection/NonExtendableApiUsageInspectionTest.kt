@@ -3,17 +3,15 @@ package com.intellij.codeInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 
 @TestDataPath("/testData/codeInspection/nonExtendableApiUsage")
-class NonExtendableApiUsageInspectionTest : LightCodeInsightFixtureTestCase() {
+class NonExtendableApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

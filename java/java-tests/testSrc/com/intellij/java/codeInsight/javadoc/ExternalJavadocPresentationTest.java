@@ -6,7 +6,7 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
+public class ExternalJavadocPresentationTest extends LightJavaCodeInsightTestCase {
   private static final String TEST_ROOT = "/codeInsight/externalJavadoc/";
 
   @NotNull

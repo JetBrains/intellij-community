@@ -27,7 +27,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
+public class GroovyMoveScriptTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {

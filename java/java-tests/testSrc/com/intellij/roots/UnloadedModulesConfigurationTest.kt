@@ -12,13 +12,13 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.ModuleTestCase
+import com.intellij.testFramework.JavaModuleTestCase
 import java.io.File
 
 /**
  * @author nik
  */
-class UnloadedModulesConfigurationTest : ModuleTestCase() {
+class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
   fun `test load project`() {
     val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
     val project = getProjectManager().loadAndOpenProject(projectPath)!!

@@ -16,15 +16,13 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
-
-import java.io.File;
 
 /**
  * @author Dmitry Batkovich
  */
-public class SuspiciousLanguagesInspectionTest extends LightCodeInsightFixtureTestCase {
+public class SuspiciousLanguagesInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/suspiciousLanguages";

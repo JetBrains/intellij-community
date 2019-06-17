@@ -2,9 +2,9 @@
 package com.intellij.sh.editing;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class ShTypingTest extends LightCodeInsightFixtureTestCase {
+public class ShTypingTest extends LightJavaCodeInsightFixtureTestCase {
   // @formatter:off
   public void testString()              { doTypingTest("<caret>", "\"", "\"<caret>\"");         }
   public void testRawString()           { doTypingTest("<caret>", "'", "'<caret>'");            }

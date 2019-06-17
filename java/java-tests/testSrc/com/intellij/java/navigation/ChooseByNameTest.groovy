@@ -7,14 +7,14 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.ide.util.gotoByName.*
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 /**
  * @author peter
  */
-class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
+class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   ChooseByNamePopup myPopup
 
   @Override

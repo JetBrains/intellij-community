@@ -16,13 +16,13 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers.
  */
-public class UseOfCloneInspectionTest extends LightInspectionTestCase {
+public class UseOfCloneInspectionTest extends LightJavaInspectionTestCase {
 
   public void testUseOfClone() {
     doTest();

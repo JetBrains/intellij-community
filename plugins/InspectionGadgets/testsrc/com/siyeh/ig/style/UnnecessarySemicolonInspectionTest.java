@@ -17,11 +17,11 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnnecessarySemicolonInspectionTest extends LightInspectionTestCase {
+public class UnnecessarySemicolonInspectionTest extends LightJavaInspectionTestCase {
   public void testUnnecessarySemicolon() { doTest(); }
   public void testNoWarningOnRedCode() { doTest(); }
   public void testModuleInfo() { doNamedTest("module-info"); }

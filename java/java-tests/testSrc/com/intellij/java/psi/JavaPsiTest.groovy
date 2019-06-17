@@ -6,12 +6,12 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class JavaPsiTest extends LightCodeInsightFixtureTestCase {
+class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   void testEmptyImportList() {
     assert configureFile("").importList != null
     assert configureFile("class C { }").importList != null

@@ -20,7 +20,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.regexp.inspection.AnonymousGroupInspection;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("Annotator")
-public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
+public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDuplicateNamedGroup() {
     doTest("(?<name>abc)(?<<error descr=\"Group with name 'name' already defined\">name</error>>xyz)");

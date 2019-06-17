@@ -24,12 +24,12 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaIntroduceVariableTest extends LightCodeInsightTestCase {
+public class JavaIntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testIntroduceBasedOnLiterals() throws Exception {
     doTest("getA(\"simple\")", "simple");
     doTest("getA(\"SimpleName\")", "simpleName", "name");

@@ -18,9 +18,9 @@ package com.intellij.lang.properties;
 import com.intellij.codeInspection.TrailingSpacesInPropertyInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class TrailingSpacesInPropertyInspectionTest extends LightCodeInsightFixtureTestCase {
+public class TrailingSpacesInPropertyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("properties") + "/testData";

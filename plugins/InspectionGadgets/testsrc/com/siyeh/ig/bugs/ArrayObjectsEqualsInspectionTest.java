@@ -16,13 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ArrayObjectsEqualsInspectionTest extends LightInspectionTestCase {
+public class ArrayObjectsEqualsInspectionTest extends LightJavaInspectionTestCase {
 
   public void testArrayObjectsEquals() {
     doTest();

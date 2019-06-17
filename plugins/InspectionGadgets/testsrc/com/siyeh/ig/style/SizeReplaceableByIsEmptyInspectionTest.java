@@ -2,10 +2,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class SizeReplaceableByIsEmptyInspectionTest extends LightInspectionTestCase {
+public class SizeReplaceableByIsEmptyInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSizeReplaceableByIsEmpty() {
     doTest();

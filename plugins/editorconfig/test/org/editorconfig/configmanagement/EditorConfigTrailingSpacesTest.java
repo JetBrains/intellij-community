@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
-import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.psi.PsiFile;
@@ -9,7 +9,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("SameParameterValue")
-public class EditorConfigTrailingSpacesTest extends CodeInsightTestCase {
+public class EditorConfigTrailingSpacesTest extends JavaCodeInsightTestCase {
 
   private EditorSettingsExternalizable.OptionSet oldSettings;
 

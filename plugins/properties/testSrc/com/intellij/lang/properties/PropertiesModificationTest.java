@@ -19,10 +19,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class PropertiesModificationTest extends LightCodeInsightFixtureTestCase {
+public class PropertiesModificationTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testValueEditing() {
     doTestEditing(" # comment<caret>", false);

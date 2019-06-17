@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
 
 import java.util.Arrays;
@@ -27,7 +27,7 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 @SuppressWarnings("ConstantConditions")
-public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
+public class XmlCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
   private String myOldDoctype;
 

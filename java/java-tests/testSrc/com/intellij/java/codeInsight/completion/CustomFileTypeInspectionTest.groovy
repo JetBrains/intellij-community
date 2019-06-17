@@ -16,14 +16,14 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
 /**
  * @author peter
  */
 @CompileStatic
-class CustomFileTypeInspectionTest extends LightCodeInsightFixtureTestCase {
+class CustomFileTypeInspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testSpellChecking() {
     myFixture.configureByText 'a.hs', '''
