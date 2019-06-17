@@ -17,6 +17,8 @@ package git4idea.branch;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.rebase.GitRebaseEditorHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,7 @@ import static java.util.Arrays.asList;
 
 public class GitRebaseParams {
 
+  @NotNull private final GitVersion myVersion;
   @Nullable private final String myBranch;
   @Nullable private final String myNewBase;
   @NotNull private final String myUpstream;
@@ -36,28 +39,35 @@ public class GitRebaseParams {
   @Nullable private final GitRebaseEditorHandler myEditorHandler;
 
   @NotNull
-  public static GitRebaseParams editCommits(@NotNull String base, @Nullable GitRebaseEditorHandler editorHandler, boolean preserveMerges) {
-    return new GitRebaseParams(null, null, base, true, preserveMerges, editorHandler);
+  public static GitRebaseParams editCommits(@NotNull GitVersion version,
+                                            @NotNull String base,
+                                            @Nullable GitRebaseEditorHandler editorHandler,
+                                            boolean preserveMerges) {
+    return new GitRebaseParams(version, null, null, base, true, preserveMerges, editorHandler);
   }
 
-  public GitRebaseParams(@NotNull String upstream) {
-    this(null, null, upstream, false, false);
+  public GitRebaseParams(@NotNull GitVersion version,
+                         @NotNull String upstream) {
+    this(version, null, null, upstream, false, false);
   }
 
-  public GitRebaseParams(@Nullable String branch,
+  public GitRebaseParams(@NotNull GitVersion version,
+                         @Nullable String branch,
                          @Nullable String newBase,
                          @NotNull String upstream,
                          boolean interactive,
                          boolean preserveMerges) {
-    this(branch, newBase, upstream, interactive, preserveMerges, null);
+    this(version, branch, newBase, upstream, interactive, preserveMerges, null);
   }
 
-  private GitRebaseParams(@Nullable String branch,
+  private GitRebaseParams(@NotNull GitVersion version,
+                          @Nullable String branch,
                           @Nullable String newBase,
                           @NotNull String upstream,
                           boolean interactive,
                           boolean preserveMerges,
                           @Nullable GitRebaseEditorHandler editorHandler) {
+    myVersion = version;
     myBranch = nullize(branch, true);
     myNewBase = nullize(newBase, true);
     myUpstream = upstream;
@@ -73,7 +83,12 @@ public class GitRebaseParams {
       args.add("--interactive");
     }
     if (myPreserveMerges) {
-      args.add("--preserve-merges");
+      if (GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(myVersion)) {
+        args.add("--rebase-merges");
+      }
+      else {
+        args.add("--preserve-merges");
+      }
     }
     if (myNewBase != null) {
       args.addAll(asList("--onto", myNewBase));

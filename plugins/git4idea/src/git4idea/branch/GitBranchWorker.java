@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
+import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
@@ -53,11 +54,13 @@ public final class GitBranchWorker {
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitBranchUiHandler myUiHandler;
+  @NotNull private final GitVcs myVcs;
 
   public GitBranchWorker(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler) {
     myProject = project;
     myGit = git;
     myUiHandler = uiHandler;
+    myVcs = GitVcs.getInstance(myProject);
   }
   
   public void checkoutNewBranch(@NotNull final String name, @NotNull List<GitRepository> repositories) {
@@ -126,12 +129,12 @@ public final class GitBranchWorker {
 
   public void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
     updateInfo(repositories);
-    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(branchName), myUiHandler.getProgressIndicator());
+    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(myVcs.getVersion(), branchName), myUiHandler.getProgressIndicator());
   }
 
   public void rebaseOnCurrent(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
     updateInfo(repositories);
-    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(branchName, null, "HEAD", false, false),
+    GitRebaseUtils.rebase(myProject, repositories, new GitRebaseParams(myVcs.getVersion(), branchName, null, "HEAD", false, false),
                           myUiHandler.getProgressIndicator());
   }
 

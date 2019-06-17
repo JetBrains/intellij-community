@@ -35,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
  * }
  * }</pre>
  * </p>
- *
- * @author Kirill Likhodedov
  */
 public enum GitVersionSpecialty {
 
@@ -273,6 +271,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
+    }
+  },
+
+  REBASE_MERGES_REPLACES_PRESERVE_MERGES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 22, 0, 0));
     }
   };
 

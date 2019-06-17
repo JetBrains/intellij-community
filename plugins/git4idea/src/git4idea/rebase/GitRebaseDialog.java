@@ -404,7 +404,8 @@ public class GitRebaseDialog extends DialogWrapper {
       newBase = onto;
     }
 
-    return new GitRebaseParams(branch, newBase, upstream, myInteractiveCheckBox.isSelected(), myPreserveMergesCheckBox.isSelected());
+    return new GitRebaseParams(GitVcs.getInstance(myProject).getVersion(),
+                               branch, newBase, upstream, myInteractiveCheckBox.isSelected(), myPreserveMergesCheckBox.isSelected());
   }
 
   /**
