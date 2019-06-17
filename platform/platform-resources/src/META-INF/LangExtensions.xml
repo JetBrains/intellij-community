@@ -936,7 +936,6 @@
     <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.impl.SurroundWithLogger$SurroundWithIdValidator"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger$PostfixTemplateValidator"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.tools.InspectionsUsagesCollector$InspectionToolValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.ProjectTypeWhiteListRule"/>
 
     <postStartupActivity implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeExtensionUsagesCollectorStartupActivity"/>
 
