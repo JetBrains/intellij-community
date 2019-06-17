@@ -2,6 +2,7 @@
 package com.intellij.ui.tree.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBScrollPane;
@@ -66,6 +67,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
       return UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(property));
     }
     Object node = TreeUtil.getLastUserObject(path);
+    if (node instanceof ColoredItem) {
+      Color background = ((ColoredItem)node).getColor();
+      if (background != null) return background;
+    }
     if (node instanceof TreeNodeBackgroundSupplier) {
       TreeNodeBackgroundSupplier supplier = (TreeNodeBackgroundSupplier)node;
       Color background = supplier.getNodeBackground(row);
