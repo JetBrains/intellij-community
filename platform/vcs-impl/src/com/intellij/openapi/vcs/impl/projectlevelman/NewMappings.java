@@ -315,7 +315,7 @@ public class NewMappings implements Disposable {
           }
 
           VirtualFile parent = f.getParent();
-          if (!isUnderProject(directoryIndex, parent)) {
+          if (parent != null && !isUnderProject(directoryIndex, parent)) {
             if (rootChecker.areChildrenValidMappings()) {
               while (parent != null) {
                 if (vcsRoots.contains(parent) || mappedDirs.contains(parent)) break;
