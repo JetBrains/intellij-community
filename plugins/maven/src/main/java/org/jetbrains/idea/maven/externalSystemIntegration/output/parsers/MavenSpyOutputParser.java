@@ -116,6 +116,7 @@ public class MavenSpyOutputParser {
         return;
       }
       case "ProjectSucceeded": {
+        stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
         doComplete(messageConsumer, execution);
         return;
@@ -128,6 +129,7 @@ public class MavenSpyOutputParser {
       }
 
       case "ProjectFailed": {
+        stopFakeDownloadNode(threadId, parameters, messageConsumer);
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, false);
         doError(messageConsumer, execution, parameters.get("error"));
         return;

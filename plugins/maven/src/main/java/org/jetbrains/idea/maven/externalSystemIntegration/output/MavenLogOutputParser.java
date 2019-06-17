@@ -121,11 +121,10 @@ public class MavenLogOutputParser implements BuildOutputParser {
                                 MavenLogEntryReader.MavenLogEntry logLine,
                                 MavenLogEntryReader mavenLogReader) {
     if (logLine.myLine.equals("BUILD FAILURE")) {
-      MavenLogEntryReader.MavenLogEntry errorDesc = mavenLogReader.findFirst(s -> s.getType() == LogMessageType.ERROR);
       completeParsers(messageConsumer);
       messageConsumer
         .accept(new FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
-                                         new MavenTaskFailedResultImpl(errorDesc == null ? "Failed" : errorDesc.myLine)));
+                                         new FailureResultImpl()));
       myCompleted = true;
       return true;
     }
