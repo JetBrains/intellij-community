@@ -15,6 +15,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
@@ -154,6 +155,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   @NotNull
   public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+    PsiUtilCore.ensureValid(element);
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
     final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
