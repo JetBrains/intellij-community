@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public interface BuildProgressListener {
+
+  /**
+   * @deprecated use {@link #onEvent(Object, BuildEvent)}
+   * @param event
+   */
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   @Deprecated
   default void onEvent(@NotNull BuildEvent event) {}
