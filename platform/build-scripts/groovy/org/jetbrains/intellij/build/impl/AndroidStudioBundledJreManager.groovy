@@ -32,16 +32,6 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   }
 
   @Override
-  String extractWinJre(JvmArchitecture arch) {
-    return  "$baseDirectoryForJdk/" + (arch == JvmArchitecture.x32 ? "win32" : "win64")
-  }
-
-  @Override
-  String findMacJreArchive() {
-    return "$baseDirectoryForJdk/mac"
-  }
-
-  @Override
   String getSecondJreBuild() {
     return "$baseDirectoryForJdk/jdk11"
   }
@@ -54,5 +44,15 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   @Override
   String extractSecondJre(String osName, String secondJreBuild) {
     return secondJreBuild + "/" + osName
+  }
+
+  @Override
+  String extractWinJre(JvmArchitecture arch) {
+    return  "$baseDirectoryForJdk/" + (arch == JvmArchitecture.x32 ? "win32" : "win64")
+  }
+
+  @Override
+  String findMacJreArchive() {
+    return "$baseDirectoryForJdk/mac"
   }
 }
