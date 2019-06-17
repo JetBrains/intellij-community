@@ -71,6 +71,10 @@
             "type": "string",
             "description": "IntelliJ language ID for language injection"
         },
+        "x-intellij-case-insensitive": {
+            "type": "boolean",
+            "description": "If 'true', enum options for this value will be checked case-insensitively"
+        },
         "default": true,
         "readOnly": {
             "type": "boolean",
