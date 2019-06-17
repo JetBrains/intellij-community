@@ -27,9 +27,6 @@ class FileHistoryVisiblePack(dataPack: DataPackBase, graph: VisibleGraph<Int>, c
                              filters: VcsLogFilterCollection,
                              fileHistory: FileHistory) : VisiblePack(dataPack, graph, canRequestMore, filters, fileHistory) {
 
-  constructor(dataPack: DataPackBase, graph: VisibleGraph<Int>, canRequestMore: Boolean, filters: VcsLogFilterCollection,
-              commitsToPaths: Map<Int, MaybeDeletedFilePath>) : this(dataPack, graph, canRequestMore, filters, FileHistory(commitsToPaths))
-
   override fun getFilePath(rowIndex: Int): FilePath {
     return filePathOrDefault(visibleGraph.getRowInfo(rowIndex).commit)!!
   }
