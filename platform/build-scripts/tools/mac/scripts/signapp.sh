@@ -16,36 +16,40 @@ NOTARIZE=$7
 
 cd $(dirname $0)
 
-echo "Deleting ${EXPLODED}..."
+function log() {
+  echo "$(date '+[%H:%M:%S]') $*"
+}
+
+log "Deleting ${EXPLODED}..."
 test -d ${EXPLODED} && chmod -R u+wx ${EXPLODED}/*
 rm -rf ${EXPLODED}
 mkdir ${EXPLODED}
 
-echo "Unzipping ${INPUT_FILE} to ${EXPLODED}..."
+log "Unzipping ${INPUT_FILE} to ${EXPLODED}..."
 unzip -q ${INPUT_FILE} -d ${EXPLODED}/
 rm ${INPUT_FILE}
 BUILD_NAME=$(ls ${EXPLODED}/)
 
 if [ $# -eq 8 ] && [ -f $8 ]; then
   archiveJDK="$8"
-  echo "Modifying Info.plist"
+  log "Modifying Info.plist"
   sed -i -e 's/1.6\*/1.6\+/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   jdk=jdk-bundled
   if [[ $1 == *custom-jdk-bundled* ]]; then
     jdk=custom-"$jdk"
   fi
   rm -f ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist-e
-  echo "Info.plist has been modified"
-  echo "Copying JDK: $archiveJDK to ${EXPLODED}/"$BUILD_NAME"/Contents"
+  log "Info.plist has been modified"
+  log "Copying JDK: $archiveJDK to ${EXPLODED}/"$BUILD_NAME"/Contents"
   tar xvf $archiveJDK -C ${EXPLODED}/"$BUILD_NAME"/Contents --exclude='._jdk'
   chmod -R u+w ${EXPLODED}/"$BUILD_NAME"/Contents/*
-  echo "JDK has been copied"
+  log "JDK has been copied"
   rm -f $archiveJDK
 fi
 
 if [ $HELP_DIR_NAME != "no-help" ]; then
   HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_DIR_NAME"/Contents/Resources/English.lproj/
-  echo "Building help indices for $HELP_DIR"
+  log "Building help indices for $HELP_DIR"
   hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
 fi
 
@@ -61,19 +65,20 @@ done
 
 for f in "${EXPLODED}/$BUILD_NAME"/Contents/*.txt ; do
   if [ -f "$f" ]; then
-    echo "Moving $f"
+    log "Moving $f"
     mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
   fi
 done
 
 for f in "${EXPLODED}/$BUILD_NAME"/Contents/* ; do
   if [ -f "$f" ] && [ $(basename -- "$f") != "Info.plist" ] ; then
-    echo "Only Info.plist file is allowed in Contents directory but $f is found"
+    log "Only Info.plist file is allowed in Contents directory but $f is found"
     exit 1
   fi
 done
 shopt -u nullglob
 
+log "Unlocking keychain..."
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p "${PASSWORD}" "/Users/${USERNAME}/Library/Keychains/login.keychain"
 
@@ -82,19 +87,19 @@ limit=3
 set +e
 while [ $attempt -le $limit ]
 do
-  echo "signing (attempt $attempt) ${EXPLODED}/$BUILD_NAME"
+  log "Signing (attempt $attempt) ${EXPLODED}/$BUILD_NAME ..."
   ./sign.sh "${EXPLODED}/$BUILD_NAME" "$CODESIGN_STRING"
   if [ "$?" != "0" ]; then
     let "attempt += 1"
     if [ $attempt -eq $limit ]; then
       set -e
     fi
-    echo "wait for 30 sec and try to sign again"
+    log "Signing failed, wait for 30 sec and try to sign again"
     sleep 30;
   else
-    echo "signing done"
+    log "Signing done"
     codesign -v ${EXPLODED}/"$BUILD_NAME" -vvvvv
-    echo "check sign done"
+    log "Check sign done"
     let "attempt += $limit"
   fi
 done
@@ -102,16 +107,21 @@ done
 set -e
 
 if [ "$NOTARIZE" = "yes" ]; then
-  echo "Notarizing..."
+  log "Notarizing..."
   source "$HOME/.notarize_token"
   ./notarize.sh "${EXPLODED}/$BUILD_NAME" "$APPLE_USERNAME" "$APPLE_PASSWORD"
 
-  echo "Stapling..."
+  log "Stapling..."
   xcrun stapler staple "${EXPLODED}/$BUILD_NAME"
+else
+  log "Notarization disabled"
+  log "Stapling disabled"
 fi
 
-echo "Zipping ${BUILD_NAME} to ${INPUT_FILE}..."
+log "Zipping ${BUILD_NAME} to ${INPUT_FILE}..."
 cd ${EXPLODED}
 ditto -c -k --sequesterRsrc --keepParent "${BUILD_NAME}" ../${INPUT_FILE}
+log "Finished zipping"
 cd ..
 rm -rf ${EXPLODED}
+log "Done"
