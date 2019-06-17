@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,18 +92,29 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       }
       finally {
         finishRefreshActivity();
-        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> myEventProcessingQueue.submit(() -> {
-          startRefreshActivity();
-          try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
-            processAndFireEvents(session, transaction);
+        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> {
+          if (Registry.is("vfs.async.event.processing")) {
+            scheduleAsynchronousPreprocessing(session, transaction);
           }
-          finally {
-            finishRefreshActivity();
+          else {
+            session.fireEvents(session.getEvents(), null);
           }
-        }));
+        });
       }
     });
     myEventCounter.eventHappened(session);
+  }
+
+  private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+    myEventProcessingQueue.submit(() -> {
+      startRefreshActivity();
+      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
+        processAndFireEvents(session, transaction);
+      }
+      finally {
+        finishRefreshActivity();
+      }
+    });
   }
 
   private synchronized void startRefreshActivity() {

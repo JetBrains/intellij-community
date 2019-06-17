@@ -398,7 +398,16 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test(timeout = 20_000)
-  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh() {
+  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh_NoWaiting() {
+    checkNonModalThenModalRefresh(false);
+  }
+
+  @Test(timeout = 20_000)
+  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh_WithWaiting() {
+    checkNonModalThenModalRefresh(true);
+  }
+
+  private void checkNonModalThenModalRefresh(boolean waitForDiskRefreshCompletionBeforeStartingModality) {
     EdtTestUtil.runInEdtAndWait(() -> {
       File dir1 = myTempDir.newFolder("dir1");
       File dir2 = myTempDir.newFolder("dir2");
@@ -422,12 +431,22 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       nonModalSession.addFile(vDir1);
       nonModalSession.launch();
 
+      if (waitForDiskRefreshCompletionBeforeStartingModality) {
+        TimeoutUtil.sleep(100); // hopefully that's enough for refresh thread to ee the disk changes
+        UIUtil.dispatchAllInvocationEvents();
+      }
+
       TransactionGuard.submitTransaction(getTestRootDisposable(), () -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-          vDir2.refresh(false, true, () -> log.add("modal finished"));
+          Semaphore local = new Semaphore(1);
+          vDir2.refresh(true, true, () -> {
+            log.add("modal finished");
+            local.up();
+          });
+          assertTrue(local.waitFor(10_000));
           assertThat(vDir2.getChildren()).hasSize(1);
         }
       }));
@@ -439,7 +458,13 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
       assertThat(vDir1.getChildren()).hasSize(1);
       assertThat(vDir2.getChildren()).hasSize(1);
-      assertThat(log).containsExactly("modal finished", "non-modal finished");
+
+      //todo order should be the same
+      if (waitForDiskRefreshCompletionBeforeStartingModality) {
+        assertThat(log).containsExactlyInAnyOrder("modal finished", "non-modal finished");
+      } else {
+        assertThat(log).containsExactly("modal finished", "non-modal finished");
+      }
     });
   }
 }
