@@ -382,7 +382,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     try {
       ourUpdatingTitle = true;
 
-      if (IdeFrameDecorator.isCustomDecoration()) {
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
         frame.getRootPane().putClientProperty("Window.CustomDecoration.documentFile", currentFile);
       }
 
