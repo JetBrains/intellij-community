@@ -367,6 +367,9 @@
     <keyboard-shortcut first-keystroke="meta control F"/>
   </action>
 
+  <action id="Vcs.ToggleAmendCommitMode">
+    <keyboard-shortcut first-keystroke="control alt M"/>
+  </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
     <keyboard-shortcut first-keystroke="meta E"/>
