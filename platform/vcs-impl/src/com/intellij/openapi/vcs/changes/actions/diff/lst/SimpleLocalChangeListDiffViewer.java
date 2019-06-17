@@ -379,7 +379,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @Override
     protected String getText(@NotNull List<? extends MySimpleDiffChange> selectedChanges) {
       boolean hasExcluded = ContainerUtil.or(selectedChanges, MySimpleDiffChange::isExcludedFromCommit);
-      return selectedChanges.isEmpty() || !hasExcluded ? "Exclude Lines from Commit" : "Include Lines into Commit";
+      return !selectedChanges.isEmpty() && !hasExcluded ? "Exclude Lines from Commit" : "Include Lines into Commit";
     }
 
     @Override
