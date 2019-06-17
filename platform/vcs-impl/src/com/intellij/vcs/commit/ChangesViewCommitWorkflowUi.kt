@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.LocalChangeList
 
 interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   var isDefaultCommitActionEnabled: Boolean
@@ -20,4 +21,6 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   fun retainInclusion(items: Collection<*>)
 
   fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext)
+
+  fun setCompletionContext(changeLists: List<LocalChangeList>)
 }
