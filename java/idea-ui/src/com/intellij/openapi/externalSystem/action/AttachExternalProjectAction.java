@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.action;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -14,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExtern
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.projectImport.ProjectImportProvider;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Denis Zhdanov
  */
-public class AttachExternalProjectAction extends AnAction {
+public class AttachExternalProjectAction extends DumbAwareAction {
 
   public AttachExternalProjectAction() {
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.attach.external.project.text", "External"));
