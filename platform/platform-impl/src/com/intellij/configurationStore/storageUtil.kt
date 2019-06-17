@@ -23,6 +23,7 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
@@ -33,6 +34,7 @@ const val NOTIFICATION_GROUP_ID = "Load Error"
 @TestOnly
 var DEBUG_LOG: String? = null
 
+@ApiStatus.Internal
 fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
   val productName = ApplicationNamesInfo.getInstance().productName
   val content = "<p><i>${macros.joinToString(", ")}</i> ${if (macros.size == 1) "is" else "are"} undefined. <a href=\"define\">Fix it</a></p>" +
@@ -45,6 +47,7 @@ fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: M
     .notify(project)
 }
 
+@ApiStatus.Internal
 fun checkUnknownMacros(project: Project, notify: Boolean) {
   // use linked set/map to get stable results
   val unknownMacros = LinkedHashSet<String>()
@@ -115,6 +118,7 @@ private fun collect(componentManager: ComponentManager,
   substitutorToStore.put(substitutor, store)
 }
 
+@ApiStatus.Internal
 fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
   if (virtualFile != null) {
@@ -134,6 +138,7 @@ fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequest
 }
 
 // runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
+@ApiStatus.Internal
 inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
   return when {
     ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
@@ -142,6 +147,7 @@ inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
 }
 
 @Throws(IOException::class)
+@ApiStatus.Internal
 fun readProjectNameFile(nameFile: Path): String? {
   return nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }
 }
