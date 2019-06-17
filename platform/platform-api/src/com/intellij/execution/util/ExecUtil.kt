@@ -169,7 +169,7 @@ object ExecUtil {
         GeneralCommandLine(getTerminalCommand("Install", script.absolutePath))
       }
       else -> {
-        throw UnsupportedOperationException("Unsupported OS/desktop: ${SystemInfo.OS_NAME}/${SystemInfo.SUN_DESKTOP}")
+        throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
       }
     }
 
