@@ -119,7 +119,7 @@ public class HighlightMethodUtil {
         }
       }
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmUtil.getAccessModifier(superAccessLevel), true)));
+      QuickFixAction.registerQuickFixAction(info, null, QUICK_FIX_FACTORY.createChangeModifierFix());
       return info;
     }
 

@@ -516,4 +516,7 @@ public abstract class QuickFixFactory {
 
   @Nullable
   public abstract IntentionAction createCollapseAnnotationsFix(@NotNull PsiAnnotation annotation);
+
+  @NotNull
+  public abstract IntentionAction createChangeModifierFix();
 }

@@ -44,6 +44,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -939,5 +940,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCollapseAnnotationsFix(@NotNull PsiAnnotation annotation) {
     return CollapseAnnotationsFix.from(annotation);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createChangeModifierFix() {
+    return new ChangeModifierIntention(true);
   }
 }
