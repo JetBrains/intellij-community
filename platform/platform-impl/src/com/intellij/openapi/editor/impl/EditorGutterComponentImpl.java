@@ -1582,6 +1582,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myCalculatingInBackground = renderer;
     myBackgroundIndicator.cancel();
     myBackgroundIndicator = new ProgressIndicatorBase();
+    myBackgroundIndicator.setModalityProgress(null);
     AtomicReference<String> tooltip = new AtomicReference<>();
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(),
                                                                                                "Constructing Tooltip") {
