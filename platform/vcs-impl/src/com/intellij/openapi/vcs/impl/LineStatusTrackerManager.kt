@@ -128,7 +128,7 @@ class LineStatusTrackerManager(
     synchronized(LOCK) {
       for ((document, multiset) in forcedDocuments) {
         for (requester in multiset.elementSet()) {
-          warn("Tracker for is being held on dispose by $requester", document)
+          warn("Tracker is being held on dispose by $requester", document)
         }
       }
       forcedDocuments.clear()
@@ -618,6 +618,8 @@ class LineStatusTrackerManager(
     }
 
     private fun isTrackedEditor(editor: Editor): Boolean {
+      // can't filter out "!isInLocalFileSystem" files, custom VcsBaseContentProvider can handle them
+      if (fileDocumentManager.getFile(editor.document) == null) return false
       return editor.project == null || editor.project == project
     }
   }
