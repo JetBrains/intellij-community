@@ -645,7 +645,7 @@
     </extensionPoint>
 
     <extensionPoint name="codeInsight.inlayProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayHintsProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayHintProvider"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory"
