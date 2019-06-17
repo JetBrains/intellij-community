@@ -10,9 +10,9 @@ import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.BACKWAR
 import com.intellij.openapi.editor.actions.MoveToCaretStopTest.Direction.FORWARD
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.Comparing
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class MoveToCaretStopTest : LightPlatformCodeInsightFixtureTestCase() {
+class MoveToCaretStopTest : BasePlatformTestCase() {
   enum class Action { MOVE, DELETE }
 
   enum class Direction : Comparator<Int> {

@@ -8,8 +8,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.XmlBundle;
 
 import java.util.List;
@@ -17,7 +16,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class RealFetchTest extends LightPlatformCodeInsightFixtureTestCase {
+public class RealFetchTest extends BasePlatformTestCase {
 
   public void testFetchDtd() {
     final String url = "http://java.sun.com/dtd/preferences.dtd";

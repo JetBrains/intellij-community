@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class EditorConfigFormattingTest : LightPlatformCodeInsightFixtureTestCase() {
+class EditorConfigFormattingTest : BasePlatformTestCase() {
   override fun getTestDataPath() = "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/formatting"
 
   private fun doTestWithSettings(settings: CommonCodeStyleSettings.() -> Unit) {

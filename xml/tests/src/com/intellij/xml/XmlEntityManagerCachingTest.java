@@ -17,7 +17,7 @@ package com.intellij.xml;
 
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
 
 import java.io.File;
@@ -25,7 +25,7 @@ import java.io.File;
 /**
  * @author ibessonov
  */
-public class XmlEntityManagerCachingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class XmlEntityManagerCachingTest extends BasePlatformTestCase {
 
   public void testXmlEntityManagerCaching() {
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://dl.google.com/gwt/DTD/xhtml.ent",

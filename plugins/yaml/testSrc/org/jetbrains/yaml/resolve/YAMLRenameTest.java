@@ -4,13 +4,13 @@ package org.jetbrains.yaml.resolve;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
-public class YAMLRenameTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLRenameTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/resolve/data/";

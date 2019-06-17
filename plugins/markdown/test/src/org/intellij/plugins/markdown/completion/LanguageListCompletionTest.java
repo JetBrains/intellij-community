@@ -9,7 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider;
 import org.intellij.plugins.markdown.injection.LanguageGuesser;
@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LanguageListCompletionTest extends LightPlatformCodeInsightFixtureTestCase {
+public class LanguageListCompletionTest extends BasePlatformTestCase {
 
   @NotNull
   @Override

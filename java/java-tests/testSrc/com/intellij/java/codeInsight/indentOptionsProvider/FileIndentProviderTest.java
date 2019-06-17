@@ -11,7 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,7 @@ import java.io.File;
 /**
  * @author Rustam Vishnyakov
  */
-public class FileIndentProviderTest extends LightPlatformCodeInsightFixtureTestCase {
+public class FileIndentProviderTest extends BasePlatformTestCase {
   private final FileIndentOptionsProvider TEST_FILE_INDENT_OPTIONS_PROVIDER = new TestIndentOptionsProvider();
   private CommonCodeStyleSettings.IndentOptions myTestIndentOptions;
   private boolean myUseOnFullReformat;

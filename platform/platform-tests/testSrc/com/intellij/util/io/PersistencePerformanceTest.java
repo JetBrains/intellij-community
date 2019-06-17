@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -27,7 +27,7 @@ import java.util.concurrent.Future;
 /**
  * @author Dmitry Avdeev
  */
-public class PersistencePerformanceTest extends LightPlatformCodeInsightFixtureTestCase {
+public class PersistencePerformanceTest extends BasePlatformTestCase {
   private final ExecutorService myThreadPool = PooledThreadExecutor.INSTANCE;
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<>();
   private final List<String> myKeys = new ArrayList<>();

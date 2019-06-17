@@ -16,12 +16,12 @@
 package com.intellij.patterns;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 /**
  * @author peter
  */
-public class VirtualFilePatternsTest extends LightPlatformCodeInsightFixtureTestCase {
+public class VirtualFilePatternsTest extends BasePlatformTestCase {
   public void testWithSuperParent() {
     VirtualFile file = myFixture.addFileToProject("foo/bar.txt", "").getVirtualFile();
     assert PlatformPatterns.virtualFile().withSuperParent(1, PlatformPatterns.virtualFile().withName("foo")).accepts(file);

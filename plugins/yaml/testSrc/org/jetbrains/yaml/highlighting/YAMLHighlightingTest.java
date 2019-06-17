@@ -2,13 +2,13 @@
 package org.jetbrains.yaml.highlighting;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.yaml.inspections.YAMLDuplicatedKeysInspection;
 import org.jetbrains.yaml.inspections.YAMLRecursiveAliasInspection;
 import org.jetbrains.yaml.inspections.YAMLUnresolvedAliasInspection;
 import org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection;
 
-public class YAMLHighlightingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLHighlightingTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/highlighting/data/";

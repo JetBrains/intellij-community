@@ -8,7 +8,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -16,7 +16,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType;
 
-public class CodeSamplesCorrectnessTest extends LightPlatformCodeInsightFixtureTestCase {
+public class CodeSamplesCorrectnessTest extends BasePlatformTestCase {
   private List<CodeErrorReport> myErrorReports;
   private SettingsType[] mySettingValues;
 

@@ -19,13 +19,13 @@ import com.intellij.codeInsight.editorActions.SelectWordHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RegExpWordSelectionFilterTest extends LightPlatformCodeInsightFixtureTestCase {
+public class RegExpWordSelectionFilterTest extends BasePlatformTestCase {
 
   public void testSelectWordSkipChar() {
     doTest("graafm<caret>achine",

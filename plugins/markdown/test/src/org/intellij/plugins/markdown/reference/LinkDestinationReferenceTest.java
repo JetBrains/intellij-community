@@ -5,11 +5,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.FakePsiElement;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class LinkDestinationReferenceTest extends LightPlatformCodeInsightFixtureTestCase {
+public class LinkDestinationReferenceTest extends BasePlatformTestCase {
 
   public static final Logger LOGGER = Logger.getInstance(LinkDestinationReferenceTest.class);
 

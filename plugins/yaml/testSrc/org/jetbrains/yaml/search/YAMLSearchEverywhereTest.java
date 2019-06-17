@@ -8,7 +8,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.navigation.YAMLKeyNavigationItem;
@@ -18,7 +18,7 @@ import org.jetbrains.yaml.psi.YAMLPsiElement;
 import java.io.IOException;
 import java.util.List;
 
-public class YAMLSearchEverywhereTest extends LightPlatformCodeInsightFixtureTestCase {
+public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/search/data/";

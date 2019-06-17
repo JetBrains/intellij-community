@@ -8,14 +8,14 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.util.Collections;
 
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class AcceptWordAsCorrectTest extends LightPlatformCodeInsightFixtureTestCase {
+public class AcceptWordAsCorrectTest extends BasePlatformTestCase {
 
   public static final String TYPPO = "typpppo";
   public static final String TEST_TXT = "test.txt";

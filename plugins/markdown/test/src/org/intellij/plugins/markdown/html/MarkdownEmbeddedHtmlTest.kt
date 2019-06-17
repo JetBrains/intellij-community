@@ -3,11 +3,11 @@ package org.intellij.plugins.markdown.html
 
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.psi.impl.DebugUtil
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 
-class MarkdownEmbeddedHtmlTest : LightPlatformCodeInsightFixtureTestCase() {
+class MarkdownEmbeddedHtmlTest : BasePlatformTestCase() {
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/html/embedded/"
   }

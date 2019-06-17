@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.html;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable;
@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownUtil;
 
 import java.io.IOException;
 
-public class MarkdownPlantUMLTest extends LightPlatformCodeInsightFixtureTestCase {
+public class MarkdownPlantUMLTest extends BasePlatformTestCase {
   private static final String PLANTUML_TARGET_DIR = "plantuml";
   protected TempDirTestFixture myFixture;
 
