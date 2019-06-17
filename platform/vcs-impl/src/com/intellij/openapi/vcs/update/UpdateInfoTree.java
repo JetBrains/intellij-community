@@ -316,7 +316,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   @Nullable
   private VirtualFilePointer getSelectedFilePointer() {
-    AbstractTreeNode treeNode = (AbstractTreeNode)myTree.getSelectionPath().getLastPathComponent();
+    TreePath path = myTree.getSelectionPath();
+    if (path == null) return null;
+    AbstractTreeNode treeNode = (AbstractTreeNode)path.getLastPathComponent();
     return treeNode instanceof FileTreeNode ? ((FileTreeNode)treeNode).getFilePointer() : null;
   }
 
