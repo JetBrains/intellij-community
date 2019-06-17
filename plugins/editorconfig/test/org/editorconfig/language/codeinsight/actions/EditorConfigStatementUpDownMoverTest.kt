@@ -3,11 +3,13 @@ package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class EditorConfigStatementUpDownMoverTest : LightJavaCodeInsightFixtureTestCase() {
+class EditorConfigStatementUpDownMoverTest : BasePlatformTestCase() {
   override fun getBasePath() =
     "/plugins/editorconfig/testData/org/editorconfig/language/codeinsight/actions/moveUpDown/"
+
+  override fun isCommunity(): Boolean = true
 
   fun testMoveFirstOption() = doTest()
   fun testMoveCentralOption() = doTest()
