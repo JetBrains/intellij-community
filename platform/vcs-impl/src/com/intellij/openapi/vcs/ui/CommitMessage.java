@@ -47,8 +47,10 @@ import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
 import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+import static com.intellij.util.containers.ContainerUtil.newUnmodifiableList;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
+import static java.util.Collections.singletonList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
@@ -228,8 +230,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @CalledInAwt
   public synchronized void setChangeList(@NotNull ChangeList value) {
+    setChangeLists(singletonList(value));
+  }
+
+  @CalledInAwt
+  public synchronized void setChangeLists(@NotNull List<ChangeList> value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myChangeLists = Collections.singletonList(value);
+    myChangeLists = newUnmodifiableList(value);
   }
 
   @NotNull

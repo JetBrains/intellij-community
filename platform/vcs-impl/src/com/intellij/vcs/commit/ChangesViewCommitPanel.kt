@@ -13,10 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesViewManager
-import com.intellij.openapi.vcs.changes.InclusionListener
-import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
@@ -197,6 +194,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
     if (isFromToolbar) commitOptionsPopup.showAbove(this)
     else commitOptionsPopup.showInBestPositionFor(dataContext)
+  }
+
+  override fun setCompletionContext(changeLists: List<LocalChangeList>) {
+    commitMessage.changeLists = changeLists
   }
 
   override fun getComponent(): JComponent = this

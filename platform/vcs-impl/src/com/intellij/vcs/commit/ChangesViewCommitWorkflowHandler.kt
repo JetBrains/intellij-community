@@ -98,6 +98,7 @@ class ChangesViewCommitWorkflowHandler(
     }
 
     inclusionModel.changeLists = changeLists
+    ui.setCompletionContext(changeLists)
   }
 
   fun setCommitState(items: Collection<Any>, force: Boolean) {
