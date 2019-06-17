@@ -32,7 +32,7 @@ else
 fi
 
 function override_jb_variables {
-  env | while IFS="=" read NAME VALUE
+  while IFS="=" read NAME VALUE
   do
     if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
     then
@@ -42,7 +42,7 @@ function override_jb_variables {
         export "$NEW_NAME"="$VALUE"
       fi
     fi
-  done
+  done < <(env)
 }
 
 override_jb_variables
