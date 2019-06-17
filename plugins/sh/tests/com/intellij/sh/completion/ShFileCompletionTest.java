@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShStringUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assume.assumeNotNull;
 
-public class ShFileCompletionTest extends LightJavaCodeInsightFixtureTestCase {
+public class ShFileCompletionTest extends BasePlatformTestCase {
   private static final String FOLDER_NAME = "example";
   private static final String FIRST_FILE_NAME = "simple1.txt";
   private static final String SECOND_FILE_NAME = "simple2.txt";
