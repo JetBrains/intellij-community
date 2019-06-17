@@ -20,13 +20,12 @@ import com.intellij.openapi.project.Project;
 
 /**
  * This class managers <i>refactoring listeners</i> - a way for plugin/client code to get
- * notifications that particular refactoring has done something with some piece of Java code in
+ * notifications that particular refactoring has done something with some piece of code in
  * a project.<p>
- *
+ * <p>
  * Listening to refactoring operations works as follows:
  * <ul>
  * <li> client wishing to receive notifications registers a {@link RefactoringElementListenerProvider}
- *  with this class.
  * <li> before some {@code PsiElement} is subjected to a refactoring, all registered providers
  *  are asked to provide a {@link RefactoringElementListener} for that element
  * ({@link RefactoringElementListenerProvider#getListener(com.intellij.psi.PsiElement)} is invoked)
@@ -36,12 +35,16 @@ import com.intellij.openapi.project.Project;
 public abstract class RefactoringListenerManager {
   /**
    * Registers a provider of listeners.
+   *
+   * @deprecated use {@code com.intellij.refactoring.elementListenerProvider} extension point
    */
   @Deprecated
   public abstract void addListenerProvider(RefactoringElementListenerProvider provider);
 
   /**
-   * Unregisters previously registered provider of listeners.   
+   * Unregisters previously registered provider of listeners.
+   *
+   * @deprecated use {@code com.intellij.refactoring.elementListenerProvider} extension point
    */
   @Deprecated
   public abstract void removeListenerProvider(RefactoringElementListenerProvider provider);
