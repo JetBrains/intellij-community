@@ -387,7 +387,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         if (myProject.isDisposed()) return;
 
         if (getImportingSettings().isImportAutomatically()) {
-          scheduleImportAndResolve();
+          scheduleImportAndResolve(true);
         }
       }
 
@@ -865,6 +865,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
    * if project is closed)
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
+    return scheduleImportAndResolve(false);
+  }
+
+  public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
 
     AtomicBoolean disposed = new AtomicBoolean(false);
     ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -872,7 +876,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         disposed.set(true);
         return;
       }
-      getSyncConsole().startImport(ServiceManager.getService(myProject, SyncViewManager.class));
+      getSyncConsole().startImport(ServiceManager.getService(myProject, SyncViewManager.class), fromAutoImport);
     });
     if (disposed.get()) {
       return Promises.cancelledPromise();

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.buildtool
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
+import com.intellij.build.FilePosition
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.*
@@ -16,6 +17,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
 
 class MavenSyncConsole(private val myProject: Project) {
   @Volatile
@@ -23,18 +25,21 @@ class MavenSyncConsole(private val myProject: Project) {
   private var mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
   private var finished = false
   private var started = false
+  private var hasErrors = false
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
-  fun startImport(syncView: BuildProgressListener) {
+  fun startImport(syncView: BuildProgressListener, fromAutoImport: Boolean) {
     if (started) {
       return
     }
     started = true
     finished = false
+    hasErrors = false
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
     val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
+    descriptor.isActivateToolWindowWhenFailed = !fromAutoImport
     mySyncView = syncView
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, "Sync ${myProject.name}"))
     debugLog("maven sync: started importing $myProject")
@@ -59,12 +64,16 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   fun finishImport() {
     debugLog("Maven sync: finishImport")
-    doFinish(DerivedResultImpl())
+    doFinish()
   }
 
   @Synchronized
   fun notifyReadingProblems(file: VirtualFile) {
     debugLog("reading problems in $file")
+    hasErrors = true
+    mySyncView.onEvent(mySyncId, FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, "Error", "Error reading ${file.path}",
+                                                      "Error reading ${file.path}",
+                                                      FilePosition(File(file.path), -1, -1)))
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
@@ -75,17 +84,19 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun doFinish(result: EventResult) {
+  private fun doFinish() {
     val tasks = myStartedSet.toList().asReversed()
-    debugLog("Tasks $tasks are not completed! Force complete with $result")
-    tasks.forEach { completeTask(it.first, it.second, result) }
-    mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "", result))
+    debugLog("Tasks $tasks are not completed! Force complete")
+    tasks.forEach { completeTask(it.first, it.second, DerivedResultImpl()) }
+    mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
+                                                      if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
     finished = true
     started = false
   }
 
   @Synchronized
   private fun showError(keyPrefix: String, dependency: String) {
+    hasErrors = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
     val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
     startTask(mySyncId, umbrellaString)
@@ -106,6 +117,8 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   private fun completeTask(parentId: Any, taskName: String, result: EventResult) {
     if (!started || finished) return
+    hasErrors =  hasErrors || result is FailureResultImpl
+
     debugLog("Maven sync: complete $taskName with $result")
     if (myStartedSet.remove(parentId to taskName)) {
       mySyncView.onEvent(mySyncId, FinishEventImpl(taskName, parentId, System.currentTimeMillis(), taskName, result))
