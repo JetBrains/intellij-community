@@ -20,6 +20,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -50,6 +51,8 @@ public class MavenExternalExecutor extends MavenExecutor {
 
   private JavaParameters myJavaParameters;
   private ExecutionException myParameterCreationError;
+  private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
+
 
   public MavenExternalExecutor(Project project,
                                @NotNull MavenRunnerParameters parameters,
@@ -84,7 +87,7 @@ public class MavenExternalExecutor extends MavenExecutor {
               ((BuildViewMavenConsole)myConsole).onTextAvailable(text, outputType);
             }
             if (!myConsole.isSuppressed(text) && (!MavenSpyOutputParser.isSpyLog(text) || Registry.is("maven.spy.events.debug"))) {
-              super.notifyTextAvailable(text, outputType);
+              myDecoder.escapeText(text, outputType, (t, ot) -> super.notifyTextAvailable(t, ot));
             }
             updateProgress(indicator, text);
           }
