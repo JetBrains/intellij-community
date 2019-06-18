@@ -632,7 +632,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
     }
 
     if (!openPaths.isEmpty() && frame == null) {
-      Activity activity = StartUpMeasurer.start("showFrame");
+      Activity activity = StartUpMeasurer.start("show frame");
       frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
       activity.end();
     }
