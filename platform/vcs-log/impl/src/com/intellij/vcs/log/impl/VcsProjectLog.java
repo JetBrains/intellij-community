@@ -113,7 +113,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @CalledInBackground
-  public void createLog(boolean forceInit) {
+  void createLog(boolean forceInit) {
     VcsLogManager logManager = myLogManager.getValue();
 
     ApplicationManager.getApplication().invokeLater(() -> {

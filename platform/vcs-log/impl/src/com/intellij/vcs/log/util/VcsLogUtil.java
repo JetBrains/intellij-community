@@ -3,9 +3,6 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,24 +19,21 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -54,8 +48,6 @@ public class VcsLogUtil {
   public static final int SHORT_HASH_LENGTH = 8;
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
   public static final String HEAD = "HEAD";
-
-  private static final Logger LOG = Logger.getInstance(VcsLogUtil.class);
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
@@ -325,47 +317,6 @@ public class VcsLogUtil {
     return Registry.is("vcs.folder.history.in.log");
   }
 
-  /**
-   * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
-   * waits for it in a background task, and executes the action after the log is ready.
-   */
-  @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
-    VcsProjectLog log = VcsProjectLog.getInstance(project);
-    VcsLogManager manager = log.getLogManager();
-    if (manager != null) {
-      action.accept(log, manager);
-    }
-    else { // schedule showing the log, wait its initialization, and then open the tab
-      CountDownLatch latch = new CountDownLatch(1);
-      MessageBusConnection connection = project.getMessageBus().connect(log);
-      connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
-        @Override
-        public void logCreated(@NotNull VcsLogManager logManager) {
-          latch.countDown();
-          action.accept(log, logManager);
-          connection.disconnect();
-        }
-      });
-
-      new Task.Backgroundable(project, "Loading Commits") {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          log.createLog(true);
-
-          try {
-            while (!latch.await(50, TimeUnit.MILLISECONDS)) {
-              indicator.checkCanceled();
-            }
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
-          }
-        }
-      }.queue();
-    }
-  }
-
   public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
     int maxSize = 0;
     for (VcsFullCommitDetails details : detailsList) {
@@ -378,7 +329,7 @@ public class VcsLogUtil {
     if (details instanceof VcsChangesLazilyParsedDetails) {
       return ((VcsChangesLazilyParsedDetails)details).size();
     }
-    
+
     int size = 0;
     for (int i = 0; i < details.getParents().size(); i++) {
       size += details.getChanges(i).size();

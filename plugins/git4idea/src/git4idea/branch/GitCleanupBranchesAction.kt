@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.keymap.KeymapUtil.*
+import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -33,8 +33,8 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl
@@ -44,7 +44,10 @@ import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 
 private val LOG = logger<GitCleanupBranchesAction>()
@@ -62,7 +65,7 @@ class GitCleanupBranchesAction : DumbAwareAction() {
     Disposer.register(content, ui)
     toolWindow.activate(null, true, true)
 
-    VcsLogUtil.runWhenLogIsReady(project) { _, _ ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { _, _ ->
       ui.stopLoading()
     } // schedule initialization: need the log for other actions
   }
@@ -314,7 +317,7 @@ private class ShowBranchDiffAction : CleanupBranchesActionBase("Compare with Cur
     val branch = e.getData(GIT_BRANCH)!!
     val project = e.project!!
 
-    VcsLogUtil.runWhenLogIsReady(project) { log, logManager ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { log, logManager ->
       val filters = VcsLogFilterObject.fromRange("HEAD", branch.branchName)
       log.tabsManager.openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters))
     }
