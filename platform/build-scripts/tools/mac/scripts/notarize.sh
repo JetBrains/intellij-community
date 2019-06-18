@@ -18,6 +18,12 @@ function log() {
   echo "$(date '+[%H:%M:%S]') $*"
 }
 
+function publish-log() {
+  id=$1
+  file=$2
+  curl -H "X-JFrog-Art-Api: $ARTIFACTORY_API_KEY" -T "$file" "$ARTIFACTORY_URL/$id"
+}
+
 #immediately exit script with an error if a command fails
 set -euo pipefail
 
@@ -59,7 +65,7 @@ while true; do
     log "Notarization failed"
     ec=1
   elif [ "$status" = "success" ]; then
-    log "Notarization suceed"
+    log "Notarization succeeded"
     ec=0
   else
     if [ "$status" != "in progress" ]; then
@@ -75,11 +81,16 @@ while true; do
     ((spent += 1))
     continue
   fi
-  log "Fetching developer_log.json"
-  url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 12-)"
-  wget "$url" -O "developer_log.json" && cat "developer_log.json" || true
-  # TODO: publish developer_log.json
-
+  developer_log="developer_log.json"
+  log "Fetching $developer_log"
+  url=$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 12-)
+  # wget does url quoting by itself
+  # shellcheck disable=SC2086
+  wget $url -O "$developer_log" && cat "$developer_log" || true
+  if [ $ec != 0 ]; then
+    log "Publishing $developer_log"
+    publish-log "$notarization_info" "$developer_log"
+  fi
   break
 done
 cat "altool.check.out"
