@@ -240,6 +240,7 @@
 
     <applicationService serviceInterface="com.intellij.ide.script.IdeScriptEngineManager"
                         serviceImplementation="com.intellij.ide.script.IdeScriptEngineManagerImpl"/>
+    <statistics.counterUsagesCollector groupId="ide.script.engine" version="1"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
