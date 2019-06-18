@@ -12,7 +12,7 @@ import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -80,11 +80,11 @@ public class Mappings {
   @Nullable
   private Collection<String> myRemovedFiles;
 
-  public MaybeRelativizer getRelativizer() {
+  public PathRelativizerService getRelativizer() {
     return myRelativizer;
   }
 
-  private final MaybeRelativizer myRelativizer;
+  private final PathRelativizerService myRelativizer;
 
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
@@ -104,7 +104,7 @@ public class Mappings {
     createImplementation();
   }
 
-  public Mappings(final File rootDir, MaybeRelativizer relativizer, final boolean transientDelta) throws IOException {
+  public Mappings(final File rootDir, PathRelativizerService relativizer, final boolean transientDelta) throws IOException {
     myLock = new Object();
     myIsDelta = false;
     myChangedClasses = null;

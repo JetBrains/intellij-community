@@ -16,7 +16,7 @@
 package org.jetbrains.ether;
 
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 
@@ -130,7 +130,7 @@ public class StorageDumper {
         final File parent = new File(oath == null ? "" : oath);
         final File dataStorageRoot = new File(dataPath, "mappings");
 
-        final Mappings mappings = new Mappings(dataStorageRoot, new MaybeRelativizer(), true);
+        final Mappings mappings = new Mappings(dataStorageRoot, new PathRelativizerService(), true);
         try {
           //final File outputPath = new File(parent, "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh-mm-ss)").format(new Date()) + ".log");
           //FileUtil.createIfDoesntExist(outputPath);

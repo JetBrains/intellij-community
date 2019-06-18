@@ -2,7 +2,7 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -14,7 +14,7 @@ import java.util.Set;
 public class ClassFileDependenciesAnalyzer {
   private final DependencyContext myContext;
 
-  public ClassFileDependenciesAnalyzer(File dependenciesDataDir, MaybeRelativizer relativizer) throws IOException {
+  public ClassFileDependenciesAnalyzer(File dependenciesDataDir, PathRelativizerService relativizer) throws IOException {
     myContext = new DependencyContext(dependenciesDataDir, relativizer);
   }
 

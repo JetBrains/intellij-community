@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class ProjectStamps {
 
   public ProjectStamps(File dataStorageRoot,
                        BuildTargetsState targetsState,
-                       MaybeRelativizer relativizer) throws IOException {
+                       PathRelativizerService relativizer) throws IOException {
     myStampsStorage = USE_HASHES
                       ? new HashStorage(dataStorageRoot, relativizer, targetsState)
                       : new TimestampStorage(dataStorageRoot, targetsState);

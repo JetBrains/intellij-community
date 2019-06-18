@@ -20,6 +20,7 @@ import com.intellij.util.containers.JBIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,9 +34,9 @@ import static com.intellij.util.containers.ContainerUtil.map;
  */
 public class SourceToOutputMappingImpl implements SourceToOutputMapping {
   private final OneToManyPathsMapping myMapping;
-  private final MaybeRelativizer myRelativizer;
+  private final PathRelativizerService myRelativizer;
 
-  public SourceToOutputMappingImpl(File storePath, MaybeRelativizer relativizer) throws IOException {
+  public SourceToOutputMappingImpl(File storePath, PathRelativizerService relativizer) throws IOException {
     myMapping = new OneToManyPathsMapping(storePath);
     myRelativizer = relativizer;
   }

@@ -177,6 +177,7 @@ public class IncProjectBuilder {
       context = createContext(scope);
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
+      myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
     }

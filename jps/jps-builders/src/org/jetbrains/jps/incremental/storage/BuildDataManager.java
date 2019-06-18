@@ -18,6 +18,7 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
 import java.util.Collection;
@@ -49,6 +50,7 @@ public class BuildDataManager implements StorageOwner {
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
+  private final PathRelativizerService myRelativizer;
   private final StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
     @Override
     protected Iterable<? extends StorageOwner> getChildStorages() {
@@ -76,12 +78,6 @@ public class BuildDataManager implements StorageOwner {
       };
     }
   };
-
-  public MaybeRelativizer getRelativizer() {
-    return myRelativizer;
-  }
-
-  private final MaybeRelativizer myRelativizer;
 
   private interface LazyValueFactory<K, V> {
     AtomicNotNullLazyValue<V> create(K key);
@@ -120,7 +116,7 @@ public class BuildDataManager implements StorageOwner {
 
   public BuildDataManager(BuildDataPaths dataPaths,
                           BuildTargetsState targetsState,
-                          MaybeRelativizer relativizer,
+                          PathRelativizerService relativizer,
                           boolean useMemoryTempCaches) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
@@ -351,6 +347,10 @@ public class BuildDataManager implements StorageOwner {
     return myDataPaths;
   }
 
+  public PathRelativizerService getRelativizer() {
+    return myRelativizer;
+  }
+
   public static File getMappingsRoot(final File dataStorageRoot) {
     return new File(dataStorageRoot, MAPPINGS_STORAGE);
   }
@@ -406,6 +406,10 @@ public class BuildDataManager implements StorageOwner {
       catch (IOException ignored) {
       }
     }
+  }
+
+  public void reportUnhandledRelativizerPaths() {
+    myRelativizer.reportUnhandledPaths();
   }
 
   // todo: add relative paths here too

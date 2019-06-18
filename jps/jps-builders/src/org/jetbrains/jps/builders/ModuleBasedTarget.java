@@ -16,7 +16,6 @@
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
 import org.jetbrains.jps.model.module.JpsModule;
 
 /**
@@ -27,12 +26,10 @@ import org.jetbrains.jps.model.module.JpsModule;
  */
 public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends BuildTarget<R> {
   protected final JpsModule myModule;
-  private final MaybeRelativizer myRelativizer;
 
   public ModuleBasedTarget(ModuleBasedBuildTargetType<?> targetType, @NotNull JpsModule module) {
     super(targetType);
     myModule = module;
-    myRelativizer = new MaybeRelativizer(module.getProject());
   }
 
   @NotNull
@@ -48,10 +45,6 @@ public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends B
   }
 
   public abstract boolean isTests();
-
-  protected MaybeRelativizer getRelativizer() {
-    return myRelativizer;
-  }
 
   @Override
   public boolean equals(Object o) {

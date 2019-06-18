@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,7 @@ class DependencyContext implements NamingContext {
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<>();
   private final Map<UsageRepr.Usage, UsageRepr.Usage> myUsageMap = new HashMap<>();
   private final int myEmptyName;
-  private final MaybeRelativizer myRelativizer;
+  private final PathRelativizerService myRelativizer;
 
   UsageRepr.Usage getUsage(final UsageRepr.Usage u) {
      final UsageRepr.Usage r = myUsageMap.get(u);
@@ -60,7 +60,7 @@ class DependencyContext implements NamingContext {
     return file;
   }
 
-  DependencyContext(final File rootDir, MaybeRelativizer relativizer) throws IOException {
+  DependencyContext(final File rootDir, PathRelativizerService relativizer) throws IOException {
     myRelativizer = relativizer;
     final File file = getTableFile(rootDir, STRING_TABLE_NAME);
     myEnumerator = new PersistentStringEnumerator(file, true);

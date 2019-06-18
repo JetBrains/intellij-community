@@ -36,6 +36,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
@@ -83,7 +84,7 @@ public class BuildRunner {
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
     BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
-    MaybeRelativizer relativizer = new MaybeRelativizer(jpsModel.getProject());
+    PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject(), dataPaths.getDataStorageRoot());
 
     ProjectStamps projectStamps = null;
     BuildDataManager dataManager = null;

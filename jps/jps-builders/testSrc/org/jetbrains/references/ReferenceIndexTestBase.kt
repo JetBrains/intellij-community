@@ -13,7 +13,7 @@ import org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import java.io.File
 
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
@@ -61,7 +61,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
     val pd = createProjectDescriptor(BuildLoggingManager(TestProjectBuilderLogger()))
     val manager = pd.dataManager
     val buildDir = manager.dataPaths.dataStorageRoot
-    val index = JavaCompilerBackwardReferenceIndex(buildDir, MaybeRelativizer(myProject), true)
+    val index = JavaCompilerBackwardReferenceIndex(buildDir,
+                                                   PathRelativizerService(myProject, buildDir), true)
 
     try {
       val fileEnumerator = index.filePathEnumerator

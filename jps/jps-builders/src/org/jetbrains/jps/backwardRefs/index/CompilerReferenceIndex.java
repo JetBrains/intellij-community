@@ -23,7 +23,7 @@ import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
 import java.util.Collection;
@@ -63,7 +63,7 @@ public class CompilerReferenceIndex<Input> {
 
   public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
                                 File buildDir,
-                                MaybeRelativizer relativizer,
+                                PathRelativizerService relativizer,
                                 boolean readOnly,
                                 int version) {
     myBuildDir = buildDir;

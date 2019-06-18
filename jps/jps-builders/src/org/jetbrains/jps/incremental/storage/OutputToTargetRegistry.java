@@ -7,6 +7,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.Collections;
  * @author Eugene Zhuravlev
  */
 public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet> {
-  private final MaybeRelativizer myRelativizer;
+  private final PathRelativizerService myRelativizer;
 
   private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
     @Override
@@ -55,7 +56,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     return myRelativizer.toRelative(path);
   }
 
-  OutputToTargetRegistry(File storePath, MaybeRelativizer relativizer) throws IOException {
+  OutputToTargetRegistry(File storePath, PathRelativizerService relativizer) throws IOException {
     super(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER);
     myRelativizer = relativizer;
   }

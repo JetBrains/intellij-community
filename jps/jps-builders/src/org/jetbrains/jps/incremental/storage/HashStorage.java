@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -20,12 +21,12 @@ import static org.jetbrains.jps.incremental.storage.HashStorage.HashPerTarget;
 
 public class HashStorage extends AbstractStateStorage<String, HashPerTarget[]> implements StampsStorage<HashStorage.Hash> {
   public static final int MD5_SIZE = 16;
-  private final MaybeRelativizer myRelativizer;
+  private final PathRelativizerService myRelativizer;
   private final BuildTargetsState myTargetsState;
   private final File myHashesRoot;
   private final MessageDigest md;
 
-  public HashStorage(File dataStorageRoot, MaybeRelativizer relativizer, BuildTargetsState targetsState) throws IOException {
+  public HashStorage(File dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
     super(new File(calcStorageRoot(dataStorageRoot), "data"), new PathStringDescriptor(), new StateExternalizer());
     myHashesRoot = calcStorageRoot(dataStorageRoot);
     myRelativizer = relativizer;

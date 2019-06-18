@@ -26,7 +26,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
@@ -137,8 +137,7 @@ public class BuildTargetConfiguration {
   }
 
   public void storeNonexistentOutputRoots(CompileContext context) throws IOException {
-    JpsModel model = context.getProjectDescriptor().getModel();
-    MaybeRelativizer relativizer = new MaybeRelativizer(model.getProject());
+    PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
     Collection<File> outputRoots = myTarget.getOutputRoots(context);
     List<String> nonexistentOutputRoots = new SmartList<>();
     for (File root : outputRoots) {
@@ -189,8 +188,7 @@ public class BuildTargetConfiguration {
       storedNonExistentOutputs = Collections.emptySet();
     }
     else {
-      JpsModel model = context.getProjectDescriptor().getModel();
-      MaybeRelativizer relativizer = new MaybeRelativizer(model.getProject());
+      PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
       List<String> lines = ContainerUtil.map(StringUtil.split(FileUtil.loadFile(file), "\n"),
                                              s -> relativizer.toFull(s));
       storedNonExistentOutputs = new THashSet<>(lines, FileUtil.PATH_HASHING_STRATEGY);

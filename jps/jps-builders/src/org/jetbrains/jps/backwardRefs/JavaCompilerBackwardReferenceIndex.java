@@ -4,12 +4,12 @@ package org.jetbrains.jps.backwardRefs;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 import org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices;
-import org.jetbrains.jps.incremental.storage.MaybeRelativizer;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 
 public class JavaCompilerBackwardReferenceIndex extends CompilerReferenceIndex<CompiledFileData> {
-  public JavaCompilerBackwardReferenceIndex(File buildDir, MaybeRelativizer relativizer, boolean readOnly) {
+  public JavaCompilerBackwardReferenceIndex(File buildDir, PathRelativizerService relativizer, boolean readOnly) {
     super(JavaCompilerIndices.getIndices(), buildDir, relativizer, readOnly, JavaCompilerIndices.VERSION);
   }
 }
