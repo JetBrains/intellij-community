@@ -9,14 +9,14 @@ import java.util.Map;
 
 public class IR {
 
-  interface PathId {
+  public interface PathId {
   }
 
-  interface PortId {
+  public interface PortId {
     int getRemotePort();
   }
 
-  interface RemoteRunner {
+  public interface RemoteRunner {
     Platform getRemotePlatform();
 
     RemoteEnvironmentRequest createRequest();
@@ -24,7 +24,7 @@ public class IR {
     RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request) throws Exception;
   }
 
-  interface RemoteEnvironment {
+  public interface RemoteEnvironment {
     Platform getPlatform();
 
     Map<String, String> getEnvVars();
@@ -34,7 +34,7 @@ public class IR {
     ProcessHandler createProcessHandler(NewCommandLine commandLine);
   }
 
-  interface RemoteEnvironmentRequest {
+  public interface RemoteEnvironmentRequest {
     PathId requestTransfer(String localPath);
 
     PathId requestRemoteFile(String remotePath);
@@ -42,7 +42,7 @@ public class IR {
     PortId requestPortMapping(int remotePort);
   }
 
-  interface NewCommandLine {
+  public interface NewCommandLine {
 
     /**
      * {@link GeneralCommandLine#getPreparedCommandLine()}
