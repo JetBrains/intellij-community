@@ -52,7 +52,7 @@ spent=0
 while true; do
   # For some reason altool prints everything to stderr, not stdout
   xcrun altool --username "$APPL_USER" --notarization-info "$notarization_info" --password "$APPL_PASSWORD" >"altool.check.out" 2>&1 || true
-  status="$(grep -oe 'Status: .*' "altool.check.out" | cut -c 9-)"
+  status="$(grep -oe 'Status: .*' "altool.check.out" | cut -c 9- || true)"
   log "Current status: $status"
   if [ "$status" = "invalid" ]; then
     log "Notarization failed"
