@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import java.util.List;
  */
 public class SpacingBuilder {
   private static final Logger LOG = Logger.getInstance(SpacingBuilder.class);
-  
+
   private static class SpacingRule {
     protected final RuleCondition myRuleCondition;
     protected final int myMinSpaces;
@@ -27,7 +28,12 @@ public class SpacingBuilder {
     protected final boolean myKeepLineBreaks;
     protected final int myKeepBlankLines;
 
-    private SpacingRule(@NotNull RuleCondition condition, int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
+    private SpacingRule(@NotNull RuleCondition condition,
+                        int minSpaces,
+                        int maxSpaces,
+                        int minLF,
+                        boolean keepLineBreaks,
+                        int keepBlankLines) {
       myRuleCondition = condition;
       myMinSpaces = minSpaces;
       myMaxSpaces = maxSpaces;
@@ -36,14 +42,14 @@ public class SpacingBuilder {
       myKeepBlankLines = keepBlankLines;
     }
 
-    public boolean matches(@NotNull IElementType parentType, @NotNull IElementType childType1, @NotNull IElementType childType2) {
-      return myRuleCondition.matches(parentType, childType1, childType2);
+    @Contract("null,_,_->false; _,null,_->false; _,_,null->false")
+    public boolean matches(@Nullable IElementType parentType, @Nullable IElementType childType1, @Nullable IElementType childType2) {
+      return parentType != null && childType1 != null && childType2 != null && myRuleCondition.matches(parentType, childType1, childType2);
     }
 
-    public boolean matches(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
-      return myRuleCondition.matches(parentBlock.getNode().getElementType(),
-                                     childBlock1.getNode().getElementType(),
-                                     childBlock2.getNode().getElementType());
+    @Contract("null,_,_->false; _,null,_->false; _,_,null->false")
+    public boolean matches(@Nullable ASTBlock parentBlock, @Nullable ASTBlock childBlock1, @Nullable ASTBlock childBlock2) {
+      return matches(ASTBlock.getElementType(parentBlock), ASTBlock.getElementType(childBlock1), ASTBlock.getElementType(childBlock2));
     }
 
     /**
@@ -352,11 +358,12 @@ public class SpacingBuilder {
   /**
    * @see #getSpacing(Block, Block, Block)
    */
+  @Contract("_,null,_,_->null; _,_,null,_->null; _,_,_,null->null")
   @Nullable
   public Spacing getSpacing(@NotNull Block parentBlock,
-                            @NotNull IElementType parentType,
-                            @NotNull IElementType child1Type,
-                            @NotNull IElementType child2Type) {
+                            @Nullable IElementType parentType,
+                            @Nullable IElementType child1Type,
+                            @Nullable IElementType child2Type) {
     for (SpacingRule rule : myRules) {
       if (rule.matches(parentType, child1Type, child2Type)) {
         return rule.createSpacing(parentBlock.getTextRange());
@@ -372,8 +379,9 @@ public class SpacingBuilder {
    * @param child2 expected an instance of ASTBlock.
    * @see #getSpacing(Block, IElementType, IElementType, IElementType)
    */
+  @Contract("null,_,_->null; _,null,_->null; _,_,null->null")
   @Nullable
-  public Spacing getSpacing(Block parent, Block child1, Block child2) {
+  public Spacing getSpacing(@Nullable Block parent, @Nullable Block child1, @Nullable Block child2) {
     if (!(parent instanceof ASTBlock) || !(child1 instanceof ASTBlock) || !(child2 instanceof ASTBlock)) {
       return null;
     }
