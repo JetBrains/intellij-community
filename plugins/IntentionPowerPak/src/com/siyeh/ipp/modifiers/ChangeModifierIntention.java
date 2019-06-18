@@ -36,6 +36,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -132,11 +133,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
           return PUBLIC_PRIVATE;
         }
       }
-      PsiMethod[] superMethods = ((PsiMethod)member).findSuperMethods(false);
-      AccessModifier minAccess = superMethods.length == 0 ? AccessModifier.PRIVATE :
-                                 StreamEx.of(AccessModifier.values())
-                                   .filter(mod -> Stream.of(superMethods).anyMatch(m -> mod.hasModifier(m)))
-                                   .findFirst().orElse(AccessModifier.PRIVATE);
+      AccessModifier minAccess = getMinAccess((PsiMethod)member);
       if (minAccess != AccessModifier.PRIVATE) {
         return ContainerUtil.filter(ALL_MODIFIERS, mod -> mod.compareTo(minAccess) <= 0);
       }
@@ -148,6 +145,25 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return ALL_MODIFIERS;
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static AccessModifier getMinAccess(PsiMethod method) {
+    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) return AccessModifier.PRIVATE;
+    HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+    AccessModifier lowest = AccessModifier.PRIVATE;
+    for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
+      PsiMethod superMethod = superSignature.getMethod();
+      AccessModifier current = AccessModifier.fromModifierList(superMethod.getModifierList());
+      if (!current.isWeaker(lowest)) continue;
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
+      if (!PsiUtil.isAccessible(method.getProject(), superMethod, method, null)) continue;
+      lowest = current;
+      if (lowest == AccessModifier.PUBLIC) {
+        break;
+      }
+    }
+    return lowest;
   }
 
   @Nullable

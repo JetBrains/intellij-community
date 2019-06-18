@@ -3,6 +3,7 @@ package com.siyeh.ipp.modifiers;
 
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +73,23 @@ enum AccessModifier {
       default:
         return null;
     }
+  }
+
+  public static AccessModifier fromModifierList(@NotNull PsiModifierList modifierList) {
+    if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return PRIVATE;
+    }
+    if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      return PACKAGE_LOCAL;
+    }
+    if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+      return PROTECTED;
+    }
+    return PUBLIC;
+  }
+
+  public boolean isWeaker(@NotNull AccessModifier other) {
+    return ordinal() < other.ordinal();
   }
 
   @Override
