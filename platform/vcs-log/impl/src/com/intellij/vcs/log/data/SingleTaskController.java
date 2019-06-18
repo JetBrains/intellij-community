@@ -187,7 +187,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       if (task != null) {
         try {
-          task.waitFor(1, TimeUnit.MINUTES);
+          task.waitFor(1, TimeUnit.SECONDS);
         }
         catch (InterruptedException | ExecutionException e) {
           LOG.debug(e);
