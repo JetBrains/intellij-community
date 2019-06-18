@@ -26,6 +26,22 @@ class NonDefaultConstructorTest {
   }
 
   @Test
+  fun `property mapping provider`() {
+    @Suppress("UNUSED_PARAMETER", "unused")
+    class NoDefaultConstructorAndNoAnnotationBean(@JvmField val someParameter: String, @JvmField val intList: List<Int>)
+
+    test(NoDefaultConstructorAndNoAnnotationBean("foo", arrayListOf(42, 21)), testName, defaultTestWriteConfiguration, ReadConfiguration(resolvePropertyMapping = {
+      val clazz = NoDefaultConstructorAndNoAnnotationBean::class.java
+      if (it.name == clazz.name) {
+        NonDefaultConstructorInfo(arrayOf("someParameter", "intList"), clazz.constructors.first())
+      }
+      else {
+        null
+      }
+    }))
+  }
+
+  @Test
   fun `skipped empty list and not null parameter`() {
     test(NoDefaultConstructorBean("foo", emptyList()), defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
   }

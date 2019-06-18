@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.model
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.serialization.NonDefaultConstructorInfo
 import com.intellij.serialization.ReadConfiguration
 import com.intellij.serialization.WriteConfiguration
 
@@ -45,7 +46,13 @@ fun createCacheReadConfiguration(log: Logger): ReadConfiguration {
 }
 
 fun createDataNodeReadConfiguration(loadClass: ((name: String, hostObject: Any) -> Class<*>?)): ReadConfiguration {
-  return ReadConfiguration(allowAnySubTypes = true, loadClass = loadClass, beanConstructed = {
+  return ReadConfiguration(allowAnySubTypes = true, resolvePropertyMapping = { beanClass ->
+    when (beanClass.name) {
+      "org.jetbrains.kotlin.idea.configuration.KotlinTargetData" -> NonDefaultConstructorInfo(arrayOf("externalName"), beanClass.getDeclaredConstructor(String::class.java))
+      "org.jetbrains.kotlin.idea.configuration.KotlinAndroidSourceSetData" -> NonDefaultConstructorInfo(arrayOf("sourceSetInfos"), beanClass.constructors.first())
+      else -> null
+    }
+  }, loadClass = loadClass, beanConstructed = {
     if (it is ProjectSystemId) {
       it.intern()
     }
