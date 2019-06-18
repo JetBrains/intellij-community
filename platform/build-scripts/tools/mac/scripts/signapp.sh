@@ -115,7 +115,8 @@ if [ "$NOTARIZE" = "yes" ]; then
   log "Notarizing..."
   # shellcheck disable=SC1090
   source "$HOME/.notarize_token"
-  ./notarize.sh "$EXPLODED/$BUILD_NAME" "$APPLE_USERNAME" "$APPLE_PASSWORD"
+  APP_NAME="${INPUT_FILE%.*}"
+  ./notarize.sh "$EXPLODED/$BUILD_NAME" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME"
 
   log "Stapling..."
   xcrun stapler staple "$EXPLODED/$BUILD_NAME"
