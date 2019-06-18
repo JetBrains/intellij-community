@@ -35,7 +35,8 @@ public class PathRelativizerService {
   }
 
   private void initialize(@Nullable String projectPath, @Nullable String buildDirPath) {
-    myRelativizers = ContainerUtil.newSmartList(new ProjectPathRelativizer(projectPath) );
+    myRelativizers = ContainerUtil.newSmartList(new ProjectPathRelativizer(projectPath),
+                                                new MavenPathRelativizer());
     myUnhandledPaths = new LinkedHashSet<>();
   }
 
