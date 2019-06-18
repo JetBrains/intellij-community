@@ -48,8 +48,8 @@ fun createCacheReadConfiguration(log: Logger): ReadConfiguration {
 fun createDataNodeReadConfiguration(loadClass: ((name: String, hostObject: Any) -> Class<*>?)): ReadConfiguration {
   return ReadConfiguration(allowAnySubTypes = true, resolvePropertyMapping = { beanClass ->
     when (beanClass.name) {
-      "org.jetbrains.kotlin.idea.configuration.KotlinTargetData" -> NonDefaultConstructorInfo(arrayOf("externalName"), beanClass.getDeclaredConstructor(String::class.java))
-      "org.jetbrains.kotlin.idea.configuration.KotlinAndroidSourceSetData" -> NonDefaultConstructorInfo(arrayOf("sourceSetInfos"), beanClass.constructors.first())
+      "org.jetbrains.kotlin.idea.configuration.KotlinTargetData" -> NonDefaultConstructorInfo(listOf("externalName"), beanClass.getDeclaredConstructor(String::class.java))
+      "org.jetbrains.kotlin.idea.configuration.KotlinAndroidSourceSetData" -> NonDefaultConstructorInfo(listOf("sourceSetInfos"), beanClass.constructors.first())
       else -> null
     }
   }, loadClass = loadClass, beanConstructed = {

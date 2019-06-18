@@ -6,6 +6,9 @@ import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
 import com.intellij.util.containers.ObjectIntHashMap
 import java.lang.reflect.Type
+import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaConstructor
 
 private val structReaderBuilder by lazy {
   IonReaderBuilder.standard().immutable()
@@ -86,6 +89,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     var constructorInfo = propertyMapping.value
     if (constructorInfo == null) {
       constructorInfo = context.configuration.resolvePropertyMapping?.invoke(beanClass)
+                        ?: getPropertyMappingIfDataClass()
                         ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=${beanClass.name})")
     }
 
@@ -156,6 +160,28 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       }
     }
     return instance
+  }
+
+  private fun getPropertyMappingIfDataClass(): NonDefaultConstructorInfo? {
+    try {
+      // primaryConstructor will be null for Java
+      // parameter names are available only via kotlin reflection, not via java reflection
+      val kFunction = beanClass.kotlin.primaryConstructor ?: return null
+      try {
+        kFunction.isAccessible = true
+      }
+      catch (ignored: SecurityException) {
+      }
+      val names = kFunction.parameters.mapNotNull { it.name }
+      if (names.isEmpty()) {
+        return null
+      }
+      return NonDefaultConstructorInfo(names, kFunction.javaConstructor!!)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+    return null
   }
 
   override fun deserialize(context: ReadContext): Any {
@@ -259,7 +285,7 @@ private fun computeNonDefaultConstructorInfo(beanClass: Class<*>): NonDefaultCon
       throw SerializationException("PropertyMapping annotation specifies ${annotation.value.size} parameters, " +
                                    "but constructor accepts ${constructor.parameterCount}")
     }
-    return NonDefaultConstructorInfo(annotation.value, constructor)
+    return NonDefaultConstructorInfo(annotation.value.toList(), constructor)
   }
 
   return null
