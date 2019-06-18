@@ -1070,7 +1070,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (fileTypeByFileName != UnknownFileType.INSTANCE) {
       return false;
     }
-    if (file instanceof StubVirtualFile) {
+    if (file instanceof StubVirtualFile || !isDetectable(file)) {
       return false;
     }
 
