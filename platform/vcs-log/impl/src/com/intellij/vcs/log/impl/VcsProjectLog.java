@@ -134,7 +134,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @CalledInBackground
-  public void createLog(boolean forceInit) {
+  void createLog(boolean forceInit) {
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
     if (!logProviders.isEmpty()) {
       createLog(logProviders, forceInit);

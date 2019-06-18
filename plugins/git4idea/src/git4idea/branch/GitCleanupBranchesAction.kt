@@ -29,8 +29,8 @@ import com.intellij.util.ThreeState.UNSURE
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -59,7 +59,7 @@ class GitCleanupBranchesAction : DumbAwareAction() {
     Disposer.register(content, ui)
     toolWindow.activate(null, true, true)
 
-    VcsLogUtil.runWhenLogIsReady(project) { _, _ ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { _, _ ->
       ui.stopLoading()
     } // schedule initialization: need the log for other actions
   }
@@ -311,7 +311,7 @@ private class ShowBranchDiffAction : CleanupBranchesActionBase("Compare with Cur
     val branch = e.getData(GIT_BRANCH)!!
     val project = e.project!!
 
-    VcsLogUtil.runWhenLogIsReady(project) { log, logManager ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { log, logManager ->
       val filters = VcsLogFilterObject.fromRange("HEAD", branch.branchName)
       log.tabsManager.openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters))
     }
