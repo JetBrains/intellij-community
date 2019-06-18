@@ -754,6 +754,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       String popup = element.getAttributeValue(POPUP_ATTR_NAME);
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
+        if (group instanceof ActionGroupStub) {
+          ((ActionGroupStub) group).setPopupDefinedInXml(true);
+        }
       }
       if (customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
         KeymapManagerEx.getInstanceEx().bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
