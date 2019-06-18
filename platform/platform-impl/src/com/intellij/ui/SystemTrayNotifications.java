@@ -1,6 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +20,11 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
   @Nullable
   static synchronized SystemTrayNotifications getWin10Instance() throws AWTException {
     if (ourWin10Instance == null && SystemTray.isSupported()) {
-      ourWin10Instance = new SystemTrayNotifications(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), TrayIcon.MessageType.INFO);
+      Image image = AppUIUtil.loadApplicationIcon16();
+      if (image == null) {
+        image = UIUtil.createImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+      }
+      ourWin10Instance = new SystemTrayNotifications(image, TrayIcon.MessageType.INFO);
     }
     return ourWin10Instance;
   }
@@ -26,7 +34,16 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
 
   private SystemTrayNotifications(@NotNull Image image, @NotNull TrayIcon.MessageType type) throws AWTException {
     myType = type;
-    SystemTray.getSystemTray().add(myTrayIcon = new TrayIcon(image));
+
+    String tooltip = ApplicationInfoImpl.getShadowInstance().getFullApplicationName();
+    SystemTray.getSystemTray().add(myTrayIcon = new TrayIcon(image, tooltip));
+
+    myTrayIcon.addActionListener(e -> {
+      IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+      if (frame instanceof Window) {
+        UIUtil.toFront((Window)frame);
+      }
+    });
   }
 
   @Override
