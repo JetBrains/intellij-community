@@ -106,7 +106,7 @@ public abstract class AbstractExternalSystemSettings<
     PS existing = getLinkedProjectSettings(settings.getExternalProjectPath());
     if (existing != null) {
       throw new IllegalArgumentException(String.format(
-        "Can't link project '%s'. Reason: it's already attached to the IDE project",
+        "Can't link project '%s'. Reason: it's already linked to the IDE project",
         settings.getExternalProjectPath()
       ));
     }
