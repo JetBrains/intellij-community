@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -22,9 +23,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FrameState;
@@ -153,6 +156,11 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     });
     if (myCloseOnEsc) addCloseOnEsc((RootPaneContainer)frame);
+
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
+      myComponent = CustomFrameDialogContent.getContent(frame, myComponent);
+    }
+
     ((RootPaneContainer)frame).getContentPane().add(myComponent, BorderLayout.CENTER);
     if (frame instanceof JFrame) {
       ((JFrame)frame).setTitle(myTitle);
@@ -362,6 +370,14 @@ public class FrameWrapper implements Disposable, DataProvider {
       MouseGestureManager.getInstance().add(this);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
       setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    }
+
+    @Override
+    public void addNotify() {
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
+        JdkEx.setHasCustomDecoration(this);
+      }
+      super.addNotify();
     }
 
     @Override
