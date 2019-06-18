@@ -25,6 +25,12 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
 
   @Nullable
   @Override
+  public String getActionGroupTitle() {
+    return EditorConfigBundle.message("action.group.title");
+  }
+
+  @Nullable
+  @Override
   public String getTooltip() {
     return EditorConfigBundle.message("config.code.style.overridden");
   }
