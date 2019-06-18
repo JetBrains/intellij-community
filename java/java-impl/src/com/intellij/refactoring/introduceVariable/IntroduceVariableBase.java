@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
@@ -485,8 +484,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           return null;
         }
       }
-      else if (containingExpression != null && !Comparing.equal(containingExpression.getType(), tempExpr.getType())){
-        return null;
+      else if (containingExpression != null) {
+        PsiType containingExpressionType = containingExpression.getType();
+        PsiType tempExprType = tempExpr.getType();
+        if (containingExpressionType != null && 
+            (tempExprType == null || !TypeConversionUtil.isAssignable(containingExpressionType, tempExprType))) {
+          return null;
+        }
       }
 
       final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);

@@ -368,6 +368,10 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("str", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
+  public void testSubExpressionFromPrimitiveWithConversion() {
+    doTest(new MockIntroduceVariableHandler("i", false, false, false, "int"));
+  }
+
   public void testSubPrimitiveLiteral() {
     doTest(new MockIntroduceVariableHandler("str", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
