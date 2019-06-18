@@ -118,7 +118,7 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
  */
 fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
-    throw IllegalStateException("Not applicable for default project")
+    return null
   }
 
   val modules = ModuleManager.getInstance(this).modules
