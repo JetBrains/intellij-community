@@ -23,7 +23,7 @@ public class PsiYieldStatementImpl extends CompositePsiElement implements PsiYie
   @Override
   public PsiSwitchExpression findEnclosingExpression() {
     PsiElement element = this, enclosing;
-    while ((enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(element)) != null) {
+    while (element != null && (enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(element)) != null) {
       if (enclosing instanceof PsiSwitchExpression) return (PsiSwitchExpression)enclosing;
       element = enclosing.getParent();
     }
