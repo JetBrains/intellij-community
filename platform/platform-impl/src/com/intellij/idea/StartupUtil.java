@@ -241,6 +241,9 @@ public class StartupUtil {
 
     SocketLock.ActivateStatusAndResponse result = lockSystemFolders(args);
     if (result.getActivateStatus() == SocketLock.ActivateStatus.ACTIVATED) {
+      Runnable hideSplashTask = SplashManager.getHideTask();
+      if (hideSplashTask != null) hideSplashTask.run();
+
       final CliResult cliOutput = Objects.requireNonNull(result.getResponse(), "guaranteed by SocketLock.mapResponseToCliResult");
       if (cliOutput.getMessage() != null) {
         //noinspection UseOfSystemOutOrSystemErr
