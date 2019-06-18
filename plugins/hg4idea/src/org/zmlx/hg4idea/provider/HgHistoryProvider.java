@@ -46,6 +46,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static java.util.Objects.requireNonNull;
+
 public class HgHistoryProvider implements VcsHistoryProvider {
 
   private final Project myProject;
@@ -83,7 +86,8 @@ public class HgHistoryProvider implements VcsHistoryProvider {
       return null;
     }
     final List<VcsFileRevision> revisions = new ArrayList<>(getHistory(filePath, vcsRoot, myProject));
-    return createAppendableSession(vcsRoot, filePath, revisions, null);
+    return createAppendableSession(vcsRoot, filePath, revisions,
+                                   revisions.isEmpty() ? null : requireNonNull(getFirstItem(revisions)).getRevisionNumber());
   }
 
   @Override
