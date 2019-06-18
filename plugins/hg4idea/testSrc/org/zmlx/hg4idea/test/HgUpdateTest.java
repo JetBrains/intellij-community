@@ -27,6 +27,7 @@ import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.provider.update.HgRegularUpdater;
 import org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings;
+import org.zmlx.hg4idea.provider.update.HgUpdateType;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
@@ -64,6 +65,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
   public void setUp() throws Exception {
     super.setUp();
     projectRepoVirtualFile = myRepo.getDir();
+    registerMockVcsHelper();
   }
 
   @Test
@@ -267,7 +269,11 @@ public class HgUpdateTest extends HgCollaborativeTest {
   }
 
   private List<VcsException> updateThroughPlugin() throws VcsException {
-    HgRegularUpdater updater = new HgRegularUpdater(myProject, projectRepoVirtualFile, new HgUpdateConfigurationSettings());
+    HgUpdateConfigurationSettings hgUpdateConfigurationSettings = new HgUpdateConfigurationSettings();
+    hgUpdateConfigurationSettings.setUpdateType(HgUpdateType.MERGE);
+    hgUpdateConfigurationSettings.setShouldCommitAfterMerge(true);
+
+    HgRegularUpdater updater = new HgRegularUpdater(myProject, projectRepoVirtualFile, hgUpdateConfigurationSettings);
     UpdatedFiles updatedFiles = UpdatedFiles.create();
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     ArrayList<VcsException> nonFatalWarnings = new ArrayList<>();
