@@ -141,7 +141,7 @@
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="ctrl shift button1"/>
   </action>
-  
+
   <action id="GotoBookmark0">
     <keyboard-shortcut first-keystroke="control 0"/>
   </action>
@@ -1171,5 +1171,9 @@
   </action>
   <action id="TodoViewGroupByFlattenPackage">
     <keyboard-shortcut first-keystroke="control alt O"/>
+  </action>
+
+  <action id="ViewInplaceComments">
+    <keyboard-shortcut first-keystroke="alt shift M"/>
   </action>
 </keymap>
