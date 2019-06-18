@@ -393,7 +393,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                  @Nullable final String altText,
                                  @Nullable InsertHandler<LookupElement> handler) {
       String unquoted = StringUtil.unquoteString(key);
-      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted) ? unquoted : key);
+      LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted, true) ? unquoted : key);
       if (altText != null) {
         builder = builder.withPresentableText(altText);
       }
@@ -406,8 +406,11 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       myVariants.add(builder);
     }
 
-    private boolean shouldWrapInQuotes(String key) {
-      return myWrapInQuotes && myWalker != null && (myWalker.requiresNameQuotes() || !myWalker.isValidIdentifier(key, myProject));
+    private boolean shouldWrapInQuotes(String key, boolean isValue) {
+      return myWrapInQuotes && myWalker != null &&
+             (isValue && myWalker.requiresValueQuotes()
+                || !isValue && myWalker.requiresNameQuotes()
+                || !myWalker.isValidIdentifier(key, myProject));
     }
 
     private void addPropertyVariant(@NotNull String key,
@@ -416,7 +419,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
                                     boolean insertComma) {
       final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
       jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
-      key = !shouldWrapInQuotes(key) ? key : StringUtil.wrapWithDoubleQuote(key);
+      key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
