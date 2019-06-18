@@ -347,8 +347,6 @@ public final class IdeaApplication {
     public void main(String[] args) {
       Activity frameInitActivity = StartUpMeasurer.start(Phases.FRAME_INITIALIZATION);
 
-      GcPauseWatcher.Companion.getInstance();
-
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
