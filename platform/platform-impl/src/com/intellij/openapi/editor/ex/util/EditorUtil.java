@@ -639,7 +639,7 @@ public final class EditorUtil {
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
 
-  public static boolean inVirtualSpace(@NotNull Editor editor) {
+  public static boolean isCaretInVirtualSpace(@NotNull Editor editor) {
     return inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
   }
 
