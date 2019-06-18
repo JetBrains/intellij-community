@@ -15,27 +15,10 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.io.ByteSequence;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.fileTypes.impl.HashBangFileTypeDetector;
 
-public class GroovyHashBangFileTypeDetector implements FileTypeRegistry.FileTypeDetector {
-  @Nullable
-  @Override
-  public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
-    if (FileUtil.isHashBangLine(firstCharsIfText, "groovy")) {
-      return GroovyFileType.GROOVY_FILE_TYPE;
-    }
-
-    return null;
-  }
-
-  @Override
-  public int getVersion() {
-    return 1;
+public class GroovyHashBangFileTypeDetector extends HashBangFileTypeDetector {
+  public GroovyHashBangFileTypeDetector() {
+    super(GroovyFileType.GROOVY_FILE_TYPE, "groovy");
   }
 }
