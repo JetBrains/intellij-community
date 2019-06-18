@@ -17,6 +17,7 @@ final class IconsPreloader implements ApplicationInitializedListener {
         new AsyncProcessIcon("");
         new AsyncProcessIcon.Big("");
         new AnimatedIcon.Blinking(AllIcons.Ide.FatalError);
+        new AnimatedIcon.FS();
         AllIcons.Ide.Shadow.Top.getIconHeight();
       });
     }
