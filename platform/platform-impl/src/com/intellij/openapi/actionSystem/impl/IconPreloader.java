@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 
-final class IconsPreloader implements ApplicationInitializedListener {
+final class IconPreloader implements ApplicationInitializedListener {
   @Override
   public void componentsInitialized() {
     Application application = ApplicationManager.getApplication();
