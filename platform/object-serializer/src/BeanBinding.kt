@@ -5,7 +5,6 @@ import com.amazon.ion.IonReader
 import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
 import com.intellij.util.containers.ObjectIntHashMap
-import java.lang.reflect.Constructor
 import java.lang.reflect.Type
 
 private val structReaderBuilder by lazy {
@@ -84,8 +83,12 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
   }
 
   private fun createUsingCustomConstructor(context: ReadContext): Any {
-    val constructorInfo = propertyMapping.value
-                          ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=${beanClass.name})")
+    var constructorInfo = propertyMapping.value
+    if (constructorInfo == null) {
+      constructorInfo = context.configuration.resolvePropertyMapping?.invoke(beanClass)
+                        ?: throw SerializationException("Please annotate non-default constructor with PropertyMapping (beanClass=${beanClass.name})")
+    }
+
     val names = constructorInfo.names
     val initArgs = arrayOfNulls<Any?>(names.size)
 
@@ -242,8 +245,6 @@ private inline fun readStruct(reader: IonReader, read: (fieldName: String, type:
   }
   reader.stepOut()
 }
-
-private class NonDefaultConstructorInfo(val names: Array<String>, val constructor: Constructor<*>)
 
 private fun computeNonDefaultConstructorInfo(beanClass: Class<*>): NonDefaultConstructorInfo? {
   for (constructor in beanClass.declaredConstructors) {

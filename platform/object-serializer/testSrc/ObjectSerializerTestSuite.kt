@@ -33,7 +33,7 @@ class ObjectSerializerTestSuite {
 internal val defaultTestWriteConfiguration = WriteConfiguration(binary = false)
 
 // don't use serialization filter in tests to make sure that test are closer to production usage (e.g. not null arg was not caught by tests because of null filtration)
-internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: WriteConfiguration): T {
+internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: WriteConfiguration, readConfiguration: ReadConfiguration? = null): T {
   val out = BufferExposingByteArrayOutputStream(8 * 1024)
 
   // just to test binary
@@ -46,7 +46,7 @@ internal fun <T : Any> test(bean: T, testName: TestName, writeConfiguration: Wri
   val ionText = out.toString()
   out.reset()
 
-  val deserializedBean = objectSerializer.read(bean.javaClass, ionText, configuration = ReadConfiguration(allowAnySubTypes = writeConfiguration.allowAnySubTypes))
+  val deserializedBean = objectSerializer.read(bean.javaClass, ionText, configuration = readConfiguration ?: ReadConfiguration(allowAnySubTypes = writeConfiguration.allowAnySubTypes))
   objectSerializer.write(deserializedBean, out, writeConfiguration)
   assertThat(out.toString()).isEqualTo(ionText)
 

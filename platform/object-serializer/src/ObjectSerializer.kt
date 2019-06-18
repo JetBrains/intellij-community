@@ -16,9 +16,6 @@ import java.io.Reader
 internal typealias ValueReader = IonReader
 internal typealias ValueWriter = IonWriter
 
-// not fully initialized object may be passed (only created instance without properties) if object has PropertyMapping annotation
-typealias BeanConstructed = (instance: Any) -> Any
-
 internal val defaultWriteConfiguration = WriteConfiguration()
 internal val LOG = logger<ObjectSerializer>()
 
