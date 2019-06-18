@@ -132,7 +132,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setCancelText(String cancelText) {
+  public final Task setCancelText(@Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     myCancelText = cancelText;
     return this;
   }
@@ -151,6 +151,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public final Task setCancelTooltipText(String cancelTooltipText) {
     myCancelTooltipText = cancelTooltipText;
