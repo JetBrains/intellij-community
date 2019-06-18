@@ -4,6 +4,7 @@ package com.intellij.util.lang;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,15 @@ public class UrlClassLoader extends ClassLoader {
   protected static void markParallelCapable(Class<? extends UrlClassLoader> loaderClass) {
     assert ourParallelCapableLoaders != null;
     ourParallelCapableLoaders.add(loaderClass);
+  }
+
+  static boolean isUrlNeedsProtectionDomain(URL url) {
+    String basename = PathUtilRt.getFileName(url.getPath());
+    if (basename.endsWith(".jar") && (basename.startsWith("bcprov-") || basename.startsWith("bcpkix-"))) {
+      // JARs of bouncycastle needs protection domain
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -178,6 +188,16 @@ public class UrlClassLoader extends ClassLoader {
      */
     public Builder useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
 
+    public Builder autoAssignUrlsWithProtectionDomain() {
+      Set<URL> result = new HashSet<URL>();
+      for (URL url : myURLs) {
+        if (isUrlNeedsProtectionDomain(url)) {
+          result.add(url);
+        }
+      }
+      return urlsWithProtectionDomain(result);
+    }
+
     @NotNull
     public UrlClassLoader get() {
       return new UrlClassLoader(this);
@@ -199,7 +219,8 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
-           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false"))));
+           .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
+           .autoAssignUrlsWithProtectionDomain());
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
