@@ -8,7 +8,8 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.RemoteDesktopService;
-import com.intellij.ide.ui.ScreenAreaTracker;
+import com.intellij.ide.ui.PopupLocationTracker;
+import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -60,7 +61,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
-public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.ScreenAreaConsumer {
+public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
 
   private static final Logger LOG = Logger.getInstance(BalloonImpl.class);
 
@@ -504,7 +505,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
         lp.width -= myContainerInsets.right;
         lp.height -= myContainerInsets.bottom;
 
-        if (!lp.contains(rec) || !ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, rec, this)) {
+        if (!lp.contains(rec) || !PopupLocationTracker.canRectangleBeUsed(myLayeredPane, rec, this)) {
           Rectangle2D currentSquare = lp.createIntersection(rec);
 
           double maxSquare = currentSquare.getWidth() * currentSquare.getHeight();
@@ -536,13 +537,13 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     Point location = r.getLocation();
     SwingUtilities.convertPointToScreen(location, myLayeredPane);
     r.setLocation(location);
-    if (!ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
+    if (!PopupLocationTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
       for (AbstractPosition eachPosition : myPosition.getOtherPositions()) {
         r = getRecForPosition(eachPosition, false);
         location = r.getLocation();
         SwingUtilities.convertPointToScreen(location, myLayeredPane);
         r.setLocation(location);
-        if (ScreenAreaTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
+        if (PopupLocationTracker.canRectangleBeUsed(myLayeredPane, r, this)) {
           myPosition = eachPosition;
           positionChangeFix = myPosition.getChangeShift(position, myPositionChangeXShift, myPositionChangeYShift);
           myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane),
@@ -763,7 +764,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaTracker.Sc
     myLayeredPane.setLayer(myComp, getLayer(), 0); // the second balloon must be over the first one
     myPosition.updateBounds(this);
 
-    ScreenAreaTracker.register(this);
+    PopupLocationTracker.register(this);
 
     if (myBlockClicks) {
       myComp.addMouseListener(new MouseAdapter() {

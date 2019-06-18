@@ -22,13 +22,7 @@ import java.util.LinkedHashSet;
  * Example of overlapping: completion in editor together with Javadoc on mouse over (or with inspection hint)
  */
 @ApiStatus.Experimental
-public class ScreenAreaTracker {
-  public interface ScreenAreaConsumer extends Disposable {
-    @NotNull
-    Rectangle getConsumedScreenBounds();
-
-    Component getUnderlyingAreaOwner();
-  }
+public class PopupLocationTracker {
 
   private static final Collection<ScreenAreaConsumer> ourAreaConsumers = new LinkedHashSet<>();
 
