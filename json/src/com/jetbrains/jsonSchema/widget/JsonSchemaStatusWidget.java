@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +25,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -47,13 +47,13 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private static final String JSON_SCHEMA_BAR_OTHER_FILES = "Schema: ";
   private static final String JSON_SCHEMA_TOOLTIP = "JSON Schema: ";
   private static final String JSON_SCHEMA_TOOLTIP_OTHER_FILES = "Validated by JSON Schema: ";
-  private final NullableLazyValue<JsonSchemaService> myServiceLazy;
+  private final SynchronizedClearableLazy<JsonSchemaService> myServiceLazy;
   private static final String ID = "JSONSchemaSelector";
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
 
   JsonSchemaStatusWidget(Project project) {
     super(project);
-    myServiceLazy = NullableLazyValue.createValue(() -> {
+    myServiceLazy = new SynchronizedClearableLazy<>(() -> {
       if (!project.isDisposed()) {
         JsonSchemaService myService = JsonSchemaService.Impl.get(project);
         myService.registerRemoteUpdateCallback(myUpdateCallback);
@@ -69,7 +69,10 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return myServiceLazy.getValue();
   }
 
-  private final Runnable myUpdateCallback = () -> { update(); myIsNotified.set(false); };
+  private final Runnable myUpdateCallback = () -> {
+    update();
+    myIsNotified.set(false);
+  };
 
   private static class MyWidgetState extends WidgetState {
     boolean warning = false;
@@ -343,11 +346,12 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   public void dispose() {
-    JsonSchemaService service = getService();
+    JsonSchemaService service = myServiceLazy.isInitialized() ? myServiceLazy.getValue() : null;
     if (service != null) {
       service.unregisterRemoteUpdateCallback(myUpdateCallback);
       service.unregisterResetAction(myUpdateCallback);
     }
+
     super.dispose();
   }
 
