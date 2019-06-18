@@ -359,7 +359,14 @@ public final class IdeEventQueue extends EventQueue {
 
     if (isMetaKeyPressedOnLinux(e)) return;
 
-    if (e.getSource() instanceof TrayIcon) return;
+    if (e.getSource() instanceof TrayIcon) {
+      if (e instanceof ActionEvent) {
+        for (ActionListener listener : ((TrayIcon)e.getSource()).getActionListeners()) {
+          listener.actionPerformed((ActionEvent)e);
+        }
+      }
+      return;
+    }
 
     checkForTimeJump();
 
