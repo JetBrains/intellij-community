@@ -17,6 +17,8 @@ class ActionGroupStub(
   override val pluginId: PluginId
 ) : DefaultActionGroup(), ActionStubBase {
 
+  var popupDefinedInXml = false
+
   override var iconPath: String? = null
 
   fun initGroup(target: ActionGroup) {
@@ -24,9 +26,13 @@ class ActionGroupStub(
     val children = getChildren(null)
     if (children.isNotEmpty()) {
       val defaultActionGroup = target as? DefaultActionGroup
-                               ?: throw PluginException("Action group class must extend DefaultActionGroup for the group to accept children: $actionClass", pluginId)
+                               ?: throw PluginException(
+                                 "Action group class must extend DefaultActionGroup for the group to accept children: $actionClass",
+                                 pluginId)
       defaultActionGroup.addAll(children.toList())
     }
-    target.isPopup = isPopup
+    if (popupDefinedInXml) {
+      target.isPopup = isPopup
+    }
   }
 }
