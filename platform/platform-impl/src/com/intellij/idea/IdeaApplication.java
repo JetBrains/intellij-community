@@ -391,7 +391,6 @@ public final class IdeaApplication {
           RecentProjectsManager.getInstance().reopenLastProjectOnStart();
         }
 
-        //noinspection SSBasedInspection
         EventQueue.invokeLater(PluginManager::reportPluginError);
       });
 
