@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "type": "object",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "required": [
@@ -46,6 +46,13 @@
             "type": "boolean",
             "description": "Whether this key is deprecated. Note replacement (if any) in description.",
             "default": false
+          },
+          "since": {
+            "type": "string",
+            "description": "Version in which key was introduced.",
+            "examples": [
+              "2019.2"
+            ]
           }
         },
         "required": [
