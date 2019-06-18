@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -232,11 +233,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       float bw = BW.getFloat();
       float arc = COMPONENT_ARC.getFloat();
 
+      Object value = comboBox.getSelectedItem();
       boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
       Color background0 = comboBox.getBackground();
       Color background = editable ? editor.getBackground() :
                          comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                         comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
+                         ObjectUtils.notNull(value instanceof ColoredItem ? ((ColoredItem)value).getColor() : null, NON_EDITABLE_BACKGROUND);
       g2.setColor(background);
 
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
@@ -261,14 +263,16 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
-    ListCellRenderer renderer = comboBox.getRenderer();
-    @SuppressWarnings("unchecked")
-    Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
+    //noinspection unchecked
+    ListCellRenderer<Object> renderer = comboBox.getRenderer();
+    Object value = comboBox.getSelectedItem();
+    Component c = renderer.getListCellRendererComponent(listBox, value, -1, false, false);
 
     c.setFont(comboBox.getFont());
     Color background0 = comboBox.getBackground();
     Color background = comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                       comboBox.isEnabled() ? NON_EDITABLE_BACKGROUND : UIUtil.getPanelBackground();
+                       !comboBox.isEnabled() ? UIUtil.getPanelBackground() :
+                       ObjectUtils.notNull(value instanceof ColoredItem ? ((ColoredItem)value).getColor() : null, NON_EDITABLE_BACKGROUND);
     c.setBackground(background);
 
     if (hasFocus && !isPopupVisible(comboBox)) {

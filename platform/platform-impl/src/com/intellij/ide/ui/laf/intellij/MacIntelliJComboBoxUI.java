@@ -3,9 +3,11 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
+import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
@@ -150,11 +152,13 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
+      Object value = comboBox.getSelectedItem();
       boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
       Color background0 = comboBox.getBackground();
       Color background = editable ? editor.getBackground() :
                          comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                         comboBox.isEnabled() ? UIManager.getColor("ComboBox.background") : UIManager.getColor("ComboBox.disabledBackground");
+                         !comboBox.isEnabled() ? UIManager.getColor("ComboBox.disabledBackground") :
+                         ObjectUtils.notNull(value instanceof ColoredItem ? ((ColoredItem)value).getColor() : null, UIManager.getColor("ComboBox.background"));
       g2.setColor(background);
 
       float arc = comboBox.isEditable() ? 0 : ARC.getFloat();
