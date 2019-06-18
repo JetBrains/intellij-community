@@ -337,6 +337,7 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
       null -> createHeavyProject(filePath, useDefaultProjectSettings = useDefaultProjectSettings)
       else -> ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
     }
+
     if (loadComponentState) {
       project.runInLoadComponentStateMode {
         project.use(task)
