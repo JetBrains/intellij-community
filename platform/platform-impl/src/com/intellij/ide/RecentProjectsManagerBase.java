@@ -5,7 +5,6 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.SplashManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -634,7 +633,7 @@ public class RecentProjectsManagerBase extends RecentProjectsManager implements 
 
     if (!openPaths.isEmpty() && frame == null) {
       Activity activity = StartUpMeasurer.start("showFrame");
-      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame(SplashManager.getHideTask());
+      frame = ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
       activity.end();
     }
 

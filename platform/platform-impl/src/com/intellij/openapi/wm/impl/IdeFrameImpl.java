@@ -6,6 +6,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.SplashManager;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -19,7 +20,10 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -88,6 +92,17 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   public IdeFrameImpl() {
     super();
     updateTitle();
+
+    Runnable hideSplashTask = SplashManager.getHideTask();
+    if (hideSplashTask != null) {
+      addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowOpened(WindowEvent e) {
+          hideSplashTask.run();
+          removeWindowListener(this);
+        }
+      });
+    }
 
     myRootPane = new IdeRootPane(this);
     setRootPane(myRootPane);
