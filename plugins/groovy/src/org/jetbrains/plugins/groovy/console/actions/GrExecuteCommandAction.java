@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 public class GrExecuteCommandAction extends AnAction {
 
   public GrExecuteCommandAction() {
-    super(AllIcons.Toolwindows.ToolWindowRun);
+    super(AllIcons.Actions.Execute);
   }
 
   @Override
