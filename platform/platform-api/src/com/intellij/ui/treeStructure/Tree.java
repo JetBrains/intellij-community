@@ -264,7 +264,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon = new AsyncProcessIcon(toString());
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);

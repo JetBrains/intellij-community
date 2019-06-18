@@ -460,7 +460,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @NotNull
   protected AsyncProcessIcon createBusyIcon() {
-    return new AsyncProcessIcon(toString()).setUseMask(false);
+    return new AsyncProcessIcon(toString());
   }
 
   public boolean isStriped() {

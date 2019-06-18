@@ -17,6 +17,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +41,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
   /**
    * @deprecated no effect
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
   @Deprecated
   public AsyncProcessIcon setUseMask(boolean useMask) {
     return this;
