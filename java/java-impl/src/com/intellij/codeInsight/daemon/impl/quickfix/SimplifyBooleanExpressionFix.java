@@ -479,7 +479,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
             if (expressions.size() > 1) {
               simplifiedText = "!(" + simplifiedText + ")";
             } else {
-              simplifiedText = "!" + simplifiedText;
+              simplifiedText = BoolUtils.getNegatedExpressionText(expressions.get(0));
             }
           }
           resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(simplifiedText, expression);
