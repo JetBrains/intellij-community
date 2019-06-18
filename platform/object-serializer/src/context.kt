@@ -45,6 +45,8 @@ internal interface ReadContext {
   fun createSubContext(reader: ValueReader): ReadContext
 
   val errors: ReadErrors
+
+  var hostObject: Any?
 }
 
 data class ReadErrors(
