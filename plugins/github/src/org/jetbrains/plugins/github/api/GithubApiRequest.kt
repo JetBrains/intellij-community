@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
@@ -114,10 +115,9 @@ sealed class GithubApiRequest<out T>(val url: String) {
       override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
     }
 
-    open class GQLQuery<out T>(url: String,
-                               private val queryName: String,
-                               private val variablesObject: Any,
-                               private val clazz: Class<out T>)
+    abstract class GQLQuery<out T>(url: String,
+                                   private val queryName: String,
+                                   private val variablesObject: Any)
       : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
 
       override val tokenHeaderType = GithubApiRequestExecutor.TokenHeaderType.BEARER
@@ -129,10 +129,38 @@ sealed class GithubApiRequest<out T>(val url: String) {
           return GithubApiContentHelper.toJson(request, true)
         }
 
-      override fun extractResult(response: GithubApiResponse): T {
-        val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
-        if (result.data != null) return result.data
-        else throw GithubConfusingException(result.errors.toString())
+      class Parsed<T>(url: String,
+                      requestFilePath: String,
+                      variablesObject: Any,
+                      private val clazz: Class<out T>)
+        : GQLQuery<T>(url, requestFilePath, variablesObject) {
+        override fun extractResult(response: GithubApiResponse): T {
+          val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
+          if (result.data != null) return result.data
+          else throw GithubConfusingException(result.errors.toString())
+        }
+      }
+
+      class TraversedParsed<T>(url: String,
+                               requestFilePath: String,
+                               variablesObject: Any,
+                               private val clazz: Class<out T>,
+                               private vararg val pathFromData: String)
+        : GQLQuery<T?>(url, requestFilePath, variablesObject) {
+
+        override fun extractResult(response: GithubApiResponse): T? {
+          val result: GHGQLResponse<out JsonNode> = parseGQLResponse(response, JsonNode::class.java)
+          val data = result.data
+          if (data != null && !data.isNull) {
+            var node: JsonNode = data
+            for (path in pathFromData) {
+              node = node[path] ?: return null
+            }
+            if (node.isNull) return null
+            return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
+          }
+          else throw GithubConfusingException(result.errors.toString())
+        }
       }
     }
   }

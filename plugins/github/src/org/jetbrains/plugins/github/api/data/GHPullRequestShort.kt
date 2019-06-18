@@ -5,15 +5,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.*
 
-class GHPullRequestShort(id: String,
-                         val url: String,
-                         val number: Long,
-                         val title: String,
-                         val state: GHPullRequestState,
-                         val author: GHActor?,
-                         val createdAt: Date,
-                         @JsonProperty("assignees") assignees: GHNodes<GHUser>,
-                         @JsonProperty("labels") labels: GHNodes<GHLabel>) : GHNode(id) {
+open class GHPullRequestShort(id: String,
+                              val url: String,
+                              val number: Long,
+                              val title: String,
+                              val state: GHPullRequestState,
+                              val author: GHActor?,
+                              val createdAt: Date,
+                              @JsonProperty("assignees") assignees: GHNodes<GHUser>,
+                              @JsonProperty("labels") labels: GHNodes<GHLabel>) : GHNode(id) {
 
   @JsonIgnore
   val assignees = assignees.nodes

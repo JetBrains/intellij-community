@@ -100,6 +100,10 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     }
   }
 
+  public void contentsChanged(int index) {
+    fireContentsChanged(this, index, index);
+  }
+
   public void contentsChanged(@NotNull final T element) {
     int i = myItems.indexOf(element);
     fireContentsChanged(this, i, i);

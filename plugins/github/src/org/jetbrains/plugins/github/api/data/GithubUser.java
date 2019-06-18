@@ -34,6 +34,7 @@ public class GithubUser {
 
   private String login;
   private Long id;
+  private String nodeId;
   private String avatarUrl;
   private String gravatarId;
 
@@ -42,6 +43,11 @@ public class GithubUser {
 
   private String type;
   private Boolean siteAdmin;
+
+  @NotNull
+  public String getNodeId() {
+    return nodeId;
+  }
 
   @NotNull
   public String getLogin() {

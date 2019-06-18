@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
@@ -12,6 +12,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.data.GHPullRequestMergeableState
+import org.jetbrains.plugins.github.api.data.GHPullRequestState
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
@@ -66,7 +68,7 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
   private val mergeButton = JBOptionButton(null, null)
 
   private val browseButton = LinkLabel.create("Open on GitHub") {
-    model.details?.run { BrowserUtil.browse(htmlUrl) }
+    model.details?.run { BrowserUtil.browse(url) }
   }.apply {
     icon = AllIcons.Ide.External_link_arrow
     setHorizontalTextPosition(SwingConstants.LEFT)
@@ -93,13 +95,16 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
 
     model.addDetailsChangedListener(this) {
       state = model.details?.let {
-        GithubPullRequestStatePanel.State(it.number, it.state, it.merged, it.mergeable, it.rebaseable,
-                                          securityService.isCurrentUserWithPushAccess(), securityService.isCurrentUser(it.user),
-                                          securityService.isMergeAllowed(),
-                                          securityService.isRebaseMergeAllowed(),
-                                          securityService.isSquashMergeAllowed(),
-                                          securityService.isMergeForbiddenForProject(),
-                                          busyStateTracker.isBusy(it.number))
+        State(it.number, it.state.asIssueState(),
+              it.state == GHPullRequestState.MERGED,
+              it.mergeable == GHPullRequestMergeableState.MERGEABLE,
+              it.mergeable == GHPullRequestMergeableState.MERGEABLE,
+              it.viewerCanUpdate, it.viewerDidAuthor,
+              securityService.isMergeAllowed(),
+              securityService.isRebaseMergeAllowed(),
+              securityService.isSquashMergeAllowed(),
+              securityService.isMergeForbiddenForProject(),
+              busyStateTracker.isBusy(it.number))
       }
     }
 
@@ -109,12 +114,12 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
     }
   }
 
-  private var state: GithubPullRequestStatePanel.State? by equalVetoingObservable<GithubPullRequestStatePanel.State?>(null) {
+  private var state: State? by equalVetoingObservable<State?>(null) {
     updateText(it)
     updateActions(it)
   }
 
-  private fun updateText(state: GithubPullRequestStatePanel.State?) {
+  private fun updateText(state: State?) {
 
     if (state == null) {
       stateLabel.text = ""
@@ -155,7 +160,7 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
     }
   }
 
-  private fun updateActions(state: GithubPullRequestStatePanel.State?) {
+  private fun updateActions(state: State?) {
     if (state == null) {
       reopenAction.isEnabled = false
       reopenButton.isVisible = false

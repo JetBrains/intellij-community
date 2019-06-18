@@ -6,4 +6,4 @@ open class GHUser(id: String,
                   url: String,
                   avatarUrl: String,
                   val name: String?)
-  : GHActor(id, login, url, avatarUrl)
+  : GHActor(id, login, url, avatarUrl), GHPullRequestReviewer

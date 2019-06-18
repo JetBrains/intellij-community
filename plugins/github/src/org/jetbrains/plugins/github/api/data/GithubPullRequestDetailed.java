@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.api.data;
 
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("UnusedDeclaration")
 public class GithubPullRequestDetailed extends GithubPullRequest {
   private Boolean merged;
   private Boolean mergeable;

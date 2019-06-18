@@ -3,4 +3,5 @@ package org.jetbrains.plugins.github.api
 
 object GHGQLQueries {
   const val issueSearch = "issueSearch"
+  const val findPullRequest = "findPullRequest"
 }

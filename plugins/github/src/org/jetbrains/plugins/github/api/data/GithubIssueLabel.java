@@ -24,6 +24,16 @@ public class GithubIssueLabel {
   private String color;
 
   @NotNull
+  public String getNodeId() {
+    return nodeId;
+  }
+
+  @NotNull
+  public String getUrl() {
+    return url;
+  }
+
+  @NotNull
   public String getName() {
     return name;
   }

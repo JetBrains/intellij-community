@@ -10,7 +10,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailed
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.WrapLayout
@@ -97,7 +97,7 @@ internal abstract class LabeledListPanelHandle<T>(private val model: GithubPullR
       isOpaque = false
     }
 
-  abstract fun extractItems(details: GithubPullRequestDetailed): List<T>?
+  abstract fun extractItems(details: GHPullRequest): List<T>?
 
   abstract fun getItemComponent(item: T): JComponent
 

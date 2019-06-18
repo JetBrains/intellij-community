@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.changes.Change
 import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GithubCommit
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture
 interface GithubPullRequestDataProvider {
   val number: Long
 
-  val detailsRequest: CompletableFuture<GithubPullRequestDetailedWithHtml>
+  val detailsRequest: CompletableFuture<GHPullRequest>
   val branchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GithubCommit>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>

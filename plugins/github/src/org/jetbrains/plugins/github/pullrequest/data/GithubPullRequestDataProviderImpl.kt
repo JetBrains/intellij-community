@@ -16,13 +16,12 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
-import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
 import org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsUtil
 import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
@@ -42,17 +41,19 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val repositoryName: String,
                                                  override val number: Long) : GithubPullRequestDataProvider {
 
+
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
 
   private var lastKnownHeadSha: String? = null
 
-  private val detailsRequestValue = object : LazyCancellableBackgroundProcessValue<GithubPullRequestDetailedWithHtml>(progressManager) {
-    override fun compute(indicator: ProgressIndicator): GithubPullRequestDetailedWithHtml {
+  private val detailsRequestValue = object : LazyCancellableBackgroundProcessValue<GHPullRequest>(progressManager) {
+    override fun compute(indicator: ProgressIndicator): GHPullRequest {
       val details = requestExecutor.execute(indicator,
-                                            GithubApiRequests.Repos.PullRequests.getHtml(serverPath, username, repositoryName, number))
+                                            GHGQLRequests.PullRequest.findOne(serverPath, username, repositoryName, number))
+                    ?: throw GHNotFoundException("Pull request $number does not exist")
       invokeAndWaitIfNeeded {
-        lastKnownHeadSha?.run { if (this != details.head.sha) reloadCommits() }
-        lastKnownHeadSha = details.head.sha
+        lastKnownHeadSha?.run { if (this != details.headRefOid) reloadCommits() }
+        lastKnownHeadSha = details.headRefOid
       }
       return details
     }

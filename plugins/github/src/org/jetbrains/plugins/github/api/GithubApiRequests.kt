@@ -198,8 +198,7 @@ object GithubApiRequests {
                  labels: List<String>? = null,
                  assignees: List<String>? = null) =
         Post.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
-                               GithubCreateIssueRequest(title, body, milestone, labels,
-                                                                                                      assignees))
+                               GithubCreateIssueRequest(title, body, milestone, labels, assignees))
 
       @JvmStatic
       fun pages(server: GithubServerPath, username: String, repoName: String,
@@ -262,16 +261,6 @@ object GithubApiRequests {
     }
 
     object PullRequests : Entity("/pulls") {
-      @JvmStatic
-      fun get(url: String) = Get.json<GithubPullRequestDetailed>(url).withOperationName("get pull request")
-
-      @JvmStatic
-      fun getHtml(serverPath: GithubServerPath, username: String, repoName: String, number: Long) =
-        getHtml(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"))
-
-      @JvmStatic
-      fun getHtml(url: String) = Get.json<GithubPullRequestDetailedWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
-        .withOperationName("get pull request")
 
       @JvmStatic
       fun getDiff(serverPath: GithubServerPath, username: String, repoName: String, number: Long) =
@@ -289,8 +278,7 @@ object GithubApiRequests {
                  username: String, repoName: String,
                  title: String, description: String, head: String, base: String) =
         Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
-                                             GithubPullRequestRequest(title, description,
-                                                                                                                    head, base))
+                                             GithubPullRequestRequest(title, description, head, base))
           .withOperationName("create pull request in $username/$repoName")
 
       @JvmStatic
@@ -301,9 +289,7 @@ object GithubApiRequests {
                  base: String? = null,
                  maintainerCanModify: Boolean? = null) =
         Patch.json<GithubPullRequestDetailed>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
-                                              GithubPullUpdateRequest(title, body, state,
-                                                                                                                    base,
-                                                                                                                    maintainerCanModify))
+                                              GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
           .withOperationName("update pull request $number")
 
       @JvmStatic
@@ -313,39 +299,34 @@ object GithubApiRequests {
                  state: GithubIssueState? = null,
                  base: String? = null,
                  maintainerCanModify: Boolean? = null) =
-        Patch.json<GithubPullRequestDetailed>(url, GithubPullUpdateRequest(title, body, state,
-                                                                                                                         base,
-                                                                                                                         maintainerCanModify))
+        Patch.json<GithubPullRequestDetailed>(url, GithubPullUpdateRequest(title, body, state, base, maintainerCanModify))
           .withOperationName("update pull request")
 
       @JvmStatic
-      fun merge(pullRequest: GithubPullRequest, commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getMergeUrl(pullRequest),
-                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha,
-                                                                                                   GithubPullRequestMergeMethod.merge))
-          .withOperationName("merge pull request ${pullRequest.number}")
+      fun merge(server: GithubServerPath, repoPath: GithubFullPath, number: Long,
+                commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix, "/merge"),
+                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
+          .withOperationName("merge pull request ${number}")
 
       @JvmStatic
-      fun squashMerge(pullRequest: GithubPullRequest, commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getMergeUrl(pullRequest),
-                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha,
-                                                                                                   GithubPullRequestMergeMethod.squash))
-          .withOperationName("squash and merge pull request ${pullRequest.number}")
+      fun squashMerge(server: GithubServerPath, repoPath: GithubFullPath, number: Long,
+                      commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix, "/merge"),
+                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
+          .withOperationName("squash and merge pull request ${number}")
 
       @JvmStatic
-      fun rebaseMerge(pullRequest: GithubPullRequest, headSha: String) =
-        Put.json<Unit>(getMergeUrl(pullRequest),
+      fun rebaseMerge(server: GithubServerPath, repoPath: GithubFullPath, number: Long,
+                      headSha: String) =
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix, "/merge"),
                        GithubPullRequestMergeRebaseRequest(headSha))
-          .withOperationName("rebase and merge pull request ${pullRequest.number}")
-
-      private fun getMergeUrl(pullRequest: GithubPullRequest) = pullRequest.url + "/merge"
+          .withOperationName("rebase and merge pull request ${number}")
 
       @JvmStatic
       fun getListETag(server: GithubServerPath, repoPath: GithubFullPath) =
         object : Get<String?>(getUrl(server, Repos.urlSuffix, "/${repoPath.fullName}", urlSuffix,
-                                     GithubApiUrlQueryBuilder.urlQuery { param(
-                                       GithubRequestPagination(pageSize = 1)) })) {
-
+                                     GithubApiUrlQueryBuilder.urlQuery { param(GithubRequestPagination(pageSize = 1)) })) {
           override fun extractResult(response: GithubApiResponse) = response.findHeader("ETag")
         }.withOperationName("get pull request list ETag")
 
