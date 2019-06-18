@@ -13,8 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * HgHistoryTest tests retrieving file history and specific revisions.
@@ -45,8 +44,8 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(versions, revisions.size());
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
-    assertEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(1).loadContent());
+    assertArrayEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
+    assertArrayEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(1).loadContent());
   }
 
   /**
@@ -79,8 +78,8 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(versions, revisions.size());
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
-    assertEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(2).loadContent());
+    assertArrayEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
+    assertArrayEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(2).loadContent());
   }
   
   @Test
@@ -109,8 +108,8 @@ public class HgHistoryTest extends HgSingleUserTest {
 
     assertEquals(versions, revisions.size());
     assertTrue(session.isCurrentRevision(revisions.get(0).getRevisionNumber()));
-    assertEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
-    assertEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(1).loadContent());
+    assertArrayEquals(UPDATED_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(0).loadContent());
+    assertArrayEquals(INITIAL_FILE_CONTENT.getBytes(StandardCharsets.UTF_8), revisions.get(1).loadContent());
   }
 
   private static void loadAllRevisions(Collection<VcsFileRevision> revisions) throws Exception {
