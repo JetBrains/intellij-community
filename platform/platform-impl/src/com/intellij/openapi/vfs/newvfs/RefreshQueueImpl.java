@@ -21,9 +21,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.AsyncFileListener;
@@ -32,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import gnu.trove.TLongObjectHashMap;
@@ -44,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author max
@@ -60,6 +57,16 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private int myBusyThreads = 0;
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
+  private final AtomicLong myWriteActionCounter = new AtomicLong();
+
+  public RefreshQueueImpl() {
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
+      @Override
+      public void writeActionStarted(@NotNull Object action) {
+        myWriteActionCounter.incrementAndGet();
+      }
+    }, this);
+  }
 
   public void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
@@ -92,14 +99,13 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       }
       finally {
         finishRefreshActivity();
-        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> {
-          if (Registry.is("vfs.async.event.processing")) {
-            scheduleAsynchronousPreprocessing(session, transaction);
-          }
-          else {
-            session.fireEvents(session.getEvents(), null);
-          }
-        });
+        if (Registry.is("vfs.async.event.processing")) {
+          scheduleAsynchronousPreprocessing(session, transaction);
+        }
+        else {
+          TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction,
+                                                           () -> session.fireEvents(session.getEvents(), null));
+        }
       }
     });
     myEventCounter.eventHappened(session);
@@ -131,9 +137,9 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void processAndFireEvents(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
     while (true) {
-      AtomicBoolean success = new AtomicBoolean();
-      ProgressIndicatorUtils.runWithWriteActionPriority(() -> success.set(tryProcessingEvents(session, transaction)), new SensitiveProgressWrapper(myRefreshIndicator));
-      if (success.get()) {
+      boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> tryProcessingEvents(session, transaction),
+                                                                          new SensitiveProgressWrapper(myRefreshIndicator));
+      if (success) {
         break;
       }
 
@@ -141,7 +147,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private static boolean tryProcessingEvents(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
+  private void tryProcessingEvents(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
     List<? extends VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
       return file == null || file.isValid();
@@ -149,20 +155,14 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
     List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(events);
 
-    Semaphore semaphore = new Semaphore(1);
+    long stamp = myWriteActionCounter.get();
     TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> {
-      semaphore.up();
-      session.fireEvents(events, appliers);
-    });
-
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    while (!semaphore.waitFor(10)) {
-      if (indicator != null && indicator.isCanceled()) {
-        indicator.checkCanceled();
-        throw new ProcessCanceledException();
+      if (stamp == myWriteActionCounter.get()) {
+        session.fireEvents(events, appliers);
+      } else {
+        scheduleAsynchronousPreprocessing(session, transaction);
       }
-    }
-    return true;
+    });
   }
 
   private void doScan(@NotNull RefreshSessionImpl session) {
