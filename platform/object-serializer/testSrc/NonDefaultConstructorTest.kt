@@ -33,12 +33,28 @@ class NonDefaultConstructorTest {
     test(NoDefaultConstructorAndNoAnnotationBean("foo", arrayListOf(42, 21)), testName, defaultTestWriteConfiguration, ReadConfiguration(resolvePropertyMapping = {
       val clazz = NoDefaultConstructorAndNoAnnotationBean::class.java
       if (it.name == clazz.name) {
-        NonDefaultConstructorInfo(arrayOf("someParameter", "intList"), clazz.constructors.first())
+        NonDefaultConstructorInfo(listOf("someParameter", "intList"), clazz.constructors.first())
       }
       else {
         null
       }
     }))
+  }
+
+  @Test
+  fun `kotlin data class`() {
+    @Suppress("UNUSED_PARAMETER", "unused")
+    data class NoDefaultConstructorAndNoAnnotationBean(@JvmField val someParameter: String, @JvmField val intList: List<Int>)
+
+    test(NoDefaultConstructorAndNoAnnotationBean("foo", arrayListOf(42, 21)))
+  }
+
+  @Test
+  fun `no annotation and class written in a poor language`() {
+    // test that Java classes are not affected by Kotlin classes support
+    assertThatThrownBy {
+      test(ClassInPoorLanguage("foo"))
+    }.hasMessageStartingWith("Please annotate non-default constructor with PropertyMapping")
   }
 
   @Test

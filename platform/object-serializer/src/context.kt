@@ -9,7 +9,7 @@ import java.lang.reflect.Constructor
 // not fully initialized object may be passed (only created instance without properties) if object has PropertyMapping annotation
 typealias BeanConstructed = (instance: Any) -> Any
 
-class NonDefaultConstructorInfo(val names: Array<String>, val constructor: Constructor<*>)
+class NonDefaultConstructorInfo(val names: List<String>, val constructor: Constructor<*>)
 
 typealias PropertyMappingProvider = (beanClass: Class<*>) -> NonDefaultConstructorInfo?
 
