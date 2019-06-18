@@ -28,6 +28,14 @@ public interface CodeStyleStatusBarUIContributor {
   AnAction[] getActions(@NotNull PsiFile file);
 
   /**
+   * @return A title used for a group of actions opened from the status bar or {@code null} if no title is shown.
+   */
+  @Nullable
+  default String getActionGroupTitle() {
+    return null;
+  }
+
+  /**
    * @return A status bar tooltip or null for default tooltip.
    */
   @Nullable
