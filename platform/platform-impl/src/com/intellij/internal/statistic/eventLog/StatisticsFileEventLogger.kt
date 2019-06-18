@@ -8,6 +8,8 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.openapi.Disposable
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.SequentialTaskExecutor
 import java.io.File
 import java.util.*
 
@@ -17,7 +19,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
                                      private val writer: StatisticsEventLogWriter) : StatisticsEventLogger, Disposable {
-  protected val myLogExecutor = ConcurrencyUtil.newSingleThreadExecutor(javaClass.simpleName)
+  protected val myLogExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("StatisticsFileEventLogger: " + sessionId)
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0

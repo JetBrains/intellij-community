@@ -16,10 +16,10 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.RequestsMerger;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -151,11 +151,7 @@ public class RequestsMergerTest extends TestCase {
   }
 
   private static class SimpleExecutor implements Consumer<Runnable> {
-    private final ExecutorService myExecutor;
-
-    private SimpleExecutor() {
-      myExecutor = ConcurrencyUtil.newSingleThreadExecutor("req merge test");
-    }
+    private final ExecutorService myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("req merge test");
 
     @Override
     public void consume(Runnable runnable) {
