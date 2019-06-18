@@ -163,6 +163,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("intellij.android.apkanalyzer", "android.jar")
       withModule("intellij.android.projectSystem", "android.jar")
       withModule("intellij.android.projectSystem.gradle", "android.jar")
+      withModule("intellij.android.gradle-tooling.api", "android.jar")
+      withModule("intellij.android.gradle-tooling.impl", "android.jar")
       withModule("intellij.android.resources-aar", "android.jar")
       withModule("android-layout-inspector", "android.jar")
       withModule("assistant", "android.jar")
@@ -199,8 +201,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
       withModule("android.sdktools.android-annotations", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
-      withModule("android.sdktools.java-lib-model", "sdk-tools.jar")
-      withModule("android.sdktools.java-lib-model-builder", "sdk-tools.jar")
       withModule("usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)

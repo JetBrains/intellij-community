@@ -282,6 +282,8 @@ class CommunityRepositoryModules {
       withModule("intellij.android.apkanalyzer", "android.jar")
       withModule("intellij.android.projectSystem", "android.jar")
       withModule("intellij.android.projectSystem.gradle", "android.jar")
+      withModule("intellij.android.gradle-tooling.api", "android.jar")
+      withModule("intellij.android.gradle-tooling.impl", "android.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
@@ -298,8 +300,6 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
-      withModule("android.sdktools.java-lib-model", "sdk-tools.jar")
-      withModule("android.sdktools.java-lib-model-builder", "sdk-tools.jar")
       withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
