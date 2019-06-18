@@ -77,6 +77,27 @@
       "key": "DebuggerTabs.underlinedTabBackground"
     },
     {
+      "key": "Debugger.Variables.collectingDataForeground"
+    },
+    {
+      "key": "Debugger.Variables.evaluatingExpressionForeground"
+    },
+    {
+      "key": "Debugger.Variables.modifyingValueForeground"
+    },
+    {
+      "key": "Debugger.Variables.changedValueForeground"
+    },
+    {
+      "key": "Debugger.Variables.exceptionForeground"
+    },
+    {
+      "key": "Debugger.Variables.valueForeground"
+    },
+    {
+      "key": "Debugger.Variables.errorMessageForeground"
+    },
+    {
     "key": "DefaultTabs.background"
     },
     {
