@@ -16,10 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -166,8 +163,10 @@ public class JavaReflectionReferenceUtil {
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
           if (field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
-            final PsiPrimitiveType unboxedType = tryUnbox(field.getContainingClass(), (PsiClassType)type);
-            if (unboxedType != null) {
+            final PsiType[] classTypeArguments = ((PsiClassType)type).getParameters();
+            final PsiPrimitiveType unboxedType = classTypeArguments.length == 1
+                                                 ? PsiPrimitiveType.getUnboxedType(classTypeArguments[0]) : null;
+            if (unboxedType != null && field.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(classTypeArguments[0])) {
               return ReflectiveType.create(unboxedType, true);
             }
           }
@@ -299,19 +298,6 @@ public class JavaReflectionReferenceUtil {
       .filter(PsiAssignmentExpression.class)
       .find(expression -> ExpressionUtils.isReferenceTo(expression.getLExpression(), field));
     return assignment != null ? assignment.getRExpression() : null;
-  }
-
-  @Nullable
-  private static PsiPrimitiveType tryUnbox(@Nullable PsiClass psiClass, @NotNull PsiClassType originalType) {
-    if (psiClass != null && TypeConversionUtil.isPrimitiveWrapper(psiClass.getQualifiedName())) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-      final PsiClassType classType = factory.createType(psiClass, PsiSubstitutor.EMPTY, originalType.getLanguageLevel());
-      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(classType);
-      if (unboxedType != null) {
-        return unboxedType;
-      }
-    }
-    return null;
   }
 
   private static PsiClass findClass(@NotNull String qualifiedName, @NotNull PsiElement context) {
