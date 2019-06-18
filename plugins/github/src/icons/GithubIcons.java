@@ -23,6 +23,7 @@ public final class GithubIcons {
   /** 16x16 */ public static final Icon Close = load("/org/jetbrains/plugins/github/close.svg");
   /** 16x16 */ public static final Icon DefaultAvatar = load("/org/jetbrains/plugins/github/defaultAvatar.svg");
   /** 16x16 */ public static final Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg");
+  /** 16x16 */ public static final Icon PullRequestMerged = load("/org/jetbrains/plugins/github/pullRequestMerged.svg");
   /** 16x16 */ public static final Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg");
   /** 13x13 */ public static final Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg");
 
