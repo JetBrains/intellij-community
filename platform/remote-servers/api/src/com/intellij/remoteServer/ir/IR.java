@@ -3,6 +3,7 @@ package com.intellij.remoteServer.ir;
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,10 @@ public class IR {
 
   public interface RemoteRunner {
     Platform getRemotePlatform();
+    
+    RemoteValue createPathValue(@NotNull String path);
+
+    RemoteValue createPortValue(int port);
 
     RemoteEnvironmentRequest createRequest();
 
@@ -29,7 +34,8 @@ public class IR {
 
     Map<String, String> getEnvVars();
 
-    String findRemotePath(PathId pathId);
+    // todo: string or remoteValue or pathId?
+    String findRemotePath(String path);
 
     ProcessHandler createProcessHandler(NewCommandLine commandLine);
   }
@@ -42,19 +48,38 @@ public class IR {
     PortId requestPortMapping(int remotePort);
   }
 
+  public interface RemoteValue {
+    @NotNull
+    String toString(@NotNull RemoteEnvironment environment);
+  }
+
+  public class StringRemoteValue implements RemoteValue {
+    private final String myString;
+
+    public StringRemoteValue(@NotNull String string) {
+      myString = string;
+    }
+
+    @Override
+    @NotNull
+    public String toString(@NotNull RemoteEnvironment environment) {
+      return myString;
+    }
+  }
+
   public interface NewCommandLine {
 
     /**
      * {@link GeneralCommandLine#getPreparedCommandLine()}
      */
-    List<String> prepareCommandLine(RemoteEnvironment target);
+    List<String> prepareCommandLine(@NotNull RemoteEnvironment target);
 
-    void setExePath(PathId path);
+    void setExePath(RemoteValue exePath);
 
-    void setWorkingDirectory(PathId path);
+    void setWorkingDirectory(RemoteValue workingDirectory);
 
-    void addPathParameter(String name, PathId value);
+    void addParameter(RemoteValue parameter);
 
-    void addEnvVar(String name, PathId value);
+    void addEnvironmentVariable(String name, RemoteValue value);
   }
 }
