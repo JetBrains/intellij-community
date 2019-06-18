@@ -17,6 +17,7 @@ package com.intellij.diagnostic
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ConcurrencyUtil
 import java.lang.management.GarbageCollectorMXBean
 import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
@@ -48,7 +49,7 @@ open class GcPauseWatcher {
   }
 
   init {
-    Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(::checkForPauses, 0, SAMPLING_RATE_MS, TimeUnit.MILLISECONDS)
+    Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("GcPauseWatcher")).scheduleWithFixedDelay(::checkForPauses, 0, SAMPLING_RATE_MS, TimeUnit.MILLISECONDS)
   }
 
   private fun checkForPauses() {
