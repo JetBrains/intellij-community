@@ -5,7 +5,6 @@ import com.intellij.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.pom.java.LanguageLevel;
 
-@SuppressWarnings("GraziInspection")
 public class StatementParserTest extends JavaParsingTestCase {
   public StatementParserTest() {
     super("parser-partial/statements");
