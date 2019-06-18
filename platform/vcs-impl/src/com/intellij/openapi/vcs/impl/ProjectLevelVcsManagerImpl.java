@@ -809,7 +809,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public boolean isIgnored(@NotNull VirtualFile vf) {
     return ReadAction.compute(() -> {
-      if (myProject.isDisposed()) return false;
+      if (myProject.isDisposed() || myProject.isDefault()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
         return myExcludedIndex.isExcludedFile(vf);
@@ -823,7 +823,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public boolean isIgnored(@NotNull FilePath filePath) {
     return ReadAction.compute(() -> {
-      if (myProject.isDisposed()) return false;
+      if (myProject.isDisposed() || myProject.isDefault()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
         VirtualFile vf = ChangesUtil.findValidParentAccurately(filePath);
