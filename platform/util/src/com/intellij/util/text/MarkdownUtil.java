@@ -169,7 +169,12 @@ public class MarkdownUtil {
 
     private void handleLocalCodeBlock(int ind, @NotNull String line) {
       boolean codeBlock = false;
-      if (line.startsWith("    ") || line.startsWith("\t")) {
+      if (line.startsWith("    ")) {
+        line = line.substring(4);
+        codeBlock = true;
+      }
+      else if (line.startsWith("\t")) {
+        line = line.substring(1);
         codeBlock = true;
       }
 
