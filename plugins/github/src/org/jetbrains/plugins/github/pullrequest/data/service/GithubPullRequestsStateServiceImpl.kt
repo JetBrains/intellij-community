@@ -210,7 +210,8 @@ class GithubPullRequestsStateServiceImpl internal constructor(private val projec
 
   private fun releaseAndRefreshData(pullRequest: Long) {
     busyStateTracker.release(pullRequest)
-    dataLoader.findDataProvider(pullRequest)?.reloadDetails()
-    listLoader.outdated = true
+    val dataProvider = dataLoader.findDataProvider(pullRequest) ?: return
+    dataProvider.reloadDetails()
+    listLoader.reloadData(dataProvider.detailsRequest)
   }
 }

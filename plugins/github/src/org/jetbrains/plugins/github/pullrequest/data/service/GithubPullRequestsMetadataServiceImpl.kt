@@ -293,8 +293,9 @@ class GithubPullRequestsMetadataServiceImpl internal constructor(private val pro
 
         override fun onFinished() {
           busyStateTracker.release(pullRequest)
-          dataLoader.findDataProvider(pullRequest)?.reloadDetails()
-          listLoader.outdated = true
+          val dataProvider = dataLoader.findDataProvider(pullRequest) ?: return
+          dataProvider.reloadDetails()
+          listLoader.reloadData(dataProvider.detailsRequest)
         }
       })
     }

@@ -52,6 +52,7 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
   }
 
   private val listModelDelegate = CollectionListModel<GHPullRequestShort>()
+  private var resetDisposable: Disposable
 
   override var error: Throwable? by Delegates.observable<Throwable?>(null) { _, _, _ ->
     errorChangeEventDispatcher.multicaster.eventOccurred()
@@ -72,6 +73,9 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
     requestExecutor.addListener(this) { reset() }
 
     Disposer.register(this, sizeChecker)
+
+    resetDisposable = Disposer.newDisposable()
+    Disposer.register(this, resetDisposable)
   }
 
   private fun buildQuery(searchQuery: GithubPullRequestSearchQuery?): String {
@@ -111,6 +115,17 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
     return lastFuture
   }
 
+  override fun reloadData(request: CompletableFuture<out GHPullRequestShort>) {
+    request.handleOnEdt(resetDisposable) { result, error ->
+      if (error == null && result != null) updateData(result)
+    }
+  }
+
+  private fun updateData(pullRequest: GHPullRequestShort) {
+    val index = listModelDelegate.items.indexOfFirst { it.id == pullRequest.id }
+    listModelDelegate.setElementAt(pullRequest, index)
+  }
+
   override fun getElementAt(index: Int): GHPullRequestShort = listModelDelegate.getElementAt(index)
   override fun getSize(): Int = listModelDelegate.size
 
@@ -128,6 +143,10 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
     sizeChecker.stop()
 
     listModelDelegate.removeAll()
+
+    Disposer.dispose(resetDisposable)
+    resetDisposable = Disposer.newDisposable()
+    Disposer.register(this, resetDisposable)
   }
 
   override fun addListDataListener(l: ListDataListener) = listModelDelegate.addListDataListener(l)
