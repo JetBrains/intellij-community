@@ -2,8 +2,8 @@ PsiJavaFile:Yield.java
   PsiYieldStatement
     PsiJavaToken:YIELD('yield')
     PsiWhiteSpace(' ')
-    PsiReferenceExpression:x
+    PsiReferenceExpression:yield
       PsiReferenceParameterList
         <empty list>
-      PsiIdentifier:x('x')
+      PsiIdentifier:yield('yield')
     PsiJavaToken:SEMICOLON(';')
