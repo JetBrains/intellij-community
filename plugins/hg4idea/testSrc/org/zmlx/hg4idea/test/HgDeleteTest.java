@@ -76,6 +76,7 @@ public class HgDeleteTest extends HgSingleUserTest {
   public void testNewlyAddedFileShouldNotBePromptedForRemoval() {
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     final VirtualFile vf = createFileInCommand("a.txt", null);
+    myChangeListManager.ensureUpToDate();
     final HgMockVcsHelper helper = registerMockVcsHelper();
     helper.addListener(new VcsHelperListener() {
       @Override
@@ -103,6 +104,7 @@ public class HgDeleteTest extends HgSingleUserTest {
 
     showConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
     vf = createFileInCommand("a.txt", null);
+    myChangeListManager.ensureUpToDate();
     final HgMockVcsHelper helper = registerMockVcsHelper();
     helper.addListener(new VcsHelperListener() {
       @Override
