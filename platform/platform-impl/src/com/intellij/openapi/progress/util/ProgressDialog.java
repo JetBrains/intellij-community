@@ -303,7 +303,7 @@ class ProgressDialog implements Disposable {
     protected DialogWrapperPeer createPeer(@NotNull final Component parent, final boolean canBeParent) {
       if (useLightPopup()) {
         try {
-          return new GlassPaneDialogWrapperPeer(this, parent, canBeParent);
+          return new GlassPaneDialogWrapperPeer(this, parent);
         }
         catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
           return super.createPeer(parent, canBeParent);
@@ -325,7 +325,7 @@ class ProgressDialog implements Disposable {
     protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
       if (useLightPopup()) {
         try {
-          return new GlassPaneDialogWrapperPeer(this, canBeParent);
+          return new GlassPaneDialogWrapperPeer(this);
         }
         catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
           return super.createPeer(WindowManager.getInstance().suggestParentWindow(myProgressWindow.myProject), canBeParent, applicationModalIfPossible);
@@ -345,7 +345,7 @@ class ProgressDialog implements Disposable {
     protected DialogWrapperPeer createPeer(final Project project, final boolean canBeParent) {
       if (System.getProperty("vintage.progress") == null) {
         try {
-          return new GlassPaneDialogWrapperPeer(this, project, canBeParent);
+          return new GlassPaneDialogWrapperPeer(project, this);
         }
         catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
           return super.createPeer(project, canBeParent);
