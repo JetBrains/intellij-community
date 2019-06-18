@@ -1,0 +1,10 @@
+PsiJavaFile:YieldIncomplete1.java
+  PsiYieldStatement
+    PsiJavaToken:YIELD('yield')
+    PsiWhiteSpace(' ')
+    PsiReferenceExpression:x
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:x('x')
+    PsiErrorElement:';' expected
+      <empty list>
