@@ -55,10 +55,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.PlatformDefaults;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.picocontainer.MutablePicoContainer;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -969,7 +966,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean runEdtProgressWriteAction(@NotNull String title,
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
-                                            @Nullable String cancelText,
+                                            @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
                                             @NotNull Consumer<? super ProgressIndicator> action) {
     return runWriteActionWithClass(action.getClass(), ()->{
       PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
