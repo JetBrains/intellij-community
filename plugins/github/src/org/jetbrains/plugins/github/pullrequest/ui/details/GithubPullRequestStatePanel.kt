@@ -148,7 +148,7 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
           accessDeniedPanel.isVisible = false
         }
         GHPullRequestState.MERGED -> {
-          stateLabel.icon = GithubIcons.PullRequestClosed
+          stateLabel.icon = GithubIcons.PullRequestMerged
           stateLabel.text = "Pull request is merged"
           accessDeniedPanel.isVisible = false
         }

@@ -119,7 +119,11 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
       val secondaryTextColor = GithubUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
 
       stateIcon.apply {
-        icon = if (value.state == GHPullRequestState.OPEN) GithubIcons.PullRequestOpen else GithubIcons.PullRequestClosed
+        icon = when (value.state) {
+          GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
+          GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
+          GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
+        }
       }
       title.apply {
         text = value.title
