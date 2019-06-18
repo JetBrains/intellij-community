@@ -639,6 +639,10 @@ public final class EditorUtil {
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
 
+  public static boolean inVirtualSpace(@NotNull Editor editor) {
+    return inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+  }
+
   public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
     return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
