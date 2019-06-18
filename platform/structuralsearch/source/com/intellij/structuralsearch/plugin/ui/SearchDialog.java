@@ -505,7 +505,7 @@ public class SearchDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
 
     if (!useLastConfiguration) {
       final Editor editor = searchContext.getEditor();
@@ -636,8 +636,8 @@ public class SearchDialog extends DialogWrapper {
 
     myAlarm.cancelAllRequests();
 
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(null);
     super.dispose();
-    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
   }
 
   protected void disposeEditorContent() {

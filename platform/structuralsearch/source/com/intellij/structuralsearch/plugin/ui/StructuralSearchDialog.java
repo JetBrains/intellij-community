@@ -677,7 +677,7 @@ public class StructuralSearchDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
     if (!myUseLastConfiguration) {
       setTextFromContext();
     }
@@ -1119,7 +1119,7 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     properties.setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
-    StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
+    StructuralSearchPlugin.getInstance(getProject()).setDialog(null);
     myAlarm.cancelAllRequests();
     mySearchCriteriaEdit.removeNotify();
     myReplaceCriteriaEdit.removeNotify();

@@ -33,7 +33,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TooltipWithClickableLinks;
@@ -148,12 +147,7 @@ public class UIUtil {
   }
 
   public static void invokeAction(Configuration config, SearchContext context) {
-    if (config instanceof SearchConfiguration) {
-      StructuralSearchAction.triggerAction(config, context);
-    }
-    else {
-      StructuralReplaceAction.triggerAction(config, context);
-    }
+    StructuralSearchAction.triggerAction(config, context, !(config instanceof SearchConfiguration));
   }
 
   public static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
