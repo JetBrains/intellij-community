@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.LocalHistory;
@@ -58,14 +58,14 @@ public class RollbackWorker {
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @Nullable String localHistoryActionName) {
-    doRollback(changes, deleteLocallyAddedFiles, true, afterVcsRefreshInAwt, localHistoryActionName);
+    doRollback(changes, deleteLocallyAddedFiles, afterVcsRefreshInAwt, localHistoryActionName, false);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
-                         boolean rollbackRangesExcludedFromCommit,
                          @Nullable Runnable afterVcsRefreshInAwt,
-                         @Nullable String localHistoryActionName) {
+                         @Nullable String localHistoryActionName,
+                         boolean honorExcludedFromCommit) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
@@ -90,7 +90,7 @@ public class RollbackWorker {
         }, updateMode, "Refresh changelists after update", ModalityState.current());
       };
 
-      List<Change> otherChanges = revertPartialChanges(changes, rollbackRangesExcludedFromCommit);
+      List<Change> otherChanges = revertPartialChanges(changes, honorExcludedFromCommit);
       if (otherChanges.isEmpty()) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(afterRefresh, null, myProject);
         return;
@@ -123,18 +123,18 @@ public class RollbackWorker {
   }
 
   @NotNull
-  private List<Change> revertPartialChanges(@NotNull Collection<? extends Change> changes, boolean rollbackRangesExcludedFromCommit) {
+  private List<Change> revertPartialChanges(@NotNull Collection<? extends Change> changes, boolean honorExcludedFromCommit) {
     return PartialChangesUtil.processPartialChanges(
       myProject, changes, true,
       (partialChanges, tracker) -> {
         if (!tracker.hasPartialChangesToCommit()) return false;
-        if (rollbackRangesExcludedFromCommit) {
+        if (!honorExcludedFromCommit) {
           Set<String> selectedIds = ContainerUtil.map2Set(partialChanges, change -> change.getChangeListId());
           if (selectedIds.containsAll(tracker.getAffectedChangeListsIds())) return false;
         }
 
         List<String> changelistIds = ContainerUtil.map(partialChanges, change -> change.getChangeListId());
-        tracker.rollbackChangelistChanges(changelistIds, rollbackRangesExcludedFromCommit);
+        tracker.rollbackChanges(changelistIds, honorExcludedFromCommit);
         return true;
       }
     );
