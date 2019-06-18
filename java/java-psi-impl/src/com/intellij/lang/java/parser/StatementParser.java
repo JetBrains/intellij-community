@@ -4,6 +4,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -117,7 +118,9 @@ public class StatementParser {
     else if (tokenType == JavaTokenType.BREAK_KEYWORD) {
       return parseBreakStatement(builder);
     }
-    else if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.YIELD.equals(builder.getTokenText())) {
+    else if (tokenType == JavaTokenType.IDENTIFIER &&
+             PsiKeyword.YIELD.equals(builder.getTokenText()) &&
+             getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
       return parseYieldStatement(builder);
     }
     else if (tokenType == JavaTokenType.CONTINUE_KEYWORD) {
