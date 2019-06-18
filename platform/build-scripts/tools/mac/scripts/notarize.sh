@@ -3,6 +3,7 @@
 APP_DIRECTORY=$1
 APPL_USER=$2
 APPL_PASSWORD=$3
+APP_NAME=$4
 
 if [[ -z "$APP_DIRECTORY" ]] || [[ -z "$APPL_USER" ]] || [[ -z "$APPL_PASSWORD" ]]; then
   echo "Usage: $0 AppDirectory Username Password"
@@ -20,7 +21,7 @@ function log() {
 #immediately exit script with an error if a command fails
 set -euo pipefail
 
-file="IntelliJ.app.zip"
+file="$APP_NAME.zip"
 
 log "Zipping $file..."
 rm -rf "$file"
