@@ -385,7 +385,7 @@ public class DiffDrawUtil {
     return Collections.singletonList(marker);
   }
 
-  private static class LineHighlighterBuilder {
+  public static final class LineHighlighterBuilder {
     @NotNull private final Editor editor;
     @NotNull private final TextDiffType type;
     private final int startLine;
@@ -397,7 +397,7 @@ public class DiffDrawUtil {
     private boolean hideWithoutLineNumbers = false;
     private boolean hideStripeMarkers = false;
 
-    private LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
+    public LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
       this.type = type;
       this.startLine = startLine;
