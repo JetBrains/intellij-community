@@ -65,6 +65,11 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
       });
     }
 
+    final String since = uiKeyMetadata.getSince();
+    if (since != null) {
+      appendSection(sb, "Since", since);
+    }
+
     sb.append(DocumentationMarkup.SECTIONS_END);
     return sb.toString();
   }
