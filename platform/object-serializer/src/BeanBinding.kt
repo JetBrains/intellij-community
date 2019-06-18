@@ -247,7 +247,9 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
 
       val binding = bindings[bindingIndex]
       try {
+        context.hostObject = instance
         binding.deserialize(instance, accessors[bindingIndex], context)
+        context.hostObject = null
       }
       catch (e: SerializationException) {
         throw e

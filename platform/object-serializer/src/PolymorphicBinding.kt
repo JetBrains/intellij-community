@@ -21,7 +21,7 @@ internal class PolymorphicBinding(private val superClass: Class<*>) : Binding {
   }
 
   override fun deserialize(context: ReadContext): Any {
-    return doDeserialize(context, null)!!
+    return doDeserialize(context, context.hostObject)!!
   }
 
   private fun doDeserialize(context: ReadContext, hostObject: Any?): Any? {
