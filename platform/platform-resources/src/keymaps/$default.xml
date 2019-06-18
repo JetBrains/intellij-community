@@ -1174,6 +1174,6 @@
   </action>
 
   <action id="ViewInplaceComments">
-    <keyboard-shortcut first-keystroke="alt shift M"/>
+    <keyboard-shortcut first-keystroke="alt shift BACK_SLASH"/>
   </action>
 </keymap>
