@@ -17,13 +17,6 @@
       <option name="workspace" value="true"/>
       <loadForDefaultProject/>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.xdebugger.memory.component.InstancesTracker</implementation-class>
-    </component>
   </project-components>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
-  </extensions>
 </idea-plugin>

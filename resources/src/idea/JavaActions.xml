@@ -572,30 +572,23 @@
                     relative-to-action="XDebugger.JumpToTypeSource"/>
     </action>
 
-    <group id="MemoryView.SettingsPopupActionGroup">
-      <action class="com.intellij.debugger.memory.action.ShowClassesWithInstanceAction"
-              id="MemoryView.ShowOnlyWithInstances"
-              text="Show With Instances Only"/>
+    <action class="com.intellij.debugger.memory.action.ShowClassesWithInstanceAction"
+            id="MemoryView.ShowOnlyWithInstances"
+            text="Show With Instances Only">
+      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="before" relative-to-action="MemoryView.ShowOnlyWithDiff"/>
+    </action>
 
-      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction"
-              id="MemoryView.ShowOnlyWithDiff"
-              text="Show Non-Zero Diff Only"/>
+    <action class="com.intellij.debugger.memory.action.ShowTrackedAction"
+            id="MemoryView.ShowOnlyTracked"
+            text="Show Tracked Classes Only">
+      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="after" relative-to-action="MemoryView.ShowOnlyWithDiff"/>
+    </action>
 
-      <action class="com.intellij.debugger.memory.action.ShowTrackedAction"
-              id="MemoryView.ShowOnlyTracked"
-              text="Show Tracked Classes Only"/>
-
-      <separator/>
-
-      <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
-              id="MemoryView.EnableTrackingWithClosedWindow"
-              text="Enable Tracking With Hidden Memory View"/>
-
-      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction"
-              id="MemoryView.SwitchUpdateMode"
-              text="Update Loaded Classes On Debugger Stop"
-              description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
-    </group>
+    <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
+            id="MemoryView.EnableTrackingWithClosedWindow"
+            text="Enable Tracking With Hidden Memory View">
+      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="before" relative-to-action="MemoryView.SwitchUpdateMode"/>
+    </action>
 
     <group id="MemoryView.ClassesPopupActionGroup">
       <action class="com.intellij.debugger.memory.action.ShowInstancesFromClassesViewAction"
