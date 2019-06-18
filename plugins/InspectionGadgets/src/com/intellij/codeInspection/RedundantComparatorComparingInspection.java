@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -116,6 +117,10 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
       }
     }
     if (REVERSE_ORDER_FOR_NATURAL.test(call)) {
+      if (!InheritanceUtil.isInheritor(PsiUtil.substituteTypeParameter(call.getType(), JAVA_UTIL_COMPARATOR, 0, false),
+                                       JAVA_LANG_COMPARABLE)) {
+        return null;
+      }
       PsiReferenceParameterList parameterList = call.getMethodExpression().getParameterList();
       return JAVA_UTIL_COMPARATOR + "."+(parameterList == null ? "" : ct.text(parameterList))+"naturalOrder()";
     }
