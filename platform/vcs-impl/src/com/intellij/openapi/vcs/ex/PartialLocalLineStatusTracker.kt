@@ -65,7 +65,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun hasPartialChangesToCommit(): Boolean
 
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
-  fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean)
+  fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean)
 
 
   fun addListener(listener: Listener, disposable: Disposable)
@@ -533,11 +533,11 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  override fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean) {
+  override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
     val idsSet = changelistsIds.toSet()
     runBulkRollback {
       idsSet.contains(it.marker.changelistId) &&
-      (rollbackRangesExcludedFromCommit || !it.excludedFromCommit)
+      (!honorExcludedFromCommit || !it.excludedFromCommit)
     }
   }
 

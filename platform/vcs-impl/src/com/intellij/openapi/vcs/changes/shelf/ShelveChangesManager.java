@@ -403,7 +403,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       notifyStateChanged();
     }
     if (rollback) {
-      rollbackChangesAfterShelve(changes, !honorExcludedFromCommit);
+      rollbackChangesAfterShelve(changes, honorExcludedFromCommit);
     }
     return shelveList;
   }
@@ -448,11 +448,11 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     return changeList;
   }
 
-  private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes, boolean rollbackRangesExcludedFromCommit) {
+  private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes, boolean honorExcludedFromCommit) {
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
-    new RollbackWorker(myProject, operationName, modalContext).
-      doRollback(changes, true, rollbackRangesExcludedFromCommit, null, VcsBundle.message("shelve.changes.action"));
+    new RollbackWorker(myProject, operationName, modalContext)
+      .doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"), honorExcludedFromCommit);
   }
 
   @NotNull
@@ -897,7 +897,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       notifyStateChanged();
     }
 
-    rollbackChangesAfterShelve(shelvedChanges, true);
+    rollbackChangesAfterShelve(shelvedChanges, false);
 
     if (!failedChangeLists.isEmpty()) {
       VcsNotifier.getInstance(myProject).notifyError("Shelf Failed", String
