@@ -14,7 +14,6 @@ import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.GHPullRequestState
-import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
@@ -95,10 +94,7 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
 
     model.addDetailsChangedListener(this) {
       state = model.details?.let {
-        State(it.number, it.state.asIssueState(),
-              it.state == GHPullRequestState.MERGED,
-              it.mergeable == GHPullRequestMergeableState.MERGEABLE,
-              it.mergeable == GHPullRequestMergeableState.MERGEABLE,
+        State(it.number, it.state, GHPullRequestMergeableState.MERGEABLE,
               it.viewerCanUpdate, it.viewerDidAuthor,
               securityService.isMergeAllowed(),
               securityService.isRebaseMergeAllowed(),
@@ -128,34 +124,34 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
       accessDeniedPanel.isVisible = false
     }
     else {
-      if (state.state == GithubIssueState.closed) {
-        if (state.merged) {
-          stateLabel.icon = GithubIcons.PullRequestClosed
-          stateLabel.text = "Pull request is merged"
+      when (state.state) {
+        GHPullRequestState.OPEN -> {
+          when (state.mergeable) {
+            GHPullRequestMergeableState.MERGEABLE -> {
+              stateLabel.icon = AllIcons.RunConfigurations.TestPassed
+              stateLabel.text = "Branch has no conflicts with base branch"
+            }
+            GHPullRequestMergeableState.CONFLICTING -> {
+              stateLabel.icon = AllIcons.RunConfigurations.TestFailed
+              stateLabel.text = "Branch has conflicts that must be resolved"
+            }
+            GHPullRequestMergeableState.UNKNOWN -> {
+              stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
+              stateLabel.text = "Checking for ability to merge automatically..."
+            }
+          }
+          accessDeniedPanel.isVisible = !state.editAllowed
         }
-        else {
+        GHPullRequestState.CLOSED -> {
           stateLabel.icon = GithubIcons.PullRequestClosed
           stateLabel.text = "Pull request is closed"
+          accessDeniedPanel.isVisible = false
         }
-        accessDeniedPanel.isVisible = false
-      }
-      else {
-        val mergeable = state.mergeable
-        if (mergeable == null) {
-          stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
-          stateLabel.text = "Checking for ability to merge automatically..."
+        GHPullRequestState.MERGED -> {
+          stateLabel.icon = GithubIcons.PullRequestClosed
+          stateLabel.text = "Pull request is merged"
+          accessDeniedPanel.isVisible = false
         }
-        else {
-          if (mergeable) {
-            stateLabel.icon = AllIcons.RunConfigurations.TestPassed
-            stateLabel.text = "Branch has no conflicts with base branch"
-          }
-          else {
-            stateLabel.icon = AllIcons.RunConfigurations.TestFailed
-            stateLabel.text = "Branch has conflicts that must be resolved"
-          }
-        }
-        accessDeniedPanel.isVisible = !state.editAllowed
       }
     }
   }
@@ -178,16 +174,17 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
       browseButton.isVisible = false
     }
     else {
-      reopenButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.closed && !state.merged
+      reopenButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GHPullRequestState.CLOSED
       reopenAction.isEnabled = reopenButton.isVisible && !state.busy
 
-      closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GithubIssueState.open
+      closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GHPullRequestState.OPEN
       closeAction.isEnabled = closeButton.isVisible && !state.busy
 
-      mergeButton.isVisible = state.editAllowed && state.state == GithubIssueState.open && !state.merged
-      mergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !state.busy && !state.mergeForbidden
-      rebaseMergeAction.isEnabled = mergeButton.isVisible && (state.rebaseable ?: false) && !state.busy && !state.mergeForbidden
-      squashMergeAction.isEnabled = mergeButton.isVisible && (state.mergeable ?: false) && !state.busy && !state.mergeForbidden
+      mergeButton.isVisible = state.editAllowed && state.state == GHPullRequestState.OPEN
+      val mergeable = mergeButton.isVisible && state.mergeable == GHPullRequestMergeableState.MERGEABLE && !state.busy && !state.mergeForbidden
+      mergeAction.isEnabled = mergeable
+      rebaseMergeAction.isEnabled = mergeable
+      squashMergeAction.isEnabled = mergeable
 
       mergeButton.optionTooltipText = if (state.mergeForbidden) "Merge actions are disabled for this project" else null
 
@@ -208,10 +205,8 @@ internal class GithubPullRequestStatePanel(private val model: GithubPullRequestD
   override fun dispose() {}
 
   private data class State(val number: Long,
-                           val state: GithubIssueState,
-                           val merged: Boolean,
-                           val mergeable: Boolean?,
-                           val rebaseable: Boolean?,
+                           val state: GHPullRequestState,
+                           val mergeable: GHPullRequestMergeableState,
                            val editAllowed: Boolean,
                            val currentUserIsAuthor: Boolean,
                            val mergeAllowed: Boolean,
