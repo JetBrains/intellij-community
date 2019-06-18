@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -798,6 +799,38 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testFileTypeBeanByExtensionWithFieldName() {
     assertSame(ModuleFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("iml"));
+  }
+
+  public void testIsFileTypeRunsDetector() throws IOException {
+    final AtomicInteger detectorCalls = new AtomicInteger();
+    FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
+      @Nullable
+      @Override
+      public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
+        detectorCalls.incrementAndGet();
+        if (firstCharsIfText.toString().startsWith("#!archive")) {
+          return ArchiveFileType.INSTANCE;
+        }
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Collection<? extends FileType> getDetectedFileTypes() {
+        return Collections.singleton(ArchiveFileType.INSTANCE);
+      }
+
+      @Override
+      public int getVersion() {
+        return 0;
+      }
+    };
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
+
+    VirtualFile vFile = createTempFile("foo.bbb", null, "#!archive!!!", CharsetToolkit.UTF8_CHARSET);
+    assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
+    assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
+    assertEquals(1, detectorCalls.get());
   }
 
   @NotNull

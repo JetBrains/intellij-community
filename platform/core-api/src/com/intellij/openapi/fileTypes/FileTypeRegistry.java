@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author yole
  */
@@ -115,6 +117,15 @@ public abstract class FileTypeRegistry {
      */
     @Nullable
     FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
+
+    /**
+     * Returns the file type that this detector is capable of detecting, or null if it can detect
+     * multiple file types.
+     */
+    @Nullable
+    default Collection<? extends FileType> getDetectedFileTypes() {
+      return null;
+    }
 
     int getVersion();
   }
