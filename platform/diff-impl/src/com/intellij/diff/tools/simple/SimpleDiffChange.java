@@ -131,7 +131,10 @@ public class SimpleDiffChange {
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsExcluded, false, false));
+    myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
+                            .withIgnored(ignored)
+                            .withExcluded(myIsExcluded)
+                            .done());
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
