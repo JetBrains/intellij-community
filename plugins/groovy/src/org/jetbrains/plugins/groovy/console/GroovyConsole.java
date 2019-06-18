@@ -39,6 +39,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
 
@@ -47,7 +48,6 @@ public class GroovyConsole {
   public static final Key<GroovyConsole> GROOVY_CONSOLE = Key.create("Groovy console key");
 
   private static final Logger LOG = Logger.getInstance(GroovyConsole.class);
-  private static final Charset UTF_8 = Charset.forName("UTF-8");
   private static final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
 
   private final Project myProject;
@@ -88,13 +88,13 @@ public class GroovyConsole {
     final Charset charset = processHandler instanceof BaseOSProcessHandler
                             ? ((BaseOSProcessHandler)processHandler).getCharset()
                             : null;
-    byte[] bytes = (command + "\n").getBytes(charset != null ? charset : UTF_8);
+    byte[] bytes = (command + "\n").getBytes(charset != null ? charset : StandardCharsets.UTF_8);
     try {
       outputStream.write(bytes);
       outputStream.flush();
     }
-    catch (IOException ignored) {
-      LOG.warn(ignored);
+    catch (IOException e) {
+      LOG.warn(e);
     }
   }
 
