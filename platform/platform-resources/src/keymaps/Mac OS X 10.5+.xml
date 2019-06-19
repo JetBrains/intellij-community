@@ -285,6 +285,9 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="meta R"/>
   </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="meta alt shift R"/>
+  </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="meta R"/>
   </action>
