@@ -59,24 +59,14 @@ private fun createSelectModulePopupStep(project: Project, modules: List<Module>,
 fun formatModuleVersion(module: Module, version: String): String = "${module.name} (${version})"
 
 fun filterGroovyCompatibleModules(modules: Collection<Module>, condition: Condition<Module>): List<Module> {
-  return filterGroovyCompatibleModules(modules, condition.toPredicate())
-}
-
-fun filterGroovyCompatibleModules(modules: Collection<Module>, condition: (Module) -> Boolean): List<Module> {
-  return modules.filter(isGroovyCompatibleModule(condition))
+  return modules.filter(isGroovyCompatibleModule(condition.toPredicate()))
 }
 
 fun hasGroovyCompatibleModules(modules: Collection<Module>, condition: Condition<Module>): Boolean {
-  return hasGroovyCompatibleModules(modules, condition.toPredicate())
+  return modules.any(isGroovyCompatibleModule(condition.toPredicate()))
 }
 
-fun hasGroovyCompatibleModules(modules: Collection<Module>, condition: (Module) -> Boolean): Boolean {
-  return modules.any(isGroovyCompatibleModule(condition))
-}
-
-private inline fun isGroovyCompatibleModule(crossinline condition: (Module) -> Boolean): (Module) -> Boolean {
-  return ::hasJavaSdk and condition
-}
+private inline fun isGroovyCompatibleModule(crossinline condition: (Module) -> Boolean) = ::hasJavaSdk and condition
 
 fun hasJavaSdk(module: Module): Boolean = ModuleRootManager.getInstance(module).sdk?.sdkType is JavaSdkType
 
