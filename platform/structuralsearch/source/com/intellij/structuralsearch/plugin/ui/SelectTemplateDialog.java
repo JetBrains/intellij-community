@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -109,9 +110,9 @@ public class SelectTemplateDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     final JPanel centerPanel = new JPanel(new BorderLayout());
-    Splitter splitter;
+    final Splitter splitter = new Splitter(false, 0.3f);
 
-    centerPanel.add(BorderLayout.CENTER, splitter = new Splitter(false, 0.3f));
+    centerPanel.add(BorderLayout.CENTER, splitter);
     centerPanel.add(splitter);
 
     splitter.setFirstComponent(
@@ -132,8 +133,7 @@ public class SelectTemplateDialog extends DialogWrapper {
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), TemplateContextType.class)
     );
 
-    JComponent centerComponent;
-
+    final JComponent centerComponent;
     if (replace) {
       replacePatternEditor = UIUtil.createEditor(
         EditorFactory.getInstance().createDocument(""),
@@ -153,8 +153,8 @@ public class SelectTemplateDialog extends DialogWrapper {
     myCardLayout = new CardLayout();
     myPreviewPanel = new JPanel(myCardLayout);
     myPreviewPanel.add(centerComponent, PREVIEW_CARD);
-    JPanel selectPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gb =
+    final JPanel selectPanel = new JPanel(new GridBagLayout());
+    final GridBagConstraints gb =
       new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0);
     selectPanel.add(new JLabel(SSRBundle.message("selecttemplate.template.label.please.select.template")), gb);
     myPreviewPanel.add(selectPanel, SELECT_TEMPLATE_CARD);
@@ -163,10 +163,12 @@ public class SelectTemplateDialog extends DialogWrapper {
 
     final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
     labelPanel.add(new JLabel(SSRBundle.message("selecttemplate.template.preview")));
-    labelPanel.add(UIUtil.createCompleteMatchInfo(() -> {
-      final Configuration[] configurations = getSelectedConfigurations();
-      return configurations.length != 1 ? null : configurations[0];
-    }));
+    if (!Registry.is("ssr.use.new.search.dialog") || !Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
+      labelPanel.add(UIUtil.createCompleteMatchInfo(() -> {
+        final Configuration[] configurations = getSelectedConfigurations();
+        return configurations.length != 1 ? null : configurations[0];
+      }));
+    }
     panel.add(BorderLayout.NORTH, labelPanel);
     return centerPanel;
   }
