@@ -173,15 +173,8 @@ public final class SemVer implements Comparable<SemVer> {
     while (diff == 0 && start1 < length1 && start2 < length2);
 
     if (diff != 0) return diff;
-    if (start1 >= length1) {
-      if (start2 >= length2) {
-        return 0;
-      }
-      return -1;
-    }
-    else {
-      return 1;
-    }
+
+    return start1 < length1 ? 1 : -1;
   }
 
   private static int compareNumeric(CharSequence segment1, CharSequence segment2) {
