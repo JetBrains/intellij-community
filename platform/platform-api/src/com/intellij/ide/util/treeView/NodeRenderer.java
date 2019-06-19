@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,6 +67,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       }
       else {
         boolean first = true;
+        boolean isMain = true;
         for (PresentableNodeDescriptor.ColoredFragment each : coloredText) {
           SimpleTextAttributes simpleTextAttributes = each.getAttributes();
           if (each.getAttributes().getFgColor() == null && forcedForeground != null) {
@@ -81,8 +83,8 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
             }
             first = false;
           }
-          // treat grayed text as non-main
-          boolean isMain = simpleTextAttributes != SimpleTextAttributes.GRAYED_ATTRIBUTES;
+          // the first grayed text (inactive foreground, regular or small) ends main speed-searchable text
+          isMain = isMain && !Comparing.equal(simpleTextAttributes.getFgColor(), SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor());
           append(each.getText(), simpleTextAttributes, isMain);
         }
         String location = presentation.getLocationString();
