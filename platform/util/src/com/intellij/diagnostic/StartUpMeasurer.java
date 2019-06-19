@@ -158,13 +158,17 @@ public final class StartUpMeasurer {
   }
 
   public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
-    if (pluginId == null || !measuringPluginStartupCosts) {
+    if (pluginId == null || !isMeasuringPluginStartupCosts()) {
       return;
     }
 
     synchronized (pluginCostMap) {
       doAddPluginCost(pluginId, phase, timeNanos, pluginCostMap);
     }
+  }
+
+  public static boolean isMeasuringPluginStartupCosts() {
+    return measuringPluginStartupCosts;
   }
 
   @ApiStatus.Internal

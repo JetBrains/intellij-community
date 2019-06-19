@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -507,17 +509,24 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @ApiStatus.Internal
-  public void setMessageDeliveryListener(@NotNull MessageDeliveryListener listener) {
-    if (myListener != null) {
+  public void setMessageDeliveryListener(@Nullable MessageDeliveryListener listener) {
+    if (myListener != null && listener != null) {
       throw new IllegalStateException("Already set: "+myListener);
     }
     myListener = listener;
   }
 
-  void notifyMessageDeliveryListener(@NotNull Topic topic, @NotNull String messageName, @NotNull Object handler, long durationNanos) {
-    if (myListener != null) {
-      myListener.messageDelivered(topic, messageName, handler, durationNanos);
+  void invokeListener(Message message, Object handler) throws IllegalAccessException, InvocationTargetException {
+    Method method = message.getListenerMethod();
+    MessageDeliveryListener listener = myListener;
+    if (listener == null) {
+      method.invoke(handler, message.getArgs());
+      return;
     }
+
+    long startTime = System.nanoTime();
+    method.invoke(handler, message.getArgs());
+    listener.messageDelivered(message.getTopic(), method.getName(), handler, System.nanoTime() - startTime);
   }
 
   public static final class RootBus extends MessageBusImpl {

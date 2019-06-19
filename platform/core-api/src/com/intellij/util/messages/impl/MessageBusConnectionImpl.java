@@ -15,7 +15,6 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Queue;
 
 public class MessageBusConnectionImpl implements MessageBusConnection {
@@ -92,16 +91,11 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     final Object handler = mySubscriptions.get(topic);
 
     try {
-      Method listenerMethod = message.getListenerMethod();
-
       if (handler == myDefaultHandler) {
-        myDefaultHandler.handle(listenerMethod, message.getArgs());
+        myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
       }
       else {
-        long startTime = System.nanoTime();
-        listenerMethod.invoke(handler, message.getArgs());
-        long endTime = System.nanoTime();
-        myBus.notifyMessageDeliveryListener(topic, listenerMethod.getName(), handler, endTime - startTime);
+        myBus.invokeListener(message, handler);
       }
     }
     catch (AbstractMethodError e) {

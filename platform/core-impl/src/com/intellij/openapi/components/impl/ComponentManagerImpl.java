@@ -337,6 +337,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected void logMessageBusDelivery(Topic topic, String messageName, Object handler, long durationNanos) {
+    if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
+      ((MessageBusImpl) myMessageBus).setMessageDeliveryListener(null);
+      return;
+    }
+
     ClassLoader loader = handler.getClass().getClassLoader();
     String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : "com.intellij";
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", durationNanos);
