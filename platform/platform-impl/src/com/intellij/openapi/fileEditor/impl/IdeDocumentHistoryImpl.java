@@ -255,6 +255,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
+  public void includeCurrentCommandHasMoves() {
+    myCurrentCommandHasMoves = true;
+  }
+
+  @Override
   public final void includeCurrentPlaceAsChangePlace() {
     setCurrentChangePlace(false);
   }
