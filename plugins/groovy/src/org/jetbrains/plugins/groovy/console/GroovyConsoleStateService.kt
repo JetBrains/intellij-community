@@ -3,22 +3,22 @@ package org.jetbrains.plugins.groovy.console
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModulePointer
+import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService.MyState
-
 import java.util.*
 
 @State(name = "GroovyConsoleState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class GroovyConsoleStateService(
-  private val moduleManager: ModuleManager,
+  private val modulePointerManager: ModulePointerManager,
   private val fileManager: VirtualFileManager
 ) : PersistentStateComponent<MyState> {
 
-  private val myFileModuleMap: MutableMap<VirtualFile, Pair<Module?, String?>> = Collections.synchronizedMap(HashMap())
+  private val myFileModuleMap: MutableMap<VirtualFile, Pair<ModulePointer, String?>> = Collections.synchronizedMap(HashMap())
 
   class Entry {
     var url: String? = null
@@ -36,7 +36,7 @@ class GroovyConsoleStateService(
       for ((file, pair) in myFileModuleMap) {
         val e = Entry()
         e.url = file.url
-        e.moduleName = pair.first?.name ?: ""
+        e.moduleName = pair.first?.moduleName ?: ""
         e.title = pair.second
         result.list.add(e)
       }
@@ -50,9 +50,8 @@ class GroovyConsoleStateService(
       for (entry in state.list) {
         val url = entry.url ?: continue
         val file = fileManager.findFileByUrl(url) ?: continue
-        val moduleName = entry.moduleName
-        val module = if (moduleName == null) null else moduleManager.findModuleByName(moduleName)
-        myFileModuleMap[file] = Pair.create(module, entry.title)
+        val modulePointer = modulePointerManager.create(entry.moduleName ?: continue)
+        myFileModuleMap[file] = Pair.create(modulePointer, entry.title)
       }
     }
   }
@@ -61,12 +60,12 @@ class GroovyConsoleStateService(
     return myFileModuleMap.containsKey(file)
   }
 
-  fun getSelectedModule(file: VirtualFile): Module? = myFileModuleMap[file]?.first
+  fun getSelectedModule(file: VirtualFile): Module? = myFileModuleMap[file]?.first?.module
 
   fun getSelectedModuleTitle(file: VirtualFile): String? = myFileModuleMap[file]?.second
 
   fun setFileModule(file: VirtualFile, module: Module) {
-    myFileModuleMap[file] = Pair.create(module, GroovyConsoleUtil.getTitle(module))
+    myFileModuleMap[file] = Pair.create(modulePointerManager.create(module), GroovyConsoleUtil.getTitle(module))
   }
 
   companion object {
