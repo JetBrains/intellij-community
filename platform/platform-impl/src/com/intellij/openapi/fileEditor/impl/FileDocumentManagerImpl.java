@@ -600,7 +600,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
   public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
     List<VirtualFile> toRecompute = new ArrayList<>();
     Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
-    for (VFileContentChangeEvent event : ContainerUtil.findAll(events, VFileContentChangeEvent.class)) {
+    List<VFileContentChangeEvent> contentChanges = ContainerUtil.findAll(events, VFileContentChangeEvent.class);
+    for (VFileContentChangeEvent event : contentChanges) {
       ProgressManager.checkCanceled();
       VirtualFile virtualFile = event.getFile();
 
@@ -610,23 +611,20 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
         toRecompute.add(virtualFile);
       }
 
-      if (ourConflictsSolverEnabled) {
-        myConflictResolver.beforeContentChange(event);
-      }
-
-      Document document = getCachedDocument(virtualFile);
-      if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
-        // re-create document with the old contents prior to this event
-        // then contentChanged() will diff the document with the new contents and update the markers
-        document = getDocument(virtualFile);
-      }
-      // save document strongly to make it live until contentChanged()
-      strongRefsToDocuments.put(virtualFile, document);
+      prepareForRangeMarkerUpdate(strongRefsToDocuments, virtualFile);
     }
 
     return new ChangeApplier() {
       @Override
       public void beforeVfsChange() {
+        for (VFileContentChangeEvent event : contentChanges) {
+          // new range markers could've appeared after "prepareChange" in some read action
+          prepareForRangeMarkerUpdate(strongRefsToDocuments, event.getFile());
+          if (ourConflictsSolverEnabled) {
+            myConflictResolver.beforeContentChange(event);
+          }
+        }
+
         for (VirtualFile file : toRecompute) {
           file.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
         }
@@ -648,6 +646,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
         ObjectUtils.reachabilityFence(strongRefsToDocuments);
       }
     };
+  }
+
+  private void prepareForRangeMarkerUpdate(Map<VirtualFile, Document> strongRefsToDocuments, VirtualFile virtualFile) {
+    Document document = getCachedDocument(virtualFile);
+    if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
+      // re-create document with the old contents prior to this event
+      // then contentChanged() will diff the document with the new contents and update the markers
+      document = getDocument(virtualFile);
+    }
+    // save document strongly to make it live until contentChanged()
+    if (document != null) {
+      strongRefsToDocuments.put(virtualFile, document);
+    }
   }
 
   public void contentsChanged(VFileContentChangeEvent event) {
