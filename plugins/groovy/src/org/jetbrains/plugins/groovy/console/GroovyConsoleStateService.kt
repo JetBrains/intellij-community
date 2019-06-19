@@ -1,101 +1,76 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.console;
+package org.jetbrains.plugins.groovy.console
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.*
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService.MyState
 
-import java.util.*;
+import java.util.*
 
-@State(
-  name = "GroovyConsoleState",
-  storages = {
-    @Storage(StoragePathMacros.WORKSPACE_FILE)
-  }
-)
-public class GroovyConsoleStateService implements PersistentStateComponent<GroovyConsoleStateService.MyState> {
+@State(name = "GroovyConsoleState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+class GroovyConsoleStateService(
+  private val moduleManager: ModuleManager,
+  private val fileManager: VirtualFileManager
+) : PersistentStateComponent<MyState> {
 
-  public static class Entry {
-    public @Nullable String url;
-    public @Nullable String moduleName;
-    public @Nullable String title;
-  }
+  private val myFileModuleMap: MutableMap<VirtualFile, Pair<Module?, String?>> = Collections.synchronizedMap(HashMap())
 
-  public static class MyState {
-    public Collection<Entry> list = new ArrayList<>();
+  class Entry {
+    var url: String? = null
+    var moduleName: String? = null
+    var title: String? = null
   }
 
-  private final ModuleManager myModuleManager;
-  private final VirtualFileManager myFileManager;
-  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap = Collections.synchronizedMap(new HashMap<>());
-
-  public GroovyConsoleStateService(ModuleManager manager, VirtualFileManager fileManager) {
-    myModuleManager = manager;
-    myFileManager = fileManager;
+  class MyState {
+    var list: MutableCollection<Entry> = ArrayList()
   }
 
-  @NotNull
-  @Override
-  public MyState getState() {
-    synchronized (myFileModuleMap) {
-      final MyState result = new MyState();
-      for (Map.Entry<VirtualFile, Pair<Module, String>> entry : myFileModuleMap.entrySet()) {
-        final VirtualFile file = entry.getKey();
-        final Pair<Module, String> pair = entry.getValue();
-        final Module module = Pair.getFirst(pair);
-        final Entry e = new Entry();
-        e.url = file.getUrl();
-        e.moduleName = module == null ? "" : module.getName();
-        e.title = pair == null ? "" : pair.second;
-        result.list.add(e);
+  override fun getState(): MyState {
+    synchronized(myFileModuleMap) {
+      val result = MyState()
+      for ((file, pair) in myFileModuleMap) {
+        val e = Entry()
+        e.url = file.url
+        e.moduleName = pair.first?.name ?: ""
+        e.title = pair.second
+        result.list.add(e)
       }
-      return result;
+      return result
     }
   }
 
-  @Override
-  public void loadState(@NotNull MyState state) {
-    synchronized (myFileModuleMap) {
-      myFileModuleMap.clear();
-      for (Entry entry : state.list) {
-        if (entry.url == null) continue;
-        final VirtualFile file = myFileManager.findFileByUrl(entry.url);
-        if (file == null) continue;
-        String moduleName = entry.moduleName;
-        final Module module = moduleName == null ? null : myModuleManager.findModuleByName(moduleName);
-        myFileModuleMap.put(file, Pair.create(module, entry.title));
+  override fun loadState(state: MyState) {
+    synchronized(myFileModuleMap) {
+      myFileModuleMap.clear()
+      for (entry in state.list) {
+        val url = entry.url ?: continue
+        val file = fileManager.findFileByUrl(url) ?: continue
+        val moduleName = entry.moduleName
+        val module = if (moduleName == null) null else moduleManager.findModuleByName(moduleName)
+        myFileModuleMap[file] = Pair.create(module, entry.title)
       }
     }
   }
 
-  public boolean isProjectConsole(@NotNull VirtualFile file) {
-    return myFileModuleMap.containsKey(file);
+  fun isProjectConsole(file: VirtualFile): Boolean {
+    return myFileModuleMap.containsKey(file)
   }
 
-  @Nullable
-  public Module getSelectedModule(@NotNull VirtualFile file) {
-    final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return Pair.getFirst(pair);
+  fun getSelectedModule(file: VirtualFile): Module? = myFileModuleMap[file]?.first
+
+  fun getSelectedModuleTitle(file: VirtualFile): String? = myFileModuleMap[file]?.second
+
+  fun setFileModule(file: VirtualFile, module: Module) {
+    myFileModuleMap[file] = Pair.create(module, GroovyConsoleUtil.getTitle(module))
   }
 
-  @Nullable
-  public String getSelectedModuleTitle(@NotNull VirtualFile file) {
-    final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return Pair.getSecond(pair);
-  }
-
-  public void setFileModule(@NotNull VirtualFile file, @NotNull Module module) {
-    myFileModuleMap.put(file, Pair.create(module, GroovyConsoleUtil.getTitle(module)));
-  }
-
-  @NotNull
-  public static GroovyConsoleStateService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GroovyConsoleStateService.class);
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): GroovyConsoleStateService = project.service()
   }
 }
