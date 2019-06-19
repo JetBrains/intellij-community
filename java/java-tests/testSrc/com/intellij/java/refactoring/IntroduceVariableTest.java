@@ -190,6 +190,10 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("mi5", false, false, false, "int"));
   }
 
+  public void testSkipErroneousParen() {
+    doTest(new MockIntroduceVariableHandler("x", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testInsideIf() {
     doTest(new MockIntroduceVariableHandler("s1", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }

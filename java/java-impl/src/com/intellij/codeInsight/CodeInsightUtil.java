@@ -42,7 +42,7 @@ public class CodeInsightUtil {
       if (element2 instanceof PsiJavaToken) {
         final PsiJavaToken token = (PsiJavaToken)element2;
         final IElementType tokenType = token.getTokenType();
-        if (tokenType.equals(JavaTokenType.SEMICOLON)) {
+        if (tokenType.equals(JavaTokenType.SEMICOLON) || element2.getParent() instanceof PsiErrorElement) {
           expression = findElementInRange(file, startOffset, element2.getTextRange().getStartOffset(), PsiExpression.class);
         }
       }
