@@ -3,54 +3,40 @@ package com.intellij.remoteServer.ir;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class IR {
-
-  public interface PathId {
-  }
-
-  public interface PortId {
-    int getRemotePort();
-  }
-
   public interface RemoteRunner {
     Platform getRemotePlatform();
 
-    RemoteValue createPathValue(@NotNull String path);
-
-    RemoteValue createPortValue(int port);
-
     RemoteEnvironmentRequest createRequest();
 
-    RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request) throws Exception;
+    RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request);
   }
 
   public interface RemoteEnvironment {
     Platform getPlatform();
 
-    Map<String, String> getEnvVars();
-
     // todo: string or remoteValue or pathId?
     String findRemotePath(String path);
 
-    ProcessHandler createProcessHandler(NewCommandLine commandLine);
+    Process createProcess(NewCommandLine commandLine);
   }
 
   public interface RemoteEnvironmentRequest {
-    PathId requestTransfer(String localPath);
+    RemoteValue createPathValue(@NotNull String path);
 
-    PathId requestRemoteFile(String remotePath);
-
-    PortId requestPortMapping(int remotePort);
+    RemoteValue createPortValue(int port);
   }
 
   public interface RemoteValue {
@@ -84,9 +70,7 @@ public class IR {
      * {@link GeneralCommandLine#getPreparedCommandLine()}
      */
     public List<String> prepareCommandLine(@NotNull RemoteEnvironment target) {
-      // todo something with working directory and environment?
-      List<String> parameters = ContainerUtil.mapNotNull(myParameters, v -> v.toString(target));
-      return CommandLineUtil.toCommandLine(myExePath.toString(), parameters, target.getPlatform());
+      return CommandLineUtil.toCommandLine(myExePath.toString(), getParameters(target), target.getPlatform());
     }
 
     public void setExePath(@NotNull RemoteValue exePath) {
@@ -104,6 +88,25 @@ public class IR {
     public void addEnvironmentVariable(String name, RemoteValue value) {
       myEnvironment.put(name, value);
     }
+
+    public String getExePath(@NotNull RemoteEnvironment target) {
+      return myExePath.toString(target);
+    }
+
+    @Nullable
+    public String getWorkingDirectory(@NotNull RemoteEnvironment target) {
+      return myWorkingDirectory.toString(target);
+    }
+
+    @NotNull
+    public List<String> getParameters(@NotNull RemoteEnvironment target) {
+      return ContainerUtil.mapNotNull(myParameters, v -> v.toString(target));
+    }
+
+    @NotNull
+    public Map<String, String> getEnvironmentVariables(@NotNull RemoteEnvironment target) {
+      return ContainerUtil.map2MapNotNull(myEnvironment.entrySet(), e -> Pair.create(e.getKey(), e.getValue().toString(target)));
+    }
   }
 
   public static class LocalRunner implements RemoteRunner {
@@ -111,25 +114,57 @@ public class IR {
     public Platform getRemotePlatform() {
       return Platform.current();
     }
-  
-    @Override
-    public RemoteValue createPathValue(@NotNull String path) {
-      return new StringRemoteValue(path);
-    }
-  
-    @Override
-    public RemoteValue createPortValue(int port) {
-      return e -> String.valueOf(port);
-    }
-  
+
     @Override
     public RemoteEnvironmentRequest createRequest() {
-      return null;
+      return new RemoteEnvironmentRequest() {
+
+        @Override
+        public RemoteValue createPathValue(@NotNull String path) {
+          return new StringRemoteValue(path);
+        }
+
+        @Override
+        public RemoteValue createPortValue(int port) {
+          return e -> String.valueOf(port);
+        }
+      };
     }
-  
+
     @Override
-    public RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request) throws Exception {
-      return null;
+    public RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request) {
+      return new RemoteEnvironment() {
+        @Override
+        public Platform getPlatform() {
+          return getRemotePlatform();
+        }
+
+        @Override
+        public String findRemotePath(String path) {
+          return path;
+        }
+
+        @Override
+        public Process createProcess(NewCommandLine commandLine) {
+          ProcessBuilder builder = new ProcessBuilder(commandLine.prepareCommandLine(this));
+          //setupEnvironment(builder.environment());
+          builder.environment().putAll(commandLine.getEnvironmentVariables(this));
+          String workingDirectory = commandLine.getWorkingDirectory(this);
+          if (workingDirectory != null) {
+            builder.directory(new File(workingDirectory));
+          }
+          //builder.redirectErrorStream(myRedirectErrorStream);
+          //if (myInputFile != null) {
+          //  builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
+          //}
+          try {
+            return builder.start();
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
     }
   }
 }
