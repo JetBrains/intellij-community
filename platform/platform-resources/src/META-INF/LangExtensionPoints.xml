@@ -865,6 +865,8 @@
       <with attribute="implementationClass" implements="com.intellij.util.indexing.DataIndexer"/>
     </extensionPoint>
 
+    <extensionPoint name="todoExtraPlaces" interface="com.intellij.psi.impl.cache.impl.todo.TodoIndexers$ExtraPlaceChecker"/>
+
     <extensionPoint name="refactoring.elementListenerProvider"
                     interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider"
                     area="IDEA_PROJECT"/>
