@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -214,16 +215,19 @@ public class UIUtil {
         if (isTarget(Configuration.CONTEXT_VAR_NAME, matchOptions)) {
           constraint.setPartOfSearchResults(true);
         }
-        final boolean link = linkConsumer != null && !Configuration.CONTEXT_VAR_NAME.equals(configuration.getCurrentVariableName());
-        final String text = SSRBundle.message("complete.match.variable.tooltip.message",
-                                              SubstitutionShortInfoHandler.getShortParamString(constraint, link));
+        String filterText = StringUtil.escapeXmlEntities(
+          SSRBundle.message("complete.match.variable.tooltip.message",
+                            SubstitutionShortInfoHandler.getShortParamString(constraint, linkConsumer == null)));
+        if (linkConsumer != null && !Configuration.CONTEXT_VAR_NAME.equals(configuration.getCurrentVariableName())) {
+          filterText = SubstitutionShortInfoHandler.appendLinkText(filterText, Configuration.CONTEXT_VAR_NAME);
+        }
         final HyperlinkListener listener = e -> {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && linkConsumer != null) {
             linkConsumer.accept(Configuration.CONTEXT_VAR_NAME);
             IdeTooltipManager.getInstance().hideCurrentNow(true);
           }
         };
-        final IdeTooltip tooltip = new TooltipWithClickableLinks(completeMatchInfo, text, listener);
+        final IdeTooltip tooltip = new TooltipWithClickableLinks(completeMatchInfo, filterText, listener);
         final Rectangle bounds = completeMatchInfo.getBounds();
         tooltip.setHint(true)
           .setExplicitClose(true)
