@@ -293,9 +293,12 @@ public class WindowsDefenderChecker {
 
   public boolean runExcludePathsCommand(Project project, Collection<Path> paths) {
     try {
-      ExecUtil.sudoAndGetOutput(new GeneralCommandLine("powershell", "-Command", "Add-MpPreference", "-ExclusionPath",
-                                                       StringUtil.join(paths, (path) -> StringUtil.wrapWithDoubleQuote(path.toString()), ",")), "");
-      return true;
+      final ProcessOutput output =
+        ExecUtil.sudoAndGetOutput(new GeneralCommandLine("powershell", "-Command", "Add-MpPreference", "-ExclusionPath",
+                                                         StringUtil
+                                                           .join(paths, (path) -> StringUtil.wrapWithDoubleQuote(path.toString()), ",")),
+                                  "");
+      return output.getExitCode() == 0;
     }
     catch (IOException | ExecutionException e) {
       UIUtil.invokeLaterIfNeeded(() ->
