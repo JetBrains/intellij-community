@@ -89,9 +89,4 @@
   <xi:include href="built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.diagnostic.GcPauseWatcher</implementation-class>
-    </component>
-  </application-components>
 </idea-plugin>

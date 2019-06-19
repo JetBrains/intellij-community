@@ -248,6 +248,7 @@
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor" serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.WindowsDefenderChecker"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.GcPauseWatcher"/>
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
