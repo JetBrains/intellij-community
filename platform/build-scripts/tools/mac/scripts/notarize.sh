@@ -83,7 +83,8 @@ while true; do
   fi
   developer_log="developer_log.json"
   log "Fetching $developer_log"
-  url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 12-)"
+  # TODO: Replace cut with trim or something better
+  url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 13-)"
   # wget does url quoting by itself
   # shellcheck disable=SC2086,SC2015
   wget "$url" -O "$developer_log" && cat "$developer_log" || true
