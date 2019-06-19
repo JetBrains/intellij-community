@@ -559,11 +559,7 @@ public class HighlightUtil extends HighlightUtilBase {
       if (returnValue != null) {
         PsiType valueType = RefactoringChangeUtil.getTypeByExpression(returnValue);
         if (isMethodVoid) {
-          description = JavaErrorMessages.message("return.from.void.method");
-          errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
-          if (valueType != null && method != null) {
-            QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true));
-          }
+          return generateReturnValueFromVoidMethodInfo(method, statement, valueType);
         }
         else {
           TextRange textRange = statement.getTextRange();
@@ -591,6 +587,36 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     return errorResult;
+  }
+
+  private static boolean isValidConstructor(@NotNull PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return false;
+    return method.getName().equals(aClass.getName());
+  }
+
+  private static HighlightInfo generateReturnValueFromVoidMethodInfo(@Nullable PsiMethod method,
+                                                                     @NotNull PsiReturnStatement returnStatement,
+                                                                     @Nullable PsiType returnValueType) {
+    String description = JavaErrorMessages.message("return.from.void.method");
+    HighlightInfo info =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(returnStatement).descriptionAndTooltip(description).create();
+
+    boolean canCreateFixes = method != null && returnValueType != null && (!method.isConstructor() || isValidConstructor(method));
+    if (!canCreateFixes) return info;
+
+    PsiCodeBlock codeBlock = method.getBody();
+    if (codeBlock == null) return info;
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteReturnFix(codeBlock, returnStatement));
+    if (method.isConstructor()) return info;
+    boolean isKnownReturnType = returnValueType.isValid() && !TypeConversionUtil.isNullType(returnValueType);
+    if (isKnownReturnType) {
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, returnValueType, true));
+    }
+    else {
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnUnknownTypeFix(method));
+    }
+    return info;
   }
 
   @NotNull

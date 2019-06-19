@@ -49,6 +49,14 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private final String myName;
   private final String myCanonicalText;
 
+  public MethodReturnTypeFix(@NotNull PsiMethod method) {
+    super(method);
+    myReturnTypePointer = null;
+    myFixWholeHierarchy = false;
+    myName = method.getName();
+    myCanonicalText = null;
+  }
+
   public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy) {
     super(method);
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
@@ -67,7 +75,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @NotNull
   @Override
   public String getText() {
-    return QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
+    return myCanonicalText == null ? QuickFixBundle.message("fix.return.type.change.type.text", myName) :
+           QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
   }
 
   @Override
@@ -82,10 +91,10 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-
+    if (!BaseIntentionAction.canModify(myMethod)) return false;
+    if (myReturnTypePointer == null) return myMethod.getReturnTypeElement() != null;
     final PsiType myReturnType = myReturnTypePointer.getType();
-    if (BaseIntentionAction.canModify(myMethod) &&
-        myReturnType != null &&
+    if (myReturnType != null &&
         myReturnType.isValid() &&
         !TypeConversionUtil.isNullType(myReturnType)) {
       final PsiType returnType = myMethod.getReturnType();
@@ -105,6 +114,11 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
+    if (myReturnTypePointer == null) {
+      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, file);
+      if (editorForMethod != null) selectInEditor(myMethod.getReturnTypeElement(), editorForMethod);
+      return;
+    }
     final PsiType myReturnType = myReturnTypePointer.getType();
     if (myReturnType == null) return;
     if (myFixWholeHierarchy) {
@@ -135,7 +149,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (statementToSelect != null) {
       Editor editorForMethod = getEditorForMethod(myMethod, project, editor, file);
       if (editorForMethod != null) {
-        selectReturnValueInEditor(statementToSelect, editorForMethod);
+        selectInEditor(statementToSelect.getReturnValue(), editorForMethod);
       }
     }
   }
@@ -308,10 +322,9 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
   }
 
-  static void selectReturnValueInEditor(final PsiReturnStatement returnStatement, final Editor editor) {
-    final PsiExpression returnValue = returnStatement.getReturnValue();
-    LOG.assertTrue(returnValue != null, returnStatement);
-    TextRange range = returnValue.getTextRange();
+  static void selectInEditor(@Nullable PsiElement element, Editor editor) {
+    LOG.assertTrue(element != null);
+    TextRange range = element.getTextRange();
     int offset = range.getStartOffset();
 
     editor.getCaretModel().moveToOffset(offset);
