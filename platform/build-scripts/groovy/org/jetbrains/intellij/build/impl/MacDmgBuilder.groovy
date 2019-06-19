@@ -204,7 +204,7 @@ class MacDmgBuilder {
       ENV_FOR_MAC_BUILDER.each {
         def value = System.getenv(it)
         if (value != null && !value.isEmpty()) {
-          env << "$it=$value "
+          env += "$it=$value "
         }
       }
 
