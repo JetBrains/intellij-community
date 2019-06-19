@@ -84,8 +84,11 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
     final String variableName = variableRange.subSequence(patternText).toString();
     final NamedScriptableDefinition variable = configuration.findVariable(variableName);
-    final String filterText =
-      getShortParamString(variable, !editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()));
+    final boolean newDialog = Registry.is("ssr.use.new.search.dialog");
+    String filterText = StringUtil.escapeXmlEntities(getShortParamString(variable, !newDialog));
+    if (!editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()) && newDialog) {
+      filterText =  appendLinkText(filterText, variableName);
+    }
     final boolean replacementVariable =
       variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
     final String currentVariableName = replacementVariable
@@ -103,6 +106,12 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
                                            ((variableRange.getEndOffset() - variableRange.getStartOffset()) >> 1));
       showTooltip(editor, toolTipPosition, filterText);
     }
+  }
+
+  @NotNull
+  static String appendLinkText(String text, String variableName) {
+    final String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor());
+    return text + "<br><a style=\"color:" + linkColor + "\" href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
   }
 
   private void checkModelValidity() {
@@ -134,15 +143,12 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   @NotNull
-  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition, boolean editLink) {
-    final boolean verbose = !Registry.is("ssr.use.new.search.dialog");
+  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition, boolean verbose) {
     if (namedScriptableDefinition == null) {
       return verbose ? SSRBundle.message("no.constraints.specified.tooltip.message") : "";
     }
 
     final StringBuilder buf = new StringBuilder();
-
-    final String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor());
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
       final String name = constraint.getName();
@@ -159,7 +165,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (!constraint.getRegExp().isEmpty()) {
         append(buf, SSRBundle.message("text.tooltip.message",
                                       constraint.isInvertRegExp() ? 1 : 0,
-                                      StringUtil.escapeXmlEntities(constraint.getRegExp()),
+                                      constraint.getRegExp(),
                                       constraint.isWholeWordsOnly() ? 1 : 0,
                                       constraint.isWithinHierarchy() ? 1 : 0));
       }
@@ -167,14 +173,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         append(buf, SSRBundle.message("hierarchy.tooltip.message"));
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
-        final String text = StringUtil.escapeXmlEntities(StringUtil.unquoteString(constraint.getReferenceConstraint()));
+        final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
         append(buf, SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text));
       }
 
       if (!constraint.getNameOfExprType().isEmpty()) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                       constraint.isInvertExprType() ? 1 : 0,
-                                      StringUtil.escapeXmlEntities(constraint.getNameOfExprType()),
+                                      constraint.getNameOfExprType(),
                                       constraint.isExprTypeWithinHierarchy() ? 1 : 0));
       }
 
@@ -182,12 +188,12 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (!constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? 1 : 0,
-                                      StringUtil.escapeXmlEntities(constraint.getNameOfFormalArgType()),
+                                      constraint.getNameOfFormalArgType(),
                                       constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0));
       }
 
       if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
-        final String text = StringUtil.escapeXmlEntities(StringUtil.unquoteString(constraint.getWithinConstraint()));
+        final String text = StringUtil.unquoteString(constraint.getWithinConstraint());
         append(buf, SSRBundle.message("within.constraints.tooltip.message", constraint.isInvertWithinConstraint() ? 1 : 0, text));
       }
     }
@@ -197,16 +203,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       append(buf, SSRBundle.message("script.tooltip.message"));
     }
 
-    if (buf.length() == 0 && !editLink && verbose) {
+    if (buf.length() == 0 && verbose) {
       buf.append(SSRBundle.message("no.constraints.specified.tooltip.message"));
-    }
-    if (editLink && !verbose && !Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
-      if (buf.length() > 0) buf.append("<br>");
-      buf.append("<a style=\"color:")
-        .append(linkColor)
-        .append("\" href=\"#ssr_edit_filters/")
-        .append(namedScriptableDefinition.getName())
-        .append("\">Edit filters</a>");
     }
     return buf.toString();
   }
