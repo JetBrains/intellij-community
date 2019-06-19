@@ -14,7 +14,7 @@ import static org.junit.Assume.assumeTrue;
 public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
   @Before
   public void ensureRightOS() {
-    assumeTrue("Windows-oly test", SystemInfo.isWindows);
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
   }
 
   @NotNull
