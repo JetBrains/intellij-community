@@ -4,8 +4,6 @@ import java.util.List;
 
 public class Main {
   public void testIterator(List<List<String>> data, boolean b) {
-    for(Ite<caret>rator<List<String>> iter = (data.iterator()); iter.hasNext();)
-      if(iter.next().isEmpty() && /* also check the flag */ b)
-        iter.remove();
+      data.removeIf(strings -> strings.isEmpty() && /* also check the flag */ b);
   }
 }
