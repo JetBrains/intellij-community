@@ -14,8 +14,8 @@ import java.util.Set;
 public class ClassFileDependenciesAnalyzer {
   private final DependencyContext myContext;
 
-  public ClassFileDependenciesAnalyzer(File dependenciesDataDir, PathRelativizerService relativizer) throws IOException {
-    myContext = new DependencyContext(dependenciesDataDir, relativizer);
+  public ClassFileDependenciesAnalyzer(File dependenciesDataDir) throws IOException {
+    myContext = new DependencyContext(dependenciesDataDir);
   }
 
   @NotNull

@@ -20,7 +20,7 @@ public class JavaSdkPathRelativizer implements PathRelativizer {
         .collect(Collectors.toMap(sdk -> {
           JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
           return "$JDK_" + (version != null ? version.toString() : "0") + "$";
-        }, sdk -> sdk.getHomePath()));
+        }, sdk -> sdk.getHomePath(), (sdk1, sdk2) -> sdk1));
     }
   }
 

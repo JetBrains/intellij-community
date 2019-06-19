@@ -70,8 +70,8 @@ public class PathRelativizerService {
     return path;
   }
 
-  public void reportUnhandledPaths() {
-    if (!LOG.isDebugEnabled() || myUnhandledPaths.isEmpty()) return;
+  public void reportUnhandledPaths() { //TODO:: Rewrite this part
+    if (!LOG.isDebugEnabled()) return;
     final StringBuilder logBuilder = new StringBuilder();
     myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
     LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());

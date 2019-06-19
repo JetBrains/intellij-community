@@ -122,7 +122,7 @@ public class Mappings {
 
   private void createImplementation() throws IOException {
     if (!myIsDelta) {
-      myContext = new DependencyContext(myRootDir, myRelativizer);
+      myContext = new DependencyContext(myRootDir);
       myDebugS = myContext.getLogger(LOG);
     }
 
@@ -2869,7 +2869,8 @@ public class Mappings {
       @Override
       public void associate(String classFileName, Collection<String> sources, ClassReader cr) {
         synchronized (myLock) {
-          final int classFileNameS = myContext.get(classFileName);
+          String relativePath = myRelativizer.toRelative(classFileName);
+          final int classFileNameS = myContext.get(relativePath);
           final ClassFileRepr result = new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr);
           if (result != null) {
             // since java9 'repr' can represent either a class or a compiled module-info.java
