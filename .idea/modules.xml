@@ -131,9 +131,6 @@
     <module old-name="index-tools" new-name="intellij.tools.index" />
     <module old-name="indexing-api" new-name="intellij.platform.indexing" />
     <module old-name="indexing-impl" new-name="intellij.platform.indexing.impl" />
-    <module old-name="instant-run-annotations" new-name="android.sdktools.instant-run-annotations" />
-    <module old-name="instant-run-client" new-name="android.sdktools.instant-run-client" />
-    <module old-name="instant-run-common" new-name="android.sdktools.instant-run-common" />
     <module old-name="instrumentation-util" new-name="intellij.java.compiler.instrumentationUtil" />
     <module old-name="instrumentation-util-8" new-name="intellij.java.compiler.instrumentationUtil.java8" />
     <module old-name="intellilang-jps-plugin" new-name="intellij.java.langInjection.jps" />
@@ -350,9 +347,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/flags/android.sdktools.flags.iml" filepath="$PROJECT_DIR$/android/tools-base/flags/android.sdktools.flags.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/android.sdktools.instant-run-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/android.sdktools.instant-run-annotations.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-client/android.sdktools.instant-run-client.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-client/android.sdktools.instant-run-client.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" filepath="$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdklib/android.sdktools.sdklib.iml" filepath="$PROJECT_DIR$/android/tools-base/sdklib/android.sdktools.sdklib.iml" />

@@ -283,9 +283,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
 
-      withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
-
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
