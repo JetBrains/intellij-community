@@ -49,6 +49,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -74,12 +75,13 @@ class InstancesView extends InstancesViewBase {
 
   private final Object myFilteringTaskLock = new Object();
 
-  private boolean myIsAndroidVM = false;
+  private boolean myIsAndroidVM;
   private final DebugProcessImpl myDebugProcess;
   private final String myClassName;
 
 
-  private volatile MyFilteringWorker myFilteringTask = null;
+  private volatile FilteringTask myFilteringTask;
+  private volatile Future<?> myFilteringTaskFuture;
 
   InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, String className, Consumer<? super String> warningMessageConsumer) {
     super(new BorderLayout(0, JBUIScale.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
@@ -201,8 +203,11 @@ class InstancesView extends InstancesViewBase {
         synchronized (myFilteringTaskLock) {
           List<JavaReferenceInfo> finalInstances = instances;
           ApplicationManager.getApplication().runReadAction(() -> {
-            myFilteringTask = new MyFilteringWorker(finalInstances, myFilterConditionEditor.getExpression(), evaluationContext);
-            myFilteringTask.execute();
+            myFilteringTask =
+              new FilteringTask(myClassName, myDebugProcess, myFilterConditionEditor.getExpression(), new MyValuesList(finalInstances),
+                                new MyFilteringCallback(evaluationContext));
+
+              myFilteringTaskFuture = ApplicationManager.getApplication().executeOnPooledThread(myFilteringTask);
           });
         }
       }
@@ -215,6 +220,8 @@ class InstancesView extends InstancesViewBase {
         if (myFilteringTask != null) {
           myFilteringTask.cancel();
           myFilteringTask = null;
+          myFilteringTaskFuture.cancel(false);
+          myFilteringTaskFuture = null;
         }
       }
     }
@@ -259,9 +266,9 @@ class InstancesView extends InstancesViewBase {
 
     private long myFilteringStartedTime;
 
-    private int myProceedCount = 0;
-    private int myMatchedCount = 0;
-    private int myErrorsCount = 0;
+    private int myProceedCount;
+    private int myMatchedCount;
+    private int myErrorsCount;
 
     private long myLastTreeUpdatingTime;
     private long myLastProgressUpdatingTime;

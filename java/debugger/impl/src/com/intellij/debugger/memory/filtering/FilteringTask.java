@@ -29,7 +29,7 @@ public class FilteringTask implements Runnable {
   private final ConditionChecker myChecker;
   private final FilteringTaskCallback myCallback;
 
-  private volatile boolean myIsCancelled = false;
+  private volatile boolean myIsCancelled;
 
   public FilteringTask(@NotNull String className, @NotNull DebugProcessImpl debugProcess,
                        @NotNull XExpression expression, @NotNull ValuesList values,

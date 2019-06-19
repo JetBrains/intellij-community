@@ -48,17 +48,12 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("DOWN"), getComponent(), parentDisposable);
 
-    new SwingWorker<Void, Void>() {
-      @Override
-      protected Void doInBackground() {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          final PsiClass psiClass = DebuggerUtils.findClass(className,
-                                                            project, GlobalSearchScope.allScope(project));
-          ApplicationManager.getApplication().invokeLater(() -> setContext(psiClass));
-        });
-        return null;
-      }
-    }.execute();
+    ApplicationManager.getApplication().executeOnPooledThread(()->
+      ApplicationManager.getApplication().runReadAction(() -> {
+        final PsiClass psiClass = DebuggerUtils.findClass(className,
+                                                          project, GlobalSearchScope.allScope(project));
+        ApplicationManager.getApplication().invokeLater(() -> setContext(psiClass));
+    }));
   }
 
   private void showHistory() {
