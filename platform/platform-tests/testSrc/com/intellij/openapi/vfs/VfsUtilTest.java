@@ -31,6 +31,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -48,6 +49,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -358,7 +360,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
 
       while (refreshed.getCount() != 0) {
-        UIUtil.pump();
+        StartupUiUtil.pump();
       }
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
@@ -398,20 +400,12 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test(timeout = 20_000)
   public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      File tempDir = myTempDir.newFolder();
-
-      File dir1 = new File(tempDir, "dir1");
-      assertTrue(dir1.mkdirs());
-
-      File dir2 = new File(tempDir, "dir2");
-      assertTrue(dir2.mkdirs());
-
-      VirtualFile vDir = VfsUtil.findFileByIoFile(tempDir, true);
-      assertThat(vDir.getChildren()).hasSize(2);
+      File dir1 = myTempDir.newFolder("dir1");
+      File dir2 = myTempDir.newFolder("dir2");
+      VirtualFile vDir = VfsUtil.findFileByIoFile(myTempDir.getRoot(), true);
+      assertThat(Stream.of(vDir.getChildren()).map(VirtualFile::getName)).containsExactly(dir1.getName(), dir2.getName());
       VirtualFile vDir1 = vDir.getChildren()[0];
       VirtualFile vDir2 = vDir.getChildren()[1];
-      assertEquals(dir1.getName(), vDir1.getName());
-
       assertThat(vDir1.getChildren()).isEmpty();
       assertThat(vDir2.getChildren()).isEmpty();
 
@@ -419,8 +413,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertTrue(new File(dir2, "a.txt").createNewFile());
 
       List<String> log = new ArrayList<>();
-
       Semaphore semaphore = new Semaphore(1);
+
       RefreshSession nonModalSession = RefreshQueue.getInstance().createSession(true, true, () -> {
         log.add("non-modal finished");
         semaphore.up();
