@@ -83,10 +83,10 @@ while true; do
   fi
   developer_log="developer_log.json"
   log "Fetching $developer_log"
-  url=$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 12-)
+  url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | cut -c 12-)"
   # wget does url quoting by itself
-  # shellcheck disable=SC2086
-  wget $url -O "$developer_log" && cat "$developer_log" || true
+  # shellcheck disable=SC2086,SC2015
+  wget "$url" -O "$developer_log" && cat "$developer_log" || true
   if [ $ec != 0 ]; then
     log "Publishing $developer_log"
     publish-log "$notarization_info" "$developer_log"

@@ -33,31 +33,33 @@ rm "$INPUT_FILE"
 BUILD_NAME="$(ls "$EXPLODED")"
 log "$INPUT_FILE unzipped and removed"
 
+APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
+
 if [ $# -eq 8 ] && [ -f "$8" ]; then
   archiveJDK="$8"
   log "Preparing jdk $archiveJDK..."
   log "Modifying Info.plist"
-  sed -i -e 's/1.6\*/1.6\+/' "$EXPLODED/$BUILD_NAME/Contents/Info.plist"
+  sed -i -e 's/1.6\*/1.6\+/' "$APPLICATION_PATH/Contents/Info.plist"
   jdk="jdk-bundled"
   if [[ $1 == *custom-jdk-bundled* ]]; then
     jdk="custom-$jdk"
   fi
-  rm -f "$EXPLODED/$BUILD_NAME/Contents/Info.plist-e"
+  rm -f "$APPLICATION_PATH/Contents/Info.plist-e"
   log "Info.plist has been modified"
-  log "Copying JDK: $archiveJDK to $EXPLODED/$BUILD_NAME/Contents"
-  tar xvf "$archiveJDK" -C "$EXPLODED/$BUILD_NAME/Contents" --exclude='._jdk'
-  find "$EXPLODED/$BUILD_NAME/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
+  log "Copying JDK: $archiveJDK to $APPLICATION_PATH/Contents"
+  tar xvf "$archiveJDK" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
+  find "$APPLICATION_PATH/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
   log "JDK has been copied"
   rm -f "$archiveJDK"
 fi
 
 if [ "$HELP_DIR_NAME" != "no-help" ]; then
-  HELP_DIR="$EXPLODED/$BUILD_NAME/Contents/Resources/$HELP_DIR_NAME/Contents/Resources/English.lproj/"
+  HELP_DIR="$APPLICATION_PATH/Contents/Resources/$HELP_DIR_NAME/Contents/Resources/English.lproj/"
   log "Building help indices for $HELP_DIR"
   hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
 fi
 
-find "$EXPLODED/$BUILD_NAME/Contents/bin" \
+find "$APPLICATION_PATH/Contents/bin" \
   -maxdepth 1 -type f -name '*.jnilib' -print0 |
   while IFS= read -r -d $'\0' file; do
     if [ -f "$file" ]; then
@@ -67,19 +69,19 @@ find "$EXPLODED/$BUILD_NAME/Contents/bin" \
     fi
   done
 
-find "$EXPLODED/$BUILD_NAME/Contents/" \
+find "$APPLICATION_PATH/Contents/" \
   -maxdepth 1 -type f -name '*.txt' -print0 |
   while IFS= read -r -d $'\0' file; do
     if [ -f "$file" ]; then
       log "Moving $file"
-      mv "$file" "$EXPLODED/$BUILD_NAME/Contents/Resources"
+      mv "$file" "$APPLICATION_PATH/Contents/Resources"
     fi
   done
 
-non_plist=$(find "$EXPLODED/$BUILD_NAME/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist' | wc -l)
+non_plist=$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist' | wc -l)
 if [[ $non_plist -gt 0 ]]; then
   log "Only Info.plist file is allowed in Contents directory but found $non_plist file(s):"
-  log "$(find "$EXPLODED/$BUILD_NAME/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist')"
+  log "$(find "$APPLICATION_PATH/Contents/" -maxdepth 1 -type f -and -not -name 'Info.plist')"
   exit 1
 fi
 
@@ -91,8 +93,8 @@ attempt=1
 limit=3
 set +e
 while [[ $attempt -le $limit ]]; do
-  log "Signing (attempt $attempt) $EXPLODED/$BUILD_NAME ..."
-  ./sign.sh "$EXPLODED/$BUILD_NAME" "$CODESIGN_STRING"
+  log "Signing (attempt $attempt) $APPLICATION_PATH ..."
+  ./sign.sh "$APPLICATION_PATH" "$CODESIGN_STRING"
   ec=$?
   if [[ $ec -ne 0 ]]; then
     ((attempt += 1))
@@ -103,7 +105,7 @@ while [[ $attempt -le $limit ]]; do
     sleep 30
   else
     log "Signing done"
-    codesign -v "$EXPLODED/$BUILD_NAME" -vvvvv
+    codesign -v "$APPLICATION_PATH" -vvvvv
     log "Check sign done"
     ((attempt += limit))
   fi
@@ -116,10 +118,10 @@ if [ "$NOTARIZE" = "yes" ]; then
   # shellcheck disable=SC1090
   source "$HOME/.notarize_token"
   APP_NAME="${INPUT_FILE%.*}"
-  ./notarize.sh "$EXPLODED/$BUILD_NAME" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME"
+  ./notarize.sh "$APPLICATION_PATH" "$APPLE_USERNAME" "$APPLE_PASSWORD" "$APP_NAME"
 
   log "Stapling..."
-  xcrun stapler staple "$EXPLODED/$BUILD_NAME"
+  xcrun stapler staple "$APPLICATION_PATH"
 else
   log "Notarization disabled"
   log "Stapling disabled"
