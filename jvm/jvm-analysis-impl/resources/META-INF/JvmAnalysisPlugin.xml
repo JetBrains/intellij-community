@@ -27,6 +27,10 @@
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.override.only.display.name"
                      implementationClass="com.intellij.codeInspection.OverrideOnlyInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="MissingDeprecatedAnnotationOnScheduledForRemovalApi"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.missing.deprecated.annotation.on.scheduled.for.removal.api.display.name"
+                     implementationClass="com.intellij.codeInspection.MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
