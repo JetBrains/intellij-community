@@ -22,6 +22,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1227,6 +1228,7 @@ public class PsiTreeUtil {
   /**
    * @deprecated use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019)
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     return SyntaxTraverser.psiTraverser().children(element).filter(aClass).iterator();

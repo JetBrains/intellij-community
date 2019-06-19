@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.List;
 /**
  * @deprecated replaced by {@link ULiteralLanguageReference}. Will be removed in IDEA 2019.1
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
 @Deprecated
 public final class LanguageReference extends StringLiteralReference {
 

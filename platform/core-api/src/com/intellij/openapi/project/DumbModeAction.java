@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.project;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @author peter
  * @deprecated to remove in IDEA 16
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2016")
 public enum DumbModeAction {
   NOTHING,
   CANCEL,

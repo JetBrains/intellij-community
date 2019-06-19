@@ -17,11 +17,13 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated Use {@link ContainerUtil#newConcurrentMap()} or {@link java.util.concurrent.ConcurrentHashMap} instead.
  * TODO to remove in IDEA 2018.1
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2018.1")
 @Deprecated
 public final class ConcurrentHashMap<K, V> extends java.util.concurrent.ConcurrentHashMap<K, V> {
   /**
@@ -29,6 +31,7 @@ public final class ConcurrentHashMap<K, V> extends java.util.concurrent.Concurre
    * TODO to remove in IDEA 2018.1
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.1")
   public ConcurrentHashMap() {
     DeprecatedMethodException.report("Use java.util.concurrent.ConcurrentHashMap instead");
   }

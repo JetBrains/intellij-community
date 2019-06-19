@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,6 +223,7 @@ public abstract class BaseOutputReader extends BaseDataReader {
 
   /** @deprecated use {@link #BaseOutputReader(Reader, Options)} (to be removed in IDEA 2018.1) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.1")
   public BaseOutputReader(@NotNull Reader reader, @Nullable SleepingPolicy policy) {
     this(reader, Options.withPolicy(policy));
   }

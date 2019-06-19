@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.VoidDataExternalizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +31,7 @@ public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K,
    *
    * @deprecated use {@link VoidDataExternalizer#INSTANCE}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.1")
   @Deprecated
   public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = VoidDataExternalizer.INSTANCE;
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -99,6 +100,7 @@ public class GraphGenerator<Node> implements Graph<Node> {
   }
 
   /** @deprecated use {@link #generate(InboundSemiGraph)} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static <T> GraphGenerator<T> create(SemiGraph<T> graph) {
     return new GraphGenerator<>(graph);

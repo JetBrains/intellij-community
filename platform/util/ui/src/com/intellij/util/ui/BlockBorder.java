@@ -2,12 +2,14 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.border.Border;
 import java.awt.*;
 
 /** @deprecated ancient HiDPI-unfriendly component, to be removed in IDEA 2018 */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019")
 @SuppressWarnings({"UseDPIAwareInsets", "UseJBColor", "unused"})
 public class BlockBorder implements Border {
   private static final Insets DEFAULT_INSETS = new Insets(1, 1, 3, 3);

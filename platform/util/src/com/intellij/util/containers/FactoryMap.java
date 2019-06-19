@@ -20,6 +20,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,6 +172,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   /**
    * Use {@link #create(Function)} instead. TODO to be removed in IDEA 2018
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   @NotNull
   public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue) {

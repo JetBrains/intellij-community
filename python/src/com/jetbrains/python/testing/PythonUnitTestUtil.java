@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,6 +134,7 @@ public final class PythonUnitTestUtil {
    * @deprecated Use {@link #isTestClass(PyClass, ThreeState, TypeEvalContext)} instead.
    * Will be removed in 2018.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
   @Deprecated
   public static boolean isUnitTestCaseClass(PyClass cls) {
     return isTestClass(cls, ThreeState.YES, null);

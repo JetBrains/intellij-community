@@ -18,6 +18,7 @@ import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -745,6 +746,7 @@ public class VfsUtilCore {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static void processFilesRecursively(@NotNull VirtualFile root,
                                              @NotNull Processor<? super VirtualFile> processor,

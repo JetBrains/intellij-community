@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +109,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   /**
    * to remove in IDEA 16
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
   @Deprecated
   public DumbModeAction getDumbModeAction() {
     return myDumbModeAction;

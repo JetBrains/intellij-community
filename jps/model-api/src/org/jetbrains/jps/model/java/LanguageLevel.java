@@ -2,6 +2,7 @@
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +31,7 @@ public enum LanguageLevel {
   }
 
   /** @deprecated use {@link JpsJavaSdkType#complianceOption} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public String getComplianceOption() {
     return JpsJavaSdkType.complianceOption(toJavaVersion());

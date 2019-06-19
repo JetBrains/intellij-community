@@ -4,6 +4,7 @@ package org.jetbrains.jps.model.java;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -19,6 +20,7 @@ public abstract class JdkVersionDetector {
   }
 
   /** @deprecated use {@link #detectJdkVersionInfo(String)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @Nullable
   public String detectJdkVersion(@NotNull String homePath) {
@@ -27,6 +29,7 @@ public abstract class JdkVersionDetector {
   }
 
   /** @deprecated use {@link #detectJdkVersionInfo(String, ExecutorService)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @Nullable
   public String detectJdkVersion(@NotNull String homePath, @NotNull ExecutorService runner) {
@@ -55,12 +58,14 @@ public abstract class JdkVersionDetector {
     }
 
     /** @deprecated use {@link #version} (to be removed in IDEA 2019) */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2019")
     @Deprecated
     public String getVersion() {
       return formatVersionString(version);
     }
 
     /** @deprecated use {@link #bitness} (to be removed in IDEA 2019) */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2019")
     @Deprecated
     public Bitness getBitness() {
       return bitness;

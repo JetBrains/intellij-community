@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import org.jetbrains.annotations.ApiStatus;
+
 @SuppressWarnings({"unused"})
 public interface CodeInsightColors {
   TextAttributesKey WRONG_REFERENCES_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("WRONG_REFERENCES_ATTRIBUTES");
@@ -41,6 +43,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey LOCAL_VARIABLE_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -49,6 +52,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey PARAMETER_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -57,6 +61,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -65,6 +70,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey REASSIGNED_PARAMETER_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -72,7 +78,8 @@ public interface CodeInsightColors {
    * For Java-related code use {@link com.intellij.ide.highlighter.JavaHighlightingColors#IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES}.
    * The field will be removed in future versions.
    */
-  @Deprecated TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
    * For non-Java code use {@link com.intellij.openapi.editor.DefaultLanguageHighlighterColors#INSTANCE_FIELD} or define your own.
@@ -80,6 +87,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey INSTANCE_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -88,6 +96,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey INSTANCE_FINAL_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -96,6 +105,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey STATIC_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -104,6 +114,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -112,6 +123,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey CLASS_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -120,6 +132,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ANONYMOUS_CLASS_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -128,6 +141,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey TYPE_PARAMETER_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -136,6 +150,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey INTERFACE_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -144,6 +159,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ENUM_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -152,6 +168,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ABSTRACT_CLASS_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -160,6 +177,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey METHOD_CALL_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -168,6 +186,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey METHOD_DECLARATION_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -176,6 +195,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey STATIC_METHOD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -184,6 +204,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ABSTRACT_METHOD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -192,6 +213,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey INHERITED_METHOD_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -200,6 +222,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey CONSTRUCTOR_CALL_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -208,6 +231,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey CONSTRUCTOR_DECLARATION_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -216,6 +240,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ANNOTATION_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -224,6 +249,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16.
@@ -232,6 +258,7 @@ public interface CodeInsightColors {
    * The field will be removed in future versions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   TextAttributesKey ANNOTATION_ATTRIBUTE_VALUE_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
 
   TextAttributesKey MATCHED_BRACE_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("MATCHED_BRACE_ATTRIBUTES");

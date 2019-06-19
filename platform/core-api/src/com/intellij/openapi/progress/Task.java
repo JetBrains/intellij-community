@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,6 +234,7 @@ public abstract class Task implements TaskInfo, Progressive {
      * @deprecated do not implement. to remove in IDEA 16
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2016")
     public DumbModeAction getDumbModeAction() {
       return DumbModeAction.NOTHING;
     }

@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -3396,6 +3397,7 @@ public class StringUtil extends StringUtilRt {
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }

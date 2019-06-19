@@ -19,10 +19,12 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link com.intellij.codeInsight.intention.QuickFixFactory#createDeleteFix} (to be removed in IDEA 2018) */
+@ApiStatus.ScheduledForRemoval(inVersion = "2018")
 @Deprecated
 public class RemoveElementQuickFix implements LocalQuickFix {
   private final String myName;

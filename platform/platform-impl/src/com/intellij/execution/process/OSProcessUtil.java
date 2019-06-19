@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
@@ -157,6 +158,7 @@ public class OSProcessUtil {
   }
 
   /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static List<String> getCommandLinesOfRunningProcesses() {
     List<String> result = new ArrayList<>();

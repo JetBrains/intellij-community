@@ -283,6 +283,7 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static boolean isAppleRetina() {
     return false;

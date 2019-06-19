@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -149,6 +150,7 @@ public class JdkBundle {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated does not belong to the class (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public String getVisualRepresentation() {
     StringBuilder representation = new StringBuilder();
@@ -167,12 +169,14 @@ public class JdkBundle {
   }
 
   /** @deprecated useless (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public String getBundleName() {
     return "java";
   }
 
   /** @deprecated use {@link #getBundleVersion()} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public Version getVersion() {
     JavaVersion v = myVersionInfo.version;
@@ -180,18 +184,21 @@ public class JdkBundle {
   }
 
   /** @deprecated use {@link #getBundleVersion()} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public Integer getUpdateNumber() {
     return myVersionInfo.version.update;
   }
 
   /** @deprecated use {@link #createBundle(File)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
     return createBundle(jvm, boot, bundled, true);
   }
 
   /** @deprecated use {@link #createBundle(File)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, @SuppressWarnings("unused") boolean bundled, boolean matchArch) {
     JdkBundle bundle = createBundle(jvm, boot);
@@ -205,12 +212,14 @@ public class JdkBundle {
   }
 
   /** @deprecated use {@link #createBundled()} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static File getBundledJDKAbsoluteLocation() {
     return new File(PathManager.getHomePath(), SystemInfo.isMac ? "jdk" : "jre");
   }
 
   /** @deprecated use {@link SystemInfo#is64Bit} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated public static final Bitness runtimeBitness = SystemInfo.is64Bit ? Bitness.x64 : Bitness.x32;
 
   //</editor-fold>

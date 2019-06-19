@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,7 @@ public enum LanguageLevel {
   }
 
   /** @deprecated use {@link org.jetbrains.jps.model.java.JpsJavaSdkType#complianceOption(JavaVersion)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public String getCompilerComplianceDefaultOption() {
     return myVersion.feature <= 8 ? "1." + myVersion.feature : String.valueOf(myVersion.feature);

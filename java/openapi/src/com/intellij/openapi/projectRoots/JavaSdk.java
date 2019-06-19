@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,18 +31,21 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
   public abstract boolean isOfVersionOrHigher(@NotNull Sdk sdk, @NotNull JavaSdkVersion version);
 
   /** @deprecated use {@link JdkUtil#checkForJdk} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static boolean checkForJdk(@NotNull File file) {
     return JdkUtil.checkForJdk(file);
   }
 
   /** @deprecated use {@link JdkUtil#checkForJre} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static boolean checkForJre(@NotNull String file) {
     return JdkUtil.checkForJre(file);
   }
 
   /** @deprecated use {@link JavaSdkVersion#fromVersionString} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public abstract JavaSdkVersion getVersion(@NotNull String versionString);
 }

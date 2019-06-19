@@ -16,6 +16,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -523,6 +524,7 @@ public class VfsUtil extends VfsUtilCore {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static String toIdeaUrl(@NotNull String url) {
@@ -530,6 +532,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated to be removed in IDEA 2018 */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
@@ -571,6 +574,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @NotNull
   public static URI toUri(@NotNull VirtualFile file) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,6 +186,7 @@ public class VMOptions {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static int readXmx() {
     return readOption(MemoryKind.HEAP, true);

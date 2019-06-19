@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -208,9 +209,11 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
   //</editor-fold>

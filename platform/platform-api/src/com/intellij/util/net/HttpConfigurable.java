@@ -35,6 +35,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -470,6 +471,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings({"unused"})
   public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
     List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
@@ -564,6 +566,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link com.intellij.execution.configurations.ParametersList#addProperty(String, String)} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings({"unused"})
   @NotNull
   public static List<String> convertArguments(@NotNull final List<? extends KeyValue<String, String>> list) {

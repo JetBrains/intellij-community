@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public interface FoldingModel {
    * @deprecated Does nothing
    * TODO to remove in IDEA 2018
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   default boolean addFoldRegion(@NotNull FoldRegion region) {
     return true;

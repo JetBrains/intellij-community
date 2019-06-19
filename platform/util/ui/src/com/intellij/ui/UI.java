@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -9,6 +10,7 @@ import java.awt.*;
  * @author max
  * @deprecated will be removed in 2018.2
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
 @Deprecated
 public class UI {
    private UI() {

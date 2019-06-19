@@ -4,6 +4,7 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @SuppressWarnings("ALL")
   public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
     submitAsync(events, info, parent, consumer);
@@ -72,6 +74,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @SuppressWarnings("ALL")
   public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
     consumer.consume(submit(events, parent));
@@ -79,6 +82,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @SuppressWarnings("ALL")
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
     throw new UnsupportedOperationException("Deprecated API called");

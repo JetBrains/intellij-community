@@ -27,10 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -382,6 +379,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   /**
    * @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018)
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<? extends PsiFile> psiFiles) {
     return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);

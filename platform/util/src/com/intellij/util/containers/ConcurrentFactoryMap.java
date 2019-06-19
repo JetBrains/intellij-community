@@ -4,6 +4,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * TODO to remove in IDEA 2018
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public ConcurrentFactoryMap() {
     DeprecatedMethodException.report("Use ConcurrentFactoryMap.create() instead");
   }
@@ -233,6 +235,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * needed for compatibility in case of moronic subclassing
    * TODO to remove in IDEA 2018
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public V getOrDefault(Object key, V defaultValue) {
       V v;

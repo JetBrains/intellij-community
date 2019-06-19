@@ -28,6 +28,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -550,6 +551,7 @@ public class JdkUtil {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static GeneralCommandLine setupJVMCommandLine(final String exePath,
                                                        final SimpleJavaParameters javaParameters,

@@ -17,6 +17,7 @@ package com.intellij.patterns;
 
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.Object;
@@ -52,6 +53,7 @@ public final class ElementPatternCondition<T> {
    * @deprecated To remove in IDEA 15. Use {@link ElementPattern#accepts(Object, ProcessingContext)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   public boolean accepts(@Nullable Object o, final ProcessingContext context) {
     if (!myInitialCondition.accepts(o, context)) return false;
     final int listSize = myConditions.size();

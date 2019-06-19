@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Platform;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,6 +148,7 @@ public class RunnerMediator {
     private final boolean mySoftKill;
 
     /** @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine) (to remove in IDEA 16) */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2016")
     @Deprecated
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
       super(process, commandLine.getCommandLineString());

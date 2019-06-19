@@ -17,6 +17,7 @@ import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SaveTo;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +80,7 @@ public class SpellcheckingStrategy {
   /**
    * @deprecated will be removed in 2018.X, use @link {@link SpellcheckingStrategy#getDefaultRegularFixes(boolean, String, PsiElement)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
   @Deprecated
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
     return getDefaultRegularFixes(useRename, wordWithTypo, null);
