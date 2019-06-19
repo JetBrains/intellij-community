@@ -39,20 +39,23 @@ public class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexEntry, 
   }
 
   public static boolean needsTodoIndex(@NotNull VirtualFile file) {
-    return needsTodoIndex(null, file);
-  }
-
-  public static boolean needsTodoIndex(@Nullable Project project, @NotNull VirtualFile file) {
     for (ExtraPlaceChecker checker : EXTRA_TODO_PLACES.getExtensionList()) {
-      if (checker.accept(project, file)) return true;
+      if (checker.accept(null, file)) return true;
     }
     if (!file.isInLocalFileSystem()) {
       return false;
     }
-    if (project == null && !isInContentOfAnyProject(file)) {
+    if (!isInContentOfAnyProject(file)) {
       return false;
     }
-    else if (project != null && !ProjectFileIndex.getInstance(project).isInContent(file)) {
+    return true;
+  }
+
+  public static boolean belongsToProject(@NotNull Project project, @NotNull VirtualFile file) {
+    for (ExtraPlaceChecker checker : EXTRA_TODO_PLACES.getExtensionList()) {
+      if (checker.accept(project, file)) return true;
+    }
+    if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
       return false;
     }
     return true;
