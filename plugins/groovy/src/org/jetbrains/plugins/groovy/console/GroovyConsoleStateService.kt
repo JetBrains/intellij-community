@@ -17,7 +17,7 @@ class GroovyConsoleStateService(
   private val fileManager: VirtualFileManager
 ) : PersistentStateComponent<MyState> {
 
-  private val myFileModuleMap: MutableMap<VirtualFile, ModulePointer> = Collections.synchronizedMap(HashMap())
+  private val myFileModuleMap: MutableMap<VirtualFile, ModulePointer?> = Collections.synchronizedMap(HashMap())
 
   class Entry {
     var url: String? = null
@@ -34,7 +34,7 @@ class GroovyConsoleStateService(
       for ((file, pointer) in myFileModuleMap) {
         val e = Entry()
         e.url = file.url
-        e.moduleName = pointer.moduleName
+        e.moduleName = pointer?.moduleName
         result.list.add(e)
       }
       return result
@@ -47,8 +47,8 @@ class GroovyConsoleStateService(
       for (entry in state.list) {
         val url = entry.url ?: continue
         val file = fileManager.findFileByUrl(url) ?: continue
-        val pointer = entry.moduleName ?: continue
-        myFileModuleMap[file] = modulePointerManager.create(pointer)
+        val pointer = entry.moduleName?.let(modulePointerManager::create)
+        myFileModuleMap[file] = pointer
       }
     }
   }
@@ -59,8 +59,8 @@ class GroovyConsoleStateService(
 
   fun getSelectedModule(file: VirtualFile): Module? = myFileModuleMap[file]?.module
 
-  fun setFileModule(file: VirtualFile, module: Module) {
-    myFileModuleMap[file] = modulePointerManager.create(module)
+  fun setFileModule(file: VirtualFile, module: Module?) {
+    myFileModuleMap[file] = module?.let(modulePointerManager::create)
   }
 
   companion object {

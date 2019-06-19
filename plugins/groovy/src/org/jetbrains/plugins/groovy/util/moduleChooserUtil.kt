@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ModuleChooserUtil")
 
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.roots.ModuleRootManager
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.Consumer
 import com.intellij.util.Function
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 
 private const val GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen"
 
@@ -73,9 +75,9 @@ fun hasGroovyCompatibleModules(modules: Collection<Module>, condition: (Module) 
 }
 
 private inline fun isGroovyCompatibleModule(crossinline condition: (Module) -> Boolean): (Module) -> Boolean {
-  val sdkTypeCheck = { it: Module ->
-    val sdk = ModuleRootManager.getInstance(it).sdk
-    sdk != null && sdk.sdkType is JavaSdkType
-  }
-  return sdkTypeCheck and condition
+  return ::hasJavaSdk and condition
 }
+
+fun hasJavaSdk(module: Module): Boolean = ModuleRootManager.getInstance(module).sdk?.sdkType is JavaSdkType
+
+fun hasAcceptableModuleType(module: Module): Boolean = GroovyFacetUtil.isAcceptableModuleType(ModuleType.get(module))
