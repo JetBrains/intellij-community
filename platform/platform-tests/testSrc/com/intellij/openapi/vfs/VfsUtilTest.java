@@ -376,11 +376,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   @Test
   public void asyncRefreshInModalTransactionCompletesWithinIt() {
     EdtTestUtil.runInEdtAndWait(() -> {
-      File temp = myTempDir.newFolder();
-      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+      VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
       assertThat(vTemp.getChildren()).isEmpty();
 
-      assertTrue(new File(temp, "x.txt").createNewFile());
+      myTempDir.newFile("x.txt");
 
       TransactionGuard.getInstance().submitTransactionAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
