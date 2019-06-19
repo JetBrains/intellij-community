@@ -131,10 +131,11 @@ public class GroovyConsole {
 
     final GroovyConsoleStateService consoleStateService = GroovyConsoleStateService.getInstance(project);
     consoleStateService.setFileModule(contentFile, module);
-    final String title = consoleStateService.getSelectedModuleTitle(contentFile);
 
     final ConsoleViewImpl consoleView = new GroovyConsoleView(project);
-    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
+    final RunContentDescriptor descriptor = new RunContentDescriptor(
+      consoleView, processHandler, new JPanel(new BorderLayout()), contentFile.getNameWithoutExtension()
+    );
     final GroovyConsole console = new GroovyConsole(project, descriptor, consoleView, processHandler);
 
     // must call getComponent before createConsoleActions()
@@ -202,7 +203,8 @@ public class GroovyConsole {
 
   private static JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true, true, false);
+    DefaultGroovyScriptRunner
+      .configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true, true, false);
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.groovy"));
     res.setWorkingDirectory(getWorkingDirectory(module));
     res.setUseDynamicClasspath(true);
