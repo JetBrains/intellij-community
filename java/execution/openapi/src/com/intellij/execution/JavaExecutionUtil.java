@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
@@ -161,12 +147,13 @@ public class JavaExecutionUtil {
                                                @Nullable String agentPathPropertyKey,
                                                @Nullable FileFilter fileFilter) {
     String agentName = new File(agentPath).getName();
-    String containingDir = handleSpacesInContainingDir(agentPath, copyDirName, agentPathPropertyKey, fileFilter);
+    String containingDir = handleSpacesInContainingDir(agentPath, agentName, copyDirName, agentPathPropertyKey, fileFilter);
     return containingDir == null ? null : FileUtil.join(containingDir, agentName);
   }
 
   @Nullable
   private static String handleSpacesInContainingDir(@NotNull String agentPath,
+                                                    @NotNull String agentName,
                                                     @NotNull String copyDirName,
                                                     @Nullable String agentPathPropertyKey,
                                                     @Nullable FileFilter fileFilter) {
@@ -178,10 +165,10 @@ public class JavaExecutionUtil {
       agentContainingDir = new File(agentPath).getParent();
     }
     if (agentContainingDir.contains(" ")) {
-      String res = tryCopy(agentContainingDir, new File(PathManager.getSystemPath(), copyDirName), fileFilter);
+      String res = tryCopy(agentContainingDir, agentName, new File(PathManager.getSystemPath(), copyDirName), fileFilter);
       if (res == null) {
         try {
-          res = tryCopy(agentContainingDir, FileUtil.createTempDirectory(copyDirName, "jars"), fileFilter);
+          res = tryCopy(agentContainingDir, agentName, FileUtil.createTempDirectory(copyDirName, "jars"), fileFilter);
           if (res == null) {
             String message = "agent not used since the agent path contains spaces: " + agentContainingDir;
             if (agentPathPropertyKey != null) {
@@ -202,15 +189,18 @@ public class JavaExecutionUtil {
 
   @Nullable
   private static String tryCopy(@NotNull String agentDir,
+                                @NotNull String agentName,
                                 @NotNull File targetDir,
                                 @Nullable FileFilter fileFilter) {
     if (targetDir.getAbsolutePath().contains(" ")) return null;
     try {
-      LOG.info("Agent jars were copied to " + targetDir.getPath());
       if (fileFilter == null) {
-        fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
+        FileUtil.copy(new File(agentDir, agentName), new File(targetDir, agentName));
       }
-      FileUtil.copyDir(new File(agentDir), targetDir, fileFilter);
+      else {
+        FileUtil.copyDir(new File(agentDir), targetDir, fileFilter);
+      }
+      LOG.info("Agent jars were copied to " + targetDir.getPath());
       return targetDir.getPath();
     }
     catch (IOException e) {
