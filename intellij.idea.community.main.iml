@@ -3,9 +3,6 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/android/android-kotlin/android-extensions-idea/.gradle" />
-      <excludeFolder url="file://$MODULE_DIR$/android/android-kotlin/idea-android/.gradle" />
-      <excludeFolder url="file://$MODULE_DIR$/android/android-kotlin/idea-android/testData/configuration/android-gsk/.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/config" />
       <excludeFolder url="file://$MODULE_DIR$/system" />
     </content>
