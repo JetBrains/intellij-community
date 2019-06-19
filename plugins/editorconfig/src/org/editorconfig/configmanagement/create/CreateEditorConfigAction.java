@@ -41,33 +41,36 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    CreateEditorConfigDialog dialog = new CreateEditorConfigDialog();
-    if (dialog.showAndGet()) {
-      final IdeView view = getIdeView(e);
-      Project project = e.getProject();
-      if (view != null && project != null) {
-        CodeStyleSettings settings = CodeStyle.getSettings(project);
-        PsiDirectory dir = view.getOrChooseDirectory();
-        if (dir != null) {
-          final VirtualFile dirVFile = dir.getVirtualFile();
-          File outputFile = getOutputFile(dirVFile);
-          if (!outputFile.exists()) {
-            VirtualFile target = ApplicationManager.getApplication().runWriteAction(
-              (Computable<VirtualFile>)() -> export(dirVFile, outputFile, project, settings,
-                                                    dialog.isRoot(),
-                                                    dialog.isCommentProperties(),
-                                                    dialog.getLanguages(),
-                                                    dialog.getPropertyKinds()));
-            if (target != null) {
-              OpenFileAction.openFile(target, project);
-              PsiFile psiFile = getPsiFile(project, target);
-              if (psiFile != null) {
-                view.selectElement(psiFile);
+    Project project = e.getProject();
+    if (project != null) {
+      CreateEditorConfigDialog dialog = new CreateEditorConfigDialog(project);
+      if (dialog.showAndGet()) {
+        final IdeView view = getIdeView(e);
+        if (view != null) {
+          CodeStyleSettings settings = CodeStyle.getSettings(project);
+          PsiDirectory dir = view.getOrChooseDirectory();
+          if (dir != null) {
+            final VirtualFile dirVFile = dir.getVirtualFile();
+            File outputFile = getOutputFile(dirVFile);
+            if (!outputFile.exists()) {
+              VirtualFile target = ApplicationManager.getApplication().runWriteAction(
+                (Computable<VirtualFile>)() -> export(dirVFile, outputFile, project, settings,
+                                                      dialog.isRoot(),
+                                                      dialog.isCommentProperties(),
+                                                      dialog.getLanguages(),
+                                                      dialog.getPropertyKinds()));
+              if (target != null) {
+                OpenFileAction.openFile(target, project);
+                PsiFile psiFile = getPsiFile(project, target);
+                if (psiFile != null) {
+                  view.selectElement(psiFile);
+                }
               }
             }
-          }
-          else {
-            Messages.showErrorDialog(project, "Another EditorConfig file already exists in " + dirVFile.getPath(), "New EditorConfig File");
+            else {
+              Messages
+                .showErrorDialog(project, "Another EditorConfig file already exists in " + dirVFile.getPath(), "New EditorConfig File");
+            }
           }
         }
       }

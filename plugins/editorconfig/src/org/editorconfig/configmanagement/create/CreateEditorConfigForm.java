@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.create;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.HyperlinkLabel;
@@ -12,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.SwingHelper;
 import org.editorconfig.language.messages.EditorConfigBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,10 +41,12 @@ public class CreateEditorConfigForm {
   private ContextHelpLabel myContextHelpLabel;
 
   private final List<LanguageCheckBoxRec> myLanguageCheckBoxes;
+  private final Project                   myProject;
 
   private final static int MAX_LANGUAGES_ROWS = 10;
 
-  public CreateEditorConfigForm() {
+  public CreateEditorConfigForm(@NotNull Project project) {
+    myProject = project;
     myPropertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(EditorConfigBundle.message("export.properties.title")));
     myLanguagesPanel.setLayout(new BoxLayout(myLanguagesPanel, BoxLayout.X_AXIS));
     myLanguageCheckBoxes = creteLanguageCheckBoxes(myLanguagesPanel);
@@ -95,8 +102,21 @@ public class CreateEditorConfigForm {
   private void setLanguagePanelEnabled(boolean enabled) {
     myLanguagesPanel.setEnabled(enabled);
     for (LanguageCheckBoxRec checkBoxRec : myLanguageCheckBoxes) {
-      checkBoxRec.myCheckBox.setEnabled(enabled);
+      checkBoxRec.myCheckBox.setEnabled(enabled && isLanguageCheckBoxEnabled(checkBoxRec));
     }
+  }
+
+  private boolean isLanguageCheckBoxEnabled(LanguageCheckBoxRec checkBoxRec) {
+    if (!myIntelliJPropertiesCb.isSelected()) {
+      CodeStyleSettings settings = CodeStyle.getSettings(myProject);
+      CommonCodeStyleSettings.IndentOptions langOptions = settings.getLanguageIndentOptions(checkBoxRec.myLanguage);
+      final CommonCodeStyleSettings.IndentOptions commonIndentOptions = settings.OTHER_INDENT_OPTIONS;
+      return langOptions.INDENT_SIZE != commonIndentOptions.INDENT_SIZE ||
+             langOptions.TAB_SIZE != commonIndentOptions.TAB_SIZE ||
+             langOptions.USE_TAB_CHARACTER != commonIndentOptions.USE_TAB_CHARACTER ||
+             settings.getRightMargin(checkBoxRec.myLanguage) != settings.getRightMargin(checkBoxRec.myLanguage);
+    }
+    return true;
   }
 
   private static JPanel createLanguageColumnPanel() {
