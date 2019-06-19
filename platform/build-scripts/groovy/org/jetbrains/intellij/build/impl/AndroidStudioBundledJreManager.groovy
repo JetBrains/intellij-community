@@ -19,10 +19,12 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 
 class AndroidStudioBundledJreManager extends BundledJreManager {
+  BuildContext buildContext
   String baseDirectoryForJdk
 
   AndroidStudioBundledJreManager(BuildContext buildContext, String communityHome) {
     super(buildContext, "$communityHome/../../prebuilts/studio/jdk")
+    this.buildContext = buildContext
     this.baseDirectoryForJdk = "$communityHome/../../prebuilts/studio/jdk"
   }
 
@@ -54,5 +56,10 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   @Override
   String findMacJreArchive() {
     return "$baseDirectoryForJdk/mac"
+  }
+
+  @Override
+  String jreSuffix() {
+    isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
   }
 }
