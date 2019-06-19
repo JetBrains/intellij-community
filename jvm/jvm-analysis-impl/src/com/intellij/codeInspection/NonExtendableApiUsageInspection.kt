@@ -69,8 +69,8 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
 
     override fun processMethodOverriding(method: UMethod, overriddenMethod: PsiMethod) {
       val elementToHighlight = method.uastAnchor.sourcePsiElement ?: return
-      val methodName = HighlightMessageUtil.getSymbolName(overriddenMethod) ?: return
       if (overriddenMethod.hasAnnotation(ANNOTATION_NAME) && isLibraryElement(overriddenMethod)) {
+        val methodName = HighlightMessageUtil.getSymbolName(overriddenMethod) ?: return
         val description = JvmAnalysisBundle.message("jvm.inspections.api.no.extension.method.overriding.description", methodName)
         problemsHolder.registerProblem(elementToHighlight, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
