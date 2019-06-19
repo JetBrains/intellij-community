@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 /**
- * Factory for [InlayHintProvider], can be used to support multiple languages with a single type of inlay hints.
+ * Factory for [InlayHintsProvider], can be used to support multiple languages with a single type of inlay hints.
  */
 interface InlayHintsProviderFactory {
   fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>>
@@ -19,6 +19,6 @@ interface InlayHintsProviderFactory {
 
 class ProviderInfo<T : Any>(
   val language: Language,
-  val provider: InlayHintProvider<T>
+  val provider: InlayHintsProvider<T>
 )
 

@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-object InlayHintsProviderExtension : LanguageExtension<InlayHintProvider<*>>("com.intellij.codeInsight.inlayProvider")
+object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>("com.intellij.codeInsight.inlayProvider")
 
 /**
  * Provider of inlay hints for single language. If you need to create hints for multiple languages, please use InlayHintsProviderFactory.
@@ -20,7 +20,7 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintProvider<*>>("co
  * @see com.intellij.openapi.editor.InlayModel.addInlineElement
  * @see com.intellij.openapi.editor.InlayModel.addBlockElement
  */
-interface InlayHintProvider<T : Any> {
+interface InlayHintsProvider<T : Any> {
   /**
    * If this method is called, provider is enabled for this file
    * Warning! Your collector should not use any settings besides [settings]
