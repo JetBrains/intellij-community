@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
@@ -48,6 +50,7 @@ public class VcsGeneralConfigurationPanel {
   private JCheckBox myReloadContext;
   private JLabel myOnPatchCreationLabel;
   private JPanel myEmptyChangeListPanel;
+  private JCheckBox myAddExternalFiles;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -61,6 +64,13 @@ public class VcsGeneralConfigurationPanel {
       myPerformActionOnAddingFile,
       myDoNothingOnAddingFile
     };
+
+    myPerformActionOnAddingFile.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        myAddExternalFiles.setEnabled(myPerformActionOnAddingFile.isSelected());
+      }
+    });
 
     myOnFileRemovingGroup = new JRadioButton[]{
       myShowDialogOnRemovingFile,
@@ -91,6 +101,7 @@ public class VcsGeneralConfigurationPanel {
 
     settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
     settings.RELOAD_CONTEXT = myReloadContext.isSelected();
+    settings.ADD_EXTERNAL_FILES_SILENTLY = myAddExternalFiles.isSelected();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -176,6 +187,7 @@ public class VcsGeneralConfigurationPanel {
       return true;
     }
     if (settings.RELOAD_CONTEXT != myReloadContext.isSelected()) return true;
+    if (settings.ADD_EXTERNAL_FILES_SILENTLY != myAddExternalFiles.isSelected()) return true;
 
     if (getReadOnlyStatusHandler().getState().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
@@ -195,6 +207,8 @@ public class VcsGeneralConfigurationPanel {
   public void reset() {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
     myReloadContext.setSelected(settings.RELOAD_CONTEXT);
+    myAddExternalFiles.setSelected(settings.ADD_EXTERNAL_FILES_SILENTLY);
+    myAddExternalFiles.setEnabled(myPerformActionOnAddingFile.isSelected());
     VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
                                                              ? 0
