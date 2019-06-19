@@ -69,7 +69,12 @@ public class IR {
      * {@link GeneralCommandLine#getPreparedCommandLine()}
      */
     public List<String> prepareCommandLine(@NotNull RemoteEnvironment target) {
-      return CommandLineUtil.toCommandLine(myExePath.toString(), getParameters(target), target.getPlatform());
+      String command = myExePath.toString(target);
+      if (command == null) {
+        // todo: handle this properly
+        throw new RuntimeException("Cannot find command");
+      }
+      return CommandLineUtil.toCommandLine(command, getParameters(target), target.getPlatform());
     }
 
     public void setExePath(@NotNull RemoteValue exePath) {
