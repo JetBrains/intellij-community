@@ -104,7 +104,10 @@ public class IR {
 
     @NotNull
     public Map<String, String> getEnvironmentVariables(@NotNull RemoteEnvironment target) {
-      return ContainerUtil.map2MapNotNull(myEnvironment.entrySet(), e -> Pair.create(e.getKey(), e.getValue().toString(target)));
+      return ContainerUtil.map2MapNotNull(myEnvironment.entrySet(), e -> {
+        String value = e.getValue().toString(target);
+        return value != null ? Pair.create(e.getKey(), value) : null;
+      });
     }
   }
 
