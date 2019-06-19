@@ -43,7 +43,7 @@ public class ShowCoveringTestsAction extends AnAction {
   private final LineData myLineData;
 
   public ShowCoveringTestsAction(final String classFQName, LineData lineData) {
-    super("Show tests covering line", "Show tests covering line", PlatformIcons.TEST_SOURCE_FOLDER);
+    super("Show Tests Covering Line", "Show tests covering line", PlatformIcons.TEST_SOURCE_FOLDER);
     myClassFQName = classFQName;
     myLineData = lineData;
   }
@@ -108,7 +108,8 @@ public class ShowCoveringTestsAction extends AnAction {
       final Project project = e.getProject();
       if (project != null) {
         CoverageSuitesBundle currentSuitesBundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-        presentation.setEnabled(currentSuitesBundle.isCoverageByTestEnabled() &&
+        presentation.setEnabled(currentSuitesBundle != null &&
+                                currentSuitesBundle.isCoverageByTestEnabled() &&
                                 currentSuitesBundle.getCoverageEngine().wasTestDataCollected(project));
       }
     }
