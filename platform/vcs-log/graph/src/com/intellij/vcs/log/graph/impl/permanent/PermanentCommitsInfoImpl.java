@@ -171,4 +171,15 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
     }
     return result;
   }
+
+  public boolean containsAll(@NotNull Collection<? extends CommitId> commitIds) {
+    Set<? extends CommitId> commitsToFind = new HashSet<>(commitIds);
+    for (CommitId commitId : myCommitIdIndexes) {
+      commitsToFind.remove(commitId);
+      if (commitsToFind.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
