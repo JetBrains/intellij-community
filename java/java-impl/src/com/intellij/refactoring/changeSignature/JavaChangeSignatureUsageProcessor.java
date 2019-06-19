@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -73,7 +72,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   private static boolean isJavaUsage(UsageInfo info) {
     final PsiElement element = info.getElement();
     if (element == null) return false;
-    return element.getLanguage() == StdLanguages.JAVA;
+    return element.getLanguage() == JavaLanguage.INSTANCE;
   }
 
   @Override
@@ -632,7 +631,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
   @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
-    if (!StdLanguages.JAVA.equals(changeInfo.getLanguage()) || !(changeInfo instanceof JavaChangeInfo)) return false;
+    if (!JavaLanguage.INSTANCE.equals(changeInfo.getLanguage()) || !(changeInfo instanceof JavaChangeInfo)) return false;
     final PsiElement element = changeInfo.getMethod();
     LOG.assertTrue(element instanceof PsiMethod);
     if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
@@ -1253,7 +1252,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       String newMethodName = myChangeInfo.getNewName();
       try {
         final PsiMethod method = myChangeInfo.getMethod();
-        if (!StdLanguages.JAVA.equals(method.getLanguage())) return null;
+        if (!JavaLanguage.INSTANCE.equals(method.getLanguage())) return null;
         PsiManager manager = method.getManager();
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
