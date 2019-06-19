@@ -49,7 +49,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
       PsiManager psiManager = PsiManager.getInstance(myProject);
       ApplicationManager.getApplication().runReadAction(() -> {
         for (VirtualFile file : files) {
-          if (TodoIndexers.needsTodoIndex(myProject, file)) {
+          if (TodoIndexers.belongsToProject(myProject, file)) {
             final PsiFile psiFile = psiManager.findFile(file);
             if (psiFile != null) {
               allFiles.add(psiFile);
@@ -63,7 +63,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
   @Override
   public int getTodoCount(@NotNull final VirtualFile file, @NotNull final IndexPatternProvider patternProvider) {
-    if (myProject.isDefault() || !TodoIndexers.needsTodoIndex(myProject, file)) {
+    if (myProject.isDefault() || !TodoIndexers.belongsToProject(myProject, file)) {
       return 0;
     }
     if (file instanceof VirtualFileWindow) return -1;
@@ -73,7 +73,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
   @Override
   public int getTodoCount(@NotNull final VirtualFile file, @NotNull final IndexPattern pattern) {
-    if (myProject.isDefault() || !TodoIndexers.needsTodoIndex(myProject, file)) {
+    if (myProject.isDefault() || !TodoIndexers.belongsToProject(myProject, file)) {
       return 0;
     }
     if (file instanceof VirtualFileWindow) return -1;
