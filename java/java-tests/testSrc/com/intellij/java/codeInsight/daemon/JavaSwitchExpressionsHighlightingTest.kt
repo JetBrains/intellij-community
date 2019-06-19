@@ -4,9 +4,9 @@ package com.intellij.java.codeInsight.daemon
 import com.intellij.JavaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class LightJava12HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
+class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_12
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting12"
+  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/switchExpressions"
 
   fun testEnhancedSwitchStatements() = doTest()
   fun testSwitchExpressions() = doTest()
@@ -19,7 +19,7 @@ class LightJava12HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   fun testSwitchExpressionHasResult() = doTest()
 
   private fun doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.configureByFile("${getTestName(false)}.java")
     myFixture.checkHighlighting()
   }
 }
