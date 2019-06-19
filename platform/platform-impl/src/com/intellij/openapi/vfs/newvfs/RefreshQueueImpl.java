@@ -40,7 +40,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", PooledThreadExecutor.INSTANCE, 1, this);
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
-  private int myBusyThreads = 0;
+  private int myBusyThreads;
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
   private final AtomicLong myWriteActionCounter = new AtomicLong();
@@ -145,7 +145,8 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, () -> {
       if (stamp == myWriteActionCounter.get()) {
         session.fireEvents(events, appliers);
-      } else {
+      }
+      else {
         scheduleAsynchronousPreprocessing(session, transaction);
       }
     });

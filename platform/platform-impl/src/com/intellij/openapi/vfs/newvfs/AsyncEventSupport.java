@@ -59,7 +59,7 @@ public class AsyncEventSupport {
     if (events.isEmpty()) return Collections.emptyList();
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Processing " + events.toString());
+      LOG.debug("Processing " + events);
     }
 
     List<AsyncFileListener.ChangeApplier> appliers = new ArrayList<>();
@@ -94,7 +94,7 @@ public class AsyncEventSupport {
     return appliers;
   }
 
-  private static void beforeVfsChange(List<AsyncFileListener.ChangeApplier> appliers) {
+  private static void beforeVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       try {
         applier.beforeVfsChange();
@@ -105,7 +105,7 @@ public class AsyncEventSupport {
     }
   }
 
-  private static void afterVfsChange(List<AsyncFileListener.ChangeApplier> appliers) {
+  private static void afterVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       try {
         applier.afterVfsChange();
@@ -116,7 +116,7 @@ public class AsyncEventSupport {
     }
   }
 
-  static void processEvents(List<? extends VFileEvent> events, @Nullable List<AsyncFileListener.ChangeApplier> appliers) {
+  static void processEvents(List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (appliers != null) {
       beforeVfsChange(appliers);
