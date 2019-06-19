@@ -300,8 +300,6 @@
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory"/>
     <highlightingPassFactory implementation="org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory"/>
 
-    <registryKey key="groovy.console.project.view.names" defaultValue="false"
-                 description="Substitute console file name with selected module/version for this console file"/>
     <registryKey key="groovy.document.based.formatting" defaultValue="false"
                  description="Enables Document based formatting instead of PSI based"/>
     <registryKey key="groovy.return.type.optimization" defaultValue="true"
