@@ -982,6 +982,9 @@
   <action id="Refresh">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
+  <action id="ForceRefresh">
+    <keyboard-shortcut first-keystroke="control shift F5"/>
+  </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>

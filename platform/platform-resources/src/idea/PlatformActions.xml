@@ -420,7 +420,10 @@
 
     <action id="SelectNextOccurrence" class="com.intellij.openapi.editor.actions.SelectNextOccurrenceAction"/>
 
-    <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
+    <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"
+            text="Refresh" icon="AllIcons.Actions.Refresh"/>
+    <action id="ForceRefresh" class="com.intellij.openapi.actionSystem.EmptyAction"
+            text="Force Refresh" icon="AllIcons.Actions.ForceRefresh"/>
 
     <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
       <action id="Diff.ShowDiff" class="com.intellij.diff.actions.ShowDiffAction"
