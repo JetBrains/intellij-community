@@ -46,15 +46,13 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (element instanceof EditorConfigHeader) {
-      if (EditorConfigPreviewManager.getInstance(element.getProject()).getAssociatedPreviewFile(element.getContainingFile().getVirtualFile()) == null) {
-        ActionGroup actionGroup = createActions((EditorConfigHeader)element);
-        PsiElement child = element.getFirstChild();
-        if (child != null && child.getNode().getElementType() == EditorConfigElementTypes.L_BRACKET) {
-          return new SectionLineMarkerInfo(actionGroup,
-                                           child,
-                                           element.getTextRange(),
-                                           null);
-        }
+      ActionGroup actionGroup = createActions((EditorConfigHeader)element);
+      PsiElement child = element.getFirstChild();
+      if (child != null && child.getNode().getElementType() == EditorConfigElementTypes.L_BRACKET) {
+        return new SectionLineMarkerInfo(actionGroup,
+                                         child,
+                                         element.getTextRange(),
+                                         null);
       }
     }
     return null;
