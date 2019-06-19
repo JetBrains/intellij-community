@@ -31,6 +31,7 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -359,7 +360,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
 
       while (refreshed.getCount() != 0) {
-        UIUtil.pump();
+        StartupUiUtil.pump();
       }
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
@@ -420,8 +421,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertTrue(new File(dir2, "a.txt").createNewFile());
 
       List<String> log = new ArrayList<>();
-
       Semaphore semaphore = new Semaphore(1);
+
       RefreshSession nonModalSession = RefreshQueue.getInstance().createSession(true, true, () -> {
         log.add("non-modal finished");
         semaphore.up();
@@ -430,7 +431,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       nonModalSession.launch();
 
       if (waitForDiskRefreshCompletionBeforeStartingModality) {
-        TimeoutUtil.sleep(100); // hopefully that's enough for refresh thread to ee the disk changes
+        TimeoutUtil.sleep(100);  // hopefully that's enough for refresh thread to see the disk changes
         UIUtil.dispatchAllInvocationEvents();
       }
 
