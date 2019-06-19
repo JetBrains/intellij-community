@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.ir;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Pair;
@@ -8,8 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ public class IR {
     // todo: string or remoteValue or pathId?
     String findRemotePath(String path);
 
-    Process createProcess(NewCommandLine commandLine);
+    Process createProcess(NewCommandLine commandLine) throws ExecutionException;
   }
 
   public interface RemoteEnvironmentRequest {
@@ -133,38 +132,35 @@ public class IR {
 
     @Override
     public RemoteEnvironment prepareRemoteEnvironment(RemoteEnvironmentRequest request) {
-      return new RemoteEnvironment() {
-        @Override
-        public Platform getPlatform() {
-          return getRemotePlatform();
-        }
+      return new LocalRemoteEnvironment();
+    }
+  }
 
-        @Override
-        public String findRemotePath(String path) {
-          return path;
-        }
+  public static class LocalRemoteEnvironment implements RemoteEnvironment {
+    @Override
+    public Platform getPlatform() {
+      return Platform.current();
+    }
 
-        @Override
-        public Process createProcess(NewCommandLine commandLine) {
-          ProcessBuilder builder = new ProcessBuilder(commandLine.prepareCommandLine(this));
-          //setupEnvironment(builder.environment());
-          builder.environment().putAll(commandLine.getEnvironmentVariables(this));
-          String workingDirectory = commandLine.getWorkingDirectory(this);
-          if (workingDirectory != null) {
-            builder.directory(new File(workingDirectory));
-          }
-          //builder.redirectErrorStream(myRedirectErrorStream);
-          //if (myInputFile != null) {
-          //  builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
-          //}
-          try {
-            return builder.start();
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      };
+    @Override
+    public String findRemotePath(String path) {
+      return path;
+    }
+
+    @Override
+    public Process createProcess(NewCommandLine commandLine) throws ExecutionException {
+      return createGeneralCommandLine(commandLine).createProcess();
+    }
+
+    @NotNull
+    protected GeneralCommandLine createGeneralCommandLine(NewCommandLine commandLine) {
+      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.prepareCommandLine(this));
+      String workingDirectory = commandLine.getWorkingDirectory(this);
+      if (workingDirectory != null) {
+        generalCommandLine.withWorkDirectory(workingDirectory);
+      }
+      generalCommandLine.withEnvironment(commandLine.getEnvironmentVariables(this));
+      return generalCommandLine;
     }
   }
 }
