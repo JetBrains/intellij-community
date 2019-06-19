@@ -2607,7 +2607,8 @@ public class HighlightUtil extends HighlightUtilBase {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(first).descriptionAndTooltip(description).create();
       }
 
-      PsiElement element = first, alien = null;
+      PsiElement element = first;
+      PsiStatement alien = null;
       boolean classicLabels = false, enhancedLabels = false, levelChecked = false;
       while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
         if (element instanceof PsiSwitchLabeledRuleStatement) {
@@ -2617,14 +2618,14 @@ public class HighlightUtil extends HighlightUtilBase {
             levelChecked = true;
           }
           if (classicLabels) {
-            alien = element;
+            alien = (PsiStatement)element;
             break;
           }
           enhancedLabels = true;
         }
         else if (element instanceof PsiStatement) {
           if (enhancedLabels) {
-            alien = element;
+            alien = (PsiStatement)element;
             break;
           }
           classicLabels = true;
@@ -2642,6 +2643,16 @@ public class HighlightUtil extends HighlightUtilBase {
         element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
       }
       if (alien != null) {
+        if (enhancedLabels && !(alien instanceof PsiSwitchLabelStatementBase)) {
+          PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(alien, PsiSwitchLabeledRuleStatement.class);
+          String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
+          HighlightInfo info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(alien).descriptionAndTooltip(description).create();
+          if (previousRule != null) {
+            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapSwitchRuleStatementsIntoBlockFix(previousRule));
+          }
+          return info;
+        }
         String description = JavaErrorMessages.message("different.case.kinds.in.switch");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(alien).descriptionAndTooltip(description).create();
       }

@@ -536,4 +536,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createChangeModifierFix();
+
+  @NotNull
+  public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule);
 }

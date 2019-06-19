@@ -15,7 +15,7 @@ class EnhancedSwitchStatements {
 
     switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");
-      <error descr="Different case kinds used in the switch">break;</error>
+      <error descr="Statement must be prepended with case label">break;</error>
     }
     switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");

@@ -959,4 +959,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createChangeModifierFix() {
     return new ChangeModifierIntention(true);
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule) {
+    return new WrapSwitchRuleStatementsIntoBlockFix(rule);
+  }
 }
