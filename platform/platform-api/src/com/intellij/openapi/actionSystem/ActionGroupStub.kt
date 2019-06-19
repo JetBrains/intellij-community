@@ -23,6 +23,7 @@ class ActionGroupStub(
 
   fun initGroup(target: ActionGroup) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)
+    target.shortcutSet = shortcutSet
     val children = getChildren(null)
     if (children.isNotEmpty()) {
       val defaultActionGroup = target as? DefaultActionGroup
