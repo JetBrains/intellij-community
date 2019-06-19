@@ -4,20 +4,20 @@ package com.intellij.java.codeInsight.daemon
 import com.intellij.JavaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class LightJava13HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
+class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_13
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting13"
+  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/textBlocks"
 
   fun testTextBlocks() = doTest()
   fun testUnclosedTextBlock() = doTest()
 
   fun testTextBlockOpeningSpaces() {
-    myFixture.configureByText(getTestName(false) + ".java", "class C {\n  String spaces = \"\"\" \t \u000C \n    \"\"\";\n}")
+    myFixture.configureByText("${getTestName(false)}.java", "class C {\n  String spaces = \"\"\" \t \u000C \n    \"\"\";\n}")
     myFixture.checkHighlighting()
   }
 
   private fun doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.configureByFile("${getTestName(false)}.java")
     myFixture.checkHighlighting()
   }
 }
