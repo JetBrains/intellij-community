@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link com.intellij.pom.java.LanguageLevel} is an IDE-side counterpart of this enum.
+ * The {@link com.intellij.pom.java.LanguageLevel} class is an IDE-side counterpart of this enum.
  *
  * @author nik
  */

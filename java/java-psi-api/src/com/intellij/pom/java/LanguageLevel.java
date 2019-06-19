@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a language level (i.e. features available) of a Java code.
- * {@code org.jetbrains.jps.model.java.LanguageLevel} is a compiler-side counterpart of this enum.
+ * The {@link org.jetbrains.jps.model.java.LanguageLevel} class is a compiler-side counterpart of this enum.
  *
  * @author dsl
  * @see LanguageLevelProjectExtension
