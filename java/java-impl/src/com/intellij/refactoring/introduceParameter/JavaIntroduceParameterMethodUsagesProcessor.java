@@ -17,7 +17,6 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +26,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,7 +77,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     }
     PsiCall callExpression = RefactoringUtil.getCallExpressionByMethodReference(ref);
     PsiExpressionList argList = RefactoringUtil.getArgumentListByMethodReference(ref);
-    if (argList == null) return true;
+    if (argList == null || callExpression == null) return true;
     PsiExpression[] oldArgs = argList.getExpressions();
     JavaResolveResult result = callExpression.resolveMethodGenerics();
     boolean varargs = result instanceof MethodCandidateInfo &&
@@ -111,14 +109,14 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     }
     else {
       PsiElement initializer =
-        ExpressionConverter.getExpression(data.getParameterInitializer().getExpression(), StdLanguages.JAVA, data.getProject());
+        ExpressionConverter.getExpression(data.getParameterInitializer().getExpression(), JavaLanguage.INSTANCE, data.getProject());
       assert initializer instanceof PsiExpression;
       if (initializer instanceof PsiNewExpression) {
         if (!PsiDiamondTypeUtil.canChangeContextForDiamond((PsiNewExpression)initializer, ((PsiNewExpression)initializer).getType())) {
           initializer = PsiDiamondTypeUtil.expandTopLevelDiamondsInside((PsiNewExpression)initializer);
         }
       }
-      substituteTypeParametersInInitializer(initializer, callExpression, argList, methodToSearchFor);
+      substituteTypeParametersInInitializer(initializer, callExpression, methodToSearchFor);
       ChangeContextUtil.encodeContextInfo(initializer, true);
       PsiExpression newArg = (PsiExpression)argList.addAfter(initializer, anchor);
       ChangeContextUtil.decodeContextInfo(newArg, null, null);
@@ -138,13 +136,9 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
   private static void substituteTypeParametersInInitializer(PsiElement initializer,
                                                             PsiCall callExpression,
-                                                            PsiExpressionList argList,
                                                             PsiMethod method) {
     final Project project = method.getProject();
-    final PsiSubstitutor psiSubstitutor = JavaPsiFacade.getInstance(project).getResolveHelper()
-      .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
-                          argList.getExpressions(), PsiSubstitutor.EMPTY, callExpression,
-                          DefaultParameterTypeInferencePolicy.INSTANCE);
+    final PsiSubstitutor psiSubstitutor = callExpression.resolveMethodGenerics().getSubstitutor();
     RefactoringUtil.replaceMovedMemberTypeParameters(initializer, PsiUtil.typeParametersIterable(method), psiSubstitutor,
                                                      JavaPsiFacade.getElementFactory(project));
   }
@@ -195,7 +189,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
       }
       if (!isMethodUsage(usage)) continue;
       final PsiCall call = RefactoringUtil.getCallExpressionByMethodReference(element);
-      final PsiExpressionList argList = call.getArgumentList();
+      final PsiExpressionList argList = call != null ? call.getArgumentList() : null;
       if (argList != null) {
         final int actualParamLength = argList.getExpressionCount();
         if ((method.isVarArgs() && actualParamLength + 1 < parametersCount) ||
