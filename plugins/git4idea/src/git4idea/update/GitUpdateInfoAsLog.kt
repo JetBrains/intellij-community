@@ -135,9 +135,9 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private inner class MyLogUiFactory(val logManager: VcsLogManager,
-                                      val rangeFilter: VcsLogRangeFilter,
-                                      val updatedFilesCount: Int,
-                                      val updateCommitsCount: Int) : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
+                                     val rangeFilter: VcsLogRangeFilter,
+                                     val updatedFilesCount: Int,
+                                     val updateCommitsCount: Int) : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
 
     override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
       val logId = "git-update-project-info-" + UUID.randomUUID()
@@ -158,7 +158,7 @@ class GitUpdateInfoAsLog(private val project: Project,
   }
 
   private class MyPropertiesForRange(val rangeFilter: VcsLogRangeFilter,
-                                      val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
+                                     val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
     override fun getFilterValues(filterName: String): List<String>? {
       if (filterName === RANGE_FILTER.name) {
         return ArrayList(rangeFilter.getTextPresentation())
