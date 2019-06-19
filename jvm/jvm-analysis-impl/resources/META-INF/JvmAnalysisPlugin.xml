@@ -31,6 +31,10 @@
                      groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.missing.deprecated.annotation.on.scheduled.for.removal.api.display.name"
                      implementationClass="com.intellij.codeInspection.MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="MustAlreadyBeRemovedApi"
+                     groupBundle="com.intellij.jvm.analysis.JvmAnalysisBundle" bundle="com.intellij.jvm.analysis.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.must.already.be.removed.api.display.name"
+                     implementationClass="com.intellij.codeInspection.MustAlreadyBeRemovedApiInspection"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>
