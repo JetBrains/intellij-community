@@ -29,12 +29,7 @@ public class TitledSeparator extends JPanel {
     return JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
   }
 
-  protected final JBLabel myLabel = new JBLabel() {
-    @Override
-    public Font getFont() {
-      return UIUtil.getTitledBorderFont();
-    }
-  };
+  protected final JBLabel myLabel;
   protected final JSeparator mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
   private String originalText;
 
@@ -47,6 +42,7 @@ public class TitledSeparator extends JPanel {
   }
 
   public TitledSeparator(String text, @Nullable JComponent labelFor) {
+    myLabel = new JBLabel(text);
     mySeparator.setForeground(ENABLED_SEPARATOR_FOREGROUND);
 
     setLayout(new GridBagLayout());
@@ -56,7 +52,6 @@ public class TitledSeparator extends JPanel {
                                JBUI.insets(2, SEPARATOR_LEFT_INSET, 0, SEPARATOR_RIGHT_INSET), 0, 0));
     setBorder(createEmptyBorder());
 
-    setText(text);
     setLabelFor(labelFor);
     setOpaque(false);
   }

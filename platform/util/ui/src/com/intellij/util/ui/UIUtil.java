@@ -2232,8 +2232,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Font getTitledBorderFont() {
-    Font defFont = getLabelFont();
-    return defFont.deriveFont(defFont.getSize() - 1f);
+    return getLabelFont();
   }
 
   /**
