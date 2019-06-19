@@ -98,8 +98,9 @@ public class VirtualFilePointerRootsTest extends PlatformTestCase {
       PlatformTestUtil.startPerformanceTest("vfp update", 7_000, () -> {
         for (int i = 0; i < 100; i++) {
           // simulate VFS refresh events since launching the actual refresh is too slow
-          myVirtualFilePointerManager.before(events);
-          myVirtualFilePointerManager.after(events);
+          AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(events);
+          applier.beforeVfsChange();
+          applier.afterVfsChange();
         }
       }).assertTiming();
     });
