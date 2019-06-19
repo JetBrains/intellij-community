@@ -7,9 +7,9 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-class LightJava12HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
+class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_12
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting12"
+  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/switchExpressions"
 
   fun testEnhancedSwitchStatements() = doTest()
   fun testSwitchExpressions() = doTest()
@@ -33,7 +33,7 @@ class LightJava12HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     ModuleRootModificationUtil.updateModel(module) { it.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = level }
 
   private fun doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.configureByFile("${getTestName(false)}.java")
     myFixture.checkHighlighting()
   }
 }
