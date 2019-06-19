@@ -38,7 +38,7 @@ public class CaptionPanel extends JPanel {
     Graphics2D g2d = (Graphics2D) g;
 
     g2d.setPaint(JBUI.CurrentTheme.Popup.headerBackground(myActive));
-    g2d.fillRect(0, 0, getWidth(), getHeight() - 1);
+    g2d.fillRect(0, 0, getWidth(), getHeight());
   }
 
   public void setActive(final boolean active) {
