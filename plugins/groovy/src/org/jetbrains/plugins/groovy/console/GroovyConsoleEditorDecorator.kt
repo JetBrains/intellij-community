@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications.Provider
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType.EXECUTE_ACTION
-import org.jetbrains.plugins.groovy.console.actions.GrSelectModuleAction
 import javax.swing.JComponent
 
 class GroovyConsoleEditorDecorator : Provider<JComponent>() {
