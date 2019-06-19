@@ -1,30 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.execution.console.ConsolePromptDecorator;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
-import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -41,7 +33,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
@@ -72,7 +63,6 @@ import java.util.concurrent.TimeUnit;
 public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
   static Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
-  private final ConsolePromptDecorator myPromptView;
   private final boolean myTestMode;
 
   private PythonConsoleExecuteActionHandler myExecuteActionHandler;
@@ -92,6 +82,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    */
   public PythonConsoleView(final Project project, final String title, @Nullable final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
+    ConsolePromptDecorator promptDecorator = getConsolePromptDecorator();
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
@@ -113,7 +104,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myPyHighlighter = new PyHighlighter(languageLevel);
     myScheme = getConsoleEditor().getColorsScheme();
     PythonConsoleData data = PyConsoleUtil.getOrCreateIPythonData(getVirtualFile());
-    myPromptView = new ConsolePromptDecorator(this.getConsoleEditor(), data);
+    promptDecorator.setIndentPrompt((data.isIPythonEnabled()) ? PyConsoleUtil.IPYTHON_INDENT_PROMPT : PyConsoleUtil.INDENT_PROMPT);
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
@@ -392,60 +383,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     splitWindow();
   }
 
-  protected final void doAddPromptToHistory(boolean isMainPrompt) {
-    flushDeferredText();
-    EditorEx viewer = getHistoryViewer();
-    DocumentEx document = viewer.getDocument();
-    RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
-                                                     .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null,
-                                                                          HighlighterTargetArea.EXACT_RANGE);
-    final String prompt;
-    if (isMainPrompt) {
-      prompt = myPromptView.getMainPrompt();
-      print(prompt + " ", myPromptView.getPromptAttributes());
-    }
-    else {
-      prompt = myPromptView.getIndentPrompt();
-      //todo should really be myPromptView.getPromptAttributes() output type
-      //but in that case flushing doesn't get handled correctly. Take a look at it later
-      print(prompt + " ", ConsoleViewContentType.USER_INPUT);
-    }
-
-    highlighter.putUserData(PyConsoleCopyHandler.PROMPT_LENGTH_MARKER, prompt.length() + 1);
-  }
-
-  @Override
-  @NotNull
-  protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
-    String text;
-    EditorHighlighter highlighter;
-    if (inputEditor instanceof EditorWindow) {
-      PsiFile file = ((EditorWindow)inputEditor).getInjectedFile();
-      highlighter =
-        HighlighterFactory.createHighlighter(file.getVirtualFile(), EditorColorsManager.getInstance().getGlobalScheme(), getProject());
-      String fullText = InjectedLanguageUtil.getUnescapedText(file, null, null);
-      highlighter.setText(fullText);
-      text = textRange.substring(fullText);
-    }
-    else {
-      text = inputEditor.getDocument().getText(textRange);
-      highlighter = inputEditor.getHighlighter();
-    }
-    SyntaxHighlighter syntax =
-      highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
-    doAddPromptToHistory(true);
-
-    if (syntax != null) {
-      ConsoleViewUtil.printWithHighlighting(this, text, syntax, () -> doAddPromptToHistory(false));
-    }
-    else {
-      print(text, ConsoleViewContentType.USER_INPUT);
-    }
-    print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
-    return text;
-  }
-
-
   @NotNull
   @Override
   protected JComponent createCenterComponent() {
@@ -453,7 +390,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     JComponent centerComponent = super.createCenterComponent();
     getHistoryViewer().getSettings().setAdditionalLinesCount(0);
     getHistoryViewer().getSettings().setUseSoftWraps(false);
-    getConsoleEditor().getGutter().registerTextAnnotation(this.myPromptView);
     getConsoleEditor().getGutterComponentEx().setBackground(getConsoleEditor().getBackgroundColor());
     getConsoleEditor().getGutterComponentEx().revalidate();
     getConsoleEditor().getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, getConsoleEditor().getBackgroundColor());
@@ -491,36 +427,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   @Nullable
-  @Override
-  public String getPrompt() {
-    if (myPromptView == null) // we're in the constructor!
-    {
-      return super.getPrompt();
-    }
-    return myPromptView.getMainPrompt();
-  }
-
-
-  @Override
-  public void setPrompt(@Nullable String prompt) {
-    if (this.myPromptView == null) // we're in the constructor!
-    {
-      super.setPrompt(prompt);
-      return;
-    }
-    if (prompt != null) {
-      this.myPromptView.setMainPrompt(prompt);
-    }
-  }
-
-  @Nullable
   public String getSdkHomePath() {
     return mySdkHomePath;
-  }
-
-  @Override
-  public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {
-    myPromptView.setPromptAttributes(textAttributes);
   }
 
   public boolean isInitialized() {
