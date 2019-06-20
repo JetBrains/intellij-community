@@ -12,9 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
+ * Provides documentation for PSI elements.
+ * <p>
+ * Extend {@link AbstractDocumentationProvider}.
+ *
  * @see com.intellij.lang.LanguageDocumentation
  * @see DocumentationProviderEx
- * @see AbstractDocumentationProvider
  * @see ExternalDocumentationProvider
  * @see ExternalDocumentationHandler
  */
@@ -31,7 +34,7 @@ public interface DocumentationProvider {
    * @param element         the element for which the documentation is requested (for example, if the mouse is over
    *                        a method reference, this will be the method to which the reference is resolved).
    * @param originalElement the element under the mouse cursor
-   * @return the documentation to show, or null if the provider can't provide any documentation for this element. Documentation can contain
+   * @return the documentation to show, or {@code null} if the provider can't provide any documentation for this element. Documentation can contain
    * HTML markup. If HTML special characters need to be shown in popup, they should be properly escaped.
    */
   @Nullable
@@ -95,7 +98,7 @@ public interface DocumentationProvider {
    * @param psiManager the PSI manager for the project in which the documentation is requested.
    * @param link       the text of the link, not including the protocol.
    * @param context    the element from which the navigation is performed.
-   * @return the navigation target, or null if the link couldn't be resolved.
+   * @return the navigation target, or {@code null} if the link couldn't be resolved.
    * @see DocumentationManagerUtil#createHyperlink(StringBuilder, String, String, boolean)
    */
   @Nullable

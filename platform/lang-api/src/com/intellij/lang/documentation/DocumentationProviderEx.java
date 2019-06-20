@@ -20,7 +20,9 @@ public class DocumentationProviderEx implements DocumentationProvider {
    * For example, it could be a keyword where there's no {@link com.intellij.psi.PsiReference}, but for which users might benefit from context help.
    */
   @Nullable
-  public PsiElement getCustomDocumentationElement(@NotNull final Editor editor, @NotNull final PsiFile file, @Nullable PsiElement contextElement) {
+  public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
+                                                  @NotNull final PsiFile file,
+                                                  @Nullable PsiElement contextElement) {
     return null;
   }
 
