@@ -6,7 +6,7 @@ task setupJbre()
 
 def targetOs = System.getProperty("intellij.build.target.os", "all")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
-def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
+def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jreVersion > 8 ? secondJreBuild : jdkBuild)
 def jrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 createJbreTasks(jreBuild, jreVersion, targetOs, jrePrefix)
 
