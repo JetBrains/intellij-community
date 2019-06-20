@@ -2,7 +2,6 @@ package com.intellij.remoteServer.ir;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,6 +15,7 @@ import java.util.Map;
 
 public class IR {
   public interface RemoteRunner {
+    @NotNull
     RemotePlatform getRemotePlatform();
 
     RemoteEnvironmentRequest createRequest();
@@ -117,6 +117,7 @@ public class IR {
   }
 
   public static class LocalRunner implements RemoteRunner {
+    @NotNull
     @Override
     public RemotePlatform getRemotePlatform() {
       return RemotePlatform.CURRENT;
