@@ -4,6 +4,8 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
@@ -31,6 +33,7 @@ import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupSh
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.EventDispatcher
+import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -101,10 +104,13 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
+  private var needUpdateCommitOptionsUi = false
+
   init {
     Disposer.register(this, commitMessage)
 
     buildLayout()
+    project.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener { needUpdateCommitOptionsUi = true })
 
     with(changesView) {
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
@@ -183,6 +189,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
       setOptions(options)
       border = empty(0, 10)
       MnemonicHelper.init(this)
+
+      // to reflect LaF changes as commit options components are created once per commit
+      if (needUpdateCommitOptionsUi) {
+        needUpdateCommitOptionsUi = false
+        updateComponentTreeUI(this)
+      }
     }
     val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
     val commitOptionsPopup = JBPopupFactory.getInstance()
