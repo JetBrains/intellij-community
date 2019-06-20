@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
@@ -17,17 +18,23 @@ import javax.swing.JPanel
 
 class UnstableApiUsageInspection : AnnotatedElementInspectionBase() {
 
+  companion object {
+    val DEFAULT_UNSTABLE_API_ANNOTATIONS: List<String> = listOf(
+      "org.jetbrains.annotations.ApiStatus.Experimental",
+      "org.jetbrains.annotations.ApiStatus.Internal",
+      "com.google.common.annotations.Beta",
+      "io.reactivex.annotations.Beta",
+      "io.reactivex.annotations.Experimental",
+      "rx.annotations.Experimental",
+      "rx.annotations.Beta",
+      "org.apache.http.annotation.Beta",
+      "org.gradle.api.Incubating"
+    )
+  }
+
   @JvmField
-  val unstableApiAnnotations: MutableList<String> = ExternalizableStringSet(
-    "org.jetbrains.annotations.ApiStatus.Experimental",
-    "org.jetbrains.annotations.ApiStatus.Internal",
-    "com.google.common.annotations.Beta",
-    "io.reactivex.annotations.Beta",
-    "io.reactivex.annotations.Experimental",
-    "rx.annotations.Experimental",
-    "rx.annotations.Beta",
-    "org.apache.http.annotation.Beta",
-    "org.gradle.api.Incubating"
+  val unstableApiAnnotations: List<String> = ExternalizableStringSet(
+    *ArrayUtilRt.toStringArray(DEFAULT_UNSTABLE_API_ANNOTATIONS)
   )
 
   override fun getAnnotations() = unstableApiAnnotations
@@ -57,7 +64,8 @@ class UnstableApiUsageInspection : AnnotatedElementInspectionBase() {
         val targetName = getPresentableName(annotatedTarget)
         val message = if (isMethodOverriding) {
           JvmAnalysisBundle.message("jvm.inspections.unstable.method.overridden.description", targetName)
-        } else {
+        }
+        else {
           JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", targetName)
         }
         val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
