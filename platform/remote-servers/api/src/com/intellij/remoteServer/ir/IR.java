@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class IR {
   public interface RemoteRunner {
-    Platform getRemotePlatform();
+    RemotePlatform getRemotePlatform();
 
     RemoteEnvironmentRequest createRequest();
 
@@ -24,7 +24,7 @@ public class IR {
   }
 
   public interface RemoteEnvironment {
-    Platform getPlatform();
+    RemotePlatform getRemotePlatform();
 
     // todo: string or remoteValue or pathId?
     //String findRemotePath(String path);
@@ -74,7 +74,7 @@ public class IR {
         // todo: handle this properly
         throw new RuntimeException("Cannot find command");
       }
-      return CommandLineUtil.toCommandLine(command, getParameters(target), target.getPlatform());
+      return CommandLineUtil.toCommandLine(command, getParameters(target), target.getRemotePlatform().getPlatform());
     }
 
     public void setExePath(@NotNull RemoteValue exePath) {
@@ -118,8 +118,8 @@ public class IR {
 
   public static class LocalRunner implements RemoteRunner {
     @Override
-    public Platform getRemotePlatform() {
-      return Platform.current();
+    public RemotePlatform getRemotePlatform() {
+      return RemotePlatform.CURRENT;
     }
 
     @Override
@@ -146,8 +146,8 @@ public class IR {
 
   public static class LocalRemoteEnvironment implements RemoteEnvironment {
     @Override
-    public Platform getPlatform() {
-      return Platform.current();
+    public RemotePlatform getRemotePlatform() {
+      return RemotePlatform.CURRENT;
     }
 
     @Override
