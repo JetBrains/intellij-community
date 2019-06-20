@@ -136,6 +136,12 @@ class GitUpdateInfoAsLog(private val project: Project,
       }
     }
 
+    override fun saveFilterValues(filterName: String, values: List<String>?) {
+      if (filterName !== RANGE_FILTER.name && filterName !== BRANCH_FILTER.name && filterName !== REVISION_FILTER.name) {
+        mainProperties.saveFilterValues(filterName, values)
+      }
+    }
+
     fun havePresetFilters(): Boolean {
       val filters = mainProperties.state.FILTERS
       return if (filters[RANGE_FILTER.name] != null) filters.size > 1 else filters.isNotEmpty()

@@ -54,11 +54,4 @@ public class GitUpdateProjectInfoLogProperties extends VcsLogUiPropertiesImpl<Gi
   public void addRecentlyFilteredGroup(@NotNull String filterName, @NotNull Collection<String> values) {
     VcsLogProjectTabsProperties.addRecentGroup(commonState.RECENT_FILTERS, filterName, values);
   }
-
-  @Override
-  public void saveFilterValues(@NotNull String filterName, @Nullable List<String> values) {
-    if (filterName != RANGE_FILTER.getName() && filterName != BRANCH_FILTER.getName() && filterName != REVISION_FILTER.getName()) {
-      super.saveFilterValues(filterName, values);
-    }
-  }
 }
