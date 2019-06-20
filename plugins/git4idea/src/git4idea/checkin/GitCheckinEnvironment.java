@@ -1274,7 +1274,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     private EditorTextField createTextField(@NotNull Project project, @NotNull List<String> list) {
       TextCompletionProvider completionProvider =
         new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), list);
-      return new TextFieldWithCompletion(project, completionProvider, "", true, true, true);
+      return new TextFieldWithCompletion(project, completionProvider, "", true, true, true) {
+        @Override
+        public void updateUI() {
+          // When switching from Darcula to IntelliJ `getBackground()` has `UIUtil.getTextFieldBackground()` value which is `UIResource`.
+          // `LookAndFeel.installColors()` (called from `updateUI()`) calls `setBackground()` and sets panel background (gray) to be used.
+          // So we clear background to allow default behavior (use background from color scheme).
+          setBackground(null);
+          super.updateUI();
+        }
+      };
     }
 
     @NotNull
