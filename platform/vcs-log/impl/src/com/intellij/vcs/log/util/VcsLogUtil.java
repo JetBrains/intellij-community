@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.*;
@@ -260,7 +261,9 @@ public class VcsLogUtil {
 
   @Nullable
   public static VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
-    Stream<VcsRef> branches = refs.getAllRefsByRoot().get(root).streamBranches();
+    CompressedRefs compressedRefs = refs.getAllRefsByRoot().get(root);
+    if (compressedRefs == null) return null;
+    Stream<VcsRef> branches = compressedRefs.streamBranches();
     return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
   }
 
