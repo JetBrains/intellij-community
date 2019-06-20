@@ -586,8 +586,8 @@ bool LoadVMOptions()
 
   if (pathSize)
   {
-    binDirs = binDirs + ";" + pathEnvVar.data();
-    SetEnvironmentVariableA("PATH", binDirs.c_str());
+    std::string path = std::string(pathEnvVar.data()) + ";" + binDirs;
+    SetEnvironmentVariableA("PATH", path.c_str());
   }
   vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
