@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -127,7 +128,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
     MyListCellRenderer renderer = new MyListCellRenderer();
     myList.setCellRenderer(renderer);
-    myList.addKeyListener(new KeyAdapter() {
+    myList.addKeyListener(new KeyListener() {
+      boolean doConsume;
+
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
@@ -160,9 +163,24 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
             if (idx < myAllContents.size()) {
               myList.setSelectedIndex(idx);
               e.consume();
-              doOKAction();
+              doConsume = true;
+              ApplicationManager.getApplication().invokeLater(() -> doOKAction());
             }
           }
+        }
+      }
+
+      @Override
+      public void keyTyped(KeyEvent e) {
+        if (doConsume) {
+          e.consume();
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        if (doConsume) {
+          e.consume();
         }
       }
     });
