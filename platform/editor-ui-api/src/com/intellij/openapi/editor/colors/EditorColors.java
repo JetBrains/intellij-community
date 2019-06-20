@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 
 import java.awt.*;
@@ -22,6 +23,8 @@ public interface EditorColors {
   ColorKey SELECTED_INDENT_GUIDE_COLOR = ColorKey.createColorKey("SELECTED_INDENT_GUIDE");
   ColorKey SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("SELECTION_BACKGROUND");
   ColorKey SELECTION_FOREGROUND_COLOR = ColorKey.createColorKey("SELECTION_FOREGROUND");
+  ColorKey SCROLLBAR_THUMB_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.thumbColor" :  "ScrollBar.thumbColor");
+  ColorKey SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.hoverThumbColor" :  "ScrollBar.hoverThumbColor");
 
   TextAttributesKey REFERENCE_HYPERLINK_COLOR = TextAttributesKey.createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(JBColor.blue, null, JBColor.blue, EffectType.LINE_UNDERSCORE,
                                                                                                                                Font.PLAIN));
