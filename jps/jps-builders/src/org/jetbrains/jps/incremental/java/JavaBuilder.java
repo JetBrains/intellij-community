@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -219,7 +220,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                           @NotNull OutputConsumer outputConsumer,
                           @NotNull JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
-      final Set<File> filesToCompile = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> filesToCompile = new OrderedSet<>();
 
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
         if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
