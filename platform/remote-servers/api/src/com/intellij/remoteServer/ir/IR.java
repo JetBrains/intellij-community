@@ -41,6 +41,7 @@ public class IR {
   public interface RemoteValue {
     RemoteValue EMPTY_VALUE = e -> null;
 
+    //todo[remoteServers]: rename? it's easy to accidentally use toString() instead of toString(env)
     @Nullable
     String toString(@NotNull RemoteEnvironment environment);
   }
