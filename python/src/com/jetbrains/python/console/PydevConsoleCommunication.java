@@ -636,14 +636,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * @param extraEnvs
    * @throws Exception if connection fails
    */
-  public void connectToDebugger(int localPort, @NotNull Map<String, Boolean> dbgOpts, @NotNull Map<String, String> extraEnvs)
+  public void connectToDebugger(int localPort, @Nullable String debuggerHost, @NotNull Map<String, Boolean> dbgOpts, @NotNull Map<String, String> extraEnvs)
     throws Exception {
     if (waitingForInput) {
       throw new Exception("Can't connect debugger now, waiting for input");
     }
     try {
       // though `connectToDebugger` returns "connect complete" string, let us just ignore it
-      getPythonConsoleBackendClient().connectToDebugger(localPort, dbgOpts, extraEnvs);
+      getPythonConsoleBackendClient().connectToDebugger(localPort, debuggerHost, dbgOpts, extraEnvs);
     }
     catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
       throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", e);
