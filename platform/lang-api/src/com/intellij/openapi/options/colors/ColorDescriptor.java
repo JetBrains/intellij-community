@@ -39,6 +39,10 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
     public boolean isForeground() {
       return this == FOREGROUND || this == FOREGROUND_WITH_TRANSPARENCY;
     }
+
+    public boolean isWithTransparency() {
+      return this == FOREGROUND_WITH_TRANSPARENCY || this == BACKGROUND_WITH_TRANSPARENCY;
+    }
   }
 
   private final Kind myKind;
