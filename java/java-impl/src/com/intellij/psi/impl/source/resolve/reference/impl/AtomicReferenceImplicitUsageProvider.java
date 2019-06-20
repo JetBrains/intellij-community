@@ -33,17 +33,17 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     "incrementAndGet", "decrementAndGet", "addAndGet", "getAndUpdate", "updateAndGet", "getAndAccumulate", "accumulateAndGet");
 
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     if (element instanceof PsiField) {
       PsiField field = (PsiField)element;
       if (field.hasModifierProperty(PsiModifier.VOLATILE)) {

@@ -27,7 +27,7 @@ import java.util.List;
 public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
     if (element instanceof PsiMethod) {
       return isImplicitMethodUsage((PsiMethod)element);
     }
@@ -60,12 +60,12 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     if (element instanceof PsiField) {
       final PsiField field = (PsiField)element;
       if (!isImplicitFxmlAccess(field)) return false;

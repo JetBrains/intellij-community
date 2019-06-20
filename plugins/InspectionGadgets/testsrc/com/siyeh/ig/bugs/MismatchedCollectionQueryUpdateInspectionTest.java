@@ -16,17 +16,17 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightJavaInsp
 
   private static final ImplicitUsageProvider TEST_PROVIDER = new ImplicitUsageProvider() {
     @Override
-    public boolean isImplicitUsage(PsiElement element) {
+    public boolean isImplicitUsage(@NotNull PsiElement element) {
       return false;
     }
 
     @Override
-    public boolean isImplicitRead(PsiElement element) {
+    public boolean isImplicitRead(@NotNull PsiElement element) {
       return false;
     }
 
     @Override
-    public boolean isImplicitWrite(PsiElement element) {
+    public boolean isImplicitWrite(@NotNull PsiElement element) {
       return element instanceof PsiField && "injected".equals(((PsiField)element).getName());
     }
   };

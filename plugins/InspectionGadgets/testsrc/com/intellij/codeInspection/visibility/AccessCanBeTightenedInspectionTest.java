@@ -449,17 +449,17 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                                "}");
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
-      public boolean isImplicitUsage(PsiElement element) {
+      public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitRead(PsiElement element) {
+      public boolean isImplicitRead(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitWrite(PsiElement element) {
+      public boolean isImplicitWrite(@NotNull PsiElement element) {
         return element instanceof PsiField && "foo".equals(((PsiField)element).getName());
       }
     }, getTestRootDisposable());
