@@ -75,6 +75,7 @@ class ActionUpdater {
       action -> {
         // clone the presentation to avoid partially changing the cached one if update is interrupted
         Presentation presentation = ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action).clone());
+        presentation.setEnabledAndVisible(true);
         Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation));
         boolean success = callAction(action, "update", doUpdate);
         return success ? presentation : null;

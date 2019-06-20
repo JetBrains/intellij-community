@@ -294,6 +294,9 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     String text = group.getTemplatePresentation().getText();
     if (!StringUtil.isEmpty(text)) {
       for (ActionUrl url : myActions) {
+        if (url.getActionType() != ActionUrl.ADDED) {
+          continue;
+        }
         if (url.getGroupPath().contains(text) || url.getGroupPath().contains(defaultGroupName)) {
           return true;
         }
