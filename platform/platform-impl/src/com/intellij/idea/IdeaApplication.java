@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.diagnostic.*;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
@@ -17,10 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogEarthquakeShaker;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
@@ -156,6 +156,10 @@ public final class IdeaApplication {
     return pluginDescriptorsFuture
       .thenCompose(pluginDescriptors -> {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+          Activity sysActivity = ParallelActivity.PREPARE_APP_INIT.start("init system properties");
+          SystemPropertyBean.initSystemProperties();
+          sysActivity.end();
+
           Activity activity = ParallelActivity.PREPARE_APP_INIT.start("add registry keys");
           RegistryKeyBean.addKeysFromPlugins();
           activity.end();
