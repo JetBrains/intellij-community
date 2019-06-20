@@ -17,7 +17,8 @@ import javax.swing.JPanel
 
 class UnstableApiUsageInspection : AnnotatedElementInspectionBase() {
 
-  val unstableApiAnnotations: List<String> = ExternalizableStringSet(
+  @JvmField
+  val unstableApiAnnotations: MutableList<String> = ExternalizableStringSet(
     "org.jetbrains.annotations.ApiStatus.Experimental",
     "org.jetbrains.annotations.ApiStatus.Internal",
     "com.google.common.annotations.Beta",
