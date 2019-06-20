@@ -65,6 +65,15 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
     doTest("synchronization");
   }
 
+  public void testWrapInHeader() {
+    doTest("synchronization");
+  }
+
+
+  public void testWrapInTable() {
+    doTest("synchronization");
+  }
+
   public void testWrapRightMargin() {
     final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     final CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(MarkdownLanguage.INSTANCE);
