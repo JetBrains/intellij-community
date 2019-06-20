@@ -53,12 +53,6 @@ public class GrExecuteCommandAction extends AnAction {
       command = commandBuilder.toString();
     }
 
-    final GroovyConsole existingConsole = virtualFile.getUserData(GroovyConsole.GROOVY_CONSOLE);
-    if (existingConsole == null) {
-      GroovyConsole.getOrCreateConsole(project, virtualFile, console -> console.execute(command));
-    }
-    else {
-      existingConsole.execute(command);
-    }
+    GroovyConsole.getOrCreateConsole(project, virtualFile, console -> console.execute(command));
   }
 }

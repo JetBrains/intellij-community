@@ -42,10 +42,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
+import static org.jetbrains.plugins.groovy.util.UserDataHolderUtilKt.removeUserData;
 
 public class GroovyConsole {
 
-  public static final Key<GroovyConsole> GROOVY_CONSOLE = Key.create("Groovy console key");
+  private static final Key<GroovyConsole> GROOVY_CONSOLE = Key.create("Groovy console key");
 
   private static final Logger LOG = Logger.getInstance(GroovyConsole.class);
   private static final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
@@ -98,11 +99,21 @@ public class GroovyConsole {
     }
   }
 
+  public static void stopConsole(@NotNull VirtualFile contentFile) {
+    GroovyConsole console = removeUserData(contentFile, GROOVY_CONSOLE);
+    if (console != null) {
+      console.stop();
+    }
+  }
+
   public static void getOrCreateConsole(@NotNull final Project project,
                                         @NotNull final VirtualFile contentFile,
                                         @NotNull final Consumer<? super GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
-    if (existingConsole != null) return;
+    if (existingConsole != null) {
+      callback.consume(existingConsole);
+      return;
+    }
 
     final Consumer<Module> initializer = module -> {
       final GroovyConsole console = createConsole(project, contentFile, module);

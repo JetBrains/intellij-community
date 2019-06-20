@@ -11,7 +11,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil.getDisplayGroovyVersion
 import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil.getTitle
 import org.jetbrains.plugins.groovy.util.createSelectModulePopup
-import org.jetbrains.plugins.groovy.util.removeUserData
 
 class GrSelectModuleAction(
   private val project: Project,
@@ -38,7 +37,7 @@ class GrSelectModuleAction(
 
   private fun moduleSelected(module: Module) {
     if (consoleService.getSelectedModule(file) == module) return
-    file.removeUserData(GroovyConsole.GROOVY_CONSOLE)?.stop()
+    GroovyConsole.stopConsole(file)
     consoleService.setFileModule(file, module)
   }
 }
