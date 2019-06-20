@@ -50,10 +50,12 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
 
     ApplicationManager.getApplication().executeOnPooledThread(()->
       ApplicationManager.getApplication().runReadAction(() -> {
-        final PsiClass psiClass = DebuggerUtils.findClass(className,
-                                                          project, GlobalSearchScope.allScope(project));
-        ApplicationManager.getApplication().invokeLater(() -> setContext(psiClass));
-    }));
+        if (!project.isDisposed()) {
+          final PsiClass psiClass = DebuggerUtils.findClass(className,
+                                                            project, GlobalSearchScope.allScope(project));
+          ApplicationManager.getApplication().invokeLater(() -> setContext(psiClass), project.getDisposed());
+        }
+      }));
   }
 
   private void showHistory() {
