@@ -53,29 +53,6 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   }
 
   /**
-   * @deprecated Use {@link #LogicalPosition(int, int)} instead.
-   *             Additional fields are not used since 2018.2. To be removed in 2019.2.
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
-                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException {
-    this(line, column, false);
-  }
-
-  /**
-   * @deprecated Use {@link #LogicalPosition(int, int, boolean)} instead.
-   *             Additional fields are not used since 2018.2. To be removed in 2019.2.
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
-                         int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean leansForward,
-                         boolean visualPositionLeansRight) throws IllegalArgumentException {
-    this(line, column, leansForward);
-  }
-
-  /**
    * Constructs a new {@code LogicalPosition} instance with a given value of {@link #leansForward} flag.
    */
   public LogicalPosition leanForward(boolean value) {
