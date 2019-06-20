@@ -183,13 +183,22 @@ public class GitLogParser<R extends GitLogRecord> {
     return createRecord();
   }
 
-  @NotNull
+  @Nullable
   private R createRecord() {
+    if (myPathsParser.getErrorText() != null) {
+      LOG.debug("Creating record was skipped: " + myPathsParser.getErrorText());
+      myOptionsParser.clear();
+      myRecordBuilder.clear();
+      myPathsParser.clear();
+      return null;
+    }
+
     Map<GitLogOption, String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
     R record = myRecordBuilder.build(options, mySupportsRawBody);
     myRecordBuilder.clear();
+    myPathsParser.clear();
     myIsInBody = true;
 
     return record;
@@ -358,6 +367,7 @@ public class GitLogParser<R extends GitLogRecord> {
   public static class PathsParser<R extends GitLogRecord> {
     @NotNull private final NameStatus myNameStatusOption;
     @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
+    @Nullable private String myErrorText = null;
 
     PathsParser(@NotNull NameStatus nameStatusOption, @NotNull GitLogRecordBuilder<R> recordBuilder) {
       myNameStatusOption = nameStatusOption;
@@ -376,7 +386,7 @@ public class GitLogParser<R extends GitLogRecord> {
         if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
         if (match.size() < 2) {
-          LOG.error(getErrorText(line));
+          myErrorText = getErrorText(line);
         }
         else {
           if (match.size() == 2) {
@@ -445,6 +455,15 @@ public class GitLogParser<R extends GitLogRecord> {
 
     public boolean expectsPaths() {
       return myNameStatusOption == NameStatus.STATUS;
+    }
+
+    public void clear() {
+      myErrorText = null;
+    }
+
+    @Nullable
+    public String getErrorText() {
+      return myErrorText;
     }
   }
 
