@@ -15,7 +15,7 @@ import com.intellij.ui.GuiUtils
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
+import com.intellij.vcs.log.VcsLogFilterCollection.*
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
@@ -129,11 +129,10 @@ class GitUpdateInfoAsLog(private val project: Project,
   private class MyPropertiesForRange(val rangeFilter: VcsLogRangeFilter,
                                      val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
     override fun getFilterValues(filterName: String): List<String>? {
-      if (filterName === RANGE_FILTER.name) {
-        return ArrayList(rangeFilter.getTextPresentation())
-      }
-      else {
-        return mainProperties.getFilterValues(filterName)
+      when {
+        filterName === RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
+        filterName == BRANCH_FILTER.name || filterName == REVISION_FILTER.name -> return null
+        else -> return mainProperties.getFilterValues(filterName)
       }
     }
 
