@@ -575,6 +575,20 @@ bool LoadVMOptions()
   if (!AddClassPathOptions(vmOptionLines)) return false;
   std::string dllName(jvmPath);
   std::string binDirs = dllName + "\\bin;" + dllName + "\\bin\\server";
+
+  std::vector<char> pathEnvVar(_MAX_PATH);
+  DWORD pathSize = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
+  while (pathSize >= pathEnvVar.size())
+  {
+    pathEnvVar.resize(pathSize + 1);
+    pathSize = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
+  }
+
+  if (pathSize)
+  {
+    binDirs = binDirs + ";" + pathEnvVar.data();
+    SetEnvironmentVariableA("PATH", binDirs.c_str());
+  }
   vmOptionLines.push_back(std::string("-Djava.library.path=") + binDirs);
   AddPredefinedVMOptions(vmOptionLines);
 
