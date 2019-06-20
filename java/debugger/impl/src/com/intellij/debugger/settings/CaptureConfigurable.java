@@ -275,7 +275,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     myConfigureAnnotationsButton.addActionListener(e -> new AsyncAnnotationsDialog(myProject).show());
 
-    myCapturePanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
+    myCapturePanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based:", false, JBUI.insetsTop(8)).setShowLine(false));
     myCapturePanel.add(decorator.createPanel(), BorderLayout.CENTER);
 
     return myPanel;
