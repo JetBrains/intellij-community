@@ -1906,6 +1906,12 @@
       <className>com.intellij.codeInsight.intention.impl.WrapWithUnmodifiableAction</className>
       <category>Java/Other</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopArgumentsAction</className>
+    </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
     <fileTypeDetector implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeDetector"/>
