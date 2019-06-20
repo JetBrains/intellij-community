@@ -31,6 +31,8 @@ private fun fromJar(module: Module): String? {
 }
 
 private fun getSdkVersionFromHome(module: Module): String? {
-  val path = LibrariesUtil.getGroovyHomePath(module)
-  return if (path == null) null else GroovyConfigUtils.getInstance().getSDKVersion(path)
+  val path = LibrariesUtil.getGroovyHomePath(module) ?: return null
+  return GroovyConfigUtils.getInstance().getSDKVersion(path).takeUnless {
+    it == UNDEFINED_VERSION
+  }
 }
