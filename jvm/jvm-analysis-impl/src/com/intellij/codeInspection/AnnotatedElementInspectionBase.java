@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.uast.UastVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
@@ -38,7 +37,7 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
   @Override
   public JPanel createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports");
+      JvmAnalysisBundle.message("jvm.inspections.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports");
   }
 
   @NotNull
