@@ -14,7 +14,7 @@ import java.util.concurrent.Executor;
 @ApiStatus.Internal
 public abstract class AsyncExecutionService {
   @NotNull
-  protected abstract AppExecutor createExecutor(@NotNull Executor executor);
+  protected abstract ExpirableExecutor createExecutor(@NotNull Executor executor);
 
   @NotNull
   protected abstract AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState);

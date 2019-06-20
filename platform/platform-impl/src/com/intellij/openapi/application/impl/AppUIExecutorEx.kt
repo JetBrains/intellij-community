@@ -2,8 +2,8 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppExecutor
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ExpirableExecutor
 import com.intellij.openapi.application.constraints.ConstrainedExecution
 import com.intellij.openapi.application.constraints.cancelJobOnDisposal
 import kotlinx.coroutines.*
@@ -24,17 +24,17 @@ fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstra
 fun AppUIExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint, parentDisposable: Disposable): AppUIExecutor =
   (this as AppUIExecutorImpl).withConstraint(constraint, parentDisposable)
 
-fun AppExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint): AppExecutor =
-  (this as AppExecutorImpl).withConstraint(constraint)
-fun AppExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint, parentDisposable: Disposable): AppExecutor =
-  (this as AppExecutorImpl).withConstraint(constraint, parentDisposable)
+fun ExpirableExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint): ExpirableExecutor =
+  (this as ExpirableExecutorImpl).withConstraint(constraint)
+fun ExpirableExecutor.withConstraint(constraint: ConstrainedExecution.ContextConstraint, parentDisposable: Disposable): ExpirableExecutor =
+  (this as ExpirableExecutorImpl).withConstraint(constraint, parentDisposable)
 
 /**
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
  * Contains: [ContinuationInterceptor].
  */
-fun AppExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
-  (this as AppExecutorImpl).asCoroutineDispatcher()
+fun ExpirableExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
+  (this as ExpirableExecutorImpl).asCoroutineDispatcher()
 
 fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
   (this as AppUIExecutorImpl).asCoroutineDispatcher()

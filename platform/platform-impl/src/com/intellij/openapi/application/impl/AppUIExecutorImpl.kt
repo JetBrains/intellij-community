@@ -10,6 +10,7 @@ import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.constraints.Expiration
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import java.util.concurrent.Executor
@@ -24,7 +25,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
                                                      cancellationConditions: Array<BooleanSupplier>,
                                                      expirableHandles: Set<Expiration>)
   : AppUIExecutor,
-    BaseAppExecutorMixinImpl<AppUIExecutorImpl>(constraints, cancellationConditions, expirableHandles, MyExecutor(modality)) {
+    BaseExpirableExecutorMixinImpl<AppUIExecutorImpl>(constraints, cancellationConditions, expirableHandles, MyExecutor(modality)) {
 
   constructor(modality: ModalityState) : this(modality, emptyArray(), emptyArray(), emptySet())
 
@@ -117,6 +118,10 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       override fun toString() = "inWriteAction"
     })
   }
+
+  override fun inSmartMode(project: Project): AppUIExecutorImpl {
+    return withConstraint(InSmartMode(project), project)
+  }
 }
 
 internal class WithDocumentsCommitted(private val project: Project, private val modality: ModalityState) : ContextConstraint {
@@ -128,4 +133,15 @@ internal class WithDocumentsCommitted(private val project: Project, private val 
   }
 
   override fun toString() = "withDocumentsCommitted"
+}
+
+internal class InSmartMode(private val project: Project) : ContextConstraint {
+  override fun isCorrectContext(): Boolean =
+    !DumbService.getInstance(project).isDumb
+
+  override fun schedule(runnable: Runnable) {
+    DumbService.getInstance(project).runWhenSmart(runnable)
+  }
+
+  override fun toString() = "inSmartMode"
 }

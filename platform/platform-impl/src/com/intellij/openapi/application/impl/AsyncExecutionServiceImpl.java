@@ -13,8 +13,8 @@ import java.util.concurrent.Executor;
 public class AsyncExecutionServiceImpl extends AsyncExecutionService {
   @NotNull
   @Override
-  protected AppExecutor createExecutor(@NotNull Executor executor) {
-    return new AppExecutorImpl(executor);
+  protected ExpirableExecutor createExecutor(@NotNull Executor executor) {
+    return new ExpirableExecutorImpl(executor);
   }
 
   @NotNull

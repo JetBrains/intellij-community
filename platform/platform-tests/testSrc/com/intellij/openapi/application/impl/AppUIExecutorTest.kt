@@ -2,7 +2,6 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppExecutor
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -13,12 +12,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.concurrency.asDeferred
-import java.util.concurrent.Executor
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.function.Consumer
 import javax.swing.SwingUtilities
@@ -98,18 +95,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     GlobalScope.async(executor.coroutineDispatchingContext()) {
       ApplicationManager.getApplication().assertIsDispatchThread()
     }.joinNonBlocking()
-  }
-
-  fun `test coroutine on background thread`() = runBlocking {
-    checkBackgroundCoroutine(AppExecutorUtil.getAppExecutorService())
-    checkBackgroundCoroutine(AppExecutorUtil.createBoundedApplicationPoolExecutor("bounded", 1))
-  }
-
-  private suspend fun checkBackgroundCoroutine(executor: Executor) {
-    val appExecutor = AppExecutor.on(executor)
-    GlobalScope.async(appExecutor.coroutineDispatchingContext()) {
-      assertFalse(ApplicationManager.getApplication().isDispatchThread)
-    }.join()
   }
 
   fun `test coroutine withExpirable`() {

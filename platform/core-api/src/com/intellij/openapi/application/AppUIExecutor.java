@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * some action when all documents are committed and indices are available, one can use
  * {@code AppUIExecutor.onUiThread().withDocumentsCommitted(project).inSmartMode(project)}.
  */
-public interface AppUIExecutor extends BaseAppExecutor<AppUIExecutor> {
+public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
 
   /**
    * Creates an executor working with the given modality state.

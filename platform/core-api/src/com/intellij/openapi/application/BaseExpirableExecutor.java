@@ -11,11 +11,11 @@ import java.util.concurrent.Callable;
 
 /**
  * DO NOT USE DIRECTLY
- * @see AppExecutor
+ * @see ExpirableExecutor
  * @see AppUIExecutor
  */
 @ApiStatus.Internal
-public interface BaseAppExecutor <E extends BaseAppExecutor<E>> {
+public interface BaseExpirableExecutor<E extends BaseExpirableExecutor<E>> {
   /**
    * @return an executor that no longer invokes the given runnable after the supplied Disposable is disposed
    */
