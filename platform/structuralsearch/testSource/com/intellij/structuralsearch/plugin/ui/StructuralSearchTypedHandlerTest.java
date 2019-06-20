@@ -33,6 +33,18 @@ public class StructuralSearchTypedHandlerTest extends BasePlatformTestCase {
            "$x$<caret> y$<caret>$z $<selection>abc<caret></selection>$");
   }
 
+  public void testOneDollar() {
+    doTest("asdf<caret>$asdf", "asdf$<caret>$asdf");
+  }
+
+  public void testOddDollar1() {
+    doTest("<caret>ba$", "$<caret>ba$");
+  }
+
+  public void testOddDollar2() {
+    doTest("$ietske<caret>", "$ietske$<caret>");
+  }
+
   private void doTest(@NotNull String before, @NotNull String after) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
     final Editor editor = myFixture.getEditor();

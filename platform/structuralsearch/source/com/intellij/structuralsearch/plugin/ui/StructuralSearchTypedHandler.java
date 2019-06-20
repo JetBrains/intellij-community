@@ -84,23 +84,28 @@ public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
         final Caret caret = caretModel.getCurrentCaret();
         final LogicalPosition position = caret.getLogicalPosition();
         final int lineStart = document.getLineStartOffset(position.line);
+        final int lineEnd = document.getLineEndOffset(position.line);
         final CharSequence text = document.getCharsSequence();
-        final int index = lineStart + position.column;
-        if (index < text.length() && text.charAt(index) == '$') {
-          caret.setSelection(index, index + 1);
+        final int offset = lineStart + position.column;
+        final boolean nextIsDollar = offset < text.length() && text.charAt(offset) == '$';
+        if (hasOddDollar(text, lineStart, offset) && nextIsDollar) {
+          caret.setSelection(offset, offset + 1);
         }
-        final CharSequence line = text.subSequence(lineStart, lineStart + position.column);
-        boolean $ = false;
-        for (int i = 0, max = line.length(); i < max; i++) {
-          if (line.charAt(i) == '$') {
-            $ = !$;
-          }
-        }
-        if (!$) {
-          document.insertString(lineStart + position.column, "$");
+        else if (!hasOddDollar(text, lineStart, lineEnd)) {
+          document.insertString(offset, "$");
         }
       }
     }
     return Result.CONTINUE;
+  }
+
+  static boolean hasOddDollar(CharSequence text, int start, int end) {
+    boolean $ = false;
+    for (int i = start; i < end; i++) {
+      if (text.charAt(i) == '$') {
+        $ = !$;
+      }
+    }
+    return $;
   }
 }
