@@ -61,8 +61,8 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
           commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
         }
         else {
-          LOG.error("Not enough records for commit ${firstRecord.hash} " +
-                    "expected ${parents.size} records, but got ${records.size}")
+          LOG.warn("Not enough records for commit ${firstRecord.hash} " +
+                   "expected ${parents.size} records, but got ${records.size}")
         }
       }
 
