@@ -32,6 +32,7 @@
     <extensionPoint name="executionEnvironmentProvider"
                     interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder"/>
+    <extensionPoint name="dependencyCompletionProviderFactory" interface="org.jetbrains.idea.maven.onlinecompletion.DependencyCompletionProviderFactory"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -372,6 +373,7 @@
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
     <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
+    <dependencyCompletionProviderFactory implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
   </extensions>
 
   <project-components>

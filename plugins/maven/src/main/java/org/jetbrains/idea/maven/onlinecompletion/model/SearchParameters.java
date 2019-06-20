@@ -7,13 +7,13 @@ public class SearchParameters {
   public static final SearchParameters FULL = new SearchParameters(200, 2000, true);
   private final int maxResults;
   private final long millisToWait;
-  private final boolean showForLocal;
+  private final boolean showAll;
 
 
-  public SearchParameters(int maxResults, long wait, boolean showForLocal) {
+  public SearchParameters(int maxResults, long wait, boolean showAll) {
     this.maxResults = maxResults;
     this.millisToWait = wait;
-    this.showForLocal = showForLocal;
+    this.showAll = showAll;
   }
 
   public int getMaxResults() {
@@ -25,7 +25,7 @@ public class SearchParameters {
     return millisToWait;
   }
 
-  public boolean getShowForLocal() {
-    return showForLocal;
+  public boolean isShowAll() {
+    return showAll;
   }
 }
