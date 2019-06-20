@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER;
+import static com.intellij.vcs.log.VcsLogFilterCollection.*;
 
 @State(
   name = "Git.Update.Project.Info.Tabs.Properties",
@@ -57,7 +57,7 @@ public class GitUpdateProjectInfoLogProperties extends VcsLogUiPropertiesImpl<Gi
 
   @Override
   public void saveFilterValues(@NotNull String filterName, @Nullable List<String> values) {
-    if (filterName != RANGE_FILTER.getName()) {
+    if (filterName != RANGE_FILTER.getName() && filterName != BRANCH_FILTER.getName() && filterName != REVISION_FILTER.getName()) {
       super.saveFilterValues(filterName, values);
     }
   }
