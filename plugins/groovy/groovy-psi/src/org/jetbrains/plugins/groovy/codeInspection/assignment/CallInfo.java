@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.PsiElement;
@@ -24,27 +22,9 @@ public interface CallInfo<Call extends GroovyPsiElement> {
   @Nullable
   GrExpression getInvokedExpression();
 
-  @Nullable
-  PsiType getQualifierInstanceType();
-
   @NotNull
   PsiElement getElementToHighlight();
 
   @NotNull
-  GroovyResolveResult advancedResolve();
-
-  @NotNull
-  GroovyResolveResult[] multiResolve();
-
-  @NotNull
   Call getCall();
-
-  @NotNull
-  GrExpression[] getExpressionArguments();
-
-  @NotNull
-  GrClosableBlock[] getClosureArguments();
-
-  @NotNull
-  GrNamedArgument[] getNamedArguments();
 }

@@ -169,7 +169,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     return checkMethodApplicability(constructorResolveResult, checkUnknownArgs, info);
   }
 
-  private void processConstructorCall(@NotNull ConstructorCallInfo<?> info) {
+  private void processConstructorCall(@NotNull GrListOrMapInfo info) {
     if (hasErrorElements(info.getArgumentList())) return;
 
     if (!checkCannotInferArgumentTypes(info)) return;
@@ -235,7 +235,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     return true;
   }
 
-  private void checkIndexProperty(@NotNull CallInfo<GrIndexProperty> info) {
+  private void checkIndexProperty(@NotNull GrIndexPropertyInfo info) {
     if (!checkCannotInferArgumentTypes(info)) return;
 
     final PsiType[] types = info.getArgumentTypes();
@@ -331,10 +331,8 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   public void visitMethodCall(@NotNull GrMethodCall call) {
     super.visitMethodCall(call);
     if (isFake(call)) return;
-    checkMethodCall(new GrMethodCallInfo(call));
-  }
 
-  private void checkMethodCall(@NotNull CallInfo<? extends GrMethodCall> info) {
+    GrMethodCallInfo info = new GrMethodCallInfo(call);
     if (hasErrorElements(info.getArgumentList())) return;
 
     if (info.getInvokedExpression() instanceof GrReferenceExpression) {
@@ -352,7 +350,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
       if (resolved != null) {
         if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-          GrMethodCall call = info.getCall();
           GroovyMethodCallReference reference = call.getImplicitCallReference();
           if (reference != null) {
             checkCallApplicability(reference.getReceiver(), true, info);
