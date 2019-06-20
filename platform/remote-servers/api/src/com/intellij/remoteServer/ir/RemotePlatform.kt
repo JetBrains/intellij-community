@@ -5,7 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 
 data class RemotePlatform(val os: String?, val osVersion: String?, val arch: String?) {
 
-  val platform: Platform = if (os?.startsWith("windows") == true) Platform.UNIX else Platform.WINDOWS
+  val platform: Platform = if (os?.startsWith("windows") == true) Platform.WINDOWS else Platform.UNIX
 
   companion object {
     @JvmField
