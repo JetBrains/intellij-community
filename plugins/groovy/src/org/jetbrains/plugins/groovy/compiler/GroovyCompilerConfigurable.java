@@ -33,9 +33,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -52,6 +53,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   private JPanel myExcludesPanel;
   private JBCheckBox myInvokeDynamicSupportCB;
   private TextFieldWithBrowseButton myConfigScriptPath;
+  private JPanel myPathPanel;
 
   private final ExcludedEntriesConfigurable myExcludes;
   private final GroovyCompilerConfiguration myConfig;
@@ -63,6 +65,12 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
 
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
     myConfigScriptPath.addBrowseFolderListener(null, "Select path to Groovy compiler configscript", null, descriptor);
+
+    myPathPanel.setBorder(
+      IdeBorderFactory.createTitledBorder("Groovyc settings (alternatively, you can specify Groovy-Eclipse compiler at Java Compiler page):",
+                                          false, JBUI.insetsTop(8)).setShowLine(false));
+
+    myExcludesPanel.setBorder(IdeBorderFactory.createTitledBorder("Exclude from stub generation:", false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   public ExcludedEntriesConfigurable getExcludes() {
