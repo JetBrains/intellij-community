@@ -44,7 +44,7 @@ import java.nio.charset.StandardCharsets;
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
 import static org.jetbrains.plugins.groovy.util.UserDataHolderUtilKt.removeUserData;
 
-public class GroovyConsole {
+public final class GroovyConsole {
 
   private static final Key<GroovyConsole> GROOVY_CONSOLE = Key.create("Groovy console key");
 
@@ -56,7 +56,7 @@ public class GroovyConsole {
   private final ConsoleView myConsoleView;
   private final ProcessHandler myProcessHandler;
 
-  public GroovyConsole(Project project, RunContentDescriptor descriptor, ConsoleView view, ProcessHandler handler) {
+  private GroovyConsole(Project project, RunContentDescriptor descriptor, ConsoleView view, ProcessHandler handler) {
     myProject = project;
     myContentDescriptor = descriptor;
     myConsoleView = view;
