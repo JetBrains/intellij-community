@@ -16,7 +16,11 @@ public class JavaChopArgumentsAction extends AbstractJavaChopListAction<PsiExpre
   @Nullable("When failed")
   @Override
   PsiExpressionList extractList(@NotNull PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiExpressionList.class, false);
+    PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(element, PsiExpressionList.class, false, PsiCodeBlock.class);
+    if (expressionList == null) return null;
+    PsiElement parent = expressionList.getParent();
+    if (!(parent instanceof PsiCall)) return null;
+    return expressionList;
   }
 
   @Nullable("When failed")
