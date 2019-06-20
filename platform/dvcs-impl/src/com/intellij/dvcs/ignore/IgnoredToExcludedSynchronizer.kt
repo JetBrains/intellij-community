@@ -77,6 +77,8 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
   }
 
   override fun doActionOnChosenFiles(files: Collection<VirtualFile>) {
+    if (files.isEmpty()) return
+
     markIgnoredAsExcluded(files)
   }
 
@@ -93,7 +95,6 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
   override fun updateFinished(ignoredPaths: Collection<FilePath>, isFullRescan: Boolean) {
     ProgressManager.checkCanceled()
     if (!isFullRescan) return
-    if (!Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)) return
     if (!VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED && wasAskedBefore()) return
 
     processIgnored(ignoredPaths)
@@ -113,7 +114,13 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
         //do not propose to exclude if there is a source root inside
         .filterNot { ignored -> sourceRoots.contains(ignored) }
         .toList()
-    processFiles(ignoredDirs)
+
+    if (allowShowNotification()) {
+      processFiles(ignoredDirs)
+    }
+    else if (needDoForCurrentProject()) {
+      doActionOnChosenFiles(doFilterFiles(ignoredDirs))
+    }
   }
 
   private fun markIgnoredAsExcluded(files: Collection<VirtualFile>) {
@@ -128,6 +135,8 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
       excludeAction.exclude(module!!, ignoredDirs)
     }
   }
+
+  private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
 
   private fun getProjectSourceRoots() =
     runReadAction { OrderEnumerator.orderEntries(project).withoutSdk().withoutLibraries().sources().usingCache().roots }

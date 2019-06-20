@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -56,7 +55,7 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
         }
         row {
           checkBox(message("ignored.file.ignored.to.excluded.label"), projectSettings::MARK_IGNORED_AS_EXCLUDED)
-        }.visible = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
+        }
       }
     }
 
