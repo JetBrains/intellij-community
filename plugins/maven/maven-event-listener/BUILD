@@ -1,0 +1,42 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+# managed by go/iml_to_build
+iml_module(
+    name = "intellij.maven.server.eventListener",
+    srcs = ["src/main/java"],
+    iml_files = ["intellij.maven.server.eventListener.iml"],
+    resources = ["src/main/resources"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//prebuilts/tools/common/m2/repository/aopalliance/aopalliance/1.0:jar",
+        "//prebuilts/tools/common/m2/repository/com/google/guava/guava/18.0:jar",
+        "//prebuilts/tools/common/m2/repository/javax/annotation/jsr250-api/1.0:jar",
+        "//prebuilts/tools/common/m2/repository/javax/enterprise/cdi-api/1.0:jar",
+        "//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-aether-provider/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-builder-support/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-core/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model-builder/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-plugin-api/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-repository-metadata/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-settings-builder/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-settings/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-classworlds/2.5.2:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-component-annotations/1.6:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-interpolation/1.21:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
+        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-api/1.0.2.v20150114:jar",
+        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-impl/1.0.2.v20150114:jar",
+        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-spi/1.0.2.v20150114:jar",
+        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-util/1.0.2.v20150114:jar",
+        "//prebuilts/tools/common/m2/repository/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.2:jar",
+        "//prebuilts/tools/common/m2/repository/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.2:jar",
+        "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-cipher/1.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-sec-dispatcher/1.3:jar",
+        "//tools/idea/.idea/libraries:javax-inject",
+    ],
+)

@@ -15,5 +15,6 @@ iml_module(
         "//tools/idea/platform/vcs-api/vcs-api-core:intellij.platform.vcs.core[module]",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
     ],
 )

@@ -36,7 +36,7 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/plugins/git4idea:intellij.vcs.git[module, test]",
         "//tools/idea/plugins/hg4idea:intellij.vcs.hg[module, test]",
-        "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
+        "//tools/idea/platform/vcs-tests:intellij.platform.vcs.testFramework[module, test]",
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module, test]",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl[module, test]",
         "//tools/idea/.idea/libraries:Mocks[test]",

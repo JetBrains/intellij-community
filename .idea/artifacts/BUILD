@@ -14,6 +14,12 @@ iml_artifact(
     visibility = ["//visibility:public"],
 )
 
+iml_artifact(
+    name = "maven-event-listener",
+    modules = ["//tools/idea/plugins/maven/maven-event-listener:intellij.maven.server.eventListener"],
+    visibility = ["//visibility:public"],
+)
+
 filegroup(
     name = "xmls",
     srcs = glob(["*.xml"]),

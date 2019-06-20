@@ -5,8 +5,8 @@ iml_module(
     name = "intellij.statsCollector.features",
     srcs = ["src"],
     iml_files = ["intellij.statsCollector.features.iml"],
-    resources = ["resources"],
     test_srcs = ["test"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [

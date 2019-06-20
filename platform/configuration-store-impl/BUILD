@@ -45,7 +45,7 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:XStream",
         "//tools/idea/.idea/libraries:lz4-java",
-        "//tools/idea/.idea/libraries:kotlin-test[test]",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
     ],
 )

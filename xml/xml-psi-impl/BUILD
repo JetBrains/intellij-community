@@ -43,7 +43,6 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/indexing-impl:intellij.platform.indexing.impl[module]",
         "//tools/idea/.idea/libraries:Xerces",
-        "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea/RegExpSupport:intellij.regexp[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/.idea/libraries:xml-resolver",

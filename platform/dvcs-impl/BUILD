@@ -8,9 +8,9 @@ iml_module(
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
-        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
-        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
+        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
@@ -40,7 +40,7 @@ iml_module(
         "//tools/idea/platform/dvcs-api:intellij.platform.vcs.dvcs[module]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
-        "//tools/idea/platform/vcs-tests:intellij.platform.vcs.tests[module, test]",
+        "//tools/idea/platform/vcs-tests:intellij.platform.vcs.testFramework[module, test]",
         "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )

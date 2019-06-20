@@ -38,7 +38,6 @@ iml_module(
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/groovy/rt:intellij.groovy.rt",
         "//tools/idea/.idea/libraries:netty-codec-http",
-        "//tools/idea/.idea/libraries:netty-handler",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/java-runtime:intellij.java.rt",
     ],
@@ -82,12 +81,12 @@ iml_module(
     deps = [
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
-        "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module]",
         "//tools/idea/.idea/libraries:http-client",
+        "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
     ],
 )
 

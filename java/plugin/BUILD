@@ -1,0 +1,42 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+# managed by go/iml_to_build
+iml_module(
+    name = "intellij.java.plugin",
+    iml_files = ["intellij.java.plugin.iml"],
+    resources = ["resources"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/idea:intellij.platform.jps.build_and_others",
+        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/java/debugger/memory-agent:intellij.java.debugger.memory.agent",
+        "//tools/idea/java/execution/impl:intellij.java.execution.impl",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/java/manifest:intellij.java.manifest",
+        "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
+        "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
+        "//tools/idea:intellij.java.analysis.impl",
+        "//tools/idea/java/java-indexing-impl:intellij.java.indexing.impl",
+        "//tools/idea/java/jsp-spi:intellij.jsp.spi",
+        "//tools/idea/uast/uast-java:intellij.java.uast",
+        "//tools/idea/java/structuralsearch-java:intellij.java.structuralSearch",
+        "//tools/idea/java/typeMigration:intellij.java.typeMigration",
+        "//tools/idea/resources:intellij.java.resources",
+        "//tools/idea/resources-en:intellij.java.resources.en",
+        "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
+        "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
+    ],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea:intellij.java.tests[module, test]",
+        "//tools/idea:intellij.java.ui.tests[module, test]",
+    ],
+)

@@ -70,6 +70,7 @@ iml_module(
         "//tools/idea/.idea/libraries:miglayout-swing",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:lz4-java",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:studio-analytics-proto",
         "//tools/analytics-library/tracker:analytics-tracker[module]",

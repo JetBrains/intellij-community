@@ -10,6 +10,8 @@ iml_module(
     exports = [
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex",
+        "//tools/idea/platform/util:intellij.platform.util.concurrency",
     ],
     # do not sort: must match IML order
     deps = [
@@ -20,5 +22,7 @@ iml_module(
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
+        "//tools/idea/platform/util:intellij.platform.util.concurrency[module]",
     ],
 )

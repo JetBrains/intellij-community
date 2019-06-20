@@ -51,6 +51,7 @@ iml_module(
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.tests[module, test]",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )
 
@@ -96,5 +97,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Objenesis",
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
     ],
 )

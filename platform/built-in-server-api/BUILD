@@ -13,5 +13,6 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
         "//tools/idea/.idea/libraries:netty-codec-http",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
     ],
 )

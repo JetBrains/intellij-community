@@ -44,5 +44,6 @@ iml_module(
         "//tools/idea/.idea/libraries:miglayout-swing",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
         "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/.idea/libraries:jackson-databind",
     ],
 )

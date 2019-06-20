@@ -50,7 +50,6 @@ iml_module(
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/groovy/rt:intellij.groovy.rt",
         "//tools/idea/.idea/libraries:netty-codec-http",
-        "//tools/idea/.idea/libraries:netty-handler",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/java-runtime:intellij.java.rt",
     ],

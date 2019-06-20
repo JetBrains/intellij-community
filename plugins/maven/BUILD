@@ -10,6 +10,7 @@ iml_module(
     resources = [
         "src/main/resources",
         "src/main/compatibilityResources",
+        "src/test/resources",
     ],
     test_srcs = ["src/test/java"],
     test_tags = ["manual"],
@@ -57,7 +58,6 @@ iml_module(
         "//tools/idea/java/execution/impl:intellij.java.execution.impl[module]",
         "//tools/idea/platform/forms_rt:intellij.java.guiForms.rt[module]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
-        "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:mockito[test]",

@@ -39,7 +39,7 @@ iml_module(
         "//tools/idea/plugins/tasks/tasks-compatibility:intellij.tasks.compatibility[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
-        "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/platform/dvcs-impl:intellij.platform.vcs.dvcs.impl[module]",
         "//tools/idea/platform/dvcs-api:intellij.platform.vcs.dvcs[module]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
@@ -53,5 +53,6 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/.idea/libraries:miglayout-swing",
+        "//tools/idea/.idea/libraries:jackson-databind",
     ],
 )

@@ -30,6 +30,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi:intellij.java[module]",
+        "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/.idea/libraries:JDOM",
     ],
 )

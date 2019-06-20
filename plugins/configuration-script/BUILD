@@ -3,11 +3,16 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 # managed by go/iml_to_build
 iml_module(
     name = "intellij.configurationScript",
-    srcs = ["src"],
+    # do not sort: must match IML order
+    srcs = [
+        "src",
+        "snakeyaml-engine",
+    ],
     iml_files = ["intellij.configurationScript.iml"],
     package_prefixes = {
         "test": "com.intellij.configurationScript",
         "src": "com.intellij.configurationScript",
+        "snakeyaml-engine": "org.snakeyaml.engine.v1",
     },
     resources = ["resources"],
     # do not sort: must match IML order
@@ -24,7 +29,6 @@ iml_module(
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
     ],
     # do not sort: must match IML order
@@ -36,12 +40,13 @@ iml_module(
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
-        "//tools/idea/.idea/libraries:snakeyaml",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
-        "//tools/idea/.idea/libraries:gson[test]",
         "//tools/idea/plugins/yaml:intellij.yaml[module, test]",
+        "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module]",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
+        "//tools/idea/.idea/libraries:jackson[test]",
     ],
 )

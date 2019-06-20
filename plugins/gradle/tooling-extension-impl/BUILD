@@ -14,6 +14,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Gradle",
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
     ],
 )
 

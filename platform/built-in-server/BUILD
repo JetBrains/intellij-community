@@ -42,7 +42,6 @@ iml_module(
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:netty-codec-http",
-        "//tools/idea/.idea/libraries:netty-handler",
     ],
 )
 

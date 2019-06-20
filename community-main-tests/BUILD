@@ -20,6 +20,8 @@ iml_module(
         "//tools/idea/plugins/stats-collector:intellij.statsCollector",
         "//tools/idea/plugins/stream-debugger:intellij.java.debugger.streams",
         "//tools/idea/plugins/editorconfig:intellij.editorconfig",
+        "//tools/idea/plugins/changeReminder:intellij.vcs.changeReminder",
+        "//tools/idea/plugins/sh:intellij.sh",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

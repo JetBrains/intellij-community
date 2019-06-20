@@ -57,6 +57,7 @@ iml_module(
         "//tools/idea/.idea/libraries:batik[test]",
         "//tools/idea/.idea/libraries:xmlgraphics-commons[test]",
         "//tools/idea/plugins/configuration-script:intellij.configurationScript[module, test]",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.tests[module, test]",
         "//tools/base/common:studio.android.sdktools.common[module, test]",
         "//tools/base/testutils:studio.android.sdktools.testutils[module, test]",
         "//tools/idea/.idea/libraries:HdrHistogram[test]",

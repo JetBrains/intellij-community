@@ -4,10 +4,6 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.platform.jps.build.javac.rt",
     srcs = ["src"],
-    exclude = [
-        "src/org/jetbrains/jps/javac/OptimizedFileManager.java",
-        "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
-    ],
     iml_files = ["intellij.platform.jps.build.javac.rt.iml"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

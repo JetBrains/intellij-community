@@ -79,5 +79,7 @@ iml_module(
         "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
         "//tools/idea/plugins/groovy:intellij.groovy[module, test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module, test]",
     ],
 )

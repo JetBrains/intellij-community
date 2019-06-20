@@ -44,14 +44,14 @@ iml_module(
 iml_module(
     name = "intellij.platform.diff.tests",
     iml_files = ["intellij.platform.diff.tests.iml"],
+    test_resources = ["tests/testData"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
-        "//tools/idea/images:intellij.platform.images",
-        "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
+        "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
     ],
-    test_srcs = ["tests"],
+    test_srcs = ["tests/testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/diff-api:intellij.platform.diff"],
@@ -80,5 +80,6 @@ iml_module(
         "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/.idea/libraries:kotlin-test[test]",
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module, test]",
+        "//tools/idea/platform/platform-tests:intellij.platform.tests[module, test]",
     ],
 )

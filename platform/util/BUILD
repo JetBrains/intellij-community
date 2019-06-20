@@ -21,7 +21,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en[module]",
         "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader[module]",
@@ -81,8 +80,25 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
+        "//tools/idea/.idea/libraries:bouncy-castle-provider[test]",
         "//tools/idea/.idea/libraries:HdrHistogram[test]",
         "//tools/idea/.idea/libraries:studio-analytics-proto[test]",
         "//tools/idea/.idea/libraries:protobuf[test]",
+    ],
+)
+
+# managed by go/iml_to_build
+iml_module(
+    name = "intellij.platform.util.concurrency",
+    srcs = ["concurrency"],
+    iml_files = ["intellij.platform.util.concurrency.iml"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
+        "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
+        "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
+        "//tools/idea/platform/core-api:intellij.platform.core[module]",
     ],
 )

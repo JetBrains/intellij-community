@@ -21,8 +21,6 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/.idea/libraries:Objenesis",
-        "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
         "//tools/idea/RegExpSupport:intellij.regexp",
@@ -46,6 +44,8 @@ iml_module(
         "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:de.ruedigermoeller_fst",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
+        "//tools/idea/.idea/libraries:lz4-java",
     ],
 )

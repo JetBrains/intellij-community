@@ -33,11 +33,11 @@ iml_module(
         "//tools/idea/plugins/ant:intellij.ant[module, test]",
         "//tools/idea/plugins/xpath:intellij.xpath[module, test]",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl[module, test]",
-        "//tools/idea/.idea/libraries:XmlBeans",
         "//tools/idea/platform/platform-tests:intellij.platform.tests[module, test]",
         "//tools/idea/.idea/libraries:xml-resolver[test]",
         "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/plugins/IntelliLang:intellij.platform.langInjection[module, test]",
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection[module]",
+        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl[module, test]",
     ],
 )

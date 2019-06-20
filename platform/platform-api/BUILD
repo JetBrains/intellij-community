@@ -19,11 +19,16 @@ iml_module(
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor",
+        "//tools/idea/.idea/libraries:rd-swing",
+        "//tools/idea/.idea/libraries:rd-core",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex",
+        "//tools/idea/platform/util:intellij.platform.util.concurrency",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
+        "//tools/idea/.idea/libraries:netty-handler-proxy",
     ],
     # do not sort: must match IML order
     deps = [
@@ -53,5 +58,9 @@ iml_module(
         "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/.idea/libraries:netty-codec-http",
         "//tools/idea/.idea/libraries:Java_Compatibility",
+        "//tools/idea/.idea/libraries:rd-swing",
+        "//tools/idea/.idea/libraries:rd-core",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
+        "//tools/idea/platform/util:intellij.platform.util.concurrency[module]",
     ],
 )

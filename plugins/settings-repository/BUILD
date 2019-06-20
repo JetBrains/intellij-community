@@ -42,6 +42,7 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:jackson",
+        "//tools/idea/.idea/libraries:jackson-databind",
     ],
 )
 
