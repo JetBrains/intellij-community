@@ -34,7 +34,6 @@ import java.util.Map;
  * @version 1.0
  */
 public interface Filter {
-
   Filter[] EMPTY_ARRAY = new Filter[0];
 
   class Result extends ResultItem {
@@ -166,19 +165,19 @@ public interface Filter {
      * @deprecated use getter, the visibility of this field will be decreased.
      */
     @Deprecated
-    public final int highlightStartOffset;
+    private final int highlightStartOffset;
     /**
      * @deprecated use getter, the visibility of this field will be decreased.
      */
     @Deprecated
-    public final int highlightEndOffset;
+    private final int highlightEndOffset;
     /**
-     * @deprecated use getter, the visibility of this field will be decreased.
+     * @deprecated use {@link #getHighlightAttributes()} instead, the visibility of this field will be decreased.
      */
     @Deprecated @Nullable
     public final TextAttributes highlightAttributes;
     /**
-     * @deprecated use getter, the visibility of this field will be decreased.
+     * @deprecated use {@link #getHyperlinkInfo()} instead, the visibility of this field will be decreased.
      */
     @Deprecated @Nullable
     public final HyperlinkInfo hyperlinkInfo;
@@ -205,7 +204,6 @@ public interface Filter {
            grayedHyperlink ? getGrayedHyperlinkAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES) : null);
     }
 
-    @SuppressWarnings("deprecation")
     public ResultItem(final int highlightStartOffset,
                       final int highlightEndOffset,
                       @Nullable final HyperlinkInfo hyperlinkInfo,
