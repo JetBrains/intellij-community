@@ -42,7 +42,7 @@ public class HgCopyTest extends HgSingleUserTest {
   public void testCopyUnversionedFile() throws Exception {
     VirtualFile file = makeFile(new File(myWorkingCopyDir.getPath(), "a.txt"));
     copyFileInCommand(file, "b.txt");
-    verify(runHgOnProjectRepo("status"), HgTestOutputParser.unknown("a.txt"), HgTestOutputParser.unknown("b.txt"));
+    verify(runHgOnProjectRepo("status"), HgTestOutputParser.added("b.txt"), HgTestOutputParser.unknown("a.txt"));
   }
 
   @Test
