@@ -83,11 +83,7 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
     final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
     String outputPath = getArtifact().getOutputPath();
-    if (StringUtil.isNotEmpty(outputPath)) {
-      out.println(relativizer.toRelative(outputPath));
-    } else {
-      out.println("");
-    }
+    out.println(StringUtil.isNotEmpty(outputPath) ? relativizer.toRelative(outputPath) : "");
     final BuildRootIndex rootIndex = pd.getBuildRootIndex();
     for (ArtifactRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       descriptor.writeConfiguration(out, relativizer);
