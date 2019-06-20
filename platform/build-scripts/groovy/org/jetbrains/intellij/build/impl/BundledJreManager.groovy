@@ -55,7 +55,7 @@ class BundledJreManager {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
-    File archive = findArchive(osName, getJreBuild(osName), getJreVersion(), null, JvmArchitecture.x64, JreVendor.JetBrains)
+    File archive = findArchive(osName, getJreBuild(osName), getJreVersion(), jrePrefix(), JvmArchitecture.x64, JreVendor.JetBrains)
     if (archive == null) {
       return null
     }
@@ -99,7 +99,7 @@ class BundledJreManager {
   }
 
   File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64) {
-    return findArchive(osName, getJreBuild(osName), getJreVersion(), null, arch, JreVendor.JetBrains)
+    return findArchive(osName, getJreBuild(osName), getJreVersion(), jrePrefix(), arch, JreVendor.JetBrains)
   }
 
   String archiveNameJre(BuildContext buildContext) {
@@ -199,9 +199,7 @@ class BundledJreManager {
   }
 
   private File findSecondBundledJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    return findArchive(osName, secondBundledJreBuild, secondBundledJreVersion,
-                       System.getProperty("intellij.build.bundled.jre.prefix"),
-                       arch, vendor)
+    return findArchive(osName, secondBundledJreBuild, secondBundledJreVersion, null, arch, vendor)
   }
 
   private File findArchive(String osName, String jreBuild,
@@ -267,6 +265,10 @@ class BundledJreManager {
       this.jreNamePrefix = jreNamePrefix
       this.jreWithToolsJarNamePrefix = jreWithToolsJarNamePrefix
     }
+  }
+
+  String jrePrefix() {
+    return System.getProperty("intellij.build.bundled.jre.prefix")
   }
 
   String secondJreSuffix() {
