@@ -4,10 +4,6 @@
       <interface-class>com.intellij.xdebugger.XDebuggerManager</interface-class>
       <implementation-class>com.intellij.xdebugger.impl.XDebuggerManagerImpl</implementation-class>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.xdebugger.memory.component.InstancesTracker</implementation-class>
-    </component>
   </project-components>
 
   <extensionPoints>
@@ -72,6 +68,8 @@
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"
                          order="before hide-search" id="smart-step-into-escape"/>
     <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
   </extensions>
   
   <actions>

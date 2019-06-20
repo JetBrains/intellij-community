@@ -2,10 +2,7 @@
 package com.intellij.xdebugger.memory.component;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -24,7 +21,7 @@ public class InstancesTracker implements PersistentStateComponent<InstancesTrack
   private MyState myState = new MyState();
 
   public static InstancesTracker getInstance(@NotNull Project project) {
-    return project.getComponent(InstancesTracker.class);
+    return ServiceManager.getService(project, InstancesTracker.class);
   }
 
   public boolean isTracked(@NotNull String className) {
