@@ -31,20 +31,16 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   private volatile List<MavenIndex> myProjectIndices = new ArrayList<>();
-  private volatile boolean offlineIndexes = false;
   private final DependencySearchService myDependencySearchService;
   private final MergingUpdateQueue myUpdateQueue;
 
   public boolean hasOfflineIndexes() {
-    return offlineIndexes;
+    return !myProjectIndices.isEmpty();
   }
 
   public static MavenProjectIndicesManager getInstance(Project p) {
@@ -94,22 +90,26 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     myUpdateQueue.queue(new Update(this) {
       @Override
       public void run() {
-        Set<Pair<String, String>> remoteRepositoriesIdsAndUrls;
-        File localRepository;
 
-
-        MavenIndicesManager indicesManager = MavenIndicesManager.getInstance();
-        remoteRepositoriesIdsAndUrls = ReadAction.compute(() -> myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls());
-        localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
+        Set<Pair<String, String>> remoteRepositoriesIdsAndUrls =
+          ReadAction.compute(() -> myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls());
+        File localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
         if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
-
-        List<MavenIndex> offlineIndices =
-          MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
-
-        synchronized (this) {
-          offlineIndexes = !remoteRepositoriesIdsAndUrls.isEmpty();
-          myDependencySearchService.reload();
+        Iterator<Pair<String, String>> iterator = remoteRepositoriesIdsAndUrls.iterator();
+        while (iterator.hasNext()) {
+          Pair<String, String> next = iterator.next();
+          if ("central".equals(next.first) || next.second.contains("repo1.maven.org/maven2")) {
+            iterator.remove();
+          }
         }
+
+        if (remoteRepositoriesIdsAndUrls.isEmpty()) {
+          myProjectIndices.clear();
+        }
+        else {
+          myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
+        }
+        myDependencySearchService.reload();
 
         if (consumer != null) {
           consumer.consume(myProjectIndices);
