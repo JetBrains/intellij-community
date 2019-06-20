@@ -235,7 +235,9 @@ public class FileUtilRt {
       }
     }
 
-    path = path.replace(separatorChar, '/');
+    if (separatorChar != '/') {
+      path = path.replace(separatorChar, '/');
+    }
     // trying to speedup the common case when there are no "//" or "/."
     int index = -1;
     do {
@@ -304,7 +306,6 @@ public class FileUtilRt {
     return result.toString();
   }
 
-  @SuppressWarnings("DuplicatedCode")
   private static int processRoot(@NotNull String path, @NotNull Appendable result) {
     try {
       if (SystemInfoRt.isWindows && path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
