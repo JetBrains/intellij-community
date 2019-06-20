@@ -337,16 +337,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public int handleDebugPort(int localPort) throws IOException {
     if (myProcessHandler instanceof RemoteProcessControl) {
-      return getRemoteTunneledPort(localPort, (RemoteProcessControl)myProcessHandler);
+      return getRemoteHostPortForDebuggerConnection(localPort, (RemoteProcessControl)myProcessHandler).getSecond();
     }
     else {
       return localPort;
     }
   }
 
-  protected static int getRemoteTunneledPort(int localPort, @NotNull RemoteProcessControl handler) throws IOException {
+  protected static Pair<String, Integer> getRemoteHostPortForDebuggerConnection(int localPort, @NotNull RemoteProcessControl handler)
+    throws IOException {
     try {
-      return handler.getRemoteSocket(localPort).getSecond();
+      return handler.getRemoteSocket(localPort);
     }
     catch (Exception e) {
       throw new IOException(e);
