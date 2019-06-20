@@ -165,10 +165,9 @@ object UpdateChecker {
       updateInfo = HttpRequests.request(updateUrl)
         .connect {
           try {
-            if (settings.isPlatformUpdateEnabled)
-              UpdatesInfo(JDOMUtil.load(it.reader))
-            else
-              null
+            //We should ping update server anyway
+            val updatesInfo = UpdatesInfo(JDOMUtil.load(it.reader))
+            if (settings.isPlatformUpdateEnabled) updatesInfo else null
           }
           catch (e: JDOMException) {
             // corrupted content, don't bother telling user
