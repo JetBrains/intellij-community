@@ -432,7 +432,8 @@ public abstract class FileAttributesReadingTest {
     File substRoot = IoTestUtil.createSubst(tempDir.getRoot().getPath());
     try {
       FileAttributes attributes = getAttributes(substRoot);
-      assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+      assertEquals(substRoot + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.type);
+      assertFalse(substRoot + " " + attributes, attributes.isSymLink());
       assertDirectoriesEqual(substRoot);
 
       File[] children = substRoot.listFiles();
