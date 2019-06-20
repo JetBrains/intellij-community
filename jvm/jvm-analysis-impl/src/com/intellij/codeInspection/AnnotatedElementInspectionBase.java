@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
 
 import javax.swing.*;
 import java.util.List;
@@ -117,6 +118,14 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
                                                    @Nullable UClass subclassDeclaration) {
       if (constructor != null) {
         maybeProcessAnnotatedTarget(sourceNode, constructor);
+      }
+    }
+
+    @Override
+    public void processMethodOverriding(@NotNull UMethod method, @NotNull PsiMethod overriddenMethod) {
+      List<PsiAnnotation> annotations = AnnotationUtil.findAllAnnotations(overriddenMethod, myAnnotations, false);
+      if (!annotations.isEmpty()) {
+        myAnnotatedApiProcessor.processAnnotatedMethodOverriding(method, overriddenMethod, annotations);
       }
     }
 

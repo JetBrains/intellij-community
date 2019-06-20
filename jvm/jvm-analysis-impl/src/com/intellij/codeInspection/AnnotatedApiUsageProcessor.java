@@ -2,9 +2,11 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UMethod;
 
 import java.util.List;
 
@@ -15,6 +17,12 @@ public interface AnnotatedApiUsageProcessor {
   void processAnnotatedTarget(
     @NotNull UElement sourceNode,
     @NotNull PsiModifierListOwner annotatedTarget,
+    @NotNull List<? extends PsiAnnotation> annotations
+  );
+
+  void processAnnotatedMethodOverriding(
+    @NotNull UMethod method,
+    @NotNull PsiMethod overriddenMethod,
     @NotNull List<? extends PsiAnnotation> annotations
   );
 }

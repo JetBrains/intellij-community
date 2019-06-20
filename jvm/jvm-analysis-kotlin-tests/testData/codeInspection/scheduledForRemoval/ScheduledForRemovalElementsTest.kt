@@ -81,3 +81,12 @@ class ScheduledForRemovalElementsTest {
     @NonAnnotatedAnnotation(<warning descr="'annotatedAttributeInNonAnnotatedAnnotation' is scheduled for removal in 123.456">annotatedAttributeInNonAnnotatedAnnotation</warning> = "123") class C6
   }
 }
+
+open class DirectOverrideAnnotatedMethod : NonAnnotatedClass() {
+  override fun <warning descr="Overridden method 'annotatedMethodInNonAnnotatedClass()' is scheduled for removal in 123.456">annotatedMethodInNonAnnotatedClass</warning>() {}
+}
+
+//No warning should be produced.
+class IndirectOverrideAnnotatedMethod : DirectOverrideAnnotatedMethod() {
+  override fun annotatedMethodInNonAnnotatedClass() {}
+}

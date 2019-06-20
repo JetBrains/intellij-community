@@ -81,3 +81,14 @@ public class UnstableElementsTest {
     @NonAnnotatedAnnotation(<warning descr="'annotatedAttributeInNonAnnotatedAnnotation' is marked unstable">annotatedAttributeInNonAnnotatedAnnotation</warning> = "123") class C6 {}
   }
 }
+
+class DirectOverrideAnnotatedMethod extends NonAnnotatedClass {
+  @Override
+  public void <warning descr="Overridden method 'annotatedMethodInNonAnnotatedClass()' is marked unstable">annotatedMethodInNonAnnotatedClass</warning>() {}
+}
+
+//No warning should be produced.
+class IndirectOverrideAnnotatedMethod extends DirectOverrideAnnotatedMethod {
+  @Override
+  public void annotatedMethodInNonAnnotatedClass() {}
+}
