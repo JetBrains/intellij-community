@@ -7,10 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.*;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -121,7 +118,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   }
 
   /**
-   * Returns relative path to the test data.
+   * Returns a relative path to the test data.
    */
   protected String getBasePath() {
     return "";
@@ -133,7 +130,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   }
 
   /**
-   * Return absolute path to the test data. Not intended to be overridden.
+   * Return an absolute path to the test data. Not intended to be overridden.
    *
    * @see #getBasePath()
    */

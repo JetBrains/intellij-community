@@ -2117,13 +2117,12 @@ public class HighlightUtil extends HighlightUtilBase {
         for (PsiSwitchLabeledRuleStatement rule = (PsiSwitchLabeledRuleStatement)lastStatement;
              rule != null;
              rule = PsiTreeUtil.getPrevSiblingOfType(rule, PsiSwitchLabeledRuleStatement.class)) {
-
           PsiStatement ruleBody = rule.getBody();
           // the expression and throw statements are fine, only the block statement could be an issue
           if (ruleBody instanceof PsiBlockStatement && ControlFlowUtils.statementMayCompleteNormally(ruleBody)) {
             PsiElement target = ObjectUtils.notNull(ObjectUtils.tryCast(rule.getFirstChild(), PsiKeyword.class), rule);
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target)
-                          .descriptionAndTooltip(JavaErrorMessages.message("switch.expr.rule.should.produce.result")).create());
+            String message = JavaErrorMessages.message("switch.expr.rule.should.produce.result");
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target).descriptionAndTooltip(message).create());
           }
         }
         return results;
@@ -2131,8 +2130,8 @@ public class HighlightUtil extends HighlightUtilBase {
       // previous statements may have no result as well, but in that case they fall through to the last one, which needs to be checked anyway
       if (lastStatement != null && ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
         PsiElement target = ObjectUtils.notNull(ObjectUtils.tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
-        return Collections.singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target)
-                                           .descriptionAndTooltip(JavaErrorMessages.message("switch.expr.should.produce.result")).create());
+        String message = JavaErrorMessages.message("switch.expr.should.produce.result");
+        return Collections.singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target).descriptionAndTooltip(message).create());
       }
     }
     return null;
