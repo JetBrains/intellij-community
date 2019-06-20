@@ -268,7 +268,7 @@ public class EditorHyperlinkSupport {
   }
 
   public void highlightHyperlinks(@NotNull Filter customFilter, final int line1, final int endLine) {
-    myFilterRunner.highlightHyperlinks(customFilter, Math.max(0, line1), endLine);
+    myFilterRunner.highlightHyperlinks(myProject, customFilter, Math.max(0, line1), endLine);
   }
 
   void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
