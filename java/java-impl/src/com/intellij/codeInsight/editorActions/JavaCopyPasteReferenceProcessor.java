@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -159,6 +160,12 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
         PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
         if (refClass != null) {
           if (refData.staticMemberName == null) {
+            if (reference instanceof PsiJavaCodeReferenceElementImpl &&
+                ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(reference.getContainingFile()) ==
+                PsiJavaCodeReferenceElementImpl.Kind.PACKAGE_NAME_KIND) {
+              // Trying to paste class reference into e.g. package statement
+              continue;
+            }
             reference.bindToElement(refClass);
             imported.add(refData.qClassName);
           }
