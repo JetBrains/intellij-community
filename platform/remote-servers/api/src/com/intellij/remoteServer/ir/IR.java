@@ -27,7 +27,7 @@ public class IR {
     Platform getPlatform();
 
     // todo: string or remoteValue or pathId?
-    String findRemotePath(String path);
+    //String findRemotePath(String path);
 
     Process createProcess(NewCommandLine commandLine) throws ExecutionException;
   }
@@ -148,11 +148,6 @@ public class IR {
     @Override
     public Platform getPlatform() {
       return Platform.current();
-    }
-
-    @Override
-    public String findRemotePath(String path) {
-      return path;
     }
 
     @Override
