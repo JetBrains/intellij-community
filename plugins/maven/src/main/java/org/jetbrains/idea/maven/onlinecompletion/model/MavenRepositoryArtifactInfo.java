@@ -27,11 +27,12 @@ public class MavenRepositoryArtifactInfo implements MavenCoordinate {
 
   }
 
-
+  @Override
   public String getGroupId() {
     return groupId;
   }
 
+  @Override
   public String getArtifactId() {
     return artifactId;
   }
@@ -45,11 +46,12 @@ public class MavenRepositoryArtifactInfo implements MavenCoordinate {
     return items[0].getVersion();
   }
 
-  public boolean isOnlyLocal() {
-    return myOnlyLocal;
-  }
-
   public MavenDependencyCompletionItem[] getItems() {
     return items;
+  }
+
+  @Override
+  public String toString() {
+    return "maven(" + groupId + ':' + artifactId + ":" + getVersion() + " " + items.length + " total)";
   }
 }

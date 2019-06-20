@@ -11,8 +11,10 @@ import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
+import java.awt.SystemColor.info
 
 import java.util.function.Consumer
+import java.util.function.Predicate
 
 
 abstract class MavenAbstractPluginExtensionCompletionContributor(tagName: String) : MavenCoordinateCompletionContributor(tagName) {

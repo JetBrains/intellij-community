@@ -29,13 +29,30 @@ import java.util.stream.Collectors;
 @ApiStatus.Experimental
 public class DependencySearchService {
   private final Project myProject;
-  private final OfflineSearchService myOfflineSearchService;
-  private final PackageSearchService myPackageSearchService = new PackageSearchService();
 
-  public DependencySearchService(Project project,
-                                 OfflineSearchService offlineSearchService) {
+  private final PackageSearchService myPackageSearchService = new PackageSearchService();
+  private OfflineSearchService myOfflineSearchService = new OfflineSearchService(Collections.emptyList());
+
+  public DependencySearchService(Project project) {
     myProject = project;
-    myOfflineSearchService = offlineSearchService;
+    reload();
+  }
+
+  public OfflineSearchService getOfflineSearchService() {
+    return myOfflineSearchService;
+  }
+
+
+  public final void reload() {
+    List<DependencyCompletionProvider> providers = new ArrayList<>();
+    List<DependencyCompletionProviderFactory> factoryList = DependencyCompletionProviderFactory.EP_NAME.getExtensionList();
+    for (DependencyCompletionProviderFactory factory : factoryList) {
+      if (factory.isApplicable(myProject)) {
+        providers.addAll(factory.getProviders(myProject));
+      }
+    }
+
+    myOfflineSearchService = new OfflineSearchService(providers);
   }
 
   public Promise<Void> fulltextSearch(@NotNull String template,
@@ -52,7 +69,7 @@ public class DependencySearchService {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ProgressManager.checkCanceled();
       Promise<Void> promise = myPackageSearchService.fullTextSearch(template, parameters, d ->
-        rewriteTypeIfPresentInLocalCache(d, collectingConsumer));//rewriting Type for data, which are present on local drive
+        mergeWithVersionsInLocalCache(d, collectingConsumer));//rewriting Type for data, which are present on local drive
 
       completeProcess(collectingConsumer, returnPromise, promise);
     });
@@ -76,7 +93,7 @@ public class DependencySearchService {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ProgressManager.checkCanceled();
       Promise<Void> promise = myPackageSearchService
-        .suggestPrefix(groupId, artifactId, parameters, d -> rewriteTypeIfPresentInLocalCache(d, collectingConsumer));
+        .suggestPrefix(groupId, artifactId, parameters, d -> mergeWithVersionsInLocalCache(d, collectingConsumer));
 
       completeProcess(collectingConsumer, returnPromise, promise);
     });
@@ -93,10 +110,6 @@ public class DependencySearchService {
   private void searchLocal(SearchParameters parameters,
                            MavenDependencyCompletionItem localSearchItem,
                            CollectingConsumer collectingConsumer) {
-    if (!parameters.getShowForLocal()) {
-      collectingConsumer.setLocalData(Collections.emptyList());
-      return;
-    }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<MavenDependencyCompletionItem> versions = getOfflineData(localSearchItem, parameters);
       collectingConsumer.setLocalData(convertLocalItemsToArtifactInfo(versions));
@@ -135,7 +148,7 @@ public class DependencySearchService {
       .collect(Collectors.toList());
   }
 
-  private void rewriteTypeIfPresentInLocalCache(MavenRepositoryArtifactInfo artifactInfo, Consumer<MavenRepositoryArtifactInfo> consumer) {
+  private void mergeWithVersionsInLocalCache(MavenRepositoryArtifactInfo artifactInfo, Consumer<MavenRepositoryArtifactInfo> consumer) {
     Map<MavenDependencyCompletionItem, MavenDependencyCompletionItem> offlineResults =
       myOfflineSearchService.findAllVersions(artifactInfo).stream().filter(v -> v.getVersion() != null)
         .collect(Collectors.toMap(Function.identity(), Function.identity()));
@@ -180,15 +193,13 @@ public class DependencySearchService {
     private final Set<String> acceptedRemotely = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<String> remoteGroups = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    CollectingConsumer(Consumer<MavenRepositoryArtifactInfo> consumer, SearchParameters parameters) {
+    CollectingConsumer(Consumer<MavenRepositoryArtifactInfo> consumer,
+                       SearchParameters parameters) {
       myConsumer = consumer;
       myParameters = parameters;
     }
 
     public void consumeLocalOnly() {
-      if(!myParameters.getShowForLocal()){
-        return;
-      }
       new WaitFor((int)myParameters.getMillisToWait()) {
         @Override
         protected boolean condition() {
@@ -207,7 +218,7 @@ public class DependencySearchService {
           continue;
         }
         String key = getKey(info);
-        if (!acceptedRemotely.contains(key)) {
+        if (!acceptedRemotely.contains(key) && myParameters.isShowAll()) {
           myConsumer.accept(info);
         }
       }

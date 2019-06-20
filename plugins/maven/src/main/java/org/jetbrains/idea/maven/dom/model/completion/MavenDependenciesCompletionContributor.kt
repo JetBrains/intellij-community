@@ -20,7 +20,7 @@ open class MavenDependenciesCompletionContributor : MavenCoordinateCompletionCon
     val text: String = trimDummy(coordinates.xmlTag?.value?.text)
     val splitted = text.split(':')
     if (splitted.size < 2) {
-      return service.fulltextSearch(text, createSearchParameters(parameters), consumer)
+      return service.suggestPrefix(text, "", createSearchParameters(parameters), consumer)
     }
     return service.suggestPrefix(splitted[0], splitted[1], createSearchParameters(parameters), consumer)
   }
