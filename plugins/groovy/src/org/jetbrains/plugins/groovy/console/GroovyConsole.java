@@ -122,15 +122,19 @@ public class GroovyConsole {
       }
     };
 
-    final Module module = GroovyConsoleStateService.getInstance(project).getSelectedModule(contentFile);
-    if (module == null || module.isDisposed()) {
-      // if not, then select module, then run initializer
-      GroovyConsoleUtil.selectModuleAndRun(project, initializer);
-    }
-    else {
+    final GroovyConsoleStateService service = GroovyConsoleStateService.getInstance(project);
+    final Module module = service.getSelectedModule(contentFile);
+    if (module != null) {
       // if module for console is already selected, then use it for creation
       initializer.consume(module);
+      return;
     }
+
+    // if not, then select module, then run initializer
+    GroovyConsoleUtil.selectModuleAndRun(project, selectedModule -> {
+      service.setFileModule(contentFile, selectedModule);
+      initializer.consume(selectedModule);
+    });
   }
 
   @Nullable
@@ -139,9 +143,6 @@ public class GroovyConsole {
                                             @NotNull Module module) {
     final ProcessHandler processHandler = createProcessHandler(module);
     if (processHandler == null) return null;
-
-    final GroovyConsoleStateService consoleStateService = GroovyConsoleStateService.getInstance(project);
-    consoleStateService.setFileModule(contentFile, module);
 
     final ConsoleViewImpl consoleView = new GroovyConsoleView(project);
     final RunContentDescriptor descriptor = new RunContentDescriptor(
