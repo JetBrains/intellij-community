@@ -783,11 +783,23 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkValueBreakExpression(@NotNull PsiBreakStatement statement, @Nullable PsiExpression expression) {
+  static HighlightInfo checkValueBreakExpression(@NotNull PsiBreakStatement statement,
+                                                 @Nullable PsiExpression expression,
+                                                 @NotNull LanguageLevel languageLevel) {
     PsiElement enclosing = PsiImplUtil.findEnclosingSwitchOrLoop(statement);
     boolean plainRef = PsiImplUtil.isUnqualifiedReference(expression);
 
     if (enclosing instanceof PsiSwitchExpression) {
+      if (languageLevel == LanguageLevel.JDK_13_PREVIEW) {
+        if (expression == null || plainRef && ((PsiReferenceExpression)expression).resolve() instanceof PsiLabeledStatement) {
+          String message = JavaErrorMessages.message("break.outside.switch.expr");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+        }
+        else {
+          String message = "Value breaks are superseded by 'yield' statements";
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+        }
+      }
       if (expression == null) {
         String message = JavaErrorMessages.message("value.break.missing");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
@@ -800,6 +812,27 @@ public class HighlightUtil extends HighlightUtilBase {
     else if (expression != null && (!plainRef || ((PsiReferenceExpression)expression).resolve() instanceof PsiVariable)) {
       String message = JavaErrorMessages.message("value.break.unexpected");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkYieldOutsideSwitchExpression(@NotNull PsiYieldStatement statement) {
+    if (statement.findEnclosingExpression() == null) {
+      String message = JavaErrorMessages.message("yield.unexpected");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkYieldExpressionType(@NotNull PsiYieldStatement statement) {
+    PsiExpression expression = statement.getExpression();
+    if (expression != null && PsiType.VOID.equals(expression.getType())) {
+      String message = JavaErrorMessages.message("yield.void");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
 
     return null;
@@ -3134,7 +3167,7 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     private boolean isSufficient(LanguageLevel useSiteLevel) {
-      return level.isPreview() ? useSiteLevel == level : useSiteLevel.isAtLeast(level);
+      return useSiteLevel.isAtLeast(level) && (!level.isPreview() || useSiteLevel.isPreview());
     }
   }
 
