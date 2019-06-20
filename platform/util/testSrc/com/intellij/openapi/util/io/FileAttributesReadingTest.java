@@ -2,7 +2,6 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -278,6 +277,8 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void innerSymlinkResolve() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
     File file = tempDir.newFile("dir/file.txt");
     File link = new File(tempDir.getRoot(), "link");
     Files.createSymbolicLink(link.toPath(), file.getParentFile().toPath());
