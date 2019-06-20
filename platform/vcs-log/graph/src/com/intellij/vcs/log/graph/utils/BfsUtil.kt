@@ -17,19 +17,23 @@ package com.intellij.vcs.log.graph.utils
 
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 
 class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val visited: Flags) {
+  constructor(start: Int, graph: LiteLinearGraph) : this(start, graph, BitSetFlags(graph.nodesCount()))
+
   private val queue = ContainerUtil.newLinkedList(start)
 
   fun isFinished() = queue.isEmpty()
 
   fun currentNodes(): List<Int> = queue
 
-  fun step(): List<Int> {
+  fun step(consumer: (Int) -> Boolean = { true }): List<Int> {
     while (!queue.isEmpty()) {
       val node = queue.poll()
       if (!visited.get(node)) {
         visited.set(node, true)
+        if (!consumer(node)) return emptyList()
         val next = graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).sorted()
         queue.addAll(next)
         return next
@@ -38,9 +42,9 @@ class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val vi
     return emptyList()
   }
 
-  fun walk() {
+  fun walk(consumer: (Int) -> Boolean = { true }) {
     while (!isFinished()) {
-      step()
+      step(consumer)
     }
   }
 }
