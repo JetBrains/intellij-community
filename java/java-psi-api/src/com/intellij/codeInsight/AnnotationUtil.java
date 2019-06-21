@@ -75,8 +75,8 @@ public class AnnotationUtil {
    *
    * @param listOwner element to search annotations of
    * @param annotationNames fully-qualified annotations names to search for
-   * @param skipExternal {@code true} if external and inferred annotations must also be searched,
-   * {@code false} only to search for own annotations declared in source code
+   * @param skipExternal {@code false} if external and inferred annotations must also be searched,
+   * {@code true} only to search for own annotations declared in source code
    * @return all annotations of {@code listOwner}, including repeatable annotation
    * and annotations from several source roots, having FQ names from {@code annotationNames}.
    */
