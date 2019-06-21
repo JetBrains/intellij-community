@@ -291,7 +291,8 @@ public class CommonDataflow {
 
         @Override
         public boolean isReleasable() {
-          return fileMap.containsKey(body);
+          myResult = fileMap.get(body);
+          return myResult != null;
         }
 
         DataflowResult getResult() {
