@@ -36,7 +36,7 @@ public class LowMemoryWatcher {
   private final Runnable myRunnable;
   private final LowMemoryWatcherType myType;
 
-  static void onLowMemorySignalReceived(boolean afterGc) {
+  public static void onLowMemorySignalReceived(boolean afterGc) {
     LOG.info("Low memory signal received: afterGc=" + afterGc);
     for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
       try {
