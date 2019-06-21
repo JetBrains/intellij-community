@@ -59,7 +59,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        res.setResult(ReadAction.compute(() -> findSmartStepTargets(position, suspendContext, getDebuggerContext(), smart)));
+        res.setResult(ReadAction.compute(() -> findStepTargets(position, suspendContext, getDebuggerContext(), smart)));
       }
 
       @Override
@@ -91,10 +91,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     throw new IllegalStateException("Should not be used");
   }
 
-  protected List<SmartStepTarget> findSmartStepTargets(final SourcePosition position,
-                                                       @Nullable SuspendContextImpl suspendContext,
-                                                       @NotNull DebuggerContextImpl debuggerContext,
-                                                       boolean smart) {
+  protected List<SmartStepTarget> findStepTargets(final SourcePosition position,
+                                                  @Nullable SuspendContextImpl suspendContext,
+                                                  @NotNull DebuggerContextImpl debuggerContext,
+                                                  boolean smart) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
