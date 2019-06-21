@@ -247,6 +247,8 @@ public class WindowsDefenderChecker {
   private static Map<Path, Boolean> checkPathsExcluded(@NotNull List<Path> paths, @NotNull List<Pattern> excludedPatterns) {
     Map<Path, Boolean> result = new HashMap<>();
     for (Path path : paths) {
+      if (!path.toFile().exists()) continue;
+
       try {
         String canonical = path.toRealPath().toString();
         boolean found = false;
