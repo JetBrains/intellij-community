@@ -35,7 +35,9 @@ public class CommandLineBuilder {
                                                             final Project project,
                                                             final boolean dynamicClasspath) throws CantRunException {
     if (dynamicClasspath) {
-      javaParameters.setUseDynamicClasspath(project);
+      if (!javaParameters.isDynamicClasspath()) {
+        javaParameters.setUseDynamicClasspath(project);
+      }
     }
     else {
       javaParameters.setUseDynamicClasspath(false);
