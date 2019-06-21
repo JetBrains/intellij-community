@@ -300,14 +300,15 @@ public class UITheme {
     }
     else {
       String valueStr = value.toString();
+      Color color = null;
       if (theme.colors != null && theme.colors.containsKey(valueStr)) {
-        Color color = parseColor(String.valueOf(theme.colors.get(valueStr)));
-        if (color != null) {
+        color = parseColor(String.valueOf(theme.colors.get(valueStr)));
+        if (color != null && !key.startsWith("*")) {
           defaults.put(key, color);
           return;
         }
       }
-      value = parseValue(key, valueStr);
+      value = color == null ? parseValue(key, valueStr) : color;
       if (key.startsWith("*.")) {
         String tail = key.substring(1);
         Object finalValue = value;
@@ -425,7 +426,8 @@ public class UITheme {
         return null;
       }
     }
-    return ColorUtil.fromHex(value, null);
+    Color color = ColorUtil.fromHex(value, null);
+    return color == null ? null : new ColorUIResource(color);
   }
 
   private static Integer getInteger(String value, @Nullable String key) {
