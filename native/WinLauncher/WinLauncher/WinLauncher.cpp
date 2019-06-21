@@ -577,14 +577,14 @@ bool LoadVMOptions()
   std::string binDirs = dllName + "\\bin;" + dllName + "\\bin\\server";
 
   std::vector<char> pathEnvVar(_MAX_PATH);
-  DWORD pathSize = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
-  while (pathSize >= pathEnvVar.size())
+  DWORD pathSizeWithoutTerminator = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
+  if (pathSizeWithoutTerminator >= pathEnvVar.size())
   {
-    pathEnvVar.resize(pathSize + 1);
-    pathSize = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
+    pathEnvVar.resize(pathSizeWithoutTerminator + 1);
+    pathSizeWithoutTerminator = GetEnvironmentVariableA("PATH", pathEnvVar.data(), pathEnvVar.size());
   }
 
-  if (pathSize)
+  if (pathSizeWithoutTerminator)
   {
     std::string path = std::string(pathEnvVar.data()) + ";" + binDirs;
     SetEnvironmentVariableA("PATH", path.c_str());
