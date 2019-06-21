@@ -113,16 +113,18 @@ public class VcsProjectLog implements Disposable {
     recreateLog();
   }
 
+  @Nullable
   @CalledInBackground
-  void createLog(boolean forceInit) {
+  VcsLogManager createLog(boolean forceInit) {
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
     if (!logProviders.isEmpty()) {
-      createLog(logProviders, forceInit);
+      return createLog(logProviders, forceInit);
     }
+    return null;
   }
 
   @CalledInBackground
-  private void createLog(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, boolean forceInit) {
+  private VcsLogManager createLog(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, boolean forceInit) {
     VcsLogManager logManager = myLogManager.getValue(logProviders);
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -136,6 +138,8 @@ public class VcsProjectLog implements Disposable {
         }
       }
     });
+
+    return logManager;
   }
 
   @NotNull

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -19,7 +20,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
@@ -31,8 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 /**
@@ -199,29 +197,18 @@ public class VcsLogContentUtil {
       action.accept(log, manager);
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
-      CountDownLatch latch = new CountDownLatch(1);
-      MessageBusConnection connection = project.getMessageBus().connect(log);
-      connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
-        @Override
-        public void logCreated(@NotNull VcsLogManager logManager) {
-          latch.countDown();
-          action.accept(log, logManager);
-          connection.disconnect();
-        }
-      });
-
       new Task.Backgroundable(project, "Loading Commits") {
+        @Nullable private VcsLogManager myLogManager;
+
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          log.createLog(true);
+          myLogManager = log.createLog(true);
+        }
 
-          try {
-            while (!latch.await(50, TimeUnit.MILLISECONDS)) {
-              indicator.checkCanceled();
-            }
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
+        @Override
+        public void onSuccess() {
+          if (myLogManager != null) {
+            action.accept(log, myLogManager);
           }
         }
       }.queue();
