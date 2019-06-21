@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.scale.JBUIScale;
@@ -15,6 +16,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.swing.plaf.basic.ComboPopup;
@@ -176,11 +178,20 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   private Color getComboBackground(boolean opaque) {
     if (comboBox != null) {
-      if (comboBox.isEnabled() && comboBox.isEditable()) {
+      Color bg = comboBox.getBackground();
+      Object value = comboBox.getSelectedItem();
+
+      if (comboBox.isEnabled() && comboBox.isEditable() && editor != null) {
         return UIManager.getColor("TextField.background");
       }
       else if (!comboBox.isEnabled()) {
         return opaque ? UIManager.getColor("Button.background.opaque") : UIManager.getColor("Button.background");
+      }
+      else if (comboBox.isBackgroundSet() && !(bg instanceof UIResource)) {
+        return bg;
+      }
+      else if (value instanceof ColoredItem) {
+        return ((ColoredItem)value).getColor();
       }
       else if (!comboBox.isEditable()) {
         if (isPressed() || popup.isVisible()) {
