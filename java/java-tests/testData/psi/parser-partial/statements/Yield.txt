@@ -1,6 +1,6 @@
 PsiJavaFile:Yield.java
   PsiYieldStatement
-    PsiJavaToken:YIELD('yield')
+    PsiKeyword:yield('yield')
     PsiWhiteSpace(' ')
     PsiReferenceExpression:yield
       PsiReferenceParameterList

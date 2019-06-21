@@ -1,6 +1,6 @@
 PsiJavaFile:YieldNested.java
   PsiYieldStatement
-    PsiJavaToken:YIELD('yield')
+    PsiKeyword:yield('yield')
     PsiWhiteSpace(' ')
     PsiSwitchExpression: 0
       PsiKeyword:switch('switch')
@@ -18,7 +18,7 @@ PsiJavaFile:YieldNested.java
           PsiJavaToken:COLON(':')
         PsiWhiteSpace(' ')
         PsiYieldStatement
-          PsiJavaToken:YIELD('yield')
+          PsiKeyword:yield('yield')
           PsiWhiteSpace(' ')
           PsiLiteralExpression:42
             PsiJavaToken:INTEGER_LITERAL('42')
