@@ -20,59 +20,38 @@ import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQuery
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import java.util.function.Function
-import javax.swing.ListModel
-import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
 
-internal class GithubPullRequestsListLoaderImpl(private val progressManager: ProgressManager,
-                                                private val requestExecutor: GithubApiRequestExecutor,
-                                                private val serverPath: GithubServerPath,
-                                                private val repoPath: GithubFullPath)
-  : GithubPullRequestsListLoader, ListModel<GHPullRequestShort>, GithubPullRequestSearchQueryHolder, Disposable {
-
-  override var searchQuery: GithubPullRequestSearchQuery
-    by Delegates.observable(GithubPullRequestSearchQuery(emptyList())) { _, _, _ ->
-      reset()
-    }
+internal class GHPRListLoaderImpl(progressManager: ProgressManager,
+                                  private val requestExecutor: GithubApiRequestExecutor,
+                                  private val serverPath: GithubServerPath,
+                                  private val repoPath: GithubFullPath,
+                                  listModel: CollectionListModel<GHPullRequestShort>,
+                                  private val searchQueryHolder: GithubPullRequestSearchQueryHolder)
+  : GHListLoaderBase<GHPullRequestShort>(progressManager, listModel), GHPRListLoader {
 
   private val loader = SimpleGHGQLPagesLoader(requestExecutor, { p ->
-    GHGQLRequests.PullRequest.search(serverPath, buildQuery(searchQuery), p)
+    GHGQLRequests.PullRequest.search(serverPath, buildQuery(searchQueryHolder.query), p)
   })
-  private var lastFuture = CompletableFuture.completedFuture(emptyList<GHPullRequestShort>())
-  private var progressIndicator = NonReusableEmptyProgressIndicator()
 
-  override var loading: Boolean by Delegates.observable(false) { _, _, _ ->
-    loadingStateChangeEventDispatcher.multicaster.eventOccurred()
-  }
-
-  private val listModelDelegate = CollectionListModel<GHPullRequestShort>()
-  private var resetDisposable: Disposable
-
-  override var error: Throwable? by Delegates.observable<Throwable?>(null) { _, _, _ ->
-    errorChangeEventDispatcher.multicaster.eventOccurred()
-  }
+  private val outdatedStateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   override var outdated: Boolean by Delegates.observable(false) { _, _, newValue ->
     if (newValue) sizeChecker.stop()
     outdatedStateEventDispatcher.multicaster.eventOccurred()
   }
-
-  private val loadingStateChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-  private val errorChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-  private val outdatedStateEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
   private val sizeChecker = ListChangesChecker()
+
+  private var resetDisposable: Disposable
 
   init {
     requestExecutor.addListener(this) { reset() }
+    searchQueryHolder.addQueryChangeListener(this) { reset() }
 
     Disposer.register(this, sizeChecker)
 
@@ -88,32 +67,35 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
     }
   }
 
-  override fun canLoadMore() = !loading && (loader.hasNext || error != null)
+  override val filterNotEmpty: Boolean
+    get() = !searchQueryHolder.query.isEmpty()
 
-  override fun loadMore() {
-    val indicator = progressIndicator
-    if (canLoadMore()) {
-      loading = true
-      requestLoadMore(indicator).handleOnEdt { list, error ->
-        if (indicator.isCanceled) return@handleOnEdt
-        when {
-          error != null && !GithubAsyncUtil.isCancellation(error) -> {
-            this.error = if (error is CompletionException) error.cause!! else error
-          }
-          list != null -> {
-            listModelDelegate.add(list)
-            sizeChecker.start()
-          }
-        }
-        loading = false
-      }
-    }
+  override fun resetFilter() {
+    searchQueryHolder.query = GithubPullRequestSearchQuery.parseFromString("state:open")
   }
 
-  private fun requestLoadMore(indicator: ProgressIndicator): CompletableFuture<List<GHPullRequestShort>> {
-    lastFuture = lastFuture.thenApplyAsync(Function { progressManager.runProcess(Computable { loader.loadNext(indicator) }, indicator) },
-                                           ProcessIOExecutorService.INSTANCE)
-    return lastFuture
+  override fun canLoadMore() = !loading && (loader.hasNext || error != null)
+
+  override fun doLoadMore(indicator: ProgressIndicator): List<GHPullRequestShort>? = loader.loadNext(indicator)
+
+  override fun handleResult(list: List<GHPullRequestShort>) {
+    super.handleResult(list)
+    sizeChecker.start()
+  }
+
+  override fun reset() {
+    loader.reset()
+    super.reset()
+    listModel.removeAll()
+
+    outdated = false
+    sizeChecker.stop()
+
+    Disposer.dispose(resetDisposable)
+    resetDisposable = Disposer.newDisposable()
+    Disposer.register(this, resetDisposable)
+
+    loadMore()
   }
 
   override fun reloadData(request: CompletableFuture<out GHPullRequestShort>) {
@@ -123,46 +105,12 @@ internal class GithubPullRequestsListLoaderImpl(private val progressManager: Pro
   }
 
   private fun updateData(pullRequest: GHPullRequestShort) {
-    val index = listModelDelegate.items.indexOfFirst { it.id == pullRequest.id }
-    listModelDelegate.setElementAt(pullRequest, index)
+    val index = listModel.items.indexOfFirst { it.id == pullRequest.id }
+    listModel.setElementAt(pullRequest, index)
   }
-
-  override fun getElementAt(index: Int): GHPullRequestShort = listModelDelegate.getElementAt(index)
-  override fun getSize(): Int = listModelDelegate.size
-
-  override fun reset() {
-    loader.reset()
-    lastFuture = lastFuture.handle { _, _ ->
-      listOf<GHPullRequestShort>()
-    }
-
-    progressIndicator.cancel()
-    progressIndicator = NonReusableEmptyProgressIndicator()
-    error = null
-    loading = false
-    outdated = false
-    sizeChecker.stop()
-
-    listModelDelegate.removeAll()
-
-    Disposer.dispose(resetDisposable)
-    resetDisposable = Disposer.newDisposable()
-    Disposer.register(this, resetDisposable)
-  }
-
-  override fun addListDataListener(l: ListDataListener) = listModelDelegate.addListDataListener(l)
-  override fun removeListDataListener(l: ListDataListener) = listModelDelegate.removeListDataListener(l)
-
-  override fun addLoadingStateChangeListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(loadingStateChangeEventDispatcher, disposable, listener)
-
-  override fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(errorChangeEventDispatcher, disposable, listener)
 
   override fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(outdatedStateEventDispatcher, disposable, listener)
-
-  override fun dispose() = progressIndicator.cancel()
 
   private inner class ListChangesChecker : Disposable {
 

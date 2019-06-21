@@ -6,8 +6,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.data.GithubPullRequest
-import org.jetbrains.plugins.github.pullrequest.ui.WrapLayout
+import org.jetbrains.plugins.github.ui.WrapLayout
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
 import javax.swing.JLabel

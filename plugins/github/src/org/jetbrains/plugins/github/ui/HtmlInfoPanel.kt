@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.ui
 
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
@@ -62,6 +62,9 @@ class HtmlInfoPanel : Wrapper() {
     }
     isVisible = true
   }
+
+  val isEmpty: Boolean
+    get() = currentSeverity == null
 
   enum class Severity {
     INFO, WARNING, ERROR

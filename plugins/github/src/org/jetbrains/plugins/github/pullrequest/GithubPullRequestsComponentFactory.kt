@@ -3,17 +3,20 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.*
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -22,18 +25,20 @@ import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestsDataCon
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GithubPullRequestEditorCommentsThreadComponentFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTrackerImpl
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoaderImpl
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoaderImpl
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoaderImpl
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
-import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
+import org.jetbrains.plugins.github.pullrequest.data.*
+import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
+import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
+import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
+import java.awt.Component
 import javax.swing.JComponent
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
+import javax.swing.event.ListSelectionEvent
 
 
 internal class GithubPullRequestsComponentFactory(private val project: Project,
@@ -64,41 +69,66 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                           accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed, account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
-    private val repoDataLoader = GithubPullRequestsRepositoryDataLoaderImpl(progressManager, requestExecutor,
-                                                                            account.server, repoDetails.fullPath)
-    private val listLoader = GithubPullRequestsListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath)
-    private val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
-    private val dataLoader = GithubPullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor, repository, remote,
-                                                              account.server, repoDetails.fullPath)
+    private val repoDataLoader: GithubPullRequestsRepositoryDataLoader
+    private val listModel: CollectionListModel<GHPullRequestShort>
+    private val searchHolder: GithubPullRequestSearchQueryHolder
+    private val listLoader: GHPRListLoader
+    private val listSelectionHolder: GithubPullRequestsListSelectionHolder
+    private val dataLoader: GithubPullRequestsDataLoader
+    private val securityService: GithubPullRequestsSecurityService
+    private val busyStateTracker: GithubPullRequestsBusyStateTracker
+    private val metadataService: GithubPullRequestsMetadataService
+    private val stateService: GithubPullRequestsStateService
 
-    private val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
-    private val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
-    private val metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager,
-                                                                        repoDataLoader, listLoader, dataLoader,
-                                                                        busyStateTracker,
-                                                                        requestExecutor, avatarIconsProviderFactory, account.server,
-                                                                        repoDetails.fullPath)
-    private val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, listLoader, dataLoader,
-                                                                  busyStateTracker,
-                                                                  requestExecutor, account.server, repoDetails.fullPath)
-
-    private val diffCommentComponentFactory = GithubPullRequestEditorCommentsThreadComponentFactoryImpl(avatarIconsProviderFactory)
-    private val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings, diffCommentComponentFactory).apply {
-      diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
-    }
-    private val details = GithubPullRequestDetailsComponent(dataLoader, securityService, busyStateTracker, metadataService, stateService,
-                                                            avatarIconsProviderFactory)
-    private val preview = GithubPullRequestPreviewComponent(changes, details)
-
-    private val list = createListPanel()
-
-    private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,
-                                                            account.server, repoDetails, accountDetails, repository, remote)
+    private val serviceDisposable: Disposable
 
     init {
-      firstComponent = list
-      secondComponent = preview
-      isFocusCycleRoot = true
+      repoDataLoader = GithubPullRequestsRepositoryDataLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath)
+      listModel = CollectionListModel()
+      searchHolder = GithubPullRequestSearchQueryHolderImpl()
+      listLoader = GHPRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
+      listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
+      dataLoader = GithubPullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor, repository, remote,
+                                                    account.server, repoDetails.fullPath)
+
+      securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
+      busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
+      metadataService = GithubPullRequestsMetadataServiceImpl(project, progressManager,
+                                                              repoDataLoader, listLoader, dataLoader,
+                                                              busyStateTracker,
+                                                              requestExecutor, avatarIconsProviderFactory, account.server,
+                                                              repoDetails.fullPath)
+      stateService = GithubPullRequestsStateServiceImpl(project, progressManager, listLoader, dataLoader, busyStateTracker,
+                                                        requestExecutor, account.server, repoDetails.fullPath)
+
+      serviceDisposable = Disposable {
+        Disposer.dispose(repoDataLoader)
+        Disposer.dispose(listLoader)
+        Disposer.dispose(dataLoader)
+      }
+    }
+
+    private val uiDisposable: Disposable
+
+    init {
+      val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, listModel)
+      list.emptyText.clear()
+      installPopup(list)
+      installSelectionSaver(list)
+
+      val search = GithubPullRequestSearchPanel(project, autoPopupController, searchHolder).apply {
+        border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+      }
+      val loaderPanel = GHPRListLoaderPanel(listLoader, dataLoader, list, search)
+      firstComponent = loaderPanel
+
+      val diffCommentComponentFactory = GithubPullRequestEditorCommentsThreadComponentFactoryImpl(avatarIconsProviderFactory)
+      val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings, diffCommentComponentFactory).apply {
+        diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
+      }
+      val details = GithubPullRequestDetailsComponent(dataLoader, securityService, busyStateTracker, metadataService, stateService,
+                                                      avatarIconsProviderFactory)
+      val preview = GithubPullRequestPreviewComponent(changes, details)
 
       listSelectionHolder.addSelectionChangeListener(preview) {
         preview.dataProvider = listSelectionHolder.selectionNumber?.let(dataLoader::getDataProvider)
@@ -110,12 +140,64 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
           preview.dataProvider = dataLoader.getDataProvider(selection)
         }
       }
+
+      secondComponent = preview
+      isFocusCycleRoot = true
+
+      uiDisposable = Disposable {
+        Disposer.dispose(list)
+        Disposer.dispose(search)
+        Disposer.dispose(loaderPanel)
+
+        Disposer.dispose(preview)
+        Disposer.dispose(changes)
+        Disposer.dispose(details)
+      }
     }
 
-    private fun createListPanel(): JComponent {
-      return GithubPullRequestsListWithSearchPanel(project, copyPasteManager, actionManager, autoPopupController,
-                                                   avatarIconsProviderFactory,
-                                                   listLoader, dataLoader, listLoader, listLoader, listSelectionHolder)
+    private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,
+                                                            account.server, repoDetails, accountDetails, repository, remote)
+
+    private fun installPopup(list: GithubPullRequestsList) {
+      val popupHandler = object : PopupHandler() {
+        override fun invokePopup(comp: Component, x: Int, y: Int) {
+          if (ListUtil.isPointOnSelection(list, x, y)) {
+            val popupMenu = actionManager
+              .createActionPopupMenu("GithubPullRequestListPopup",
+                                     actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup)
+            popupMenu.setTargetComponent(list)
+            popupMenu.component.show(comp, x, y)
+          }
+        }
+      }
+      list.addMouseListener(popupHandler)
+    }
+
+    private fun installSelectionSaver(list: GithubPullRequestsList) {
+      var savedSelectionNumber: Long? = null
+
+      list.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
+        if (!e.valueIsAdjusting) {
+          val selectedIndex = list.selectedIndex
+          if (selectedIndex >= 0 && selectedIndex < list.model.size) {
+            listSelectionHolder.selectionNumber = list.model.getElementAt(selectedIndex).number
+            savedSelectionNumber = null
+          }
+        }
+      }
+
+      list.model.addListDataListener(object : ListDataListener {
+        override fun intervalAdded(e: ListDataEvent) {
+          if (e.type == ListDataEvent.INTERVAL_ADDED)
+            (e.index0..e.index1).find { list.model.getElementAt(it).number == savedSelectionNumber }
+              ?.run { ApplicationManager.getApplication().invokeLater { ScrollingUtil.selectItem(list, this) } }
+        }
+
+        override fun contentsChanged(e: ListDataEvent) {}
+        override fun intervalRemoved(e: ListDataEvent) {
+          if (e.type == ListDataEvent.INTERVAL_REMOVED) savedSelectionNumber = listSelectionHolder.selectionNumber
+        }
+      })
     }
 
     override fun getData(dataId: String): Any? {
@@ -127,14 +209,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     }
 
     override fun dispose() {
-      if (list is Disposable) Disposer.dispose(list)
-      Disposer.dispose(preview)
-      Disposer.dispose(changes)
-      Disposer.dispose(details)
-
-      Disposer.dispose(repoDataLoader)
-      Disposer.dispose(listLoader)
-      Disposer.dispose(dataLoader)
+      Disposer.dispose(uiDisposable)
+      Disposer.dispose(serviceDisposable)
     }
   }
 }

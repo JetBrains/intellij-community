@@ -23,6 +23,15 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
 
   fun isEmpty() = terms.isEmpty()
 
+  override fun toString(): String {
+    val builder = StringBuilder()
+    for (term in terms) {
+      builder.append(term.toString())
+      if (builder.isNotEmpty()) builder.append(" ")
+    }
+    return builder.toString()
+  }
+
   companion object {
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd")
 
@@ -81,10 +90,14 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
 
     class QueryPart(value: String) : Term<String>(value) {
       override val apiValue = this.value
+
+      override fun toString(): String = value
     }
 
-    sealed class Qualifier<T : Any>(name: QualifierName, value: T) : Term<T>(value) {
+    sealed class Qualifier<T : Any>(protected val name: QualifierName, value: T) : Term<T>(value) {
       val apiName: String = name.apiName
+
+      override fun toString(): String = "$name:$value"
 
       class Simple(name: QualifierName, value: String) : Qualifier<String>(name, value) {
         override val apiValue = this.value
@@ -96,10 +109,10 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
         companion object {
           inline fun <reified T : kotlin.Enum<T>> from(name: QualifierName, value: String): Term<*> {
             return try {
-              Qualifier.Enum(name, enumValueOf<T>(value))
+              Enum(name, enumValueOf<T>(value))
             }
             catch (e: IllegalArgumentException) {
-              Qualifier.Simple(name, value)
+              Simple(name, value)
             }
           }
         }
@@ -107,6 +120,8 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
 
       sealed class Date(name: QualifierName, value: java.util.Date) : Qualifier<java.util.Date>(name, value) {
         protected fun formatDate(): String = DATE_FORMAT.format(this.value)
+
+        override fun toString(): String = "$name:${formatDate()}"
 
         class Before(name: QualifierName, value: java.util.Date) : Date(name, value) {
           override val apiValue = "<${formatDate()}"
@@ -117,9 +132,9 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
                 DATE_FORMAT.parse(value)
               }
               catch (e: ParseException) {
-                return Qualifier.Simple(name, value)
+                return Simple(name, value)
               }
-              return Qualifier.Date.Before(name, date)
+              return Before(name, date)
             }
           }
         }
@@ -130,10 +145,10 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
           companion object {
             fun from(name: QualifierName, value: String): Term<*> {
               return try {
-                Qualifier.Date.After(name, DATE_FORMAT.parse(value))
+                After(name, DATE_FORMAT.parse(value))
               }
               catch (e: ParseException) {
-                Qualifier.Simple(name, value)
+                Simple(name, value)
               }
             }
           }

@@ -3,25 +3,20 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.GHPullRequestShort
-import java.util.concurrent.CompletableFuture
 
-internal interface GithubPullRequestsListLoader {
+interface GHListLoader {
   @get:CalledInAwt
   val loading: Boolean
   @get:CalledInAwt
   val error: Throwable?
   @get:CalledInAwt
-  var outdated: Boolean
+  val hasLoadedItems: Boolean
 
   @CalledInAwt
   fun canLoadMore(): Boolean
 
   @CalledInAwt
   fun loadMore()
-
-  @CalledInAwt
-  fun reloadData(request: CompletableFuture<out GHPullRequestShort>)
 
   @CalledInAwt
   fun reset()
@@ -31,7 +26,4 @@ internal interface GithubPullRequestsListLoader {
 
   @CalledInAwt
   fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit)
-
-  @CalledInAwt
-  fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit)
 }

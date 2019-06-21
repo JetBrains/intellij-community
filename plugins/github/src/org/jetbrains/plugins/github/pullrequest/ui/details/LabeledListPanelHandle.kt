@@ -13,7 +13,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.WrapLayout
+import org.jetbrains.plugins.github.ui.WrapLayout
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.Cursor
 import java.awt.FlowLayout

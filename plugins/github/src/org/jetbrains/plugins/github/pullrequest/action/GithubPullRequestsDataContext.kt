@@ -9,13 +9,13 @@ import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsRepositoryDataLoader
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionHolder
 
 class GithubPullRequestsDataContext internal constructor(val requestExecutor: GithubApiRequestExecutor,
                                                          internal val repositoryDataLoader: GithubPullRequestsRepositoryDataLoader,
-                                                         internal val listLoader: GithubPullRequestsListLoader,
+                                                         internal val listLoader: GHPRListLoader,
                                                          internal val selectionHolder: GithubPullRequestsListSelectionHolder,
                                                          internal val dataLoader: GithubPullRequestsDataLoader,
                                                          val serverPath: GithubServerPath,

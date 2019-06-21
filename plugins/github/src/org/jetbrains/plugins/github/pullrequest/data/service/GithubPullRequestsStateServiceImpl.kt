@@ -19,13 +19,13 @@ import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubNotifications
 
 class GithubPullRequestsStateServiceImpl internal constructor(private val project: Project,
                                                               private val progressManager: ProgressManager,
-                                                              private val listLoader: GithubPullRequestsListLoader,
+                                                              private val listLoader: GHPRListLoader,
                                                               private val dataLoader: GithubPullRequestsDataLoader,
                                                               private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                               private val requestExecutor: GithubApiRequestExecutor,
