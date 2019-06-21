@@ -33,7 +33,6 @@
     <fileType name="GUI_DESIGNER_FORM" extensions="form"
               implementationClass="com.intellij.uiDesigner.GuiFormFileType" fieldName="INSTANCE"/>
 
-    <search.topHitProvider implementation="com.intellij.uiDesigner.GuiDesignerOptionsTopHitProvider"/>
     <projectConfigurable groupId="editor" instance="com.intellij.uiDesigner.GuiDesignerConfigurable" id="project.propGUI" key="title.gui.designer"
                          bundle="messages.UIDesignerBundle"/>
 
