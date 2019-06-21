@@ -58,7 +58,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
   }
 
   inner class GithubPullRequestsComponent(requestExecutor: GithubApiRequestExecutor,
-                                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                          private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                           pullRequestUiSettings: GithubPullRequestsProjectUISettings,
                                           repository: GitRepository, remote: GitRemote,
                                           accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed, account: GithubAccount)
@@ -90,9 +90,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                             avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
-    private val list = GithubPullRequestsListWithSearchPanel(project, copyPasteManager, actionManager, autoPopupController,
-                                                             avatarIconsProviderFactory,
-                                                             listLoader, dataLoader, listLoader, listLoader, listSelectionHolder)
+    private val list = createListPanel()
 
     private val dataContext = GithubPullRequestsDataContext(requestExecutor, repoDataLoader, listLoader, listSelectionHolder, dataLoader,
                                                             account.server, repoDetails, accountDetails, repository, remote)
@@ -114,6 +112,12 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
       }
     }
 
+    private fun createListPanel(): JComponent {
+      return GithubPullRequestsListWithSearchPanel(project, copyPasteManager, actionManager, autoPopupController,
+                                                   avatarIconsProviderFactory,
+                                                   listLoader, dataLoader, listLoader, listLoader, listSelectionHolder)
+    }
+
     override fun getData(dataId: String): Any? {
       if (Disposer.isDisposed(this)) return null
       return when {
@@ -123,7 +127,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     }
 
     override fun dispose() {
-      Disposer.dispose(list)
+      if (list is Disposable) Disposer.dispose(list)
       Disposer.dispose(preview)
       Disposer.dispose(changes)
       Disposer.dispose(details)
