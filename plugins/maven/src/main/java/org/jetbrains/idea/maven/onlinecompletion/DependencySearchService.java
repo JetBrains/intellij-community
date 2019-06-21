@@ -218,7 +218,7 @@ public class DependencySearchService {
           continue;
         }
         String key = getKey(info);
-        if (!acceptedRemotely.contains(key) && myParameters.isShowAll()) {
+        if (!acceptedRemotely.contains(key)) {
           myConsumer.accept(info);
         }
       }
