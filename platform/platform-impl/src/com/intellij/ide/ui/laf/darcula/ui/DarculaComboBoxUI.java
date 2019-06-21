@@ -233,14 +233,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       float bw = BW.getFloat();
       float arc = COMPONENT_ARC.getFloat();
 
-      Object value = comboBox.getSelectedItem();
-      boolean editable = comboBox.isEnabled() && editor != null && comboBox.isEditable();
-      Color background0 = comboBox.getBackground();
-      Color background = editable ? editor.getBackground() :
-                         comboBox.isBackgroundSet() && !(background0 instanceof UIResource) ? background0 :
-                         ObjectUtils.notNull(value instanceof ColoredItem ? ((ColoredItem)value).getColor() : null, NON_EDITABLE_BACKGROUND);
-      g2.setColor(background);
-
+      g2.setColor(getBackgroundColor());
       g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     }
     finally {
@@ -250,6 +243,18 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     if (!comboBox.isEditable()) {
       checkFocus();
       paintCurrentValue(g, rectangleForCurrentValue(), hasFocus);
+    }
+  }
+
+  private Color getBackgroundColor() {
+    if (comboBox.isEditable() && editor != null) {
+      return comboBox.isEnabled() ? editor.getBackground() : comboBox.getBackground();
+    }
+    else {
+      Color bg = comboBox.getBackground();
+      Object value = comboBox.getSelectedItem();
+      return value instanceof ColoredItem ? ((ColoredItem)value).getColor() :
+             !comboBox.isEnabled() || comboBox.isBackgroundSet() && !(bg instanceof UIResource) ? bg : NON_EDITABLE_BACKGROUND;
     }
   }
 
