@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="a44a9"/>
-          <text value="Xmx"/>
+          <text value="Maximum Heap Size:"/>
         </properties>
       </component>
       <component id="9a867" class="javax.swing.JLabel">
