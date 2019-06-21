@@ -1,6 +1,6 @@
 PsiJavaFile:YieldIncomplete1.java
   PsiYieldStatement
-    PsiJavaToken:YIELD('yield')
+    PsiKeyword:yield('yield')
     PsiWhiteSpace(' ')
     PsiReferenceExpression:x
       PsiReferenceParameterList
