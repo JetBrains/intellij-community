@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -56,9 +58,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
 
     private VirtualFile myImportRoot;
     private List<VirtualFile> myFiles;
-    private List<String> myProfiles = new ArrayList<>();
-    private List<String> myActivatedProfiles = new ArrayList<>();
-    private MavenExplicitProfiles mySelectedProfiles = MavenExplicitProfiles.NONE;
 
     private MavenProjectsTree myMavenProjectTree;
     private List<MavenProject> mySelectedProjects;
@@ -173,12 +172,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
       settings.generalSettings.setUserSettingsFile(settingsFile.trim());
     }
 
-    MavenExplicitProfiles selectedProfiles = getSelectedProfiles();
+    MavenExplicitProfiles selectedProfiles = MavenExplicitProfiles.NONE.clone();
 
     String enabledProfilesList = System.getProperty("idea.maven.import.enabled.profiles");
     String disabledProfilesList = System.getProperty("idea.maven.import.disabled.profiles");
     if (enabledProfilesList != null || disabledProfilesList != null) {
-      selectedProfiles = selectedProfiles.clone();
       appendProfilesFromString(selectedProfiles.getEnabledProfiles(), enabledProfilesList);
       appendProfilesFromString(selectedProfiles.getDisabledProfiles(), disabledProfilesList);
     }
@@ -221,8 +219,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
 
   public boolean setRootDirectory(@Nullable Project projectToUpdate, final String root) {
     getParameters().myFiles = null;
-    getParameters().myProfiles.clear();
-    getParameters().myActivatedProfiles.clear();
     getParameters().myMavenProjectTree = null;
 
     // We cannot determinate project in non-EDT thread.
@@ -244,61 +240,9 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
                                                           indicator,
                                                           new ArrayList<>());
 
-        collectProfiles(indicator);
         readMavenProjectTree(indicator);
 
         indicator.setText("");
-        indicator.setText2("");
-      }
-    });
-  }
-
-  private void collectProfiles(MavenProgressIndicator process) {
-    process.setText(ProjectBundle.message("maven.searching.profiles"));
-
-    Set<String> availableProfiles = new LinkedHashSet<>();
-    Set<String> activatedProfiles = new LinkedHashSet<>();
-    MavenProjectReader reader = new MavenProjectReader(getProjectToUpdate());
-    MavenGeneralSettings generalSettings = getGeneralSettings();
-    MavenProjectReaderProjectLocator locator = new MavenProjectReaderProjectLocator() {
-      @Override
-      public VirtualFile findProjectFile(MavenId coordinates) {
-        return null;
-      }
-    };
-    for (VirtualFile f : getParameters().myFiles) {
-      MavenProject project = new MavenProject(f);
-      process.setText2(ProjectBundle.message("maven.reading.pom", f.getPath()));
-      project.read(generalSettings, MavenExplicitProfiles.NONE, reader, locator);
-      availableProfiles.addAll(project.getProfilesIds());
-      activatedProfiles.addAll(project.getActivatedProfilesIds().getEnabledProfiles());
-    }
-    getParameters().myProfiles = new ArrayList<>(availableProfiles);
-    getParameters().myActivatedProfiles = new ArrayList<>(activatedProfiles);
-  }
-
-  public List<String> getProfiles() {
-    return getParameters().myProfiles;
-  }
-
-  public List<String> getActivatedProfiles() {
-    return getParameters().myActivatedProfiles;
-  }
-
-  public MavenExplicitProfiles getSelectedProfiles() {
-    return getParameters().mySelectedProfiles;
-  }
-
-  public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
-    getParameters().myMavenProjectTree = null;
-    getParameters().mySelectedProfiles = profiles;
-
-    // We cannot determinate project in non-EDT thread.
-    getParameters().myProjectToUpdate = getProjectOrDefault();
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
-      @Override
-      public void run(MavenProgressIndicator indicator) {
-        readMavenProjectTree(indicator);
         indicator.setText2("");
       }
     });
@@ -316,7 +260,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
 
   private void readMavenProjectTree(MavenProgressIndicator process) {
     MavenProjectsTree tree = new MavenProjectsTree(getProjectOrDefault());
-    tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
+    tree.addManagedFilesWithProfiles(getParameters().myFiles, MavenExplicitProfiles.NONE);
     tree.updateAll(false, getGeneralSettings(), process);
 
     getParameters().myMavenProjectTree = tree;
