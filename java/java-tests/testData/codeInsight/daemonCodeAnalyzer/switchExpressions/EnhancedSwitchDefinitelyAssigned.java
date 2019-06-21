@@ -118,8 +118,8 @@ class C {
 
   static class FinalFieldValueBreakSwitchExpression {
     final String s = switch ((int)Math.random()) {
-      case 1: break "a";
-      default: break "?";
+      case 1: yield "a";
+      default: yield "?";
     };
     {
       System.out.println(s);
@@ -136,8 +136,8 @@ class C {
 
   void finalVariableValueBreakSwitchExpression(String s) {
     final int n = switch (s) {
-      case "a": break 1;
-      default: break 0;
+      case "a": yield 1;
+      default: yield 0;
     };
     System.out.println(n);
   }
@@ -163,8 +163,8 @@ class C {
   void definitelyAssignedInSwitchExpressionValueBreak(String s) {
     int n;
     int x = switch (s) {
-      case "a": break n = 1;
-      default: break n = 0;
+      case "a": yield n = 1;
+      default: yield n = 0;
     };
     System.out.println(n);
   }
@@ -172,8 +172,8 @@ class C {
   void notDefinitelyAssignedInSwitchExpressionValueBreak(String s) {
     int n;
     int x = switch (s) {
-      case "a": break n = 1;
-      default: break 0;
+      case "a": yield n = 1;
+      default: yield 0;
     };
     System.out.println(<error descr="Variable 'n' might not have been initialized">n</error>);
   }
@@ -198,7 +198,7 @@ class C {
       String string = switch (n) {
         case -1 -> throw new RuntimeException();
         case 0 -> s = "a";
-        default -> { break s = "b"; }
+        default -> { yield s = "b"; }
       };
     }
     System.out.println(s);

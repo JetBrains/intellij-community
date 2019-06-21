@@ -86,6 +86,7 @@ public class PsiPolyExpressionUtil {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr).getParent();
     if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiSwitchLabeledRuleStatement || 
         parent instanceof PsiBreakStatement || 
+        parent instanceof PsiYieldStatement ||
         parent instanceof PsiThrowStatement) {
       PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(expr, PsiSwitchExpression.class, true, PsiMember.class, PsiLambdaExpression.class);
       return switchExpression  != null &&

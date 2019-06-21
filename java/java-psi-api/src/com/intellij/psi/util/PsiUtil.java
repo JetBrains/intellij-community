@@ -382,7 +382,7 @@ public final class PsiUtil extends PsiUtilCore {
       ContainerUtil.addIfNotNull(result, statement.getExpression());
     }
     List<PsiYieldStatement> yields = new ArrayList<>();
-    addStatements(yields, container, PsiYieldStatement.class, element -> false);
+    addStatements(yields, container, PsiYieldStatement.class, element -> element instanceof PsiSwitchExpression);
     for (PsiYieldStatement statement : yields) {
       ContainerUtil.addIfNotNull(result, statement.getExpression());
     }
