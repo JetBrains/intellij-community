@@ -15,9 +15,11 @@ public abstract class AbstractListIntentionAction<L extends PsiElement, E extend
   @Nullable("When failed")
   abstract List<E> getElements(@NotNull L list);
 
-  abstract boolean hasBreakBefore(@NotNull E element);
+  @Nullable
+  abstract PsiElement prevBreak(@NotNull PsiElement element);
 
-  abstract boolean hasBreakAfter(@NotNull E element);
+  @Nullable
+  abstract PsiElement nextBreak(@NotNull PsiElement element);
 
   /**
    * Min count of elements for intention to work
@@ -39,33 +41,4 @@ public abstract class AbstractListIntentionAction<L extends PsiElement, E extend
    * @return true if it requires line break before first element
    */
   abstract  boolean needHeadBreak(@NotNull E first);
-
-  //boolean hasNewlineBetween(@NotNull E left, @NotNull E right) {
-  //  PsiElement current = left.getNextSibling();
-  //  while (current != null && current != right) {
-  //    if (isWhitespaceWithBreak(current)) {
-  //      return true;
-  //    }
-  //    current = current.getNextSibling();
-  //  }
-  //  return false;
-  //}
-  //
-  //private boolean isWhitespaceWithBreak(PsiElement element) {
-  //  return isWhitespace(element) && element.textContains('\n');
-  //}
-  //
-  //boolean hasLeadingNewline(@NotNull E element) {
-  //  PsiElement current = element.getPrevSibling();
-  //  while (current != null) {
-  //    current = current.getPrevSibling();
-  //    if (isWhitespaceWithBreak(current)) {
-  //
-  //    }
-  //  }
-  //}
-
-  //boolean hasTrailingNewline(@NotNull E element) {
-  //
-  //}
 }

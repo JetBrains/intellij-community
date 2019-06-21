@@ -30,24 +30,24 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     int size = elements.size();
     for (int i = elements.size() - 1; i >= 0; i--) {
       E el = elements.get(i);
-      if (!hasBreakAfter(el)) {
-        int offset = findPlaceForBreakAfter(el);
+      if (nextBreak(el) == null) {
+        int offset = findOffsetForBreakAfter(el);
         if (i == size - 1 && !needTailBreak(el)) continue;
         document.insertString(offset, "\n");
       }
     }
     E first = elements.get(0);
     if (needHeadBreak(first)){
-      document.insertString(getOffsetOfBreakBeforeFirstElement(first), "\n");
+      document.insertString(findOffsetOfBreakBeforeFirst(first), "\n");
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
     CodeStyleManager.getInstance(project).adjustLineIndent(context.list.getContainingFile(), context.list.getParent().getTextRange());
   }
 
-  abstract int findPlaceForBreakAfter(E element);
+  abstract int findOffsetForBreakAfter(E element);
 
-  protected int getOffsetOfBreakBeforeFirstElement(@NotNull E element) {
+  protected int findOffsetOfBreakBeforeFirst(@NotNull E element) {
     return element.getTextRange().getStartOffset();
   }
 
@@ -78,9 +78,9 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     for (int i = 0; i < size; i++) {
       E current = elements.get(i);
       if (i == 0) {
-        if (needHeadBreak(current) && !hasBreakBefore(current)) return true;
+        if (needHeadBreak(current) && prevBreak(current) == null) return true;
       }
-      if (!hasBreakAfter(current)) {
+      if (nextBreak(current) == null) {
         if (i == size - 1 && !needTailBreak(current)) continue;
         return true;
       }

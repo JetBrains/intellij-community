@@ -14,7 +14,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.intention.impl.lists.JavaListUtils.getCallArgumentsList;
 
-public class JavaChopArgumentsAction extends AbstractJavaChopListAction<PsiExpressionList, PsiExpression> {
+public class JavaJoinArgumentsAction extends AbstractJavaJoinListAction<PsiExpressionList, PsiExpression> {
   @Nullable("When failed")
   @Override
   PsiExpressionList extractList(@NotNull PsiElement element) {
@@ -27,7 +27,6 @@ public class JavaChopArgumentsAction extends AbstractJavaChopListAction<PsiExpre
     return Arrays.asList(list.getExpressions());
   }
 
-
   @Override
   boolean needTailBreak(@NotNull PsiExpression last) {
     return CodeStyle.getLanguageSettings(last.getContainingFile(), JavaLanguage.INSTANCE).CALL_PARAMETERS_RPAREN_ON_NEXT_LINE;
@@ -35,14 +34,14 @@ public class JavaChopArgumentsAction extends AbstractJavaChopListAction<PsiExpre
 
   @Override
   boolean needHeadBreak(@NotNull PsiExpression first) {
-    return CodeStyle.getLanguageSettings(first.getContainingFile(), JavaLanguage.INSTANCE).CALL_PARAMETERS_RPAREN_ON_NEXT_LINE;
+    return CodeStyle.getLanguageSettings(first.getContainingFile(), JavaLanguage.INSTANCE).CALL_PARAMETERS_LPAREN_ON_NEXT_LINE;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Put arguments on separate lines";
+    return "Put arguments on one line";
   }
 
   @NotNull
