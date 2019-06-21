@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Allows opening file in editor, optionally at specific line/column position.
+ */
 public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescriptor> {
   /**
-   * Tells descriptor to navigate in specific editor rather than file editor in main IDEA window.
+   * Tells descriptor to navigate in specific editor rather than file editor in main IDE window.
    * For example if you want to navigate in editor embedded into modal dialog, you should provide this data.
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
