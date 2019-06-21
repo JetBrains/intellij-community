@@ -14,7 +14,7 @@ class C {
   void defaultBranchSometimesHasNoResult(int n, boolean b) {
     String s = <error descr="Switch expression should produce result in all execution paths">switch</error> (n) {
       default: {
-        if (b) break "";
+        if (b) yield "";
       }
     };
   }
@@ -22,7 +22,7 @@ class C {
   void defaultRuleSometimesHasNoResult(int n, boolean b) {
     String s = switch (n) {
       <error descr="Switch expression rule should produce result in all execution paths">default</error> -> {
-        if (b) break "";
+        if (b) yield "";
       }
     };
   }
@@ -43,7 +43,7 @@ class C {
     String s = switch (n) {
       default:
         if (b) throw new RuntimeException();
-        break "";
+        yield "";
     };
   }
 
@@ -51,7 +51,7 @@ class C {
     String s = switch (n) {
       default -> {
         if (b) throw new RuntimeException();
-        break "";
+        yield "";
       }
     };
   }
@@ -59,9 +59,9 @@ class C {
   void defaultBranchHasManyResults(int n, int k) {
     String s = switch (n) {
       default: {
-        if (k < n) break "a";
-        if (k > n) break "b";
-        break "c";
+        if (k < n) yield "a";
+        if (k > n) yield "b";
+        yield "c";
       }
     };
   }
@@ -69,16 +69,16 @@ class C {
   void defaultRuleHasManyResults(int n, int k) {
     String s = switch (n) {
       default -> {
-        if (k < n) break "a";
-        if (k > n) break "b";
-        break "c";
+        if (k < n) yield "a";
+        if (k > n) yield "b";
+        yield "c";
       }
     };
   }
 
   void oneOfBranchesHasNoResult(int n) {
     String s = <error descr="Switch expression should produce result in all execution paths">switch</error> (n) {
-      case 0: break "";
+      case 0: yield "";
       default:
     };
   }
@@ -110,8 +110,8 @@ class C {
   void allBranchesDoHaveResult(int n) {
     String s = switch (n) {
       case -1: throw new RuntimeException();
-      case 0: break "a";
-      default: break "b";
+      case 0: yield "a";
+      default: yield "b";
     };
   }
 
@@ -129,8 +129,8 @@ class C {
     } finally {
       s = switch (n) {
         case -1: throw new RuntimeException();
-        case 0: break "a";
-        default: break "b";
+        case 0: yield "a";
+        default: yield "b";
       };
     }
   }

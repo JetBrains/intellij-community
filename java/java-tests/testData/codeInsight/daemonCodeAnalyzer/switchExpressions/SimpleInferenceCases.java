@@ -23,31 +23,31 @@ no instance(s) of type variable(s) exist so that Object conforms to String">foo(
             default -> "str";
         });
     String s3 = foo(() -> switch (i) {default -> bar();});
-    String s4 = foo(() -> switch (i) {default -> { break bar();}});
+    String s4 = foo(() -> switch (i) {default -> { yield bar();}});
     String s5 = foo(<error descr="Incompatible types. Required String but 'foo' was inferred to T:
-no instance(s) of type variable(s) exist so that Integer conforms to String">() -> switch (i) {default -> { break 1;}}</error>);
+no instance(s) of type variable(s) exist so that Integer conforms to String">() -> switch (i) {default -> { yield 1;}}</error>);
     String s6 = switch (i) {
       case 1 -> <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">2</error>;
       default -> {
-        break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+        yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
       }
     };
     Supplier<String> stringSupplier = switch (i) {
             default -> {
-                break () -> <error descr="Bad return type in lambda expression: int cannot be converted to String">1</error>;
+                yield () -> <error descr="Bad return type in lambda expression: int cannot be converted to String">1</error>;
             }
         };
     String s7 = switch (i) {
       case 1: {
-        break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+        yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
       }
       default: {
         int i1 = switch (0) {
           default -> {
-            break 1;
+            yield 1;
           }
         };
-        break "";
+        yield "";
       }
     };
   }
@@ -56,15 +56,15 @@ no instance(s) of type variable(s) exist so that Integer conforms to String">() 
     String s = switch (i) {
       default -> switch (0) {
         default -> {
-          break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+          yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
         }
       };
     };
     String s1 = switch (i) {
       default -> {
-        break switch (0) {
+        yield switch (0) {
           default -> {
-            break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+            yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
           }
         };
       }
@@ -72,9 +72,9 @@ no instance(s) of type variable(s) exist so that Integer conforms to String">() 
 
     String s2 = switch (i) {
       default: {
-        break switch (0) {
+        yield switch (0) {
           default -> {
-            break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+            yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
           }
         };
       }
@@ -82,24 +82,24 @@ no instance(s) of type variable(s) exist so that Integer conforms to String">() 
 
     String s3 = switch (0) {
       default: {
-        break switch (1) {
+        yield switch (1) {
           case 2: {
             System.out.println();
             int inside_switch = switch (8) {
               default:
-                break 1;
+                yield 1;
             };
           }
           case 1: 
-            if (i > 3) break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">3</error>;
+            if (i > 3) yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">3</error>;
           case 0:
             try {
-              break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">42</error>;
+              yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">42</error>;
             } finally {
               //do nothing
             }
           default:
-            break <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
+            yield <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">1</error>;
         };
       }
     };

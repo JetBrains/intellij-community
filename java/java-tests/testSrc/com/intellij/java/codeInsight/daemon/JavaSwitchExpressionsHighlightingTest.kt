@@ -2,13 +2,10 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
-import com.intellij.openapi.roots.LanguageLevelModuleExtension
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_12
+  override fun getProjectDescriptor() = JAVA_13
   override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/switchExpressions"
 
   fun testEnhancedSwitchStatements() = doTest()
@@ -21,16 +18,7 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testEnhancedSwitchUnreachable() = doTest()
   fun testSwitchExpressionHasResult() = doTest()
 
-  fun testYieldStatements() = try {
-    level(LanguageLevel.JDK_13_PREVIEW)
-    doTest()
-  }
-  finally {
-    level(LanguageLevel.JDK_12_PREVIEW)
-  }
-
-  private fun level(level: LanguageLevel) =
-    ModuleRootModificationUtil.updateModel(module) { it.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = level }
+  fun testYieldStatements() = doTest()
 
   private fun doTest() {
     myFixture.configureByFile("${getTestName(false)}.java")

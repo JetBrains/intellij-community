@@ -396,10 +396,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override
   public void visitBreakStatement(PsiBreakStatement statement) {
-    startElement(statement);
-    generateExpressionInstructions(statement.getValueExpression());
+    generateYieldInstructions(statement, statement.getValueExpression(), statement.findExitedElement());
+  }
 
-    PsiElement exitedStatement = statement.findExitedElement();
+  @Override
+  public void visitYieldStatement(PsiYieldStatement statement) {
+    generateYieldInstructions(statement, statement.getExpression(), statement.findEnclosingExpression());
+  }
+
+  private void generateYieldInstructions(PsiStatement statement, PsiExpression valueExpression, PsiElement exitedStatement) {
+    startElement(statement);
+    generateExpressionInstructions(valueExpression);
+
     if (exitedStatement != null) {
       callFinallyBlocksOnExit(exitedStatement);
 
