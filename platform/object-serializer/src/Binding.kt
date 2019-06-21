@@ -13,7 +13,7 @@ internal interface Binding {
 
   fun deserialize(hostObject: Any, property: MutableAccessor, context: ReadContext) {
     read(hostObject, property, context) {
-      deserialize(context)
+      deserialize(context, hostObject)
     }
   }
 
@@ -24,7 +24,7 @@ internal interface Binding {
 
   fun serialize(obj: Any, context: WriteContext)
 
-  fun deserialize(context: ReadContext): Any
+  fun deserialize(context: ReadContext, hostObject: Any?): Any
 }
 
 internal interface BindingInitializationContext {
