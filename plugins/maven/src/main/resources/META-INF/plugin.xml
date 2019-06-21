@@ -154,6 +154,9 @@
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenArtifactIdCompletionContributor"/>
 
     <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenDependencyTopLevelCompletionContributor"/>
+
+    <completion.contributor language="XML"
                             implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenPomXmlCompletionTagListenerContributor"
                             order="first"/>
 
