@@ -44,9 +44,11 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
   }
 
   private final TrayIcon myTrayIcon;
+  private final Image myImage;
   private final TrayIcon.MessageType myType;
 
   private SystemTrayNotifications(@NotNull Image image, @NotNull TrayIcon.MessageType type) throws AWTException {
+    myImage = image;
     myType = type;
 
     String tooltip = ApplicationInfoImpl.getShadowInstance().getFullApplicationName();
@@ -62,6 +64,7 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
 
   @Override
   public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
+    myTrayIcon.setImage(myImage);
     myTrayIcon.displayMessage(title, description, myType);
   }
 }
