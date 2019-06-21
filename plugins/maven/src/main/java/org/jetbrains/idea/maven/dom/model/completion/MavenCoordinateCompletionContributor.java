@@ -98,7 +98,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
 
   @NotNull
   protected CompletionResultSet amendResultSet(@NotNull CompletionResultSet result) {
-    result.restartCompletionOnAnyPrefixChange();
+    result.restartCompletionWhenNothingMatches();
     return result;
   }
 
