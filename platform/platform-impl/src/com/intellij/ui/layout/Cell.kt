@@ -18,17 +18,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.*
-import com.intellij.ui.layout.migLayout.*
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.swing.*
 import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty0
 
 @DslMarker
 annotation class CellMarker
@@ -259,8 +255,8 @@ abstract class Cell {
   /**
    * @see LayoutBuilder.titledRow
    */
-  fun panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
-    val panel = Panel(title)
+  fun panel(title: String, wrappedComponent: Component, hasSeparator: Boolean = true, vararg constraints: CCFlags) {
+    val panel = Panel(title, hasSeparator)
     panel.add(wrappedComponent)
     panel(*constraints)
   }

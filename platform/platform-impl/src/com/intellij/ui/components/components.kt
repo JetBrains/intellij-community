@@ -119,20 +119,21 @@ fun CheckBox(text: String, selected: Boolean = false, toolTip: String? = null): 
 }
 
 @JvmOverloads
-fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
+fun Panel(title: String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
-  title?.let { setTitledBorder(it, panel) }
+  title?.let { setTitledBorder(it, panel, hasSeparator) }
   return panel
 }
 
 fun DialogPanel(title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
   val panel = DialogPanel(layout)
-  title?.let { setTitledBorder(it, panel) }
+  title?.let { setTitledBorder(it, panel, true) }
   return panel
 }
 
-private fun setTitledBorder(title: String, panel: JPanel) {
-  val border = IdeBorderFactory.createTitledBorder(title, false)
+private fun setTitledBorder(title: String, panel: JPanel, hasSeparator: Boolean) {
+  val border = if (hasSeparator) IdeBorderFactory.createTitledBorder(title, false) else
+    IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false)
   panel.border = border
   border.acceptMinimumSize(panel)
 }
