@@ -29,6 +29,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
@@ -93,6 +94,56 @@ public final class UIUtil extends StartupUiUtil {
     if (pane != null && SystemInfo.isMac) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
     }
+  }
+
+  public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, Consumer<Runnable> onDispose) {
+    if(SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+      JBInsets topWindowInset = JBUI.insetsTop(24);
+      rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
+      AbstractBorder customDecorationBorder = new AbstractBorder() {
+        @Override
+        public Insets getBorderInsets(Component c) {
+          return topWindowInset;
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+          Graphics2D graphics = (Graphics2D)g.create();
+          try {
+            Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
+            graphics.setColor(getPanelBackground());
+            graphics.fill(headerRectangle);
+            Color color = window.isActive()
+                          ? JBColor.black
+                          : JBColor.gray;
+            graphics.setColor(color);
+            drawCenteredString(graphics, headerRectangle, getWindowTitle(window));
+          }
+          finally {
+            graphics.dispose();
+          }
+        }
+      };
+      rootPane.setBorder(customDecorationBorder);
+
+      WindowAdapter windowAdapter = new WindowAdapter() {
+        @Override
+        public void windowActivated(WindowEvent e) {
+          rootPane.repaint();
+        }
+
+        @Override
+        public void windowDeactivated(WindowEvent e) {
+          rootPane.repaint();
+        }
+      };
+      window.addWindowListener(windowAdapter);
+      onDispose.consume(() -> window.removeWindowListener(windowAdapter));
+    }
+  }
+
+  private static String getWindowTitle(Window window) {
+    return window instanceof JDialog ? ((JDialog)window).getTitle() : ((JFrame)window).getTitle() ;
   }
 
   // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
