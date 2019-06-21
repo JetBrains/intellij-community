@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -354,7 +355,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
 
   private static class UnitListCellRenderer extends SimpleListCellRenderer<String> {
     @Override
-    public void customize(JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
       setText(UNITS_MAP.getOrDefault(value, ""));
     }
   }

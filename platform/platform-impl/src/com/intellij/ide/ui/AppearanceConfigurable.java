@@ -557,7 +557,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
 
     @Override
-    public void customize(JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
       if (value == AntialiasingType.SUBPIXEL) {
         GraphicsUtil.setAntialiasingType(this, SUBPIXEL_HINT);
       }
