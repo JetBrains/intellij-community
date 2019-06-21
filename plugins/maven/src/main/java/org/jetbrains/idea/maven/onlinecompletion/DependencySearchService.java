@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.model.MavenCoordinate;
 import org.jetbrains.idea.maven.onlinecompletion.intellij.PackageSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
@@ -32,6 +33,7 @@ public class DependencySearchService {
 
   private final PackageSearchService myPackageSearchService = new PackageSearchService();
   private OfflineSearchService myOfflineSearchService = new OfflineSearchService(Collections.emptyList());
+  private volatile long myLastRequestedTime = -1;
 
   public DependencySearchService(Project project) {
     myProject = project;
@@ -59,7 +61,10 @@ public class DependencySearchService {
                                       @NotNull SearchParameters parameters,
                                       @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
 
-
+    if (skipRequest(parameters)) {
+      return Promises.resolvedPromise(null);
+    }
+    myLastRequestedTime = System.currentTimeMillis();
     MavenDependencyCompletionItem localSearchItem = new MavenDependencyCompletionItem(template);
     CollectingConsumer collectingConsumer = new CollectingConsumer(consumer, parameters);
     final Promise<Void> returnPromise = createPromiseWithStatisticHandlers(parameters, "fulltext");
@@ -76,11 +81,19 @@ public class DependencySearchService {
     return returnPromise;
   }
 
+  private boolean skipRequest(SearchParameters parameters) {
+    return System.currentTimeMillis() - myLastRequestedTime < parameters.getThrottleTime();
+  }
+
   public Promise<Void> suggestPrefix(@NotNull String groupId,
                                      @NotNull String artifactId,
                                      @NotNull SearchParameters parameters,
                                      @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
 
+    if (skipRequest(parameters)) {
+      return Promises.resolvedPromise(null);
+    }
+    myLastRequestedTime = System.currentTimeMillis();
 
     MavenDependencyCompletionItem localSearchItem = new MavenDependencyCompletionItem(groupId, artifactId, null);
 
