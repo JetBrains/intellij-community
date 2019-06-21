@@ -53,7 +53,6 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,30 +95,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     myOldToNewConverter = oldToNewConverter;
     myCoverageSuite = coverageSuite;
     mySubCoverageActive = subCoverageActive;
-  }
-
-  /**
-   * To be removed in 2019.1. Use {@link CoverageLineMarkerRenderer#CoverageLineMarkerRenderer(int, String, TreeMap, boolean, Function, Function, CoverageSuitesBundle, boolean)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  protected CoverageLineMarkerRenderer(final TextAttributesKey key,
-                                       @Nullable final String className,
-                                       final TreeMap<Integer, LineData> lines,
-                                       final boolean coverageByTestApplicable,
-                                       final Function<? super Integer, Integer> newToOldConverter,
-                                       final Function<? super Integer, Integer> oldToNewConverter,
-                                       final CoverageSuitesBundle coverageSuite,
-                                       boolean subCoverageActive) {
-    myKey = key;
-    myClassName = className;
-    myLines = lines;
-    myCoverageByTestApplicable = coverageByTestApplicable;
-    myNewToOldConverter = newToOldConverter;
-    myOldToNewConverter = oldToNewConverter;
-    myCoverageSuite = coverageSuite;
-    mySubCoverageActive = subCoverageActive;
-    myLineNumber = -1;
   }
 
   private int getCurrentLineNumber(@NotNull Editor editor, Point mousePosition) {
