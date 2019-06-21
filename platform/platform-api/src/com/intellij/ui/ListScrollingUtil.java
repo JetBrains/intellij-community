@@ -15,10 +15,13 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated use {@link ScrollingUtil} instead (to be removed in IDEA 17)
  * @see ScrollingUtil
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2017")
 public class ListScrollingUtil extends ScrollingUtil {
 }

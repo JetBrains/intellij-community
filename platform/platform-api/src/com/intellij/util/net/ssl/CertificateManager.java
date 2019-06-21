@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +78,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public static final HostnameVerifier HOSTNAME_VERIFIER = new HostnameVerifier() {
     private volatile HostnameVerifier myHostnameVerifier; 
     @Override

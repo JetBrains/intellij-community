@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.MockDumbService;
 import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.mock.MockProject;
@@ -67,6 +68,7 @@ public class CoreProjectEnvironment {
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
     myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
+    myProject.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
   }
 
   @NotNull

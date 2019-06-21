@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,6 +38,7 @@ public class SystemProperties {
 
   /** @deprecated use {@link SystemInfo#OS_NAME} (to be removed in IDEA 2020) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static String getOsName() {
     return SystemInfo.OS_NAME;
   }
@@ -49,6 +51,7 @@ public class SystemProperties {
 
   /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static String getJavaVmVendor() {
     return SystemInfo.JAVA_VENDOR;
   }
@@ -98,6 +101,7 @@ public class SystemProperties {
 
   /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static String getJavaVendor() {
     return SystemInfo.JAVA_VENDOR;
   }

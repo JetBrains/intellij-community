@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,6 +34,7 @@ public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHan
   /** @deprecated Use {@link #CapturingAnsiEscapesAwareProcessHandler(Process, String)} instead (to be removed in IDEA 17) */
   @SuppressWarnings({"unused"})
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   public CapturingAnsiEscapesAwareProcessHandler(Process process) {
     super(process);
   }

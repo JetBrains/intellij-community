@@ -157,8 +157,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private final Object PENDING_INIT_LOCK = new Object();
 
-  private MultiValuesMap<FileType, FileTypeDetector> myFileTypeDetectorMap = null;
-  private List<FileTypeDetector> myUntypedFileTypeDetectors = new ArrayList<>();
+  private MultiValuesMap<FileType, FileTypeDetector> myFileTypeDetectorMap;
+  private final List<FileTypeDetector> myUntypedFileTypeDetectors = new ArrayList<>();
   private final Object FILE_TYPE_DETECTOR_MAP_LOCK = new Object();
 
   public FileTypeManagerImpl() {
@@ -377,9 +377,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     for (FileTypeBean bean : fileTypeBeans) {
       bean.addMatchers(ContainerUtil.concat(
         parse(bean.extensions),
-        parse(bean.fileNames, (token) -> new ExactFileNameMatcher(token)),
-        parse(bean.fileNamesCaseInsensitive, (token) -> new ExactFileNameMatcher(token, true)),
-        parse(bean.patterns, (token) -> FileNameMatcherFactory.getInstance().createMatcher(token))));
+        parse(bean.fileNames, token -> new ExactFileNameMatcher(token)),
+        parse(bean.fileNamesCaseInsensitive, token -> new ExactFileNameMatcher(token, true)),
+        parse(bean.patterns, token -> FileNameMatcherFactory.getInstance().createMatcher(token))));
     }
 
     for (FileTypeBean bean : fileTypeBeans) {
@@ -920,7 +920,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContent(@NotNull VirtualFile file, @NotNull Iterable<FileTypeDetector> detectors) throws IOException {
+  private FileType detectFromContent(@NotNull VirtualFile file, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
     FileType fileType;
     try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
       if (toLog()) {
@@ -956,7 +956,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detect(@NotNull VirtualFile file, @NotNull byte[] bytes, int length, @NotNull Iterable<FileTypeDetector> detectors) {
+  private FileType detect(@NotNull VirtualFile file, @NotNull byte[] bytes, int length, @NotNull Iterable<? extends FileTypeDetector> detectors) {
     if (length <= 0) return UnknownFileType.INSTANCE;
 
     // use PlainTextFileType because it doesn't supply its own charset detector
@@ -1095,7 +1095,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           return true;
         }
       }
-      catch (IOException ignored) { ;
+      catch (IOException ignored) {
       }
     }
 
@@ -1526,7 +1526,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited, Function<String, FileNameMatcher> matcherFactory) {
+  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited, Function<? super String, ? extends FileNameMatcher> matcherFactory) {
     if (semicolonDelimited == null) {
       return Collections.emptyList();
     }
@@ -1669,7 +1669,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return myPatternsTable;
   }
 
-  void setPatternsTable(@NotNull Set<FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
+  void setPatternsTable(@NotNull Set<? extends FileType> fileTypes, @NotNull FileTypeAssocTable<FileType> assocTable) {
     Map<FileNameMatcher, FileType> removedMappings = getExtensionMap().getRemovedMappings(assocTable, fileTypes);
     fireBeforeFileTypesChanged();
     for (FileType existing : getRegisteredFileTypes()) {
@@ -1690,8 +1690,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       FileType fileType = getFileTypeByName(fileTypeName);
       return fileType != null && assocTable.isAssociatedWith(fileType, matcher);
     });
-    for (FileNameMatcher matcher : removedMappings.keySet()) {
-      myRemovedMappingTracker.add(matcher, removedMappings.get(matcher).getName(), true);
+    for (Map.Entry<FileNameMatcher, FileType> entry : removedMappings.entrySet()) {
+      myRemovedMappingTracker.add(entry.getKey(), entry.getValue().getName(), true);
     }
   }
 
@@ -1748,7 +1748,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private void registerReDetectedMapping(String fileTypeName, @NotNull FileNameMatcher matcher) {
+  private void registerReDetectedMapping(@NotNull String fileTypeName, @NotNull FileNameMatcher matcher) {
     String typeName = myUnresolvedMappings.get(matcher);
     if (typeName != null && !typeName.equals(fileTypeName)) {
       if (!myRemovedMappingTracker.hasRemovedMapping(matcher)) {

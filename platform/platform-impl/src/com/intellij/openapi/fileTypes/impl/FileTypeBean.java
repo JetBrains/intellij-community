@@ -70,7 +70,7 @@ public class FileTypeBean extends AbstractExtensionPointBean {
   public String language;
 
   @ApiStatus.Internal
-  public void addMatchers(List<FileNameMatcher> matchers) {
+  public void addMatchers(List<? extends FileNameMatcher> matchers) {
     myMatchers.addAll(matchers);
   }
 

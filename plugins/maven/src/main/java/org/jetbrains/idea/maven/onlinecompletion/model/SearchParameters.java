@@ -3,17 +3,19 @@ package org.jetbrains.idea.maven.onlinecompletion.model;
 
 public class SearchParameters {
 
-  public static final SearchParameters DEFAULT = new SearchParameters(200, 2000, false);
-  public static final SearchParameters FULL = new SearchParameters(200, 2000, true);
+  public static final SearchParameters DEFAULT = new SearchParameters(200, 2000, false, 300);
+  public static final SearchParameters FULL = new SearchParameters(200, 2000, true, 0);
   private final int maxResults;
   private final long millisToWait;
-  private final boolean showForLocal;
+  private final boolean showAll;
+  private final int myThrottleTime;
 
 
-  public SearchParameters(int maxResults, long wait, boolean showForLocal) {
+  public SearchParameters(int maxResults, long wait, boolean showAll, int throttleTime) {
     this.maxResults = maxResults;
     this.millisToWait = wait;
-    this.showForLocal = showForLocal;
+    this.showAll = showAll;
+    myThrottleTime = throttleTime;
   }
 
   public int getMaxResults() {
@@ -25,7 +27,11 @@ public class SearchParameters {
     return millisToWait;
   }
 
-  public boolean getShowForLocal() {
-    return showForLocal;
+  public boolean isShowAll() {
+    return showAll;
+  }
+
+  public int getThrottleTime() {
+    return myThrottleTime;
   }
 }

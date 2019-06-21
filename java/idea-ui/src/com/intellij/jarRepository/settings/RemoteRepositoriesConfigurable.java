@@ -13,10 +13,12 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,6 +45,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   private JButton myRemoveRepoButton;
   private JButton myResetToDefaultReposButton;
   private JButton myResetToDefaultServicesButton;
+  private JPanel myMavenPanel;
+  private JPanel myServiceListPanel;
 
   private final Project myProject;
   private final CollectionListModel<String> myServicesModel = new CollectionListModel<>();
@@ -68,6 +72,9 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   private void configControls() {
+    myMavenPanel.setBorder(IdeBorderFactory.createTitledBorder("Maven jar repositories:", false, JBUI.insetsTop(8)).setShowLine(false));
+    myServiceListPanel.setBorder(IdeBorderFactory.createTitledBorder("Artifactory, Nexus or Bintray Service URLs:", false, JBUI.insetsTop(8)).setShowLine(false));
+
     setupListControls(
       myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton, myRemoveServiceButton,
       "Artifactory, Nexus or Bintray Service URLs", "Service URL", "No services", DataAdapter.STRING_ADAPTER

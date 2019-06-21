@@ -16,7 +16,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="etched" title="Accepted certificates"/>
+        <border type="none"/>
         <children/>
       </grid>
       <grid id="16d1c" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

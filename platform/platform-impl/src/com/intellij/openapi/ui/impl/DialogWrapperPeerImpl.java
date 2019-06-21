@@ -385,6 +385,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     final JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
 
+    if (getWindow() instanceof JDialog) {
+      UIUtil.setCustomTitleBar(getWindow(), rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+    }
+
     Container contentPane = getContentPane();
     if (IdeFrameDecorator.isCustomDecorationActive() && contentPane instanceof JComponent) {
       setContentPane(CustomFrameDialogContent.getContent(getWindow(), (JComponent) contentPane));

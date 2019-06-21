@@ -173,8 +173,8 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Non-Picked Commits"
-              description="Dims those commits which have equivalent changes in the current branch"/>
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Not Cherry-Picked Commits"
+              description="Highlights commits which have not been cherry-picked to the current branch"/>
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.Set;
  * @deprecated to be removed in 2019.1
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
 public class FUStatisticsSettingsService extends StatisticsConnectionService {
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   public  static FUStatisticsSettingsService getInstance() {return  new FUStatisticsSettingsService();}

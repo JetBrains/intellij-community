@@ -104,7 +104,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
     MyCellRenderer() {}
 
     @Override
-    public void customize(JList<? extends FileTypeInfo> list, FileTypeInfo value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends FileTypeInfo> list, FileTypeInfo value, int index, boolean selected, boolean hasFocus) {
       if (value == null) {
         return;
       }

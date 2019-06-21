@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -29,6 +28,7 @@ import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER;
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
@@ -61,7 +61,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
         ProgressManager.checkCanceled();
         MavenRepositoryArtifactInfo item = cld.poll();
         if (item != null) {
-          fillResult(result, item);
+          fillResult(coordinates, result, item);
         }
       }
       fillAfter(result);
@@ -89,14 +89,16 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
   protected void fillAfter(CompletionResultSet result) {
   }
 
-  protected void fillResult(@NotNull CompletionResultSet result, MavenRepositoryArtifactInfo item) {
+  protected void fillResult(@NotNull MavenDomShortArtifactCoordinates coordinates,
+                            @NotNull CompletionResultSet result,
+                            @NotNull MavenRepositoryArtifactInfo item) {
     result
       .addElement(MavenDependencyCompletionUtil.lookupElement(item).withInsertHandler(MavenArtifactInfoInsertionHandler.INSTANCE));
   }
 
   @NotNull
   protected CompletionResultSet amendResultSet(@NotNull CompletionResultSet result) {
-    result.restartCompletionOnAnyPrefixChange();
+    result.restartCompletionWhenNothingMatches();
     return result;
   }
 
@@ -106,6 +108,15 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
       return "";
     }
     return StringUtil.trim(value.replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, ""));
+  }
+
+  protected static Consumer<MavenRepositoryArtifactInfo> withPredicate(Consumer<MavenRepositoryArtifactInfo> consumer,
+                                                                       Predicate<MavenRepositoryArtifactInfo> predicate) {
+    return it -> {
+      if (predicate.test(it)) {
+        consumer.accept(it);
+      }
+    };
   }
 
   protected class PlaceChecker {

@@ -129,6 +129,10 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
 
+    if (frame instanceof JFrame) {
+      UIUtil.setCustomTitleBar(frame, ((JFrame)frame).getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+    }
+
     final WindowAdapter focusListener = new WindowAdapter() {
       @Override
       public void windowOpened(WindowEvent e) {

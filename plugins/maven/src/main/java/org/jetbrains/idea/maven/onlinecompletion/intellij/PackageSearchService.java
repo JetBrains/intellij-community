@@ -104,21 +104,22 @@ public class PackageSearchService {
     return result;
   }
 
-  private String createUrlFullTextSearch(String coord) {
+  private String createUrlFullTextSearch(@NotNull String coord) {
     String url = myPackageServiceConfig.getFullTextUrl();
     if (url == null) {
       return null;
     }
-    return url + "?query=" + coord;
+
+    return url + "?query=" + coord.trim();
   }
 
-  private String createUrlSuggestPrefix(String groupId, String artifactId) {
+  private String createUrlSuggestPrefix(@NotNull String groupId, @NotNull String artifactId) {
     String url = myPackageServiceConfig.getSuggestUrl();
     if (url == null) {
       return null;
     }
-    String groupParam = StringUtil.isEmpty(groupId) ? "" : "groupId=" + groupId;
-    String artifactParam = StringUtil.isEmpty(artifactId) ? "" : "artifactId=" + artifactId;
+    String groupParam = StringUtil.isEmpty(groupId) ? "" : "groupId=" + groupId.trim();
+    String artifactParam = StringUtil.isEmpty(artifactId) ? "" : "artifactId=" + artifactId.trim();
     return url + "?" + groupParam + "&" + artifactParam;
   }
 

@@ -16,7 +16,9 @@
 
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.compiler.options.JavaCompilersTab;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -25,6 +27,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -33,14 +36,25 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.DefaultCaret;
+import javax.swing.text.EditorKit;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -52,6 +66,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   private JPanel myExcludesPanel;
   private JBCheckBox myInvokeDynamicSupportCB;
   private TextFieldWithBrowseButton myConfigScriptPath;
+  private JPanel myPathPanel;
 
   private final ExcludedEntriesConfigurable myExcludes;
   private final GroovyCompilerConfiguration myConfig;
@@ -61,8 +76,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     myConfig = GroovyCompilerConfiguration.getInstance(project);
     myExcludes = createExcludedConfigurable(project);
 
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
-    myConfigScriptPath.addBrowseFolderListener(null, "Select path to Groovy compiler configscript", null, descriptor);
+    myExcludesPanel.setBorder(IdeBorderFactory.createTitledBorder("Exclude from stub generation:", false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   public ExcludedEntriesConfigurable getExcludes() {
@@ -140,4 +154,63 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     return FileUtil.toSystemIndependentName(myConfigScriptPath.getText());
   }
 
+  private void createUIComponents() {
+    myPathPanel = new JPanel(new GridBagLayout());
+    GridBag gb = new GridBag().setDefaultWeightX(1.0).
+      setDefaultAnchor(GridBagConstraints.LINE_START).
+      setDefaultFill(GridBagConstraints.HORIZONTAL);
+
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+    myConfigScriptPath = new TextFieldWithBrowseButton();
+    myConfigScriptPath.addBrowseFolderListener(null, "Select path to Groovy compiler configscript", null, descriptor);
+
+    myPathPanel.add(createTopLabel(), gb.nextLine());
+    myPathPanel.add(UI.PanelFactory.panel(myConfigScriptPath).withLabel("Path to &configscript:").createPanel(), gb.nextLine().insetTop(13));
+
+    String cbText = "Invoke &dynamic support";
+    myInvokeDynamicSupportCB = new JBCheckBox(UIUtil.removeMnemonic(cbText));
+    myInvokeDynamicSupportCB.setDisplayedMnemonicIndex(UIUtil.getDisplayMnemonicIndex(cbText));
+    myPathPanel.add(myInvokeDynamicSupportCB, gb.nextLine().insetTop(8));
+  }
+
+  private static JComponent createTopLabel() {
+    JEditorPane tipComponent = new JEditorPane();
+    tipComponent.setContentType("text/html");
+    tipComponent.setEditable(false);
+    tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+
+    EditorKit kit = tipComponent.getEditorKit();
+    if (kit instanceof HTMLEditorKit) {
+      StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
+
+      css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
+      css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}");
+      css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
+      css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
+      //css.addRule("body {background-color:#" + ColorUtil.toHex(info.warning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
+    }
+
+    if (tipComponent.getCaret() instanceof DefaultCaret) {
+      ((DefaultCaret)tipComponent.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+    }
+
+    tipComponent.setCaretPosition(0);
+    tipComponent.setText("Alternatively, you can specify Groovy-Eclipse compiler at <a href=\"#\">Java Compiler page</a>");
+    tipComponent.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(tipComponent));
+        if (allSettings != null) {
+          Configurable javacConfigurable = allSettings.find(JavaCompilersTab.class);
+          if (javacConfigurable != null) {
+            allSettings.select(javacConfigurable);
+          }
+        }
+      }
+    });
+
+    tipComponent.setBorder(null);
+    tipComponent.setOpaque(false);
+
+    return tipComponent;
+  }
 }

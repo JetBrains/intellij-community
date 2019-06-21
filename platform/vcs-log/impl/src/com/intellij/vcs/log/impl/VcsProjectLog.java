@@ -24,19 +24,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
@@ -50,8 +53,8 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final VcsLogTabsProperties myUiProperties;
   @NotNull private final VcsLogTabsManager myTabsManager;
 
-  @NotNull
-  private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
+  @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
+  @NotNull private final Disposable myMappingChangesDisposable = Disposer.newDisposable();
   private int myRecreatedLogCount = 0;
 
   public VcsProjectLog(@NotNull Project project,
@@ -61,6 +64,12 @@ public class VcsProjectLog implements Disposable {
     myMessageBus = messageBus;
     myUiProperties = uiProperties;
     myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
+
+    Disposer.register(this, myMappingChangesDisposable);
+  }
+
+  private void subscribeToMappingsChanges() {
+    myMessageBus.connect(myMappingChangesDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::recreateLog);
   }
 
   @Nullable
@@ -99,9 +108,7 @@ public class VcsProjectLog implements Disposable {
   private void recreateLog() {
     UIUtil.invokeLaterIfNeeded(() -> myLogManager.drop(() -> {
       if (myProject.isDisposed()) return;
-      if (hasDvcsRoots()) {
-        createLog(false);
-      }
+      createLog(false);
     }));
   }
 
@@ -127,8 +134,16 @@ public class VcsProjectLog implements Disposable {
   }
 
   @CalledInBackground
-  public void createLog(boolean forceInit) {
-    VcsLogManager logManager = myLogManager.getValue();
+  void createLog(boolean forceInit) {
+    Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
+    if (!logProviders.isEmpty()) {
+      createLog(logProviders, forceInit);
+    }
+  }
+
+  @CalledInBackground
+  private void createLog(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, boolean forceInit) {
+    VcsLogManager logManager = myLogManager.getValue(logProviders);
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (logManager.isLogVisible() || forceInit) {
@@ -143,8 +158,9 @@ public class VcsProjectLog implements Disposable {
     });
   }
 
-  private boolean hasDvcsRoots() {
-    return !VcsLogManager.findLogProviders(getVcsRoots(), myProject).isEmpty();
+  @NotNull
+  private Map<VirtualFile, VcsLogProvider> getLogProviders() {
+    return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()), myProject);
   }
 
   public static VcsProjectLog getInstance(@NotNull Project project) {
@@ -161,9 +177,9 @@ public class VcsProjectLog implements Disposable {
 
     @NotNull
     @CalledInBackground
-    public synchronized VcsLogManager getValue() {
+    public synchronized VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
-        VcsLogManager value = compute();
+        VcsLogManager value = compute(logProviders);
         myValue = value;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!myProject.isDisposed()) myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
@@ -174,8 +190,9 @@ public class VcsProjectLog implements Disposable {
 
     @NotNull
     @CalledInBackground
-    protected synchronized VcsLogManager compute() {
-      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateOnError);
+    protected VcsLogManager compute(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+      return new VcsLogManager(myProject, myUiProperties, logProviders, false,
+                               VcsProjectLog.this::recreateOnError);
     }
 
     @CalledInAwt
@@ -209,11 +226,8 @@ public class VcsProjectLog implements Disposable {
       VcsProjectLog projectLog = getInstance(project);
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        MessageBusConnection connection = project.getMessageBus().connect(project);
-        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
-        if (projectLog.hasDvcsRoots()) {
-          projectLog.createLog(false);
-        }
+        projectLog.subscribeToMappingsChanges();
+        projectLog.createLog(false);
       });
     }
   }

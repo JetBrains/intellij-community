@@ -27,7 +27,6 @@ import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VisiblePack
@@ -52,7 +51,7 @@ class GitUpdateInfoAsLog(private val project: Project,
   @CalledInAwt
   fun buildAndShowNotification() {
     notificationShown = false
-    VcsLogUtil.runWhenLogIsReady(project) { log, logManager ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { log, logManager ->
       val listener = object : DataPackChangeListener {
         override fun onDataPackChange(dataPack: DataPack) {
           showNotificationIfRangesAreReachable(log, dataPack, logManager, this)
@@ -62,9 +61,9 @@ class GitUpdateInfoAsLog(private val project: Project,
       log.dataManager?.addDataPackChangeListener(listener)
 
       GuiUtils.invokeLaterIfNeeded({
-        // the log may be refreshed before we subscribe to the listener
-        showNotificationIfRangesAreReachable(log, logManager.dataManager.dataPack, logManager, listener)
-      }, ModalityState.defaultModalityState())
+                                     // the log may be refreshed before we subscribe to the listener
+                                     showNotificationIfRangesAreReachable(log, logManager.dataManager.dataPack, logManager, listener)
+                                   }, ModalityState.defaultModalityState())
     }
   }
 

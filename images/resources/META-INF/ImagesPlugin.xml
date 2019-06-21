@@ -6,7 +6,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="org.intellij.images.options.impl.ImagesOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.ImagesConfigurable" id="Images" displayName="Images"/>
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>

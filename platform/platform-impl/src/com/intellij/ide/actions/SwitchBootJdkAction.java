@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -332,7 +331,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
     private static class JdkBundleItemRenderer extends SimpleListCellRenderer<JdkBundleItem> {
       @Override
-      public void customize(JList<? extends JdkBundleItem> list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
+      public void customize(@NotNull JList<? extends JdkBundleItem> list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
         if (value == RESET) {
           setText("<reset to default>");
         }

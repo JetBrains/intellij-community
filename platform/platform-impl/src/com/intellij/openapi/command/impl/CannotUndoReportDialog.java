@@ -43,7 +43,7 @@ public class CannotUndoReportDialog extends DialogWrapper implements DataProvide
     }
     myProblemFilesList.setCellRenderer(new SimpleListCellRenderer<DocumentReference>() {
       @Override
-      public void customize(JList<? extends DocumentReference> list,
+      public void customize(@NotNull JList<? extends DocumentReference> list,
                             DocumentReference file,
                             int index,
                             boolean selected,

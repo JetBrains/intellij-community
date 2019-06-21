@@ -61,6 +61,6 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
     repositoryListEditor.buildUi(this)
     row { autoSync(comment = "Use VCS -> Sync Settings to sync when you want") }
     row { includeHostIntoCommitMessage() }
-    row { panel("Read-only Sources", editors.get(1).component) }
+    row { panel("Read-only sources:", editors.get(1).component, false) }
   }
 }

@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,6 +33,10 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
     myProject = project;
     myOriginalPath = originalFile.getPath();
     myDocument = document;
+    final Language language = EditorConfigEditorProvider.getLanguage(originalFile);
+    if (language != null) {
+      super.setLanguage(language);
+    }
     super.setContent(this, myDocument.getText(), false);
     reformat();
     CodeStyleSettingsManager.getInstance(project).addListener(this);

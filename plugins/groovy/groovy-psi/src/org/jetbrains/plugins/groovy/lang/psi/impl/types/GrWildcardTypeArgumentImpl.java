@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -51,13 +50,11 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
     return findChildByClass(GrTypeElement.class);
   }
 
-  @Override
-  public boolean isExtends() {
+  private boolean isExtends() {
     return findChildByType(GroovyTokenTypes.kEXTENDS) != null;
   }
 
-  @Override
-  public boolean isSuper() {
+  private boolean isSuper() {
     return findChildByType(GroovyTokenTypes.kSUPER) != null;
   }
 }

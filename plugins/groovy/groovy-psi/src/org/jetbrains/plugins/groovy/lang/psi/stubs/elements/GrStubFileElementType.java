@@ -29,7 +29,7 @@ import java.io.IOException;
  */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
-  public static final int STUB_VERSION = 49;
+  public static final int STUB_VERSION = 50;
 
   public GrStubFileElementType(Language language) {
     super(language);

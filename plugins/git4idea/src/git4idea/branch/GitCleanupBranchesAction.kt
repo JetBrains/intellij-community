@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.keymap.KeymapUtil.*
+import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -29,12 +29,9 @@ import com.intellij.util.ThreeState.UNSURE
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.data.DataPackChangeListener
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
-import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl
@@ -62,7 +59,7 @@ class GitCleanupBranchesAction : DumbAwareAction() {
     Disposer.register(content, ui)
     toolWindow.activate(null, true, true)
 
-    VcsLogUtil.runWhenLogIsReady(project) { _, _ ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { _, _ ->
       ui.stopLoading()
     } // schedule initialization: need the log for other actions
   }
@@ -314,7 +311,7 @@ private class ShowBranchDiffAction : CleanupBranchesActionBase("Compare with Cur
     val branch = e.getData(GIT_BRANCH)!!
     val project = e.project!!
 
-    VcsLogUtil.runWhenLogIsReady(project) { log, logManager ->
+    VcsLogContentUtil.runWhenLogIsReady(project) { log, logManager ->
       val filters = VcsLogFilterObject.fromRange("HEAD", branch.branchName)
       log.tabsManager.openAnotherLogTab(logManager, VcsLogFilterObject.collection(filters))
     }
@@ -418,33 +415,9 @@ private fun isMyBranch(log: VcsProjectLog,
 
 private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: GitRepository): TIntHashSet? {
   val dataPack = log.dataManager!!.dataPack
-  val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
-  val storage = log.dataManager!!.storage
 
-  val ref = dataPack.refsModel.findBranch(branchName, repo.root) ?: return null
+  val ref = dataPack.findBranch(branchName, repo.root) ?: return null
   if (!ref.type.isBranch) return null
 
-  val branchRefIndex = storage.getCommitIndex(ref.commitHash, ref.root)
-  val branchNodeId = permanentGraph.permanentCommitsInfo.getNodeId(branchRefIndex)
-
-  val exclusiveCommits = TIntHashSet()
-  DfsWalk(listOf(branchNodeId), permanentGraph.linearGraph).walk(true) { node: Int ->
-    val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph))
-    val containingBranchesIndexes = reachableNodes.getContainingBranches(node, permanentGraph.branchNodeIds)
-
-    if (!containingBranchesIndexes.contains(branchNodeId)) {
-      LOG.error("The branch $branchName doesn't contain commit reachable from it")
-    }
-
-    if (containingBranchesIndexes.size > 1) {
-      // there are other containing branches
-      false
-    }
-    else {
-      val commitId = permanentGraph.permanentCommitsInfo.getCommitId(node)
-      exclusiveCommits.add(commitId)
-      true
-    }
-  }
-  return exclusiveCommits
+  return dataPack.exclusiveCommits(ref, log.dataManager!!.storage)
 }

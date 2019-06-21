@@ -204,6 +204,7 @@ public class SystemInfo extends SystemInfoRt {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }

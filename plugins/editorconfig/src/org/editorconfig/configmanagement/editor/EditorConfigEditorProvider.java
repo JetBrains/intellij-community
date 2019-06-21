@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.editorconfig.language.filetype.EditorConfigFileType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -92,13 +93,13 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
       }
     }
 
-    private FileEditor createPreviewEditor(@NotNull Document document, @NotNull VirtualFile previewFile) {
+    private FileEditor createPreviewEditor(@NotNull Document document, @NotNull EditorConfigPreviewFile previewFile) {
       Editor previewEditor = EditorFactory.getInstance().createEditor(document, myProject);
       if (previewEditor instanceof EditorEx) {
         EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, previewFile);
         ((EditorEx)previewEditor).setHighlighter(highlighter);
       }
-      return new EditorConfigPreviewFileEditor(previewEditor);
+      return new EditorConfigPreviewFileEditor(previewEditor, previewFile);
     }
 
     @NotNull
@@ -111,9 +112,8 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
           // Ignore
         }
       }
-      FileType fileType = file.getFileType();
-      if (fileType instanceof LanguageFileType) {
-        Language language = ((LanguageFileType)fileType).getLanguage();
+      Language language = getLanguage(file);
+      if (language != null) {
         LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
         if (provider != null) {
           String sample = provider.getCodeSample(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS);
@@ -122,5 +122,11 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
       }
       return "No preview";
     }
+  }
+
+  @Nullable
+  static Language getLanguage(@NotNull VirtualFile virtualFile) {
+    FileType fileType = virtualFile.getFileType();
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 }
