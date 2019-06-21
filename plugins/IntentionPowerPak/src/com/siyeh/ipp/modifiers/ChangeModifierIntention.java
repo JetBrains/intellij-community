@@ -53,6 +53,7 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(AccessModifier.values());
@@ -68,7 +70,18 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   private static final List<AccessModifier> PUBLIC_PACKAGE =
     ContainerUtil.immutableList(AccessModifier.PUBLIC, AccessModifier.PACKAGE_LOCAL);
 
+  private final boolean myErrorFix;
   private AccessModifier myTarget;
+
+  // Necessary to register an extension
+  @SuppressWarnings("unused")
+  public ChangeModifierIntention() {
+    this(false);
+  }
+
+  public ChangeModifierIntention(boolean errorFix) {
+    myErrorFix = errorFix;
+  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
@@ -78,12 +91,13 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (identifier == null || identifier.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) return false;
     List<AccessModifier> modifiers = new ArrayList<>(getAvailableModifiers(member));
     if (modifiers.isEmpty()) return false;
+    if (!myErrorFix && modifiers.stream().noneMatch(mod -> mod.hasModifier(member))) return false;
     modifiers.removeIf(mod -> mod.hasModifier(member));
     AccessModifier target = null;
     if (modifiers.isEmpty()) return false;
     if (modifiers.size() == 1) {
       target = modifiers.get(0);
-      setText("Make " + getModifierPresentation(target));
+      setText("Make '" + identifier.getText() + "' " + target);
     }
     else {
       setText(getFamilyName());
@@ -104,11 +118,6 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @NotNull
-  private static String getModifierPresentation(AccessModifier modifier) {
-    return modifier.equals(AccessModifier.PACKAGE_LOCAL) ? "package-private" : "'" + modifier + "'";
-  }
-
-  @NotNull
   private static List<AccessModifier> getAvailableModifiers(PsiMember member) {
     if (member == null) return Collections.emptyList();
     PsiClass containingClass = member.getContainingClass();
@@ -122,6 +131,14 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         if (PsiUtil.isLanguageLevel9OrHigher(member)) {
           return PUBLIC_PRIVATE;
         }
+      }
+      PsiMethod[] superMethods = ((PsiMethod)member).findSuperMethods(false);
+      AccessModifier minAccess = superMethods.length == 0 ? AccessModifier.PRIVATE :
+                                 StreamEx.of(AccessModifier.values())
+                                   .filter(mod -> Stream.of(superMethods).anyMatch(m -> mod.hasModifier(m)))
+                                   .findFirst().orElse(AccessModifier.PRIVATE);
+      if (minAccess != AccessModifier.PRIVATE) {
+        return ContainerUtil.filter(ALL_MODIFIERS, mod -> mod.compareTo(minAccess) <= 0);
       }
       return ALL_MODIFIERS;
     }

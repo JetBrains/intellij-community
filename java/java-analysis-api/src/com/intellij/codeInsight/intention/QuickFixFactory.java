@@ -513,4 +513,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @Nullable String message);
 
   public abstract IntentionAction createCollapseAnnotationsFix(PsiAnnotation annotation);
+
+  @NotNull
+  public abstract IntentionAction createChangeModifierFix();
 }

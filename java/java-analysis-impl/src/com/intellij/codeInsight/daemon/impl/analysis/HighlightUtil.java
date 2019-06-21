@@ -911,6 +911,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement modifierOwnerParent = modifierOwner instanceof PsiMember ? ((PsiMember)modifierOwner).getContainingClass() : modifierOwner.getParent();
     if (modifierOwnerParent == null) modifierOwnerParent = modifierOwner.getParent();
     boolean isAllowed = true;
+    IntentionAction fix = null;
     if (modifierOwner instanceof PsiClass) {
       PsiClass aClass = (PsiClass)modifierOwner;
       boolean privateOrProtected = PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier);
@@ -933,6 +934,9 @@ public class HighlightUtil extends HighlightUtilBase {
             isAllowed = modifierOwnerParent instanceof PsiClass &&
                         // non-physical dummy holder might not have FQN
                         ((PsiClass)modifierOwnerParent).getQualifiedName() != null || FileTypeUtils.isInServerPageFile(modifierOwnerParent) || !modifierOwnerParent.isPhysical();
+          }
+          if (privateOrProtected && !isAllowed) {
+            fix = QUICK_FIX_FACTORY.createChangeModifierFix();
           }
         }
 
@@ -994,7 +998,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!isAllowed) {
       String message = JavaErrorMessages.message("modifier.not.allowed", modifier);
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false));
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix != null ? fix : QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false));
       return highlightInfo;
     }
 
