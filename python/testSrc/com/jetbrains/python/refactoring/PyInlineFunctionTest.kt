@@ -53,6 +53,9 @@ class PyInlineFunctionTest : PyTestCase() {
 
   fun testSimple() = doTest()
   fun testNameClash() = doTest()
+  fun testLocalFunctionUse() = doTest()
+  fun testLocalClassUse() = doTest()
+  fun testCallAsDefaultValue() = doTest()
   fun testArgumentExtraction() = doTest()
   fun testMultipleReturns() = doTest()
   fun testImporting() = doTest()

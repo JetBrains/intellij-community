@@ -428,6 +428,11 @@ public final class PyClassRefactoringUtil {
     return ContainerUtil.mapNotNull(expr.getReference().multiResolve(false), result -> result.getElement());
   }
 
+
+  public static boolean hasEncodedTarget(@NotNull PyReferenceExpression node) {
+    return node.getCopyableUserData(ENCODED_IMPORT) != null;
+  }
+
   /**
    * Updates the import statement if the given PSI element <em>has the same name</em> as one of the import elements of that statement.
    * It means that you should be careful it you actually want to update the source part of a "from import" statement, because in cases
