@@ -2,21 +2,26 @@
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase.getPresentableName
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil
-import com.intellij.psi.PsiAnnotation
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.sourcePsiElement
+import org.jetbrains.uast.*
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-class UnstableApiUsageInspection : AnnotatedElementInspectionBase() {
+class UnstableApiUsageInspection : LocalInspectionTool() {
 
   companion object {
     val DEFAULT_UNSTABLE_API_ANNOTATIONS: List<String> = listOf(
@@ -37,54 +42,91 @@ class UnstableApiUsageInspection : AnnotatedElementInspectionBase() {
     *ArrayUtilRt.toStringArray(DEFAULT_UNSTABLE_API_ANNOTATIONS)
   )
 
-  override fun getAnnotations() = unstableApiAnnotations
+  @JvmField
+  var myIgnoreInsideImports: Boolean = true
 
-  override fun buildAnnotatedApiUsageProcessor(holder: ProblemsHolder) =
-    object : AnnotatedApiUsageProcessor {
-      override fun processAnnotatedTarget(
-        sourceNode: UElement,
-        annotatedTarget: PsiModifierListOwner,
-        annotations: List<PsiAnnotation>
-      ) {
-        checkUnstableApiUsage(annotatedTarget, sourceNode, false)
-      }
-
-      override fun processAnnotatedMethodOverriding(
-        method: UMethod,
-        overriddenMethod: PsiMethod,
-        annotations: List<PsiAnnotation>
-      ) {
-        checkUnstableApiUsage(overriddenMethod, method, true)
-      }
-
-      private fun checkUnstableApiUsage(annotatedTarget: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
-        if (!isLibraryElement(annotatedTarget)) {
-          return
-        }
-        val targetName = getPresentableName(annotatedTarget)
-        val message = if (isMethodOverriding) {
-          JvmAnalysisBundle.message("jvm.inspections.unstable.method.overridden.description", targetName)
-        }
-        else {
-          JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", targetName)
-        }
-        val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
-        if (elementToHighlight != null) {
-          holder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-        }
-      }
-    }
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    ApiUsageUastVisitor.createPsiElementVisitor(
+      UnstableApiUsageProcessor(holder, myIgnoreInsideImports, unstableApiAnnotations.toList())
+    )
 
   override fun createOptionsPanel(): JPanel {
-    val checkboxPanel = super.createOptionsPanel()
+    val checkboxPanel = SingleCheckboxOptionsPanel(
+      JvmAnalysisBundle.message("jvm.inspections.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports"
+    )
 
     //TODO in add annotation window "Include non-project items" should be enabled by default
     val annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"))
+      unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list")
+    )
 
     val panel = JPanel(BorderLayout(2, 2))
     panel.add(checkboxPanel, BorderLayout.NORTH)
     panel.add(annotationsListControl, BorderLayout.CENTER)
     return panel
   }
+}
+
+private class UnstableApiUsageProcessor(
+  private val problemsHolder: ProblemsHolder,
+  private val ignoreInsideImports: Boolean,
+  private val annotations: List<String>
+) : ApiUsageProcessor {
+
+  private companion object {
+    fun isLibraryElement(element: PsiElement): Boolean {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return true
+      }
+      val containingVirtualFile = PsiUtilCore.getVirtualFile(element)
+      return containingVirtualFile != null && ProjectFileIndex.getInstance(element.project).isInLibraryClasses(containingVirtualFile)
+    }
+  }
+
+  override fun processImportReference(sourceNode: UElement, target: PsiModifierListOwner) {
+    if (!ignoreInsideImports) {
+      checkUnstableApiUsage(target, sourceNode, false)
+    }
+  }
+
+  override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
+    checkUnstableApiUsage(target, sourceNode, false)
+  }
+
+  override fun processConstructorInvocation(
+    sourceNode: UElement,
+    instantiatedClass: PsiClass,
+    constructor: PsiMethod?,
+    subclassDeclaration: UClass?
+  ) {
+    if (constructor != null) {
+      checkUnstableApiUsage(constructor, sourceNode, false)
+    }
+  }
+
+  override fun processMethodOverriding(method: UMethod, overriddenMethod: PsiMethod) {
+    checkUnstableApiUsage(overriddenMethod, method, true)
+  }
+
+  private fun checkUnstableApiUsage(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
+    if (!isLibraryElement(target)) {
+      return
+    }
+    val annotations = AnnotationUtil.findAllAnnotations(target, annotations, false)
+    if (annotations.isEmpty()) {
+      return
+    }
+    val targetName = getPresentableName(target)
+    val message = if (isMethodOverriding) {
+      JvmAnalysisBundle.message("jvm.inspections.unstable.method.overridden.description", targetName)
+    }
+    else {
+      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.description", targetName)
+    }
+    val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi
+    if (elementToHighlight != null) {
+      problemsHolder.registerProblem(elementToHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+    }
+  }
+
 }
