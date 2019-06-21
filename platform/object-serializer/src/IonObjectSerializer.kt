@@ -140,7 +140,7 @@ internal class IonObjectSerializer {
       else -> {
         val binding = bindingProducer.getRootBinding(objectClass, originalType ?: objectClass)
         @Suppress("UNCHECKED_CAST")
-        return binding.deserialize(context) as T
+        return binding.deserialize(context, hostObject = null) as T
       }
     }
   }
@@ -163,8 +163,6 @@ private data class ReadContextImpl(override val reader: ValueReader,
                                    override val objectIdReader: ObjectIdReader,
                                    override val bindingProducer: BindingProducer,
                                    override val configuration: ReadConfiguration) : ReadContext {
-  override var hostObject: Any? = null
-
   private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
 
   override val errors = ReadErrors()

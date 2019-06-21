@@ -85,7 +85,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     writer.stepOut()
   }
 
-  private fun createUsingCustomConstructor(context: ReadContext): Any {
+  private fun createUsingCustomConstructor(context: ReadContext, hostObject: Any?): Any {
     var constructorInfo = propertyMapping.value
     if (constructorInfo == null) {
       constructorInfo = context.configuration.resolvePropertyMapping?.invoke(beanClass)
@@ -129,7 +129,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
 
         val binding = bindings[bindingIndex]
         try {
-          initArgs[argIndex] = binding.deserialize(subReadContext)
+          initArgs[argIndex] = binding.deserialize(subReadContext, hostObject)
         }
         catch (e: Exception) {
           throw SerializationException("Cannot deserialize parameter value (fieldName=$fieldName, binding=$binding, valueType=${reader.type}, beanClass=${beanClass.name})", e)
@@ -184,7 +184,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     return null
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     val reader = context.reader
 
     val ionType = reader.type
@@ -201,7 +201,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     }
 
     if (propertyMapping.isInitialized()) {
-      return createUsingCustomConstructor(context)
+      return createUsingCustomConstructor(context, hostObject)
     }
 
     val instance = try {
@@ -211,7 +211,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
       beanClass.newInstance()
     }
     catch (e: NoSuchMethodException) {
-      return createUsingCustomConstructor(context)
+      return createUsingCustomConstructor(context, hostObject)
     }
 
     readIntoObject(instance, context)
@@ -247,9 +247,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
 
       val binding = bindings[bindingIndex]
       try {
-        context.hostObject = instance
         binding.deserialize(instance, accessors[bindingIndex], context)
-        context.hostObject = null
       }
       catch (e: SerializationException) {
         throw e

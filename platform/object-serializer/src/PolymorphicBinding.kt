@@ -20,8 +20,8 @@ internal class PolymorphicBinding(private val superClass: Class<*>) : Binding {
     }
   }
 
-  override fun deserialize(context: ReadContext): Any {
-    return doDeserialize(context, context.hostObject)!!
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
+    return doDeserialize(context, hostObject)!!
   }
 
   private fun doDeserialize(context: ReadContext, hostObject: Any?): Any? {
@@ -50,6 +50,6 @@ internal class PolymorphicBinding(private val superClass: Class<*>) : Binding {
     else {
       throw SerializationException("Class name is not specified")
     }
-    return context.bindingProducer.getRootBinding(beanClass).deserialize(context)
+    return context.bindingProducer.getRootBinding(beanClass).deserialize(context, hostObject)
   }
 }

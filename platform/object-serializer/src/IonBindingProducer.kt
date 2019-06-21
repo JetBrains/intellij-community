@@ -127,7 +127,7 @@ internal class IonBindingProducer(override val propertyCollector: PropertyCollec
 }
 
 private class FileBinding : Binding {
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return File(context.reader.stringValue())
   }
 
@@ -137,7 +137,7 @@ private class FileBinding : Binding {
 }
 
 private class PathBinding : Binding {
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return FileSystems.getDefault().getPath(context.reader.stringValue())
   }
 
@@ -147,7 +147,7 @@ private class PathBinding : Binding {
 }
 
 private class EnumBinding(private val valueClass: Class<out Enum<*>>) : Binding {
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     val enumConstants = valueClass.enumConstants
     val value = context.reader.stringValue()
     return enumConstants.firstOrNull { it.name == value }
@@ -165,7 +165,7 @@ private class DateBinding : Binding {
     context.writer.writeTimestamp(Timestamp.forDateZ(obj as Date))
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return context.reader.dateValue()
   }
 }
@@ -175,7 +175,7 @@ private class ByteArrayBinding : Binding {
     context.writer.writeBlob(obj as ByteArray)
   }
 
-  override fun deserialize(context: ReadContext): Any {
+  override fun deserialize(context: ReadContext, hostObject: Any?): Any {
     return context.reader.newBytes()
   }
 }
