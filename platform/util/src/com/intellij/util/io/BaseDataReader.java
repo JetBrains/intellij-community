@@ -45,6 +45,7 @@ public abstract class BaseDataReader {
 
   /** @deprecated use {@link #start(String)} instead (to be removed in IDEA 17) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   protected void start() {
     start("");
   }

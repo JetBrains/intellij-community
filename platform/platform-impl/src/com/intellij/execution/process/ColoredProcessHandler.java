@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -79,6 +80,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    * To be removed in IDEA 14.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2014")
   protected void textAvailable(final String text, final Key attributes) {
     super.notifyTextAvailable(text, attributes);
   }

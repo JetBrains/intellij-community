@@ -40,6 +40,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -300,6 +301,7 @@ public final class EditorUtil {
    * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead. To be removed in 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static void setHandCursor(@NotNull Editor view) {
     Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work

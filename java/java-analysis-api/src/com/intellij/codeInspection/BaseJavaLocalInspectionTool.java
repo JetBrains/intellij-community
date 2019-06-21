@@ -3,12 +3,14 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated superfluous, extend {@link AbstractBaseJavaLocalInspectionTool} / {@link CustomSuppressableInspectionTool} instead
  * (to be removed in IDEA 2019).
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019")
 @Deprecated
 public abstract class BaseJavaLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   @NotNull

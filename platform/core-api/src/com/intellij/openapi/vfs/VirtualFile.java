@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -708,6 +709,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /** @deprecated use {@link VirtualFileSystem#isValidName(String)} (to be removed in IDEA 18) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public static boolean isValidName(@NotNull String name) {
     return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }

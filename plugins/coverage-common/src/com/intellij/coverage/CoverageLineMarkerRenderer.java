@@ -53,6 +53,7 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +102,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
    * To be removed in 2019.1. Use {@link CoverageLineMarkerRenderer#CoverageLineMarkerRenderer(int, String, TreeMap, boolean, Function, Function, CoverageSuitesBundle, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   protected CoverageLineMarkerRenderer(final TextAttributesKey key,
                                        @Nullable final String className,
                                        final TreeMap<Integer, LineData> lines,

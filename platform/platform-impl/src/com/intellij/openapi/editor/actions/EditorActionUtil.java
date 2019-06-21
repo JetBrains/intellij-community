@@ -26,6 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -980,6 +981,7 @@ public class EditorActionUtil {
    * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {
     return new EditorPopupHandler() {
       @Override
@@ -997,6 +999,7 @@ public class EditorActionUtil {
    * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
     return new EditorPopupHandler() {
       @Override

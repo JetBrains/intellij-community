@@ -79,10 +79,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -132,6 +129,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   @NonNls
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");

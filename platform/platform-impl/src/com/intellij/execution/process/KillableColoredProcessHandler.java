@@ -18,6 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -57,6 +58,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   /** @deprecated use {@link #KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 17) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableColoredProcessHandler(commandLine, true);
   }

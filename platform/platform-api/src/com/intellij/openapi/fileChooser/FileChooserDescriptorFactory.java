@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 public class FileChooserDescriptorFactory {
   private FileChooserDescriptorFactory() { }
@@ -73,6 +74,7 @@ public class FileChooserDescriptorFactory {
    * @deprecated not very useful (to be removed in IDEA 15)
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   @SuppressWarnings("UnusedDeclaration")
   public static FileChooserDescriptor getDirectoryChooserDescriptor(String objectName) {
     return createSingleFolderDescriptor().withTitle("Select " + objectName);

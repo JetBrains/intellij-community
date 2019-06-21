@@ -23,6 +23,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.stubs.PsiClassHolderFileStub;
+import org.jetbrains.annotations.ApiStatus;
 
 public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
   PsiJavaModule getModule();
@@ -35,5 +36,6 @@ public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
 
   /** @deprecated override {@link #getPsiFactory()} instead (to be removed in IDEA 18) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   void setPsiFactory(StubPsiFactory factory);
 }

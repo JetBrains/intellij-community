@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
    * @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18)
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
     return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
   }

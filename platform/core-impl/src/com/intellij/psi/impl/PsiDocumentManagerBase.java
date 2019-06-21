@@ -107,7 +107,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval("2017")
   // todo remove when plugins come to their senses and stopped using it
   // todo to be removed in idea 17
   public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
