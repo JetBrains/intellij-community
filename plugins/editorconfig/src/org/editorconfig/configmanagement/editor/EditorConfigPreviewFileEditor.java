@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -38,6 +39,10 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
       ((EditorEx)myEditor).setPermanentHeaderComponent(getHeaderComponent());
     }
     myEditor.setHeaderComponent(getHeaderComponent());
+    final EditorSettings editorSettings = myEditor.getSettings();
+    editorSettings.setWhitespacesShown(true);
+    editorSettings.setGutterIconsShown(false);
+    editorSettings.setLineNumbersShown(false);
     updateEditor();
     CodeStyleSettingsManager.getInstance(myEditor.getProject()).addListener(this);
   }
