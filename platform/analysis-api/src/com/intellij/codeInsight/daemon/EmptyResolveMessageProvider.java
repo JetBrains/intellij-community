@@ -26,6 +26,7 @@ public interface EmptyResolveMessageProvider {
   /**
    * Returns custom unresolved message pattern. First, returned value is used as pattern in {@code MessageFormat.format()} call.
    * If the call fails, returned value is used as is.
+   * Resulting text should have Sentence capitalization.
    *
    * @return pattern or message
    */
