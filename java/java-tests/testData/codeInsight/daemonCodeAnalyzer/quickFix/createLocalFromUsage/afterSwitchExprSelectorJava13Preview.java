@@ -4,7 +4,7 @@ class Foo {
         int foo;
         return switch (foo) {
             default -> {
-                break i;
+                yield i;
             }
         };
     }

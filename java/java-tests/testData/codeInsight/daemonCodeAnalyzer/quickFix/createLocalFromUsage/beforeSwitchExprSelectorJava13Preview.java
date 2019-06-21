@@ -1,9 +1,9 @@
 // "Create local variable 'foo'" "true"
 class Foo {
     String test(int i) {
-        return switch (i) {
+        return switch (f<caret>oo) {
             default -> {
-                break fo<caret>o;
+                yield i;
             }
         };
     }

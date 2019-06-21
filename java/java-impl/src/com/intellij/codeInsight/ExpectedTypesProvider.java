@@ -372,6 +372,14 @@ public class ExpectedTypesProvider {
     }
 
     @Override
+    public void visitYieldStatement(PsiYieldStatement statement) {
+      PsiSwitchExpression exitedElement = statement.findEnclosingExpression();
+      if (exitedElement != null) {
+        Collections.addAll(myResult, getExpectedTypes(exitedElement, myForCompletion));
+      }
+    }
+
+    @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       myExpr = (PsiExpression)myExpr.getParent();
       expression.getParent().accept(this);
