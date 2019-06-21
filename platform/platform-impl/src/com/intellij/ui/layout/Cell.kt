@@ -255,6 +255,7 @@ abstract class Cell {
   /**
    * @see LayoutBuilder.titledRow
    */
+  @JvmOverloads
   fun panel(title: String, wrappedComponent: Component, hasSeparator: Boolean = true, vararg constraints: CCFlags) {
     val panel = Panel(title, hasSeparator)
     panel.add(wrappedComponent)

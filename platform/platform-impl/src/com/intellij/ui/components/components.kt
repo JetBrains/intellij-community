@@ -1,6 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("FunctionName")
-
 package com.intellij.ui.components
 
 import com.intellij.BundleBase
@@ -132,8 +131,10 @@ fun DialogPanel(title: String? = null, layout: LayoutManager2? = BorderLayout())
 }
 
 private fun setTitledBorder(title: String, panel: JPanel, hasSeparator: Boolean) {
-  val border = if (hasSeparator) IdeBorderFactory.createTitledBorder(title, false) else
-    IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false)
+  val border = when {
+    hasSeparator -> IdeBorderFactory.createTitledBorder(title, false)
+    else -> IdeBorderFactory.createTitledBorder(title, false, JBUI.insetsTop(8)).setShowLine(false)
+  }
   panel.border = border
   border.acceptMinimumSize(panel)
 }
