@@ -1098,10 +1098,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
             component.setFont(table.getFont());
           }
 
-          if (component instanceof JCheckBox) {
-            component.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
-          }
-
           return component;
         }
         catch(Exception ex) {
@@ -1201,8 +1197,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         final JComponent c = myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
         if (c instanceof JComboBox) {
           c.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        } else if (c instanceof JCheckBox) {
-          c.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
         }
 
         return c;
