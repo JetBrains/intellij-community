@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Consumer;
 
 /**
  * The base class for actions which create new file elements.
@@ -50,7 +51,17 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * @return created elements. Never null.
    */
   @NotNull
+  @Deprecated
   protected abstract PsiElement[] invokeDialog(Project project, PsiDirectory directory);
+
+  /**
+   * Overloaded version of {@link com.intellij.ide.actions.CreateElementActionBase#invokeDialog(com.intellij.openapi.project.Project, com.intellij.psi.PsiDirectory)}
+   * adapted for asynchronous calls
+   * @param elementsConsumer describes actions with created elements
+   */
+  protected void invokeDialog(Project project, PsiDirectory directory, Consumer<PsiElement[]> elementsConsumer) {
+    elementsConsumer.accept(invokeDialog(project, directory));
+  }
 
   /**
    * @return created elements. Never null.
@@ -75,11 +86,11 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
-    final PsiElement[] createdElements = invokeDialog(project, dir);
-
-    for (PsiElement createdElement : createdElements) {
-      view.selectElement(createdElement);
-    }
+    invokeDialog(project, dir, createdElements -> {
+      for (PsiElement createdElement : createdElements) {
+        view.selectElement(createdElement);
+      }
+    });
   }
 
   @Nullable
