@@ -2,19 +2,20 @@
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.SwingHelper;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ public class CreateEditorConfigForm {
   private JBCheckBox       myCommentProperties;
   private JBLabel          myAddPropertiesForLabel;
   @SuppressWarnings("unused")
-  private HyperlinkLabel   myAboutEditorConfigLink;
+  private JLabel           myAboutEditorConfigLink;
   @SuppressWarnings("unused")
   private ContextHelpLabel myContextHelpLabel;
 
@@ -127,9 +128,13 @@ public class CreateEditorConfigForm {
   }
 
   private void createUIComponents() {
-    myAboutEditorConfigLink = SwingHelper.createWebHyperlink(
-      EditorConfigBundle.message("export.editor.config.about"),
-      "http://www.editorconfig.org");
+    myAboutEditorConfigLink =
+      new LinkLabel<>(
+        EditorConfigBundle.message("export.editor.config.about"),
+        AllIcons.Ide.External_link_arrow,
+        (_0, _1) -> BrowserUtil.browse("http://www.editorconfig.org"));
+    myAboutEditorConfigLink.setIconTextGap(0);
+    myAboutEditorConfigLink.setHorizontalTextPosition(SwingConstants.LEFT);
     myContextHelpLabel = ContextHelpLabel.create("", EditorConfigBundle.message("export.editor.config.root.help"));
   }
 
