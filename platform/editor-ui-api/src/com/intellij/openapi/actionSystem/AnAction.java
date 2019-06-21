@@ -50,6 +50,7 @@ import java.util.List;
  * @see AnActionEvent
  * @see Presentation
  * @see com.intellij.openapi.actionSystem.ActionPlaces
+ * @see com.intellij.openapi.project.DumbAwareAction
  */
 public abstract class AnAction implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(AnAction.class);
