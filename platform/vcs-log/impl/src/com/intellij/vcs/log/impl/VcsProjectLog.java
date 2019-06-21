@@ -79,11 +79,6 @@ public class VcsProjectLog implements Disposable {
     return cached.getDataManager();
   }
 
-  @NotNull
-  private Collection<VcsRoot> getVcsRoots() {
-    return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
-  }
-
   /**
    * The instance of the {@link VcsLogUiImpl} or null if the log was not initialized yet.
    */
