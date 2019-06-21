@@ -1,4 +1,4 @@
-// "Change return type for method 'foo'" "true"
+// "Make 'foo' return 'java.lang.Object'" "true"
 
 class Test {
 

@@ -3,7 +3,7 @@
 class Test {
 
   void foo(boolean b) {
-    return/*1*/<caret> getWithSideEffects(/*2*/);
+      getWithSideEffects(/*2*/);/*1*/
   }
 
   private String getWithSideEffects() {

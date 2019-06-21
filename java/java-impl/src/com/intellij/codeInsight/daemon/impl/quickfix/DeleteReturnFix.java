@@ -1,40 +1,47 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
-import org.jetbrains.annotations.Contract;
+import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class DeleteReturnFix implements IntentionAction {
+import java.util.List;
+import java.util.Objects;
 
-  private final PsiReturnStatement myReturnStatement;
-  private final boolean myIsLastStatement;
+public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
-  @Contract(pure = true)
-  public DeleteReturnFix(@NotNull PsiCodeBlock codeBlock, @NotNull PsiReturnStatement statement) {
-    myReturnStatement = statement;
-    myIsLastStatement = ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement);
+  private final SmartPsiElementPointer<PsiReturnStatement> myStatementPtr;
+  private final SmartPsiElementPointer<PsiExpression> myValuePtr;
+  private final String myMessage;
+
+  public DeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement, @NotNull PsiExpression returnValue) {
+    super(returnStatement);
+    PsiCodeBlock codeBlock = Objects.requireNonNull(method.getBody());
+    SmartPointerManager manager = SmartPointerManager.getInstance(returnStatement.getProject());
+    myStatementPtr = manager.createSmartPsiElementPointer(returnStatement);
+    myValuePtr = manager.createSmartPsiElementPointer(returnValue);
+    String toDelete = ControlFlowUtils.blockCompletesWithStatement(codeBlock, returnStatement) ? "statement" : "value";
+    boolean hasSideEffects = SideEffectChecker.mayHaveSideEffects(returnValue);
+    myMessage = QuickFixBundle.message(hasSideEffects ? "delete.return.fix.side.effects.text" : "delete.return.fix.text", toDelete);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getText() {
-    if (!myIsLastStatement) {
-      PsiExpression value = myReturnStatement.getReturnValue();
-      if (value != null) return QuickFixBundle.message("delete.return.fix.value.text", value.getText());
-    }
-    return QuickFixBundle.message("delete.return.fix.statement.text");
+    return myMessage;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -45,25 +52,30 @@ public class DeleteReturnFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myReturnStatement.isValid() || !BaseIntentionAction.canModify(myReturnStatement)) return false;
-    PsiExpression returnValue = myReturnStatement.getReturnValue();
-    return returnValue == null || !SideEffectChecker.mayHaveSideEffects(returnValue);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (myIsLastStatement) {
-      new CommentTracker().deleteAndRestoreComments(myReturnStatement);
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    PsiReturnStatement returnStatement = myStatementPtr.getElement();
+    if (returnStatement == null) return;
+    PsiExpression returnValue = myValuePtr.getElement();
+    if (returnValue == null) return;
+    PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true, PsiLambdaExpression.class);
+    if (method == null) return;
+    PsiCodeBlock codeBlock = method.getBody();
+    if (codeBlock == null) return;
+    boolean isLastStatement = ControlFlowUtils.blockCompletesWithStatement(codeBlock, returnStatement);
+    CommentTracker ct = new CommentTracker();
+    if (SideEffectChecker.mayHaveSideEffects(returnValue)) {
+      returnValue = Objects.requireNonNull(RefactoringUtil.ensureCodeBlock(returnValue));
+      returnStatement = (PsiReturnStatement)returnValue.getParent();
     }
-    else {
-      PsiElement toDelete = myReturnStatement.getReturnValue();
-      new CommentTracker().deleteAndRestoreComments(toDelete == null ? myReturnStatement : toDelete);
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);
+    sideEffects.forEach(ct::markUnchanged);
+    PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, returnValue);
+    if (statements.length > 0) BlockUtils.addBefore(returnStatement, statements);
+    PsiElement toDelete = isLastStatement ? returnStatement : returnValue;
+    ct.deleteAndRestoreComments(toDelete);
   }
 }

@@ -49,19 +49,14 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private final String myName;
   private final String myCanonicalText;
 
-  public MethodReturnTypeFix(@NotNull PsiMethod method) {
-    super(method);
-    myReturnTypePointer = null;
-    myFixWholeHierarchy = false;
-    myName = method.getName();
-    myCanonicalText = null;
-  }
-
   public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy) {
     super(method);
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     myName = method.getName();
+    if (TypeConversionUtil.isNullType(returnType)) {
+      returnType = PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
+    }
     if (fixWholeHierarchy) {
       PsiType type = getHierarchyAdjustedReturnType(method, returnType);
       myCanonicalText = (type != null ? type : returnType).getCanonicalText();
@@ -75,8 +70,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @NotNull
   @Override
   public String getText() {
-    return myCanonicalText == null ? QuickFixBundle.message("fix.return.type.change.type.text", myName) :
-           QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
+    return QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
   }
 
   @Override
@@ -91,12 +85,11 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-    if (!BaseIntentionAction.canModify(myMethod)) return false;
-    if (myReturnTypePointer == null) return myMethod.getReturnTypeElement() != null;
+
     final PsiType myReturnType = myReturnTypePointer.getType();
-    if (myReturnType != null &&
-        myReturnType.isValid() &&
-        !TypeConversionUtil.isNullType(myReturnType)) {
+    if (BaseIntentionAction.canModify(myMethod) &&
+        myReturnType != null &&
+        myReturnType.isValid()) {
       final PsiType returnType = myMethod.getReturnType();
       if (returnType != null && returnType.isValid() && !Comparing.equal(myReturnType, returnType)) {
         return PsiTypesUtil.allTypeParametersResolved(myMethod, myReturnType);
@@ -114,13 +107,10 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
-    if (myReturnTypePointer == null) {
-      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, file);
-      if (editorForMethod != null) selectInEditor(myMethod.getReturnTypeElement(), editorForMethod);
-      return;
-    }
-    final PsiType myReturnType = myReturnTypePointer.getType();
+    PsiType myReturnType = myReturnTypePointer.getType();
     if (myReturnType == null) return;
+    boolean isNullType = TypeConversionUtil.isNullType(myReturnType);
+    if (isNullType) myReturnType = PsiType.getJavaLangObject(myMethod.getManager(), myMethod.getResolveScope());
     if (myFixWholeHierarchy) {
       final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
       final PsiType superReturnType = superMethod == null ? null : superMethod.getReturnType();
@@ -144,6 +134,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
           statementToSelect = statement;
         }
       }
+    }
+
+    if (isNullType) {
+      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, file);
+      if (editorForMethod != null) selectInEditor(myMethod.getReturnTypeElement(), editorForMethod);
+      return;
     }
 
     if (statementToSelect != null) {

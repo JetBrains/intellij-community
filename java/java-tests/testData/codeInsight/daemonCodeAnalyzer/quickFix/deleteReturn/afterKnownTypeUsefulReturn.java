@@ -1,4 +1,4 @@
-// "Delete return value '"foo"'" "true"
+// "Delete return value" "true"
 
 class Test {
 

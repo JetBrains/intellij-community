@@ -86,12 +86,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnUnknownTypeFix(@NotNull PsiMethod method) {
-    return new MethodReturnTypeFix(method);
-  }
-
-  @NotNull
-  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
     return new AddMethodFix(method, toClass);
   }
@@ -277,8 +271,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createDeleteReturnFix(@NotNull PsiCodeBlock codeBlock, @NotNull PsiReturnStatement statement) {
-    return new DeleteReturnFix(codeBlock, statement);
+  public IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
+                                               @NotNull PsiReturnStatement returnStatement,
+                                               @NotNull PsiExpression returnValue) {
+    return new DeleteReturnFix(method, returnStatement, returnValue);
   }
 
   @NotNull

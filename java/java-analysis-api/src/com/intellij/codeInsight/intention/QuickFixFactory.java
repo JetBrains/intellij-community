@@ -60,13 +60,6 @@ public abstract class QuickFixFactory {
                                                                                     @NotNull PsiType toReturn,
                                                                                     boolean fixWholeHierarchy);
 
-  /**
-   * Provides fix for changing method return type when it's not clear with which type method return type should be replaced.<p>
-   * For example, in case when <code>void</code> method returns <code>null</code> this fix should be used.
-   */
-  @NotNull
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnUnknownTypeFix(@NotNull PsiMethod method);
-
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass);
 
@@ -183,13 +176,15 @@ public abstract class QuickFixFactory {
 
   /**
    * Provides fix to remove return statement or return value in case when return statement is not last statement in block.
-   * This fix won't be available if return value may have side effects.
    *
-   * @param codeBlock code block with return statement
-   * @param statement return statement to remove
+   * @param method method with return statement
+   * @param returnStatement statement to remove
+   * @param returnValue statement value
    */
   @NotNull
-  public abstract IntentionAction createDeleteReturnFix(@NotNull PsiCodeBlock codeBlock, @NotNull PsiReturnStatement statement);
+  public abstract IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
+                                                        @NotNull PsiReturnStatement returnStatement,
+                                                        @NotNull PsiExpression returnValue);
 
   @NotNull
   public abstract IntentionAction createDeleteCatchFix(@NotNull PsiParameter parameter);

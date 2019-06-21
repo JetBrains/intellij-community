@@ -3,7 +3,10 @@
 class Test {
 
   void foo(boolean b) {
-      if (b) /*1*/return ("foo"/*2*/) + <caret>getWithSideEffects(/*3*/);
+      if (b) /*1*/ {
+          getWithSideEffects(/*3*/);
+          return /*2*/;
+      }
       System.out.println("bar");
   }
 

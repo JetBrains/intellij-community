@@ -1,4 +1,4 @@
-// "Delete return value 'null'" "true"
+// "Delete return value" "true"
 
 class Test {
 
