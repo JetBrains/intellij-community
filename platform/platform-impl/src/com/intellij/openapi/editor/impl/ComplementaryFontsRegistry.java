@@ -50,7 +50,6 @@ public class ComplementaryFontsRegistry {
     FONT_NAME_TO_STYLE.put("SourceCodePro-BoldIt",  Font.BOLD | Font.ITALIC);
     FONT_NAME_TO_STYLE.put("Hasklig-It",            Font.ITALIC);
     FONT_NAME_TO_STYLE.put("Hasklig-BoldIt",        Font.BOLD | Font.ITALIC);
-    FONT_NAME_TO_STYLE.put("FiraCode-Light",        Font.PLAIN);
     FONT_NAME_TO_STYLE.put("FiraCode-Medium",       Font.BOLD);
   }
 
