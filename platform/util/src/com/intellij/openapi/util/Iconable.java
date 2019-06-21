@@ -12,7 +12,12 @@ import javax.swing.*;
 public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
   int ICON_FLAG_READ_STATUS = 0x0002;
-  @Deprecated int ICON_FLAG_OPEN = 0x0004;
+
+  /**
+   * @deprecated unused, left for API compatibility
+   */
+  @Deprecated
+  int ICON_FLAG_OPEN = 0x0004;
 
   Key<Integer> ICON_FLAG_IGNORE_MASK = new Key<>("ICON_FLAG_IGNORE_MASK");
 
