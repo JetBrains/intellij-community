@@ -190,6 +190,31 @@ class VisiblePackBuilderTest {
   }
 
   @Test
+  fun `filter by hash range in multi-root project`() {
+    val root1 = MockVirtualFile("root1")
+    val root2 = MockVirtualFile("root2")
+
+    val graph = multiRootGraph {
+      root(root1) {
+        1(2) * "master"
+        2(3)
+        3()
+      }
+
+      root(root2) {
+        5(4) * "master"
+        4()
+      }
+    }
+
+    val hash1 = graph.getHash(1)
+    val hash2 = graph.getHash(2)
+    val filters = VcsLogFilterObject.collection(VcsLogFilterObject.fromRange(hash2.asString(), hash1.asString()))
+    val visiblePack = graph.build(filters)
+    assertCommits(visiblePack.visibleGraph, 1)
+  }
+
+  @Test
   fun `filter by range where ref is unresolved`() {
     val graph = graph {
       1(3) *"master"
@@ -272,6 +297,10 @@ class VisiblePackBuilderTest {
           return null
         }
       }
+    }
+
+    fun getHash(id: Int): Hash {
+      return hashMap.getCommitId(id).hash
     }
   }
 
