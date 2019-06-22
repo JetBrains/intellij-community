@@ -17,9 +17,11 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Test
 import java.util.*
+import kotlin.random.nextInt
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -349,7 +351,7 @@ class VisiblePackBuilderTest {
         val hashes : Map<Int, Hash> = commits.map {
           val currentIndex = commitIndex
           commitIndex++
-          val hash = HashImpl.build(currentIndex.toString())
+          val hash = generateHashForIndex(currentIndex)
           currentIndex to hash
         }.toMap()
 
@@ -362,6 +364,21 @@ class VisiblePackBuilderTest {
 
         SingleRootStorage(hashes, refs)
       }
+    }
+
+    private fun generateHashForIndex(currentIndex: Int): Hash {
+      val hexIndex = currentIndex.toString(16)
+      val remainingSize = FULL_HASH_LENGTH - hexIndex.length
+
+      val sb = StringBuilder()
+      for (i in 0 until remainingSize) {
+        val randomHexChar = kotlin.random.Random.nextInt(0 until 16).toString(16)
+        sb.append(randomHexChar)
+      }
+
+      val hashString = hexIndex + sb.toString()
+      assertEquals(FULL_HASH_LENGTH, hashString.length, "Hash generated incorrectly: [$hashString]")
+      return HashImpl.build(hashString)
     }
 
     override fun getCommitIndex(hash: Hash, root: VirtualFile) = storagesByRoot.getValue(root).hashesReversed.getValue(hash)
