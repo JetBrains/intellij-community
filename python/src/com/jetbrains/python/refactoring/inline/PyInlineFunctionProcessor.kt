@@ -90,8 +90,9 @@ class PyInlineFunctionProcessor(project: Project,
   override fun findUsages(): Array<UsageInfo> {
     if (myInlineThis) {
       val element = myReference!!.element as PyReferenceExpression
-      val import = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
-      return if (import != null) arrayOf(UsageInfo(element), UsageInfo(import)) else arrayOf(UsageInfo(element))
+      val isImport = PsiTreeUtil.getParentOfType(element, PyImportStatementBase::class.java) != null
+      val localImport = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }
+      return if (!isImport && localImport != null) arrayOf(UsageInfo(element), UsageInfo(localImport)) else arrayOf(UsageInfo(element))
     }
 
     return ReferencesSearch.search(myFunction, myRefactoringScope).asSequence()
