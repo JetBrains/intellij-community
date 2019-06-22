@@ -279,9 +279,11 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                             commitCandidates: TIntHashSet?): FilterByDetailsResult {
     var commitCountToTry = commitCount
     if (commitCountToTry == CommitCountStage.INITIAL) {
-      val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates).toCommitIndexes()
-      if (commitsFromMemory.size >= commitCountToTry.count) {
-        return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry)
+      if (filters.get(VcsLogFilterCollection.RANGE_FILTER) == null) { // not filtering in memory by range for simplicity
+        val commitsFromMemory = filterDetailsInMemory(graph, filters.detailsFilters, matchingHeads, commitCandidates).toCommitIndexes()
+        if (commitsFromMemory.size >= commitCountToTry.count) {
+          return FilterByDetailsResult(commitsFromMemory, true, commitCountToTry)
+        }
       }
       commitCountToTry = commitCountToTry.next()
     }
